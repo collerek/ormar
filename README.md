@@ -179,4 +179,4 @@ All fields are required unless one of the following is set:
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [databases]: https://github.com/encode/databases
 [pydantic]: https://pydantic-docs.helpmanual.io/
-[encode/orm]: 
+[encode/orm]: https://github.com/encode/orm/
