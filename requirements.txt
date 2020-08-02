@@ -1,0 +1,7 @@
+databases[sqlite]
+pydantic
+sqlalchemy
+
+# Testing
+pytest
+pytest-cov

@@ -22,6 +22,9 @@ MySQL, and SQLite. ORM is built with:
 Because ORM is built on SQLAlchemy core, you can use Alembic to provide
 database migrations.
 
+The goal was to create a simple orm that can be used directly with FastApi that bases it's data validation on pydantic.
+Initial work was inspired by [`encode/orm`][encode/orm]
+
 **ORM is still under development: We recommend pinning any dependencies with `orm~=0.1`**
 
 **Note**: Use `ipython` to try this from the console, since it supports `await`.
@@ -176,3 +179,4 @@ All fields are required unless one of the following is set:
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [databases]: https://github.com/encode/databases
 [pydantic]: https://pydantic-docs.helpmanual.io/
+[encode/orm]: 
