@@ -13,7 +13,7 @@ install:
     - pip install -U -r requirements.txt
 
 script:
-    - scripts/test
+    - scripts/test.sh
 
 after_script:
     - codecov
