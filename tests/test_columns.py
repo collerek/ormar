@@ -1,4 +1,5 @@
 import datetime
+from typing import ClassVar
 
 import pydantic
 import pytest
@@ -25,6 +26,10 @@ class ExampleModel(Model):
     test_json = fields.JSON(default={})
     test_bigint = fields.BigInteger(default=0)
     test_decimal = fields.Decimal(length=10, precision=2)
+
+
+fields_to_check = ['test', 'test_text', 'test_string', 'test_datetime', 'test_date', 'test_text', 'test_float',
+                   'test_bigint', 'test_json']
 
 
 class ExampleModel2(Model):
@@ -66,10 +71,30 @@ def test_primary_key_access_and_setting():
     assert example.test == 2
 
 
-def test_wrong_model_definition():
+def test_pydantic_model_is_created():
+    example = ExampleModel(pk=1, test_string='test', test_bool=True)
+    assert issubclass(example.values.__class__, pydantic.BaseModel)
+    assert all([field in example.values.__fields__ for field in fields_to_check])
+    assert example.values.test == 1
+
+
+def test_sqlalchemy_table_is_created():
+    example = ExampleModel(pk=1, test_string='test', test_bool=True)
+    assert issubclass(example.__table__.__class__, sqlalchemy.Table)
+    assert all([field in example.__table__.columns for field in fields_to_check])
+
+
+def test_double_column_name_in_model_definition():
     with pytest.raises(ModelDefinitionError):
         class ExampleModel2(Model):
             __tablename__ = "example3"
             __metadata__ = metadata
-            test = fields.Integer(name='test12', primary_key=True)
             test_string = fields.String('test_string2', name='test_string2', length=250)
+
+
+def test_setting_pk_column_as_pydantic_only_in_model_definition():
+    with pytest.raises(ModelDefinitionError):
+        class ExampleModel2(Model):
+            __tablename__ = "example4"
+            __metadata__ = metadata
+            test = fields.Integer(name='test12', primary_key=True, pydantic_only=True)

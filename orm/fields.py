@@ -1,5 +1,6 @@
 import datetime
 import decimal
+from typing import Any
 
 import pydantic
 import sqlalchemy
@@ -9,6 +10,10 @@ from orm.exceptions import ModelDefinitionError
 
 class BaseField:
     __type__ = None
+
+    def __new__(cls, *args, **kwargs):
+        cls.__annotations__ = {}
+        return super().__new__(cls)
 
     def __init__(self, *args, **kwargs):
         name = kwargs.pop('name', None)
@@ -31,6 +36,10 @@ class BaseField:
 
         self.index = kwargs.pop('index', None)
         self.unique = kwargs.pop('unique', None)
+
+        self.pydantic_only = kwargs.pop('pydantic_only', False)
+        if self.pydantic_only and self.primary_key:
+            raise ModelDefinitionError('Primary key column cannot be pydantic only.')
 
     def get_column(self, name=None) -> sqlalchemy.Column:
         name = self.name or name

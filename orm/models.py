@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 import sqlalchemy
 from pydantic import create_model
@@ -33,20 +33,29 @@ class ModelMetaclass(type):
         pkname = None
 
         columns = []
-        for field_name, field in new_model.__dict__.items():
-            if isinstance(field, BaseField):
+        for field_name, field in attrs.items():
+            if isinstance(field, BaseField) and not field.pydantic_only:
                 if field.primary_key:
                     pkname = field_name
                 columns.append(field.get_column(field_name))
 
-        pydantic_fields = parse_pydantic_field_from_model_fields(new_model.__dict__)
+        # sqlalchemy table creation
+        attrs['__table__'] = sqlalchemy.Table(tablename, metadata, *columns)
+        attrs['__columns__'] = columns
+        attrs['__pkname__'] = pkname
 
-        new_model.__table__ = sqlalchemy.Table(tablename, metadata, *columns)
-        new_model.__columns__ = columns
-        new_model.__pkname__ = pkname
-        new_model.__pydantic_fields__ = pydantic_fields
-        new_model.__pydantic_model__ = create_model(name, **pydantic_fields)
-        new_model.__fields__ = new_model.__pydantic_model__.__fields__
+        # pydantic model creation
+        pydantic_fields = parse_pydantic_field_from_model_fields(attrs)
+        pydantic_model = create_model(name, **pydantic_fields)
+        attrs['__pydantic_fields__'] = pydantic_fields
+        attrs['__pydantic_model__'] = pydantic_model
+        attrs['__fields__'] = pydantic_model.__fields__
+        attrs['__signature__'] = pydantic_model.__signature__
+        attrs['__annotations__'] = pydantic_model.__annotations__
+
+        new_model = super().__new__(  # type: ignore
+            mcs, name, bases, attrs
+        )
 
         return new_model
 
@@ -62,9 +71,10 @@ class Model(metaclass=ModelMetaclass):
     def __setattr__(self, key, value):
         if key in self.__fields__:
             setattr(self.values, key, value)
-        super().__setattr__(key, value)
+        else:
+            super().__setattr__(key, value)
 
-    def __getattribute__(self, item):
+    def __getattribute__(self, item) -> Any:
         if item != '__fields__' and item in self.__fields__:
             return getattr(self.values, item)
         return super().__getattribute__(item)
