@@ -2,10 +2,10 @@
 
 <p>
 <a href="https://travis-ci.org/encode/orm">
-    <img src="https://travis-ci.org/encode/orm.svg?branch=master" alt="Build Status">
+    <img src="https://travis-ci.com/collerek/async-orm.svg?branch=master" alt="Build Status">
 </a>
 <a href="https://codecov.io/gh/encode/orm">
-    <img src="https://codecov.io/gh/encode/orm/branch/master/graph/badge.svg" alt="Coverage">
+    <img src="https://codecov.io/gh/collerek/async-orm/branch/master/graph/badge.svg" alt="Coverage">
 </a>
 <a href="https://pypi.org/project/orm/">
     <img src="https://badge.fury.io/py/orm.svg" alt="Package version">

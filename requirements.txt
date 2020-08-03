@@ -5,3 +5,4 @@ sqlalchemy
 # Testing
 pytest
 pytest-cov
+codecov
