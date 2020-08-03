@@ -7,10 +7,9 @@
 <a href="https://codecov.io/gh/encode/orm">
     <img src="https://codecov.io/gh/collerek/async-orm/branch/master/graph/badge.svg" alt="Coverage">
 </a>
-<a href="https://pypi.org/project/orm/">
-    <img src="https://badge.fury.io/py/orm.svg" alt="Package version">
+<a href="https://www.codefactor.io/repository/github/collerek/async-orm">
+<img src="https://www.codefactor.io/repository/github/collerek/async-orm/badge" alt="CodeFactor" />
 </a>
-<a href="https://www.codefactor.io/repository/github/collerek/async-orm"><img src="https://www.codefactor.io/repository/github/collerek/async-orm/badge" alt="CodeFactor" /></a>
 </p>
 
 The `async-orm` package is an async ORM for Python, with support for Postgres,
@@ -164,10 +163,10 @@ The following keyword arguments are supported on all field types.
 
 All fields are required unless one of the following is set:
 
-* `allow_null` - Creates a nullable column. Sets the default to `None`.
-* `allow_blank` - Allow empty strings to validate. Sets the default to `""`.
+* `nullable` - Creates a nullable column. Sets the default to `None`.
 * `default` - Set a default value for the field.
 
+Available Model Fields:
 * `orm.String(length)`
 * `orm.Text()`
 * `orm.Boolean()`
@@ -177,6 +176,8 @@ All fields are required unless one of the following is set:
 * `orm.Time()`
 * `orm.DateTime()`
 * `orm.JSON()`
+* `orm.BigInteger()`
+* `orm.Decimal(lenght, precision)`
 
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [databases]: https://github.com/encode/databases
