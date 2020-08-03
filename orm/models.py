@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 import json
-from typing import Any
+from typing import Any, Type
 from typing import Set, Dict
 
 import pydantic
@@ -179,7 +177,7 @@ class Model(metaclass=ModelMetaclass):
         result = await self.__database__.execute(expr)
         return result
 
-    async def load(self) -> Model:
+    async def load(self) -> 'Model':
         expr = self.__table__.select().where(self.pk_column == self.pk)
         row = await self.__database__.fetch_one(expr)
         self.from_dict(dict(row))
