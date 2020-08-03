@@ -1,10 +1,10 @@
 # Async-ORM
 
 <p>
-<a href="https://travis-ci.org/encode/orm">
+<a href="https://travis-ci.com/collerek/async-orm">
     <img src="https://travis-ci.com/collerek/async-orm.svg?branch=master" alt="Build Status">
 </a>
-<a href="https://codecov.io/gh/encode/orm">
+<a href="https://codecov.io/gh/collerek/async-orm">
     <img src="https://codecov.io/gh/collerek/async-orm/branch/master/graph/badge.svg" alt="Coverage">
 </a>
 <a href="https://www.codefactor.io/repository/github/collerek/async-orm">
