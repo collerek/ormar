@@ -16,7 +16,7 @@ class ExampleModel(Model):
     __metadata__ = metadata
     test = fields.Integer(primary_key=True)
     test_string = fields.String(length=250)
-    test_text = fields.Text()
+    test_text = fields.Text(default='')
     test_bool = fields.Boolean(nullable=False)
     test_float = fields.Float()
     test_datetime = fields.DateTime(default=datetime.datetime.now)
@@ -43,6 +43,12 @@ def test_model_attribute_access():
     example = ExampleModel(test=1, test_string='test', test_bool=True)
     assert example.test == 1
     assert example.test_string == 'test'
+    assert example.test_datetime.year == datetime.datetime.now().year
+    assert example.test_date == datetime.date.today()
+    assert example.test_text == ''
+    assert example.test_float is None
+    assert example.test_bigint == 0
+    assert example.test_json == {}
 
     example.test = 12
     assert example.test == 12
