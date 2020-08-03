@@ -1,4 +1,4 @@
-# ORM
+# Async-ORM
 
 <p>
 <a href="https://travis-ci.org/encode/orm">
@@ -10,6 +10,7 @@
 <a href="https://pypi.org/project/orm/">
     <img src="https://badge.fury.io/py/orm.svg" alt="Package version">
 </a>
+<a href="https://www.codefactor.io/repository/github/collerek/async-orm"><img src="https://www.codefactor.io/repository/github/collerek/async-orm/badge" alt="CodeFactor" /></a>
 </p>
 
 The `async-orm` package is an async ORM for Python, with support for Postgres,
@@ -156,7 +157,7 @@ assert len(tracks) == 1
 The following keyword arguments are supported on all field types.
 
 * `primary_key`
-* `allow_null`
+* `nullable`
 * `default`
 * `index`
 * `unique`
@@ -167,7 +168,7 @@ All fields are required unless one of the following is set:
 * `allow_blank` - Allow empty strings to validate. Sets the default to `""`.
 * `default` - Set a default value for the field.
 
-* `orm.String(max_length)`
+* `orm.String(length)`
 * `orm.Text()`
 * `orm.Boolean()`
 * `orm.Integer()`

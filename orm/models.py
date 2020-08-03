@@ -1,9 +1,20 @@
-from typing import Any
+from typing import Any, Optional
 
 import sqlalchemy
 from pydantic import create_model
 
 from orm.fields import BaseField
+
+
+def parse_pydantic_field_from_model_fields(object_dict: dict):
+    pydantic_fields = {field_name: (
+        base_field.__type__,
+        ... if (not base_field.nullable and not base_field.default) else (
+            base_field.default() if callable(base_field.default) else base_field.default)
+    )
+        for field_name, base_field in object_dict.items()
+        if isinstance(base_field, BaseField)}
+    return pydantic_fields
 
 
 class ModelMetaclass(type):
@@ -28,9 +39,7 @@ class ModelMetaclass(type):
                     pkname = field_name
                 columns.append(field.get_column(field_name))
 
-        pydantic_fields = {field_name: (base_field.__type__, base_field.default or ...)
-                           for field_name, base_field in new_model.__dict__.items()
-                           if isinstance(base_field, BaseField)}
+        pydantic_fields = parse_pydantic_field_from_model_fields(new_model.__dict__)
 
         new_model.__table__ = sqlalchemy.Table(tablename, metadata, *columns)
         new_model.__columns__ = columns

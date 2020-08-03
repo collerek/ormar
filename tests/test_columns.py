@@ -1,3 +1,6 @@
+import datetime
+
+import pydantic
 import pytest
 import sqlalchemy
 
@@ -12,20 +15,34 @@ class ExampleModel(Model):
     __tablename__ = "example"
     __metadata__ = metadata
     test = fields.Integer(primary_key=True)
-    test2 = fields.String(length=250)
+    test_string = fields.String(length=250)
+    test_text = fields.Text()
+    test_bool = fields.Boolean(nullable=False)
+    test_float = fields.Float()
+    test_datetime = fields.DateTime(default=datetime.datetime.now)
+    test_date = fields.Date(default=datetime.date.today)
+    test_time = fields.Time(default=datetime.time)
+    test_json = fields.JSON(default={})
+    test_bigint = fields.BigInteger(default=0)
+    test_decimal = fields.Decimal(length=10, precision=2)
 
 
 class ExampleModel2(Model):
     __tablename__ = "example2"
     __metadata__ = metadata
     test = fields.Integer(name='test12', primary_key=True)
-    test2 = fields.String('test22', length=250)
+    test_string = fields.String('test_string2', length=250)
+
+
+def test_not_nullable_field_is_required():
+    with pytest.raises(pydantic.error_wrappers.ValidationError):
+        ExampleModel(test=1, test_string='test')
 
 
 def test_model_attribute_access():
-    example = ExampleModel(test=1, test2='test')
+    example = ExampleModel(test=1, test_string='test', test_bool=True)
     assert example.test == 1
-    assert example.test2 == 'test'
+    assert example.test_string == 'test'
 
     example.test = 12
     assert example.test == 12
@@ -35,7 +52,7 @@ def test_model_attribute_access():
 
 
 def test_primary_key_access_and_setting():
-    example = ExampleModel(pk=1, test2='test')
+    example = ExampleModel(pk=1, test_string='test', test_bool=True)
     assert example.pk == 1
     example.pk = 2
 
@@ -49,4 +66,4 @@ def test_wrong_model_definition():
             __tablename__ = "example3"
             __metadata__ = metadata
             test = fields.Integer(name='test12', primary_key=True)
-            test2 = fields.String('test22', name='test22', length=250)
+            test_string = fields.String('test_string2', name='test_string2', length=250)

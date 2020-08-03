@@ -1,3 +1,7 @@
+import datetime
+import decimal
+
+import pydantic
 import sqlalchemy
 
 from orm.exceptions import ModelDefinitionError
@@ -66,8 +70,75 @@ class String(BaseField):
 class Integer(BaseField):
     __type__ = int
 
+    def get_column_type(self):
+        return sqlalchemy.Integer()
+
+
+class Text(BaseField):
+    __type__ = str
+
+    def get_column_type(self):
+        return sqlalchemy.Text()
+
+
+class Float(BaseField):
+    __type__ = float
+
+    def get_column_type(self):
+        return sqlalchemy.Float()
+
+
+class Boolean(BaseField):
+    __type__ = bool
+
+    def get_column_type(self):
+        return sqlalchemy.Boolean()
+
+
+class DateTime(BaseField):
+    __type__ = datetime.datetime
+
+    def get_column_type(self):
+        return sqlalchemy.DateTime()
+
+
+class Date(BaseField):
+    __type__ = datetime.date
+
+    def get_column_type(self):
+        return sqlalchemy.Date()
+
+
+class Time(BaseField):
+    __type__ = datetime.time
+
+    def get_column_type(self):
+        return sqlalchemy.Time()
+
+
+class JSON(BaseField):
+    __type__ = pydantic.Json
+
+    def get_column_type(self):
+        return sqlalchemy.JSON()
+
+
+class BigInteger(BaseField):
+    __type__ = int
+
+    def get_column_type(self):
+        return sqlalchemy.BigInteger()
+
+
+class Decimal(BaseField):
+    __type__ = decimal.Decimal
+
     def __init__(self, *args, **kwargs):
+        assert 'precision' in kwargs, 'precision is required'
+        assert 'length' in kwargs, 'length is required'
+        self.length = kwargs.pop('length')
+        self.precision = kwargs.pop('precision')
         super().__init__(*args, **kwargs)
 
     def get_column_type(self):
-        return sqlalchemy.Integer()
+        return sqlalchemy.DECIMAL(self.length, self.precision)
