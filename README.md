@@ -15,17 +15,18 @@
 The `async-orm` package is an async ORM for Python, with support for Postgres,
 MySQL, and SQLite. ORM is built with:
 
-* [SQLAlchemy core][sqlalchemy-core] for query building.
+* [`SQLAlchemy core`][sqlalchemy-core] for query building.
 * [`databases`][databases] for cross-database async support.
 * [`pydantic`][pydantic] for data validation.
 
-Because ORM is built on SQLAlchemy core, you can use Alembic to provide
+Because ORM is built on SQLAlchemy core, you can use [`alembic`][alembic] to provide
 database migrations.
 
-The goal was to create a simple orm that can be used directly with FastApi that bases it's data validation on pydantic.
-Initial work was inspired by [`encode/orm`][encode/orm]
+The goal was to create a simple orm that can be used directly with [`fastapi`][fastapi] that bases it's data validation on pydantic.
+Initial work was inspired by [`encode/orm`][encode/orm].
+The encode package was too simple (i.e. no ability to join two times to the same table) and used typesystem for data checks.
 
-**ORM is still under development: We recommend pinning any dependencies with `orm~=0.1`**
+**aysn-orm is still under development: We recommend pinning any dependencies with `async-orm~=0.1`**
 
 **Note**: Use `ipython` to try this from the console, since it supports `await`.
 
@@ -180,3 +181,5 @@ All fields are required unless one of the following is set:
 [databases]: https://github.com/encode/databases
 [pydantic]: https://pydantic-docs.helpmanual.io/
 [encode/orm]: https://github.com/encode/orm/
+[alembic]: https://alembic.sqlalchemy.org/en/latest/
+[fastapi]: https://fastapi.tiangolo.com/
