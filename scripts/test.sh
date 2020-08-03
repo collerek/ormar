@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-PACKAGE="async-orm"
+PACKAGE="orm"
 
 PREFIX=""
 if [ -d 'venv' ] ; then
