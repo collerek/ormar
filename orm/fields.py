@@ -1,6 +1,6 @@
 import datetime
 import decimal
-from typing import Any
+from typing import Optional, List
 
 import pydantic
 import sqlalchemy
@@ -11,11 +11,7 @@ from orm.exceptions import ModelDefinitionError
 class BaseField:
     __type__ = None
 
-    def __new__(cls, *args, **kwargs):
-        cls.__annotations__ = {}
-        return super().__new__(cls)
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         name = kwargs.pop('name', None)
         args = list(args)
         if args:
@@ -28,7 +24,7 @@ class BaseField:
 
         self.name = name
         self.primary_key = kwargs.pop('primary_key', False)
-        self.autoincrement = kwargs.pop('autoincrement', 'auto')
+        self.autoincrement = kwargs.pop('autoincrement', self.primary_key)
 
         self.nullable = kwargs.pop('nullable', not self.primary_key)
         self.default = kwargs.pop('default', None)
@@ -41,7 +37,7 @@ class BaseField:
         if self.pydantic_only and self.primary_key:
             raise ModelDefinitionError('Primary key column cannot be pydantic only.')
 
-    def get_column(self, name=None) -> sqlalchemy.Column:
+    def get_column(self, name: str = None) -> sqlalchemy.Column:
         name = self.name or name
         constraints = self.get_constraints()
         return sqlalchemy.Column(
@@ -60,7 +56,7 @@ class BaseField:
     def get_column_type(self) -> sqlalchemy.types.TypeEngine:
         raise NotImplementedError()  # pragma: no cover
 
-    def get_constraints(self):
+    def get_constraints(self) -> Optional[List]:
         return []
 
 

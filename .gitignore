@@ -3,3 +3,4 @@ p38venv
 .pytest_cache
 *.pyc
 *.log
+test.db
