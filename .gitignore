@@ -1,2 +1,5 @@
 p38venv
 .idea
+.pytest_cache
+*.pyc
+*.log
