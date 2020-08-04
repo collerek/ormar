@@ -2,6 +2,7 @@ import copy
 import inspect
 import json
 import uuid
+from abc import ABCMeta
 from typing import Any, List, Type
 from typing import Set, Dict
 
@@ -173,10 +174,15 @@ class QuerySet:
             offset=self.query_offset
         )
 
-    # async def exists(self) -> bool:
-    #     expr = self.build_select_expression()
-    #     expr = sqlalchemy.exists(expr).select()
-    #     return await self.database.fetch_val(expr)
+    async def exists(self) -> bool:
+        expr = self.build_select_expression()
+        expr = sqlalchemy.exists(expr).select()
+        return await self.database.fetch_val(expr)
+
+    async def count(self) -> int:
+        expr = self.build_select_expression().alias("subquery_for_count")
+        expr = sqlalchemy.func.count().select().select_from(expr)
+        return await self.database.fetch_val(expr)
 
     def limit(self, limit_count: int):
         return self.__class__(
@@ -195,6 +201,14 @@ class QuerySet:
             limit_count=self.limit_count,
             offset=offset
         )
+
+    async def first(self, **kwargs):
+        if kwargs:
+            return await self.filter(**kwargs).first()
+
+        rows = await self.limit(1).all()
+        if rows:
+            return rows[0]
 
     async def get(self, **kwargs):
         if kwargs:
@@ -287,7 +301,6 @@ class ModelMetaclass(type):
         attrs['__fields__'] = copy.deepcopy(pydantic_model.__fields__)
         attrs['__signature__'] = copy.deepcopy(pydantic_model.__signature__)
         attrs['__annotations__'] = copy.deepcopy(pydantic_model.__annotations__)
-
         attrs['__model_fields__'] = model_fields
 
         new_model = super().__new__(  # type: ignore
@@ -297,7 +310,7 @@ class ModelMetaclass(type):
         return new_model
 
 
-class Model(metaclass=ModelMetaclass):
+class Model(tuple, metaclass=ModelMetaclass):
     __abstract__ = True
 
     objects = QuerySet()
@@ -338,8 +351,10 @@ class Model(metaclass=ModelMetaclass):
                 except TypeError:  # pragma no cover
                     pass
             return item
-
         return super().__getattribute__(key)
+
+    def __eq__(self, other):
+        return self.values.dict() == other.values.dict()
 
     def __repr__(self):  # pragma no cover
         return self.values.__repr__()
@@ -379,6 +394,18 @@ class Model(metaclass=ModelMetaclass):
                 item[column.name] = row[column]
 
         return cls(**item)
+
+    @classmethod
+    def validate(cls: Type['Model'], value: Any) -> 'Model':  # pragma no cover
+        return cls.__pydantic_model__.validate(cls.__pydantic_model__.__class__, value)
+
+    @classmethod
+    def __get_validators__(cls):  # pragma no cover
+        yield cls.__pydantic_model__.validate
+
+    @classmethod
+    def schema(cls, by_alias: bool = True):  # pragma no cover
+        return cls.__pydantic_model__.schame(cls.__pydantic_model__, by_alias=by_alias)
 
     def is_conversion_to_json_needed(self, column_name: str) -> bool:
         return self.__model_fields__.get(column_name).__type__ == pydantic.Json

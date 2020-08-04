@@ -1,6 +1,6 @@
 from typing import Dict, Union, List
 
-from sqlalchemy import text
+from orm.exceptions import RelationshipNotFound
 
 
 class Relationship:
@@ -41,5 +41,4 @@ class RelationshipManager:
             if rel == name:
                 if relations and relations[0].fk_side == 'parent':
                     return relations[0].child
-                else:
-                    return [rela.child for rela in relations]
+                return [rela.child for rela in relations]

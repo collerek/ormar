@@ -23,5 +23,4 @@ class Excludable:  # pragma no cover
             return key in to_exclude
         elif to_exclude is ...:
             return True
-        else:
-            return False
+        return False

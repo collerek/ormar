@@ -7,3 +7,4 @@ pytest
 pytest-cov
 codecov
 pytest-asyncio
+fastapi
