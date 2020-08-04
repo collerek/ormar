@@ -310,7 +310,7 @@ class ModelMetaclass(type):
         return new_model
 
 
-class Model(tuple, metaclass=ModelMetaclass):
+class Model(list, metaclass=ModelMetaclass):
     __abstract__ = True
 
     objects = QuerySet()
