@@ -158,6 +158,7 @@ The following keyword arguments are supported on all field types.
 * `primary_key`
 * `nullable`
 * `default`
+* `server_default`
 * `index`
 * `unique`
 
@@ -165,6 +166,9 @@ All fields are required unless one of the following is set:
 
 * `nullable` - Creates a nullable column. Sets the default to `None`.
 * `default` - Set a default value for the field.
+* `server_default` - Set a default value for the field on server side (like sqlalchemy's `func.now()`).
+* `primary key` with `autoincrement` - When a column is set to primary key and autoincrement is set on this column. 
+Autoincrement is set by default on int primary keys. 
 
 Available Model Fields:
 * `orm.String(length)`
