@@ -193,6 +193,8 @@ class ForeignKey(BaseField):
     def expand_relationship(self, value, child):
         if isinstance(value, self.to):
             model = value
+        elif isinstance(value, dict):
+            model = self.to(**value)
         else:
             model = self.to(**{self.to.__pkname__: value})
 

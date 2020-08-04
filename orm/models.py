@@ -315,7 +315,7 @@ class Model(tuple, metaclass=ModelMetaclass):
 
     objects = QuerySet()
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         self._orm_id = uuid.uuid4().hex
         self._orm_saved = False
         self._orm_relationship_manager = RelationshipManager(self)
