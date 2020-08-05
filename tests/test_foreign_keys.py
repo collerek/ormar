@@ -3,7 +3,7 @@ import pytest
 import sqlalchemy
 
 import orm
-from orm.exceptions import NoMatch, MultipleMatches
+from orm.exceptions import NoMatch, MultipleMatches, RelationshipInstanceError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -229,3 +229,10 @@ async def test_get_exceptions():
         await Track.objects.create(album=fantasies, title="Test3", position=3)
         with pytest.raises(MultipleMatches):
             await Track.objects.select_related("album").get(album=fantasies)
+
+
+@pytest.mark.asyncio
+async def test_wrong_model_passed_as_fk():
+    with pytest.raises(RelationshipInstanceError):
+        org = await Organisation.objects.create(ident="ACME Ltd")
+        await Track.objects.create(album=org, title="Test1", position=1)

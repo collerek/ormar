@@ -18,5 +18,5 @@ class MultipleMatches(AsyncOrmException):
     pass
 
 
-class RelationshipNotFound(AsyncOrmException):
+class RelationshipInstanceError(AsyncOrmException):
     pass

@@ -2,17 +2,18 @@ import copy
 import inspect
 import json
 import uuid
-from abc import ABCMeta
-from typing import Any, List, Type
+from typing import Any, List, Type, TYPE_CHECKING, Optional, TypeVar
 from typing import Set, Dict
 
 import pydantic
 import sqlalchemy
-from pydantic import BaseConfig, create_model
+from pydantic import BaseModel, BaseConfig, create_model
 
-from orm.exceptions import ModelDefinitionError, MultipleMatches, NoMatch
-from orm.fields import BaseField
+from orm.exceptions import ModelDefinitionError, NoMatch, MultipleMatches
+from orm.fields import BaseField, ForeignKey
 from orm.relations import RelationshipManager
+
+relationship_manager = RelationshipManager()
 
 
 def parse_pydantic_field_from_model_fields(object_dict: dict):
@@ -23,6 +24,24 @@ def parse_pydantic_field_from_model_fields(object_dict: dict):
         for field_name, base_field in object_dict.items()
         if isinstance(base_field, BaseField)}
     return pydantic_fields
+
+
+def sqlalchemy_columns_from_model_fields(name: str, object_dict: Dict):
+    pkname = None
+    columns: List[sqlalchemy.Column] = []
+    model_fields: Dict[str, BaseField] = {}
+
+    for field_name, field in object_dict.items():
+        if isinstance(field, BaseField):
+            model_fields[field_name] = field
+            if not field.pydantic_only:
+                if field.primary_key:
+                    pkname = field_name
+                if isinstance(field, ForeignKey):
+                    reverse_name = field.related_name or field.to.__name__.title() + '_' + name.lower() + 's'
+                    relationship_manager.add_relation_type(name + '_' + field.to.__name__.lower(), reverse_name)
+                columns.append(field.get_column(field_name))
+    return pkname, columns, model_fields
 
 
 FILTER_OPERATORS = {
@@ -272,19 +291,9 @@ class ModelMetaclass(type):
 
         tablename = attrs["__tablename__"]
         metadata = attrs["__metadata__"]
-        pkname = None
-
-        columns = []
-        model_fields = {}
-        for field_name, field in attrs.items():
-            if isinstance(field, BaseField):
-                model_fields[field_name] = field
-                if not field.pydantic_only:
-                    if field.primary_key:
-                        pkname = field_name
-                    columns.append(field.get_column(field_name))
 
         # sqlalchemy table creation
+        pkname, columns, model_fields = sqlalchemy_columns_from_model_fields(name, attrs)
         attrs['__table__'] = sqlalchemy.Table(tablename, metadata, *columns)
         attrs['__columns__'] = columns
         attrs['__pkname__'] = pkname
@@ -311,18 +320,28 @@ class ModelMetaclass(type):
 
 
 class Model(list, metaclass=ModelMetaclass):
+    # Model inherits from list in order to be treated as request.Body parameter in fastapi routes,
+    # inheriting from pydantic.BaseModel causes metaclass conflicts
     __abstract__ = True
+    if TYPE_CHECKING:  # pragma no cover
+        __model_fields__: Dict[str, TypeVar[BaseField]]
+        __table__: sqlalchemy.Table
+        __fields__: Dict[str, pydantic.fields.ModelField]
+        __pydantic_model__: Type[BaseModel]
+        __pkname__: str
 
     objects = QuerySet()
 
     def __init__(self, *args, **kwargs) -> None:
-        self._orm_id = uuid.uuid4().hex
-        self._orm_saved = False
-        self._orm_relationship_manager = RelationshipManager(self)
-        self._orm_observers = []
+        self._orm_id: str = uuid.uuid4().hex
+        self._orm_saved: bool = False
+        self._orm_relationship_manager: RelationshipManager = relationship_manager
+        self._orm_observers: List['Model'] = []
+        self.values: Optional[BaseModel] = None
 
         if "pk" in kwargs:
             kwargs[self.__pkname__] = kwargs.pop("pk")
+        # breakpoint()
         kwargs = {k: self.__model_fields__[k].expand_relationship(v, self) for k, v in kwargs.items()}
         self.values = self.__pydantic_model__(**kwargs)
 
@@ -340,9 +359,9 @@ class Model(list, metaclass=ModelMetaclass):
 
     def __getattribute__(self, key: str) -> Any:
         if key != '__fields__' and key in self.__fields__:
-            if key in self._orm_relationship_manager:
-                parent_item = self._orm_relationship_manager.get(key)
-                return parent_item
+            relation_key = self.__class__.__name__.title() + '_' + key
+            if self._orm_relationship_manager.contains(relation_key, self):
+                return self._orm_relationship_manager.get(relation_key, self)
 
             item = getattr(self.values, key, None)
             if item is not None and self.is_conversion_to_json_needed(key) and isinstance(item, str):
@@ -393,11 +412,12 @@ class Model(list, metaclass=ModelMetaclass):
             if column.name not in item:
                 item[column.name] = row[column]
 
+        # breakpoint()
         return cls(**item)
 
     @classmethod
-    def validate(cls: Type['Model'], value: Any) -> 'Model':  # pragma no cover
-        return cls.__pydantic_model__.validate(cls.__pydantic_model__.__class__, value)
+    def validate(cls, value: Any) -> 'BaseModel':  # pragma no cover
+        return cls.__pydantic_model__.validate(value=value)
 
     @classmethod
     def __get_validators__(cls):  # pragma no cover
@@ -405,7 +425,7 @@ class Model(list, metaclass=ModelMetaclass):
 
     @classmethod
     def schema(cls, by_alias: bool = True):  # pragma no cover
-        return cls.__pydantic_model__.schame(cls.__pydantic_model__, by_alias=by_alias)
+        return cls.__pydantic_model__.schema(by_alias=by_alias)
 
     def is_conversion_to_json_needed(self, column_name: str) -> bool:
         return self.__model_fields__.get(column_name).__type__ == pydantic.Json

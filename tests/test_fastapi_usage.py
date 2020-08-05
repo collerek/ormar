@@ -1,16 +1,12 @@
-import json
-from typing import Optional
-
 import databases
-import pydantic
 import sqlalchemy
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-app = FastAPI()
-
 import orm
 from tests.settings import DATABASE_URL
+
+app = FastAPI()
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()

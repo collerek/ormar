@@ -2,11 +2,11 @@ import datetime
 import decimal
 from typing import Optional, List
 
-import pydantic
 import sqlalchemy
+from pydantic import Json
+from pydantic.fields import ModelField
 
-from orm.exceptions import ModelDefinitionError
-from orm.relations import Relationship
+from orm.exceptions import ModelDefinitionError, RelationshipInstanceError
 
 
 class BaseField:
@@ -79,7 +79,7 @@ class BaseField:
     def get_constraints(self) -> Optional[List]:
         return []
 
-    def expand_relationship(self, value, parent):
+    def expand_relationship(self, value, child):
         return value
 
 
@@ -145,7 +145,7 @@ class Time(BaseField):
 
 
 class JSON(BaseField):
-    __type__ = pydantic.Json
+    __type__ = Json
 
     def get_column_type(self):
         return sqlalchemy.JSON()
@@ -173,8 +173,9 @@ class Decimal(BaseField):
 
 
 class ForeignKey(BaseField):
-    def __init__(self, to, related_name: str = None, nullable: bool = False):
+    def __init__(self, to, related_name: str = None, nullable: bool = False, virtual: bool = False):
         super().__init__(nullable=nullable)
+        self.virtual = virtual
         self.related_name = related_name
         self.to = to
 
@@ -191,6 +192,9 @@ class ForeignKey(BaseField):
         return to_column.get_column_type()
 
     def expand_relationship(self, value, child):
+        if not isinstance(value, (self.to, dict, int, str)):
+            raise RelationshipInstanceError(
+                'Relationship model can be build only from orm.Model, dict and integer or string (pk).')
         if isinstance(value, self.to):
             model = value
         elif isinstance(value, dict):
@@ -199,10 +203,27 @@ class ForeignKey(BaseField):
             model = self.to(**{self.to.__pkname__: value})
 
         child_model_name = self.related_name or child.__class__.__name__.lower() + 's'
-        model._orm_relationship_manager.add(
-            Relationship(name=child_model_name, child=child, parent=model, fk_side='child'))
-        model.__fields__[child_model_name] = pydantic.fields.ModelField(name=child_model_name,
-                                                                        type_=child.__pydantic_model__,
-                                                                        model_config=child.__pydantic_model__.__config__,
-                                                                        class_validators=child.__pydantic_model__.__validators__)
+        model._orm_relationship_manager.add_relation(model.__class__.__name__.lower(),
+                                                     child.__class__.__name__.lower(),
+                                                     model, child, virtual=self.virtual)
+
+        if child_model_name not in model.__fields__:
+            model.__fields__[child_model_name] = ModelField(name=child_model_name,
+                                                            type_=Optional[child.__pydantic_model__],
+                                                            model_config=child.__pydantic_model__.__config__,
+                                                            class_validators=child.__pydantic_model__.__validators__)
+            model.__model_fields__[child_model_name] = ForeignKey(child.__class__, virtual=True)
+
         return model
+
+    # def register_relationship(self):
+    #     child_model_name = self.related_name or child.__class__.__name__.lower() + 's'
+    #     if not child_model_name in model._orm_relationship_manager:
+    #         model._orm_relationship_manager.add(
+    #             Relationship(name=child_model_name, child=child, parent=model, fk_side='child'))
+    #         model.__fields__[child_model_name] = ModelField(name=child_model_name,
+    #                                                         type_=Optional[child.__pydantic_model__],
+    #                                                         model_config=child.__pydantic_model__.__config__,
+    #                                                         class_validators=child.__pydantic_model__.__validators__)
+    #         model.__model_fields__[child_model_name] = ForeignKey(child.__class__, virtual=True)
+    #     breakpoint()
