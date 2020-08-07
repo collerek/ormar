@@ -57,10 +57,16 @@ class QuerySet:
                     f'{previous_alias + "_" if previous_alias else ""}{from_table}.{from_key}')
 
     def build_select_expression(self):
-        tables = [self.table]
+        # tables = [self.table]
         columns = list(self.table.columns)
         order_bys = [text(f'{self.table.name}.{self.model_cls.__pkname__}')]
         select_from = self.table
+
+        for key in self.model_cls.__model_fields__:
+            if not self.model_cls.__model_fields__[key].nullable \
+                    and isinstance(self.model_cls.__model_fields__[key], orm.fields.ForeignKey) \
+                    and key not in self._select_related:
+                self._select_related.append(key)
 
         for item in self._select_related:
             previous_alias = ''
@@ -86,7 +92,7 @@ class QuerySet:
                 on_clause = self.on_clause(from_table, to_table, previous_alias, alias, to_key, from_key)
                 target_table = self.prefixed_table_name(alias, to_table)
                 select_from = sqlalchemy.sql.outerjoin(select_from, target_table, on_clause)
-                tables.append(model_cls.__table__)
+                # tables.append(model_cls.__table__)
                 order_bys.append(text(f'{alias}_{to_table}.{model_cls.__pkname__}'))
                 columns.extend(self.prefixed_columns(alias, model_cls.__table__))
 

@@ -14,7 +14,7 @@ class Department(orm.Model):
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
+    id = orm.Integer(primary_key=True, autoincrement=False)
     name = orm.String(length=100)
 
 
@@ -25,7 +25,7 @@ class SchoolClass(orm.Model):
 
     id = orm.Integer(primary_key=True)
     name = orm.String(length=100)
-    department = orm.ForeignKey(Department)
+    department = orm.ForeignKey(Department, nullable=False)
 
 
 class Category(orm.Model):
@@ -70,7 +70,7 @@ def create_test_database():
 @pytest.mark.asyncio
 async def test_model_multiple_instances_of_same_table_in_schema():
     async with database:
-        department = await Department.objects.create(name='Math Department')
+        department = await Department.objects.create(id=1, name='Math Department')
         class1 = await SchoolClass.objects.create(name="Math", department=department)
         category = await Category.objects.create(name="Foreign")
         category2 = await Category.objects.create(name="Domestic")
@@ -91,7 +91,7 @@ async def test_model_multiple_instances_of_same_table_in_schema():
 @pytest.mark.asyncio
 async def test_right_tables_join():
     async with database:
-        department = await Department.objects.create(name='Math Department')
+        department = await Department.objects.create(id=1, name='Math Department')
         class1 = await SchoolClass.objects.create(name="Math", department=department)
         category = await Category.objects.create(name="Foreign")
         category2 = await Category.objects.create(name="Domestic")
@@ -111,7 +111,7 @@ async def test_right_tables_join():
 @pytest.mark.asyncio
 async def test_multiple_reverse_related_objects():
     async with database:
-        department = await Department.objects.create(name='Math Department')
+        department = await Department.objects.create(id=1, name='Math Department')
         class1 = await SchoolClass.objects.create(name="Math", department=department)
         category = await Category.objects.create(name="Foreign")
         category2 = await Category.objects.create(name="Domestic")

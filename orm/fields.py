@@ -1,13 +1,16 @@
 import datetime
 import decimal
-from typing import Optional, List
+from typing import Optional, List, Type, TYPE_CHECKING
 
-import orm
 import sqlalchemy
 from pydantic import Json
 from pydantic.fields import ModelField
 
+import orm
 from orm.exceptions import ModelDefinitionError, RelationshipInstanceError
+
+if TYPE_CHECKING:  # pragma no cover
+    from orm.models import Model
 
 
 class BaseField:
@@ -173,8 +176,16 @@ class Decimal(BaseField):
         return sqlalchemy.DECIMAL(self.length, self.precision)
 
 
+def create_dummy_instance(fk: Type['Model'], pk: int = None):
+    init_dict = {fk.__pkname__: pk or -1}
+    init_dict = {**init_dict, **{k: create_dummy_instance(v.to)
+                                 for k, v in fk.__model_fields__.items()
+                                 if isinstance(v, ForeignKey) and not v.nullable and not v.virtual}}
+    return fk(**init_dict)
+
+
 class ForeignKey(BaseField):
-    def __init__(self, to, related_name: str = None, nullable: bool = False, virtual: bool = False):
+    def __init__(self, to, related_name: str = None, nullable: bool = True, virtual: bool = False):
         super().__init__(nullable=nullable)
         self.virtual = virtual
         self.related_name = related_name
@@ -206,14 +217,15 @@ class ForeignKey(BaseField):
         elif isinstance(value, dict):
             model = self.to(**value)
         else:
-            model = self.to(**{self.to.__pkname__: value})
+            model = create_dummy_instance(fk=self.to, pk=value)
 
         child_model_name = self.related_name or child.__class__.__name__.lower() + 's'
         model._orm_relationship_manager.add_relation(model.__class__.__name__.lower(),
                                                      child.__class__.__name__.lower(),
                                                      model, child, virtual=self.virtual)
 
-        if child_model_name not in model.__fields__:
+        if child_model_name not in model.__fields__ \
+                and child.__class__.__name__.lower() not in model.__fields__:
             model.__fields__[child_model_name] = ModelField(name=child_model_name,
                                                             type_=Optional[child.__pydantic_model__],
                                                             model_config=child.__pydantic_model__.__config__,
