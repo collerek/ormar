@@ -77,15 +77,18 @@ async def test_model_multiple_instances_of_same_table_in_schema():
         await Student.objects.create(name="Jane", category=category, schoolclass=class1)
         await Teacher.objects.create(name="Joe", category=category2, schoolclass=class1)
 
-        classes = await SchoolClass.objects.select_related(['teachers', 'students']).all()
+        classes = await SchoolClass.objects.select_related(['teachers__category', 'students']).all()
         assert classes[0].name == 'Math'
         assert classes[0].students[0].name == 'Jane'
 
         # related fields of main model are only populated by pk
+        # unless there is a required foreign key somewhere along the way
+        # since department is required for schoolclass it was pre loaded (again)
         # but you can load them anytime
-        assert classes[0].students[0].schoolclass.name is None
-        await classes[0].students[0].schoolclass.load()
         assert classes[0].students[0].schoolclass.name == 'Math'
+        assert classes[0].students[0].schoolclass.department.name is None
+        await classes[0].students[0].schoolclass.department.load()
+        assert classes[0].students[0].schoolclass.department.name == 'Math Department'
 
 
 @pytest.mark.asyncio

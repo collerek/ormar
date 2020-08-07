@@ -185,8 +185,8 @@ def create_dummy_instance(fk: Type['Model'], pk: int = None):
 
 
 class ForeignKey(BaseField):
-    def __init__(self, to, related_name: str = None, nullable: bool = True, virtual: bool = False):
-        super().__init__(nullable=nullable)
+    def __init__(self, to, name: str = None, related_name: str = None, nullable: bool = True, virtual: bool = False):
+        super().__init__(nullable=nullable, name=name)
         self.virtual = virtual
         self.related_name = related_name
         self.to = to
@@ -230,6 +230,8 @@ class ForeignKey(BaseField):
                                                             type_=Optional[child.__pydantic_model__],
                                                             model_config=child.__pydantic_model__.__config__,
                                                             class_validators=child.__pydantic_model__.__validators__)
-            model.__model_fields__[child_model_name] = ForeignKey(child.__class__, virtual=True)
+            model.__model_fields__[child_model_name] = ForeignKey(child.__class__,
+                                                                  name=child_model_name,
+                                                                  virtual=True)
 
         return model

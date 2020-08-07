@@ -40,7 +40,7 @@ class RelationshipManager:
             self._relations[reverse_key] = get_relation_config('reverse', table_name, field)
 
     def deregister(self, model: 'Model'):
-        print(f'deregistering {model.__class__.__name__}, {model._orm_id}')
+        # print(f'deregistering {model.__class__.__name__}, {model._orm_id}')
         for rel_type in self._relations.keys():
             if model.__class__.__name__.lower() in rel_type.lower():
                 if model._orm_id in self._relations[rel_type]:
@@ -55,11 +55,11 @@ class RelationshipManager:
             child, parent = parent, proxy(child)
         else:
             child = proxy(child)
-        print(
-            f'setting up relationship, {parent_id}, {child_id}, '
-            f'{parent.__class__.__name__}, {child.__class__.__name__}, '
-            f'{parent.pk if parent.values is not None else None}, '
-            f'{child.pk if child.values is not None else None}')
+        # print(
+        #     f'setting up relationship, {parent_id}, {child_id}, '
+        #     f'{parent.__class__.__name__}, {child.__class__.__name__}, '
+        #     f'{parent.pk if parent.values is not None else None}, '
+        #     f'{child.pk if child.values is not None else None}')
         parents_list = self._relations[parent_name.lower().title() + '_' + child_name + 's'].setdefault(parent_id, [])
         self.append_related_model(parents_list, child)
         children_list = self._relations[child_name.lower().title() + '_' + parent_name].setdefault(child_id, [])
