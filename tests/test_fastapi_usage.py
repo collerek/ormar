@@ -13,7 +13,7 @@ metadata = sqlalchemy.MetaData()
 
 
 class Category(orm.Model):
-    __tablename__ = "cateries"
+    __tablename__ = "categories"
     __metadata__ = metadata
     __database__ = database
 
@@ -22,7 +22,7 @@ class Category(orm.Model):
 
 
 class Item(orm.Model):
-    __tablename__ = "users"
+    __tablename__ = "items"
     __metadata__ = metadata
     __database__ = database
 

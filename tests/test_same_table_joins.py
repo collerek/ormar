@@ -19,7 +19,7 @@ class SchoolClass(orm.Model):
 
 
 class Category(orm.Model):
-    __tablename__ = "cateogories"
+    __tablename__ = "categories"
     __metadata__ = metadata
     __database__ = database
 
@@ -75,3 +75,19 @@ async def test_model_multiple_instances_of_same_table_in_schema():
         assert classes[0].students[0].schoolclass.name is None
         await classes[0].students[0].schoolclass.load()
         assert classes[0].students[0].schoolclass.name == 'Math'
+
+
+@pytest.mark.asyncio
+async def test_right_tables_join():
+    async with database:
+        class1 = await SchoolClass.objects.create(name="Math")
+        category = await Category.objects.create(name="Foreign")
+        category2 = await Category.objects.create(name="Domestic")
+        await Student.objects.create(name="Jane", category=category, schoolclass=class1)
+        await Teacher.objects.create(name="Joe", category=category2, schoolclass=class1)
+
+        classes = await SchoolClass.objects.select_related(['teachers__category', 'students']).all()
+        assert classes[0].name == 'Math'
+        assert classes[0].students[0].name == 'Jane'
+        breakpoint()
+        assert classes[0].teachers[0].category.name == 'Domestic'

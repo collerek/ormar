@@ -215,15 +215,3 @@ class ForeignKey(BaseField):
             model.__model_fields__[child_model_name] = ForeignKey(child.__class__, virtual=True)
 
         return model
-
-    # def register_relationship(self):
-    #     child_model_name = self.related_name or child.__class__.__name__.lower() + 's'
-    #     if not child_model_name in model._orm_relationship_manager:
-    #         model._orm_relationship_manager.add(
-    #             Relationship(name=child_model_name, child=child, parent=model, fk_side='child'))
-    #         model.__fields__[child_model_name] = ModelField(name=child_model_name,
-    #                                                         type_=Optional[child.__pydantic_model__],
-    #                                                         model_config=child.__pydantic_model__.__config__,
-    #                                                         class_validators=child.__pydantic_model__.__validators__)
-    #         model.__model_fields__[child_model_name] = ForeignKey(child.__class__, virtual=True)
-    #     breakpoint()
