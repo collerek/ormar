@@ -2,7 +2,7 @@ import pprint
 import string
 import uuid
 from random import choices
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 from weakref import proxy
 
 from sqlalchemy import text
@@ -40,6 +40,7 @@ class RelationshipManager:
             self._relations[reverse_key] = get_relation_config('reverse', table_name, field)
 
     def deregister(self, model: 'Model'):
+        print(f'deregistering {model.__class__.__name__}, {model._orm_id}')
         for rel_type in self._relations.keys():
             if model.__class__.__name__.lower() in rel_type.lower():
                 if model._orm_id in self._relations[rel_type]:
@@ -54,8 +55,25 @@ class RelationshipManager:
             child, parent = parent, proxy(child)
         else:
             child = proxy(child)
-        self._relations[parent_name.title() + '_' + child_name + 's'].setdefault(parent_id, []).append(child)
-        self._relations[child_name.title() + '_' + parent_name].setdefault(child_id, []).append(parent)
+        print(
+            f'setting up relationship, {parent_id}, {child_id}, '
+            f'{parent.__class__.__name__}, {child.__class__.__name__}, '
+            f'{parent.pk if parent.values is not None else None}, '
+            f'{child.pk if child.values is not None else None}')
+        parents_list = self._relations[parent_name.lower().title() + '_' + child_name + 's'].setdefault(parent_id, [])
+        self.append_related_model(parents_list, child)
+        children_list = self._relations[child_name.lower().title() + '_' + parent_name].setdefault(child_id, [])
+        self.append_related_model(children_list, parent)
+
+    def append_related_model(self, relations_list: List['Model'], model: 'Model'):
+        for x in relations_list:
+            try:
+                if x.__same__(model):
+                    return
+            except ReferenceError:
+                continue
+
+        relations_list.append(model)
 
     def contains(self, relations_key: str, object: 'Model'):
         if relations_key in self._relations:
@@ -68,6 +86,12 @@ class RelationshipManager:
                 if self._relations[relations_key]['type'] == 'primary':
                     return self._relations[relations_key][object._orm_id][0]
                 return self._relations[relations_key][object._orm_id]
+
+    def resolve_relation_join(self, from_table: str, to_table: str) -> str:
+        for k, v in self._relations.items():
+            if v['source_table'] == from_table and v['target_table'] == to_table:
+                return self._relations[k]['table_alias']
+        return ''
 
     def __str__(self):  # pragma no cover
         return pprint.pformat(self._relations, indent=4, width=1)

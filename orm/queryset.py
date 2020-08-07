@@ -1,6 +1,7 @@
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Type
 
 import sqlalchemy
+from sqlalchemy import text
 
 import orm
 from orm.exceptions import NoMatch, MultipleMatches
@@ -24,13 +25,14 @@ FILTER_OPERATORS = {
 class QuerySet:
     ESCAPE_CHARACTERS = ['%', '_']
 
-    def __init__(self, model_cls: 'Model' = None, filter_clauses: List = None, select_related: List = None,
+    def __init__(self, model_cls: Type['Model'] = None, filter_clauses: List = None, select_related: List = None,
                  limit_count: int = None, offset: int = None):
         self.model_cls = model_cls
         self.filter_clauses = [] if filter_clauses is None else filter_clauses
         self._select_related = [] if select_related is None else select_related
         self.limit_count = limit_count
         self.query_offset = offset
+        self.aliases_dict = dict()
 
     def __get__(self, instance, owner):
         return self.__class__(model_cls=owner)
@@ -43,19 +45,56 @@ class QuerySet:
     def table(self):
         return self.model_cls.__table__
 
+    def prefixed_columns(self, alias, table):
+        return [text(f'{alias}_{table.name}.{column.name} as {alias}_{column.name}')
+                for column in table.columns]
+
+    def prefixed_table_name(self, alias, name):
+        return text(f'{name} {alias}_{name}')
+
+    def on_clause(self, from_table, to_table, previous_alias, alias, to_key, from_key):
+        return text(f'{alias}_{to_table}.{to_key}='
+                    f'{previous_alias + "_" if previous_alias else ""}{from_table}.{from_key}')
+
     def build_select_expression(self):
         tables = [self.table]
+        columns = list(self.table.columns)
+        order_bys = [text(f'{self.table.name}.{self.model_cls.__pkname__}')]
         select_from = self.table
 
         for item in self._select_related:
+            previous_alias = ''
+            from_table = self.table.name
+            prev_model = self.model_cls
             model_cls = self.model_cls
-            select_from = self.table
-            for part in item.split("__"):
-                model_cls = model_cls.__model_fields__[part].to
-                select_from = sqlalchemy.sql.join(select_from, model_cls.__table__)
-                tables.append(model_cls.__table__)
 
-        expr = sqlalchemy.sql.select(tables)
+            for part in item.split("__"):
+
+                model_cls = model_cls.__model_fields__[part].to
+                to_table = model_cls.__table__.name
+
+                alias = model_cls._orm_relationship_manager.resolve_relation_join(from_table, to_table)
+
+                if prev_model.__model_fields__[part].virtual:
+                    # TODO: change the key lookup
+                    to_key = prev_model.__name__.lower()
+                    from_key = model_cls.__pkname__
+                else:
+                    to_key = model_cls.__pkname__
+                    from_key = part
+
+                on_clause = self.on_clause(from_table, to_table, previous_alias, alias, to_key, from_key)
+                target_table = self.prefixed_table_name(alias, to_table)
+                select_from = sqlalchemy.sql.outerjoin(select_from, target_table, on_clause)
+                tables.append(model_cls.__table__)
+                order_bys.append(text(f'{alias}_{to_table}.{model_cls.__pkname__}'))
+                columns.extend(self.prefixed_columns(alias, model_cls.__table__))
+
+                previous_alias = alias
+                from_table = to_table
+                prev_model = model_cls
+
+        expr = sqlalchemy.sql.select(columns)
         expr = expr.select_from(select_from)
 
         if self.filter_clauses:
@@ -71,6 +110,9 @@ class QuerySet:
         if self.query_offset:
             expr = expr.offset(self.query_offset)
 
+        for order in order_bys:
+            expr = expr.order_by(order)
+
         print(expr.compile(compile_kwargs={"literal_binds": True}))
         return expr
 
@@ -83,6 +125,7 @@ class QuerySet:
             kwargs[pk_name] = kwargs.pop("pk")
 
         for key, value in kwargs.items():
+            table_prefix = ''
             if "__" in key:
                 parts = key.split("__")
 
@@ -106,14 +149,22 @@ class QuerySet:
 
                     # Walk the relationships to the actual model class
                     # against which the comparison is being made.
+                    previous_table = model_cls.__tablename__
                     for part in related_parts:
+                        current_table = model_cls.__model_fields__[part].to.__tablename__
+                        table_prefix = model_cls._orm_relationship_manager.resolve_relation_join(previous_table,
+                                                                                                 current_table)
                         model_cls = model_cls.__model_fields__[part].to
+                        previous_table = current_table
 
+                print(table_prefix)
+                table = model_cls.__table__
                 column = model_cls.__table__.columns[field_name]
 
             else:
                 op = "exact"
                 column = self.table.columns[key]
+                table = self.table
 
             # Map the operation code onto SQLAlchemy's ColumnElement
             # https://docs.sqlalchemy.org/en/latest/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement
@@ -134,6 +185,13 @@ class QuerySet:
 
             clause = getattr(column, op_attr)(value)
             clause.modifiers['escape'] = '\\' if has_escaped_character else None
+
+            clause_text = str(clause.compile(compile_kwargs={"literal_binds": True}))
+            alias = f'{table_prefix}_' if table_prefix else ''
+            aliased_name = f'{alias}{table.name}.{column.name}'
+            clause_text = clause_text.replace(f'{table.name}.{column.name}', aliased_name)
+            clause = text(clause_text)
+
             filter_clauses.append(clause)
 
         return self.__class__(
@@ -212,10 +270,35 @@ class QuerySet:
 
         expr = self.build_select_expression()
         rows = await self.database.fetch_all(expr)
-        return [
+        result_rows = [
             self.model_cls.from_row(row, select_related=self._select_related)
             for row in rows
         ]
+
+        result_rows = self.merge_result_rows(result_rows)
+
+        return result_rows
+
+    @classmethod
+    def merge_result_rows(cls, result_rows):
+        merged_rows = []
+        for index, model in enumerate(result_rows):
+            if index > 0 and model.pk == result_rows[index - 1].pk:
+                result_rows[-1] = cls.merge_two_instances(model, merged_rows[-1])
+            else:
+                merged_rows.append(model)
+        return merged_rows
+
+    @classmethod
+    def merge_two_instances(cls, one: 'Model', other: 'Model'):
+        for field in one.__model_fields__.keys():
+            print(field, one.dict(), other.dict())
+            if isinstance(getattr(one, field), list) and not isinstance(getattr(one, field), orm.models.Model):
+                setattr(other, field, getattr(one, field) + getattr(other, field))
+            elif isinstance(getattr(one, field), orm.models.Model):
+                if getattr(one, field).pk == getattr(other, field).pk:
+                    setattr(other, field, cls.merge_two_instances(getattr(one, field), getattr(other, field)))
+        return other
 
     async def create(self, **kwargs):
 

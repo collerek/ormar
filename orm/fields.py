@@ -2,6 +2,7 @@ import datetime
 import decimal
 from typing import Optional, List
 
+import orm
 import sqlalchemy
 from pydantic import Json
 from pydantic.fields import ModelField
@@ -192,9 +193,14 @@ class ForeignKey(BaseField):
         return to_column.get_column_type()
 
     def expand_relationship(self, value, child):
-        if not isinstance(value, (self.to, dict, int, str)):
+        if not isinstance(value, (self.to, dict, int, str, list)) or (
+                isinstance(value, orm.models.Model) and not isinstance(value, self.to)):
             raise RelationshipInstanceError(
                 'Relationship model can be build only from orm.Model, dict and integer or string (pk).')
+        if isinstance(value, list) and not isinstance(value, self.to):
+            model = [self.expand_relationship(val, child) for val in value]
+            return model
+
         if isinstance(value, self.to):
             model = value
         elif isinstance(value, dict):
