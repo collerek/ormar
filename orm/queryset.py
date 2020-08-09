@@ -75,7 +75,6 @@ class QuerySet:
         to_table = model_cls.__table__.name
 
         alias = model_cls._orm_relationship_manager.resolve_relation_join(join_params.from_table, to_table)
-        # print(f'resolving tables alias from {join_params.from_table}, to: {to_table} -> {alias}')
         if alias not in self.used_aliases:
             if join_params.prev_model.__model_fields__[part].virtual:
                 to_key = next((v for k, v in model_cls.__model_fields__.items()
@@ -110,30 +109,19 @@ class QuerySet:
 
     def extract_auto_required_relations(self, join_params: JoinParameters,
                                         rel_part: str = '', nested: bool = False, parent_virtual: bool = False):
-        # print(f'checking model {join_params.prev_model}, {rel_part}')
         for field_name, field in join_params.prev_model.__model_fields__.items():
-            # print(f'checking_field {field_name}')
             if self.field_is_a_foreign_key_and_no_circular_reference(field, field_name, rel_part):
                 rel_part = field_name if not rel_part else rel_part + '__' + field_name
                 if not field.nullable:
-                    # print(f'field {field_name} is not nullable, appending to auto, curr rel: {rel_part}')
                     if rel_part not in self._select_related:
                         self.auto_related.append("__".join(rel_part.split("__")[:-1]))
                     rel_part = ''
                 elif self.field_qualifies_to_deeper_search(field, parent_virtual, nested, rel_part):
-                    # print(
-                    #     f'field {field_name} is nullable, going down, curr rel: '
-                    #     f'{rel_part}, nested:{nested}, virtual:{field.virtual}, virtual_par:{parent_virtual}, '
-                    #     f'injoin: {"__".join(rel_part.split("__")[:-1]) in self._select_related}')
                     join_params = JoinParameters(field.to, join_params.previous_alias,
                                                  join_params.from_table, join_params.prev_model)
                     self.extract_auto_required_relations(join_params=join_params,
                                                          rel_part=rel_part, nested=True, parent_virtual=field.virtual)
                 else:
-                    # print(
-                    #     f'field {field_name} is out, going down, curr rel: '
-                    #     f'{rel_part}, nested:{nested}, virtual:{field.virtual}, virtual_par:{parent_virtual}, '
-                    #     f'injoin: {"__".join(rel_part.split("__")[:-1]) in self._select_related}')
                     rel_part = ''
 
     def build_select_expression(self):

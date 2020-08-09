@@ -1,0 +1,4 @@
+[flake8]
+ignore = ANN101
+max-complexity = 10
+exclude = p38venv,.pytest_cache

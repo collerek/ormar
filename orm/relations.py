@@ -5,8 +5,6 @@ from random import choices
 from typing import TYPE_CHECKING, List
 from weakref import proxy
 
-from sqlalchemy import text
-
 from orm.fields import ForeignKey
 
 if TYPE_CHECKING:  # pragma no cover
@@ -55,11 +53,6 @@ class RelationshipManager:
             child, parent = parent, proxy(child)
         else:
             child = proxy(child)
-        # print(
-        #     f'setting up relationship, {parent_id}, {child_id}, '
-        #     f'{parent.__class__.__name__}, {child.__class__.__name__}, '
-        #     f'{parent.pk if parent.values is not None else None}, '
-        #     f'{child.pk if child.values is not None else None}')
         parents_list = self._relations[parent_name.lower().title() + '_' + child_name + 's'].setdefault(parent_id, [])
         self.append_related_model(parents_list, child)
         children_list = self._relations[child_name.lower().title() + '_' + parent_name].setdefault(child_id, [])

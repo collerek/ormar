@@ -1,9 +1,9 @@
 import datetime
 import decimal
-from typing import Optional, List, Type, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING, Type, Any, Union
 
 import sqlalchemy
-from pydantic import Json
+from pydantic import Json, BaseModel
 from pydantic.fields import ModelField
 
 import orm
@@ -22,9 +22,7 @@ class BaseField:
         if args:
             if isinstance(args[0], str):
                 if name is not None:
-                    raise ModelDefinitionError(
-                        'Column name cannot be passed positionally and as a keyword.'
-                    )
+                    raise ModelDefinitionError('Column name cannot be passed positionally and as a keyword.')
                 name = args.pop(0)
 
         self.name = name
@@ -43,20 +41,20 @@ class BaseField:
             raise ModelDefinitionError('Primary key column cannot be pydantic only.')
 
     @property
-    def is_required(self):
+    def is_required(self) -> bool:
         return not self.nullable and not self.has_default and not self.is_auto_primary_key
 
     @property
-    def default_value(self):
+    def default_value(self) -> Any:
         default = self.default if self.default is not None else self.server_default
         return default() if callable(default) else default
 
     @property
-    def has_default(self):
+    def has_default(self) -> bool:
         return self.default is not None or self.server_default is not None
 
     @property
-    def is_auto_primary_key(self):
+    def is_auto_primary_key(self) -> bool:
         if self.primary_key:
             return self.autoincrement
         return False
@@ -83,7 +81,7 @@ class BaseField:
     def get_constraints(self) -> Optional[List]:
         return []
 
-    def expand_relationship(self, value, child):
+    def expand_relationship(self, value, child) -> Any:
         return value
 
 
@@ -95,70 +93,70 @@ class String(BaseField):
         self.length = kwargs.pop('length')
         super().__init__(*args, **kwargs)
 
-    def get_column_type(self):
+    def get_column_type(self) -> sqlalchemy.Column:
         return sqlalchemy.String(self.length)
 
 
 class Integer(BaseField):
     __type__ = int
 
-    def get_column_type(self):
+    def get_column_type(self) -> sqlalchemy.Column:
         return sqlalchemy.Integer()
 
 
 class Text(BaseField):
     __type__ = str
 
-    def get_column_type(self):
+    def get_column_type(self) -> sqlalchemy.Column:
         return sqlalchemy.Text()
 
 
 class Float(BaseField):
     __type__ = float
 
-    def get_column_type(self):
+    def get_column_type(self) -> sqlalchemy.Column:
         return sqlalchemy.Float()
 
 
 class Boolean(BaseField):
     __type__ = bool
 
-    def get_column_type(self):
+    def get_column_type(self) -> sqlalchemy.Column:
         return sqlalchemy.Boolean()
 
 
 class DateTime(BaseField):
     __type__ = datetime.datetime
 
-    def get_column_type(self):
+    def get_column_type(self) -> sqlalchemy.Column:
         return sqlalchemy.DateTime()
 
 
 class Date(BaseField):
     __type__ = datetime.date
 
-    def get_column_type(self):
+    def get_column_type(self) -> sqlalchemy.Column:
         return sqlalchemy.Date()
 
 
 class Time(BaseField):
     __type__ = datetime.time
 
-    def get_column_type(self):
+    def get_column_type(self) -> sqlalchemy.Column:
         return sqlalchemy.Time()
 
 
 class JSON(BaseField):
     __type__ = Json
 
-    def get_column_type(self):
+    def get_column_type(self) -> sqlalchemy.Column:
         return sqlalchemy.JSON()
 
 
 class BigInteger(BaseField):
     __type__ = int
 
-    def get_column_type(self):
+    def get_column_type(self) -> sqlalchemy.Column:
         return sqlalchemy.BigInteger()
 
 
@@ -172,11 +170,11 @@ class Decimal(BaseField):
         self.precision = kwargs.pop('precision')
         super().__init__(*args, **kwargs)
 
-    def get_column_type(self):
+    def get_column_type(self) -> sqlalchemy.Column:
         return sqlalchemy.DECIMAL(self.length, self.precision)
 
 
-def create_dummy_instance(fk: Type['Model'], pk: int = None):
+def create_dummy_instance(fk: Type['Model'], pk: int = None) -> 'Model':
     init_dict = {fk.__pkname__: pk or -1}
     init_dict = {**init_dict, **{k: create_dummy_instance(v.to)
                                  for k, v in fk.__model_fields__.items()
@@ -192,18 +190,18 @@ class ForeignKey(BaseField):
         self.to = to
 
     @property
-    def __type__(self):
+    def __type__(self) -> Type[BaseModel]:
         return self.to.__pydantic_model__
 
-    def get_constraints(self):
+    def get_constraints(self) -> List[sqlalchemy.schema.ForeignKey]:
         fk_string = self.to.__tablename__ + "." + self.to.__pkname__
         return [sqlalchemy.schema.ForeignKey(fk_string)]
 
-    def get_column_type(self):
+    def get_column_type(self) -> sqlalchemy.Column:
         to_column = self.to.__model_fields__[self.to.__pkname__]
         return to_column.get_column_type()
 
-    def expand_relationship(self, value, child):
+    def expand_relationship(self, value, child) -> Union['Model', List['Model']]:
         if not isinstance(value, (self.to, dict, int, str, list)) or (
                 isinstance(value, orm.models.Model) and not isinstance(value, self.to)):
             raise RelationshipInstanceError(
