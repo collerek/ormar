@@ -32,8 +32,17 @@ def parse_pydantic_field_from_model_fields(object_dict: dict) -> Dict[str, Tuple
     return pydantic_fields
 
 
+def register_relation_on_build(table_name: str, field: ForeignKey, name: str) -> None:
+    child_relation_name = field.to.get_name(title=True) + "_" + name.lower() + "s"
+    reverse_name = field.related_name or child_relation_name
+    relation_name = name.lower().title() + "_" + field.to.get_name()
+    relationship_manager.add_relation_type(
+        relation_name, reverse_name, field, table_name
+    )
+
+
 def sqlalchemy_columns_from_model_fields(
-    name: str, object_dict: Dict, tablename: str
+    name: str, object_dict: Dict, table_name: str
 ) -> Tuple[Optional[str], List[sqlalchemy.Column], Dict[str, BaseField]]:
     pkname: Optional[str] = None
     columns: List[sqlalchemy.Column] = []
@@ -46,14 +55,7 @@ def sqlalchemy_columns_from_model_fields(
                 if field.primary_key:
                     pkname = field_name
                 if isinstance(field, ForeignKey):
-                    child_relation_name = (
-                        field.to.get_name(title=True) + "_" + name.lower() + "s"
-                    )
-                    reverse_name = field.related_name or child_relation_name
-                    relation_name = name.lower().title() + "_" + field.to.get_name()
-                    relationship_manager.add_relation_type(
-                        relation_name, reverse_name, field, tablename
-                    )
+                    register_relation_on_build(table_name, field, name)
                 columns.append(field.get_column(field_name))
     return pkname, columns, model_fields
 
@@ -109,8 +111,8 @@ class ModelMetaclass(type):
         return new_model
 
 
-class Model(list, metaclass=ModelMetaclass):
-    # Model inherits from list in order to be treated as
+class FakePydantic(list, metaclass=ModelMetaclass):
+    # FakePydantic inherits from list in order to be treated as
     # request.Body parameter in fastapi routes,
     # inheriting from pydantic.BaseModel causes metaclass conflicts
     __abstract__ = True
@@ -125,9 +127,8 @@ class Model(list, metaclass=ModelMetaclass):
         __database__: databases.Database
         _orm_relationship_manager: RelationshipManager
 
-    objects = qry.QuerySet()
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__()
         self._orm_id: str = uuid.uuid4().hex
         self._orm_saved: bool = False
         self.values: Optional[BaseModel] = None
@@ -145,7 +146,7 @@ class Model(list, metaclass=ModelMetaclass):
 
     def __setattr__(self, key: str, value: Any) -> None:
         if key in self.__fields__:
-            if self.is_conversion_to_json_needed(key) and not isinstance(value, str):
+            if self._is_conversion_to_json_needed(key) and not isinstance(value, str):
                 try:
                     value = json.dumps(value)
                 except TypeError:  # pragma no cover
@@ -168,7 +169,7 @@ class Model(list, metaclass=ModelMetaclass):
             item = getattr(self.values, key, None)
             if (
                 item is not None
-                and self.is_conversion_to_json_needed(key)
+                and self._is_conversion_to_json_needed(key)
                 and isinstance(item, str)
             ):
                 try:
@@ -190,6 +191,79 @@ class Model(list, metaclass=ModelMetaclass):
 
     def __repr__(self) -> str:  # pragma no cover
         return self.values.__repr__()
+
+    @classmethod
+    def __get_validators__(cls) -> Callable:  # pragma no cover
+        yield cls.__pydantic_model__.validate
+
+    @classmethod
+    def get_name(cls, title: bool = False, lower: bool = True) -> str:
+        name = cls.__name__
+        if lower:
+            name = name.lower()
+        if title:
+            name = name.title()
+        return name
+
+    @property
+    def pk_column(self) -> sqlalchemy.Column:
+        return self.__table__.primary_key.columns.values()[0]
+
+    @classmethod
+    def pk_type(cls):
+        return cls.__model_fields__[cls.__pkname__].__type__
+
+    def dict(self) -> Dict:  # noqa: A003
+        dict_instance = self.values.dict()
+        for field in self._extract_related_names():
+            nested_model = getattr(self, field)
+            if isinstance(nested_model, list):
+                dict_instance[field] = [x.dict() for x in nested_model]
+            else:
+                dict_instance[field] = (
+                    nested_model.dict() if nested_model is not None else {}
+                )
+        return dict_instance
+
+    def from_dict(self, value_dict: Dict) -> None:
+        for key, value in value_dict.items():
+            setattr(self, key, value)
+
+    def _is_conversion_to_json_needed(self, column_name: str) -> bool:
+        return self.__model_fields__.get(column_name).__type__ == pydantic.Json
+
+    def _extract_own_model_fields(self) -> Dict:
+        related_names = self._extract_related_names()
+        self_fields = {k: v for k, v in self.dict().items() if k not in related_names}
+        return self_fields
+
+    @classmethod
+    def _extract_related_names(cls) -> Set:
+        related_names = set()
+        for name, field in cls.__fields__.items():
+            if inspect.isclass(field.type_) and issubclass(
+                field.type_, pydantic.BaseModel
+            ):
+                related_names.add(name)
+        return related_names
+
+    def _extract_model_db_fields(self) -> Dict:
+        self_fields = self._extract_own_model_fields()
+        self_fields = {
+            k: v for k, v in self_fields.items() if k in self.__table__.columns
+        }
+        for field in self._extract_related_names():
+            if getattr(self, field) is not None:
+                self_fields[field] = getattr(
+                    getattr(self, field), self.__model_fields__[field].to.__pkname__
+                )
+        return self_fields
+
+
+class Model(FakePydantic):
+    __abstract__ = True
+
+    objects = qry.QuerySet()
 
     @classmethod
     def from_row(
@@ -227,30 +301,6 @@ class Model(list, metaclass=ModelMetaclass):
 
         return cls(**item)
 
-    # @classmethod
-    # def validate(cls, value: Any) -> 'BaseModel':  # pragma no cover
-    #     return cls.__pydantic_model__.validate(value=value)
-
-    @classmethod
-    def __get_validators__(cls) -> Callable:  # pragma no cover
-        yield cls.__pydantic_model__.validate
-
-    # @classmethod
-    # def schema(cls, by_alias: bool = True):  # pragma no cover
-    #     return cls.__pydantic_model__.schema(by_alias=by_alias)
-
-    @classmethod
-    def get_name(cls, title: bool = False, lower: bool = True) -> str:
-        name = cls.__name__
-        if lower:
-            name = name.lower()
-        if title:
-            name = name.title()
-        return name
-
-    def is_conversion_to_json_needed(self, column_name: str) -> bool:
-        return self.__model_fields__.get(column_name).__type__ == pydantic.Json
-
     @property
     def pk(self) -> str:
         return getattr(self.values, self.__pkname__)
@@ -259,55 +309,8 @@ class Model(list, metaclass=ModelMetaclass):
     def pk(self, value: Any) -> None:
         setattr(self.values, self.__pkname__, value)
 
-    @property
-    def pk_column(self) -> sqlalchemy.Column:
-        return self.__table__.primary_key.columns.values()[0]
-
-    def dict(self) -> Dict:  # noqa: A003
-        dict_instance = self.values.dict()
-        for field in self.extract_related_names():
-            nested_model = getattr(self, field)
-            if isinstance(nested_model, list):
-                dict_instance[field] = [x.dict() for x in nested_model]
-            else:
-                dict_instance[field] = (
-                    nested_model.dict() if nested_model is not None else {}
-                )
-        return dict_instance
-
-    def from_dict(self, value_dict: Dict) -> None:
-        for key, value in value_dict.items():
-            setattr(self, key, value)
-
-    def extract_own_model_fields(self) -> Dict:
-        related_names = self.extract_related_names()
-        self_fields = {k: v for k, v in self.dict().items() if k not in related_names}
-        return self_fields
-
-    @classmethod
-    def extract_related_names(cls) -> Set:
-        related_names = set()
-        for name, field in cls.__fields__.items():
-            if inspect.isclass(field.type_) and issubclass(
-                field.type_, pydantic.BaseModel
-            ):
-                related_names.add(name)
-        return related_names
-
-    def extract_model_db_fields(self) -> Dict:
-        self_fields = self.extract_own_model_fields()
-        self_fields = {
-            k: v for k, v in self_fields.items() if k in self.__table__.columns
-        }
-        for field in self.extract_related_names():
-            if getattr(self, field) is not None:
-                self_fields[field] = getattr(
-                    getattr(self, field), self.__model_fields__[field].to.__pkname__
-                )
-        return self_fields
-
     async def save(self) -> int:
-        self_fields = self.extract_model_db_fields()
+        self_fields = self._extract_model_db_fields()
         if self.__model_fields__.get(self.__pkname__).autoincrement:
             self_fields.pop(self.__pkname__, None)
         expr = self.__table__.insert()
@@ -321,7 +324,7 @@ class Model(list, metaclass=ModelMetaclass):
             new_values = {**self.dict(), **kwargs}
             self.from_dict(new_values)
 
-        self_fields = self.extract_model_db_fields()
+        self_fields = self._extract_model_db_fields()
         self_fields.pop(self.__pkname__)
         expr = (
             self.__table__.update()

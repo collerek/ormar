@@ -527,7 +527,7 @@ class QuerySet:
             del new_kwargs[pkname]
 
         # substitute related models with their pk
-        for field in self.model_cls.extract_related_names():
+        for field in self.model_cls._extract_related_names():
             if field in new_kwargs and new_kwargs.get(field) is not None:
                 new_kwargs[field] = getattr(
                     new_kwargs.get(field),

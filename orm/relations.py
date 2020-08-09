@@ -8,7 +8,7 @@ from weakref import proxy
 from orm.fields import ForeignKey
 
 if TYPE_CHECKING:  # pragma no cover
-    from orm.models import Model
+    from orm.models import FakePydantic, Model
 
 
 def get_table_alias() -> str:
@@ -48,7 +48,7 @@ class RelationshipManager:
                 "reverse", table_name, field
             )
 
-    def deregister(self, model: "Model") -> None:
+    def deregister(self, model: "FakePydantic") -> None:
         # print(f'deregistering {model.__class__.__name__}, {model._orm_id}')
         for rel_type in self._relations.keys():
             if model.__class__.__name__.lower() in rel_type.lower():
@@ -59,8 +59,8 @@ class RelationshipManager:
         self,
         parent_name: str,
         child_name: str,
-        parent: "Model",
-        child: "Model",
+        parent: "FakePydantic",
+        child: "FakePydantic",
         virtual: bool = False,
     ) -> None:
         parent_id = parent._orm_id
@@ -91,13 +91,13 @@ class RelationshipManager:
 
         relations_list.append(model)
 
-    def contains(self, relations_key: str, instance: "Model") -> bool:
+    def contains(self, relations_key: str, instance: "FakePydantic") -> bool:
         if relations_key in self._relations:
             return instance._orm_id in self._relations[relations_key]
         return False
 
     def get(
-        self, relations_key: str, instance: "Model"
+        self, relations_key: str, instance: "FakePydantic"
     ) -> Union["Model", List["Model"]]:
         if relations_key in self._relations:
             if instance._orm_id in self._relations[relations_key]:

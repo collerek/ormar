@@ -1,6 +1,6 @@
 import datetime
 import decimal
-from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Type, Union
 
 import orm
 from orm.exceptions import ModelDefinitionError, RelationshipInstanceError
@@ -29,6 +29,9 @@ class BaseField:
                 name = args.pop(0)
 
         self.name = name
+        self._populate_from_kwargs(kwargs)
+
+    def _populate_from_kwargs(self, kwargs: Dict) -> None:
         self.primary_key = kwargs.pop("primary_key", False)
         self.autoincrement = kwargs.pop(
             "autoincrement", self.primary_key and self.__type__ == int
@@ -79,7 +82,7 @@ class BaseField:
             index=self.index,
             unique=self.unique,
             default=self.default,
-            server_default=self.server_default
+            server_default=self.server_default,
         )
 
     def get_column_type(self) -> sqlalchemy.types.TypeEngine:
@@ -228,13 +231,13 @@ class ForeignKey(BaseField):
     def expand_relationship(
         self, value: Any, child: "Model"
     ) -> Union["Model", List["Model"]]:
-        if not isinstance(value, (self.to, dict, int, str, list)) or (
-            isinstance(value, orm.models.Model) and not isinstance(value, self.to)
-        ):
+
+        if isinstance(value, orm.models.Model) and not isinstance(value, self.to):
             raise RelationshipInstanceError(
-                "Relationship model can be build only from orm.Model, "
-                "dict and integer or string (pk)."
+                f"Relationship error - expecting: {self.to.__name__}, "
+                f"but {value.__class__.__name__} encountered."
             )
+
         if isinstance(value, list) and not isinstance(value, self.to):
             model = [self.expand_relationship(val, child) for val in value]
             return model
@@ -244,9 +247,19 @@ class ForeignKey(BaseField):
         elif isinstance(value, dict):
             model = self.to(**value)
         else:
+            if not isinstance(value, self.to.pk_type()):
+                raise RelationshipInstanceError(
+                    f"Relationship error - ForeignKey {self.to.__name__} is of type {self.to.pk_type()} "
+                    f"of type {self.__type__} while {type(value)} passed as a parameter."
+                )
             model = create_dummy_instance(fk=self.to, pk=value)
 
-        child_model_name = self.related_name or child.__class__.__name__.lower() + "s"
+        self.add_to_relationship_registry(model, child)
+
+        return model
+
+    def add_to_relationship_registry(self, model: "Model", child: "Model") -> None:
+        child_model_name = self.related_name or child.get_name() + "s"
         model._orm_relationship_manager.add_relation(
             model.__class__.__name__.lower(),
             child.__class__.__name__.lower(),
@@ -257,16 +270,20 @@ class ForeignKey(BaseField):
 
         if (
             child_model_name not in model.__fields__
-            and child.__class__.__name__.lower() not in model.__fields__
+            and child.get_name() not in model.__fields__
         ):
-            model.__fields__[child_model_name] = ModelField(
-                name=child_model_name,
-                type_=Optional[child.__pydantic_model__],
-                model_config=child.__pydantic_model__.__config__,
-                class_validators=child.__pydantic_model__.__validators__,
-            )
-            model.__model_fields__[child_model_name] = ForeignKey(
-                child.__class__, name=child_model_name, virtual=True
-            )
+            self.register_reverse_model_fields(model, child, child_model_name)
 
-        return model
+    @staticmethod
+    def register_reverse_model_fields(
+        model: "Model", child: "Model", child_model_name: str
+    ) -> None:
+        model.__fields__[child_model_name] = ModelField(
+            name=child_model_name,
+            type_=Optional[child.__pydantic_model__],
+            model_config=child.__pydantic_model__.__config__,
+            class_validators=child.__pydantic_model__.__validators__,
+        )
+        model.__model_fields__[child_model_name] = ForeignKey(
+            child.__class__, name=child_model_name, virtual=True
+        )

@@ -68,6 +68,12 @@ def create_test_database():
 
 
 @pytest.mark.asyncio
+async def test_wrong_query_foreign_key_type():
+    with pytest.raises(RelationshipInstanceError):
+        Track(title="The Error", album="wrong_pk_type")
+
+
+@pytest.mark.asyncio
 async def test_model_crud():
     async with database:
         album = Album(name="Malibu")
