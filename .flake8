@@ -1,5 +1,5 @@
 [flake8]
 ignore = ANN101, ANN102, W503
-max-complexity = 10
+max-complexity = 8
 max-line-length = 88
 exclude = p38venv,.pytest_cache

@@ -184,7 +184,7 @@ class Model(list, metaclass=ModelMetaclass):
         return self.values.dict() == other.values.dict()
 
     def __same__(self, other: "Model") -> bool:
-        if self.__class__ != other.__class__:
+        if self.__class__ != other.__class__:  # pragma no cover
             return False
         return self._orm_id == other._orm_id or (
             self.values is not None and other.values is not None and self.pk == other.pk
