@@ -249,8 +249,10 @@ class ForeignKey(BaseField):
         else:
             if not isinstance(value, self.to.pk_type()):
                 raise RelationshipInstanceError(
-                    f"Relationship error - ForeignKey {self.to.__name__} is of type {self.to.pk_type()} "
-                    f"of type {self.__type__} while {type(value)} passed as a parameter."
+                    f"Relationship error - ForeignKey {self.to.__name__} "
+                    f"is of type {self.to.pk_type()} "
+                    f"of type {self.__type__} "
+                    f"while {type(value)} passed as a parameter."
                 )
             model = create_dummy_instance(fk=self.to, pk=value)
 

@@ -210,7 +210,7 @@ class FakePydantic(list, metaclass=ModelMetaclass):
         return self.__table__.primary_key.columns.values()[0]
 
     @classmethod
-    def pk_type(cls):
+    def pk_type(cls) -> Any:
         return cls.__model_fields__[cls.__pkname__].__type__
 
     def dict(self) -> Dict:  # noqa: A003
@@ -258,6 +258,35 @@ class FakePydantic(list, metaclass=ModelMetaclass):
                     getattr(self, field), self.__model_fields__[field].to.__pkname__
                 )
         return self_fields
+
+    @classmethod
+    def merge_instances_list(cls, result_rows: List["Model"]) -> List["Model"]:
+        merged_rows = []
+        for index, model in enumerate(result_rows):
+            if index > 0 and model.pk == result_rows[index - 1].pk:
+                result_rows[-1] = cls.merge_two_instances(model, merged_rows[-1])
+            else:
+                merged_rows.append(model)
+        return merged_rows
+
+    @classmethod
+    def merge_two_instances(cls, one: "Model", other: "Model") -> "Model":
+        for field in one.__model_fields__.keys():
+            # print(field, one.dict(), other.dict())
+            if isinstance(getattr(one, field), list) and not isinstance(
+                getattr(one, field), Model
+            ):
+                setattr(other, field, getattr(one, field) + getattr(other, field))
+            elif isinstance(getattr(one, field), Model):
+                if getattr(one, field).pk == getattr(other, field).pk:
+                    setattr(
+                        other,
+                        field,
+                        cls.merge_two_instances(
+                            getattr(one, field), getattr(other, field)
+                        ),
+                    )
+        return other
 
 
 class Model(FakePydantic):

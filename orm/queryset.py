@@ -479,38 +479,9 @@ class QuerySet:
             for row in rows
         ]
 
-        result_rows = self.merge_result_rows(result_rows)
+        result_rows = self.model_cls.merge_instances_list(result_rows)
 
         return result_rows
-
-    @classmethod
-    def merge_result_rows(cls, result_rows: List["Model"]) -> List["Model"]:
-        merged_rows = []
-        for index, model in enumerate(result_rows):
-            if index > 0 and model.pk == result_rows[index - 1].pk:
-                result_rows[-1] = cls.merge_two_instances(model, merged_rows[-1])
-            else:
-                merged_rows.append(model)
-        return merged_rows
-
-    @classmethod
-    def merge_two_instances(cls, one: "Model", other: "Model") -> "Model":
-        for field in one.__model_fields__.keys():
-            # print(field, one.dict(), other.dict())
-            if isinstance(getattr(one, field), list) and not isinstance(
-                getattr(one, field), orm.models.Model
-            ):
-                setattr(other, field, getattr(one, field) + getattr(other, field))
-            elif isinstance(getattr(one, field), orm.models.Model):
-                if getattr(one, field).pk == getattr(other, field).pk:
-                    setattr(
-                        other,
-                        field,
-                        cls.merge_two_instances(
-                            getattr(one, field), getattr(other, field)
-                        ),
-                    )
-        return other
 
     async def create(self, **kwargs: Any) -> "Model":
 

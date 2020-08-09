@@ -10,6 +10,9 @@
 <a href="https://www.codefactor.io/repository/github/collerek/async-orm">
 <img src="https://www.codefactor.io/repository/github/collerek/async-orm/badge" alt="CodeFactor" />
 </a>
+<a href="https://app.codacy.com/manual/collerek/async-orm?utm_source=github.com&utm_medium=referral&utm_content=collerek/async-orm&utm_campaign=Badge_Grade_Dashboard">
+<img src="https://api.codacy.com/project/badge/Grade/62568734f70f49cd8ea7a1a0b2d0c107" alt="Codacy" />
+</a>
 </p>
 
 The `async-orm` package is an async ORM for Python, with support for Postgres,
@@ -26,7 +29,7 @@ The goal was to create a simple orm that can be used directly with [`fastapi`][f
 Initial work was inspired by [`encode/orm`][encode/orm].
 The encode package was too simple (i.e. no ability to join two times to the same table) and used typesystem for data checks.
 
-**aysn-orm is still under development:** We recommend pinning any dependencies with `aorm~=0.0.1`
+**async-orm is still under development:** We recommend pinning any dependencies with `aorm~=0.0.1`
 
 **Note**: Use `ipython` to try this from the console, since it supports `await`.
 
@@ -44,8 +47,9 @@ class Note(orm.Model):
     __database__ = database
     __metadata__ = metadata
 
+    # primary keys of type int by dafault are set to autoincrement    
     id = orm.Integer(primary_key=True)
-    text = orm.String(max_length=100)
+    text = orm.String(length=100)
     completed = orm.Boolean(default=False)
 
 # Create the database
@@ -97,7 +101,7 @@ class Album(orm.Model):
     __database__ = database
 
     id = orm.Integer(primary_key=True)
-    name = orm.String(max_length=100)
+    name = orm.String(length=100)
 
 
 class Track(orm.Model):
@@ -107,7 +111,7 @@ class Track(orm.Model):
 
     id = orm.Integer(primary_key=True)
     album = orm.ForeignKey(Album)
-    title = orm.String(max_length=100)
+    title = orm.String(length=100)
     position = orm.Integer()
 
 
@@ -137,6 +141,12 @@ assert track.album.name == "Malibu"
 # This time, fetch an instance, loading the foreign key relationship.
 track = await Track.objects.select_related("album").get(title="The Bird")
 assert track.album.name == "Malibu"
+
+# By default you also get a second side of the relation 
+# constructed as lowercase source model name +'s' (tracks in this case)
+# you can also provide custom name with parameter related_name
+album = await Album.objects.select_related("tracks").all()
+assert len(album.tracks) == 3
 
 # Fetch instances, with a filter across an FK relationship.
 tracks = Track.objects.filter(album__name="Fantasies")
