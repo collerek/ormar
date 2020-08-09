@@ -171,17 +171,17 @@ All fields are required unless one of the following is set:
 Autoincrement is set by default on int primary keys. 
 
 Available Model Fields:
-  * `orm.String(length)`
-  * `orm.Text()`
-  * `orm.Boolean()`
-  * `orm.Integer()`
-  * `orm.Float()`
-  * `orm.Date()`
-  * `orm.Time()`
-  * `orm.DateTime()`
-  * `orm.JSON()`
-  * `orm.BigInteger()`
-  * `orm.Decimal(lenght, precision)`
+* `orm.String(length)`
+* `orm.Text()`
+* `orm.Boolean()`
+* `orm.Integer()`
+* `orm.Float()`
+* `orm.Date()`
+* `orm.Time()`
+* `orm.DateTime()`
+* `orm.JSON()`
+* `orm.BigInteger()`
+* `orm.Decimal(lenght, precision)`
 
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [databases]: https://github.com/encode/databases
