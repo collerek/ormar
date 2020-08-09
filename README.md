@@ -15,9 +15,9 @@
 The `async-orm` package is an async ORM for Python, with support for Postgres,
 MySQL, and SQLite. ORM is built with:
 
-* [`SQLAlchemy core`][sqlalchemy-core] for query building.
-* [`databases`][databases] for cross-database async support.
-* [`pydantic`][pydantic] for data validation.
+  * [`SQLAlchemy core`][sqlalchemy-core] for query building.
+  * [`databases`][databases] for cross-database async support.
+  * [`pydantic`][pydantic] for data validation.
 
 Because ORM is built on SQLAlchemy core, you can use [`alembic`][alembic] to provide
 database migrations.
@@ -26,7 +26,7 @@ The goal was to create a simple orm that can be used directly with [`fastapi`][f
 Initial work was inspired by [`encode/orm`][encode/orm].
 The encode package was too simple (i.e. no ability to join two times to the same table) and used typesystem for data checks.
 
-**aysn-orm is still under development: We recommend pinning any dependencies with `async-orm~=0.1`**
+**aysn-orm is still under development:** We recommend pinning any dependencies with `aorm~=0.0.1`
 
 **Note**: Use `ipython` to try this from the console, since it supports `await`.
 
@@ -155,33 +155,33 @@ assert len(tracks) == 1
 
 The following keyword arguments are supported on all field types.
 
-* `primary_key`
-* `nullable`
-* `default`
-* `server_default`
-* `index`
-* `unique`
+  * `primary_key`
+  * `nullable`
+  * `default`
+  * `server_default`
+  * `index`
+  * `unique`
 
 All fields are required unless one of the following is set:
 
-* `nullable` - Creates a nullable column. Sets the default to `None`.
-* `default` - Set a default value for the field.
-* `server_default` - Set a default value for the field on server side (like sqlalchemy's `func.now()`).
-* `primary key` with `autoincrement` - When a column is set to primary key and autoincrement is set on this column. 
+  * `nullable` - Creates a nullable column. Sets the default to `None`.
+  * `default` - Set a default value for the field.
+  * `server_default` - Set a default value for the field on server side (like sqlalchemy's `func.now()`).
+  * `primary key` with `autoincrement` - When a column is set to primary key and autoincrement is set on this column. 
 Autoincrement is set by default on int primary keys. 
 
 Available Model Fields:
-* `orm.String(length)`
-* `orm.Text()`
-* `orm.Boolean()`
-* `orm.Integer()`
-* `orm.Float()`
-* `orm.Date()`
-* `orm.Time()`
-* `orm.DateTime()`
-* `orm.JSON()`
-* `orm.BigInteger()`
-* `orm.Decimal(lenght, precision)`
+  * `orm.String(length)`
+  * `orm.Text()`
+  * `orm.Boolean()`
+  * `orm.Integer()`
+  * `orm.Float()`
+  * `orm.Date()`
+  * `orm.Time()`
+  * `orm.DateTime()`
+  * `orm.JSON()`
+  * `orm.BigInteger()`
+  * `orm.Decimal(lenght, precision)`
 
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [databases]: https://github.com/encode/databases

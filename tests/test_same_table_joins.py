@@ -67,16 +67,24 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-@pytest.mark.asyncio
-async def test_model_multiple_instances_of_same_table_in_schema():
-    async with database:
-        department = await Department.objects.create(id=1, name='Math Department')
-        class1 = await SchoolClass.objects.create(name="Math", department=department)
-        category = await Category.objects.create(name="Foreign")
-        category2 = await Category.objects.create(name="Domestic")
-        await Student.objects.create(name="Jane", category=category, schoolclass=class1)
-        await Teacher.objects.create(name="Joe", category=category2, schoolclass=class1)
+@pytest.fixture()
+async def init_relation():
+    department = await Department.objects.create(id=1, name='Math Department')
+    class1 = await SchoolClass.objects.create(name="Math", department=department)
+    category = await Category.objects.create(name="Foreign")
+    category2 = await Category.objects.create(name="Domestic")
+    await Student.objects.create(name="Jane", category=category, schoolclass=class1)
+    await Student.objects.create(name="Jack", category=category2, schoolclass=class1)
+    await Teacher.objects.create(name="Joe", category=category2, schoolclass=class1)
+    yield
+    engine = sqlalchemy.create_engine(DATABASE_URL)
+    metadata.drop_all(engine)
+    metadata.create_all(engine)
 
+
+@pytest.mark.asyncio
+async def test_model_multiple_instances_of_same_table_in_schema(init_relation):
+    async with database:
         classes = await SchoolClass.objects.select_related(['teachers__category', 'students']).all()
         assert classes[0].name == 'Math'
         assert classes[0].students[0].name == 'Jane'
@@ -92,18 +100,9 @@ async def test_model_multiple_instances_of_same_table_in_schema():
 
 
 @pytest.mark.asyncio
-async def test_right_tables_join():
+async def test_right_tables_join(init_relation):
     async with database:
-        department = await Department.objects.create(id=1, name='Math Department')
-        class1 = await SchoolClass.objects.create(name="Math", department=department)
-        category = await Category.objects.create(name="Foreign")
-        category2 = await Category.objects.create(name="Domestic")
-        await Student.objects.create(name="Jane", category=category, schoolclass=class1)
-        await Teacher.objects.create(name="Joe", category=category2, schoolclass=class1)
-
         classes = await SchoolClass.objects.select_related(['teachers__category', 'students']).all()
-        assert classes[0].name == 'Math'
-        assert classes[0].students[0].name == 'Jane'
         assert classes[0].teachers[0].category.name == 'Domestic'
 
         assert classes[0].students[0].category.name is None
@@ -112,17 +111,9 @@ async def test_right_tables_join():
 
 
 @pytest.mark.asyncio
-async def test_multiple_reverse_related_objects():
+async def test_multiple_reverse_related_objects(init_relation):
     async with database:
-        department = await Department.objects.create(id=1, name='Math Department')
-        class1 = await SchoolClass.objects.create(name="Math", department=department)
-        category = await Category.objects.create(name="Foreign")
-        category2 = await Category.objects.create(name="Domestic")
-        await Student.objects.create(name="Jane", category=category, schoolclass=class1)
-        await Student.objects.create(name="Jack", category=category, schoolclass=class1)
-        await Teacher.objects.create(name="Joe", category=category2, schoolclass=class1)
-
         classes = await SchoolClass.objects.select_related(['teachers__category', 'students']).all()
         assert classes[0].name == 'Math'
-        assert classes[0].students[0].name == 'Jane'
+        assert classes[0].students[1].name == 'Jack'
         assert classes[0].teachers[0].category.name == 'Domestic'

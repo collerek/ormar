@@ -71,43 +71,47 @@ class RelationshipManager:
             child, parent = parent, proxy(child)
         else:
             child = proxy(child)
-        parents_list = self._relations[
-            parent_name.lower().title() + "_" + child_name + "s"
-        ].setdefault(parent_id, [])
+
+        parent_relation_name = parent_name.lower().title() + "_" + child_name + "s"
+        parents_list = self._relations[parent_relation_name].setdefault(parent_id, [])
         self.append_related_model(parents_list, child)
-        children_list = self._relations[
-            child_name.lower().title() + "_" + parent_name
-        ].setdefault(child_id, [])
+
+        child_relation_name = child_name.lower().title() + "_" + parent_name
+        children_list = self._relations[child_relation_name].setdefault(child_id, [])
         self.append_related_model(children_list, parent)
 
-    def append_related_model(
-        self, relations_list: List["Model"], model: "Model"
-    ) -> None:
-        for x in relations_list:
+    @staticmethod
+    def append_related_model(relations_list: List["Model"], model: "Model") -> None:
+        for relation_child in relations_list:
             try:
-                if x.__same__(model):
+                if relation_child.__same__(model):
                     return
             except ReferenceError:
                 continue
 
         relations_list.append(model)
 
-    def contains(self, relations_key: str, object: "Model") -> bool:
+    def contains(self, relations_key: str, instance: "Model") -> bool:
         if relations_key in self._relations:
-            return object._orm_id in self._relations[relations_key]
+            return instance._orm_id in self._relations[relations_key]
         return False
 
-    def get(self, relations_key: str, object: "Model") -> Union["Model", List["Model"]]:
+    def get(
+        self, relations_key: str, instance: "Model"
+    ) -> Union["Model", List["Model"]]:
         if relations_key in self._relations:
-            if object._orm_id in self._relations[relations_key]:
+            if instance._orm_id in self._relations[relations_key]:
                 if self._relations[relations_key]["type"] == "primary":
-                    return self._relations[relations_key][object._orm_id][0]
-                return self._relations[relations_key][object._orm_id]
+                    return self._relations[relations_key][instance._orm_id][0]
+                return self._relations[relations_key][instance._orm_id]
 
     def resolve_relation_join(self, from_table: str, to_table: str) -> str:
-        for k, v in self._relations.items():
-            if v["source_table"] == from_table and v["target_table"] == to_table:
-                return self._relations[k]["table_alias"]
+        for relation_name, relation in self._relations.items():
+            if (
+                relation["source_table"] == from_table
+                and relation["target_table"] == to_table
+            ):
+                return self._relations[relation_name]["table_alias"]
         return ""
 
     def __str__(self) -> str:  # pragma no cover
