@@ -1,5 +1,7 @@
 # Async-ORM
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/62568734f70f49cd8ea7a1a0b2d0c107)](https://app.codacy.com/manual/collerek/async-orm?utm_source=github.com&utm_medium=referral&utm_content=collerek/async-orm&utm_campaign=Badge_Grade_Dashboard)
+
 <p>
 <a href="https://travis-ci.com/collerek/async-orm">
     <img src="https://travis-ci.com/collerek/async-orm.svg?branch=master" alt="Build Status">
