@@ -5,6 +5,7 @@ import uuid
 from typing import Any, List, Type, TYPE_CHECKING, Optional, TypeVar, Tuple
 from typing import Set, Dict
 
+import databases
 import pydantic
 import sqlalchemy
 from pydantic import BaseModel, BaseConfig, create_model
@@ -107,6 +108,9 @@ class Model(list, metaclass=ModelMetaclass):
         __fields__: Dict[str, pydantic.fields.ModelField]
         __pydantic_model__: Type[BaseModel]
         __pkname__: str
+        __tablename__: str
+        __metadata__: sqlalchemy.MetaData
+        __database__: databases.Database
         _orm_relationship_manager: RelationshipManager
 
     objects = qry.QuerySet()

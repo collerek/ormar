@@ -262,7 +262,8 @@ class QuerySet:
             clause = getattr(column, op_attr)(value)
             clause.modifiers['escape'] = '\\' if has_escaped_character else None
 
-            clause_text = str(clause.compile(compile_kwargs={"literal_binds": True}))
+            clause_text = str(clause.compile(dialect=self.model_cls.__database__._backend._dialect,
+                                             compile_kwargs={"literal_binds": True}))
             alias = f'{table_prefix}_' if table_prefix else ''
             aliased_name = f'{alias}{table.name}.{column.name}'
             clause_text = clause_text.replace(f'{table.name}.{column.name}', aliased_name)
