@@ -3,6 +3,7 @@ import pytest
 import sqlalchemy
 
 import orm
+from orm.exceptions import QueryDefinitionError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -140,6 +141,13 @@ async def test_model_filter():
 
 
 @pytest.mark.asyncio
+async def test_wrong_query_contains_model():
+    with pytest.raises(QueryDefinitionError):
+        product = Product(name="90%-Cotton", rating=2)
+        await Product.objects.filter(name__contains=product).count()
+
+
+@pytest.mark.asyncio
 async def test_model_exists():
     async with database:
         await User.objects.create(name="Tom")
@@ -175,7 +183,7 @@ async def test_model_limit_with_filter():
         await User.objects.create(name="Tom")
         await User.objects.create(name="Tom")
 
-        assert len(await User.objects.limit(2).filter(name__iexact='Tom').all()) == 2
+        assert len(await User.objects.limit(2).filter(name__iexact="Tom").all()) == 2
 
 
 @pytest.mark.asyncio
@@ -185,7 +193,7 @@ async def test_offset():
         await User.objects.create(name="Jane")
 
         users = await User.objects.offset(1).limit(1).all()
-        assert users[0].name == 'Jane'
+        assert users[0].name == "Jane"
 
 
 @pytest.mark.asyncio

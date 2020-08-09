@@ -40,8 +40,14 @@ client = TestClient(app)
 
 
 def test_read_main():
-    response = client.post("/items/", json={'name': 'test', 'id': 1, 'category': {'name': 'test cat'}})
+    response = client.post(
+        "/items/", json={"name": "test", "id": 1, "category": {"name": "test cat"}}
+    )
     assert response.status_code == 200
-    assert response.json() == {'category': {'id': None, 'name': 'test cat'}, 'id': 1, 'name': 'test'}
+    assert response.json() == {
+        "category": {"id": None, "name": "test cat"},
+        "id": 1,
+        "name": "test",
+    }
     item = Item(**response.json())
     assert item.id == 1

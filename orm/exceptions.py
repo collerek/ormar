@@ -18,5 +18,9 @@ class MultipleMatches(AsyncOrmException):
     pass
 
 
+class QueryDefinitionError(AsyncOrmException):
+    pass
+
+
 class RelationshipInstanceError(AsyncOrmException):
     pass

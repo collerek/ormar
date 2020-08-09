@@ -88,7 +88,7 @@ async def test_model_crud():
         assert len(album.tracks) == 3
         assert album.tracks[1].title == "Heart don't stand a chance"
 
-        album1 = await Album.objects.get(name='Malibu')
+        album1 = await Album.objects.get(name="Malibu")
         assert album1.pk == 1
         assert album1.tracks is None
 
@@ -127,7 +127,9 @@ async def test_fk_filter():
         malibu = Album(name="Malibu%")
         await malibu.save()
         await Track.objects.create(album=malibu, title="The Bird", position=1)
-        await Track.objects.create(album=malibu, title="Heart don't stand a chance", position=2)
+        await Track.objects.create(
+            album=malibu, title="Heart don't stand a chance", position=2
+        )
         await Track.objects.create(album=malibu, title="The Waters", position=3)
 
         fantasies = await Album.objects.create(name="Fantasies")
@@ -135,12 +137,20 @@ async def test_fk_filter():
         await Track.objects.create(album=fantasies, title="Sick Muse", position=2)
         await Track.objects.create(album=fantasies, title="Satellite Mind", position=3)
 
-        tracks = await Track.objects.select_related("album").filter(album__name="Fantasies").all()
+        tracks = (
+            await Track.objects.select_related("album")
+            .filter(album__name="Fantasies")
+            .all()
+        )
         assert len(tracks) == 3
         for track in tracks:
             assert track.album.name == "Fantasies"
 
-        tracks = await Track.objects.select_related("album").filter(album__name__icontains="fan").all()
+        tracks = (
+            await Track.objects.select_related("album")
+            .filter(album__name__icontains="fan")
+            .all()
+        )
         assert len(tracks) == 3
         for track in tracks:
             assert track.album.name == "Fantasies"
@@ -179,7 +189,11 @@ async def test_multiple_fk():
         team = await Team.objects.create(org=other, name="Green Team")
         await Member.objects.create(team=team, email="e@example.org")
 
-        members = await Member.objects.select_related('team__org').filter(team__org__ident="ACME Ltd").all()
+        members = (
+            await Member.objects.select_related("team__org")
+            .filter(team__org__ident="ACME Ltd")
+            .all()
+        )
         assert len(members) == 4
         for member in members:
             assert member.team.org.ident == "ACME Ltd"
@@ -195,7 +209,11 @@ async def test_pk_filter():
         tracks = await Track.objects.select_related("album").filter(pk=1).all()
         assert len(tracks) == 1
 
-        tracks = await Track.objects.select_related("album").filter(position=2, album__name='Test').all()
+        tracks = (
+            await Track.objects.select_related("album")
+            .filter(position=2, album__name="Test")
+            .all()
+        )
         assert len(tracks) == 1
 
 

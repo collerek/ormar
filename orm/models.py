@@ -46,13 +46,11 @@ def sqlalchemy_columns_from_model_fields(
                 if field.primary_key:
                     pkname = field_name
                 if isinstance(field, ForeignKey):
-                    reverse_name = (
-                        field.related_name
-                        or field.to.__name__.lower().title() + "_" + name.lower() + "s"
+                    child_relation_name = (
+                        field.to.get_name(title=True) + "_" + name.lower() + "s"
                     )
-                    relation_name = (
-                        name.lower().title() + "_" + field.to.__name__.lower()
-                    )
+                    reverse_name = field.related_name or child_relation_name
+                    relation_name = name.lower().title() + "_" + field.to.get_name()
                     relationship_manager.add_relation_type(
                         relation_name, reverse_name, field, tablename
                     )
@@ -241,6 +239,15 @@ class Model(list, metaclass=ModelMetaclass):
     # def schema(cls, by_alias: bool = True):  # pragma no cover
     #     return cls.__pydantic_model__.schema(by_alias=by_alias)
 
+    @classmethod
+    def get_name(cls, title: bool = False, lower: bool = True) -> str:
+        name = cls.__name__
+        if lower:
+            name = name.lower()
+        if title:
+            name = name.title()
+        return name
+
     def is_conversion_to_json_needed(self, column_name: str) -> bool:
         return self.__model_fields__.get(column_name).__type__ == pydantic.Json
 
@@ -256,7 +263,7 @@ class Model(list, metaclass=ModelMetaclass):
     def pk_column(self) -> sqlalchemy.Column:
         return self.__table__.primary_key.columns.values()[0]
 
-    def dict(self) -> Dict:
+    def dict(self) -> Dict:  # noqa: A003
         dict_instance = self.values.dict()
         for field in self.extract_related_names():
             nested_model = getattr(self, field)

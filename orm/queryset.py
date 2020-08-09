@@ -1,10 +1,20 @@
-from typing import Any, List, NamedTuple, TYPE_CHECKING, Tuple, Type, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    TYPE_CHECKING,
+    Tuple,
+    Type,
+    Union,
+)
 
 import databases
 
 import orm
 from orm import ForeignKey
-from orm.exceptions import MultipleMatches, NoMatch
+from orm.exceptions import MultipleMatches, NoMatch, QueryDefinitionError
 from orm.fields import BaseField
 
 import sqlalchemy
@@ -80,18 +90,11 @@ class QuerySet:
         return text(f"{name} {alias}_{name}")
 
     def on_clause(
-        self,
-        from_table: str,
-        to_table: str,
-        previous_alias: str,
-        alias: str,
-        to_key: str,
-        from_key: str,
+        self, previous_alias: str, alias: str, from_clause: str, to_clause: str,
     ) -> text:
-        return text(
-            f"{alias}_{to_table}.{to_key}="
-            f'{previous_alias + "_" if previous_alias else ""}{from_table}.{from_key}'
-        )
+        left_part = f"{alias}_{to_clause}"
+        right_part = f"{previous_alias + '_' if previous_alias else ''}{from_clause}"
+        return text(f"{left_part}={right_part}")
 
     def _build_join_parameters(
         self, part: str, join_params: JoinParameters
@@ -118,12 +121,10 @@ class QuerySet:
                 from_key = part
 
             on_clause = self.on_clause(
-                join_params.from_table,
-                to_table,
-                join_params.previous_alias,
-                alias,
-                to_key,
-                from_key,
+                previous_alias=join_params.previous_alias,
+                alias=alias,
+                from_clause=f"{join_params.from_table}.{from_key}",
+                to_clause=f"{to_table}.{to_key}",
             )
             target_table = self.prefixed_table_name(alias, to_table)
             self.select_from = sqlalchemy.sql.outerjoin(
@@ -159,12 +160,12 @@ class QuerySet:
 
     def _extract_auto_required_relations(
         self,
-        join_params: JoinParameters,
+        prev_model: Type["Model"],
         rel_part: str = "",
         nested: bool = False,
         parent_virtual: bool = False,
     ) -> None:
-        for field_name, field in join_params.prev_model.__model_fields__.items():
+        for field_name, field in prev_model.__model_fields__.items():
             if self._field_is_a_foreign_key_and_no_circular_reference(
                 field, field_name, rel_part
             ):
@@ -176,14 +177,8 @@ class QuerySet:
                 elif self._field_qualifies_to_deeper_search(
                     field, parent_virtual, nested, rel_part
                 ):
-                    join_params = JoinParameters(
-                        field.to,
-                        join_params.previous_alias,
-                        join_params.from_table,
-                        join_params.prev_model,
-                    )
                     self._extract_auto_required_relations(
-                        join_params=join_params,
+                        prev_model=field.to,
                         rel_part=rel_part,
                         nested=True,
                         parent_virtual=field.virtual,
@@ -244,7 +239,7 @@ class QuerySet:
         start_params = JoinParameters(
             self.model_cls, "", self.table.name, self.model_cls
         )
-        self._extract_auto_required_relations(start_params)
+        self._extract_auto_required_relations(prev_model=start_params.prev_model)
         self._include_auto_related_models()
         self._select_related.sort(key=lambda item: (-len(item), item))
 
@@ -266,7 +261,90 @@ class QuerySet:
 
         return expr
 
-    def filter(self, **kwargs: Any) -> "QuerySet":
+    def _determine_filter_target_table(
+        self, related_parts: List[str], select_related: List[str]
+    ) -> Tuple[List[str], str, "Model"]:
+
+        table_prefix = ""
+        model_cls = self.model_cls
+        select_related = [relation for relation in select_related]
+
+        # Add any implied select_related
+        related_str = "__".join(related_parts)
+        if related_str not in select_related:
+            select_related.append(related_str)
+
+        # Walk the relationships to the actual model class
+        # against which the comparison is being made.
+        previous_table = model_cls.__tablename__
+        for part in related_parts:
+            current_table = model_cls.__model_fields__[part].to.__tablename__
+            manager = model_cls._orm_relationship_manager
+            table_prefix = manager.resolve_relation_join(previous_table, current_table)
+            model_cls = model_cls.__model_fields__[part].to
+            previous_table = current_table
+        return select_related, table_prefix, model_cls
+
+    def _compile_clause(
+        self,
+        clause: sqlalchemy.sql.expression.BinaryExpression,
+        column: sqlalchemy.Column,
+        table: sqlalchemy.Table,
+        table_prefix: str,
+        modifiers: Dict,
+    ) -> sqlalchemy.sql.expression.TextClause:
+        for modifier, modifier_value in modifiers.items():
+            clause.modifiers[modifier] = modifier_value
+
+        clause_text = str(
+            clause.compile(
+                dialect=self.model_cls.__database__._backend._dialect,
+                compile_kwargs={"literal_binds": True},
+            )
+        )
+        alias = f"{table_prefix}_" if table_prefix else ""
+        aliased_name = f"{alias}{table.name}.{column.name}"
+        clause_text = clause_text.replace(f"{table.name}.{column.name}", aliased_name)
+        clause = text(clause_text)
+        return clause
+
+    def _escape_characters_in_clause(
+        self, op: str, value: Union[str, "Model"]
+    ) -> Tuple[str, bool]:
+        has_escaped_character = False
+
+        if op in ["contains", "icontains"]:
+            if isinstance(value, orm.Model):
+                raise QueryDefinitionError(
+                    "You cannot use contains and icontains with instance of the Model"
+                )
+
+            has_escaped_character = any(c for c in self.ESCAPE_CHARACTERS if c in value)
+
+            if has_escaped_character:
+                # enable escape modifier
+                for char in self.ESCAPE_CHARACTERS:
+                    value = value.replace(char, f"\\{char}")
+            value = f"%{value}%"
+
+        return value, has_escaped_character
+
+    @staticmethod
+    def _extract_operator_field_and_related(
+        parts: List[str],
+    ) -> Tuple[str, str, Optional[List]]:
+        if parts[-1] in FILTER_OPERATORS:
+            op = parts[-1]
+            field_name = parts[-2]
+            related_parts = parts[:-2]
+        else:
+            op = "exact"
+            field_name = parts[-1]
+            related_parts = parts[:-1]
+
+        return op, field_name, related_parts
+
+    def filter(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
         filter_clauses = self.filter_clauses
         select_related = list(self._select_related)
 
@@ -279,37 +357,21 @@ class QuerySet:
             if "__" in key:
                 parts = key.split("__")
 
-                # Determine if we should treat the final part as a
-                # filter operator or as a related field.
-                if parts[-1] in FILTER_OPERATORS:
-                    op = parts[-1]
-                    field_name = parts[-2]
-                    related_parts = parts[:-2]
-                else:
-                    op = "exact"
-                    field_name = parts[-1]
-                    related_parts = parts[:-1]
+                (
+                    op,
+                    field_name,
+                    related_parts,
+                ) = self._extract_operator_field_and_related(parts)
 
                 model_cls = self.model_cls
                 if related_parts:
-                    # Add any implied select_related
-                    related_str = "__".join(related_parts)
-                    if related_str not in select_related:
-                        select_related.append(related_str)
-
-                    # Walk the relationships to the actual model class
-                    # against which the comparison is being made.
-                    previous_table = model_cls.__tablename__
-                    for part in related_parts:
-                        current_table = model_cls.__model_fields__[
-                            part
-                        ].to.__tablename__
-                        manager = model_cls._orm_relationship_manager
-                        table_prefix = manager.resolve_relation_join(
-                            previous_table, current_table
-                        )
-                        model_cls = model_cls.__model_fields__[part].to
-                        previous_table = current_table
+                    (
+                        select_related,
+                        table_prefix,
+                        model_cls,
+                    ) = self._determine_filter_target_table(
+                        related_parts, select_related
+                    )
 
                 table = model_cls.__table__
                 column = model_cls.__table__.columns[field_name]
@@ -319,39 +381,20 @@ class QuerySet:
                 column = self.table.columns[key]
                 table = self.table
 
-            # Map the operation code onto SQLAlchemy's ColumnElement
-            # https://docs.sqlalchemy.org/en/latest/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement
-            op_attr = FILTER_OPERATORS[op]
-            has_escaped_character = False
-
-            if op in ["contains", "icontains"]:
-                has_escaped_character = any(
-                    c for c in self.ESCAPE_CHARACTERS if c in value
-                )
-                if has_escaped_character:
-                    # enable escape modifier
-                    for char in self.ESCAPE_CHARACTERS:
-                        value = value.replace(char, f"\\{char}")
-                value = f"%{value}%"
+            value, has_escaped_character = self._escape_characters_in_clause(op, value)
 
             if isinstance(value, orm.Model):
                 value = value.pk
 
+            op_attr = FILTER_OPERATORS[op]
             clause = getattr(column, op_attr)(value)
-            clause.modifiers["escape"] = "\\" if has_escaped_character else None
-
-            clause_text = str(
-                clause.compile(
-                    dialect=self.model_cls.__database__._backend._dialect,
-                    compile_kwargs={"literal_binds": True},
-                )
+            clause = self._compile_clause(
+                clause,
+                column,
+                table,
+                table_prefix,
+                modifiers={"escape": "\\" if has_escaped_character else None},
             )
-            alias = f"{table_prefix}_" if table_prefix else ""
-            aliased_name = f"{alias}{table.name}.{column.name}"
-            clause_text = clause_text.replace(
-                f"{table.name}.{column.name}", aliased_name
-            )
-            clause = text(clause_text)
 
             filter_clauses.append(clause)
 
@@ -425,7 +468,7 @@ class QuerySet:
             raise MultipleMatches()
         return self.model_cls.from_row(rows[0], select_related=self._select_related)
 
-    async def all(self, **kwargs: Any) -> List["Model"]:
+    async def all(self, **kwargs: Any) -> List["Model"]:  # noqa: A003
         if kwargs:
             return await self.filter(**kwargs).all()
 
