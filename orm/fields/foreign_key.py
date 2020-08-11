@@ -1,4 +1,4 @@
-from typing import Type, List, Any, Union, TYPE_CHECKING
+from typing import Type, List, Any, Union, TYPE_CHECKING, Optional
 
 import sqlalchemy
 from pydantic import BaseModel
@@ -12,9 +12,8 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def create_dummy_instance(fk: Type["Model"], pk: int = None) -> "Model":
-    init_dict = {fk.__pkname__: pk or -1}
     init_dict = {
-        **init_dict,
+        **{fk.__pkname__: pk or -1},
         **{
             k: create_dummy_instance(v.to)
             for k, v in fk.__model_fields__.items()
@@ -26,12 +25,12 @@ def create_dummy_instance(fk: Type["Model"], pk: int = None) -> "Model":
 
 class ForeignKey(BaseField):
     def __init__(
-        self,
-        to: Type["Model"],
-        name: str = None,
-        related_name: str = None,
-        nullable: bool = True,
-        virtual: bool = False,
+            self,
+            to: Type["Model"],
+            name: str = None,
+            related_name: str = None,
+            nullable: bool = True,
+            virtual: bool = False,
     ) -> None:
         super().__init__(nullable=nullable, name=name)
         self.virtual = virtual
@@ -51,8 +50,11 @@ class ForeignKey(BaseField):
         return to_column.get_column_type()
 
     def expand_relationship(
-        self, value: Any, child: "Model"
-    ) -> Union["Model", List["Model"]]:
+            self, value: Any, child: "Model"
+    ) -> Optional[Union["Model", List["Model"]]]:
+
+        if value is None:
+            return None
 
         if isinstance(value, orm.models.Model) and not isinstance(value, self.to):
             raise RelationshipInstanceError(
@@ -77,15 +79,10 @@ class ForeignKey(BaseField):
                 )
             model = create_dummy_instance(fk=self.to, pk=value)
 
-        self.add_to_relationship_registry(model, child)
-
-        return model
-
-    def add_to_relationship_registry(self, model: "Model", child: "Model") -> None:
         model._orm_relationship_manager.add_relation(
-            model.__class__.__name__.lower(),
-            child.__class__.__name__.lower(),
             model,
             child,
             virtual=self.virtual,
         )
+
+        return model
