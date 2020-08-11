@@ -13,9 +13,10 @@ from typing import (
 import databases
 
 import orm
+import orm.fields.foreign_key
 from orm import ForeignKey
 from orm.exceptions import MultipleMatches, NoMatch, QueryDefinitionError
-from orm.fields import BaseField
+from orm.fields.base import BaseField
 
 import sqlalchemy
 from sqlalchemy import text
@@ -79,7 +80,8 @@ class Query:
             if (
                 not self.model_cls.__model_fields__[key].nullable
                 and isinstance(
-                    self.model_cls.__model_fields__[key], orm.fields.ForeignKey
+                    self.model_cls.__model_fields__[key],
+                    orm.fields.foreign_key.ForeignKey,
                 )
                 and key not in self._select_related
             ):

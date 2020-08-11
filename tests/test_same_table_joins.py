@@ -5,6 +5,7 @@ import pytest
 import sqlalchemy
 
 import orm
+import orm.fields.foreign_key
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -27,7 +28,7 @@ class SchoolClass(orm.Model):
 
     id = orm.Integer(primary_key=True)
     name = orm.String(length=100)
-    department = orm.ForeignKey(Department, nullable=False)
+    department = orm.fields.foreign_key.ForeignKey(Department, nullable=False)
 
 
 class Category(orm.Model):
@@ -46,8 +47,8 @@ class Student(orm.Model):
 
     id = orm.Integer(primary_key=True)
     name = orm.String(length=100)
-    schoolclass = orm.ForeignKey(SchoolClass)
-    category = orm.ForeignKey(Category, nullable=True)
+    schoolclass = orm.fields.foreign_key.ForeignKey(SchoolClass)
+    category = orm.fields.foreign_key.ForeignKey(Category, nullable=True)
 
 
 class Teacher(orm.Model):
@@ -57,8 +58,8 @@ class Teacher(orm.Model):
 
     id = orm.Integer(primary_key=True)
     name = orm.String(length=100)
-    schoolclass = orm.ForeignKey(SchoolClass)
-    category = orm.ForeignKey(Category, nullable=True)
+    schoolclass = orm.fields.foreign_key.ForeignKey(SchoolClass)
+    category = orm.fields.foreign_key.ForeignKey(Category, nullable=True)
 
 
 @pytest.fixture(scope='module')

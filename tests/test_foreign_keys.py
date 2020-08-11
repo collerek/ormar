@@ -3,6 +3,7 @@ import pytest
 import sqlalchemy
 
 import orm
+import orm.fields.foreign_key
 from orm.exceptions import NoMatch, MultipleMatches, RelationshipInstanceError
 from tests.settings import DATABASE_URL
 
@@ -25,7 +26,7 @@ class Track(orm.Model):
     __database__ = database
 
     id = orm.Integer(primary_key=True)
-    album = orm.ForeignKey(Album)
+    album = orm.fields.foreign_key.ForeignKey(Album)
     title = orm.String(length=100)
     position = orm.Integer()
 
@@ -45,7 +46,7 @@ class Team(orm.Model):
     __database__ = database
 
     id = orm.Integer(primary_key=True)
-    org = orm.ForeignKey(Organisation)
+    org = orm.fields.foreign_key.ForeignKey(Organisation)
     name = orm.String(length=100)
 
 
@@ -55,7 +56,7 @@ class Member(orm.Model):
     __database__ = database
 
     id = orm.Integer(primary_key=True)
-    team = orm.ForeignKey(Team)
+    team = orm.fields.foreign_key.ForeignKey(Team)
     email = orm.String(length=100)
 
 

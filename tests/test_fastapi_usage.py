@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 import orm
+import orm.fields.foreign_key
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -28,7 +29,7 @@ class Item(orm.Model):
 
     id = orm.Integer(primary_key=True)
     name = orm.String(length=100)
-    category = orm.ForeignKey(Category, nullable=True)
+    category = orm.fields.foreign_key.ForeignKey(Category, nullable=True)
 
 
 @app.post("/items/", response_model=Item)

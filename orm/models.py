@@ -9,7 +9,8 @@ import databases
 
 import orm.queryset as qry
 from orm.exceptions import ModelDefinitionError
-from orm.fields import BaseField, ForeignKey
+from orm import ForeignKey
+from orm.fields.base import BaseField
 from orm.relations import RelationshipManager
 
 import pydantic

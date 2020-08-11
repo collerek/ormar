@@ -5,7 +5,7 @@ from random import choices
 from typing import Dict, List, TYPE_CHECKING, Union
 from weakref import proxy
 
-from orm.fields import ForeignKey
+from orm import ForeignKey
 
 if TYPE_CHECKING:  # pragma no cover
     from orm.models import FakePydantic, Model
