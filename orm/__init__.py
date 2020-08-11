@@ -6,13 +6,13 @@ from orm.fields import (
     DateTime,
     Decimal,
     Float,
+    ForeignKey,
     Integer,
     JSON,
     String,
     Text,
     Time,
 )
-from orm.fields.foreign_key import ForeignKey
 from orm.models import Model
 
 __version__ = "0.0.1"
