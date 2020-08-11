@@ -1,3 +1,5 @@
+import asyncio
+
 import databases
 import pytest
 import sqlalchemy
@@ -59,16 +61,17 @@ class Teacher(orm.Model):
     category = orm.ForeignKey(Category, nullable=True)
 
 
+@pytest.fixture(scope='module')
+def event_loop():
+    loop = asyncio.get_event_loop()
+    yield loop
+    loop.close()
+
+
 @pytest.fixture(autouse=True, scope="module")
-def create_test_database():
+async def create_test_database():
     engine = sqlalchemy.create_engine(DATABASE_URL)
     metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
-
-
-@pytest.fixture()
-async def init_relation():
     department = await Department.objects.create(id=1, name="Math Department")
     class1 = await SchoolClass.objects.create(name="Math", department=department)
     category = await Category.objects.create(name="Foreign")
@@ -77,13 +80,11 @@ async def init_relation():
     await Student.objects.create(name="Jack", category=category2, schoolclass=class1)
     await Teacher.objects.create(name="Joe", category=category2, schoolclass=class1)
     yield
-    engine = sqlalchemy.create_engine(DATABASE_URL)
     metadata.drop_all(engine)
-    metadata.create_all(engine)
 
 
 @pytest.mark.asyncio
-async def test_model_multiple_instances_of_same_table_in_schema(init_relation):
+async def test_model_multiple_instances_of_same_table_in_schema():
     async with database:
         classes = await SchoolClass.objects.select_related(
             ["teachers__category", "students"]
@@ -102,7 +103,7 @@ async def test_model_multiple_instances_of_same_table_in_schema(init_relation):
 
 
 @pytest.mark.asyncio
-async def test_right_tables_join(init_relation):
+async def test_right_tables_join():
     async with database:
         classes = await SchoolClass.objects.select_related(
             ["teachers__category", "students"]
@@ -115,7 +116,7 @@ async def test_right_tables_join(init_relation):
 
 
 @pytest.mark.asyncio
-async def test_multiple_reverse_related_objects(init_relation):
+async def test_multiple_reverse_related_objects():
     async with database:
         classes = await SchoolClass.objects.select_related(
             ["teachers__category", "students"]

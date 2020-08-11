@@ -51,7 +51,7 @@ class BaseField:
     @property
     def is_required(self) -> bool:
         return (
-            not self.nullable and not self.has_default and not self.is_auto_primary_key
+                not self.nullable and not self.has_default and not self.is_auto_primary_key
         )
 
     @property
@@ -204,12 +204,12 @@ def create_dummy_instance(fk: Type["Model"], pk: int = None) -> "Model":
 
 class ForeignKey(BaseField):
     def __init__(
-        self,
-        to: Type["Model"],
-        name: str = None,
-        related_name: str = None,
-        nullable: bool = True,
-        virtual: bool = False,
+            self,
+            to: Type["Model"],
+            name: str = None,
+            related_name: str = None,
+            nullable: bool = True,
+            virtual: bool = False,
     ) -> None:
         super().__init__(nullable=nullable, name=name)
         self.virtual = virtual
@@ -229,7 +229,7 @@ class ForeignKey(BaseField):
         return to_column.get_column_type()
 
     def expand_relationship(
-        self, value: Any, child: "Model"
+            self, value: Any, child: "Model"
     ) -> Union["Model", List["Model"]]:
 
         if isinstance(value, orm.models.Model) and not isinstance(value, self.to):
@@ -261,31 +261,10 @@ class ForeignKey(BaseField):
         return model
 
     def add_to_relationship_registry(self, model: "Model", child: "Model") -> None:
-        child_model_name = self.related_name or child.get_name() + "s"
         model._orm_relationship_manager.add_relation(
             model.__class__.__name__.lower(),
             child.__class__.__name__.lower(),
             model,
             child,
             virtual=self.virtual,
-        )
-
-        if (
-            child_model_name not in model.__fields__
-            and child.get_name() not in model.__fields__
-        ):
-            self.register_reverse_model_fields(model, child, child_model_name)
-
-    @staticmethod
-    def register_reverse_model_fields(
-        model: "Model", child: "Model", child_model_name: str
-    ) -> None:
-        model.__fields__[child_model_name] = ModelField(
-            name=child_model_name,
-            type_=Optional[child.__pydantic_model__],
-            model_config=child.__pydantic_model__.__config__,
-            class_validators=child.__pydantic_model__.__validators__,
-        )
-        model.__model_fields__[child_model_name] = ForeignKey(
-            child.__class__, name=child_model_name, virtual=True
         )

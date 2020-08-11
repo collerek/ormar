@@ -6,6 +6,7 @@ from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, TypeVar
 from typing import Callable, Dict, Set
 
 import databases
+from pydantic.fields import ModelField
 
 import orm.queryset as qry
 from orm.exceptions import ModelDefinitionError
@@ -41,8 +42,35 @@ def register_relation_on_build(table_name: str, field: ForeignKey, name: str) ->
     )
 
 
+def expand_reverse_relationships(model: Type["Model"]):
+    for field_name, model_field in model.__model_fields__.items():
+        if isinstance(model_field, ForeignKey):
+            child_model_name = model_field.related_name or model.__name__.lower() + 's'
+            parent_model = model_field.to
+            child = model
+            if (
+                    child_model_name not in parent_model.__fields__
+                    and child.get_name() not in parent_model.__fields__
+            ):
+                register_reverse_model_fields(parent_model, child, child_model_name)
+
+
+def register_reverse_model_fields(
+        model: Type["Model"], child: Type["Model"], child_model_name: str
+) -> None:
+    model.__fields__[child_model_name] = ModelField(
+        name=child_model_name,
+        type_=Optional[child.__pydantic_model__],
+        model_config=child.__pydantic_model__.__config__,
+        class_validators=child.__pydantic_model__.__validators__,
+    )
+    model.__model_fields__[child_model_name] = ForeignKey(
+        child, name=child_model_name, virtual=True
+    )
+
+
 def sqlalchemy_columns_from_model_fields(
-    name: str, object_dict: Dict, table_name: str
+        name: str, object_dict: Dict, table_name: str
 ) -> Tuple[Optional[str], List[sqlalchemy.Column], Dict[str, BaseField]]:
     pkname: Optional[str] = None
     columns: List[sqlalchemy.Column] = []
@@ -100,13 +128,15 @@ class ModelMetaclass(type):
         attrs["__fields__"] = copy.deepcopy(pydantic_model.__fields__)
         attrs["__signature__"] = copy.deepcopy(pydantic_model.__signature__)
         attrs["__annotations__"] = copy.deepcopy(pydantic_model.__annotations__)
-        attrs["__model_fields__"] = model_fields
 
+        attrs["__model_fields__"] = model_fields
         attrs["_orm_relationship_manager"] = relationship_manager
 
         new_model = super().__new__(  # type: ignore
             mcs, name, bases, attrs
         )
+
+        expand_reverse_relationships(new_model)
 
         return new_model
 
@@ -168,9 +198,9 @@ class FakePydantic(list, metaclass=ModelMetaclass):
 
             item = getattr(self.values, key, None)
             if (
-                item is not None
-                and self._is_conversion_to_json_needed(key)
-                and isinstance(item, str)
+                    item is not None
+                    and self._is_conversion_to_json_needed(key)
+                    and isinstance(item, str)
             ):
                 try:
                     item = json.loads(item)
@@ -186,7 +216,7 @@ class FakePydantic(list, metaclass=ModelMetaclass):
         if self.__class__ != other.__class__:  # pragma no cover
             return False
         return self._orm_id == other._orm_id or (
-            self.values is not None and other.values is not None and self.pk == other.pk
+                self.values is not None and other.values is not None and self.pk == other.pk
         )
 
     def __repr__(self) -> str:  # pragma no cover
@@ -242,7 +272,7 @@ class FakePydantic(list, metaclass=ModelMetaclass):
         related_names = set()
         for name, field in cls.__fields__.items():
             if inspect.isclass(field.type_) and issubclass(
-                field.type_, pydantic.BaseModel
+                    field.type_, pydantic.BaseModel
             ):
                 related_names.add(name)
         return related_names
@@ -274,7 +304,7 @@ class FakePydantic(list, metaclass=ModelMetaclass):
         for field in one.__model_fields__.keys():
             # print(field, one.dict(), other.dict())
             if isinstance(getattr(one, field), list) and not isinstance(
-                getattr(one, field), Model
+                    getattr(one, field), Model
             ):
                 setattr(other, field, getattr(one, field) + getattr(other, field))
             elif isinstance(getattr(one, field), Model):
@@ -296,10 +326,10 @@ class Model(FakePydantic):
 
     @classmethod
     def from_row(
-        cls,
-        row: sqlalchemy.engine.ResultProxy,
-        select_related: List = None,
-        previous_table: str = None,
+            cls,
+            row: sqlalchemy.engine.ResultProxy,
+            select_related: List = None,
+            previous_table: str = None,
     ) -> "Model":
 
         item = {}
@@ -357,8 +387,8 @@ class Model(FakePydantic):
         self_fields.pop(self.__pkname__)
         expr = (
             self.__table__.update()
-            .values(**self_fields)
-            .where(self.pk_column == getattr(self, self.__pkname__))
+                .values(**self_fields)
+                .where(self.pk_column == getattr(self, self.__pkname__))
         )
         result = await self.__database__.execute(expr)
         return result
