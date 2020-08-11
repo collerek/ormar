@@ -11,7 +11,7 @@ if TYPE_CHECKING:  # pragma no cover
     from orm.models import Model
 
 
-def create_dummy_instance(fk: Type["Model"], pk: int = None) -> "Model":
+def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
     init_dict = {
         **{fk.__pkname__: pk or -1},
         **{
