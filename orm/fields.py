@@ -6,12 +6,32 @@ import orm
 from orm.exceptions import ModelDefinitionError, RelationshipInstanceError
 
 from pydantic import BaseModel, Json
-from pydantic.fields import ModelField
 
 import sqlalchemy
 
 if TYPE_CHECKING:  # pragma no cover
     from orm.models import Model
+
+
+class RequiredParams:
+    def __init__(self, *args: str) -> None:
+        self._required = list(args)
+
+    def __call__(self, model_field_class: Type["BaseField"]) -> Type["BaseField"]:
+        old_init = model_field_class.__init__
+        model_field_class._old_init = old_init
+
+        def __init__(instance: "BaseField", *args: Any, **kwargs: Any) -> None:
+            super(instance.__class__, instance).__init__(*args, **kwargs)
+            for arg in self._required:
+                if arg not in kwargs:
+                    raise ModelDefinitionError(
+                        f"{instance.__class__.__name__} field requires parameter: {arg}"
+                    )
+                setattr(instance, arg, kwargs.pop(arg))
+
+        model_field_class.__init__ = __init__
+        return model_field_class
 
 
 class BaseField:
@@ -51,7 +71,7 @@ class BaseField:
     @property
     def is_required(self) -> bool:
         return (
-                not self.nullable and not self.has_default and not self.is_auto_primary_key
+            not self.nullable and not self.has_default and not self.is_auto_primary_key
         )
 
     @property
@@ -95,16 +115,9 @@ class BaseField:
         return value
 
 
+@RequiredParams("length")
 class String(BaseField):
     __type__ = str
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        if "length" not in kwargs:
-            raise ModelDefinitionError(
-                "Param length is required for String model field."
-            )
-        self.length = kwargs.pop("length")
-        super().__init__(*args, **kwargs)
 
     def get_column_type(self) -> sqlalchemy.Column:
         return sqlalchemy.String(self.length)
@@ -173,17 +186,9 @@ class BigInteger(BaseField):
         return sqlalchemy.BigInteger()
 
 
+@RequiredParams("length", "precision")
 class Decimal(BaseField):
     __type__ = decimal.Decimal
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        if "length" not in kwargs or "precision" not in kwargs:
-            raise ModelDefinitionError(
-                "Params length and precision are required for Decimal model field."
-            )
-        self.length = kwargs.pop("length")
-        self.precision = kwargs.pop("precision")
-        super().__init__(*args, **kwargs)
 
     def get_column_type(self) -> sqlalchemy.Column:
         return sqlalchemy.DECIMAL(self.length, self.precision)
@@ -204,12 +209,12 @@ def create_dummy_instance(fk: Type["Model"], pk: int = None) -> "Model":
 
 class ForeignKey(BaseField):
     def __init__(
-            self,
-            to: Type["Model"],
-            name: str = None,
-            related_name: str = None,
-            nullable: bool = True,
-            virtual: bool = False,
+        self,
+        to: Type["Model"],
+        name: str = None,
+        related_name: str = None,
+        nullable: bool = True,
+        virtual: bool = False,
     ) -> None:
         super().__init__(nullable=nullable, name=name)
         self.virtual = virtual
@@ -229,7 +234,7 @@ class ForeignKey(BaseField):
         return to_column.get_column_type()
 
     def expand_relationship(
-            self, value: Any, child: "Model"
+        self, value: Any, child: "Model"
     ) -> Union["Model", List["Model"]]:
 
         if isinstance(value, orm.models.Model) and not isinstance(value, self.to):
