@@ -1,9 +1,9 @@
-from typing import Type, List, Any, Union, TYPE_CHECKING, Optional
+from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
 from pydantic import BaseModel
 
-import orm
+import orm  # noqa I101
 from orm.exceptions import RelationshipInstanceError
 from orm.fields.base import BaseField
 
@@ -25,12 +25,12 @@ def create_dummy_instance(fk: Type["Model"], pk: int = None) -> "Model":
 
 class ForeignKey(BaseField):
     def __init__(
-            self,
-            to: Type["Model"],
-            name: str = None,
-            related_name: str = None,
-            nullable: bool = True,
-            virtual: bool = False,
+        self,
+        to: Type["Model"],
+        name: str = None,
+        related_name: str = None,
+        nullable: bool = True,
+        virtual: bool = False,
     ) -> None:
         super().__init__(nullable=nullable, name=name)
         self.virtual = virtual
@@ -50,7 +50,7 @@ class ForeignKey(BaseField):
         return to_column.get_column_type()
 
     def expand_relationship(
-            self, value: Any, child: "Model"
+        self, value: Any, child: "Model"
     ) -> Optional[Union["Model", List["Model"]]]:
 
         if value is None:
@@ -80,9 +80,7 @@ class ForeignKey(BaseField):
             model = create_dummy_instance(fk=self.to, pk=value)
 
         model._orm_relationship_manager.add_relation(
-            model,
-            child,
-            virtual=self.virtual,
+            model, child, virtual=self.virtual,
         )
 
         return model

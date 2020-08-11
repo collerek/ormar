@@ -33,4 +33,5 @@ __all__ = [
     "ModelNotSet",
     "MultipleMatches",
     "NoMatch",
+    "ForeignKey",
 ]

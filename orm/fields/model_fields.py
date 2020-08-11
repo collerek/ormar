@@ -4,7 +4,7 @@ import decimal
 import sqlalchemy
 from pydantic import Json
 
-from orm.fields.base import BaseField, RequiredParams
+from orm.fields.base import BaseField, RequiredParams  # noqa I101
 
 
 @RequiredParams("length")

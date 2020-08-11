@@ -11,15 +11,14 @@ from typing import (
 )
 
 import databases
+import sqlalchemy
+from sqlalchemy import text
 
-import orm
+import orm  # noqa I100
 import orm.fields.foreign_key
 from orm import ForeignKey
 from orm.exceptions import MultipleMatches, NoMatch, QueryDefinitionError
 from orm.fields.base import BaseField
-
-import sqlalchemy
-from sqlalchemy import text
 
 if TYPE_CHECKING:  # pragma no cover
     from orm.models import Model

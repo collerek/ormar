@@ -6,18 +6,16 @@ from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, TypeVar
 from typing import Callable, Dict, Set
 
 import databases
-
-import orm.queryset as qry
-from orm.exceptions import ModelDefinitionError
-from orm import ForeignKey
-from orm.fields.base import BaseField
-from orm.relations import RelationshipManager
-
 import pydantic
+import sqlalchemy
 from pydantic import BaseConfig, BaseModel, create_model
 from pydantic.fields import ModelField
 
-import sqlalchemy
+import orm.queryset as qry  # noqa I100
+from orm import ForeignKey
+from orm.exceptions import ModelDefinitionError
+from orm.fields.base import BaseField
+from orm.relations import RelationshipManager
 
 relationship_manager = RelationshipManager()
 

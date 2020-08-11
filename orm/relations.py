@@ -16,7 +16,7 @@ def get_table_alias() -> str:
 
 
 def get_relation_config(
-        relation_type: str, table_name: str, field: ForeignKey
+    relation_type: str, table_name: str, field: ForeignKey
 ) -> Dict[str, str]:
     alias = get_table_alias()
     config = {
@@ -37,7 +37,7 @@ class RelationshipManager:
         self._relations = dict()
 
     def add_relation_type(
-            self, relations_key: str, reverse_key: str, field: ForeignKey, table_name: str
+        self, relations_key: str, reverse_key: str, field: ForeignKey, table_name: str
     ) -> None:
         if relations_key not in self._relations:
             self._relations[relations_key] = get_relation_config(
@@ -56,10 +56,7 @@ class RelationshipManager:
                     del self._relations[rel_type][model._orm_id]
 
     def add_relation(
-            self,
-            parent: "FakePydantic",
-            child: "FakePydantic",
-            virtual: bool = False,
+        self, parent: "FakePydantic", child: "FakePydantic", virtual: bool = False,
     ) -> None:
         parent_id = parent._orm_id
         child_id = child._orm_id
@@ -97,7 +94,7 @@ class RelationshipManager:
         return False
 
     def get(
-            self, relations_key: str, instance: "FakePydantic"
+        self, relations_key: str, instance: "FakePydantic"
     ) -> Union["Model", List["Model"]]:
         if relations_key in self._relations:
             if instance._orm_id in self._relations[relations_key]:
@@ -108,8 +105,8 @@ class RelationshipManager:
     def resolve_relation_join(self, from_table: str, to_table: str) -> str:
         for relation_name, relation in self._relations.items():
             if (
-                    relation["source_table"] == from_table
-                    and relation["target_table"] == to_table
+                relation["source_table"] == from_table
+                and relation["target_table"] == to_table
             ):
                 return self._relations[relation_name]["table_alias"]
         return ""

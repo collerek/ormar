@@ -1,8 +1,11 @@
-from typing import Type, Any, Dict, Optional, List
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Type
 
 import sqlalchemy
 
-from orm import ModelDefinitionError
+from orm import ModelDefinitionError  # noqa I101
+
+if TYPE_CHECKING:  # pragma no cover
+    from orm.models import Model
 
 
 class RequiredParams:

@@ -1,18 +1,18 @@
+from orm.fields.base import BaseField
+from orm.fields.foreign_key import ForeignKey
 from orm.fields.model_fields import (
     BigInteger,
     Boolean,
     Date,
     DateTime,
     Decimal,
-    String,
-    Integer,
-    Text,
     Float,
-    Time,
+    Integer,
     JSON,
+    String,
+    Text,
+    Time,
 )
-from orm.fields.foreign_key import ForeignKey
-from orm.fields.base import BaseField
 
 __all__ = [
     "Decimal",
