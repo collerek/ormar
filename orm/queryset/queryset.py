@@ -1,10 +1,10 @@
-from typing import Type, List, Any, Union, Tuple, TYPE_CHECKING
+from typing import Any, List, TYPE_CHECKING, Tuple, Type, Union
 
 import databases
 import sqlalchemy
 
 import orm  # noqa I100
-from orm import NoMatch, MultipleMatches
+from orm import MultipleMatches, NoMatch
 from orm.queryset.clause import QueryClause
 from orm.queryset.query import Query
 
@@ -14,12 +14,12 @@ if TYPE_CHECKING:  # pragma no cover
 
 class QuerySet:
     def __init__(
-            self,
-            model_cls: Type["Model"] = None,
-            filter_clauses: List = None,
-            select_related: List = None,
-            limit_count: int = None,
-            offset: int = None,
+        self,
+        model_cls: Type["Model"] = None,
+        filter_clauses: List = None,
+        select_related: List = None,
+        limit_count: int = None,
+        offset: int = None,
     ) -> None:
         self.model_cls = model_cls
         self.filter_clauses = [] if filter_clauses is None else filter_clauses
@@ -151,9 +151,9 @@ class QuerySet:
         pkname = self.model_cls.__pkname__
         pk = self.model_cls.__model_fields__[pkname]
         if (
-                pkname in new_kwargs
-                and new_kwargs.get(pkname) is None
-                and (pk.nullable or pk.autoincrement)
+            pkname in new_kwargs
+            and new_kwargs.get(pkname) is None
+            and (pk.nullable or pk.autoincrement)
         ):
             del new_kwargs[pkname]
 

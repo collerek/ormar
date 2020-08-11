@@ -1,9 +1,9 @@
-from typing import Type, List, Any, Tuple, Dict, Union, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import sqlalchemy
 from sqlalchemy import text
 
-import orm
+import orm  # noqa I100
 from orm.exceptions import QueryDefinitionError
 
 if TYPE_CHECKING:  # pragma no cover
@@ -25,7 +25,7 @@ ESCAPE_CHARACTERS = ["%", "_"]
 
 class QueryClause:
     def __init__(
-            self, model_cls: Type["Model"], filter_clauses: List, select_related: List,
+        self, model_cls: Type["Model"], filter_clauses: List, select_related: List,
     ) -> None:
 
         self._select_related = select_related
@@ -35,7 +35,7 @@ class QueryClause:
         self.table = self.model_cls.__table__
 
     def filter(  # noqa: A003
-            self, **kwargs: Any
+        self, **kwargs: Any
     ) -> Tuple[List[sqlalchemy.sql.expression.TextClause], List[str]]:
         filter_clauses = self.filter_clauses
         select_related = list(self._select_related)
@@ -92,7 +92,7 @@ class QueryClause:
         return filter_clauses, select_related
 
     def _determine_filter_target_table(
-            self, related_parts: List[str], select_related: List[str]
+        self, related_parts: List[str], select_related: List[str]
     ) -> Tuple[List[str], str, "Model"]:
 
         table_prefix = ""
@@ -116,12 +116,12 @@ class QueryClause:
         return select_related, table_prefix, model_cls
 
     def _compile_clause(
-            self,
-            clause: sqlalchemy.sql.expression.BinaryExpression,
-            column: sqlalchemy.Column,
-            table: sqlalchemy.Table,
-            table_prefix: str,
-            modifiers: Dict,
+        self,
+        clause: sqlalchemy.sql.expression.BinaryExpression,
+        column: sqlalchemy.Column,
+        table: sqlalchemy.Table,
+        table_prefix: str,
+        modifiers: Dict,
     ) -> sqlalchemy.sql.expression.TextClause:
         for modifier, modifier_value in modifiers.items():
             clause.modifiers[modifier] = modifier_value
@@ -140,7 +140,7 @@ class QueryClause:
 
     @staticmethod
     def _escape_characters_in_clause(
-            op: str, value: Union[str, "Model"]
+        op: str, value: Union[str, "Model"]
     ) -> Tuple[str, bool]:
         has_escaped_character = False
 
@@ -162,7 +162,7 @@ class QueryClause:
 
     @staticmethod
     def _extract_operator_field_and_related(
-            parts: List[str],
+        parts: List[str],
     ) -> Tuple[str, str, Optional[List]]:
         if parts[-1] in FILTER_OPERATORS:
             op = parts[-1]

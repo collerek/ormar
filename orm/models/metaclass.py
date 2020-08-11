@@ -1,13 +1,16 @@
 import copy
-from typing import Dict, Tuple, Type, Optional, List, Any
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type
 
 import sqlalchemy
 from pydantic import BaseConfig, create_model
 from pydantic.fields import ModelField
 
-from orm import ForeignKey, ModelDefinitionError
+from orm import ForeignKey, ModelDefinitionError  # noqa I100
 from orm.fields import BaseField
 from orm.relations import RelationshipManager
+
+if TYPE_CHECKING:  # pragma no cover
+    from orm import Model
 
 relationship_manager = RelationshipManager()
 

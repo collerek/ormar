@@ -1,15 +1,15 @@
-from typing import List, Any
+from typing import Any, List
 
 import sqlalchemy
 
-import orm.queryset.queryset
-from orm.models.fakepydantic import FakePydantic
+import orm.queryset  # noqa I100
+from orm.models import FakePydantic  # noqa I100
 
 
 class Model(FakePydantic):
     __abstract__ = True
 
-    objects = orm.queryset.queryset.QuerySet()
+    objects = orm.queryset.QuerySet()
 
     @classmethod
     def from_row(

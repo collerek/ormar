@@ -1,19 +1,29 @@
 import inspect
 import json
 import uuid
-from typing import TYPE_CHECKING, Dict, TypeVar, Type, Any, Optional, Callable, Set, List
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Type,
+    TypeVar,
+)
 
 import databases
 import pydantic
 import sqlalchemy
 from pydantic import BaseModel
 
-import orm
+import orm  # noqa I100
 from orm.fields import BaseField
 from orm.models.metaclass import ModelMetaclass
 from orm.relations import RelationshipManager
 
-if TYPE_CHECKING: #pragma no cover
+if TYPE_CHECKING:  # pragma no cover
     from orm.models.model import Model
 
 
@@ -74,9 +84,9 @@ class FakePydantic(list, metaclass=ModelMetaclass):
 
             item = getattr(self.values, key, None)
             if (
-                    item is not None
-                    and self._is_conversion_to_json_needed(key)
-                    and isinstance(item, str)
+                item is not None
+                and self._is_conversion_to_json_needed(key)
+                and isinstance(item, str)
             ):
                 try:
                     item = json.loads(item)
@@ -92,7 +102,7 @@ class FakePydantic(list, metaclass=ModelMetaclass):
         if self.__class__ != other.__class__:  # pragma no cover
             return False
         return self._orm_id == other._orm_id or (
-                self.values is not None and other.values is not None and self.pk == other.pk
+            self.values is not None and other.values is not None and self.pk == other.pk
         )
 
     def __repr__(self) -> str:  # pragma no cover
@@ -148,7 +158,7 @@ class FakePydantic(list, metaclass=ModelMetaclass):
         related_names = set()
         for name, field in cls.__fields__.items():
             if inspect.isclass(field.type_) and issubclass(
-                    field.type_, pydantic.BaseModel
+                field.type_, pydantic.BaseModel
             ):
                 related_names.add(name)
         return related_names
@@ -180,7 +190,7 @@ class FakePydantic(list, metaclass=ModelMetaclass):
         for field in one.__model_fields__.keys():
             # print(field, one.dict(), other.dict())
             if isinstance(getattr(one, field), list) and not isinstance(
-                    getattr(one, field), orm.Model
+                getattr(one, field), orm.Model
             ):
                 setattr(other, field, getattr(one, field) + getattr(other, field))
             elif isinstance(getattr(one, field), orm.Model):
