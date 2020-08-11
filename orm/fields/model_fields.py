@@ -5,7 +5,7 @@ import sqlalchemy
 from pydantic import Json
 
 from orm.fields.base import BaseField  # noqa I101
-from orm.fields.required_decorator import RequiredParams
+from orm.fields.decorators import RequiredParams
 
 
 @RequiredParams("length")
