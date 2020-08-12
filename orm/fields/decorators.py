@@ -14,8 +14,8 @@ class RequiredParams:
         old_init = model_field_class.__init__
         model_field_class._old_init = old_init
 
-        def __init__(instance: "BaseField", *args: Any, **kwargs: Any) -> None:
-            super(instance.__class__, instance).__init__(*args, **kwargs)
+        def __init__(instance: "BaseField", **kwargs: Any) -> None:
+            super(instance.__class__, instance).__init__(**kwargs)
             for arg in self._required:
                 if arg not in kwargs:
                     raise ModelDefinitionError(

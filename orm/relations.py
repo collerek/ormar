@@ -2,7 +2,7 @@ import pprint
 import string
 import uuid
 from random import choices
-from typing import Dict, List, TYPE_CHECKING, Union
+from typing import List, TYPE_CHECKING, Union
 from weakref import proxy
 
 from orm import ForeignKey
@@ -15,38 +15,20 @@ def get_table_alias() -> str:
     return "".join(choices(string.ascii_uppercase, k=2)) + uuid.uuid4().hex[:4]
 
 
-def get_relation_config(
-    relation_type: str, table_name: str, field: ForeignKey
-) -> Dict[str, str]:
-    alias = get_table_alias()
-    config = {
-        "type": relation_type,
-        "table_alias": alias,
-        "source_table": table_name
-        if relation_type == "primary"
-        else field.to.__tablename__,
-        "target_table": field.to.__tablename__
-        if relation_type == "primary"
-        else table_name,
-    }
-    return config
-
-
 class RelationshipManager:
     def __init__(self) -> None:
         self._relations = dict()
+        self._aliases = dict()
 
     def add_relation_type(
         self, relations_key: str, reverse_key: str, field: ForeignKey, table_name: str
     ) -> None:
         if relations_key not in self._relations:
-            self._relations[relations_key] = get_relation_config(
-                "primary", table_name, field
-            )
+            self._relations[relations_key] = {"type": "primary"}
+            self._aliases[f"{table_name}_{field.to.__tablename__}"] = get_table_alias()
         if reverse_key not in self._relations:
-            self._relations[reverse_key] = get_relation_config(
-                "reverse", table_name, field
-            )
+            self._relations[reverse_key] = {"type": "reverse"}
+            self._aliases[f"{field.to.__tablename__}_{table_name}"] = get_table_alias()
 
     def deregister(self, model: "FakePydantic") -> None:
         for rel_type in self._relations.keys():
@@ -57,10 +39,11 @@ class RelationshipManager:
     def add_relation(
         self, parent: "FakePydantic", child: "FakePydantic", virtual: bool = False,
     ) -> None:
-        parent_id = parent._orm_id
-        child_id = child._orm_id
-        parent_name = parent.get_name()
-        child_name = child.get_name()
+        parent_id, child_id = parent._orm_id, child._orm_id
+        parent_name, child_name = (
+            parent.get_name(title=True),
+            child.get_name(title=True),
+        )
         if virtual:
             child_name, parent_name = parent_name, child_name
             child_id, parent_id = parent_id, child_id
@@ -68,11 +51,11 @@ class RelationshipManager:
         else:
             child = proxy(child)
 
-        parent_relation_name = parent_name.lower().title() + "_" + child_name + "s"
+        parent_relation_name = parent_name + "_" + child_name.lower() + "s"
         parents_list = self._relations[parent_relation_name].setdefault(parent_id, [])
         self.append_related_model(parents_list, child)
 
-        child_relation_name = child_name.lower().title() + "_" + parent_name
+        child_relation_name = child_name + "_" + parent_name.lower()
         children_list = self._relations[child_relation_name].setdefault(child_id, [])
         self.append_related_model(children_list, parent)
 
@@ -102,13 +85,7 @@ class RelationshipManager:
                 return self._relations[relations_key][instance._orm_id]
 
     def resolve_relation_join(self, from_table: str, to_table: str) -> str:
-        for relation_name, relation in self._relations.items():
-            if (
-                relation["source_table"] == from_table
-                and relation["target_table"] == to_table
-            ):
-                return self._relations[relation_name]["table_alias"]
-        return ""
+        return self._aliases.get(f"{from_table}_{to_table}", "")
 
     def __str__(self) -> str:  # pragma no cover
         return pprint.pformat(self._relations, indent=4, width=1)

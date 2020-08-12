@@ -75,6 +75,8 @@ def sqlalchemy_columns_from_model_fields(
     }
     for field_name, field in model_fields.items():
         if field.primary_key:
+            if pkname is not None:
+                raise ModelDefinitionError("Only one primary key column is allowed.")
             pkname = field_name
         if not field.pydantic_only:
             columns.append(field.get_column(field_name))
@@ -100,7 +102,8 @@ class ModelMetaclass(type):
         if attrs.get("__abstract__"):
             return new_model
 
-        tablename = attrs["__tablename__"]
+        tablename = attrs.get("__tablename__", name.lower() + "s")
+        attrs["__tablename__"] = tablename
         metadata = attrs["__metadata__"]
 
         # sqlalchemy table creation

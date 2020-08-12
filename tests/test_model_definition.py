@@ -43,8 +43,8 @@ fields_to_check = [
 class ExampleModel2(Model):
     __tablename__ = "example2"
     __metadata__ = metadata
-    test = fields.Integer(name="test12", primary_key=True)
-    test_string = fields.String("test_string2", length=250)
+    test = fields.Integer(primary_key=True)
+    test_string = fields.String(length=250)
 
 
 @pytest.fixture()
@@ -93,49 +93,44 @@ def test_sqlalchemy_table_is_created(example):
     assert all([field in example.__table__.columns for field in fields_to_check])
 
 
-def test_double_column_name_in_model_definition():
-    with pytest.raises(ModelDefinitionError):
-
-        class ExampleModel2(Model):
-            __tablename__ = "example3"
-            __metadata__ = metadata
-            test_string = fields.String("test_string2", name="test_string2", length=250)
-
-
 def test_no_pk_in_model_definition():
     with pytest.raises(ModelDefinitionError):
-
         class ExampleModel2(Model):
             __tablename__ = "example3"
             __metadata__ = metadata
-            test_string = fields.String(name="test_string2", length=250)
+            test_string = fields.String(length=250)
+
+def test_two_pks_in_model_definition():
+    with pytest.raises(ModelDefinitionError):
+        class ExampleModel2(Model):
+            __tablename__ = "example3"
+            __metadata__ = metadata
+            id = fields.Integer(primary_key=True)
+            test_string = fields.String(length=250, primary_key=True)
 
 
 def test_setting_pk_column_as_pydantic_only_in_model_definition():
     with pytest.raises(ModelDefinitionError):
-
         class ExampleModel2(Model):
             __tablename__ = "example4"
             __metadata__ = metadata
-            test = fields.Integer(name="test12", primary_key=True, pydantic_only=True)
+            test = fields.Integer(primary_key=True, pydantic_only=True)
 
 
 def test_decimal_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
-
         class ExampleModel2(Model):
             __tablename__ = "example4"
             __metadata__ = metadata
-            test = fields.Decimal(name="test12", primary_key=True)
+            test = fields.Decimal(primary_key=True)
 
 
 def test_string_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
-
         class ExampleModel2(Model):
             __tablename__ = "example4"
             __metadata__ = metadata
-            test = fields.String(name="test12", primary_key=True)
+            test = fields.String(primary_key=True)
 
 
 def test_json_conversion_in_model():

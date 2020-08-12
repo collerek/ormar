@@ -52,8 +52,7 @@ class Query:
             if (
                 not self.model_cls.__model_fields__[key].nullable
                 and isinstance(
-                    self.model_cls.__model_fields__[key],
-                    orm.fields.foreign_key.ForeignKey,
+                    self.model_cls.__model_fields__[key], orm.fields.ForeignKey,
                 )
                 and key not in self._select_related
             ):

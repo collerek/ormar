@@ -144,19 +144,21 @@ class QueryClause:
     ) -> Tuple[str, bool]:
         has_escaped_character = False
 
-        if op in ["contains", "icontains"]:
-            if isinstance(value, orm.Model):
-                raise QueryDefinitionError(
-                    "You cannot use contains and icontains with instance of the Model"
-                )
+        if op not in ["contains", "icontains"]:
+            return value, has_escaped_character
 
-            has_escaped_character = any(c for c in ESCAPE_CHARACTERS if c in value)
+        if isinstance(value, orm.Model):
+            raise QueryDefinitionError(
+                "You cannot use contains and icontains with instance of the Model"
+            )
 
-            if has_escaped_character:
-                # enable escape modifier
-                for char in ESCAPE_CHARACTERS:
-                    value = value.replace(char, f"\\{char}")
-            value = f"%{value}%"
+        has_escaped_character = any(c for c in ESCAPE_CHARACTERS if c in value)
+
+        if has_escaped_character:
+            # enable escape modifier
+            for char in ESCAPE_CHARACTERS:
+                value = value.replace(char, f"\\{char}")
+        value = f"%{value}%"
 
         return value, has_escaped_character
 

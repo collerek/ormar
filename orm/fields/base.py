@@ -11,18 +11,8 @@ if TYPE_CHECKING:  # pragma no cover
 class BaseField:
     __type__ = None
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        name = kwargs.pop("name", None)
-        args = list(args)
-        if args:
-            if isinstance(args[0], str):
-                if name is not None:
-                    raise ModelDefinitionError(
-                        "Column name cannot be passed positionally and as a keyword."
-                    )
-                name = args.pop(0)
-
-        self.name = name
+    def __init__(self, **kwargs: Any) -> None:
+        self.name = None
         self._populate_from_kwargs(kwargs)
 
     def _populate_from_kwargs(self, kwargs: Dict) -> None:
@@ -64,7 +54,7 @@ class BaseField:
         return False
 
     def get_column(self, name: str = None) -> sqlalchemy.Column:
-        self.name = self.name or name
+        self.name = name
         constraints = self.get_constraints()
         return sqlalchemy.Column(
             self.name,
@@ -87,3 +77,6 @@ class BaseField:
 
     def expand_relationship(self, value: Any, child: "Model") -> Any:
         return value
+
+    def __repr__(self):  # pragma no cover
+        return str(self.__dict__)
