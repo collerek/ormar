@@ -66,19 +66,21 @@ def register_reverse_model_fields(
 def sqlalchemy_columns_from_model_fields(
     name: str, object_dict: Dict, table_name: str
 ) -> Tuple[Optional[str], List[sqlalchemy.Column], Dict[str, BaseField]]:
-    pkname: Optional[str] = None
-    columns: List[sqlalchemy.Column] = []
-    model_fields: Dict[str, BaseField] = {}
+    columns = []
+    pkname = None
+    model_fields = {
+        field_name: field
+        for field_name, field in object_dict.items()
+        if isinstance(field, BaseField)
+    }
+    for field_name, field in model_fields.items():
+        if field.primary_key:
+            pkname = field_name
+        if not field.pydantic_only:
+            columns.append(field.get_column(field_name))
+        if isinstance(field, ForeignKey):
+            register_relation_on_build(table_name, field, name)
 
-    for field_name, field in object_dict.items():
-        if isinstance(field, BaseField):
-            model_fields[field_name] = field
-            if not field.pydantic_only:
-                if field.primary_key:
-                    pkname = field_name
-                if isinstance(field, ForeignKey):
-                    register_relation_on_build(table_name, field, name)
-                columns.append(field.get_column(field_name))
     return pkname, columns, model_fields
 
 

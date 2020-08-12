@@ -49,9 +49,8 @@ class RelationshipManager:
             )
 
     def deregister(self, model: "FakePydantic") -> None:
-        # print(f'deregistering {model.__class__.__name__}, {model._orm_id}')
         for rel_type in self._relations.keys():
-            if model.__class__.__name__.lower() in rel_type.lower():
+            if model.get_name() in rel_type.lower():
                 if model._orm_id in self._relations[rel_type]:
                     del self._relations[rel_type][model._orm_id]
 
