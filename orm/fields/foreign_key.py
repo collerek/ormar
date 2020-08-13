@@ -25,12 +25,12 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
 
 class ForeignKey(BaseField):
     def __init__(
-        self,
-        to: Type["Model"],
-        name: str = None,
-        related_name: str = None,
-        nullable: bool = True,
-        virtual: bool = False,
+            self,
+            to: Type["Model"],
+            name: str = None,
+            related_name: str = None,
+            nullable: bool = True,
+            virtual: bool = False,
     ) -> None:
         super().__init__(nullable=nullable, name=name)
         self.virtual = virtual
@@ -50,7 +50,7 @@ class ForeignKey(BaseField):
         return to_column.get_column_type()
 
     def _extract_model_from_sequence(
-        self, value: List, child: "Model"
+            self, value: List, child: "Model"
     ) -> Union["Model", List["Model"]]:
         return [self.expand_relationship(val, child) for val in value]
 
@@ -75,10 +75,11 @@ class ForeignKey(BaseField):
         return model
 
     def register_relation(self, model: "Model", child: "Model") -> None:
-        model._orm_relationship_manager.add_relation(model, child, virtual=self.virtual)
+        child_model_name = self.related_name or child.get_name()
+        model._orm_relationship_manager.add_relation(model, child, child_model_name, virtual=self.virtual)
 
     def expand_relationship(
-        self, value: Any, child: "Model"
+            self, value: Any, child: "Model"
     ) -> Optional[Union["Model", List["Model"]]]:
 
         if value is None:

@@ -28,8 +28,8 @@ def parse_pydantic_field_from_model_fields(object_dict: dict) -> Dict[str, Tuple
 
 
 def register_relation_on_build(table_name: str, field: ForeignKey, name: str) -> None:
-    child_relation_name = field.to.get_name(title=True) + "_" + name.lower() + "s"
-    reverse_name = field.related_name or child_relation_name
+    child_relation_name = field.to.get_name(title=True) + "_" + (field.related_name or (name.lower() + "s"))
+    reverse_name = child_relation_name
     relation_name = name.lower().title() + "_" + field.to.get_name()
     relationship_manager.add_relation_type(
         relation_name, reverse_name, field, table_name
@@ -43,14 +43,14 @@ def expand_reverse_relationships(model: Type["Model"]) -> None:
             parent_model = model_field.to
             child = model
             if (
-                child_model_name not in parent_model.__fields__
-                and child.get_name() not in parent_model.__fields__
+                    child_model_name not in parent_model.__fields__
+                    and child.get_name() not in parent_model.__fields__
             ):
                 register_reverse_model_fields(parent_model, child, child_model_name)
 
 
 def register_reverse_model_fields(
-    model: Type["Model"], child: Type["Model"], child_model_name: str
+        model: Type["Model"], child: Type["Model"], child_model_name: str
 ) -> None:
     model.__fields__[child_model_name] = ModelField(
         name=child_model_name,
@@ -64,7 +64,7 @@ def register_reverse_model_fields(
 
 
 def sqlalchemy_columns_from_model_fields(
-    name: str, object_dict: Dict, table_name: str
+        name: str, object_dict: Dict, table_name: str
 ) -> Tuple[Optional[str], List[sqlalchemy.Column], Dict[str, BaseField]]:
     columns = []
     pkname = None

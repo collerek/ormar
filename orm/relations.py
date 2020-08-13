@@ -37,25 +37,28 @@ class RelationshipManager:
                     del self._relations[rel_type][model._orm_id]
 
     def add_relation(
-        self, parent: "FakePydantic", child: "FakePydantic", virtual: bool = False,
+        self,
+            parent: "FakePydantic",
+            child: "FakePydantic",
+            child_model_name: str,
+            virtual: bool = False,
     ) -> None:
         parent_id, child_id = parent._orm_id, child._orm_id
-        parent_name, child_name = (
-            parent.get_name(title=True),
-            child.get_name(title=True),
-        )
+        parent_name =parent.get_name(title=True)
+        child_name = child_model_name if child.get_name() != child_model_name else child.get_name()+'s'
         if virtual:
-            child_name, parent_name = parent_name, child_name
+            child_name, parent_name = parent_name, child.get_name()
             child_id, parent_id = parent_id, child_id
             child, parent = parent, proxy(child)
+            child_name = child_name.lower()+'s'
         else:
             child = proxy(child)
 
-        parent_relation_name = parent_name + "_" + child_name.lower() + "s"
+        parent_relation_name = parent_name.title() + "_" + child_name
         parents_list = self._relations[parent_relation_name].setdefault(parent_id, [])
         self.append_related_model(parents_list, child)
 
-        child_relation_name = child_name + "_" + parent_name.lower()
+        child_relation_name = child.get_name(title=True) + "_" + parent_name.lower()
         children_list = self._relations[child_relation_name].setdefault(child_id, [])
         self.append_related_model(children_list, parent)
 

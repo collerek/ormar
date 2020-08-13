@@ -3,7 +3,6 @@ import pytest
 import sqlalchemy
 
 import orm
-import orm.fields.foreign_key
 from orm.exceptions import NoMatch, MultipleMatches, RelationshipInstanceError
 from tests.settings import DATABASE_URL
 
@@ -26,9 +25,19 @@ class Track(orm.Model):
     __database__ = database
 
     id = orm.Integer(primary_key=True)
-    album = orm.fields.foreign_key.ForeignKey(Album)
+    album = orm.ForeignKey(Album)
     title = orm.String(length=100)
     position = orm.Integer()
+
+
+class Cover(orm.Model):
+    __tablename__ = "covers"
+    __metadata__ = metadata
+    __database__ = database
+
+    id = orm.Integer(primary_key=True)
+    album = orm.ForeignKey(Album, related_name='cover_pictures')
+    title = orm.String(length=100)
 
 
 class Organisation(orm.Model):
@@ -46,7 +55,7 @@ class Team(orm.Model):
     __database__ = database
 
     id = orm.Integer(primary_key=True)
-    org = orm.fields.foreign_key.ForeignKey(Organisation)
+    org = orm.ForeignKey(Organisation)
     name = orm.String(length=100)
 
 
@@ -56,7 +65,7 @@ class Member(orm.Model):
     __database__ = database
 
     id = orm.Integer(primary_key=True)
-    team = orm.fields.foreign_key.ForeignKey(Team)
+    team = orm.ForeignKey(Team)
     email = orm.String(length=100)
 
 
@@ -79,6 +88,15 @@ async def test_setting_explicitly_empty_relation():
     async with database:
         track = Track(album=None, title="The Bird", position=1)
         assert track.album is None
+
+
+@pytest.mark.asyncio
+async def test_related_name():
+    async with database:
+        album = await Album.objects.create(name="Vanilla")
+        await Cover.objects.create(album=album, title="The cover file")
+
+        assert len(album.cover_pictures) == 1
 
 
 @pytest.mark.asyncio
