@@ -5,3 +5,4 @@ p38venv
 *.log
 test.db
 dist
+/ormar.egg-info/
