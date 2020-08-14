@@ -5,12 +5,12 @@ import sqlalchemy
 from pydantic import BaseConfig, create_model
 from pydantic.fields import ModelField
 
-from orm import ForeignKey, ModelDefinitionError  # noqa I100
-from orm.fields import BaseField
-from orm.relations import RelationshipManager
+from ormar import ForeignKey, ModelDefinitionError  # noqa I100
+from ormar.fields import BaseField
+from ormar.relations import RelationshipManager
 
 if TYPE_CHECKING:  # pragma no cover
-    from orm import Model
+    from ormar import Model
 
 relationship_manager = RelationshipManager()
 

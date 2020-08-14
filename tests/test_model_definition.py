@@ -4,9 +4,9 @@ import pydantic
 import pytest
 import sqlalchemy
 
-import orm.fields as fields
-from orm.exceptions import ModelDefinitionError
-from orm.models import Model
+import ormar.fields as fields
+from ormar.exceptions import ModelDefinitionError
+from ormar.models import Model
 
 metadata = sqlalchemy.MetaData()
 

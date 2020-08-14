@@ -1,9 +1,9 @@
 from typing import Any, TYPE_CHECKING, Type
 
-from orm import ModelDefinitionError
+from ormar import ModelDefinitionError
 
 if TYPE_CHECKING:  # pragma no cover
-    from orm.fields import BaseField
+    from ormar.fields import BaseField
 
 
 class RequiredParams:

@@ -1,4 +1,4 @@
-# Async-ORM
+# ORMar
 
 <p>
 <a href="https://travis-ci.com/collerek/async-orm">
@@ -15,42 +15,42 @@
 </a>
 </p>
 
-The `async-orm` package is an async ORM for Python, with support for Postgres,
-MySQL, and SQLite. ORM is built with:
+The `ormar` package is an async ORM for Python, with support for Postgres,
+MySQL, and SQLite. Ormar is built with:
 
   * [`SQLAlchemy core`][sqlalchemy-core] for query building.
   * [`databases`][databases] for cross-database async support.
   * [`pydantic`][pydantic] for data validation.
 
-Because ORM is built on SQLAlchemy core, you can use [`alembic`][alembic] to provide
+Because ormar is built on SQLAlchemy core, you can use [`alembic`][alembic] to provide
 database migrations.
 
-The goal was to create a simple orm that can be used directly with [`fastapi`][fastapi] that bases it's data validation on pydantic.
+The goal was to create a simple ORM that can be used directly with [`fastapi`][fastapi] that bases it's data validation on pydantic.
 Initial work was inspired by [`encode/orm`][encode/orm].
 The encode package was too simple (i.e. no ability to join two times to the same table) and used typesystem for data checks.
 
-**async-orm is still under development:** We recommend pinning any dependencies with `aorm~=0.0.1`
+**ormar is still under development:** We recommend pinning any dependencies with `ormar~=0.0.1`
 
 **Note**: Use `ipython` to try this from the console, since it supports `await`.
 
 ```python
 import databases
-import orm
+import ormar
 import sqlalchemy
 
 database = databases.Database("sqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
 
-class Note(orm.Model):
+class Note(ormar.Model):
     __tablename__ = "notes"
     __database__ = database
     __metadata__ = metadata
 
     # primary keys of type int by dafault are set to autoincrement    
-    id = orm.Integer(primary_key=True)
-    text = orm.String(length=100)
-    completed = orm.Boolean(default=False)
+    id = ormar.Integer(primary_key=True)
+    text = ormar.String(length=100)
+    completed = ormar.Boolean(default=False)
 
 # Create the database
 engine = sqlalchemy.create_engine(str(database.url))
@@ -84,35 +84,35 @@ note = await Note.objects.get(pk=2)
 note.pk  # 2
 ```
 
-ORM supports loading and filtering across foreign keys...
+Ormar supports loading and filtering across foreign keys...
 
 ```python
 import databases
-import orm
+import ormar
 import sqlalchemy
 
 database = databases.Database("sqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
 
-class Album(orm.Model):
+class Album(ormar.Model):
     __tablename__ = "album"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
 
 
-class Track(orm.Model):
+class Track(ormar.Model):
     __tablename__ = "track"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    album = orm.ForeignKey(Album)
-    title = orm.String(length=100)
-    position = orm.Integer()
+    id = ormar.Integer(primary_key=True)
+    album = ormar.ForeignKey(Album)
+    title = ormar.String(length=100)
+    position = ormar.Integer()
 
 
 # Create some records to work with.
@@ -187,17 +187,17 @@ All fields are required unless one of the following is set:
 
 ### Fields Types
 
-* `orm.String(length)`
-* `orm.Text()`
-* `orm.Boolean()`
-* `orm.Integer()`
-* `orm.Float()`
-* `orm.Date()`
-* `orm.Time()`
-* `orm.DateTime()`
-* `orm.JSON()`
-* `orm.BigInteger()`
-* `orm.Decimal(lenght, precision)`
+* `String(length)`
+* `Text()`
+* `Boolean()`
+* `Integer()`
+* `Float()`
+* `Date()`
+* `Time()`
+* `DateTime()`
+* `JSON()`
+* `BigInteger()`
+* `Decimal(lenght, precision)`
 
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [databases]: https://github.com/encode/databases

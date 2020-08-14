@@ -4,3 +4,4 @@ p38venv
 *.pyc
 *.log
 test.db
+dist

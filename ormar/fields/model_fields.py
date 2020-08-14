@@ -4,8 +4,8 @@ import decimal
 import sqlalchemy
 from pydantic import Json
 
-from orm.fields.base import BaseField  # noqa I101
-from orm.fields.decorators import RequiredParams
+from ormar.fields.base import BaseField  # noqa I101
+from ormar.fields.decorators import RequiredParams
 
 
 @RequiredParams("length")

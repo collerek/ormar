@@ -2,10 +2,10 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 import sqlalchemy
 
-from orm import ModelDefinitionError  # noqa I101
+from ormar import ModelDefinitionError  # noqa I101
 
 if TYPE_CHECKING:  # pragma no cover
-    from orm.models import Model
+    from ormar.models import Model
 
 
 class BaseField:

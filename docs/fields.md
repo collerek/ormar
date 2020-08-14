@@ -199,7 +199,7 @@ But you can overwrite this name by providing `related_name` parameter like below
     Since related models are coming from Relationship Manager the reverse relation on access returns list of `wekref.proxy` to avoid circular references.
 
 !!!info
-    All relations are stored in lists, but when you access parent `Model` the ORM is unpacking the value for you. 
+    All relations are stored in lists, but when you access parent `Model` the ormar is unpacking the value for you. 
     Read more in [relations][relations].
 
 [relations]: ./relations.md

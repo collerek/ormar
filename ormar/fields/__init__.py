@@ -1,6 +1,6 @@
-from orm.fields.base import BaseField
-from orm.fields.foreign_key import ForeignKey
-from orm.fields.model_fields import (
+from ormar.fields.base import BaseField
+from ormar.fields.foreign_key import ForeignKey
+from ormar.fields.model_fields import (
     BigInteger,
     Boolean,
     Date,

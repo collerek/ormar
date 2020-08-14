@@ -4,7 +4,7 @@ import databases
 import pytest
 import sqlalchemy
 
-import orm
+import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -15,18 +15,18 @@ def time():
     return datetime.datetime.now().time()
 
 
-class Example(orm.Model):
+class Example(ormar.Model):
     __tablename__ = "example"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    created = orm.DateTime(default=datetime.datetime.now)
-    created_day = orm.Date(default=datetime.date.today)
-    created_time = orm.Time(default=time)
-    description = orm.Text(nullable=True)
-    value = orm.Float(nullable=True)
-    data = orm.JSON(default={})
+    id = ormar.Integer(primary_key=True)
+    created = ormar.DateTime(default=datetime.datetime.now)
+    created_day = ormar.Date(default=datetime.date.today)
+    created_time = ormar.Time(default=time)
+    description = ormar.Text(nullable=True)
+    value = ormar.Float(nullable=True)
+    data = ormar.JSON(default={})
 
 
 @pytest.fixture(autouse=True, scope="module")

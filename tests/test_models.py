@@ -2,32 +2,32 @@ import databases
 import pytest
 import sqlalchemy
 
-import orm
-from orm.exceptions import QueryDefinitionError
+import ormar
+from ormar.exceptions import QueryDefinitionError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
-class User(orm.Model):
+class User(ormar.Model):
     __tablename__ = "users"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
 
 
-class Product(orm.Model):
+class Product(ormar.Model):
     __tablename__ = "product"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
-    rating = orm.Integer(minimum=1, maximum=5)
-    in_stock = orm.Boolean(default=False)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
+    rating = ormar.Integer(minimum=1, maximum=5)
+    in_stock = ormar.Boolean(default=False)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -40,9 +40,9 @@ def create_test_database():
 
 def test_model_class():
     assert list(User.__model_fields__.keys()) == ["id", "name"]
-    assert isinstance(User.__model_fields__["id"], orm.Integer)
+    assert isinstance(User.__model_fields__["id"], ormar.Integer)
     assert User.__model_fields__["id"].primary_key is True
-    assert isinstance(User.__model_fields__["name"], orm.String)
+    assert isinstance(User.__model_fields__["name"], ormar.String)
     assert User.__model_fields__["name"].length == 100
     assert isinstance(User.__table__, sqlalchemy.Table)
 
@@ -82,7 +82,7 @@ async def test_model_crud():
 @pytest.mark.asyncio
 async def test_model_get():
     async with database:
-        with pytest.raises(orm.NoMatch):
+        with pytest.raises(ormar.NoMatch):
             await User.objects.get()
 
         user = await User.objects.create(name="Tom")
@@ -90,7 +90,7 @@ async def test_model_get():
         assert lookup == user
 
         user = await User.objects.create(name="Jane")
-        with pytest.raises(orm.MultipleMatches):
+        with pytest.raises(ormar.MultipleMatches):
             await User.objects.get()
 
         same_user = await User.objects.get(pk=user.id)
@@ -108,7 +108,7 @@ async def test_model_filter():
         user = await User.objects.get(name="Lucy")
         assert user.name == "Lucy"
 
-        with pytest.raises(orm.NoMatch):
+        with pytest.raises(ormar.NoMatch):
             await User.objects.get(name="Jim")
 
         await Product.objects.create(name="T-Shirt", rating=5, in_stock=True)

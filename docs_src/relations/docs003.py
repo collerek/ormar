@@ -1,44 +1,44 @@
 import databases
 import sqlalchemy
-import orm
+import ormar
 
 database = databases.Database("sqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
 
-class SchoolClass(orm.Model):
+class SchoolClass(ormar.Model):
     __tablename__ = "schoolclasses"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
 
 
-class Category(orm.Model):
+class Category(ormar.Model):
     __tablename__ = "categories"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
 
 
-class Student(orm.Model):
+class Student(ormar.Model):
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
-    schoolclass = orm.ForeignKey(SchoolClass)
-    category = orm.ForeignKey(Category)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
+    schoolclass = ormar.ForeignKey(SchoolClass)
+    category = ormar.ForeignKey(Category)
 
 
-class Teacher(orm.Model):
+class Teacher(ormar.Model):
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
-    schoolclass = orm.ForeignKey(SchoolClass)
-    category = orm.ForeignKey(Category)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
+    schoolclass = ormar.ForeignKey(SchoolClass)
+    category = ormar.ForeignKey(Category)

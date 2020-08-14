@@ -4,62 +4,61 @@ import databases
 import pytest
 import sqlalchemy
 
-import orm
-import orm.fields.foreign_key
+import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
-class Department(orm.Model):
+class Department(ormar.Model):
     __tablename__ = "departments"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True, autoincrement=False)
-    name = orm.String(length=100)
+    id = ormar.Integer(primary_key=True, autoincrement=False)
+    name = ormar.String(length=100)
 
 
-class SchoolClass(orm.Model):
+class SchoolClass(ormar.Model):
     __tablename__ = "schoolclasses"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
-    department = orm.fields.foreign_key.ForeignKey(Department, nullable=False)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
+    department = ormar.ForeignKey(Department, nullable=False)
 
 
-class Category(orm.Model):
+class Category(ormar.Model):
     __tablename__ = "categories"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
 
 
-class Student(orm.Model):
+class Student(ormar.Model):
     __tablename__ = "students"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
-    schoolclass = orm.fields.foreign_key.ForeignKey(SchoolClass)
-    category = orm.fields.foreign_key.ForeignKey(Category, nullable=True)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
+    schoolclass = ormar.ForeignKey(SchoolClass)
+    category = ormar.ForeignKey(Category, nullable=True)
 
 
-class Teacher(orm.Model):
+class Teacher(ormar.Model):
     __tablename__ = "teachers"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
-    schoolclass = orm.fields.foreign_key.ForeignKey(SchoolClass)
-    category = orm.fields.foreign_key.ForeignKey(Category, nullable=True)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
+    schoolclass = ormar.ForeignKey(SchoolClass)
+    category = ormar.ForeignKey(Category, nullable=True)
 
 
 @pytest.fixture(scope='module')

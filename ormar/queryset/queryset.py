@@ -3,13 +3,13 @@ from typing import Any, List, TYPE_CHECKING, Tuple, Type, Union
 import databases
 import sqlalchemy
 
-import orm  # noqa I100
-from orm import MultipleMatches, NoMatch
-from orm.queryset.clause import QueryClause
-from orm.queryset.query import Query
+import ormar  # noqa I100
+from ormar import MultipleMatches, NoMatch
+from ormar.queryset.clause import QueryClause
+from ormar.queryset.query import Query
 
 if TYPE_CHECKING:  # pragma no cover
-    from orm import Model
+    from ormar import Model
 
 
 class QuerySet:

@@ -74,7 +74,7 @@ classes = await SchoolClass.objects.select_related(
 
 Since you join two times to the same table (categories) it won't work by default -> you would need to use aliases for category tables and columns.
 
-But don't worry - orm can handle situations like this, as it uses the Relationship Manager which has it's aliases defined for all relationships.
+But don't worry - ormar can handle situations like this, as it uses the Relationship Manager which has it's aliases defined for all relationships.
 
 Each class is registered with the same instance of the RelationshipManager that you can access like this:
 
@@ -110,7 +110,7 @@ print(Teacher._orm_relationship_manager.resolve_relation_join(
 
 ### Query automatic construction
 
-Orm is using those aliases during queries to both construct a meaningful and valid sql, 
+Ormar is using those aliases during queries to both construct a meaningful and valid sql, 
 as well as later use it to extract proper columns for proper nested models.
 
 Running a previously mentioned query to select school classes and related teachers and students: 

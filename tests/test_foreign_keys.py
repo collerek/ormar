@@ -2,71 +2,71 @@ import databases
 import pytest
 import sqlalchemy
 
-import orm
-from orm.exceptions import NoMatch, MultipleMatches, RelationshipInstanceError
+import ormar
+from ormar.exceptions import NoMatch, MultipleMatches, RelationshipInstanceError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
-class Album(orm.Model):
+class Album(ormar.Model):
     __tablename__ = "album"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
 
 
-class Track(orm.Model):
+class Track(ormar.Model):
     __tablename__ = "track"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    album = orm.ForeignKey(Album)
-    title = orm.String(length=100)
-    position = orm.Integer()
+    id = ormar.Integer(primary_key=True)
+    album = ormar.ForeignKey(Album)
+    title = ormar.String(length=100)
+    position = ormar.Integer()
 
 
-class Cover(orm.Model):
+class Cover(ormar.Model):
     __tablename__ = "covers"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    album = orm.ForeignKey(Album, related_name='cover_pictures')
-    title = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    album = ormar.ForeignKey(Album, related_name='cover_pictures')
+    title = ormar.String(length=100)
 
 
-class Organisation(orm.Model):
+class Organisation(ormar.Model):
     __tablename__ = "org"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    ident = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    ident = ormar.String(length=100)
 
 
-class Team(orm.Model):
+class Team(ormar.Model):
     __tablename__ = "team"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    org = orm.ForeignKey(Organisation)
-    name = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    org = ormar.ForeignKey(Organisation)
+    name = ormar.String(length=100)
 
 
-class Member(orm.Model):
+class Member(ormar.Model):
     __tablename__ = "member"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    team = orm.ForeignKey(Team)
-    email = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    team = ormar.ForeignKey(Team)
+    email = ormar.String(length=100)
 
 
 @pytest.fixture(autouse=True, scope="module")

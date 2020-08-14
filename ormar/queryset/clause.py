@@ -3,11 +3,11 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 import sqlalchemy
 from sqlalchemy import text
 
-import orm  # noqa I100
-from orm.exceptions import QueryDefinitionError
+import ormar  # noqa I100
+from ormar.exceptions import QueryDefinitionError
 
 if TYPE_CHECKING:  # pragma no cover
-    from orm import Model
+    from ormar import Model
 
 FILTER_OPERATORS = {
     "exact": "__eq__",
@@ -75,7 +75,7 @@ class QueryClause:
 
             value, has_escaped_character = self._escape_characters_in_clause(op, value)
 
-            if isinstance(value, orm.Model):
+            if isinstance(value, ormar.Model):
                 value = value.pk
 
             op_attr = FILTER_OPERATORS[op]
@@ -147,7 +147,7 @@ class QueryClause:
         if op not in ["contains", "icontains"]:
             return value, has_escaped_character
 
-        if isinstance(value, orm.Model):
+        if isinstance(value, ormar.Model):
             raise QueryDefinitionError(
                 "You cannot use contains and icontains with instance of the Model"
             )

@@ -5,10 +5,10 @@ from random import choices
 from typing import List, TYPE_CHECKING, Union
 from weakref import proxy
 
-from orm import ForeignKey
+from ormar import ForeignKey
 
 if TYPE_CHECKING:  # pragma no cover
-    from orm.models import FakePydantic, Model
+    from ormar.models import FakePydantic, Model
 
 
 def get_table_alias() -> str:

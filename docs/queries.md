@@ -30,7 +30,7 @@ await malibu.save()
 
 ### load()
 
-By default when you query a table without prefetching related models, the orm will still construct
+By default when you query a table without prefetching related models, the ormar will still construct
 your related models, but populate them only with the pk value.
 
 ```python

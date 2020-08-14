@@ -7,8 +7,8 @@
 <a href="https://codecov.io/gh/collerek/async-orm">
     <img src="https://codecov.io/gh/collerek/async-orm/branch/master/graph/badge.svg" alt="Coverage">
 </a>
-<a href="https://www.codefactor.io/repository/github/collerek/async-orm">
-<img src="https://www.codefactor.io/repository/github/collerek/async-orm/badge" alt="CodeFactor" />
+<a href="https://www.codefactor.io/repository/github/collerek/ormar">
+<img src="https://www.codefactor.io/repository/github/collerek/ormar/badge" alt="CodeFactor" />
 </a>
 <a href="https://app.codacy.com/manual/collerek/async-orm?utm_source=github.com&utm_medium=referral&utm_content=collerek/async-orm&utm_campaign=Badge_Grade_Dashboard">
 <img src="https://api.codacy.com/project/badge/Grade/62568734f70f49cd8ea7a1a0b2d0c107" alt="Codacy" />
@@ -35,22 +35,22 @@ The encode package was too simple (i.e. no ability to join two times to the same
 
 ```python
 import databases
-import orm
+import ormar
 import sqlalchemy
 
 database = databases.Database("sqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
 
-class Note(orm.Model):
+class Note(ormar.Model):
     __tablename__ = "notes"
     __database__ = database
     __metadata__ = metadata
 
     # primary keys of type int by dafault are set to autoincrement    
-    id = orm.Integer(primary_key=True)
-    text = orm.String(length=100)
-    completed = orm.Boolean(default=False)
+    id = ormar.Integer(primary_key=True)
+    text = ormar.String(length=100)
+    completed = ormar.Boolean(default=False)
 
 # Create the database
 engine = sqlalchemy.create_engine(str(database.url))
@@ -88,31 +88,31 @@ ORM supports loading and filtering across foreign keys...
 
 ```python
 import databases
-import orm
+import ormar
 import sqlalchemy
 
 database = databases.Database("sqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
 
-class Album(orm.Model):
+class Album(ormar.Model):
     __tablename__ = "album"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
 
 
-class Track(orm.Model):
+class Track(ormar.Model):
     __tablename__ = "track"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    album = orm.ForeignKey(Album)
-    title = orm.String(length=100)
-    position = orm.Integer()
+    id = ormar.Integer(primary_key=True)
+    album = ormar.ForeignKey(Album)
+    title = ormar.String(length=100)
+    position = ormar.Integer()
 
 
 # Create some records to work with.

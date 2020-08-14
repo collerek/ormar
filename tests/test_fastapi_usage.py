@@ -3,8 +3,7 @@ import sqlalchemy
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-import orm
-import orm.fields.foreign_key
+import ormar
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -13,23 +12,23 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
-class Category(orm.Model):
+class Category(ormar.Model):
     __tablename__ = "categories"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
 
 
-class Item(orm.Model):
+class Item(ormar.Model):
     __tablename__ = "items"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
-    category = orm.fields.foreign_key.ForeignKey(Category, nullable=True)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
+    category = ormar.ForeignKey(Category, nullable=True)
 
 
 @app.post("/items/", response_model=Item)

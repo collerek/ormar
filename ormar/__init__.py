@@ -1,5 +1,5 @@
-from orm.exceptions import ModelDefinitionError, ModelNotSet, MultipleMatches, NoMatch
-from orm.fields import (
+from ormar.exceptions import ModelDefinitionError, ModelNotSet, MultipleMatches, NoMatch
+from ormar.fields import (
     BigInteger,
     Boolean,
     Date,
@@ -13,9 +13,9 @@ from orm.fields import (
     Text,
     Time,
 )
-from orm.models import Model
+from ormar.models import Model
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 __all__ = [
     "Integer",
     "BigInteger",

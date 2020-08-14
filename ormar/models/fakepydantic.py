@@ -19,13 +19,13 @@ import pydantic
 import sqlalchemy
 from pydantic import BaseModel
 
-import orm  # noqa I100
-from orm.fields import BaseField
-from orm.models.metaclass import ModelMetaclass
-from orm.relations import RelationshipManager
+import ormar  # noqa I100
+from ormar.fields import BaseField
+from ormar.models.metaclass import ModelMetaclass
+from ormar.relations import RelationshipManager
 
 if TYPE_CHECKING:  # pragma no cover
-    from orm.models.model import Model
+    from ormar.models.model import Model
 
 
 class FakePydantic(list, metaclass=ModelMetaclass):
@@ -194,10 +194,10 @@ class FakePydantic(list, metaclass=ModelMetaclass):
     def merge_two_instances(cls, one: "Model", other: "Model") -> "Model":
         for field in one.__model_fields__.keys():
             if isinstance(getattr(one, field), list) and not isinstance(
-                getattr(one, field), orm.Model
+                getattr(one, field), ormar.Model
             ):
                 setattr(other, field, getattr(one, field) + getattr(other, field))
-            elif isinstance(getattr(one, field), orm.Model):
+            elif isinstance(getattr(one, field), ormar.Model):
                 if getattr(one, field).pk == getattr(other, field).pk:
                     setattr(
                         other,

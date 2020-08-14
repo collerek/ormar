@@ -1,5 +1,5 @@
 #!/bin/sh -e
-PACKAGE="orm"
+PACKAGE="ormar"
 if [ -d 'dist' ] ; then
     rm -r dist
 fi

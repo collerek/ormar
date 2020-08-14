@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-PACKAGE="orm"
+PACKAGE="ormar"
 
 PREFIX=""
 if [ -d 'venv' ] ; then

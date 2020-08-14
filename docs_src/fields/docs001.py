@@ -1,28 +1,28 @@
 import databases
 import sqlalchemy
 
-import orm
+import ormar
 
 database = databases.Database("sqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
 
-class Department(orm.Model):
+class Department(ormar.Model):
     __database__ = database
     __metadata__ = metadata
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
 
 
-class Course(orm.Model):
+class Course(ormar.Model):
     __database__ = database
     __metadata__ = metadata
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
-    completed = orm.Boolean(default=False)
-    department = orm.ForeignKey(Department)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
+    completed = ormar.Boolean(default=False)
+    department = ormar.ForeignKey(Department)
 
 
 department = Department(name='Science')

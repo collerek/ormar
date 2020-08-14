@@ -1,17 +1,20 @@
 # Models
 
 ## Defining models
-By defining an orm Model you get corresponding **Pydantic model** as well as **Sqlalchemy table** for free.
+
+By defining an ormar Model you get corresponding **Pydantic model** as well as **Sqlalchemy table** for free.
 They are being managed in the background and you do not have to create them on your own.
 
 ### Model Class
-To build an ORM model you simply need to inherit a `orm.Model` class.
+
+To build an ormar model you simply need to inherit a `ormar.Model` class.
 
 ```Python hl_lines="10"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
 ### Defining Fields
+
 Next assign one or more of the [Fields][fields] as a class level variables.
 
 Each table **has to** have a primary key column, which you specify by setting `primary_key=True` on selected field.
@@ -31,17 +34,18 @@ By default if you assign primary key to `Integer` field, the `autoincrement` opt
 You can disable by passing `autoincremant=False`.
 
 ```Python 
-id = orm.Integer(primary_key=True, autoincrement=False)
+id = ormar.Integer(primary_key=True, autoincrement=False)
 ```
 
 Names of the fields will be used for both the underlying `pydantic` model and `sqlalchemy` table.
 
 ### Dependencies
 
-Since orm depends on [`databases`][databases] and [`sqlalchemy-core`][sqlalchemy-core] for database connection 
+Since ormar depends on [`databases`][databases] and [`sqlalchemy-core`][sqlalchemy-core] for database connection 
 and table creation you need to assign each `Model` with two special parameters.
 
 #### Databases
+
 One is `Database` instance created with your database url in [sqlalchemy connection string][sqlalchemy connection string] format.
 
 Created instance needs to be passed to every `Model` with `__database__` parameter.
@@ -55,6 +59,7 @@ Created instance needs to be passed to every `Model` with `__database__` paramet
     You can create several ones if you want to use multiple databases.
 
 #### Sqlalchemy
+
 Second dependency is sqlalchemy `MetaData` instance.
 
 Created instance needs to be passed to every `Model` with `__metadata__` parameter.
@@ -123,6 +128,7 @@ The fields and relations are not stored on the `Model` itself
 Apart from special parameters defined in the `Model` during definition (tablename, metadata etc.) the `Model` provides you with useful internals.
 
 ### Pydantic Model
+
 To access auto created pydantic model you can use `Model.__pydantic_model__` parameter
 
 For example to list model fields you can:
@@ -138,6 +144,7 @@ For example to list model fields you can:
     For more options visit official [pydantic][pydantic] documentation.
 
 ### Sqlalchemy Table
+
 To access auto created sqlalchemy table you can use `Model.__table__` parameter
 
 For example to list table columns you can:
@@ -153,7 +160,8 @@ For example to list table columns you can:
     For more options visit official [sqlalchemy-metadata][sqlalchemy-metadata] documentation.
 
 ### Fields Definition
-To access orm `Fields` you can use `Model.__model_fields__` parameter
+
+To access ormar `Fields` you can use `Model.__model_fields__` parameter
 
 For example to list table model fields you can:
 

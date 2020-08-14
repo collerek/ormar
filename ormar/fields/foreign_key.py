@@ -3,12 +3,12 @@ from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 import sqlalchemy
 from pydantic import BaseModel
 
-import orm  # noqa I101
-from orm.exceptions import RelationshipInstanceError
-from orm.fields.base import BaseField
+import ormar  # noqa I101
+from ormar.exceptions import RelationshipInstanceError
+from ormar.fields.base import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
-    from orm.models import Model
+    from ormar.models import Model
 
 
 def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":

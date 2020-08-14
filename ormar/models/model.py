@@ -2,14 +2,14 @@ from typing import Any, List
 
 import sqlalchemy
 
-import orm.queryset  # noqa I100
-from orm.models import FakePydantic  # noqa I100
+import ormar.queryset  # noqa I100
+from ormar.models import FakePydantic  # noqa I100
 
 
 class Model(FakePydantic):
     __abstract__ = True
 
-    objects = orm.queryset.QuerySet()
+    objects = ormar.queryset.QuerySet()
 
     @classmethod
     def from_row(

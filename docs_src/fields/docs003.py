@@ -1,4 +1,4 @@
-import orm
+import ormar
 import databases
 import sqlalchemy
 
@@ -6,24 +6,24 @@ database = databases.Database("sqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
 
-class Album(orm.Model):
+class Album(ormar.Model):
     __tablename__ = "album"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    name = orm.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
 
 
-class Track(orm.Model):
+class Track(ormar.Model):
     __tablename__ = "track"
     __metadata__ = metadata
     __database__ = database
 
-    id = orm.Integer(primary_key=True)
-    album = orm.ForeignKey(Album, nullable=False)
-    title = orm.String(length=100)
-    position = orm.Integer()
+    id = ormar.Integer(primary_key=True)
+    album = ormar.ForeignKey(Album, nullable=False)
+    title = ormar.String(length=100)
+    position = ormar.Integer()
 
 
 album = await Album.objects.create(name="Brooklyn")

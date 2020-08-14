@@ -3,12 +3,12 @@ from typing import List, NamedTuple, TYPE_CHECKING, Tuple, Type
 import sqlalchemy
 from sqlalchemy import text
 
-import orm  # noqa I100
-from orm import ForeignKey
-from orm.fields import BaseField
+import ormar  # noqa I100
+from ormar import ForeignKey
+from ormar.fields import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
-    from orm import Model
+    from ormar import Model
 
 
 class JoinParameters(NamedTuple):
@@ -53,7 +53,7 @@ class Query:
             if (
                 not self.model_cls.__model_fields__[key].nullable
                 and isinstance(
-                    self.model_cls.__model_fields__[key], orm.fields.ForeignKey,
+                    self.model_cls.__model_fields__[key], ormar.fields.ForeignKey,
                 )
                 and key not in self._select_related
             ):
