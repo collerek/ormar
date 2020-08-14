@@ -120,7 +120,7 @@ async def test_right_tables_join():
 async def test_multiple_reverse_related_objects():
     async with database:
         classes = await SchoolClass.objects.select_related(
-            ["teachers__category", "students"]
+            ["teachers__category", "students__category"]
         ).all()
         assert classes[0].name == "Math"
         assert classes[0].students[1].name == "Jack"
