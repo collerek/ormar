@@ -35,7 +35,7 @@ class BaseField:
     @property
     def is_required(self) -> bool:
         return (
-                not self.nullable and not self.has_default and not self.is_auto_primary_key
+            not self.nullable and not self.has_default and not self.is_auto_primary_key
         )
 
     @property
