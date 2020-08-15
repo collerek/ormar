@@ -46,7 +46,7 @@ setup(
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
     keywords=['ORM', 'sqlalchemy', 'fastapi', 'pydantic', 'databases'],
-    author="Radosław Drążkiewicz",
+    author="collerek",
     author_email="collerek@gmail.com",
     packages=get_packages(PACKAGE),
     package_data={PACKAGE: ["py.typed"]},

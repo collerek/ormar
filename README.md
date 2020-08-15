@@ -1,6 +1,11 @@
 # ORMar
-
 <p>
+<a href="https://pypi.org/project/ormar">
+    <img src="https://img.shields.io/pypi/v/ormar.svg" alt="Pypi version">
+</a>
+<a href="https://pypi.org/project/ormar">
+    <img src="https://img.shields.io/pypi/pyversions/ormar.svg" alt="Pypi version">
+</a>
 <a href="https://travis-ci.com/collerek/ormar">
     <img src="https://travis-ci.com/collerek/ormar.svg?branch=master" alt="Build Status">
 </a>

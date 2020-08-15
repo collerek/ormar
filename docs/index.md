@@ -1,16 +1,22 @@
 # ORMar
 
 <p>
-<a href="https://travis-ci.com/collerek/async-orm">
-    <img src="https://travis-ci.com/collerek/async-orm.svg?branch=master" alt="Build Status">
+<a href="https://pypi.org/project/ormar">
+    <img src="https://img.shields.io/pypi/v/ormar.svg" alt="Pypi version">
 </a>
-<a href="https://codecov.io/gh/collerek/async-orm">
-    <img src="https://codecov.io/gh/collerek/async-orm/branch/master/graph/badge.svg" alt="Coverage">
+<a href="https://pypi.org/project/ormar">
+    <img src="https://img.shields.io/pypi/pyversions/ormar.svg" alt="Pypi version">
 </a>
-<a href="https://www.codefactor.io/repository/github/collerek/async-orm">
-<img src="https://www.codefactor.io/repository/github/collerek/async-orm/badge" alt="CodeFactor" />
+<a href="https://travis-ci.com/collerek/ormar">
+    <img src="https://travis-ci.com/collerek/ormar.svg?branch=master" alt="Build Status">
 </a>
-<a href="https://app.codacy.com/manual/collerek/async-orm?utm_source=github.com&utm_medium=referral&utm_content=collerek/async-orm&utm_campaign=Badge_Grade_Dashboard">
+<a href="https://codecov.io/gh/collerek/ormar">
+    <img src="https://codecov.io/gh/collerek/ormar/branch/master/graph/badge.svg" alt="Coverage">
+</a>
+<a href="https://www.codefactor.io/repository/github/collerek/ormar">
+<img src="https://www.codefactor.io/repository/github/collerek/ormar/badge" alt="CodeFactor" />
+</a>
+<a href="https://app.codacy.com/manual/collerek/ormar?utm_source=github.com&utm_medium=referral&utm_content=collerek/oramr&utm_campaign=Badge_Grade_Dashboard">
 <img src="https://api.codacy.com/project/badge/Grade/62568734f70f49cd8ea7a1a0b2d0c107" alt="Codacy" />
 </a>
 </p>

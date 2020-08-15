@@ -15,7 +15,7 @@ from ormar.fields import (
 )
 from ormar.models import Model
 
-__version__ = "0.1.1"
+__version__ = "0.1.3"
 __all__ = [
     "Integer",
     "BigInteger",
