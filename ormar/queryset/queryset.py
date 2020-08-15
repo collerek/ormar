@@ -160,10 +160,15 @@ class QuerySet:
         # substitute related models with their pk
         for field in self.model_cls._extract_related_names():
             if field in new_kwargs and new_kwargs.get(field) is not None:
-                new_kwargs[field] = getattr(
-                    new_kwargs.get(field),
-                    self.model_cls.__model_fields__[field].to.__pkname__,
-                )
+                if isinstance(new_kwargs.get(field), ormar.Model):
+                    new_kwargs[field] = getattr(
+                        new_kwargs.get(field),
+                        self.model_cls.__model_fields__[field].to.__pkname__,
+                    )
+                else:
+                    new_kwargs[field] = new_kwargs.get(field).get(
+                        self.model_cls.__model_fields__[field].to.__pkname__
+                    )
 
         # Build the insert expression.
         expr = self.table.insert()

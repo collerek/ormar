@@ -61,7 +61,7 @@ class Teacher(ormar.Model):
     category = ormar.ForeignKey(Category, nullable=True)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def event_loop():
     loop = asyncio.get_event_loop()
     yield loop
@@ -91,6 +91,8 @@ async def test_model_multiple_instances_of_same_table_in_schema():
         ).all()
         assert classes[0].name == "Math"
         assert classes[0].students[0].name == "Jane"
+
+        assert len(classes[0].dict().get("students")) == 2
 
         # related fields of main model are only populated by pk
         # unless there is a required foreign key somewhere along the way

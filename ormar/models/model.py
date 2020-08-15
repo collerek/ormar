@@ -55,7 +55,7 @@ class Model(FakePydantic):
     def pk(self, value: Any) -> None:
         setattr(self.values, self.__pkname__, value)
 
-    async def save(self) -> int:
+    async def save(self) -> "Model":
         self_fields = self._extract_model_db_fields()
         if self.__model_fields__.get(self.__pkname__).autoincrement:
             self_fields.pop(self.__pkname__, None)
@@ -63,7 +63,7 @@ class Model(FakePydantic):
         expr = expr.values(**self_fields)
         item_id = await self.__database__.execute(expr)
         self.pk = item_id
-        return item_id
+        return self
 
     async def update(self, **kwargs: Any) -> int:
         if kwargs:

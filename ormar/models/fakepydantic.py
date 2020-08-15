@@ -117,15 +117,19 @@ class FakePydantic(list, metaclass=ModelMetaclass):
     def pk_type(cls) -> Any:
         return cls.__model_fields__[cls.__pkname__].__type__
 
-    def dict(self) -> Dict:  # noqa: A003
+    def dict(self, nested=False) -> Dict:  # noqa: A003
         dict_instance = self.values.dict()
         for field in self._extract_related_names():
             nested_model = getattr(self, field)
-            if isinstance(nested_model, list):
-                dict_instance[field] = [x.dict() for x in nested_model]
+            if self.__model_fields__[field].virtual and nested:
+                continue
+            if isinstance(nested_model, list) and not isinstance(
+                nested_model, ormar.Model
+            ):
+                dict_instance[field] = [x.dict(nested=True) for x in nested_model]
             else:
                 dict_instance[field] = (
-                    nested_model.dict() if nested_model is not None else {}
+                    nested_model.dict(nested=True) if nested_model is not None else {}
                 )
         return dict_instance
 

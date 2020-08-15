@@ -36,7 +36,7 @@ class Cover(ormar.Model):
     __database__ = database
 
     id = ormar.Integer(primary_key=True)
-    album = ormar.ForeignKey(Album, related_name='cover_pictures')
+    album = ormar.ForeignKey(Album, related_name="cover_pictures")
     title = ormar.String(length=100)
 
 
@@ -171,8 +171,8 @@ async def test_fk_filter():
 
         tracks = (
             await Track.objects.select_related("album")
-                .filter(album__name="Fantasies")
-                .all()
+            .filter(album__name="Fantasies")
+            .all()
         )
         assert len(tracks) == 3
         for track in tracks:
@@ -180,8 +180,8 @@ async def test_fk_filter():
 
         tracks = (
             await Track.objects.select_related("album")
-                .filter(album__name__icontains="fan")
-                .all()
+            .filter(album__name__icontains="fan")
+            .all()
         )
         assert len(tracks) == 3
         for track in tracks:
@@ -223,8 +223,8 @@ async def test_multiple_fk():
 
         members = (
             await Member.objects.select_related("team__org")
-                .filter(team__org__ident="ACME Ltd")
-                .all()
+            .filter(team__org__ident="ACME Ltd")
+            .all()
         )
         assert len(members) == 4
         for member in members:
@@ -243,8 +243,8 @@ async def test_pk_filter():
 
         tracks = (
             await Track.objects.select_related("album")
-                .filter(position=2, album__name="Test")
-                .all()
+            .filter(position=2, album__name="Test")
+            .all()
         )
         assert len(tracks) == 1
 

@@ -1,16 +1,16 @@
 # ORMar
 
 <p>
-<a href="https://travis-ci.com/collerek/async-orm">
-    <img src="https://travis-ci.com/collerek/async-orm.svg?branch=master" alt="Build Status">
+<a href="https://travis-ci.com/collerek/ormar">
+    <img src="https://travis-ci.com/collerek/ormar.svg?branch=master" alt="Build Status">
 </a>
-<a href="https://codecov.io/gh/collerek/async-orm">
-    <img src="https://czodecov.io/gh/collerek/async-orm/branch/master/graph/badge.svg" alt="Coverage">
+<a href="https://codecov.io/gh/collerek/ormar">
+    <img src="https://codecov.io/gh/collerek/ormar/branch/master/graph/badge.svg" alt="Coverage">
 </a>
 <a href="https://www.codefactor.io/repository/github/collerek/ormar">
 <img src="https://www.codefactor.io/repository/github/collerek/ormar/badge" alt="CodeFactor" />
 </a>
-<a href="https://app.codacy.com/manual/collerek/async-orm?utm_source=github.com&utm_medium=referral&utm_content=collerek/async-orm&utm_campaign=Badge_Grade_Dashboard">
+<a href="https://app.codacy.com/manual/collerek/ormar?utm_source=github.com&utm_medium=referral&utm_content=collerek/oramr&utm_campaign=Badge_Grade_Dashboard">
 <img src="https://api.codacy.com/project/badge/Grade/62568734f70f49cd8ea7a1a0b2d0c107" alt="Codacy" />
 </a>
 </p>
@@ -25,9 +25,11 @@ MySQL, and SQLite. Ormar is built with:
 Because ormar is built on SQLAlchemy core, you can use [`alembic`][alembic] to provide
 database migrations.
 
-The goal was to create a simple ormar that can be used directly with [`fastapi`][fastapi] that bases it's data validation on pydantic.
+The goal was to create a simple ORM that can be used directly with [`fastapi`][fastapi] that bases it's data validation on pydantic.
 Initial work was inspired by [`encode/orm`][encode/orm].
 The encode package was too simple (i.e. no ability to join two times to the same table) and used typesystem for data checks.
+
+To avoid too high coupling with pydantic and sqlalchemy ormar uses them by **composition** rather than by **inheritance**.
 
 **ormar is still under development:** We recommend pinning any dependencies with `ormar~=0.1.1`
 
