@@ -1,4 +1,5 @@
 import databases
+import pydantic
 import pytest
 import sqlalchemy
 
@@ -11,23 +12,25 @@ metadata = sqlalchemy.MetaData()
 
 
 class User(ormar.Model):
-    __tablename__ = "users"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "users"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100, default='')
 
 
 class Product(ormar.Model):
-    __tablename__ = "product"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "product"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
-    rating = ormar.Integer(minimum=1, maximum=5)
-    in_stock = ormar.Boolean(default=False)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
+    rating: ormar.Integer(minimum=1, maximum=5)
+    in_stock: ormar.Boolean(default=False)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -39,12 +42,12 @@ def create_test_database():
 
 
 def test_model_class():
-    assert list(User.__model_fields__.keys()) == ["id", "name"]
-    assert isinstance(User.__model_fields__["id"], ormar.Integer)
-    assert User.__model_fields__["id"].primary_key is True
-    assert isinstance(User.__model_fields__["name"], ormar.String)
-    assert User.__model_fields__["name"].length == 100
-    assert isinstance(User.__table__, sqlalchemy.Table)
+    assert list(User.Meta.model_fields.keys()) == ["id", "name"]
+    assert issubclass(User.Meta.model_fields["id"], pydantic.ConstrainedInt)
+    assert User.Meta.model_fields["id"].primary_key is True
+    assert issubclass(User.Meta.model_fields["name"], pydantic.ConstrainedStr)
+    assert User.Meta.model_fields["name"].max_length == 100
+    assert isinstance(User.Meta.table, sqlalchemy.Table)
 
 
 def test_model_pk():

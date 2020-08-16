@@ -16,17 +16,19 @@ def time():
 
 
 class Example(ormar.Model):
-    __tablename__ = "example"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "example"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    created = ormar.DateTime(default=datetime.datetime.now)
-    created_day = ormar.Date(default=datetime.date.today)
-    created_time = ormar.Time(default=time)
-    description = ormar.Text(nullable=True)
-    value = ormar.Float(nullable=True)
-    data = ormar.JSON(default={})
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=200, default='aaa')
+    created: ormar.DateTime(default=datetime.datetime.now)
+    created_day: ormar.Date(default=datetime.date.today)
+    created_time: ormar.Time(default=time)
+    description: ormar.Text(nullable=True)
+    value: ormar.Float(nullable=True)
+    data: ormar.JSON(default={})
 
 
 @pytest.fixture(autouse=True, scope="module")

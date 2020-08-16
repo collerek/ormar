@@ -12,53 +12,58 @@ metadata = sqlalchemy.MetaData()
 
 
 class Department(ormar.Model):
-    __tablename__ = "departments"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "departments"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True, autoincrement=False)
-    name = ormar.String(length=100)
+    id: ormar.Integer(primary_key=True, autoincrement=False)
+    name: ormar.String(max_length=100)
 
 
 class SchoolClass(ormar.Model):
-    __tablename__ = "schoolclasses"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "schoolclasses"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
-    department = ormar.ForeignKey(Department, nullable=False)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
+    department: ormar.ForeignKey(Department, nullable=False)
 
 
 class Category(ormar.Model):
-    __tablename__ = "categories"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "categories"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
 
 
 class Student(ormar.Model):
-    __tablename__ = "students"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "students"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
-    schoolclass = ormar.ForeignKey(SchoolClass)
-    category = ormar.ForeignKey(Category, nullable=True)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
+    schoolclass: ormar.ForeignKey(SchoolClass)
+    category: ormar.ForeignKey(Category, nullable=True)
 
 
 class Teacher(ormar.Model):
-    __tablename__ = "teachers"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "teachers"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
-    schoolclass = ormar.ForeignKey(SchoolClass)
-    category = ormar.ForeignKey(Category, nullable=True)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
+    schoolclass: ormar.ForeignKey(SchoolClass)
+    category: ormar.ForeignKey(Category, nullable=True)
 
 
 @pytest.fixture(scope="module")

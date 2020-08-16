@@ -1,6 +1,7 @@
 import databases
 import pytest
 import sqlalchemy
+from pydantic import ValidationError
 
 import ormar
 from ormar.exceptions import NoMatch, MultipleMatches, RelationshipInstanceError
@@ -11,62 +12,68 @@ metadata = sqlalchemy.MetaData()
 
 
 class Album(ormar.Model):
-    __tablename__ = "album"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "albums"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
 
 
 class Track(ormar.Model):
-    __tablename__ = "track"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "tracks"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    album = ormar.ForeignKey(Album)
-    title = ormar.String(length=100)
-    position = ormar.Integer()
+    id: ormar.Integer(primary_key=True)
+    album: ormar.ForeignKey(Album)
+    title: ormar.String(max_length=100)
+    position: ormar.Integer()
 
 
 class Cover(ormar.Model):
-    __tablename__ = "covers"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "covers"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    album = ormar.ForeignKey(Album, related_name="cover_pictures")
-    title = ormar.String(length=100)
+    id: ormar.Integer(primary_key=True)
+    album: ormar.ForeignKey(Album, related_name="cover_pictures")
+    title: ormar.String(max_length=100)
 
 
 class Organisation(ormar.Model):
-    __tablename__ = "org"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "org"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    ident = ormar.String(length=100)
+    id: ormar.Integer(primary_key=True)
+    ident: ormar.String(max_length=100)
 
 
 class Team(ormar.Model):
-    __tablename__ = "team"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "teams"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    org = ormar.ForeignKey(Organisation)
-    name = ormar.String(length=100)
+    id: ormar.Integer(primary_key=True)
+    org: ormar.ForeignKey(Organisation)
+    name: ormar.String(max_length=100)
 
 
 class Member(ormar.Model):
-    __tablename__ = "member"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "members"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    team = ormar.ForeignKey(Team)
-    email = ormar.String(length=100)
+    id: ormar.Integer(primary_key=True)
+    team: ormar.ForeignKey(Team)
+    email: ormar.String(max_length=100)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -171,8 +178,8 @@ async def test_fk_filter():
 
         tracks = (
             await Track.objects.select_related("album")
-            .filter(album__name="Fantasies")
-            .all()
+                .filter(album__name="Fantasies")
+                .all()
         )
         assert len(tracks) == 3
         for track in tracks:
@@ -180,8 +187,8 @@ async def test_fk_filter():
 
         tracks = (
             await Track.objects.select_related("album")
-            .filter(album__name__icontains="fan")
-            .all()
+                .filter(album__name__icontains="fan")
+                .all()
         )
         assert len(tracks) == 3
         for track in tracks:
@@ -223,8 +230,8 @@ async def test_multiple_fk():
 
         members = (
             await Member.objects.select_related("team__org")
-            .filter(team__org__ident="ACME Ltd")
-            .all()
+                .filter(team__org__ident="ACME Ltd")
+                .all()
         )
         assert len(members) == 4
         for member in members:
@@ -243,8 +250,8 @@ async def test_pk_filter():
 
         tracks = (
             await Track.objects.select_related("album")
-            .filter(position=2, album__name="Test")
-            .all()
+                .filter(position=2, album__name="Test")
+                .all()
         )
         assert len(tracks) == 1
 

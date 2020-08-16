@@ -30,22 +30,24 @@ async def shutdown() -> None:
 
 
 class Category(ormar.Model):
-    __tablename__ = "categories"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "categories"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    __tablename__ = "items"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "items"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
-    category = ormar.ForeignKey(Category, nullable=True)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
+    category: ormar.ForeignKey(Category, nullable=True)
 
 
 @pytest.fixture(autouse=True, scope="module")
