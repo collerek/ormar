@@ -69,10 +69,8 @@ class RelationshipManager:
 
     @staticmethod
     def append_related_model(relations_list: List["Model"], model: "Model") -> None:
-        print("appending", relations_list, model)
         for relation_child in relations_list:
             try:
-                print(relation_child.__same__(model), "same")
                 if relation_child.__same__(model):
                     return
             except ReferenceError:

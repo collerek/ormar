@@ -113,11 +113,9 @@ def populate_pydantic_default_values(attrs: Dict) -> Dict:
                 type_.name = field
             def_value = type_.default_value()
             curr_def_value = attrs.get(field, 'NONE')
-            print(field, curr_def_value, 'def val', type_.nullable)
             if curr_def_value == 'NONE' and isinstance(def_value, FieldInfo):
                 attrs[field] = def_value
             elif curr_def_value == 'NONE' and type_.nullable:
-                print(field, 'defsults tp none')
                 attrs[field] = FieldInfo(default=None)
     return attrs
 
@@ -147,8 +145,6 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             annotations = attrs.get("__annotations__") or new_model.__annotations__
             attrs["__annotations__"]= annotations
             attrs = populate_pydantic_default_values(attrs)
-           
-            print(attrs)
 
             tablename = name.lower() + "s"
             new_model.Meta.tablename = new_model.Meta.tablename or tablename
@@ -182,8 +178,6 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             )
 
             new_model.Meta.model_fields = model_fields
-            print(attrs, 'before super')
-            print(new_model.Meta.__dict__)
             new_model = super().__new__(  # type: ignore
                 mcs, name, bases, attrs
             )

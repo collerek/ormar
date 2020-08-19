@@ -79,7 +79,7 @@ class Query:
 
         expr = self._apply_expression_modifiers(expr)
 
-        print(expr.compile(compile_kwargs={"literal_binds": True}))
+        #print(expr.compile(compile_kwargs={"literal_binds": True}))
         self._reset_query_parameters()
 
         return expr, self._select_related
@@ -179,7 +179,6 @@ class Query:
             ):
                 rel_part = field_name if not rel_part else rel_part + "__" + field_name
                 if not field.nullable:
-                    print('add', rel_part, field)
                     if rel_part not in self._select_related:
                         new_related = "__".join(rel_part.split("__")[:-1]) if len(
                             rel_part.split("__")) > 1 else rel_part
@@ -188,7 +187,7 @@ class Query:
                 elif self._field_qualifies_to_deeper_search(
                         field, parent_virtual, nested, rel_part
                 ):
-                    print('deeper', rel_part, field, field.to)
+                    
                     self._extract_auto_required_relations(
                         prev_model=field.to,
                         rel_part=rel_part,

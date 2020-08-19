@@ -171,9 +171,7 @@ class FakePydantic(pydantic.BaseModel, metaclass=ModelMetaclass):
             exclude_defaults: bool = False,
             exclude_none: bool = False,
             nested: bool = False
-    ) -> 'DictStrAny':  # noqa: A003
-        print('callin super', self.__class__)
-        print('to exclude', self._exclude_related_names_not_required(nested))
+    ) -> 'DictStrAny':  # noqa: A003'
         dict_instance = super().dict(include=include,
                                      exclude=self._exclude_related_names_not_required(nested),
                                      by_alias=by_alias,
@@ -181,9 +179,7 @@ class FakePydantic(pydantic.BaseModel, metaclass=ModelMetaclass):
                                      exclude_unset=exclude_unset,
                                      exclude_defaults=exclude_defaults,
                                      exclude_none=exclude_none)
-        print('after super')
         for field in self._extract_related_names():
-            print(self.__class__, field, nested)
             nested_model = getattr(self, field)
 
             if self.Meta.model_fields[field].virtual and nested:
@@ -191,13 +187,9 @@ class FakePydantic(pydantic.BaseModel, metaclass=ModelMetaclass):
             if isinstance(nested_model, list) and not isinstance(
                     nested_model, ormar.Model
             ):
-                print('nested list')
                 dict_instance[field] = [x.dict(nested=True) for x in nested_model]
-            else:
-                print('instance')
-                if nested_model is not None:
-                    dict_instance[field] = nested_model.dict(nested=True) 
-                
+            elif nested_model is not None:
+                   dict_instance[field] = nested_model.dict(nested=True) 
         return dict_instance
 
     def from_dict(self, value_dict: Dict) -> None:

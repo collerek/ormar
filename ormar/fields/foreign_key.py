@@ -111,7 +111,6 @@ class ForeignKeyField(BaseField):
     def expand_relationship(
             cls, value: Any, child: "Model"
     ) -> Optional[Union["Model", List["Model"]]]:
-        print("expandong relatiknship", value, child)
         if value is None:
             return None
 

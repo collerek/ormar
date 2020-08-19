@@ -117,9 +117,6 @@ async def test_model_crud():
         await track1.save()
         await track2.save()
         await track3.save()
-        
-        assert len(album.tracks) == 3
-        assert album.tracks[1].title == "Heart don't stand a chance"
 
         track = await Track.objects.get(title="The Bird")
         assert track.album.pk == album.pk
@@ -127,6 +124,8 @@ async def test_model_crud():
         await track.album.load()
         assert track.album.name == "Malibu"
 
+        assert len(album.tracks) == 3
+        assert album.tracks[1].title == "Heart don't stand a chance"
 
         album1 = await Album.objects.get(name="Malibu")
         assert album1.pk == 1
