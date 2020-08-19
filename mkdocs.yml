@@ -1,0 +1,29 @@
+site_name: Async ORM
+nav:
+  - Home: index.md
+  - Models: models.md
+  - Fields: fields.md
+  - Relations: relations.md
+  - Queries: queries.md
+  - Pydantic models: pydantic.md
+  - Use with Fastapi: fastapi.md
+theme:
+  name: material
+  highlightjs: true
+  hljs_languages:
+      - python
+  palette:
+    primary: indigo
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: docs
+  - pymdownx.inlinehilite
+  - pymdownx.highlight:
+      linenums: true
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js
+  - javascripts/config.js
+extra_css:
+  - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css

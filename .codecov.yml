@@ -1,0 +1,18 @@
+coverage:
+  precision: 2
+  round: down
+  range: "80...100"
+
+  status:
+    project: yes
+    patch: yes
+    changes: yes
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: false  # if true: only post the comment if coverage changes
+  require_base: no        # [yes :: must have a base report to post]
+  require_head: yes       # [yes :: must have a head report to post]
+  branches:               # branch names that can post comment
+    - "master"

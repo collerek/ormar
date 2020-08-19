@@ -1,0 +1,8 @@
+p38venv
+.idea
+.pytest_cache
+*.pyc
+*.log
+test.db
+dist
+/ormar.egg-info/
