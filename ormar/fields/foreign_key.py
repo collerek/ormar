@@ -23,7 +23,7 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
 
 
 def ForeignKey(
-    to: "Model",
+    to: Type["Model"],
     *,
     name: str = None,
     unique: bool = False,

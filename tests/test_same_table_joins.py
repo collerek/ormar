@@ -76,6 +76,7 @@ def event_loop():
 @pytest.fixture(autouse=True, scope="module")
 async def create_test_database():
     engine = sqlalchemy.create_engine(DATABASE_URL)
+    metadata.drop_all(engine)
     metadata.create_all(engine)
     department = await Department.objects.create(id=1, name="Math Department")
     class1 = await SchoolClass.objects.create(name="Math", department=department)

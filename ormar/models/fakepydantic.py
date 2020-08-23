@@ -240,10 +240,9 @@ class FakePydantic(pydantic.BaseModel, metaclass=ModelMetaclass):
             k: v for k, v in self_fields.items() if k in self.Meta.table.columns
         }
         for field in self._extract_related_names():
+            target_pk_name = self.Meta.model_fields[field].to.Meta.pkname
             if getattr(self, field) is not None:
-                self_fields[field] = getattr(
-                    getattr(self, field), self.Meta.model_fields[field].to.Meta.pkname
-                )
+                self_fields[field] = getattr(getattr(self, field), target_pk_name)
         return self_fields
 
     @classmethod
@@ -259,17 +258,18 @@ class FakePydantic(pydantic.BaseModel, metaclass=ModelMetaclass):
     @classmethod
     def merge_two_instances(cls, one: "Model", other: "Model") -> "Model":
         for field in one.Meta.model_fields.keys():
-            if isinstance(getattr(one, field), list) and not isinstance(
-                getattr(one, field), ormar.Model
+            current_field = getattr(one, field)
+            if isinstance(current_field, list) and not isinstance(
+                current_field, ormar.Model
             ):
-                setattr(other, field, getattr(one, field) + getattr(other, field))
-            elif isinstance(getattr(one, field), ormar.Model):
-                if getattr(one, field).pk == getattr(other, field).pk:
-                    setattr(
-                        other,
-                        field,
-                        cls.merge_two_instances(
-                            getattr(one, field), getattr(other, field)
-                        ),
-                    )
+                setattr(other, field, current_field + getattr(other, field))
+            elif (
+                isinstance(current_field, ormar.Model)
+                and current_field.pk == getattr(other, field).pk
+            ):
+                setattr(
+                    other,
+                    field,
+                    cls.merge_two_instances(current_field, getattr(other, field)),
+                )
         return other
