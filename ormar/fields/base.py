@@ -7,7 +7,7 @@ from ormar import ModelDefinitionError  # noqa I101
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
-    from ormar.models import FakePydantic
+    from ormar.models import NewBaseModel
 
 
 class BaseField:
@@ -64,6 +64,6 @@ class BaseField:
 
     @classmethod
     def expand_relationship(
-        cls, value: Any, child: Union["Model", "FakePydantic"]
+        cls, value: Any, child: Union["Model", "NewBaseModel"]
     ) -> Any:
         return value

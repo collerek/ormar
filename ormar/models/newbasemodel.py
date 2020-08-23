@@ -33,7 +33,7 @@ if TYPE_CHECKING:  # pragma no cover
     MappingIntStrAny = Mapping[IntStr, Any]
 
 
-class FakePydantic(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass):
+class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass):
     __slots__ = ("_orm_id", "_orm_saved")
 
     if TYPE_CHECKING:  # pragma no cover

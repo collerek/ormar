@@ -11,7 +11,7 @@ from sqlalchemy import text
 from ormar.fields.foreign_key import ForeignKeyField  # noqa I100
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import FakePydantic, Model
+    from ormar.models import NewBaseModel, Model
 
 
 def get_table_alias() -> str:
@@ -48,7 +48,7 @@ class RelationshipManager:
             self._relations[reverse_key] = {"type": "reverse"}
             self._aliases[f"{field.to.Meta.tablename}_{table_name}"] = get_table_alias()
 
-    def deregister(self, model: "FakePydantic") -> None:
+    def deregister(self, model: "NewBaseModel") -> None:
         for rel_type in self._relations.keys():
             if model.get_name() in rel_type.lower():
                 if model._orm_id in self._relations[rel_type]:
@@ -56,8 +56,8 @@ class RelationshipManager:
 
     def add_relation(
         self,
-        parent: "FakePydantic",
-        child: "FakePydantic",
+        parent: "NewBaseModel",
+        child: "NewBaseModel",
         child_model_name: str,
         virtual: bool = False,
     ) -> None:
@@ -95,13 +95,13 @@ class RelationshipManager:
 
         relations_list.append(model)
 
-    def contains(self, relations_key: str, instance: "FakePydantic") -> bool:
+    def contains(self, relations_key: str, instance: "NewBaseModel") -> bool:
         if relations_key in self._relations:
             return instance._orm_id in self._relations[relations_key]
         return False
 
     def get(
-        self, relations_key: str, instance: "FakePydantic"
+        self, relations_key: str, instance: "NewBaseModel"
     ) -> Union["Model", List["Model"]]:
         if relations_key in self._relations:
             if instance._orm_id in self._relations[relations_key]:

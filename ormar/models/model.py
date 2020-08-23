@@ -3,10 +3,10 @@ from typing import Any, List
 import sqlalchemy
 
 import ormar.queryset  # noqa I100
-from ormar.models import FakePydantic  # noqa I100
+from ormar.models import NewBaseModel  # noqa I100
 
 
-class Model(FakePydantic):
+class Model(NewBaseModel):
     __abstract__ = False
 
     @classmethod
