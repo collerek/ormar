@@ -87,6 +87,8 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _construct_model_from_dict(cls, value: dict, child: "Model") -> "Model":
+        if len(value.keys()) == 1 and list(value.keys())[0] == cls.to.Meta.pkname:
+            value["__pk_only__"] = True
         model = cls.to(**value)
         cls.register_relation(model, child)
         return model

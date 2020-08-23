@@ -61,13 +61,13 @@ def create_test_database():
 @app.get("/items/", response_model=List[Item])
 async def get_items():
     items = await Item.objects.select_related("category").all()
-    return [item.dict() for item in items]
+    return items
 
 
 @app.post("/items/", response_model=Item)
 async def create_item(item: Item):
-    item = await Item.objects.create(**item.dict())
-    return item.dict()
+    await item.save()
+    return item
 
 
 @app.post("/categories/", response_model=Category)

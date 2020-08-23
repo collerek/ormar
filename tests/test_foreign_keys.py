@@ -133,6 +133,8 @@ async def test_model_crud():
         assert album1.pk == 1
         assert album1.tracks is None
 
+        await Track.objects.create(album={"id": track.album.pk}, title="The Bird2", position=4)
+
 
 @pytest.mark.asyncio
 async def test_select_related():
