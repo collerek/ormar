@@ -32,7 +32,7 @@ class QueryClause:
         self.filter_clauses = filter_clauses
 
         self.model_cls = model_cls
-        self.table = self.model_cls.__table__
+        self.table = self.model_cls.Meta.table
 
     def filter(  # noqa: A003
         self, **kwargs: Any
@@ -41,7 +41,7 @@ class QueryClause:
         select_related = list(self._select_related)
 
         if kwargs.get("pk"):
-            pk_name = self.model_cls.__pkname__
+            pk_name = self.model_cls.Meta.pkname
             kwargs[pk_name] = kwargs.pop("pk")
 
         for key, value in kwargs.items():
@@ -65,8 +65,8 @@ class QueryClause:
                         related_parts, select_related
                     )
 
-                table = model_cls.__table__
-                column = model_cls.__table__.columns[field_name]
+                table = model_cls.Meta.table
+                column = model_cls.Meta.table.columns[field_name]
 
             else:
                 op = "exact"
@@ -106,12 +106,12 @@ class QueryClause:
 
         # Walk the relationships to the actual model class
         # against which the comparison is being made.
-        previous_table = model_cls.__tablename__
+        previous_table = model_cls.Meta.tablename
         for part in related_parts:
-            current_table = model_cls.__model_fields__[part].to.__tablename__
-            manager = model_cls._orm_relationship_manager
+            current_table = model_cls.Meta.model_fields[part].to.Meta.tablename
+            manager = model_cls.Meta._orm_relationship_manager
             table_prefix = manager.resolve_relation_join(previous_table, current_table)
-            model_cls = model_cls.__model_fields__[part].to
+            model_cls = model_cls.Meta.model_fields[part].to
             previous_table = current_table
         return select_related, table_prefix, model_cls
 
@@ -128,7 +128,7 @@ class QueryClause:
 
         clause_text = str(
             clause.compile(
-                dialect=self.model_cls.__database__._backend._dialect,
+                dialect=self.model_cls.Meta.database._backend._dialect,
                 compile_kwargs={"literal_binds": True},
             )
         )

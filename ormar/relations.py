@@ -5,7 +5,7 @@ from random import choices
 from typing import List, TYPE_CHECKING, Union
 from weakref import proxy
 
-from ormar import ForeignKey
+from ormar.fields.foreign_key import ForeignKeyField
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import FakePydantic, Model
@@ -21,14 +21,18 @@ class RelationshipManager:
         self._aliases = dict()
 
     def add_relation_type(
-        self, relations_key: str, reverse_key: str, field: ForeignKey, table_name: str
+        self,
+        relations_key: str,
+        reverse_key: str,
+        field: ForeignKeyField,
+        table_name: str,
     ) -> None:
         if relations_key not in self._relations:
             self._relations[relations_key] = {"type": "primary"}
-            self._aliases[f"{table_name}_{field.to.__tablename__}"] = get_table_alias()
+            self._aliases[f"{table_name}_{field.to.Meta.tablename}"] = get_table_alias()
         if reverse_key not in self._relations:
             self._relations[reverse_key] = {"type": "reverse"}
-            self._aliases[f"{field.to.__tablename__}_{table_name}"] = get_table_alias()
+            self._aliases[f"{field.to.Meta.tablename}_{table_name}"] = get_table_alias()
 
     def deregister(self, model: "FakePydantic") -> None:
         for rel_type in self._relations.keys():

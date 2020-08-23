@@ -30,22 +30,24 @@ async def shutdown() -> None:
 
 
 class Category(ormar.Model):
-    __tablename__ = "categories"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "categories"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    __tablename__ = "items"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "items"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
-    category = ormar.ForeignKey(Category, nullable=True)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
+    category: ormar.ForeignKey(Category, nullable=True)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -59,19 +61,19 @@ def create_test_database():
 @app.get("/items/", response_model=List[Item])
 async def get_items():
     items = await Item.objects.select_related("category").all()
-    return [item.dict() for item in items]
+    return items
 
 
 @app.post("/items/", response_model=Item)
 async def create_item(item: Item):
-    item = await Item.objects.create(**item.dict())
-    return item.dict()
+    await item.save()
+    return item
 
 
 @app.post("/categories/", response_model=Category)
 async def create_category(category: Category):
-    category = await Category.objects.create(**category.dict())
-    return category.dict()
+    await category.save()
+    return category
 
 
 @app.put("/items/{item_id}")

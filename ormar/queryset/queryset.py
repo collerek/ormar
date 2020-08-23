@@ -33,11 +33,11 @@ class QuerySet:
 
     @property
     def database(self) -> databases.Database:
-        return self.model_cls.__database__
+        return self.model_cls.Meta.database
 
     @property
     def table(self) -> sqlalchemy.Table:
-        return self.model_cls.__table__
+        return self.model_cls.Meta.table
 
     def build_select_expression(self) -> sqlalchemy.sql.select:
         qry = Query(
@@ -148,8 +148,8 @@ class QuerySet:
         new_kwargs = dict(**kwargs)
 
         # Remove primary key when None to prevent not null constraint in postgresql.
-        pkname = self.model_cls.__pkname__
-        pk = self.model_cls.__model_fields__[pkname]
+        pkname = self.model_cls.Meta.pkname
+        pk = self.model_cls.Meta.model_fields[pkname]
         if (
             pkname in new_kwargs
             and new_kwargs.get(pkname) is None
@@ -163,11 +163,11 @@ class QuerySet:
                 if isinstance(new_kwargs.get(field), ormar.Model):
                     new_kwargs[field] = getattr(
                         new_kwargs.get(field),
-                        self.model_cls.__model_fields__[field].to.__pkname__,
+                        self.model_cls.Meta.model_fields[field].to.Meta.pkname,
                     )
                 else:
                     new_kwargs[field] = new_kwargs.get(field).get(
-                        self.model_cls.__model_fields__[field].to.__pkname__
+                        self.model_cls.Meta.model_fields[field].to.Meta.pkname
                     )
 
         # Build the insert expression.
@@ -176,5 +176,6 @@ class QuerySet:
 
         # Execute the insert, and return a new model instance.
         instance = self.model_cls(**kwargs)
-        instance.pk = await self.database.execute(expr)
+        pk = await self.database.execute(expr)
+        setattr(instance, self.model_cls.Meta.pkname, pk)
         return instance

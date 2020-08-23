@@ -1,4 +1,5 @@
 import databases
+import pydantic
 import pytest
 import sqlalchemy
 
@@ -10,24 +11,36 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
-class User(ormar.Model):
-    __tablename__ = "users"
-    __metadata__ = metadata
-    __database__ = database
+class JsonSample(ormar.Model):
+    class Meta:
+        tablename = "jsons"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
+    id: ormar.Integer(primary_key=True)
+    test_json: ormar.JSON(nullable=True)
+
+
+class User(ormar.Model):
+    class Meta:
+        tablename = "users"
+        metadata = metadata
+        database = database
+
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100, default='')
 
 
 class Product(ormar.Model):
-    __tablename__ = "product"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "product"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
-    rating = ormar.Integer(minimum=1, maximum=5)
-    in_stock = ormar.Boolean(default=False)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
+    rating: ormar.Integer(minimum=1, maximum=5)
+    in_stock: ormar.Boolean(default=False)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -39,18 +52,30 @@ def create_test_database():
 
 
 def test_model_class():
-    assert list(User.__model_fields__.keys()) == ["id", "name"]
-    assert isinstance(User.__model_fields__["id"], ormar.Integer)
-    assert User.__model_fields__["id"].primary_key is True
-    assert isinstance(User.__model_fields__["name"], ormar.String)
-    assert User.__model_fields__["name"].length == 100
-    assert isinstance(User.__table__, sqlalchemy.Table)
+    assert list(User.Meta.model_fields.keys()) == ["id", "name"]
+    assert issubclass(User.Meta.model_fields["id"], pydantic.ConstrainedInt)
+    assert User.Meta.model_fields["id"].primary_key is True
+    assert issubclass(User.Meta.model_fields["name"], pydantic.ConstrainedStr)
+    assert User.Meta.model_fields["name"].max_length == 100
+    assert isinstance(User.Meta.table, sqlalchemy.Table)
 
 
 def test_model_pk():
     user = User(pk=1)
     assert user.pk == 1
     assert user.id == 1
+
+
+@pytest.mark.asyncio
+async def test_json_column():
+    async with database:
+        await JsonSample.objects.create(test_json=dict(aa=12))
+        await JsonSample.objects.create(test_json='{"aa": 12}')
+
+        items = await JsonSample.objects.all()
+        assert len(items) == 2
+        assert items[0].test_json == dict(aa=12)
+        assert items[1].test_json == dict(aa=12)
 
 
 @pytest.mark.asyncio

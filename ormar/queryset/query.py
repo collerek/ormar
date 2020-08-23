@@ -4,8 +4,8 @@ import sqlalchemy
 from sqlalchemy import text
 
 import ormar  # noqa I100
-from ormar import ForeignKey
 from ormar.fields import BaseField
+from ormar.fields.foreign_key import ForeignKeyField
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -34,7 +34,7 @@ class Query:
         self.filter_clauses = filter_clauses
 
         self.model_cls = model_cls
-        self.table = self.model_cls.__table__
+        self.table = self.model_cls.Meta.table
 
         self.auto_related = []
         self.used_aliases = []
@@ -46,18 +46,18 @@ class Query:
 
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
         self.columns = list(self.table.columns)
-        self.order_bys = [text(f"{self.table.name}.{self.model_cls.__pkname__}")]
+        self.order_bys = [text(f"{self.table.name}.{self.model_cls.Meta.pkname}")]
         self.select_from = self.table
 
-        for key in self.model_cls.__model_fields__:
-            if (
-                not self.model_cls.__model_fields__[key].nullable
-                and isinstance(
-                    self.model_cls.__model_fields__[key], ormar.fields.ForeignKey,
-                )
-                and key not in self._select_related
-            ):
-                self._select_related = [key] + self._select_related
+        # for key in self.model_cls.Meta.model_fields:
+        #     if (
+        #             not self.model_cls.Meta.model_fields[key].nullable
+        #             and isinstance(
+        #         self.model_cls.Meta.model_fields[key], ForeignKeyField,
+        #     )
+        #             and key not in self._select_related
+        #     ):
+        #         self._select_related = [key] + self._select_related
 
         start_params = JoinParameters(
             self.model_cls, "", self.table.name, self.model_cls
@@ -97,12 +97,12 @@ class Query:
 
     @staticmethod
     def _field_is_a_foreign_key_and_no_circular_reference(
-        field: BaseField, field_name: str, rel_part: str
+        field: Type[BaseField], field_name: str, rel_part: str
     ) -> bool:
-        return isinstance(field, ForeignKey) and field_name not in rel_part
+        return issubclass(field, ForeignKeyField) and field_name not in rel_part
 
     def _field_qualifies_to_deeper_search(
-        self, field: ForeignKey, parent_virtual: bool, nested: bool, rel_part: str
+        self, field: ForeignKeyField, parent_virtual: bool, nested: bool, rel_part: str
     ) -> bool:
         prev_part_of_related = "__".join(rel_part.split("__")[:-1])
         partial_match = any(
@@ -126,25 +126,26 @@ class Query:
     def _build_join_parameters(
         self, part: str, join_params: JoinParameters
     ) -> JoinParameters:
-        model_cls = join_params.model_cls.__model_fields__[part].to
-        to_table = model_cls.__table__.name
+        model_cls = join_params.model_cls.Meta.model_fields[part].to
+        to_table = model_cls.Meta.table.name
 
-        alias = model_cls._orm_relationship_manager.resolve_relation_join(
+        alias = model_cls.Meta._orm_relationship_manager.resolve_relation_join(
             join_params.from_table, to_table
         )
         if alias not in self.used_aliases:
-            if join_params.prev_model.__model_fields__[part].virtual:
+            if join_params.prev_model.Meta.model_fields[part].virtual:
                 to_key = next(
                     (
                         v
-                        for k, v in model_cls.__model_fields__.items()
-                        if isinstance(v, ForeignKey) and v.to == join_params.prev_model
+                        for k, v in model_cls.Meta.model_fields.items()
+                        if issubclass(v, ForeignKeyField)
+                        and v.to == join_params.prev_model
                     ),
                     None,
                 ).name
-                from_key = model_cls.__pkname__
+                from_key = model_cls.Meta.pkname
             else:
-                to_key = model_cls.__pkname__
+                to_key = model_cls.Meta.pkname
                 from_key = part
 
             on_clause = self.on_clause(
@@ -157,8 +158,8 @@ class Query:
             self.select_from = sqlalchemy.sql.outerjoin(
                 self.select_from, target_table, on_clause
             )
-            self.order_bys.append(text(f"{alias}_{to_table}.{model_cls.__pkname__}"))
-            self.columns.extend(self.prefixed_columns(alias, model_cls.__table__))
+            self.order_bys.append(text(f"{alias}_{to_table}.{model_cls.Meta.pkname}"))
+            self.columns.extend(self.prefixed_columns(alias, model_cls.Meta.table))
             self.used_aliases.append(alias)
 
         previous_alias = alias
@@ -173,18 +174,24 @@ class Query:
         nested: bool = False,
         parent_virtual: bool = False,
     ) -> None:
-        for field_name, field in prev_model.__model_fields__.items():
+        for field_name, field in prev_model.Meta.model_fields.items():
             if self._field_is_a_foreign_key_and_no_circular_reference(
                 field, field_name, rel_part
             ):
                 rel_part = field_name if not rel_part else rel_part + "__" + field_name
                 if not field.nullable:
                     if rel_part not in self._select_related:
-                        self.auto_related.append("__".join(rel_part.split("__")[:-1]))
+                        new_related = (
+                            "__".join(rel_part.split("__")[:-1])
+                            if len(rel_part.split("__")) > 1
+                            else rel_part
+                        )
+                        self.auto_related.append(new_related)
                     rel_part = ""
                 elif self._field_qualifies_to_deeper_search(
                     field, parent_virtual, nested, rel_part
                 ):
+
                     self._extract_auto_required_relations(
                         prev_model=field.to,
                         rel_part=rel_part,
