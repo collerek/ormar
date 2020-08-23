@@ -22,7 +22,7 @@ import ormar  # noqa I100
 from ormar.fields import BaseField
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
-from ormar.relations import RelationshipManager
+from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models.model import Model
@@ -45,7 +45,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         __tablename__: str
         __metadata__: sqlalchemy.MetaData
         __database__: databases.Database
-        _orm_relationship_manager: RelationshipManager
+        _orm_relationship_manager: AliasManager
         Meta: ModelMeta
 
     # noinspection PyMissingConstructor

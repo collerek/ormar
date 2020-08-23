@@ -18,7 +18,7 @@ def get_table_alias() -> str:
     return "".join(choices(string.ascii_uppercase, k=2)) + uuid.uuid4().hex[:4]
 
 
-class RelationshipManager:
+class AliasManager:
     def __init__(self) -> None:
         self._relations = dict()
         self._aliases = dict()

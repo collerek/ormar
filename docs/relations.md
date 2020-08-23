@@ -76,7 +76,7 @@ Since you join two times to the same table (categories) it won't work by default
 
 But don't worry - ormar can handle situations like this, as it uses the Relationship Manager which has it's aliases defined for all relationships.
 
-Each class is registered with the same instance of the RelationshipManager that you can access like this:
+Each class is registered with the same instance of the AliasManager that you can access like this:
 
 ```python
 SchoolClass._orm_relationship_manager

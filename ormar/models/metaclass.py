@@ -10,12 +10,12 @@ from ormar import ForeignKey, ModelDefinitionError  # noqa I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.queryset import QuerySet
-from ormar.relations import RelationshipManager
+from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
-relationship_manager = RelationshipManager()
+relationship_manager = AliasManager()
 
 
 class ModelMeta:
@@ -26,7 +26,7 @@ class ModelMeta:
     columns: List[sqlalchemy.Column]
     pkname: str
     model_fields: Dict[str, Union[BaseField, ForeignKey]]
-    _orm_relationship_manager: RelationshipManager
+    _orm_relationship_manager: AliasManager
 
 
 def register_relation_on_build(table_name: str, field: ForeignKey, name: str) -> None:

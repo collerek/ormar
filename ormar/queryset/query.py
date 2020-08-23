@@ -6,7 +6,7 @@ from sqlalchemy import text
 import ormar  # noqa I100
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.queryset.relationship_crawler import RelationshipCrawler
-from ormar.relations import RelationshipManager
+from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -44,7 +44,7 @@ class Query:
         self.order_bys = None
 
     @property
-    def relation_manager(self) -> RelationshipManager:
+    def relation_manager(self) -> AliasManager:
         return self.model_cls.Meta._orm_relationship_manager
 
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
