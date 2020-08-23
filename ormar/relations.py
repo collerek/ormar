@@ -5,7 +5,10 @@ from random import choices
 from typing import List, TYPE_CHECKING, Union
 from weakref import proxy
 
-from ormar.fields.foreign_key import ForeignKeyField
+import sqlalchemy
+from sqlalchemy import text
+
+from ormar.fields.foreign_key import ForeignKeyField  # noqa I100
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import FakePydantic, Model
@@ -19,6 +22,17 @@ class RelationshipManager:
     def __init__(self) -> None:
         self._relations = dict()
         self._aliases = dict()
+
+    @staticmethod
+    def prefixed_columns(alias: str, table: sqlalchemy.Table) -> List[text]:
+        return [
+            text(f"{alias}_{table.name}.{column.name} as {alias}_{column.name}")
+            for column in table.columns
+        ]
+
+    @staticmethod
+    def prefixed_table_name(alias: str, name: str) -> text:
+        return text(f"{name} {alias}_{name}")
 
     def add_relation_type(
         self,

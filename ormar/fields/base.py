@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, TYPE_CHECKING
+from typing import Any, List, Optional, TYPE_CHECKING, Union
 
 import sqlalchemy
 from pydantic import Field
@@ -7,6 +7,7 @@ from ormar import ModelDefinitionError  # noqa I101
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
+    from ormar.models import FakePydantic
 
 
 class BaseField:
@@ -62,5 +63,7 @@ class BaseField:
         )
 
     @classmethod
-    def expand_relationship(cls, value: Any, child: "Model") -> Any:
+    def expand_relationship(
+        cls, value: Any, child: Union["Model", "FakePydantic"]
+    ) -> Any:
         return value

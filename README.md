@@ -31,12 +31,11 @@ Because ormar is built on SQLAlchemy core, you can use [`alembic`][alembic] to p
 database migrations.
 
 The goal was to create a simple ORM that can be used directly with [`fastapi`][fastapi] that bases it's data validation on pydantic.
-Initial work was inspired by [`encode/orm`][encode/orm].
+Initial work was inspired by [`encode/orm`][encode/orm], later I found `ormantic` and used it as a further inspiration.
 The encode package was too simple (i.e. no ability to join two times to the same table) and used typesystem for data checks.
 
-To avoid too high coupling with pydantic and sqlalchemy ormar uses them by **composition** rather than by **inheritance**.
 
-**ormar is still under development:** We recommend pinning any dependencies with `ormar~=0.1.1`
+**ormar is still under development:** We recommend pinning any dependencies with `ormar~=0.2.0`
 
 **Note**: Use `ipython` to try this from the console, since it supports `await`.
 
@@ -50,14 +49,15 @@ metadata = sqlalchemy.MetaData()
 
 
 class Note(ormar.Model):
-    __tablename__ = "notes"
-    __database__ = database
-    __metadata__ = metadata
+    class Meta:
+        tablename = "notes"
+        database = database
+        metadata = metadata
 
     # primary keys of type int by dafault are set to autoincrement    
-    id = ormar.Integer(primary_key=True)
-    text = ormar.String(length=100)
-    completed = ormar.Boolean(default=False)
+    id: ormar.Integer(primary_key=True)
+    text: ormar.String(length=100)
+    completed: ormar.Boolean(default=False)
 
 # Create the database
 engine = sqlalchemy.create_engine(str(database.url))
@@ -103,23 +103,25 @@ metadata = sqlalchemy.MetaData()
 
 
 class Album(ormar.Model):
-    __tablename__ = "album"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "album"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(length=100)
 
 
 class Track(ormar.Model):
-    __tablename__ = "track"
-    __metadata__ = metadata
-    __database__ = database
+    class Meta:
+        tablename = "track"
+        metadata = metadata
+        database = database
 
-    id = ormar.Integer(primary_key=True)
-    album = ormar.ForeignKey(Album)
-    title = ormar.String(length=100)
-    position = ormar.Integer()
+    id: ormar.Integer(primary_key=True)
+    album: ormar.ForeignKey(Album)
+    title: ormar.String(length=100)
+    position: ormar.Integer()
 
 
 # Create some records to work with.

@@ -4,8 +4,9 @@ import sqlalchemy
 from sqlalchemy import text
 
 import ormar  # noqa I100
-from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
+from ormar.queryset.relationship_crawler import RelationshipCrawler
+from ormar.relations import RelationshipManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -36,34 +37,28 @@ class Query:
         self.model_cls = model_cls
         self.table = self.model_cls.Meta.table
 
-        self.auto_related = []
         self.used_aliases = []
-        self.already_checked = []
 
         self.select_from = None
         self.columns = None
         self.order_bys = None
+
+    @property
+    def relation_manager(self) -> RelationshipManager:
+        return self.model_cls.Meta._orm_relationship_manager
 
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
         self.columns = list(self.table.columns)
         self.order_bys = [text(f"{self.table.name}.{self.model_cls.Meta.pkname}")]
         self.select_from = self.table
 
-        # for key in self.model_cls.Meta.model_fields:
-        #     if (
-        #             not self.model_cls.Meta.model_fields[key].nullable
-        #             and isinstance(
-        #         self.model_cls.Meta.model_fields[key], ForeignKeyField,
-        #     )
-        #             and key not in self._select_related
-        #     ):
-        #         self._select_related = [key] + self._select_related
-
         start_params = JoinParameters(
             self.model_cls, "", self.table.name, self.model_cls
         )
-        self._extract_auto_required_relations(prev_model=start_params.prev_model)
-        self._include_auto_related_models()
+
+        self._select_related = RelationshipCrawler().discover_relations(
+            self._select_related, prev_model=start_params.prev_model
+        )
         self._select_related.sort(key=lambda item: (-len(item), item))
 
         for item in self._select_related:
@@ -83,38 +78,6 @@ class Query:
         self._reset_query_parameters()
 
         return expr, self._select_related
-
-    @staticmethod
-    def prefixed_columns(alias: str, table: sqlalchemy.Table) -> List[text]:
-        return [
-            text(f"{alias}_{table.name}.{column.name} as {alias}_{column.name}")
-            for column in table.columns
-        ]
-
-    @staticmethod
-    def prefixed_table_name(alias: str, name: str) -> text:
-        return text(f"{name} {alias}_{name}")
-
-    @staticmethod
-    def _field_is_a_foreign_key_and_no_circular_reference(
-        field: Type[BaseField], field_name: str, rel_part: str
-    ) -> bool:
-        return issubclass(field, ForeignKeyField) and field_name not in rel_part
-
-    def _field_qualifies_to_deeper_search(
-        self, field: ForeignKeyField, parent_virtual: bool, nested: bool, rel_part: str
-    ) -> bool:
-        prev_part_of_related = "__".join(rel_part.split("__")[:-1])
-        partial_match = any(
-            [x.startswith(prev_part_of_related) for x in self._select_related]
-        )
-        already_checked = any(
-            [x.startswith(rel_part) for x in (self.auto_related + self.already_checked)]
-        )
-        return (
-            (field.virtual and parent_virtual)
-            or (partial_match and not already_checked)
-        ) or not nested
 
     def on_clause(
         self, previous_alias: str, alias: str, from_clause: str, to_clause: str,
@@ -154,61 +117,20 @@ class Query:
                 from_clause=f"{join_params.from_table}.{from_key}",
                 to_clause=f"{to_table}.{to_key}",
             )
-            target_table = self.prefixed_table_name(alias, to_table)
+            target_table = self.relation_manager.prefixed_table_name(alias, to_table)
             self.select_from = sqlalchemy.sql.outerjoin(
                 self.select_from, target_table, on_clause
             )
             self.order_bys.append(text(f"{alias}_{to_table}.{model_cls.Meta.pkname}"))
-            self.columns.extend(self.prefixed_columns(alias, model_cls.Meta.table))
+            self.columns.extend(
+                self.relation_manager.prefixed_columns(alias, model_cls.Meta.table)
+            )
             self.used_aliases.append(alias)
 
         previous_alias = alias
         from_table = to_table
         prev_model = model_cls
         return JoinParameters(prev_model, previous_alias, from_table, model_cls)
-
-    def _extract_auto_required_relations(
-        self,
-        prev_model: Type["Model"],
-        rel_part: str = "",
-        nested: bool = False,
-        parent_virtual: bool = False,
-    ) -> None:
-        for field_name, field in prev_model.Meta.model_fields.items():
-            if self._field_is_a_foreign_key_and_no_circular_reference(
-                field, field_name, rel_part
-            ):
-                rel_part = field_name if not rel_part else rel_part + "__" + field_name
-                if not field.nullable:
-                    if rel_part not in self._select_related:
-                        new_related = (
-                            "__".join(rel_part.split("__")[:-1])
-                            if len(rel_part.split("__")) > 1
-                            else rel_part
-                        )
-                        self.auto_related.append(new_related)
-                    rel_part = ""
-                elif self._field_qualifies_to_deeper_search(
-                    field, parent_virtual, nested, rel_part
-                ):
-
-                    self._extract_auto_required_relations(
-                        prev_model=field.to,
-                        rel_part=rel_part,
-                        nested=True,
-                        parent_virtual=field.virtual,
-                    )
-                else:
-                    self.already_checked.append(rel_part)
-                    rel_part = ""
-
-    def _include_auto_related_models(self) -> None:
-        if self.auto_related:
-            new_joins = []
-            for join in self._select_related:
-                if not any([x.startswith(join) for x in self.auto_related]):
-                    new_joins.append(join)
-            self._select_related = new_joins + self.auto_related
 
     def _apply_expression_modifiers(
         self, expr: sqlalchemy.sql.select
@@ -234,6 +156,4 @@ class Query:
         self.select_from = None
         self.columns = None
         self.order_bys = None
-        self.auto_related = []
         self.used_aliases = []
-        self.already_checked = []

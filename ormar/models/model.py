@@ -9,8 +9,6 @@ from ormar.models import FakePydantic  # noqa I100
 class Model(FakePydantic):
     __abstract__ = False
 
-    # objects = ormar.queryset.QuerySet()
-
     @classmethod
     def from_row(
         cls,

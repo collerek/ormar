@@ -51,7 +51,7 @@ setup(
     packages=get_packages(PACKAGE),
     package_data={PACKAGE: ["py.typed"]},
     data_files=[("", ["LICENSE.md"])],
-    install_requires=["databases", "pydantic", "sqlalchemy"],
+    install_requires=["databases", "pydantic>=1.5", "sqlalchemy"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Web Environment",

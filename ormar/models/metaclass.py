@@ -161,5 +161,4 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             new_model.Meta._orm_relationship_manager = relationship_manager
             new_model.objects = QuerySet(new_model)
 
-        # breakpoint()
         return new_model

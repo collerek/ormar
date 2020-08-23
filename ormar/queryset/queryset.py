@@ -157,18 +157,7 @@ class QuerySet:
         ):
             del new_kwargs[pkname]
 
-        # substitute related models with their pk
-        for field in self.model_cls._extract_related_names():
-            if field in new_kwargs and new_kwargs.get(field) is not None:
-                if isinstance(new_kwargs.get(field), ormar.Model):
-                    new_kwargs[field] = getattr(
-                        new_kwargs.get(field),
-                        self.model_cls.Meta.model_fields[field].to.Meta.pkname,
-                    )
-                else:
-                    new_kwargs[field] = new_kwargs.get(field).get(
-                        self.model_cls.Meta.model_fields[field].to.Meta.pkname
-                    )
+        new_kwargs = self.model_cls.substitute_models_with_pks(new_kwargs)
 
         # Build the insert expression.
         expr = self.table.insert()
