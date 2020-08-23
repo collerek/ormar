@@ -11,6 +11,16 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
+class JsonSample(ormar.Model):
+    class Meta:
+        tablename = "jsons"
+        metadata = metadata
+        database = database
+
+    id: ormar.Integer(primary_key=True)
+    test_json: ormar.JSON(nullable=True)
+
+
 class User(ormar.Model):
     class Meta:
         tablename = "users"
@@ -54,6 +64,18 @@ def test_model_pk():
     user = User(pk=1)
     assert user.pk == 1
     assert user.id == 1
+
+
+@pytest.mark.asyncio
+async def test_json_column():
+    async with database:
+        await JsonSample.objects.create(test_json=dict(aa=12))
+        await JsonSample.objects.create(test_json='{"aa": 12}')
+
+        items = await JsonSample.objects.all()
+        assert len(items) == 2
+        assert items[0].test_json == dict(aa=12)
+        assert items[1].test_json == dict(aa=12)
 
 
 @pytest.mark.asyncio

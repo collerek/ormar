@@ -1,41 +1,43 @@
 import datetime
 import decimal
 import re
-from typing import Type, Any, Optional
+from typing import Any, Optional, Type
 
 import pydantic
 import sqlalchemy
 from pydantic import Json
 
-from ormar import ModelDefinitionError
+from ormar import ModelDefinitionError  # noqa I101
 from ormar.fields.base import BaseField  # noqa I101
 
 
-def is_field_nullable(nullable: Optional[bool], default: Any, server_default: Any) -> bool:
+def is_field_nullable(
+    nullable: Optional[bool], default: Any, server_default: Any
+) -> bool:
     if nullable is None:
         return default is not None or server_default is not None
     return nullable
 
 
 def String(
-        *,
-        name: str = None,
-        primary_key: bool = False,
-        nullable: bool = None,
-        index: bool = False,
-        unique: bool = False,
-        allow_blank: bool = False,
-        strip_whitespace: bool = False,
-        min_length: int = None,
-        max_length: int = None,
-        curtail_length: int = None,
-        regex: str = None,
-        pydantic_only: bool = False,
-        default: Any = None,
-        server_default: Any = None
+    *,
+    name: str = None,
+    primary_key: bool = False,
+    nullable: bool = None,
+    index: bool = False,
+    unique: bool = False,
+    allow_blank: bool = False,
+    strip_whitespace: bool = False,
+    min_length: int = None,
+    max_length: int = None,
+    curtail_length: int = None,
+    regex: str = None,
+    pydantic_only: bool = False,
+    default: Any = None,
+    server_default: Any = None,
 ) -> Type[str]:
     if max_length is None or max_length <= 0:
-        raise ModelDefinitionError(f'Parameter max_length is required for field String')
+        raise ModelDefinitionError("Parameter max_length is required for field String")
 
     namespace = dict(
         __type__=str,
@@ -54,26 +56,26 @@ def String(
         pydantic_only=pydantic_only,
         default=default,
         server_default=server_default,
-        autoincrement=False
+        autoincrement=False,
     )
 
     return type("String", (pydantic.ConstrainedStr, BaseField), namespace)
 
 
 def Integer(
-        *,
-        name: str = None,
-        primary_key: bool = False,
-        autoincrement: bool = None,
-        nullable: bool = None,
-        index: bool = False,
-        unique: bool = False,
-        minimum: int = None,
-        maximum: int = None,
-        multiple_of: int = None,
-        pydantic_only: bool = False,
-        default: Any = None,
-        server_default: Any = None
+    *,
+    name: str = None,
+    primary_key: bool = False,
+    autoincrement: bool = None,
+    nullable: bool = None,
+    index: bool = False,
+    unique: bool = False,
+    minimum: int = None,
+    maximum: int = None,
+    multiple_of: int = None,
+    pydantic_only: bool = False,
+    default: Any = None,
+    server_default: Any = None,
 ) -> Type[int]:
     namespace = dict(
         __type__=int,
@@ -89,23 +91,23 @@ def Integer(
         pydantic_only=pydantic_only,
         default=default,
         server_default=server_default,
-        autoincrement=autoincrement if autoincrement is not None else primary_key
+        autoincrement=autoincrement if autoincrement is not None else primary_key,
     )
     return type("Integer", (pydantic.ConstrainedInt, BaseField), namespace)
 
 
 def Text(
-        *,
-        name: str = None,
-        primary_key: bool = False,
-        nullable: bool = None,
-        index: bool = False,
-        unique: bool = False,
-        allow_blank: bool = False,
-        strip_whitespace: bool = False,
-        pydantic_only: bool = False,
-        default: Any = None,
-        server_default: Any = None
+    *,
+    name: str = None,
+    primary_key: bool = False,
+    nullable: bool = None,
+    index: bool = False,
+    unique: bool = False,
+    allow_blank: bool = False,
+    strip_whitespace: bool = False,
+    pydantic_only: bool = False,
+    default: Any = None,
+    server_default: Any = None,
 ) -> Type[str]:
     namespace = dict(
         __type__=str,
@@ -120,25 +122,25 @@ def Text(
         pydantic_only=pydantic_only,
         default=default,
         server_default=server_default,
-        autoincrement=False
+        autoincrement=False,
     )
 
     return type("Text", (pydantic.ConstrainedStr, BaseField), namespace)
 
 
 def Float(
-        *,
-        name: str = None,
-        primary_key: bool = False,
-        nullable: bool = None,
-        index: bool = False,
-        unique: bool = False,
-        minimum: float = None,
-        maximum: float = None,
-        multiple_of: int = None,
-        pydantic_only: bool = False,
-        default: Any = None,
-        server_default: Any = None
+    *,
+    name: str = None,
+    primary_key: bool = False,
+    nullable: bool = None,
+    index: bool = False,
+    unique: bool = False,
+    minimum: float = None,
+    maximum: float = None,
+    multiple_of: int = None,
+    pydantic_only: bool = False,
+    default: Any = None,
+    server_default: Any = None,
 ) -> Type[int]:
     namespace = dict(
         __type__=float,
@@ -154,21 +156,21 @@ def Float(
         pydantic_only=pydantic_only,
         default=default,
         server_default=server_default,
-        autoincrement=False
+        autoincrement=False,
     )
     return type("Float", (pydantic.ConstrainedFloat, BaseField), namespace)
 
 
 def Boolean(
-        *,
-        name: str = None,
-        primary_key: bool = False,
-        nullable: bool = None,
-        index: bool = False,
-        unique: bool = False,
-        pydantic_only: bool = False,
-        default: Any = None,
-        server_default: Any = None
+    *,
+    name: str = None,
+    primary_key: bool = False,
+    nullable: bool = None,
+    index: bool = False,
+    unique: bool = False,
+    pydantic_only: bool = False,
+    default: Any = None,
+    server_default: Any = None,
 ) -> Type[bool]:
     namespace = dict(
         __type__=bool,
@@ -181,21 +183,21 @@ def Boolean(
         pydantic_only=pydantic_only,
         default=default,
         server_default=server_default,
-        autoincrement=False
+        autoincrement=False,
     )
     return type("Boolean", (int, BaseField), namespace)
 
 
 def DateTime(
-        *,
-        name: str = None,
-        primary_key: bool = False,
-        nullable: bool = None,
-        index: bool = False,
-        unique: bool = False,
-        pydantic_only: bool = False,
-        default: Any = None,
-        server_default: Any = None
+    *,
+    name: str = None,
+    primary_key: bool = False,
+    nullable: bool = None,
+    index: bool = False,
+    unique: bool = False,
+    pydantic_only: bool = False,
+    default: Any = None,
+    server_default: Any = None,
 ) -> Type[datetime.datetime]:
     namespace = dict(
         __type__=datetime.datetime,
@@ -208,21 +210,21 @@ def DateTime(
         pydantic_only=pydantic_only,
         default=default,
         server_default=server_default,
-        autoincrement=False
+        autoincrement=False,
     )
     return type("DateTime", (datetime.datetime, BaseField), namespace)
 
 
 def Date(
-        *,
-        name: str = None,
-        primary_key: bool = False,
-        nullable: bool = None,
-        index: bool = False,
-        unique: bool = False,
-        pydantic_only: bool = False,
-        default: Any = None,
-        server_default: Any = None
+    *,
+    name: str = None,
+    primary_key: bool = False,
+    nullable: bool = None,
+    index: bool = False,
+    unique: bool = False,
+    pydantic_only: bool = False,
+    default: Any = None,
+    server_default: Any = None,
 ) -> Type[datetime.date]:
     namespace = dict(
         __type__=datetime.date,
@@ -235,21 +237,21 @@ def Date(
         pydantic_only=pydantic_only,
         default=default,
         server_default=server_default,
-        autoincrement=False
+        autoincrement=False,
     )
     return type("Date", (datetime.date, BaseField), namespace)
 
 
 def Time(
-        *,
-        name: str = None,
-        primary_key: bool = False,
-        nullable: bool = None,
-        index: bool = False,
-        unique: bool = False,
-        pydantic_only: bool = False,
-        default: Any = None,
-        server_default: Any = None
+    *,
+    name: str = None,
+    primary_key: bool = False,
+    nullable: bool = None,
+    index: bool = False,
+    unique: bool = False,
+    pydantic_only: bool = False,
+    default: Any = None,
+    server_default: Any = None,
 ) -> Type[datetime.time]:
     namespace = dict(
         __type__=datetime.time,
@@ -262,21 +264,21 @@ def Time(
         pydantic_only=pydantic_only,
         default=default,
         server_default=server_default,
-        autoincrement=False
+        autoincrement=False,
     )
     return type("Time", (datetime.time, BaseField), namespace)
 
 
 def JSON(
-        *,
-        name: str = None,
-        primary_key: bool = False,
-        nullable: bool = None,
-        index: bool = False,
-        unique: bool = False,
-        pydantic_only: bool = False,
-        default: Any = None,
-        server_default: Any = None
+    *,
+    name: str = None,
+    primary_key: bool = False,
+    nullable: bool = None,
+    index: bool = False,
+    unique: bool = False,
+    pydantic_only: bool = False,
+    default: Any = None,
+    server_default: Any = None,
 ) -> Type[Json]:
     namespace = dict(
         __type__=pydantic.Json,
@@ -289,26 +291,26 @@ def JSON(
         pydantic_only=pydantic_only,
         default=default,
         server_default=server_default,
-        autoincrement=False
+        autoincrement=False,
     )
 
     return type("JSON", (pydantic.Json, BaseField), namespace)
 
 
 def BigInteger(
-        *,
-        name: str = None,
-        primary_key: bool = False,
-        autoincrement: bool = None,
-        nullable: bool = None,
-        index: bool = False,
-        unique: bool = False,
-        minimum: int = None,
-        maximum: int = None,
-        multiple_of: int = None,
-        pydantic_only: bool = False,
-        default: Any = None,
-        server_default: Any = None
+    *,
+    name: str = None,
+    primary_key: bool = False,
+    autoincrement: bool = None,
+    nullable: bool = None,
+    index: bool = False,
+    unique: bool = False,
+    minimum: int = None,
+    maximum: int = None,
+    multiple_of: int = None,
+    pydantic_only: bool = False,
+    default: Any = None,
+    server_default: Any = None,
 ) -> Type[int]:
     namespace = dict(
         __type__=int,
@@ -324,31 +326,33 @@ def BigInteger(
         pydantic_only=pydantic_only,
         default=default,
         server_default=server_default,
-        autoincrement=autoincrement if autoincrement is not None else primary_key
+        autoincrement=autoincrement if autoincrement is not None else primary_key,
     )
     return type("BigInteger", (pydantic.ConstrainedInt, BaseField), namespace)
 
 
 def Decimal(
-        *,
-        name: str = None,
-        primary_key: bool = False,
-        nullable: bool = None,
-        index: bool = False,
-        unique: bool = False,
-        minimum: float = None,
-        maximum: float = None,
-        multiple_of: int = None,
-        precision: int = None,
-        scale: int = None,
-        max_digits: int = None,
-        decimal_places: int = None,
-        pydantic_only: bool = False,
-        default: Any = None,
-        server_default: Any = None
-):
+    *,
+    name: str = None,
+    primary_key: bool = False,
+    nullable: bool = None,
+    index: bool = False,
+    unique: bool = False,
+    minimum: float = None,
+    maximum: float = None,
+    multiple_of: int = None,
+    precision: int = None,
+    scale: int = None,
+    max_digits: int = None,
+    decimal_places: int = None,
+    pydantic_only: bool = False,
+    default: Any = None,
+    server_default: Any = None,
+) -> Type[decimal.Decimal]:
     if precision is None or precision < 0 or scale is None or scale < 0:
-        raise ModelDefinitionError(f'Parameters scale and precision are required for field Decimal')
+        raise ModelDefinitionError(
+            "Parameters scale and precision are required for field Decimal"
+        )
 
     namespace = dict(
         __type__=decimal.Decimal,
@@ -368,6 +372,6 @@ def Decimal(
         pydantic_only=pydantic_only,
         default=default,
         server_default=server_default,
-        autoincrement=False
+        autoincrement=False,
     )
     return type("Decimal", (pydantic.ConstrainedDecimal, BaseField), namespace)

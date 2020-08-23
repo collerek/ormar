@@ -2,16 +2,17 @@ import inspect
 import json
 import uuid
 from typing import (
+    AbstractSet,
     Any,
-    Callable,
     Dict,
     List,
+    Mapping,
     Optional,
     Set,
     TYPE_CHECKING,
     Type,
     TypeVar,
-    Union, AbstractSet, Mapping,
+    Union,
 )
 
 import databases
@@ -20,10 +21,9 @@ import sqlalchemy
 from pydantic import BaseModel
 
 import ormar  # noqa I100
-from ormar import ForeignKey
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
-from ormar.models.metaclass import ModelMetaclass, ModelMeta
+from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.relations import RelationshipManager
 
 if TYPE_CHECKING:  # pragma no cover
@@ -39,7 +39,8 @@ class FakePydantic(pydantic.BaseModel, metaclass=ModelMetaclass):
     # FakePydantic inherits from list in order to be treated as
     # request.Body parameter in fastapi routes,
     # inheriting from pydantic.BaseModel causes metaclass conflicts
-    __slots__ = ('_orm_id', '_orm_saved')
+    __slots__ = ("_orm_id", "_orm_saved")
+    __abstract__ = True
 
     if TYPE_CHECKING:  # pragma no cover
         __model_fields__: Dict[str, TypeVar[BaseField]]
@@ -63,18 +64,18 @@ class FakePydantic(pydantic.BaseModel, metaclass=ModelMetaclass):
         if "pk" in kwargs:
             kwargs[self.Meta.pkname] = kwargs.pop("pk")
         kwargs = {
-            k: self.Meta.model_fields[k].expand_relationship(v, self)
+            k: self._convert_json(
+                k, self.Meta.model_fields[k].expand_relationship(v, self), "dumps"
+            )
             for k, v in kwargs.items()
         }
 
-        values, fields_set, validation_error = pydantic.validate_model(
-            self, kwargs
-        )
+        values, fields_set, validation_error = pydantic.validate_model(self, kwargs)
         if validation_error and not pk_only:
             raise validation_error
 
-        object.__setattr__(self, '__dict__', values)
-        object.__setattr__(self, '__fields_set__', fields_set)
+        object.__setattr__(self, "__dict__", values)
+        object.__setattr__(self, "__fields_set__", fields_set)
 
         # super().__init__(**kwargs)
         # self.values = self.__pydantic_model__(**kwargs)
@@ -82,58 +83,50 @@ class FakePydantic(pydantic.BaseModel, metaclass=ModelMetaclass):
     def __del__(self) -> None:
         self.Meta._orm_relationship_manager.deregister(self)
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:
         relation_key = self.get_name(title=True) + "_" + name
         if name in self.__slots__:
             object.__setattr__(self, name, value)
-        elif name == 'pk':
-            object.__setattr__(self, self.Meta.pkname, value)     
+        elif name == "pk":
+            object.__setattr__(self, self.Meta.pkname, value)
         elif self.Meta._orm_relationship_manager.contains(relation_key, self):
             self.Meta.model_fields[name].expand_relationship(value, self)
         else:
-        	super().__setattr__(name, value)
+            value = (
+                self._convert_json(name, value, "dumps")
+                if name in self.__fields__
+                else value
+            )
+            super().__setattr__(name, value)
 
-    def __getattr__(self, item):
+    def __getattribute__(self, item: str) -> Any:
+        if item != "__fields__" and item in self.__fields__:
+            related = self._extract_related_model_instead_of_field(item)
+            if related:
+                return related
+            value = object.__getattribute__(self, item)
+            value = self._convert_json(item, value, "loads")
+            return value
+        return super().__getattribute__(item)
+
+    def __getattr__(self, item: str) -> Optional[Union["Model", List["Model"]]]:
+        return self._extract_related_model_instead_of_field(item)
+
+    def _extract_related_model_instead_of_field(
+        self, item: str
+    ) -> Optional[Union["Model", List["Model"]]]:
         relation_key = self.get_name(title=True) + "_" + item
         if self.Meta._orm_relationship_manager.contains(relation_key, self):
             return self.Meta._orm_relationship_manager.get(relation_key, self)
 
-    # def __setattr__(self, key: str, value: Any) -> None:
-    #     if key in ('_orm_id', '_orm_relationship_manager', '_orm_saved', 'objects', '__model_fields__'):
-    #         return setattr(self, key, value)
-    #     # elif key in self._extract_related_names():
-    #     #     value = self._convert_json(key, value, op="dumps")
-    #     #     value = self.Meta.model_fields[key].expand_relationship(value, self)
-    #     #     relation_key = self.get_name(title=True) + "_" + key
-    #     #     if not self.Meta._orm_relationship_manager.contains(relation_key, self):
-    #     #         setattr(self.values, key, value)
-    #     else:
-    #         super().__setattr__(key, value)
-
-    # def __getattribute__(self, key: str) -> Any:
-    #     if key != 'Meta' and key in self.Meta.model_fields:
-    #         relation_key = self.get_name(title=True) + "_" + key
-    #         if self.Meta._orm_relationship_manager.contains(relation_key, self):
-    #             return self.Meta._orm_relationship_manager.get(relation_key, self)
-    #         item = getattr(self.__fields__, key, None)
-    #         item = self._convert_json(key, item, op="loads")
-    #         return item
-    #     return super().__getattribute__(key)
-
     def __same__(self, other: "Model") -> bool:
         if self.__class__ != other.__class__:  # pragma no cover
             return False
-        return (self._orm_id == other._orm_id or 
-                self.__dict__ == other.__dict__  or 
-               (self.pk == other.pk and self.pk is not None
-        ))
-
-    # def __repr__(self) -> str:  # pragma no cover
-    #     return self.values.__repr__()
-
-    # @classmethod
-    # def __get_validators__(cls) -> Callable:  # pragma no cover
-    #     yield cls.__pydantic_model__.validate
+        return (
+            self._orm_id == other._orm_id
+            or self.__dict__ == other.__dict__
+            or (self.pk == other.pk and self.pk is not None)
+        )
 
     @classmethod
     def get_name(cls, title: bool = False, lower: bool = True) -> str:
@@ -148,10 +141,6 @@ class FakePydantic(pydantic.BaseModel, metaclass=ModelMetaclass):
     def pk(self) -> Any:
         return getattr(self, self.Meta.pkname)
 
-    @pk.setter
-    def pk(self, value: Any) -> None:
-        setattr(self, self.Meta.pkname, value)
-
     @property
     def pk_column(self) -> sqlalchemy.Column:
         return self.Meta.table.primary_key.columns.values()[0]
@@ -160,36 +149,38 @@ class FakePydantic(pydantic.BaseModel, metaclass=ModelMetaclass):
     def pk_type(cls) -> Any:
         return cls.Meta.model_fields[cls.Meta.pkname].__type__
 
-    def dict(
-            self,
-            *,
-            include: Union['AbstractSetIntStr', 'MappingIntStrAny'] = None,
-            exclude: Union['AbstractSetIntStr', 'MappingIntStrAny'] = None,
-            by_alias: bool = False,
-            skip_defaults: bool = None,
-            exclude_unset: bool = False,
-            exclude_defaults: bool = False,
-            exclude_none: bool = False,
-            nested: bool = False
-    ) -> 'DictStrAny':  # noqa: A003'
-        dict_instance = super().dict(include=include,
-                                     exclude=self._exclude_related_names_not_required(nested),
-                                     by_alias=by_alias,
-                                     skip_defaults=skip_defaults,
-                                     exclude_unset=exclude_unset,
-                                     exclude_defaults=exclude_defaults,
-                                     exclude_none=exclude_none)
+    def dict(  # noqa A003
+        self,
+        *,
+        include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+        exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+        by_alias: bool = False,
+        skip_defaults: bool = None,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+        nested: bool = False
+    ) -> "DictStrAny":  # noqa: A003'
+        dict_instance = super().dict(
+            include=include,
+            exclude=self._exclude_related_names_not_required(nested),
+            by_alias=by_alias,
+            skip_defaults=skip_defaults,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
+        )
         for field in self._extract_related_names():
             nested_model = getattr(self, field)
 
             if self.Meta.model_fields[field].virtual and nested:
                 continue
             if isinstance(nested_model, list) and not isinstance(
-                    nested_model, ormar.Model
+                nested_model, ormar.Model
             ):
                 dict_instance[field] = [x.dict(nested=True) for x in nested_model]
             elif nested_model is not None:
-                   dict_instance[field] = nested_model.dict(nested=True) 
+                dict_instance[field] = nested_model.dict(nested=True)
         return dict_instance
 
     def from_dict(self, value_dict: Dict) -> None:
@@ -225,19 +216,21 @@ class FakePydantic(pydantic.BaseModel, metaclass=ModelMetaclass):
     def _extract_related_names(cls) -> Set:
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
-            if inspect.isclass(field) and issubclass(
-                    field, ForeignKeyField
-            ):
+            if inspect.isclass(field) and issubclass(field, ForeignKeyField):
                 related_names.add(name)
         return related_names
 
     @classmethod
-    def _exclude_related_names_not_required(cls, nested:bool=False) -> Set:
+    def _exclude_related_names_not_required(cls, nested: bool = False) -> Set:
         if nested:
             return cls._extract_related_names()
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
-            if inspect.isclass(field) and issubclass(field, ForeignKeyField) and field.nullable:
+            if (
+                inspect.isclass(field)
+                and issubclass(field, ForeignKeyField)
+                and field.nullable
+            ):
                 related_names.add(name)
         return related_names
 
@@ -267,7 +260,7 @@ class FakePydantic(pydantic.BaseModel, metaclass=ModelMetaclass):
     def merge_two_instances(cls, one: "Model", other: "Model") -> "Model":
         for field in one.Meta.model_fields.keys():
             if isinstance(getattr(one, field), list) and not isinstance(
-                    getattr(one, field), ormar.Model
+                getattr(one, field), ormar.Model
             ):
                 setattr(other, field, getattr(one, field) + getattr(other, field))
             elif isinstance(getattr(one, field), ormar.Model):

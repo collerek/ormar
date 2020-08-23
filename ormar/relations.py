@@ -5,7 +5,6 @@ from random import choices
 from typing import List, TYPE_CHECKING, Union
 from weakref import proxy
 
-from ormar import ForeignKey
 from ormar.fields.foreign_key import ForeignKeyField
 
 if TYPE_CHECKING:  # pragma no cover
@@ -22,7 +21,11 @@ class RelationshipManager:
         self._aliases = dict()
 
     def add_relation_type(
-        self, relations_key: str, reverse_key: str, field: ForeignKeyField, table_name: str
+        self,
+        relations_key: str,
+        reverse_key: str,
+        field: ForeignKeyField,
+        table_name: str,
     ) -> None:
         if relations_key not in self._relations:
             self._relations[relations_key] = {"type": "primary"}

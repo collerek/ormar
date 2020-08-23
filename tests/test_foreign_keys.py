@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 import ormar
 from ormar.exceptions import NoMatch, MultipleMatches, RelationshipInstanceError
+from ormar.fields.foreign_key import ForeignKeyField
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -120,6 +121,7 @@ async def test_model_crud():
 
         track = await Track.objects.get(title="The Bird")
         assert track.album.pk == album.pk
+        assert isinstance(track.album, ormar.Model)
         assert track.album.name is None
         await track.album.load()
         assert track.album.name == "Malibu"

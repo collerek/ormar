@@ -13,10 +13,10 @@ class Model(FakePydantic):
 
     @classmethod
     def from_row(
-            cls,
-            row: sqlalchemy.engine.ResultProxy,
-            select_related: List = None,
-            previous_table: str = None,
+        cls,
+        row: sqlalchemy.engine.ResultProxy,
+        select_related: List = None,
+        previous_table: str = None,
     ) -> "Model":
 
         item = {}
@@ -66,8 +66,8 @@ class Model(FakePydantic):
         self_fields.pop(self.Meta.pkname)
         expr = (
             self.Meta.table.update()
-                .values(**self_fields)
-                .where(self.pk_column == getattr(self, self.Meta.pkname))
+            .values(**self_fields)
+            .where(self.pk_column == getattr(self, self.Meta.pkname))
         )
         result = await self.Meta.database.execute(expr)
         return result

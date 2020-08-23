@@ -75,9 +75,18 @@ def test_model_attribute_access(example):
     example.test = 12
     assert example.test == 12
 
+    example._orm_saved = True
+    assert example._orm_saved
+
+
+def test_model_attribute_json_access(example):
+    example.test_json = dict(aa=12)
+    assert example.test_json == dict(aa=12)
+
+
 def test_non_existing_attr(example):
-	with pytest.raises(ValueError):
-		example.new_attr=12
+    with pytest.raises(ValueError):
+        example.new_attr = 12
 
 
 def test_primary_key_access_and_setting(example):

@@ -1,7 +1,6 @@
-from typing import Any, List, Optional, TYPE_CHECKING, Type, Union, Callable
+from typing import Any, Callable, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
-from pydantic import BaseModel
 
 import ormar  # noqa I101
 from ormar.exceptions import RelationshipInstanceError
@@ -13,8 +12,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
     init_dict = {
-        **{fk.Meta.pkname: pk or -1,
-           '__pk_only__': True},
+        **{fk.Meta.pkname: pk or -1, "__pk_only__": True},
         **{
             k: create_dummy_instance(v.to)
             for k, v in fk.Meta.model_fields.items()
@@ -24,10 +22,15 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
     return fk(**init_dict)
 
 
-def ForeignKey(to, *, name: str = None, unique: bool = False, nullable: bool = True,
-               related_name: str = None,
-               virtual: bool = False,
-               ) -> Type[object]:
+def ForeignKey(
+    to: "Model",
+    *,
+    name: str = None,
+    unique: bool = False,
+    nullable: bool = True,
+    related_name: str = None,
+    virtual: bool = False,
+) -> Type[object]:
     fk_string = to.Meta.tablename + "." + to.Meta.pkname
     to_field = to.__fields__[to.Meta.pkname]
     namespace = dict(
@@ -43,7 +46,7 @@ def ForeignKey(to, *, name: str = None, unique: bool = False, nullable: bool = T
         index=False,
         pydantic_only=False,
         default=None,
-        server_default=None
+        server_default=None,
     )
 
     return type("ForeignKey", (ForeignKeyField, BaseField), namespace)
@@ -59,21 +62,21 @@ class ForeignKeyField(BaseField):
         yield cls.validate
 
     @classmethod
-    def validate(cls, v: Any) -> Any:
-        return v
+    def validate(cls, value: Any) -> Any:
+        return value
 
-    @property
-    def __type__(self) -> Type[BaseModel]:
-        return self.to.__pydantic_model__
+    # @property
+    # def __type__(self) -> Type[BaseModel]:
+    #     return self.to.__pydantic_model__
 
-    @classmethod
-    def get_column_type(cls) -> sqlalchemy.Column:
-        to_column = cls.to.Meta.model_fields[cls.to.Meta.pkname]
-        return to_column.column_type
+    # @classmethod
+    # def get_column_type(cls) -> sqlalchemy.Column:
+    #     to_column = cls.to.Meta.model_fields[cls.to.Meta.pkname]
+    #     return to_column.column_type
 
     @classmethod
     def _extract_model_from_sequence(
-            cls, value: List, child: "Model"
+        cls, value: List, child: "Model"
     ) -> Union["Model", List["Model"]]:
         return [cls.expand_relationship(val, child) for val in value]
 
@@ -109,7 +112,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def expand_relationship(
-            cls, value: Any, child: "Model"
+        cls, value: Any, child: "Model"
     ) -> Optional[Union["Model", List["Model"]]]:
         if value is None:
             return None

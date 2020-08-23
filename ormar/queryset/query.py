@@ -20,12 +20,12 @@ class JoinParameters(NamedTuple):
 
 class Query:
     def __init__(
-            self,
-            model_cls: Type["Model"],
-            filter_clauses: List,
-            select_related: List,
-            limit_count: int,
-            offset: int,
+        self,
+        model_cls: Type["Model"],
+        filter_clauses: List,
+        select_related: List,
+        limit_count: int,
+        offset: int,
     ) -> None:
 
         self.query_offset = offset
@@ -49,15 +49,15 @@ class Query:
         self.order_bys = [text(f"{self.table.name}.{self.model_cls.Meta.pkname}")]
         self.select_from = self.table
 
-        for key in self.model_cls.Meta.model_fields:
-            if (
-                    not self.model_cls.Meta.model_fields[key].nullable
-                    and isinstance(
-                self.model_cls.Meta.model_fields[key], ForeignKeyField,
-            )
-                    and key not in self._select_related
-            ):
-                self._select_related = [key] + self._select_related
+        # for key in self.model_cls.Meta.model_fields:
+        #     if (
+        #             not self.model_cls.Meta.model_fields[key].nullable
+        #             and isinstance(
+        #         self.model_cls.Meta.model_fields[key], ForeignKeyField,
+        #     )
+        #             and key not in self._select_related
+        #     ):
+        #         self._select_related = [key] + self._select_related
 
         start_params = JoinParameters(
             self.model_cls, "", self.table.name, self.model_cls
@@ -79,7 +79,7 @@ class Query:
 
         expr = self._apply_expression_modifiers(expr)
 
-        #print(expr.compile(compile_kwargs={"literal_binds": True}))
+        # print(expr.compile(compile_kwargs={"literal_binds": True}))
         self._reset_query_parameters()
 
         return expr, self._select_related
@@ -97,12 +97,12 @@ class Query:
 
     @staticmethod
     def _field_is_a_foreign_key_and_no_circular_reference(
-            field: BaseField, field_name: str, rel_part: str
+        field: Type[BaseField], field_name: str, rel_part: str
     ) -> bool:
         return issubclass(field, ForeignKeyField) and field_name not in rel_part
 
     def _field_qualifies_to_deeper_search(
-            self, field: ForeignKeyField, parent_virtual: bool, nested: bool, rel_part: str
+        self, field: ForeignKeyField, parent_virtual: bool, nested: bool, rel_part: str
     ) -> bool:
         prev_part_of_related = "__".join(rel_part.split("__")[:-1])
         partial_match = any(
@@ -112,19 +112,19 @@ class Query:
             [x.startswith(rel_part) for x in (self.auto_related + self.already_checked)]
         )
         return (
-                       (field.virtual and parent_virtual)
-                       or (partial_match and not already_checked)
-               ) or not nested
+            (field.virtual and parent_virtual)
+            or (partial_match and not already_checked)
+        ) or not nested
 
     def on_clause(
-            self, previous_alias: str, alias: str, from_clause: str, to_clause: str,
+        self, previous_alias: str, alias: str, from_clause: str, to_clause: str,
     ) -> text:
         left_part = f"{alias}_{to_clause}"
         right_part = f"{previous_alias + '_' if previous_alias else ''}{from_clause}"
         return text(f"{left_part}={right_part}")
 
     def _build_join_parameters(
-            self, part: str, join_params: JoinParameters
+        self, part: str, join_params: JoinParameters
     ) -> JoinParameters:
         model_cls = join_params.model_cls.Meta.model_fields[part].to
         to_table = model_cls.Meta.table.name
@@ -138,7 +138,8 @@ class Query:
                     (
                         v
                         for k, v in model_cls.Meta.model_fields.items()
-                        if issubclass(v, ForeignKeyField) and v.to == join_params.prev_model
+                        if issubclass(v, ForeignKeyField)
+                        and v.to == join_params.prev_model
                     ),
                     None,
                 ).name
@@ -167,27 +168,30 @@ class Query:
         return JoinParameters(prev_model, previous_alias, from_table, model_cls)
 
     def _extract_auto_required_relations(
-            self,
-            prev_model: Type["Model"],
-            rel_part: str = "",
-            nested: bool = False,
-            parent_virtual: bool = False,
+        self,
+        prev_model: Type["Model"],
+        rel_part: str = "",
+        nested: bool = False,
+        parent_virtual: bool = False,
     ) -> None:
         for field_name, field in prev_model.Meta.model_fields.items():
             if self._field_is_a_foreign_key_and_no_circular_reference(
-                    field, field_name, rel_part
+                field, field_name, rel_part
             ):
                 rel_part = field_name if not rel_part else rel_part + "__" + field_name
                 if not field.nullable:
                     if rel_part not in self._select_related:
-                        new_related = "__".join(rel_part.split("__")[:-1]) if len(
-                            rel_part.split("__")) > 1 else rel_part
+                        new_related = (
+                            "__".join(rel_part.split("__")[:-1])
+                            if len(rel_part.split("__")) > 1
+                            else rel_part
+                        )
                         self.auto_related.append(new_related)
                     rel_part = ""
                 elif self._field_qualifies_to_deeper_search(
-                        field, parent_virtual, nested, rel_part
+                    field, parent_virtual, nested, rel_part
                 ):
-                    
+
                     self._extract_auto_required_relations(
                         prev_model=field.to,
                         rel_part=rel_part,
@@ -207,7 +211,7 @@ class Query:
             self._select_related = new_joins + self.auto_related
 
     def _apply_expression_modifiers(
-            self, expr: sqlalchemy.sql.select
+        self, expr: sqlalchemy.sql.select
     ) -> sqlalchemy.sql.select:
         if self.filter_clauses:
             if len(self.filter_clauses) == 1:

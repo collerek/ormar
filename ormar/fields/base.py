@@ -1,6 +1,5 @@
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import Any, List, Optional, TYPE_CHECKING
 
-import pydantic
 import sqlalchemy
 from pydantic import Field
 
@@ -8,13 +7,6 @@ from ormar import ModelDefinitionError  # noqa I101
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
-
-
-def prepare_validator(type_):
-    def validate_model_field(value):
-        return isinstance(value, type_)
-
-    return validate_model_field
 
 
 class BaseField:
@@ -34,13 +26,7 @@ class BaseField:
     server_default: Any
 
     @classmethod
-    def is_required(cls) -> bool:
-        return (
-                not cls.nullable and not cls.has_default() and not cls.is_auto_primary_key()
-        )
-
-    @classmethod
-    def default_value(cls):
+    def default_value(cls) -> Optional[Field]:
         if cls.is_auto_primary_key():
             return Field(default=None)
         if cls.has_default():
@@ -52,7 +38,7 @@ class BaseField:
         return None
 
     @classmethod
-    def has_default(cls):
+    def has_default(cls) -> bool:
         return cls.default is not None or cls.server_default is not None
 
     @classmethod
