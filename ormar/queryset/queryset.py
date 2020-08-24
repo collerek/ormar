@@ -138,7 +138,6 @@ class QuerySet:
             self.model_cls.from_row(row, select_related=self._select_related)
             for row in rows
         ]
-
         result_rows = self.model_cls.merge_instances_list(result_rows)
 
         return result_rows

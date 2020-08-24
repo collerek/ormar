@@ -29,7 +29,6 @@ class SchoolClass(ormar.Model):
 
     id: ormar.Integer(primary_key=True)
     name: ormar.String(max_length=100)
-    department: ormar.ForeignKey(Department, nullable=False)
 
 
 class Category(ormar.Model):
@@ -40,6 +39,7 @@ class Category(ormar.Model):
 
     id: ormar.Integer(primary_key=True)
     name: ormar.String(max_length=100)
+    department: ormar.ForeignKey(Department, nullable=False)
 
 
 class Student(ormar.Model):
@@ -80,10 +80,10 @@ async def create_test_database():
     metadata.create_all(engine)
     department = await Department.objects.create(id=1, name="Math Department")
     department2 = await Department.objects.create(id=2, name="Law Department")
-    class1 = await SchoolClass.objects.create(name="Math", department=department)
-    class2 = await SchoolClass.objects.create(name="Logic", department=department2)
-    category = await Category.objects.create(name="Foreign")
-    category2 = await Category.objects.create(name="Domestic")
+    class1 = await SchoolClass.objects.create(name="Math")
+    class2 = await SchoolClass.objects.create(name="Logic")
+    category = await Category.objects.create(name="Foreign", department=department)
+    category2 = await Category.objects.create(name="Domestic", department=department2)
     await Student.objects.create(name="Jane", category=category, schoolclass=class1)
     await Student.objects.create(name="Judy", category=category2, schoolclass=class1)
     await Student.objects.create(name="Jack", category=category2, schoolclass=class2)
@@ -96,44 +96,15 @@ async def create_test_database():
 async def test_model_multiple_instances_of_same_table_in_schema():
     async with database:
         classes = await SchoolClass.objects.select_related(
-            ["teachers__category", "students"]
+            ["teachers__category__department", "students"]
         ).all()
         assert classes[0].name == "Math"
         assert classes[0].students[0].name == "Jane"
-
         assert len(classes[0].dict().get("students")) == 2
+        assert classes[0].teachers[0].category.department.name == 'Law Department'
 
-        # since it's going from schoolclass => teacher => schoolclass (same class) department is already populated
-        assert classes[0].students[0].schoolclass.name == "Math"
-        assert classes[0].students[0].schoolclass.department.name is None
-        await classes[0].students[0].schoolclass.department.load()
-        assert classes[0].students[0].schoolclass.department.name == "Math Department"
-
-        await classes[1].students[0].schoolclass.department.load()
-        assert classes[1].students[0].schoolclass.department.name == "Law Department"
-
-
-@pytest.mark.asyncio
-async def test_right_tables_join():
-    async with database:
-        classes = await SchoolClass.objects.select_related(
-            ["teachers__category", "students"]
-        ).all()
-        assert classes[0].teachers[0].category.name == "Domestic"
-
+        assert classes[0].students[0].category.pk is not None
         assert classes[0].students[0].category.name is None
         await classes[0].students[0].category.load()
-        assert classes[0].students[0].category.name == "Foreign"
-
-
-@pytest.mark.asyncio
-async def test_multiple_reverse_related_objects():
-    async with database:
-        classes = await SchoolClass.objects.select_related(
-            ["teachers__category", "students__category"]
-        ).all()
-        assert classes[0].name == "Math"
-        assert classes[0].students[1].name == "Judy"
-        assert classes[0].students[0].category.name == "Foreign"
-        assert classes[0].students[1].category.name == "Domestic"
-        assert classes[0].teachers[0].category.name == "Domestic"
+        await classes[0].students[0].category.department.load()
+        assert classes[0].students[0].category.department.name == 'Math Department'

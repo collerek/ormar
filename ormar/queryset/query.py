@@ -5,7 +5,6 @@ from sqlalchemy import text
 
 import ormar  # noqa I100
 from ormar.fields.foreign_key import ForeignKeyField
-from ormar.queryset.relationship_crawler import RelationshipCrawler
 from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
@@ -52,14 +51,7 @@ class Query:
         self.order_bys = [text(f"{self.table.name}.{self.model_cls.Meta.pkname}")]
         self.select_from = self.table
 
-        start_params = JoinParameters(
-            self.model_cls, "", self.table.name, self.model_cls
-        )
-
-        self._select_related = RelationshipCrawler().discover_relations(
-            self._select_related, prev_model=start_params.prev_model
-        )
-        self._select_related.sort(key=lambda item: (-len(item), item))
+        self._select_related.sort(key=lambda item: (item, -len(item)))
 
         for item in self._select_related:
             join_parameters = JoinParameters(

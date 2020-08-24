@@ -1,9 +1,25 @@
-from typing import Any, List
+import itertools
+from typing import Any, List, Tuple, Union
 
 import sqlalchemy
 
 import ormar.queryset  # noqa I100
 from ormar.models import NewBaseModel  # noqa I100
+
+
+def group_related_list(list_):
+    test_dict = dict()
+    grouped = itertools.groupby(list_, key=lambda x: x.split("__")[0])
+    for key, group in grouped:
+        group_list = list(group)
+        new = [
+            "__".join(x.split("__")[1:]) for x in group_list if len(x.split("__")) > 1
+        ]
+        if any("__" in x for x in new):
+            test_dict[key] = group_related_list(new)
+        else:
+            test_dict[key] = new
+    return test_dict
 
 
 class Model(NewBaseModel):
@@ -14,22 +30,27 @@ class Model(NewBaseModel):
         cls,
         row: sqlalchemy.engine.ResultProxy,
         select_related: List = None,
+        related_models: Any = None,
         previous_table: str = None,
-    ) -> "Model":
+    ) -> Union["Model", Tuple["Model", dict]]:
 
         item = {}
         select_related = select_related or []
+        related_models = related_models or []
+        if select_related:
+            related_models = group_related_list(select_related)
 
         table_prefix = cls.Meta._orm_relationship_manager.resolve_relation_join(
             previous_table, cls.Meta.table.name
         )
+
         previous_table = cls.Meta.table.name
-        for related in select_related:
-            if "__" in related:
-                first_part, remainder = related.split("__", 1)
+        for related in related_models:
+            if isinstance(related_models, dict) and related_models[related]:
+                first_part, remainder = related, related_models[related]
                 model_cls = cls.Meta.model_fields[first_part].to
                 child = model_cls.from_row(
-                    row, select_related=[remainder], previous_table=previous_table
+                    row, related_models=remainder, previous_table=previous_table
                 )
                 item[first_part] = child
             else:
@@ -43,7 +64,8 @@ class Model(NewBaseModel):
                     f'{table_prefix + "_" if table_prefix else ""}{column.name}'
                 ]
 
-        return cls(**item)
+        instance = cls(**item) if item.get(cls.Meta.pkname, None) is not None else None
+        return instance
 
     async def save(self) -> "Model":
         self_fields = self._extract_model_db_fields()

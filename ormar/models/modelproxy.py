@@ -44,6 +44,18 @@ class ModelTableProxy:
         return related_names
 
     @classmethod
+    def _extract_db_related_names(cls) -> Set:
+        related_names = set()
+        for name, field in cls.Meta.model_fields.items():
+            if (
+                inspect.isclass(field)
+                and issubclass(field, ForeignKeyField)
+                and not field.virtual
+            ):
+                related_names.add(name)
+        return related_names
+
+    @classmethod
     def _exclude_related_names_not_required(cls, nested: bool = False) -> Set:
         if nested:
             return cls._extract_related_names()
@@ -62,7 +74,7 @@ class ModelTableProxy:
         self_fields = {
             k: v for k, v in self_fields.items() if k in self.Meta.table.columns
         }
-        for field in self._extract_related_names():
+        for field in self._extract_db_related_names():
             target_pk_name = self.Meta.model_fields[field].to.Meta.pkname
             if getattr(self, field) is not None:
                 self_fields[field] = getattr(getattr(self, field), target_pk_name)
@@ -72,8 +84,8 @@ class ModelTableProxy:
     def merge_instances_list(cls, result_rows: List["Model"]) -> List["Model"]:
         merged_rows = []
         for index, model in enumerate(result_rows):
-            if index > 0 and model.pk == result_rows[index - 1].pk:
-                result_rows[-1] = cls.merge_two_instances(model, merged_rows[-1])
+            if index > 0 and model.pk == merged_rows[-1].pk:
+                merged_rows[-1] = cls.merge_two_instances(model, merged_rows[-1])
             else:
                 merged_rows.append(model)
         return merged_rows

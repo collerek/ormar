@@ -20,9 +20,10 @@ from pydantic import BaseModel
 
 import ormar  # noqa I100
 from ormar.fields import BaseField
+from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
-from ormar.relations import AliasManager
+from ormar.relations import AliasManager, RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models.model import Model
@@ -34,7 +35,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass):
-    __slots__ = ("_orm_id", "_orm_saved")
+    __slots__ = ("_orm_id", "_orm_saved", "_orm")
 
     if TYPE_CHECKING:  # pragma no cover
         __model_fields__: Dict[str, TypeVar[BaseField]]
@@ -46,6 +47,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         __metadata__: sqlalchemy.MetaData
         __database__: databases.Database
         _orm_relationship_manager: AliasManager
+        _orm: RelationsManager
         Meta: ModelMeta
 
     # noinspection PyMissingConstructor
@@ -53,6 +55,18 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         object.__setattr__(self, "_orm_id", uuid.uuid4().hex)
         object.__setattr__(self, "_orm_saved", False)
+        object.__setattr__(
+            self,
+            "_orm",
+            RelationsManager(
+                related_fields=[
+                    field
+                    for name, field in self.Meta.model_fields.items()
+                    if issubclass(field, ForeignKeyField)
+                ],
+                owner=self,
+            ),
+        )
 
         pk_only = kwargs.pop("__pk_only__", False)
         if "pk" in kwargs:
@@ -71,16 +85,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         object.__setattr__(self, "__dict__", values)
         object.__setattr__(self, "__fields_set__", fields_set)
 
-    def __del__(self) -> None:
-        self.Meta._orm_relationship_manager.deregister(self)
-
     def __setattr__(self, name: str, value: Any) -> None:
-        relation_key = self.get_name(title=True) + "_" + name
         if name in self.__slots__:
             object.__setattr__(self, name, value)
         elif name == "pk":
             object.__setattr__(self, self.Meta.pkname, value)
-        elif self.Meta._orm_relationship_manager.contains(relation_key, self):
+        elif name in self._orm:
             self.Meta.model_fields[name].expand_relationship(value, self)
         else:
             value = (
@@ -91,24 +101,27 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             super().__setattr__(name, value)
 
     def __getattribute__(self, item: str) -> Any:
-        if item != "__fields__" and item in self.__fields__:
-            related = self._extract_related_model_instead_of_field(item)
-            if related:
-                return related
-            value = object.__getattribute__(self, item)
+        if item in ("_orm_id", "_orm_saved", "_orm", "__fields__"):
+            return object.__getattribute__(self, item)
+        elif item != "_extract_related_names" and item in self._extract_related_names():
+            return self._extract_related_model_instead_of_field(item)
+        elif item == "pk":
+            return self.__dict__.get(self.Meta.pkname, None)
+        elif item != "__fields__" and item in self.__fields__:
+            value = self.__dict__.get(item, None)
             value = self._convert_json(item, value, "loads")
             return value
         return super().__getattribute__(item)
 
-    def __getattr__(self, item: str) -> Optional[Union["Model", List["Model"]]]:
-        return self._extract_related_model_instead_of_field(item)
+    # def __getattr__(self, item: str) -> Optional[Union["Model", List["Model"]]]:
+    # return self._extract_related_model_instead_of_field(item)
 
     def _extract_related_model_instead_of_field(
         self, item: str
     ) -> Optional[Union["Model", List["Model"]]]:
-        relation_key = self.get_name(title=True) + "_" + item
-        if self.Meta._orm_relationship_manager.contains(relation_key, self):
-            return self.Meta._orm_relationship_manager.get(relation_key, self)
+        # relation_key = self.get_name(title=True) + "_" + item
+        if item in self._orm:
+            return self._orm.get(item)
 
     def __same__(self, other: "Model") -> bool:
         if self.__class__ != other.__class__:  # pragma no cover
@@ -127,10 +140,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if title:
             name = name.title()
         return name
-
-    @property
-    def pk(self) -> Any:
-        return getattr(self, self.Meta.pkname)
 
     @property
     def pk_column(self) -> sqlalchemy.Column:
@@ -177,7 +186,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             setattr(self, key, value)
 
     def _convert_json(self, column_name: str, value: Any, op: str) -> Union[str, dict]:
-
         if not self._is_conversion_to_json_needed(column_name):
             return value
 

@@ -107,9 +107,8 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def register_relation(cls, model: "Model", child: "Model") -> None:
-        child_model_name = cls.related_name or child.get_name()
-        model.Meta._orm_relationship_manager.add_relation(
-            model, child, child_model_name, virtual=cls.virtual
+        model._orm.add(
+            parent=model, child=child, child_name=cls.related_name, virtual=cls.virtual
         )
 
     @classmethod
