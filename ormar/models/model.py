@@ -69,7 +69,8 @@ class Model(NewBaseModel):
 
     async def save(self) -> "Model":
         self_fields = self._extract_model_db_fields()
-        if self.Meta.model_fields.get(self.Meta.pkname).autoincrement:
+
+        if not self.pk and self.Meta.model_fields.get(self.Meta.pkname).autoincrement:
             self_fields.pop(self.Meta.pkname, None)
         expr = self.Meta.table.insert()
         expr = expr.values(**self_fields)
@@ -77,7 +78,7 @@ class Model(NewBaseModel):
         setattr(self, self.Meta.pkname, item_id)
         return self
 
-    async def update(self, **kwargs: Any) -> int:
+    async def update(self, **kwargs: Any) -> "Model":
         if kwargs:
             new_values = {**self.dict(), **kwargs}
             self.from_dict(new_values)
@@ -89,8 +90,8 @@ class Model(NewBaseModel):
             .values(**self_fields)
             .where(self.pk_column == getattr(self, self.Meta.pkname))
         )
-        result = await self.Meta.database.execute(expr)
-        return result
+        await self.Meta.database.execute(expr)
+        return self
 
     async def delete(self) -> int:
         expr = self.Meta.table.delete()

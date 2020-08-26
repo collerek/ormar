@@ -24,7 +24,6 @@ class ModelTableProxy:
 
     @classmethod
     def substitute_models_with_pks(cls, model_dict: dict) -> dict:
-        model_dict = copy.deepcopy(model_dict)
         for field in cls._extract_related_names():
             if field in model_dict and model_dict.get(field) is not None:
                 target_field = cls.Meta.model_fields[field]
@@ -76,9 +75,18 @@ class ModelTableProxy:
         }
         for field in self._extract_db_related_names():
             target_pk_name = self.Meta.model_fields[field].to.Meta.pkname
-            if getattr(self, field) is not None:
-                self_fields[field] = getattr(getattr(self, field), target_pk_name)
+            target_field = getattr(self, field)
+            self_fields[field] = getattr(target_field, target_pk_name, None)
         return self_fields
+
+    @staticmethod
+    def resolve_relation_name(item: "Model", related: "Model"):
+        for name, field in item.Meta.model_fields.items():
+            if issubclass(field, ForeignKeyField):
+                # fastapi is creating clones of response model that's why it can be a subclass
+                # of the original one so we need to compare Meta too
+                if field.to == related.__class__ or field.to.Meta == related.Meta:
+                    return name
 
     @classmethod
     def merge_instances_list(cls, result_rows: List["Model"]) -> List["Model"]:

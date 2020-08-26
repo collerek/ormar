@@ -1,11 +1,11 @@
+import gc
+
 import databases
 import pytest
 import sqlalchemy
-from pydantic import ValidationError
 
 import ormar
 from ormar.exceptions import NoMatch, MultipleMatches, RelationshipInstanceError
-from ormar.fields.foreign_key import ForeignKeyField
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -133,7 +133,9 @@ async def test_model_crud():
         assert album1.pk == 1
         assert album1.tracks == []
 
-        await Track.objects.create(album={"id": track.album.pk}, title="The Bird2", position=4)
+        await Track.objects.create(
+            album={"id": track.album.pk}, title="The Bird2", position=4
+        )
 
 
 @pytest.mark.asyncio
@@ -165,6 +167,47 @@ async def test_select_related():
 
 
 @pytest.mark.asyncio
+async def test_model_removal_from_relations():
+    async with database:
+        album = Album(name="Chichi")
+        await album.save()
+        track1 = Track(album=album, title="The Birdman", position=1)
+        track2 = Track(album=album, title="Superman", position=2)
+        track3 = Track(album=album, title="Wonder Woman", position=3)
+        await track1.save()
+        await track2.save()
+        await track3.save()
+
+        assert len(album.tracks) == 3
+        album.tracks.remove(track1)
+        assert len(album.tracks) == 2
+        assert track1.album is None
+
+        await track1.update()
+        track1 = await Track.objects.get(title="The Birdman")
+        assert track1.album is None
+
+        album.tracks.add(track1)
+        assert len(album.tracks) == 3
+        assert track1.album == album
+
+        await track1.update()
+        track1 = await Track.objects.select_related("album__tracks").get(
+            title="The Birdman"
+        )
+        album = await Album.objects.select_related("tracks").get(name="Chichi")
+        assert track1.album == album
+
+        track1.remove(album)
+        assert track1.album is None
+        assert len(album.tracks) == 2
+
+        track2.remove(album)
+        assert track2.album is None
+        assert len(album.tracks) == 1
+
+
+@pytest.mark.asyncio
 async def test_fk_filter():
     async with database:
         malibu = Album(name="Malibu%")
@@ -182,8 +225,8 @@ async def test_fk_filter():
 
         tracks = (
             await Track.objects.select_related("album")
-                .filter(album__name="Fantasies")
-                .all()
+            .filter(album__name="Fantasies")
+            .all()
         )
         assert len(tracks) == 3
         for track in tracks:
@@ -191,8 +234,8 @@ async def test_fk_filter():
 
         tracks = (
             await Track.objects.select_related("album")
-                .filter(album__name__icontains="fan")
-                .all()
+            .filter(album__name__icontains="fan")
+            .all()
         )
         assert len(tracks) == 3
         for track in tracks:
@@ -234,8 +277,8 @@ async def test_multiple_fk():
 
         members = (
             await Member.objects.select_related("team__org")
-                .filter(team__org__ident="ACME Ltd")
-                .all()
+            .filter(team__org__ident="ACME Ltd")
+            .all()
         )
         assert len(members) == 4
         for member in members:
@@ -254,8 +297,8 @@ async def test_pk_filter():
 
         tracks = (
             await Track.objects.select_related("album")
-                .filter(position=2, album__name="Test")
-                .all()
+            .filter(position=2, album__name="Test")
+            .all()
         )
         assert len(tracks) == 1
 

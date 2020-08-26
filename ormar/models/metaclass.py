@@ -29,17 +29,8 @@ class ModelMeta:
     alias_manager: AliasManager
 
 
-def register_relation_on_build(table_name: str, field: ForeignKey, name: str) -> None:
-    child_relation_name = (
-        field.to.get_name(title=True)
-        + "_"
-        + (field.related_name or (name.lower() + "s"))
-    )
-    reverse_name = child_relation_name
-    relation_name = name.lower().title() + "_" + field.to.get_name()
-    relationship_manager.add_relation_type(
-        relation_name, reverse_name, field, table_name
-    )
+def register_relation_on_build(table_name: str, field: ForeignKey) -> None:
+    relationship_manager.add_relation_type(field, table_name)
 
 
 def expand_reverse_relationships(model: Type["Model"]) -> None:
@@ -64,15 +55,10 @@ def register_reverse_model_fields(
 
 
 def sqlalchemy_columns_from_model_fields(
-    name: str, object_dict: Dict, table_name: str
-) -> Tuple[Optional[str], List[sqlalchemy.Column], Dict[str, BaseField]]:
+    model_fields: Dict, table_name: str
+) -> Tuple[Optional[str], List[sqlalchemy.Column]]:
     columns = []
     pkname = None
-    model_fields = {
-        field_name: field
-        for field_name, field in object_dict["__annotations__"].items()
-        if issubclass(field, BaseField)
-    }
     for field_name, field in model_fields.items():
         if field.primary_key:
             if pkname is not None:
@@ -83,9 +69,9 @@ def sqlalchemy_columns_from_model_fields(
         if not field.pydantic_only:
             columns.append(field.get_column(field_name))
         if issubclass(field, ForeignKeyField):
-            register_relation_on_build(table_name, field, name)
+            register_relation_on_build(table_name, field)
 
-    return pkname, columns, model_fields
+    return pkname, columns
 
 
 def populate_pydantic_default_values(attrs: Dict) -> Dict:
@@ -125,21 +111,29 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             attrs["__annotations__"] = annotations
             attrs = populate_pydantic_default_values(attrs)
 
+            attrs["__module__"] = attrs["__module__"] or bases[0].__module__
+            attrs["__annotations__"] = (
+                attrs["__annotations__"] or bases[0].__annotations__
+            )
+
             tablename = name.lower() + "s"
             new_model.Meta.tablename = new_model.Meta.tablename or tablename
 
             # sqlalchemy table creation
 
-            pkname, columns, model_fields = sqlalchemy_columns_from_model_fields(
-                name, attrs, new_model.Meta.tablename
-            )
+            model_fields = {
+                field_name: field
+                for field_name, field in attrs["__annotations__"].items()
+                if issubclass(field, BaseField)
+            }
 
-            if hasattr(new_model.Meta, "model_fields") and not pkname:
-                model_fields = new_model.Meta.model_fields
-                for fieldname, field in new_model.Meta.model_fields.items():
-                    if field.primary_key:
-                        pkname = fieldname
+            if hasattr(new_model.Meta, "columns"):
                 columns = new_model.Meta.table.columns
+                pkname = new_model.Meta.pkname
+            else:
+                pkname, columns = sqlalchemy_columns_from_model_fields(
+                    model_fields, new_model.Meta.tablename
+                )
 
             if not hasattr(new_model.Meta, "table"):
                 new_model.Meta.table = sqlalchemy.Table(
@@ -153,10 +147,11 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 raise ModelDefinitionError("Table has to have a primary key.")
 
             new_model.Meta.model_fields = model_fields
+            expand_reverse_relationships(new_model)
+
             new_model = super().__new__(  # type: ignore
                 mcs, name, bases, attrs
             )
-            expand_reverse_relationships(new_model)
 
             new_model.Meta.alias_manager = relationship_manager
             new_model.objects = QuerySet(new_model)

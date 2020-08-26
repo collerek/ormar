@@ -22,7 +22,7 @@ class Example(ormar.Model):
         database = database
 
     id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=200, default='aaa')
+    name: ormar.String(max_length=200, default="aaa")
     created: ormar.DateTime(default=datetime.datetime.now)
     created_day: ormar.Date(default=datetime.date.today)
     created_time: ormar.Time(default=time)

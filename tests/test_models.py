@@ -28,7 +28,7 @@ class User(ormar.Model):
         database = database
 
     id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100, default='')
+    name: ormar.String(max_length=100, default="")
 
 
 class Product(ormar.Model):

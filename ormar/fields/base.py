@@ -64,6 +64,6 @@ class BaseField:
 
     @classmethod
     def expand_relationship(
-        cls, value: Any, child: Union["Model", "NewBaseModel"]
+        cls, value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True
     ) -> Any:
         return value

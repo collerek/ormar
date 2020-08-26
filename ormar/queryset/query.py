@@ -69,10 +69,11 @@ class Query:
         # print(expr.compile(compile_kwargs={"literal_binds": True}))
         self._reset_query_parameters()
 
-        return expr, self._select_related
+        return expr
 
+    @staticmethod
     def on_clause(
-        self, previous_alias: str, alias: str, from_clause: str, to_clause: str,
+        previous_alias: str, alias: str, from_clause: str, to_clause: str,
     ) -> text:
         left_part = f"{alias}_{to_clause}"
         right_part = f"{previous_alias + '_' if previous_alias else ''}{from_clause}"

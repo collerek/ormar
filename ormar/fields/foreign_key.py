@@ -68,25 +68,33 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _extract_model_from_sequence(
-        cls, value: List, child: "Model"
+        cls, value: List, child: "Model", to_register: bool
     ) -> Union["Model", List["Model"]]:
-        return [cls.expand_relationship(val, child) for val in value]
+        return [cls.expand_relationship(val, child, to_register) for val in value]
 
     @classmethod
-    def _register_existing_model(cls, value: "Model", child: "Model") -> "Model":
-        cls.register_relation(value, child)
+    def _register_existing_model(
+        cls, value: "Model", child: "Model", to_register: bool
+    ) -> "Model":
+        if to_register:
+            cls.register_relation(value, child)
         return value
 
     @classmethod
-    def _construct_model_from_dict(cls, value: dict, child: "Model") -> "Model":
+    def _construct_model_from_dict(
+        cls, value: dict, child: "Model", to_register: bool
+    ) -> "Model":
         if len(value.keys()) == 1 and list(value.keys())[0] == cls.to.Meta.pkname:
             value["__pk_only__"] = True
         model = cls.to(**value)
-        cls.register_relation(model, child)
+        if to_register:
+            cls.register_relation(model, child)
         return model
 
     @classmethod
-    def _construct_model_from_pk(cls, value: Any, child: "Model") -> "Model":
+    def _construct_model_from_pk(
+        cls, value: Any, child: "Model", to_register: bool
+    ) -> "Model":
         if not isinstance(value, cls.to.pk_type()):
             raise RelationshipInstanceError(
                 f"Relationship error - ForeignKey {cls.to.__name__} "
@@ -94,7 +102,8 @@ class ForeignKeyField(BaseField):
                 f"while {type(value)} passed as a parameter."
             )
         model = create_dummy_instance(fk=cls.to, pk=value)
-        cls.register_relation(model, child)
+        if to_register:
+            cls.register_relation(model, child)
         return model
 
     @classmethod
@@ -105,7 +114,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def expand_relationship(
-        cls, value: Any, child: "Model"
+        cls, value: Any, child: "Model", to_register: bool = True
     ) -> Optional[Union["Model", List["Model"]]]:
         if value is None:
             return None
@@ -118,5 +127,5 @@ class ForeignKeyField(BaseField):
 
         model = constructors.get(
             value.__class__.__name__, cls._construct_model_from_pk
-        )(value, child)
+        )(value, child, to_register)
         return model
