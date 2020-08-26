@@ -54,6 +54,7 @@ def ForeignKey(
 
 class ForeignKeyField(BaseField):
     to: Type["Model"]
+    name: str
     related_name: str
     virtual: bool
 
@@ -64,15 +65,6 @@ class ForeignKeyField(BaseField):
     @classmethod
     def validate(cls, value: Any) -> Any:
         return value
-
-    # @property
-    # def __type__(self) -> Type[BaseModel]:
-    #     return self.to.__pydantic_model__
-
-    # @classmethod
-    # def get_column_type(cls) -> sqlalchemy.Column:
-    #     to_column = cls.to.Meta.model_fields[cls.to.Meta.pkname]
-    #     return to_column.column_type
 
     @classmethod
     def _extract_model_from_sequence(

@@ -109,7 +109,7 @@ class QueryClause:
         previous_table = model_cls.Meta.tablename
         for part in related_parts:
             current_table = model_cls.Meta.model_fields[part].to.Meta.tablename
-            manager = model_cls.Meta._orm_relationship_manager
+            manager = model_cls.Meta.alias_manager
             table_prefix = manager.resolve_relation_join(previous_table, current_table)
             model_cls = model_cls.Meta.model_fields[part].to
             previous_table = current_table

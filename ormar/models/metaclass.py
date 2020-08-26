@@ -26,7 +26,7 @@ class ModelMeta:
     columns: List[sqlalchemy.Column]
     pkname: str
     model_fields: Dict[str, Union[BaseField, ForeignKey]]
-    _orm_relationship_manager: AliasManager
+    alias_manager: AliasManager
 
 
 def register_relation_on_build(table_name: str, field: ForeignKey, name: str) -> None:
@@ -158,7 +158,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             )
             expand_reverse_relationships(new_model)
 
-            new_model.Meta._orm_relationship_manager = relationship_manager
+            new_model.Meta.alias_manager = relationship_manager
             new_model.objects = QuerySet(new_model)
 
         return new_model

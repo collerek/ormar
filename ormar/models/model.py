@@ -40,7 +40,7 @@ class Model(NewBaseModel):
         if select_related:
             related_models = group_related_list(select_related)
 
-        table_prefix = cls.Meta._orm_relationship_manager.resolve_relation_join(
+        table_prefix = cls.Meta.alias_manager.resolve_relation_join(
             previous_table, cls.Meta.table.name
         )
 

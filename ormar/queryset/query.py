@@ -44,7 +44,7 @@ class Query:
 
     @property
     def relation_manager(self) -> AliasManager:
-        return self.model_cls.Meta._orm_relationship_manager
+        return self.model_cls.Meta.alias_manager
 
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
         self.columns = list(self.table.columns)
@@ -84,7 +84,7 @@ class Query:
         model_cls = join_params.model_cls.Meta.model_fields[part].to
         to_table = model_cls.Meta.table.name
 
-        alias = model_cls.Meta._orm_relationship_manager.resolve_relation_join(
+        alias = model_cls.Meta.alias_manager.resolve_relation_join(
             join_params.from_table, to_table
         )
         if alias not in self.used_aliases:
