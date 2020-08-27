@@ -87,19 +87,25 @@ def sqlalchemy_columns_from_model_fields(
 
     return pkname, columns
 
-def populate_default
+
+def populate_default_field_value(
+    type_: Type[BaseField], field: str, attrs: dict
+) -> dict:
+    def_value = type_.default_value()
+    curr_def_value = attrs.get(field, "NONE")
+    if curr_def_value == "NONE" and isinstance(def_value, FieldInfo):
+        attrs[field] = def_value
+    elif curr_def_value == "NONE" and type_.nullable:
+        attrs[field] = FieldInfo(default=None)
+    return attrs
+
 
 def populate_pydantic_default_values(attrs: Dict) -> Dict:
     for field, type_ in attrs["__annotations__"].items():
         if issubclass(type_, BaseField):
             if type_.name is None:
                 type_.name = field
-            def_value = type_.default_value()
-            curr_def_value = attrs.get(field, "NONE")
-            if curr_def_value == "NONE" and isinstance(def_value, FieldInfo):
-                attrs[field] = def_value
-            elif curr_def_value == "NONE" and type_.nullable:
-                attrs[field] = FieldInfo(default=None)
+            attrs = populate_default_field_value(type_, field, attrs)
     return attrs
 
 
