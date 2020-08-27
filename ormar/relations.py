@@ -2,15 +2,16 @@ import string
 import uuid
 from enum import Enum
 from random import choices
-from typing import List, TYPE_CHECKING, Type, Union, Optional
+from typing import List, Optional, TYPE_CHECKING, Type, Union
 from weakref import proxy
 
 import sqlalchemy
 from sqlalchemy import text
 
-import ormar
-from ormar.exceptions import RelationshipInstanceError
+import ormar  # noqa I100
+from ormar.exceptions import RelationshipInstanceError  # noqa I100
 from ormar.fields.foreign_key import ForeignKeyField  # noqa I100
+
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
@@ -51,20 +52,20 @@ class AliasManager:
 
 
 class RelationProxy(list):
-    def __init__(self, relation: "Relation"):
+    def __init__(self, relation: "Relation") -> None:
         super(RelationProxy, self).__init__()
         self.relation = relation
         self._owner = self.relation.manager.owner
 
-    def remove(self, item: "Model"):
+    def remove(self, item: "Model") -> None:
         super().remove(item)
         rel_name = item.resolve_relation_name(item, self._owner)
         item._orm._get(rel_name).remove(self._owner)
 
-    def append(self, item: "Model"):
+    def append(self, item: "Model") -> None:
         super().append(item)
 
-    def add(self, item):
+    def add(self, item: "Model") -> None:
         rel_name = item.resolve_relation_name(item, self._owner)
         setattr(item, rel_name, self._owner)
 
@@ -78,7 +79,7 @@ class Relation:
             RelationProxy(relation=self) if type_ == RelationType.REVERSE else None
         )
 
-    def _find_existing(self, child) -> Optional[int]:
+    def _find_existing(self, child: "Model") -> Optional[int]:
         for ind, relation_child in enumerate(self.related_models[:]):
             try:
                 if relation_child.__same__(child):
@@ -114,14 +115,14 @@ class Relation:
     def get(self) -> Union[List["Model"], "Model"]:
         return self.related_models
 
-    def __repr__(self):  # pragma no cover
+    def __repr__(self) -> str:  # pragma no cover
         return str(self.related_models)
 
 
 class RelationsManager:
     def __init__(
         self, related_fields: List[Type[ForeignKeyField]] = None, owner: "Model" = None
-    ):
+    ) -> None:
         self.owner = owner
         self._related_fields = related_fields or []
         self._related_names = [field.name for field in self._related_fields]
@@ -129,26 +130,27 @@ class RelationsManager:
         for field in self._related_fields:
             self._add_relation(field)
 
-    def _add_relation(self, field):
+    def _add_relation(self, field: Type[ForeignKeyField]) -> None:
         self._relations[field.name] = Relation(
             manager=self,
             type_=RelationType.PRIMARY if not field.virtual else RelationType.REVERSE,
         )
 
-    def __contains__(self, item):
+    def __contains__(self, item: str) -> bool:
         return item in self._related_names
 
-    def get(self, name) -> Optional[Union[List["Model"], "Model"]]:
+    def get(self, name: str) -> Optional[Union[List["Model"], "Model"]]:
         relation = self._relations.get(name, None)
         if relation:
             return relation.get()
 
-    def _get(self, name) -> Optional[Relation]:
+    def _get(self, name: str) -> Optional[Relation]:
         relation = self._relations.get(name, None)
         if relation:
             return relation
 
-    def add(self, parent: "Model", child: "Model", child_name: str, virtual: bool):
+    @staticmethod
+    def add(parent: "Model", child: "Model", child_name: str, virtual: bool) -> None:
         to_field = next(
             (
                 field
@@ -160,7 +162,8 @@ class RelationsManager:
 
         if not to_field:  # pragma no cover
             raise RelationshipInstanceError(
-                f"Model {child.__class__} does not have reference to model {parent.__class__}"
+                f"Model {child.__class__} does not have "
+                f"reference to model {parent.__class__}"
             )
 
         to_name = to_field.name
@@ -181,12 +184,12 @@ class RelationsManager:
         parent_relation.add(child)
         child._orm._get(to_name).add(parent)
 
-    def remove(self, name: str, child: "Model"):
+    def remove(self, name: str, child: "Model") -> None:
         relation = self._get(name)
         relation.remove(child)
 
     @staticmethod
-    def remove_parent(item: "Model", name: Union[str, "Model"]):
+    def remove_parent(item: "Model", name: Union[str, "Model"]) -> None:
         related_model = name
         name = item.resolve_relation_name(item, related_model)
         if name in item._orm:

@@ -1,6 +1,5 @@
-import copy
 import inspect
-from typing import List, Set, TYPE_CHECKING
+from typing import List, Optional, Set, TYPE_CHECKING
 
 import ormar
 from ormar.fields.foreign_key import ForeignKeyField
@@ -80,11 +79,12 @@ class ModelTableProxy:
         return self_fields
 
     @staticmethod
-    def resolve_relation_name(item: "Model", related: "Model"):
+    def resolve_relation_name(item: "Model", related: "Model") -> Optional[str]:
         for name, field in item.Meta.model_fields.items():
             if issubclass(field, ForeignKeyField):
-                # fastapi is creating clones of response model that's why it can be a subclass
-                # of the original one so we need to compare Meta too
+                # fastapi is creating clones of response model
+                # that's why it can be a subclass of the original model
+                # so we need to compare Meta too as this one is copied as is
                 if field.to == related.__class__ or field.to.Meta == related.Meta:
                     return name
 

@@ -7,7 +7,7 @@ import ormar.queryset  # noqa I100
 from ormar.models import NewBaseModel  # noqa I100
 
 
-def group_related_list(list_):
+def group_related_list(list_: List) -> dict:
     test_dict = dict()
     grouped = itertools.groupby(list_, key=lambda x: x.split("__")[0])
     for key, group in grouped:
@@ -45,6 +45,23 @@ class Model(NewBaseModel):
         )
 
         previous_table = cls.Meta.table.name
+
+        item = cls.populate_nested_models_from_row(
+            item, row, related_models, previous_table
+        )
+        item = cls.extract_prefixed_table_columns(item, row, table_prefix)
+
+        instance = cls(**item) if item.get(cls.Meta.pkname, None) is not None else None
+        return instance
+
+    @classmethod
+    def populate_nested_models_from_row(
+        cls,
+        item: dict,
+        row: sqlalchemy.engine.ResultProxy,
+        related_models: Any,
+        previous_table: sqlalchemy.Table,
+    ) -> dict:
         for related in related_models:
             if isinstance(related_models, dict) and related_models[related]:
                 first_part, remainder = related, related_models[related]
@@ -58,14 +75,18 @@ class Model(NewBaseModel):
                 child = model_cls.from_row(row, previous_table=previous_table)
                 item[related] = child
 
+        return item
+
+    @classmethod
+    def extract_prefixed_table_columns(
+        cls, item: dict, row: sqlalchemy.engine.result.ResultProxy, table_prefix: str
+    ) -> dict:
         for column in cls.Meta.table.columns:
             if column.name not in item:
                 item[column.name] = row[
                     f'{table_prefix + "_" if table_prefix else ""}{column.name}'
                 ]
-
-        instance = cls(**item) if item.get(cls.Meta.pkname, None) is not None else None
-        return instance
+        return item
 
     async def save(self) -> "Model":
         self_fields = self._extract_model_db_fields()
@@ -85,11 +106,9 @@ class Model(NewBaseModel):
 
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.Meta.pkname)
-        expr = (
-            self.Meta.table.update()
-            .values(**self_fields)
-            .where(self.pk_column == getattr(self, self.Meta.pkname))
-        )
+        expr = self.Meta.table.update().values(**self_fields)
+        expr = expr.where(self.pk_column == getattr(self, self.Meta.pkname))
+
         await self.Meta.database.execute(expr)
         return self
 

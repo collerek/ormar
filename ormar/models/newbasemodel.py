@@ -153,7 +153,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def pk_type(cls) -> Any:
         return cls.Meta.model_fields[cls.Meta.pkname].__type__
 
-    def remove(self, name: "Model"):
+    def remove(self, name: "Model") -> None:
         self._orm.remove_parent(self, name)
 
     def dict(  # noqa A003

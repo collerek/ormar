@@ -46,9 +46,13 @@ class Query:
     def relation_manager(self) -> AliasManager:
         return self.model_cls.Meta.alias_manager
 
+    @property
+    def prefixed_pk_name(self) -> str:
+        return f"{self.table.name}.{self.model_cls.Meta.pkname}"
+
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
         self.columns = list(self.table.columns)
-        self.order_bys = [text(f"{self.table.name}.{self.model_cls.Meta.pkname}")]
+        self.order_bys = [text(self.prefixed_pk_name)]
         self.select_from = self.table
 
         self._select_related.sort(key=lambda item: (item, -len(item)))
