@@ -33,15 +33,23 @@ def register_relation_on_build(table_name: str, field: ForeignKey) -> None:
     relationship_manager.add_relation_type(field, table_name)
 
 
+def reverse_field_not_already_registered(
+    child: Type["Model"], child_model_name: str, parent_model: Type["Model"]
+) -> bool:
+    return (
+        child_model_name not in parent_model.__fields__
+        and child.get_name() not in parent_model.__fields__
+    )
+
+
 def expand_reverse_relationships(model: Type["Model"]) -> None:
     for model_field in model.Meta.model_fields.values():
         if issubclass(model_field, ForeignKeyField):
             child_model_name = model_field.related_name or model.get_name() + "s"
             parent_model = model_field.to
             child = model
-            if (
-                child_model_name not in parent_model.__fields__
-                and child.get_name() not in parent_model.__fields__
+            if reverse_field_not_already_registered(
+                child, child_model_name, parent_model
             ):
                 register_reverse_model_fields(parent_model, child, child_model_name)
 
@@ -54,6 +62,16 @@ def register_reverse_model_fields(
     )
 
 
+def check_pk_column_validity(
+    field_name: str, field: BaseField, pkname: str
+) -> Optional[str]:
+    if pkname is not None:
+        raise ModelDefinitionError("Only one primary key column is allowed.")
+    if field.pydantic_only:
+        raise ModelDefinitionError("Primary key column cannot be pydantic only")
+    return field_name
+
+
 def sqlalchemy_columns_from_model_fields(
     model_fields: Dict, table_name: str
 ) -> Tuple[Optional[str], List[sqlalchemy.Column]]:
@@ -61,11 +79,7 @@ def sqlalchemy_columns_from_model_fields(
     pkname = None
     for field_name, field in model_fields.items():
         if field.primary_key:
-            if pkname is not None:
-                raise ModelDefinitionError("Only one primary key column is allowed.")
-            if field.pydantic_only:
-                raise ModelDefinitionError("Primary key column cannot be pydantic only")
-            pkname = field_name
+            pkname = check_pk_column_validity(field_name, field, pkname)
         if not field.pydantic_only:
             columns.append(field.get_column(field_name))
         if issubclass(field, ForeignKeyField):
@@ -73,6 +87,7 @@ def sqlalchemy_columns_from_model_fields(
 
     return pkname, columns
 
+def populate_default
 
 def populate_pydantic_default_values(attrs: Dict) -> Dict:
     for field, type_ in attrs["__annotations__"].items():
@@ -92,7 +107,6 @@ def get_pydantic_base_orm_config() -> Type[BaseConfig]:
     class Config(BaseConfig):
         orm_mode = True
         arbitrary_types_allowed = True
-        # extra = Extra.allow
 
     return Config
 

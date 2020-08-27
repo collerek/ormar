@@ -24,13 +24,14 @@ class ModelTableProxy:
     @classmethod
     def substitute_models_with_pks(cls, model_dict: dict) -> dict:
         for field in cls._extract_related_names():
-            if field in model_dict and model_dict.get(field) is not None:
+            field_value = model_dict.get(field, None)
+            if field_value is not None:
                 target_field = cls.Meta.model_fields[field]
                 target_pkname = target_field.to.Meta.pkname
-                if isinstance(model_dict.get(field), ormar.Model):
-                    model_dict[field] = getattr(model_dict.get(field), target_pkname)
+                if isinstance(field_value, ormar.Model):
+                    model_dict[field] = getattr(field_value, target_pkname)
                 else:
-                    model_dict[field] = model_dict.get(field).get(target_pkname)
+                    model_dict[field] = field_value.get(target_pkname)
         return model_dict
 
     @classmethod
