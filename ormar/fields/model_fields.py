@@ -57,7 +57,7 @@ class String(ModelFieldFactory):
     _bases = (pydantic.ConstrainedStr, BaseField)
     _type = str
 
-    def __new__(
+    def __new__( # noqa CFQ002
         cls,
         *,
         allow_blank: bool = False,
@@ -231,7 +231,7 @@ class Decimal(ModelFieldFactory):
     _bases = (pydantic.ConstrainedDecimal, BaseField)
     _type = decimal.Decimal
 
-    def __new__(
+    def __new__( # noqa CFQ002
         cls,
         *,
         minimum: float = None,

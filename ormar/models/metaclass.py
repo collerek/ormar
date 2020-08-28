@@ -15,7 +15,7 @@ from ormar.relations import AliasManager
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
-relationship_manager = AliasManager()
+alias_manager = AliasManager()
 
 
 class ModelMeta:
@@ -30,7 +30,7 @@ class ModelMeta:
 
 
 def register_relation_on_build(table_name: str, field: ForeignKey) -> None:
-    relationship_manager.add_relation_type(field, table_name)
+    alias_manager.add_relation_type(field, table_name)
 
 
 def reverse_field_not_already_registered(
@@ -193,7 +193,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 mcs, name, bases, attrs
             )
 
-            new_model.Meta.alias_manager = relationship_manager
+            new_model.Meta.alias_manager = alias_manager
             new_model.objects = QuerySet(new_model)
 
         return new_model
