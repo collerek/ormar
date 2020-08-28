@@ -76,16 +76,16 @@ Since you join two times to the same table (categories) it won't work by default
 
 But don't worry - ormar can handle situations like this, as it uses the Relationship Manager which has it's aliases defined for all relationships.
 
-Each class is registered with the same instance of the RelationshipManager that you can access like this:
+Each class is registered with the same instance of the AliasManager that you can access like this:
 
 ```python
-SchoolClass._orm_relationship_manager
+SchoolClass.alias_manager
 ```
 
 It's the same object for all `Models`
 
 ```python
-print(Teacher._orm_relationship_manager == Student._orm_relationship_manager)
+print(Teacher.alias_manager == Student.alias_manager)
 # will produce: True
 ```
 
@@ -94,11 +94,11 @@ print(Teacher._orm_relationship_manager == Student._orm_relationship_manager)
 You can even preview the alias used for any relation by passing two tables names.
 
 ```python
-print(Teacher._orm_relationship_manager.resolve_relation_join(
+print(Teacher.alias_manager.resolve_relation_join(
 'students', 'categories'))
 # will produce: KId1c6 (sample value)
 
-print(Teacher._orm_relationship_manager.resolve_relation_join(
+print(Teacher.alias_manager.resolve_relation_join(
 'categories', 'students'))
 # will produce: EFccd5 (sample value)
 ```

@@ -1,6 +1,5 @@
-import copy
 import inspect
-from typing import List, Set, TYPE_CHECKING
+from typing import List, Optional, Set, TYPE_CHECKING
 
 import ormar
 from ormar.fields.foreign_key import ForeignKeyField
@@ -24,15 +23,15 @@ class ModelTableProxy:
 
     @classmethod
     def substitute_models_with_pks(cls, model_dict: dict) -> dict:
-        model_dict = copy.deepcopy(model_dict)
         for field in cls._extract_related_names():
-            if field in model_dict and model_dict.get(field) is not None:
+            field_value = model_dict.get(field, None)
+            if field_value is not None:
                 target_field = cls.Meta.model_fields[field]
                 target_pkname = target_field.to.Meta.pkname
-                if isinstance(model_dict.get(field), ormar.Model):
-                    model_dict[field] = getattr(model_dict.get(field), target_pkname)
+                if isinstance(field_value, ormar.Model):
+                    model_dict[field] = getattr(field_value, target_pkname)
                 else:
-                    model_dict[field] = model_dict.get(field).get(target_pkname)
+                    model_dict[field] = field_value.get(target_pkname)
         return model_dict
 
     @classmethod
@@ -40,6 +39,18 @@ class ModelTableProxy:
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
             if inspect.isclass(field) and issubclass(field, ForeignKeyField):
+                related_names.add(name)
+        return related_names
+
+    @classmethod
+    def _extract_db_related_names(cls) -> Set:
+        related_names = set()
+        for name, field in cls.Meta.model_fields.items():
+            if (
+                inspect.isclass(field)
+                and issubclass(field, ForeignKeyField)
+                and not field.virtual
+            ):
                 related_names.add(name)
         return related_names
 
@@ -62,18 +73,28 @@ class ModelTableProxy:
         self_fields = {
             k: v for k, v in self_fields.items() if k in self.Meta.table.columns
         }
-        for field in self._extract_related_names():
+        for field in self._extract_db_related_names():
             target_pk_name = self.Meta.model_fields[field].to.Meta.pkname
-            if getattr(self, field) is not None:
-                self_fields[field] = getattr(getattr(self, field), target_pk_name)
+            target_field = getattr(self, field)
+            self_fields[field] = getattr(target_field, target_pk_name, None)
         return self_fields
+
+    @staticmethod
+    def resolve_relation_name(item: "Model", related: "Model") -> Optional[str]:
+        for name, field in item.Meta.model_fields.items():
+            if issubclass(field, ForeignKeyField):
+                # fastapi is creating clones of response model
+                # that's why it can be a subclass of the original model
+                # so we need to compare Meta too as this one is copied as is
+                if field.to == related.__class__ or field.to.Meta == related.Meta:
+                    return name
 
     @classmethod
     def merge_instances_list(cls, result_rows: List["Model"]) -> List["Model"]:
         merged_rows = []
         for index, model in enumerate(result_rows):
-            if index > 0 and model.pk == result_rows[index - 1].pk:
-                result_rows[-1] = cls.merge_two_instances(model, merged_rows[-1])
+            if index > 0 and model.pk == merged_rows[-1].pk:
+                merged_rows[-1] = cls.merge_two_instances(model, merged_rows[-1])
             else:
                 merged_rows.append(model)
         return merged_rows

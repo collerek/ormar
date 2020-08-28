@@ -20,9 +20,10 @@ from pydantic import BaseModel
 
 import ormar  # noqa I100
 from ormar.fields import BaseField
+from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
-from ormar.relations import RelationshipManager
+from ormar.relations import AliasManager, RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models.model import Model
@@ -34,7 +35,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass):
-    __slots__ = ("_orm_id", "_orm_saved")
+    __slots__ = ("_orm_id", "_orm_saved", "_orm")
 
     if TYPE_CHECKING:  # pragma no cover
         __model_fields__: Dict[str, TypeVar[BaseField]]
@@ -45,7 +46,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         __tablename__: str
         __metadata__: sqlalchemy.MetaData
         __database__: databases.Database
-        _orm_relationship_manager: RelationshipManager
+        _orm_relationship_manager: AliasManager
+        _orm: RelationsManager
         Meta: ModelMeta
 
     # noinspection PyMissingConstructor
@@ -53,13 +55,30 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         object.__setattr__(self, "_orm_id", uuid.uuid4().hex)
         object.__setattr__(self, "_orm_saved", False)
+        object.__setattr__(
+            self,
+            "_orm",
+            RelationsManager(
+                related_fields=[
+                    field
+                    for name, field in self.Meta.model_fields.items()
+                    if issubclass(field, ForeignKeyField)
+                ],
+                owner=self,
+            ),
+        )
 
         pk_only = kwargs.pop("__pk_only__", False)
         if "pk" in kwargs:
             kwargs[self.Meta.pkname] = kwargs.pop("pk")
+        # build the models to set them and validate but don't register
         kwargs = {
             k: self._convert_json(
-                k, self.Meta.model_fields[k].expand_relationship(v, self), "dumps"
+                k,
+                self.Meta.model_fields[k].expand_relationship(
+                    v, self, to_register=False
+                ),
+                "dumps",
             )
             for k, v in kwargs.items()
         }
@@ -71,17 +90,20 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         object.__setattr__(self, "__dict__", values)
         object.__setattr__(self, "__fields_set__", fields_set)
 
-    def __del__(self) -> None:
-        self.Meta._orm_relationship_manager.deregister(self)
+        # register the related models after initialization
+        for related in self._extract_related_names():
+            self.Meta.model_fields[related].expand_relationship(
+                kwargs.get(related), self, to_register=True
+            )
 
     def __setattr__(self, name: str, value: Any) -> None:
-        relation_key = self.get_name(title=True) + "_" + name
         if name in self.__slots__:
             object.__setattr__(self, name, value)
         elif name == "pk":
             object.__setattr__(self, self.Meta.pkname, value)
-        elif self.Meta._orm_relationship_manager.contains(relation_key, self):
-            self.Meta.model_fields[name].expand_relationship(value, self)
+        elif name in self._orm:
+            model = self.Meta.model_fields[name].expand_relationship(value, self)
+            self.__dict__[name] = model
         else:
             value = (
                 self._convert_json(name, value, "dumps")
@@ -91,28 +113,25 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             super().__setattr__(name, value)
 
     def __getattribute__(self, item: str) -> Any:
-        if item != "__fields__" and item in self.__fields__:
-            related = self._extract_related_model_instead_of_field(item)
-            if related:
-                return related
-            value = object.__getattribute__(self, item)
+        if item in ("_orm_id", "_orm_saved", "_orm", "__fields__"):
+            return object.__getattribute__(self, item)
+        elif item != "_extract_related_names" and item in self._extract_related_names():
+            return self._extract_related_model_instead_of_field(item)
+        elif item == "pk":
+            return self.__dict__.get(self.Meta.pkname, None)
+        elif item != "__fields__" and item in self.__fields__:
+            value = self.__dict__.get(item, None)
             value = self._convert_json(item, value, "loads")
             return value
         return super().__getattribute__(item)
 
-    def __getattr__(self, item: str) -> Optional[Union["Model", List["Model"]]]:
-        return self._extract_related_model_instead_of_field(item)
-
     def _extract_related_model_instead_of_field(
         self, item: str
     ) -> Optional[Union["Model", List["Model"]]]:
-        relation_key = self.get_name(title=True) + "_" + item
-        if self.Meta._orm_relationship_manager.contains(relation_key, self):
-            return self.Meta._orm_relationship_manager.get(relation_key, self)
+        if item in self._orm:
+            return self._orm.get(item)
 
     def __same__(self, other: "Model") -> bool:
-        if self.__class__ != other.__class__:  # pragma no cover
-            return False
         return (
             self._orm_id == other._orm_id
             or self.__dict__ == other.__dict__
@@ -124,13 +143,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         name = cls.__name__
         if lower:
             name = name.lower()
-        if title:
-            name = name.title()
         return name
-
-    @property
-    def pk(self) -> Any:
-        return getattr(self, self.Meta.pkname)
 
     @property
     def pk_column(self) -> sqlalchemy.Column:
@@ -139,6 +152,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     @classmethod
     def pk_type(cls) -> Any:
         return cls.Meta.model_fields[cls.Meta.pkname].__type__
+
+    def remove(self, name: "Model") -> None:
+        self._orm.remove_parent(self, name)
 
     def dict(  # noqa A003
         self,
@@ -167,17 +183,25 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             if self.Meta.model_fields[field].virtual and nested:
                 continue
             if isinstance(nested_model, list):
-                dict_instance[field] = [x.dict(nested=True) for x in nested_model]
+                result = []
+                for model in nested_model:
+                    try:
+                        result.append(model.dict(nested=True))
+                    except ReferenceError:  # pragma no cover
+                        continue
+                dict_instance[field] = result
             elif nested_model is not None:
                 dict_instance[field] = nested_model.dict(nested=True)
+            else:
+                dict_instance[field] = None
         return dict_instance
 
-    def from_dict(self, value_dict: Dict) -> None:
+    def from_dict(self, value_dict: Dict) -> "Model":
         for key, value in value_dict.items():
             setattr(self, key, value)
+        return self
 
     def _convert_json(self, column_name: str, value: Any, op: str) -> Union[str, dict]:
-
         if not self._is_conversion_to_json_needed(column_name):
             return value
 

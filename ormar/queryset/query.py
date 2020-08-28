@@ -5,8 +5,7 @@ from sqlalchemy import text
 
 import ormar  # noqa I100
 from ormar.fields.foreign_key import ForeignKeyField
-from ormar.queryset.relationship_crawler import RelationshipCrawler
-from ormar.relations import RelationshipManager
+from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -44,22 +43,19 @@ class Query:
         self.order_bys = None
 
     @property
-    def relation_manager(self) -> RelationshipManager:
-        return self.model_cls.Meta._orm_relationship_manager
+    def relation_manager(self) -> AliasManager:
+        return self.model_cls.Meta.alias_manager
+
+    @property
+    def prefixed_pk_name(self) -> str:
+        return f"{self.table.name}.{self.model_cls.Meta.pkname}"
 
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
         self.columns = list(self.table.columns)
-        self.order_bys = [text(f"{self.table.name}.{self.model_cls.Meta.pkname}")]
+        self.order_bys = [text(self.prefixed_pk_name)]
         self.select_from = self.table
 
-        start_params = JoinParameters(
-            self.model_cls, "", self.table.name, self.model_cls
-        )
-
-        self._select_related = RelationshipCrawler().discover_relations(
-            self._select_related, prev_model=start_params.prev_model
-        )
-        self._select_related.sort(key=lambda item: (-len(item), item))
+        self._select_related.sort(key=lambda item: (item, -len(item)))
 
         for item in self._select_related:
             join_parameters = JoinParameters(
@@ -77,10 +73,11 @@ class Query:
         # print(expr.compile(compile_kwargs={"literal_binds": True}))
         self._reset_query_parameters()
 
-        return expr, self._select_related
+        return expr
 
+    @staticmethod
     def on_clause(
-        self, previous_alias: str, alias: str, from_clause: str, to_clause: str,
+        previous_alias: str, alias: str, from_clause: str, to_clause: str,
     ) -> text:
         left_part = f"{alias}_{to_clause}"
         right_part = f"{previous_alias + '_' if previous_alias else ''}{from_clause}"
@@ -92,7 +89,7 @@ class Query:
         model_cls = join_params.model_cls.Meta.model_fields[part].to
         to_table = model_cls.Meta.table.name
 
-        alias = model_cls.Meta._orm_relationship_manager.resolve_relation_join(
+        alias = model_cls.Meta.alias_manager.resolve_relation_join(
             join_params.from_table, to_table
         )
         if alias not in self.used_aliases:

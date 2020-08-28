@@ -36,6 +36,6 @@ print('department' in course.__dict__)
 # False <- related model is not stored on Course instance
 print(course.department)
 # Department(id=None, name='Science') <- Department model
-# returned from RelationshipManager
+# returned from AliasManager
 print(course.department.name)
 # Science

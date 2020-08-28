@@ -37,12 +37,20 @@ class QueryClause:
     def filter(  # noqa: A003
         self, **kwargs: Any
     ) -> Tuple[List[sqlalchemy.sql.expression.TextClause], List[str]]:
-        filter_clauses = self.filter_clauses
-        select_related = list(self._select_related)
 
         if kwargs.get("pk"):
             pk_name = self.model_cls.Meta.pkname
             kwargs[pk_name] = kwargs.pop("pk")
+
+        filter_clauses, select_related = self._populate_filter_clauses(**kwargs)
+
+        return filter_clauses, select_related
+
+    def _populate_filter_clauses(
+        self, **kwargs: Any
+    ) -> Tuple[List[sqlalchemy.sql.expression.TextClause], List[str]]:
+        filter_clauses = self.filter_clauses
+        select_related = list(self._select_related)
 
         for key, value in kwargs.items():
             table_prefix = ""
@@ -73,23 +81,35 @@ class QueryClause:
                 column = self.table.columns[key]
                 table = self.table
 
-            value, has_escaped_character = self._escape_characters_in_clause(op, value)
-
-            if isinstance(value, ormar.Model):
-                value = value.pk
-
-            op_attr = FILTER_OPERATORS[op]
-            clause = getattr(column, op_attr)(value)
-            clause = self._compile_clause(
-                clause,
-                column,
-                table,
-                table_prefix,
-                modifiers={"escape": "\\" if has_escaped_character else None},
+            clause = self._process_column_clause_for_operator_and_value(
+                value, op, column, table, table_prefix
             )
             filter_clauses.append(clause)
-
         return filter_clauses, select_related
+
+    def _process_column_clause_for_operator_and_value(
+        self,
+        value: Any,
+        op: str,
+        column: sqlalchemy.Column,
+        table: sqlalchemy.Table,
+        table_prefix: str,
+    ) -> sqlalchemy.sql.expression.TextClause:
+        value, has_escaped_character = self._escape_characters_in_clause(op, value)
+
+        if isinstance(value, ormar.Model):
+            value = value.pk
+
+        op_attr = FILTER_OPERATORS[op]
+        clause = getattr(column, op_attr)(value)
+        clause = self._compile_clause(
+            clause,
+            column,
+            table,
+            table_prefix,
+            modifiers={"escape": "\\" if has_escaped_character else None},
+        )
+        return clause
 
     def _determine_filter_target_table(
         self, related_parts: List[str], select_related: List[str]
@@ -109,7 +129,7 @@ class QueryClause:
         previous_table = model_cls.Meta.tablename
         for part in related_parts:
             current_table = model_cls.Meta.model_fields[part].to.Meta.tablename
-            manager = model_cls.Meta._orm_relationship_manager
+            manager = model_cls.Meta.alias_manager
             table_prefix = manager.resolve_relation_join(previous_table, current_table)
             model_cls = model_cls.Meta.model_fields[part].to
             previous_table = current_table

@@ -47,7 +47,7 @@ class QuerySet:
             offset=self.query_offset,
             limit_count=self.limit_count,
         )
-        exp, self._select_related = qry.build_select_expression()
+        exp = qry.build_select_expression()
         return exp
 
     def filter(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
@@ -118,15 +118,25 @@ class QuerySet:
     async def get(self, **kwargs: Any) -> "Model":
         if kwargs:
             return await self.filter(**kwargs).get()
+        else:
+            if not self.filter_clauses:
+                expr = self.build_select_expression().limit(2)
+            else:
+                expr = self.build_select_expression()
 
-        expr = self.build_select_expression().limit(2)
         rows = await self.database.fetch_all(expr)
+
+        result_rows = [
+            self.model_cls.from_row(row, select_related=self._select_related)
+            for row in rows
+        ]
+        rows = self.model_cls.merge_instances_list(result_rows)
 
         if not rows:
             raise NoMatch()
         if len(rows) > 1:
             raise MultipleMatches()
-        return self.model_cls.from_row(rows[0], select_related=self._select_related)
+        return rows[0]
 
     async def all(self, **kwargs: Any) -> List["Model"]:  # noqa: A003
         if kwargs:
@@ -138,7 +148,6 @@ class QuerySet:
             self.model_cls.from_row(row, select_related=self._select_related)
             for row in rows
         ]
-
         result_rows = self.model_cls.merge_instances_list(result_rows)
 
         return result_rows
