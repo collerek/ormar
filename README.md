@@ -21,7 +21,12 @@
 </p>
 
 The `ormar` package is an async ORM for Python, with support for Postgres,
-MySQL, and SQLite. Ormar is built with:
+MySQL, and SQLite. 
+
+Ormar - apart form obvious ORM in name - get it's name from ormar in swedish which means snakes, and ormar(e) in italian which means cabinet. 
+And what's a better name for python ORM than snakes cabinet :)
+
+Ormar is built with:
 
   * [`SQLAlchemy core`][sqlalchemy-core] for query building.
   * [`databases`][databases] for cross-database async support.

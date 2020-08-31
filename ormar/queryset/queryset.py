@@ -167,8 +167,6 @@ class QuerySet:
             del new_kwargs[pkname]
 
         new_kwargs = self.model_cls.substitute_models_with_pks(new_kwargs)
-
-        # Build the insert expression.
         expr = self.table.insert()
         expr = expr.values(**new_kwargs)
 
