@@ -22,6 +22,7 @@ class BaseField:
     index: bool
     unique: bool
     pydantic_only: bool
+    virtual: bool = False
 
     default: Any
     server_default: Any

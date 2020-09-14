@@ -5,6 +5,7 @@ from sqlalchemy import text
 
 import ormar  # noqa I100
 from ormar.exceptions import QueryDefinitionError
+from ormar.fields.many_to_many import ManyToManyField
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -128,6 +129,10 @@ class QueryClause:
         # against which the comparison is being made.
         previous_table = model_cls.Meta.tablename
         for part in related_parts:
+            if issubclass(model_cls.Meta.model_fields[part], ManyToManyField):
+                previous_table = model_cls.Meta.model_fields[
+                    part
+                ].through.Meta.tablename
             current_table = model_cls.Meta.model_fields[part].to.Meta.tablename
             manager = model_cls.Meta.alias_manager
             table_prefix = manager.resolve_relation_join(previous_table, current_table)

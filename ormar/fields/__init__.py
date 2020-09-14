@@ -1,5 +1,6 @@
 from ormar.fields.base import BaseField
 from ormar.fields.foreign_key import ForeignKey
+from ormar.fields.many_to_many import ManyToMany
 from ormar.fields.model_fields import (
     BigInteger,
     Boolean,
@@ -27,5 +28,6 @@ __all__ = [
     "Float",
     "Time",
     "ForeignKey",
+    "ManyToMany",
     "BaseField",
 ]

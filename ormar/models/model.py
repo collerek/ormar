@@ -4,6 +4,7 @@ from typing import Any, List, Tuple, Union
 import sqlalchemy
 
 import ormar.queryset  # noqa I100
+from ormar.fields.many_to_many import ManyToManyField
 from ormar.models import NewBaseModel  # noqa I100
 
 
@@ -40,10 +41,19 @@ class Model(NewBaseModel):
         if select_related:
             related_models = group_related_list(select_related)
 
+        # breakpoint()
+        if (
+            previous_table
+            and previous_table in cls.Meta.model_fields
+            and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
+        ):
+            previous_table = cls.Meta.model_fields[
+                previous_table
+            ].through.Meta.tablename
+
         table_prefix = cls.Meta.alias_manager.resolve_relation_join(
             previous_table, cls.Meta.table.name
         )
-
         previous_table = cls.Meta.table.name
 
         item = cls.populate_nested_models_from_row(
