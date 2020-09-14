@@ -48,6 +48,7 @@ class QuerySet:
             limit_count=self.limit_count,
         )
         exp = qry.build_select_expression()
+        # print(exp.compile(compile_kwargs={"literal_binds": True}))
         return exp
 
     def filter(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
@@ -70,7 +71,7 @@ class QuerySet:
         if not isinstance(related, (list, tuple)):
             related = [related]
 
-        related = list(self._select_related) + related
+        related = list(set(list(self._select_related) + related))
         return self.__class__(
             model_cls=self.model_cls,
             filter_clauses=self.filter_clauses,
@@ -82,12 +83,27 @@ class QuerySet:
     async def exists(self) -> bool:
         expr = self.build_select_expression()
         expr = sqlalchemy.exists(expr).select()
+        # print(expr.compile(compile_kwargs={"literal_binds": True}))
         return await self.database.fetch_val(expr)
 
     async def count(self) -> int:
         expr = self.build_select_expression().alias("subquery_for_count")
         expr = sqlalchemy.func.count().select().select_from(expr)
+        # print(expr.compile(compile_kwargs={"literal_binds": True}))
         return await self.database.fetch_val(expr)
+
+    async def delete(self, **kwargs: Any) -> int:
+        if kwargs:
+            return await self.filter(**kwargs).delete()
+        qry = Query(
+            model_cls=self.model_cls,
+            select_related=self._select_related,
+            filter_clauses=self.filter_clauses,
+            offset=self.query_offset,
+            limit_count=self.limit_count,
+        )
+        expr = qry.filter(self.table.delete())
+        return await self.database.execute(expr)
 
     def limit(self, limit_count: int) -> "QuerySet":
         return self.__class__(
@@ -118,11 +134,11 @@ class QuerySet:
     async def get(self, **kwargs: Any) -> "Model":
         if kwargs:
             return await self.filter(**kwargs).get()
+
+        if not self.filter_clauses:
+            expr = self.build_select_expression().limit(2)
         else:
-            if not self.filter_clauses:
-                expr = self.build_select_expression().limit(2)
-            else:
-                expr = self.build_select_expression()
+            expr = self.build_select_expression()
 
         rows = await self.database.fetch_all(expr)
 
@@ -143,6 +159,7 @@ class QuerySet:
             return await self.filter(**kwargs).all()
 
         expr = self.build_select_expression()
+        # breakpoint()
         rows = await self.database.fetch_all(expr)
         result_rows = [
             self.model_cls.from_row(row, select_related=self._select_related)

@@ -175,6 +175,86 @@ tracks = await Track.objects.limit(1).all()
 assert len(tracks) == 1
 ```
 
+Since version >=0.3 Ormar supports also many to many relationships
+```python
+import databases
+import ormar
+import sqlalchemy
+
+database = databases.Database("sqlite:///db.sqlite")
+metadata = sqlalchemy.MetaData()
+
+class Author(ormar.Model):
+    class Meta:
+        tablename = "authors"
+        database = database
+        metadata = metadata
+
+    id: ormar.Integer(primary_key=True)
+    first_name: ormar.String(max_length=80)
+    last_name: ormar.String(max_length=80)
+
+
+class Category(ormar.Model):
+    class Meta:
+        tablename = "categories"
+        database = database
+        metadata = metadata
+
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=40)
+
+
+class PostCategory(ormar.Model):
+    class Meta:
+        tablename = "posts_categories"
+        database = database
+        metadata = metadata
+
+
+class Post(ormar.Model):
+    class Meta:
+        tablename = "posts"
+        database = database
+        metadata = metadata
+
+    id: ormar.Integer(primary_key=True)
+    title: ormar.String(max_length=200)
+    categories: ormar.ManyToMany(Category, through=PostCategory)
+    author: ormar.ForeignKey(Author)
+
+guido = await Author.objects.create(first_name="Guido", last_name="Van Rossum")
+post = await Post.objects.create(title="Hello, M2M", author=guido)
+news = await Category.objects.create(name="News")
+
+# Add a category to a post.
+await post.categories.add(news)
+# or from the other end:
+await news.posts.add(post)
+
+# Creating related object from instance:
+await post.categories.create(name="Tips")
+assert len(await post.categories.all()) == 2
+
+# Many to many relation exposes a list of related models 
+# and an API of the Queryset:
+assert news == await post.categories.get(name="News")
+
+# with all Queryset methods - filtering, selecting related, counting etc.
+await news.posts.filter(title__contains="M2M").all()
+await Category.objects.filter(posts__author=guido).get()
+
+# related models of many to many relation can be prefetched
+news_posts = await news.posts.select_related("author").all()
+assert news_posts[0].author == guido
+
+# Removal of the relationship by one
+await news.posts.remove(post)
+# or all at once
+await news.posts.clear()
+
+```
+
 ## Data types
 
 The following keyword arguments are supported on all field types.

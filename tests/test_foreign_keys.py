@@ -1,5 +1,3 @@
-import gc
-
 import databases
 import pytest
 import sqlalchemy
@@ -179,7 +177,7 @@ async def test_model_removal_from_relations():
         await track3.save()
 
         assert len(album.tracks) == 3
-        album.tracks.remove(track1)
+        await album.tracks.remove(track1)
         assert len(album.tracks) == 2
         assert track1.album is None
 
@@ -187,7 +185,7 @@ async def test_model_removal_from_relations():
         track1 = await Track.objects.get(title="The Birdman")
         assert track1.album is None
 
-        album.tracks.add(track1)
+        await album.tracks.add(track1)
         assert len(album.tracks) == 3
         assert track1.album == album
 

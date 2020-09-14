@@ -23,7 +23,8 @@ from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
-from ormar.relations import AliasManager, RelationsManager
+from ormar.relations.alias_manager import AliasManager
+from ormar.relations.relation import RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models.model import Model
@@ -96,14 +97,17 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 kwargs.get(related), self, to_register=True
             )
 
-    def __setattr__(self, name: str, value: Any) -> None:
+    def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
         if name in self.__slots__:
             object.__setattr__(self, name, value)
         elif name == "pk":
             object.__setattr__(self, self.Meta.pkname, value)
         elif name in self._orm:
             model = self.Meta.model_fields[name].expand_relationship(value, self)
-            self.__dict__[name] = model
+            if isinstance(self.__dict__.get(name), list):
+                self.__dict__[name].append(model)
+            else:
+                self.__dict__[name] = model
         else:
             value = (
                 self._convert_json(name, value, "dumps")
@@ -115,11 +119,11 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def __getattribute__(self, item: str) -> Any:
         if item in ("_orm_id", "_orm_saved", "_orm", "__fields__"):
             return object.__getattribute__(self, item)
-        elif item != "_extract_related_names" and item in self._extract_related_names():
+        if item != "_extract_related_names" and item in self._extract_related_names():
             return self._extract_related_model_instead_of_field(item)
-        elif item == "pk":
+        if item == "pk":
             return self.__dict__.get(self.Meta.pkname, None)
-        elif item != "__fields__" and item in self.__fields__:
+        if item != "__fields__" and item in self.__fields__:
             value = self.__dict__.get(item, None)
             value = self._convert_json(item, value, "loads")
             return value
@@ -131,15 +135,20 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if item in self._orm:
             return self._orm.get(item)
 
+    def __eq__(self, other: "Model") -> bool:
+        if isinstance(other, NewBaseModel):
+            return self.__same__(other)
+        return super().__eq__(other)  # pragma no cover
+
     def __same__(self, other: "Model") -> bool:
         return (
             self._orm_id == other._orm_id
-            or self.__dict__ == other.__dict__
+            or self.dict() == other.dict()
             or (self.pk == other.pk and self.pk is not None)
         )
 
     @classmethod
-    def get_name(cls, title: bool = False, lower: bool = True) -> str:
+    def get_name(cls, lower: bool = True) -> str:
         name = cls.__name__
         if lower:
             name = name.lower()

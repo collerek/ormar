@@ -4,8 +4,10 @@ import sqlalchemy
 from sqlalchemy import text
 
 import ormar  # noqa I100
+from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
-from ormar.relations import AliasManager
+from ormar.fields.many_to_many import ManyToManyField
+from ormar.relations.alias_manager import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -63,6 +65,15 @@ class Query:
             )
 
             for part in item.split("__"):
+                if issubclass(
+                    join_parameters.model_cls.Meta.model_fields[part], ManyToManyField
+                ):
+                    _fields = join_parameters.model_cls.Meta.model_fields
+                    new_part = _fields[part].to.get_name()
+                    join_parameters = self._build_join_parameters(
+                        part, join_parameters, is_multi=True
+                    )
+                    part = new_part
                 join_parameters = self._build_join_parameters(part, join_parameters)
 
         expr = sqlalchemy.sql.select(self.columns)
@@ -83,23 +94,30 @@ class Query:
         right_part = f"{previous_alias + '_' if previous_alias else ''}{from_clause}"
         return text(f"{left_part}={right_part}")
 
+    def _is_target_relation_key(
+        self, field: BaseField, target_model: Type["Model"]
+    ) -> bool:
+        return issubclass(field, ForeignKeyField) and field.to.Meta == target_model.Meta
+
     def _build_join_parameters(
-        self, part: str, join_params: JoinParameters
+        self, part: str, join_params: JoinParameters, is_multi: bool = False
     ) -> JoinParameters:
-        model_cls = join_params.model_cls.Meta.model_fields[part].to
+        if is_multi:
+            model_cls = join_params.model_cls.Meta.model_fields[part].through
+        else:
+            model_cls = join_params.model_cls.Meta.model_fields[part].to
         to_table = model_cls.Meta.table.name
 
         alias = model_cls.Meta.alias_manager.resolve_relation_join(
             join_params.from_table, to_table
         )
         if alias not in self.used_aliases:
-            if join_params.prev_model.Meta.model_fields[part].virtual:
+            if join_params.prev_model.Meta.model_fields[part].virtual or is_multi:
                 to_key = next(
                     (
                         v
                         for k, v in model_cls.Meta.model_fields.items()
-                        if issubclass(v, ForeignKeyField)
-                        and v.to == join_params.prev_model
+                        if self._is_target_relation_key(v, join_params.prev_model)
                     ),
                     None,
                 ).name
@@ -129,16 +147,19 @@ class Query:
         prev_model = model_cls
         return JoinParameters(prev_model, previous_alias, from_table, model_cls)
 
-    def _apply_expression_modifiers(
-        self, expr: sqlalchemy.sql.select
-    ) -> sqlalchemy.sql.select:
+    def filter(self, expr: sqlalchemy.sql.select) -> sqlalchemy.sql.select:  # noqa A003
         if self.filter_clauses:
             if len(self.filter_clauses) == 1:
                 clause = self.filter_clauses[0]
             else:
                 clause = sqlalchemy.sql.and_(*self.filter_clauses)
             expr = expr.where(clause)
+        return expr
 
+    def _apply_expression_modifiers(
+        self, expr: sqlalchemy.sql.select
+    ) -> sqlalchemy.sql.select:
+        expr = self.filter(expr)
         if self.limit_count:
             expr = expr.limit(self.limit_count)
 

@@ -22,7 +22,7 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
     return fk(**init_dict)
 
 
-def ForeignKey(
+def ForeignKey(  # noqa CFQ002
     to: Type["Model"],
     *,
     name: str = None,
@@ -30,6 +30,8 @@ def ForeignKey(
     nullable: bool = True,
     related_name: str = None,
     virtual: bool = False,
+    onupdate: str = None,
+    ondelete: str = None,
 ) -> Type[object]:
     fk_string = to.Meta.tablename + "." + to.Meta.pkname
     to_field = to.__fields__[to.Meta.pkname]
@@ -37,7 +39,11 @@ def ForeignKey(
         to=to,
         name=name,
         nullable=nullable,
-        constraints=[sqlalchemy.schema.ForeignKey(fk_string)],
+        constraints=[
+            sqlalchemy.schema.ForeignKey(
+                fk_string, ondelete=ondelete, onupdate=onupdate
+            )
+        ],
         unique=unique,
         column_type=to_field.type_.column_type,
         related_name=related_name,
@@ -117,7 +123,7 @@ class ForeignKeyField(BaseField):
         cls, value: Any, child: "Model", to_register: bool = True
     ) -> Optional[Union["Model", List["Model"]]]:
         if value is None:
-            return None
+            return None if not cls.virtual else []
 
         constructors = {
             f"{cls.to.__name__}": cls._register_existing_model,

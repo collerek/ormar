@@ -22,6 +22,7 @@ class BaseField:
     index: bool
     unique: bool
     pydantic_only: bool
+    virtual: bool = False
 
     default: Any
     server_default: Any
@@ -34,8 +35,7 @@ class BaseField:
             default = cls.default if cls.default is not None else cls.server_default
             if callable(default):
                 return Field(default_factory=default)
-            else:
-                return Field(default=default)
+            return Field(default=default)
         return None
 
     @classmethod

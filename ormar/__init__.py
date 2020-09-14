@@ -9,13 +9,14 @@ from ormar.fields import (
     ForeignKey,
     Integer,
     JSON,
+    ManyToMany,
     String,
     Text,
     Time,
 )
 from ormar.models import Model
 
-__version__ = "0.2.2"
+__version__ = "0.3.0"
 __all__ = [
     "Integer",
     "BigInteger",
@@ -28,6 +29,7 @@ __all__ = [
     "Date",
     "Decimal",
     "Float",
+    "ManyToMany",
     "Model",
     "ModelDefinitionError",
     "ModelNotSet",
