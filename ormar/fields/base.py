@@ -35,8 +35,7 @@ class BaseField:
             default = cls.default if cls.default is not None else cls.server_default
             if callable(default):
                 return Field(default_factory=default)
-            else:
-                return Field(default=default)
+            return Field(default=default)
         return None
 
     @classmethod

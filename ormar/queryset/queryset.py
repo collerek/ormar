@@ -134,11 +134,11 @@ class QuerySet:
     async def get(self, **kwargs: Any) -> "Model":
         if kwargs:
             return await self.filter(**kwargs).get()
+
+        if not self.filter_clauses:
+            expr = self.build_select_expression().limit(2)
         else:
-            if not self.filter_clauses:
-                expr = self.build_select_expression().limit(2)
-            else:
-                expr = self.build_select_expression()
+            expr = self.build_select_expression()
 
         rows = await self.database.fetch_all(expr)
 

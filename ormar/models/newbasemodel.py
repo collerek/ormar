@@ -119,11 +119,11 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def __getattribute__(self, item: str) -> Any:
         if item in ("_orm_id", "_orm_saved", "_orm", "__fields__"):
             return object.__getattribute__(self, item)
-        elif item != "_extract_related_names" and item in self._extract_related_names():
+        if item != "_extract_related_names" and item in self._extract_related_names():
             return self._extract_related_model_instead_of_field(item)
-        elif item == "pk":
+        if item == "pk":
             return self.__dict__.get(self.Meta.pkname, None)
-        elif item != "__fields__" and item in self.__fields__:
+        if item != "__fields__" and item in self.__fields__:
             value = self.__dict__.get(item, None)
             value = self._convert_json(item, value, "loads")
             return value
