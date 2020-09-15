@@ -16,6 +16,7 @@ from ormar.fields import (
 )
 from ormar.models import Model
 from ormar.queryset import QuerySet
+from ormar.relations import RelationType
 
 __version__ = "0.3.0"
 __all__ = [

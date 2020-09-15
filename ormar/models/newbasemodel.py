@@ -24,7 +24,7 @@ from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
 from ormar.relations.alias_manager import AliasManager
-from ormar.relations.relation import RelationsManager
+from ormar.relations.relation_manager import RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models.model import Model
