@@ -1,10 +1,11 @@
-from typing import TYPE_CHECKING, Union, List, Any, Tuple
+from typing import Any, List, TYPE_CHECKING, Tuple, Union
 
 import ormar
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
     from ormar.models import Model
+    from ormar.queryset import QuerySet
 
 
 class QuerysetProxy:

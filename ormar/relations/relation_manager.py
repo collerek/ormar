@@ -1,5 +1,5 @@
-from _weakref import proxy
-from typing import List, Type, Optional, Union, Tuple
+from typing import List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from weakref import proxy
 
 import ormar
 from ormar.exceptions import RelationshipInstanceError
@@ -7,6 +7,9 @@ from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.relations import Relation
 from ormar.relations.relation import RelationType
+
+if TYPE_CHECKING:  # pragma no cover
+    from ormar import Model
 
 
 class RelationsManager:

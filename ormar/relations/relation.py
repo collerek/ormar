@@ -77,5 +77,3 @@ class Relation:
 
     def __repr__(self) -> str:  # pragma no cover
         return str(self.related_models)
-
-

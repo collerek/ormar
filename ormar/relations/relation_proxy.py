@@ -40,8 +40,8 @@ class RelationProxy(list):
         kwargs = {f"{owner_table}__{pkname}": pk_value}
         queryset = (
             ormar.QuerySet(model_cls=self.relation.to)
-                .select_related(owner_table)
-                .filter(**kwargs)
+            .select_related(owner_table)
+            .filter(**kwargs)
         )
         return queryset
 
