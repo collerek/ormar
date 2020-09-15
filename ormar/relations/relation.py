@@ -6,7 +6,7 @@ import ormar  # noqa I100
 from ormar.exceptions import RelationshipInstanceError  # noqa I100
 from ormar.fields.foreign_key import ForeignKeyField  # noqa I100
 from ormar.fields.many_to_many import ManyToManyField
-from ormar.queryset import QuerySet
+from ormar.relations.querysetproxy import QuerysetProxy
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -16,87 +16,6 @@ class RelationType(Enum):
     PRIMARY = 1
     REVERSE = 2
     MULTIPLE = 3
-
-
-class QuerysetProxy:
-    if TYPE_CHECKING:  # pragma no cover
-        relation: "Relation"
-
-    def __init__(self, relation: "Relation") -> None:
-        self.relation = relation
-        self.queryset = None
-
-    def _assign_child_to_parent(self, child: "Model") -> None:
-        owner = self.relation._owner
-        rel_name = owner.resolve_relation_name(owner, child)
-        setattr(owner, rel_name, child)
-
-    def _register_related(self, child: Union["Model", List["Model"]]) -> None:
-        if isinstance(child, list):
-            for subchild in child:
-                self._assign_child_to_parent(subchild)
-        else:
-            self._assign_child_to_parent(child)
-
-    async def create_through_instance(self, child: "Model") -> None:
-        queryset = QuerySet(model_cls=self.relation.through)
-        owner_column = self.relation._owner.get_name()
-        child_column = child.get_name()
-        kwargs = {owner_column: self.relation._owner, child_column: child}
-        await queryset.create(**kwargs)
-
-    async def delete_through_instance(self, child: "Model") -> None:
-        queryset = QuerySet(model_cls=self.relation.through)
-        owner_column = self.relation._owner.get_name()
-        child_column = child.get_name()
-        kwargs = {owner_column: self.relation._owner, child_column: child}
-        link_instance = await queryset.filter(**kwargs).get()
-        await link_instance.delete()
-
-    def filter(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
-        return self.queryset.filter(**kwargs)
-
-    def select_related(self, related: Union[List, Tuple, str]) -> "QuerySet":
-        return self.queryset.select_related(related)
-
-    async def exists(self) -> bool:
-        return await self.queryset.exists()
-
-    async def count(self) -> int:
-        return await self.queryset.count()
-
-    async def clear(self) -> int:
-        queryset = QuerySet(model_cls=self.relation.through)
-        owner_column = self.relation._owner.get_name()
-        kwargs = {owner_column: self.relation._owner}
-        return await queryset.delete(**kwargs)
-
-    def limit(self, limit_count: int) -> "QuerySet":
-        return self.queryset.limit(limit_count)
-
-    def offset(self, offset: int) -> "QuerySet":
-        return self.queryset.offset(offset)
-
-    async def first(self, **kwargs: Any) -> "Model":
-        first = await self.queryset.first(**kwargs)
-        self._register_related(first)
-        return first
-
-    async def get(self, **kwargs: Any) -> "Model":
-        get = await self.queryset.get(**kwargs)
-        self._register_related(get)
-        return get
-
-    async def all(self, **kwargs: Any) -> List["Model"]:  # noqa: A003
-        all_items = await self.queryset.all(**kwargs)
-        self._register_related(all_items)
-        return all_items
-
-    async def create(self, **kwargs: Any) -> "Model":
-        create = await self.queryset.create(**kwargs)
-        self._register_related(create)
-        await self.create_through_instance(create)
-        return create
 
 
 class RelationProxy(list):
@@ -118,7 +37,7 @@ class RelationProxy(list):
             self.queryset_proxy.queryset = self._set_queryset()
         return getattr(self.queryset_proxy, item)
 
-    def _set_queryset(self) -> QuerySet:
+    def _set_queryset(self) -> "QuerySet":
         owner_table = self.relation._owner.Meta.tablename
         pkname = self.relation._owner.Meta.pkname
         pk_value = self.relation._owner.pk
@@ -128,7 +47,7 @@ class RelationProxy(list):
             )
         kwargs = {f"{owner_table}__{pkname}": pk_value}
         queryset = (
-            QuerySet(model_cls=self.relation.to)
+            ormar.QuerySet(model_cls=self.relation.to)
             .select_related(owner_table)
             .filter(**kwargs)
         )

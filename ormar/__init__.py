@@ -15,6 +15,7 @@ from ormar.fields import (
     Time,
 )
 from ormar.models import Model
+from ormar.queryset import QuerySet
 
 __version__ = "0.3.0"
 __all__ = [
@@ -36,4 +37,5 @@ __all__ = [
     "MultipleMatches",
     "NoMatch",
     "ForeignKey",
+    "QuerySet",
 ]
