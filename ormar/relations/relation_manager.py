@@ -2,7 +2,6 @@ from typing import List, Optional, TYPE_CHECKING, Tuple, Type, Union
 from weakref import proxy
 
 import ormar
-from ormar.exceptions import RelationshipInstanceError
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.relations import Relation
@@ -85,20 +84,7 @@ class RelationsManager:
 
     @staticmethod
     def add(parent: "Model", child: "Model", child_name: str, virtual: bool) -> None:
-        to_field = next(
-            (
-                field
-                for field in child._orm._related_fields
-                if field.to == parent.__class__ or field.to.Meta == parent.Meta
-            ),
-            None,
-        )
-
-        if not to_field:  # pragma no cover
-            raise RelationshipInstanceError(
-                f"Model {child.__class__} does not have "
-                f"reference to model {parent.__class__}"
-            )
+        to_field = child.resolve_relation_field(child, parent)
 
         (
             parent,

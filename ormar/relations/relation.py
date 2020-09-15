@@ -39,7 +39,7 @@ class Relation:
     def _find_existing(self, child: "Model") -> Optional[int]:
         for ind, relation_child in enumerate(self.related_models[:]):
             try:
-                if relation_child.__same__(child):
+                if relation_child == child:
                     return ind
             except ReferenceError:  # pragma no cover
                 self.related_models.pop(ind)

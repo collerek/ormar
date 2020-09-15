@@ -1,12 +1,16 @@
 import inspect
-from typing import List, Optional, Set, TYPE_CHECKING
+from typing import List, Optional, Set, TYPE_CHECKING, Type, TypeVar
 
 import ormar
+from ormar.exceptions import RelationshipInstanceError
+from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.metaclass import ModelMeta
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+
+Field = TypeVar("Field", bound=BaseField)
 
 
 class ModelTableProxy:
@@ -88,6 +92,17 @@ class ModelTableProxy:
                 # so we need to compare Meta too as this one is copied as is
                 if field.to == related.__class__ or field.to.Meta == related.Meta:
                     return name
+
+    @staticmethod
+    def resolve_relation_field(item: "Model", related: "Model") -> Type[Field]:
+        name = ModelTableProxy.resolve_relation_name(item, related)
+        to_field = item.Meta.model_fields.get(name)
+        if not to_field:  # pragma no cover
+            raise RelationshipInstanceError(
+                f"Model {item.__class__} does not have "
+                f"reference to model {related.__class__}"
+            )
+        return to_field
 
     @classmethod
     def merge_instances_list(cls, result_rows: List["Model"]) -> List["Model"]:
