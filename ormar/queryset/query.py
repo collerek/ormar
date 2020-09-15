@@ -112,40 +112,63 @@ class Query:
             join_params.from_table, to_table
         )
         if alias not in self.used_aliases:
-            if join_params.prev_model.Meta.model_fields[part].virtual or is_multi:
-                to_key = next(
-                    (
-                        v
-                        for k, v in model_cls.Meta.model_fields.items()
-                        if self._is_target_relation_key(v, join_params.prev_model)
-                    ),
-                    None,
-                ).name
-                from_key = model_cls.Meta.pkname
-            else:
-                to_key = model_cls.Meta.pkname
-                from_key = part
-
-            on_clause = self.on_clause(
-                previous_alias=join_params.previous_alias,
-                alias=alias,
-                from_clause=f"{join_params.from_table}.{from_key}",
-                to_clause=f"{to_table}.{to_key}",
-            )
-            target_table = self.relation_manager.prefixed_table_name(alias, to_table)
-            self.select_from = sqlalchemy.sql.outerjoin(
-                self.select_from, target_table, on_clause
-            )
-            self.order_bys.append(text(f"{alias}_{to_table}.{model_cls.Meta.pkname}"))
-            self.columns.extend(
-                self.relation_manager.prefixed_columns(alias, model_cls.Meta.table)
-            )
-            self.used_aliases.append(alias)
+            self._process_join(join_params, is_multi, model_cls, part, alias)
 
         previous_alias = alias
         from_table = to_table
         prev_model = model_cls
         return JoinParameters(prev_model, previous_alias, from_table, model_cls)
+
+    def _process_join(
+        self,
+        join_params: JoinParameters,
+        is_multi: bool,
+        model_cls: Type["Model"],
+        part: str,
+        alias: str,
+    ) -> None:
+        to_table = model_cls.Meta.table.name
+        to_key, from_key = self._get_to_and_from_keys(
+            join_params, is_multi, model_cls, part
+        )
+
+        on_clause = self.on_clause(
+            previous_alias=join_params.previous_alias,
+            alias=alias,
+            from_clause=f"{join_params.from_table}.{from_key}",
+            to_clause=f"{to_table}.{to_key}",
+        )
+        target_table = self.relation_manager.prefixed_table_name(alias, to_table)
+        self.select_from = sqlalchemy.sql.outerjoin(
+            self.select_from, target_table, on_clause
+        )
+        self.order_bys.append(text(f"{alias}_{to_table}.{model_cls.Meta.pkname}"))
+        self.columns.extend(
+            self.relation_manager.prefixed_columns(alias, model_cls.Meta.table)
+        )
+        self.used_aliases.append(alias)
+
+    def _get_to_and_from_keys(
+        self,
+        join_params: JoinParameters,
+        is_multi: bool,
+        model_cls: Type["Model"],
+        part: str,
+    ) -> Tuple[str, str]:
+        if join_params.prev_model.Meta.model_fields[part].virtual or is_multi:
+            to_key = next(
+                (
+                    v
+                    for k, v in model_cls.Meta.model_fields.items()
+                    if self._is_target_relation_key(v, join_params.prev_model)
+                ),
+                None,
+            ).name
+            from_key = model_cls.Meta.pkname
+        else:
+            to_key = model_cls.Meta.pkname
+            from_key = part
+        return to_key, from_key
 
     def filter(self, expr: sqlalchemy.sql.select) -> sqlalchemy.sql.select:  # noqa A003
         if self.filter_clauses:

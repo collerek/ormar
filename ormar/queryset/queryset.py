@@ -1,4 +1,4 @@
-from typing import Any, List, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, List, Mapping, TYPE_CHECKING, Tuple, Type, Union
 
 import databases
 import sqlalchemy
@@ -30,6 +30,30 @@ class QuerySet:
 
     def __get__(self, instance: "QuerySet", owner: Type["Model"]) -> "QuerySet":
         return self.__class__(model_cls=owner)
+
+    def _process_query_result_rows(self, rows: List[Mapping]) -> List["Model"]:
+        result_rows = [
+            self.model_cls.from_row(row, select_related=self._select_related)
+            for row in rows
+        ]
+        rows = self.model_cls.merge_instances_list(result_rows)
+        return rows
+
+    def _remove_pk_from_kwargs(self, new_kwargs: dict) -> dict:
+        pkname = self.model_cls.Meta.pkname
+        pk = self.model_cls.Meta.model_fields[pkname]
+        if new_kwargs.get(pkname, ormar.Undefined) is None and (
+            pk.nullable or pk.autoincrement
+        ):
+            del new_kwargs[pkname]
+        return new_kwargs
+
+    @staticmethod
+    def check_single_result_rows_count(rows: List["Model"]) -> None:
+        if not rows:
+            raise NoMatch()
+        if len(rows) > 1:
+            raise MultipleMatches()
 
     @property
     def database(self) -> databases.Database:
@@ -128,30 +152,20 @@ class QuerySet:
             return await self.filter(**kwargs).first()
 
         rows = await self.limit(1).all()
-        if rows:
-            return rows[0]
+        self.check_single_result_rows_count(rows)
+        return rows[0]
 
     async def get(self, **kwargs: Any) -> "Model":
         if kwargs:
             return await self.filter(**kwargs).get()
 
+        expr = self.build_select_expression()
         if not self.filter_clauses:
-            expr = self.build_select_expression().limit(2)
-        else:
-            expr = self.build_select_expression()
+            expr = expr.limit(2)
 
         rows = await self.database.fetch_all(expr)
-
-        result_rows = [
-            self.model_cls.from_row(row, select_related=self._select_related)
-            for row in rows
-        ]
-        rows = self.model_cls.merge_instances_list(result_rows)
-
-        if not rows:
-            raise NoMatch()
-        if len(rows) > 1:
-            raise MultipleMatches()
+        rows = self._process_query_result_rows(rows)
+        self.check_single_result_rows_count(rows)
         return rows[0]
 
     async def all(self, **kwargs: Any) -> List["Model"]:  # noqa: A003
@@ -159,31 +173,17 @@ class QuerySet:
             return await self.filter(**kwargs).all()
 
         expr = self.build_select_expression()
-        # breakpoint()
         rows = await self.database.fetch_all(expr)
-        result_rows = [
-            self.model_cls.from_row(row, select_related=self._select_related)
-            for row in rows
-        ]
-        result_rows = self.model_cls.merge_instances_list(result_rows)
+        result_rows = self._process_query_result_rows(rows)
 
         return result_rows
 
     async def create(self, **kwargs: Any) -> "Model":
 
         new_kwargs = dict(**kwargs)
-
-        # Remove primary key when None to prevent not null constraint in postgresql.
-        pkname = self.model_cls.Meta.pkname
-        pk = self.model_cls.Meta.model_fields[pkname]
-        if (
-            pkname in new_kwargs
-            and new_kwargs.get(pkname) is None
-            and (pk.nullable or pk.autoincrement)
-        ):
-            del new_kwargs[pkname]
-
+        new_kwargs = self._remove_pk_from_kwargs(new_kwargs)
         new_kwargs = self.model_cls.substitute_models_with_pks(new_kwargs)
+
         expr = self.table.insert()
         expr = expr.values(**new_kwargs)
 

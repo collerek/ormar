@@ -4,7 +4,7 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar.exceptions import QueryDefinitionError
+from ormar.exceptions import QueryDefinitionError, NoMatch
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -230,4 +230,5 @@ async def test_model_first():
         assert await User.objects.first() == tom
         assert await User.objects.first(name="Jane") == jane
         assert await User.objects.filter(name="Jane").first() == jane
-        assert await User.objects.filter(name="Lucy").first() is None
+        with pytest.raises(NoMatch):
+            await User.objects.filter(name="Lucy").first()

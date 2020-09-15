@@ -18,6 +18,14 @@ from ormar.models import Model
 from ormar.queryset import QuerySet
 from ormar.relations import RelationType
 
+
+class UndefinedType:  # pragma no cover
+    def __repr__(self) -> str:
+        return "OrmarUndefined"
+
+
+Undefined = UndefinedType()
+
 __version__ = "0.3.0"
 __all__ = [
     "Integer",
@@ -40,4 +48,5 @@ __all__ = [
     "ForeignKey",
     "QuerySet",
     "RelationType",
+    "Undefined",
 ]
