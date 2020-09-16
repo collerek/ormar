@@ -1,6 +1,14 @@
 databases[sqlite]
+databases[postgresql]
+databases[mysql]
 pydantic
 sqlalchemy
+
+# Async database drivers
+aiomysql
+aiosqlite
+asyncpg
+pymysql
 
 # Testing
 pytest
