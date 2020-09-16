@@ -5,8 +5,10 @@ import sqlalchemy
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
+from ormar.queryset import FilterQuery
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.query import Query
+
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -119,14 +121,9 @@ class QuerySet:
     async def delete(self, **kwargs: Any) -> int:
         if kwargs:
             return await self.filter(**kwargs).delete()
-        qry = Query(
-            model_cls=self.model_cls,
-            select_related=self._select_related,
-            filter_clauses=self.filter_clauses,
-            offset=self.query_offset,
-            limit_count=self.limit_count,
+        expr = FilterQuery(filter_clauses=self.filter_clauses,).apply(
+            self.table.delete()
         )
-        expr = qry.filter(self.table.delete())
         return await self.database.execute(expr)
 
     def limit(self, limit_count: int) -> "QuerySet":

@@ -7,6 +7,7 @@ import ormar  # noqa I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
+from ormar.queryset import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
 from ormar.relations.alias_manager import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
@@ -170,27 +171,13 @@ class Query:
             from_key = part
         return to_key, from_key
 
-    def filter(self, expr: sqlalchemy.sql.select) -> sqlalchemy.sql.select:  # noqa A003
-        if self.filter_clauses:
-            if len(self.filter_clauses) == 1:
-                clause = self.filter_clauses[0]
-            else:
-                clause = sqlalchemy.sql.and_(*self.filter_clauses)
-            expr = expr.where(clause)
-        return expr
-
     def _apply_expression_modifiers(
         self, expr: sqlalchemy.sql.select
     ) -> sqlalchemy.sql.select:
-        expr = self.filter(expr)
-        if self.limit_count:
-            expr = expr.limit(self.limit_count)
-
-        if self.query_offset:
-            expr = expr.offset(self.query_offset)
-
-        for order in self.order_bys:
-            expr = expr.order_by(order)
+        expr = FilterQuery(filter_clauses=self.filter_clauses).apply(expr)
+        expr = LimitQuery(limit_count=self.limit_count).apply(expr)
+        expr = OffsetQuery(query_offset=self.query_offset).apply(expr)
+        expr = OrderQuery(order_bys=self.order_bys).apply(expr)
         return expr
 
     def _reset_query_parameters(self) -> None:
