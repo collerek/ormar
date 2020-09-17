@@ -207,6 +207,9 @@ class QuerySet:
         # Execute the insert, and return a new model instance.
         instance = self.model_cls(**kwargs)
         pk = await self.database.execute(expr)
-        if pk:
+        pk_name = self.model_cls.Meta.pkname
+        if pk_name not in kwargs and pk_name in new_kwargs:
+            instance.pk = new_kwargs[self.model_cls.Meta.pkname]
+        if pk and isinstance(pk, self.model_cls.pk_type()):
             setattr(instance, self.model_cls.Meta.pkname, pk)
         return instance
