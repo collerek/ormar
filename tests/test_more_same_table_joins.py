@@ -78,6 +78,11 @@ async def create_test_database():
     engine = sqlalchemy.create_engine(DATABASE_URL)
     metadata.drop_all(engine)
     metadata.create_all(engine)
+    yield
+    metadata.drop_all(engine)
+
+
+async def create_data():
     department = await Department.objects.create(id=1, name="Math Department")
     department2 = await Department.objects.create(id=2, name="Law Department")
     class1 = await SchoolClass.objects.create(name="Math")
@@ -88,13 +93,11 @@ async def create_test_database():
     await Student.objects.create(name="Judy", category=category2, schoolclass=class1)
     await Student.objects.create(name="Jack", category=category2, schoolclass=class2)
     await Teacher.objects.create(name="Joe", category=category2, schoolclass=class1)
-    yield
-    metadata.drop_all(engine)
-
 
 @pytest.mark.asyncio
 async def test_model_multiple_instances_of_same_table_in_schema():
     async with database:
+        await create_data()
         classes = await SchoolClass.objects.select_related(
             ["teachers__category__department", "students"]
         ).all()

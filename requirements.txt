@@ -7,8 +7,13 @@ sqlalchemy
 # Async database drivers
 aiomysql
 aiosqlite
+aiopg
 asyncpg
+
+# Sync database drivers for standard tooling around setup/teardown/migrations.
 pymysql
+psycopg2-binary
+mysqlclient
 
 # Testing
 pytest

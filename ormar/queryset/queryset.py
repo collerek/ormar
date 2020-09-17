@@ -9,6 +9,9 @@ from ormar.queryset import FilterQuery
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.query import Query
 
+import logging
+import sys
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -187,5 +190,6 @@ class QuerySet:
         # Execute the insert, and return a new model instance.
         instance = self.model_cls(**kwargs)
         pk = await self.database.execute(expr)
-        setattr(instance, self.model_cls.Meta.pkname, pk)
+        if pk:
+            setattr(instance, self.model_cls.Meta.pkname, pk)
         return instance

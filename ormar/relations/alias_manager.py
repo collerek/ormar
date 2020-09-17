@@ -8,7 +8,8 @@ from sqlalchemy import text
 
 
 def get_table_alias() -> str:
-    return "".join(choices(string.ascii_uppercase, k=2)) + uuid.uuid4().hex[:4]
+    alias = "".join(choices(string.ascii_uppercase, k=2)) + uuid.uuid4().hex[:4]
+    return alias.lower()
 
 
 class AliasManager:

@@ -9,8 +9,6 @@ python:
   - "3.7"
   - "3.8"
 
-env:
-  - TEST_DATABASE_URLS="postgresql://localhost/test_database, mysql://localhost/test_database, sqlite:///test.db"
 
 services:
   - postgresql
@@ -26,7 +24,9 @@ before_script:
 
 
 script:
-  - scripts/test.sh
+  - DATABASE_URL=postgresql://localhost/test_database scripts/test.sh
+  - DATABASE_URL=mysql://localhost/test_database scripts/test.sh
+  - DATABASE_URL=sqlite:///test.db scripts/test.sh
 
 after_script:
   - codecov

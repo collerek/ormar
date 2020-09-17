@@ -1,7 +1,7 @@
 import databases
 import sqlalchemy
 from fastapi import FastAPI
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -38,18 +38,17 @@ async def create_item(item: Item):
     return item
 
 
-client = TestClient(app)
-
-
 def test_read_main():
-    response = client.post(
-        "/items/", json={"name": "test", "id": 1, "category": {"name": "test cat"}}
-    )
-    assert response.status_code == 200
-    assert response.json() == {
-        "category": {"id": None, "name": "test cat"},
-        "id": 1,
-        "name": "test",
-    }
-    item = Item(**response.json())
-    assert item.id == 1
+    client = TestClient(app)
+    with client as client:
+        response = client.post(
+            "/items/", json={"name": "test", "id": 1, "category": {"name": "test cat"}}
+        )
+        assert response.status_code == 200
+        assert response.json() == {
+            "category": {"id": None, "name": "test cat"},
+            "id": 1,
+            "name": "test",
+        }
+        item = Item(**response.json())
+        assert item.id == 1

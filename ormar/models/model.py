@@ -1,11 +1,17 @@
 import itertools
 from typing import Any, List, Tuple, Union
 
+from databases.backends.postgres import Record
 import sqlalchemy
 
 import ormar.queryset  # noqa I100
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.models import NewBaseModel  # noqa I100
+
+import logging
+import sys
+
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
 def group_related_list(list_: List) -> dict:
@@ -28,11 +34,11 @@ class Model(NewBaseModel):
 
     @classmethod
     def from_row(
-        cls,
-        row: sqlalchemy.engine.ResultProxy,
-        select_related: List = None,
-        related_models: Any = None,
-        previous_table: str = None,
+            cls,
+            row: sqlalchemy.engine.ResultProxy,
+            select_related: List = None,
+            related_models: Any = None,
+            previous_table: str = None,
     ) -> Union["Model", Tuple["Model", dict]]:
 
         item = {}
@@ -43,9 +49,9 @@ class Model(NewBaseModel):
 
         # breakpoint()
         if (
-            previous_table
-            and previous_table in cls.Meta.model_fields
-            and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
+                previous_table
+                and previous_table in cls.Meta.model_fields
+                and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
         ):
             previous_table = cls.Meta.model_fields[
                 previous_table
@@ -66,11 +72,11 @@ class Model(NewBaseModel):
 
     @classmethod
     def populate_nested_models_from_row(
-        cls,
-        item: dict,
-        row: sqlalchemy.engine.ResultProxy,
-        related_models: Any,
-        previous_table: sqlalchemy.Table,
+            cls,
+            item: dict,
+            row: sqlalchemy.engine.ResultProxy,
+            related_models: Any,
+            previous_table: sqlalchemy.Table,
     ) -> dict:
         for related in related_models:
             if isinstance(related_models, dict) and related_models[related]:
@@ -89,13 +95,17 @@ class Model(NewBaseModel):
 
     @classmethod
     def extract_prefixed_table_columns(
-        cls, item: dict, row: sqlalchemy.engine.result.ResultProxy, table_prefix: str
+            cls, item: dict, row: sqlalchemy.engine.result.ResultProxy, table_prefix: str
     ) -> dict:
         for column in cls.Meta.table.columns:
+            logging.debug('column to extract:' + column.name)
+            logging.debug(f'{row.keys()}')
             if column.name not in item:
-                item[column.name] = row[
-                    f'{table_prefix + "_" if table_prefix else ""}{column.name}'
-                ]
+                prefixed_name = f'{table_prefix + "_" if table_prefix else ""}{column.name}'
+                # databases does not keep aliases in Record for postgres
+                source = row._row if isinstance(row, Record) else row
+                item[column.name] = source[prefixed_name]
+
         return item
 
     async def save(self) -> "Model":
@@ -106,7 +116,8 @@ class Model(NewBaseModel):
         expr = self.Meta.table.insert()
         expr = expr.values(**self_fields)
         item_id = await self.Meta.database.execute(expr)
-        setattr(self, self.Meta.pkname, item_id)
+        if item_id:  # postgress does not return id if it's already there
+            setattr(self, self.Meta.pkname, item_id)
         return self
 
     async def update(self, **kwargs: Any) -> "Model":
