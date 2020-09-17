@@ -12,18 +12,20 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 class Query:
-    def __init__(
+    def __init__(  # noqa CFQ002
         self,
         model_cls: Type["Model"],
         filter_clauses: List,
+        exclude_clauses: List,
         select_related: List,
         limit_count: int,
         offset: int,
     ) -> None:
         self.query_offset = offset
         self.limit_count = limit_count
-        self._select_related = select_related
-        self.filter_clauses = filter_clauses
+        self._select_related = select_related[:]
+        self.filter_clauses = filter_clauses[:]
+        self.exclude_clauses = exclude_clauses[:]
 
         self.model_cls = model_cls
         self.table = self.model_cls.Meta.table
@@ -78,6 +80,9 @@ class Query:
         self, expr: sqlalchemy.sql.select
     ) -> sqlalchemy.sql.select:
         expr = FilterQuery(filter_clauses=self.filter_clauses).apply(expr)
+        expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
+            expr
+        )
         expr = LimitQuery(limit_count=self.limit_count).apply(expr)
         expr = OffsetQuery(query_offset=self.query_offset).apply(expr)
         expr = OrderQuery(order_bys=self.order_bys).apply(expr)

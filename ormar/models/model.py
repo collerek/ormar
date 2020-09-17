@@ -108,6 +108,7 @@ class Model(NewBaseModel):
 
         if not self.pk and self.Meta.model_fields.get(self.Meta.pkname).autoincrement:
             self_fields.pop(self.Meta.pkname, None)
+        self_fields = self.objects._populate_default_values(self_fields)
         expr = self.Meta.table.insert()
         expr = expr.values(**self_fields)
         item_id = await self.Meta.database.execute(expr)

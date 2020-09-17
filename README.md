@@ -82,6 +82,9 @@ notes = await Note.objects.filter(completed=True).all()
 # exact, iexact, contains, icontains, lt, lte, gt, gte, in
 notes = await Note.objects.filter(text__icontains="mum").all()
 
+# exclude - from ormar >= 0.3.1
+notes = await Note.objects.exclude(text__icontains="mum").all()
+
 # .get()
 note = await Note.objects.get(id=1)
 
