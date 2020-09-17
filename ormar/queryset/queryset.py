@@ -108,13 +108,11 @@ class QuerySet:
     async def exists(self) -> bool:
         expr = self.build_select_expression()
         expr = sqlalchemy.exists(expr).select()
-        # print(expr.compile(compile_kwargs={"literal_binds": True}))
         return await self.database.fetch_val(expr)
 
     async def count(self) -> int:
         expr = self.build_select_expression().alias("subquery_for_count")
         expr = sqlalchemy.func.count().select().select_from(expr)
-        # print(expr.compile(compile_kwargs={"literal_binds": True}))
         return await self.database.fetch_val(expr)
 
     async def delete(self, **kwargs: Any) -> int:
