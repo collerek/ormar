@@ -4,8 +4,6 @@ import sqlalchemy
 from sqlalchemy import text
 
 import ormar  # noqa I100
-from ormar.fields import BaseField
-from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.queryset import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
 from ormar.relations.alias_manager import AliasManager
@@ -95,11 +93,6 @@ class Query:
         right_part = f"{previous_alias + '_' if previous_alias else ''}{from_clause}"
         return text(f"{left_part}={right_part}")
 
-    def _is_target_relation_key(
-        self, field: BaseField, target_model: Type["Model"]
-    ) -> bool:
-        return issubclass(field, ForeignKeyField) and field.to.Meta == target_model.Meta
-
     def _build_join_parameters(
         self, part: str, join_params: JoinParameters, is_multi: bool = False
     ) -> JoinParameters:
@@ -157,14 +150,10 @@ class Query:
         part: str,
     ) -> Tuple[str, str]:
         if join_params.prev_model.Meta.model_fields[part].virtual or is_multi:
-            to_key = next(
-                (
-                    v
-                    for k, v in model_cls.Meta.model_fields.items()
-                    if self._is_target_relation_key(v, join_params.prev_model)
-                ),
-                None,
-            ).name
+            to_field = model_cls.resolve_relation_field(
+                model_cls, join_params.prev_model
+            )
+            to_key = to_field.name
             from_key = model_cls.Meta.pkname
         else:
             to_key = model_cls.Meta.pkname

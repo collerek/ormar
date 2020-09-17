@@ -89,7 +89,7 @@ class Model(NewBaseModel):
         return item
 
     @classmethod
-    def extract_prefixed_table_columns( # noqa CCR001
+    def extract_prefixed_table_columns(  # noqa CCR001
         cls, item: dict, row: sqlalchemy.engine.result.ResultProxy, table_prefix: str
     ) -> dict:
         for column in cls.Meta.table.columns:

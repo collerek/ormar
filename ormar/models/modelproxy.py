@@ -1,5 +1,5 @@
 import inspect
-from typing import List, Optional, Set, TYPE_CHECKING, Type, TypeVar
+from typing import List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union
 
 import ormar
 from ormar.exceptions import RelationshipInstanceError
@@ -94,7 +94,9 @@ class ModelTableProxy:
                     return name
 
     @staticmethod
-    def resolve_relation_field(item: "Model", related: "Model") -> Type[Field]:
+    def resolve_relation_field(
+        item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
+    ) -> Type[Field]:
         name = ModelTableProxy.resolve_relation_name(item, related)
         to_field = item.Meta.model_fields.get(name)
         if not to_field:  # pragma no cover
