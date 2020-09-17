@@ -2,6 +2,7 @@ import itertools
 from typing import Any, List, Tuple, Union
 
 import sqlalchemy
+from databases.backends.postgres import Record
 
 import ormar.queryset  # noqa I100
 from ormar.fields.many_to_many import ManyToManyField
@@ -88,14 +89,18 @@ class Model(NewBaseModel):
         return item
 
     @classmethod
-    def extract_prefixed_table_columns(
+    def extract_prefixed_table_columns( # noqa CCR001
         cls, item: dict, row: sqlalchemy.engine.result.ResultProxy, table_prefix: str
     ) -> dict:
         for column in cls.Meta.table.columns:
             if column.name not in item:
-                item[column.name] = row[
+                prefixed_name = (
                     f'{table_prefix + "_" if table_prefix else ""}{column.name}'
-                ]
+                )
+                # databases does not keep aliases in Record for postgres
+                source = row._row if isinstance(row, Record) else row
+                item[column.name] = source[prefixed_name]
+
         return item
 
     async def save(self) -> "Model":
@@ -106,7 +111,8 @@ class Model(NewBaseModel):
         expr = self.Meta.table.insert()
         expr = expr.values(**self_fields)
         item_id = await self.Meta.database.execute(expr)
-        setattr(self, self.Meta.pkname, item_id)
+        if item_id:  # postgress does not return id if it's already there
+            setattr(self, self.Meta.pkname, item_id)
         return self
 
     async def update(self, **kwargs: Any) -> "Model":
