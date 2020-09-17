@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 
 import databases
 import pydantic
@@ -43,6 +44,7 @@ class Product(ormar.Model):
     name: ormar.String(max_length=100)
     rating: ormar.Integer(minimum=1, maximum=5)
     in_stock: ormar.Boolean(default=False)
+    last_delivery: ormar.Date(default=datetime.now)
 
 
 @pytest.fixture(scope="module")
@@ -158,6 +160,7 @@ async def test_model_filter():
             assert product.pk is not None
             assert product.name == "T-Shirt"
             assert product.rating == 5
+            assert product.last_delivery == datetime.now().date()
 
             products = await Product.objects.all(rating__gte=2, in_stock=True)
             assert len(products) == 2

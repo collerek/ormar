@@ -41,7 +41,10 @@ class BaseField:
     @classmethod
     def get_default(cls) -> Any:
         if cls.has_default():
-            return cls.default if cls.default is not None else cls.server_default
+            default = cls.default if cls.default is not None else cls.server_default
+            if callable(default):
+                default = default()
+            return default
 
     @classmethod
     def has_default(cls) -> bool:
