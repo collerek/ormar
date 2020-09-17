@@ -42,6 +42,6 @@ async def test_pk_1():
 
 @pytest.mark.asyncio
 async def test_pk_2():
-    # async with database:
+    async with database:
         model = await Model.objects.create(name="NAME")
         assert await Model.objects.all() == [model]
