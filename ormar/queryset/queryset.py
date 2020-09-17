@@ -9,10 +9,6 @@ from ormar.queryset import FilterQuery
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.query import Query
 
-import logging
-import sys
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
