@@ -3,7 +3,7 @@ from typing import List, NamedTuple, TYPE_CHECKING, Tuple, Type
 import sqlalchemy
 from sqlalchemy import text
 
-from ormar.fields import ManyToManyField # noqa I100
+from ormar.fields import ManyToManyField  # noqa I100
 from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover

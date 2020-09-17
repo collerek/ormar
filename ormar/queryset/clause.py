@@ -29,8 +29,8 @@ class QueryClause:
         self, model_cls: Type["Model"], filter_clauses: List, select_related: List,
     ) -> None:
 
-        self._select_related = select_related
-        self.filter_clauses = filter_clauses
+        self._select_related = select_related[:]
+        self.filter_clauses = filter_clauses[:]
 
         self.model_cls = model_cls
         self.table = self.model_cls.Meta.table

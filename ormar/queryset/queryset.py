@@ -14,16 +14,18 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 class QuerySet:
-    def __init__(
+    def __init__(  # noqa CFQ002
         self,
         model_cls: Type["Model"] = None,
         filter_clauses: List = None,
+        exclude_clauses: List = None,
         select_related: List = None,
         limit_count: int = None,
         offset: int = None,
     ) -> None:
         self.model_cls = model_cls
         self.filter_clauses = [] if filter_clauses is None else filter_clauses
+        self.exclude_clauses = [] if exclude_clauses is None else exclude_clauses
         self._select_related = [] if select_related is None else select_related
         self.limit_count = limit_count
         self.query_offset = offset
@@ -39,6 +41,12 @@ class QuerySet:
         ]
         rows = self.model_cls.merge_instances_list(result_rows)
         return rows
+
+    def _populate_default_values(self, new_kwargs: dict) -> dict:
+        for field_name, field in self.model_cls.Meta.model_fields.items():
+            if field_name not in new_kwargs and field.has_default():
+                new_kwargs[field_name] = field.get_default()
+        return new_kwargs
 
     def _remove_pk_from_kwargs(self, new_kwargs: dict) -> dict:
         pkname = self.model_cls.Meta.pkname
@@ -69,6 +77,7 @@ class QuerySet:
             model_cls=self.model_cls,
             select_related=self._select_related,
             filter_clauses=self.filter_clauses,
+            exclude_clauses=self.exclude_clauses,
             offset=self.query_offset,
             limit_count=self.limit_count,
         )
@@ -76,21 +85,31 @@ class QuerySet:
         # print(exp.compile(compile_kwargs={"literal_binds": True}))
         return exp
 
-    def filter(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
+    def filter(self, _exclude: bool = False, **kwargs: Any) -> "QuerySet":  # noqa: A003
         qryclause = QueryClause(
             model_cls=self.model_cls,
             select_related=self._select_related,
             filter_clauses=self.filter_clauses,
         )
         filter_clauses, select_related = qryclause.filter(**kwargs)
+        if _exclude:
+            exclude_clauses = filter_clauses
+            filter_clauses = self.filter_clauses
+        else:
+            exclude_clauses = self.exclude_clauses
+            filter_clauses = filter_clauses
 
         return self.__class__(
             model_cls=self.model_cls,
             filter_clauses=filter_clauses,
+            exclude_clauses=exclude_clauses,
             select_related=select_related,
             limit_count=self.limit_count,
             offset=self.query_offset,
         )
+
+    def exclude(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
+        return self.filter(_exclude=True, **kwargs)
 
     def select_related(self, related: Union[List, Tuple, str]) -> "QuerySet":
         if not isinstance(related, (list, tuple)):
@@ -100,6 +119,7 @@ class QuerySet:
         return self.__class__(
             model_cls=self.model_cls,
             filter_clauses=self.filter_clauses,
+            exclude_clauses=self.exclude_clauses,
             select_related=related,
             limit_count=self.limit_count,
             offset=self.query_offset,
@@ -127,6 +147,7 @@ class QuerySet:
         return self.__class__(
             model_cls=self.model_cls,
             filter_clauses=self.filter_clauses,
+            exclude_clauses=self.exclude_clauses,
             select_related=self._select_related,
             limit_count=limit_count,
             offset=self.query_offset,
@@ -136,6 +157,7 @@ class QuerySet:
         return self.__class__(
             model_cls=self.model_cls,
             filter_clauses=self.filter_clauses,
+            exclude_clauses=self.exclude_clauses,
             select_related=self._select_related,
             limit_count=self.limit_count,
             offset=offset,
@@ -177,6 +199,7 @@ class QuerySet:
         new_kwargs = dict(**kwargs)
         new_kwargs = self._remove_pk_from_kwargs(new_kwargs)
         new_kwargs = self.model_cls.substitute_models_with_pks(new_kwargs)
+        new_kwargs = self._populate_default_values(new_kwargs)
 
         expr = self.table.insert()
         expr = expr.values(**new_kwargs)
