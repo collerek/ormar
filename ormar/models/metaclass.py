@@ -7,6 +7,7 @@ import sqlalchemy
 from pydantic import BaseConfig
 from pydantic.fields import FieldInfo, ModelField
 
+import ormar  # noqa I100
 from ormar import ForeignKey, ModelDefinitionError, Integer  # noqa I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
@@ -108,7 +109,7 @@ def create_pydantic_field(
         type_=Optional[model],
         model_config=model.__config__,
         required=False,
-        class_validators=model.__validators__,
+        class_validators={},
     )
 
 
@@ -252,9 +253,41 @@ def get_pydantic_base_orm_config() -> Type[BaseConfig]:
     return Config
 
 
+def check_if_field_has_choices(field: BaseField) -> bool:
+    return hasattr(field, "choices") and field.choices
+
+
+def model_initialized_and_has_model_fields(model: Type["Model"]) -> bool:
+    return hasattr(model, "Meta") and hasattr(model.Meta, "model_fields")
+
+
+def choices_validator(cls: Type["Model"], values: Dict[str, Any]) -> Dict[str, Any]:
+    for field_name, field in cls.Meta.model_fields.items():
+        if check_if_field_has_choices(field):
+            value = values.get(field_name, ormar.Undefined)
+            if value is not ormar.Undefined and value not in field.choices:
+                raise ValueError(
+                    f"{field_name}: '{values.get(field_name)}' "
+                    f"not in allowed choices set:"
+                    f" {field.choices}"
+                )
+    return values
+
+
+def populate_choices_validators(model: Type["Model"], attrs: Dict) -> None:  # noqa CCR001
+    if model_initialized_and_has_model_fields(model):
+        for _, field in model.Meta.model_fields.items():
+            if check_if_field_has_choices(field):
+                validators = attrs.get("__pre_root_validators__", [])
+                if choices_validator not in validators:
+                    validators.append(choices_validator)
+                    attrs["__pre_root_validators__"] = validators
+
+
 class ModelMetaclass(pydantic.main.ModelMetaclass):
     def __new__(mcs: type, name: str, bases: Any, attrs: dict) -> type:
         attrs["Config"] = get_pydantic_base_orm_config()
+        attrs["__name__"] = name
         attrs = extract_annotations_and_default_vals(attrs, bases)
         new_model = super().__new__(  # type: ignore
             mcs, name, bases, attrs
@@ -262,11 +295,11 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         # breakpoint()
 
         if hasattr(new_model, "Meta"):
-            # attrs = extract_annotations_and_default_vals(attrs, bases)
             new_model = populate_meta_orm_model_fields(attrs, new_model)
             new_model = populate_meta_tablename_columns_and_pk(name, new_model)
             new_model = populate_meta_sqlalchemy_table_if_required(new_model)
             expand_reverse_relationships(new_model)
+            populate_choices_validators(new_model, attrs)
 
             if new_model.Meta.pkname not in attrs["__annotations__"]:
                 field_name = new_model.Meta.pkname

@@ -1,6 +1,9 @@
+import asyncio
+
 import databases
 import pytest
 import sqlalchemy
+from pydantic import root_validator, validator
 
 import ormar
 from ormar.exceptions import NoMatch, MultipleMatches, RelationshipInstanceError
@@ -50,7 +53,7 @@ class Organisation(ormar.Model):
         database = database
 
     id: ormar.Integer(primary_key=True)
-    ident: ormar.String(max_length=100)
+    ident: ormar.String(max_length=100, choices=['ACME Ltd', 'Other ltd'])
 
 
 class Team(ormar.Model):
@@ -73,6 +76,25 @@ class Member(ormar.Model):
     id: ormar.Integer(primary_key=True)
     team: ormar.ForeignKey(Team)
     email: ormar.String(max_length=100)
+
+
+country_name_choices = ("Canada", "Algeria", "United States")
+country_taxed_choices = (True,)
+country_country_code_choices = (-10, 1, 213, 1200)
+
+
+class Country(ormar.Model):
+    class Meta:
+        tablename = "country"
+        metadata = metadata
+        database = database
+
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=9, choices=country_name_choices, default="Canada", )
+    taxed: ormar.Boolean(choices=country_taxed_choices, default=True)
+    country_code: ormar.Integer(
+        minimum=0, maximum=1000, choices=country_country_code_choices, default=1
+    )
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -105,6 +127,109 @@ async def test_related_name():
             album = await Album.objects.create(name="Vanilla")
             await Cover.objects.create(album=album, title="The cover file")
             assert len(album.cover_pictures) == 1
+
+
+@pytest.mark.asyncio
+async def test_model_choices():
+    """Test that choices work properly for various types of fields."""
+    async with database:
+        # Test valid choices.
+        await asyncio.gather(
+            Country.objects.create(name="Canada", taxed=True, country_code=1),
+            Country.objects.create(name="Algeria", taxed=True, country_code=213),
+            Country.objects.create(name="Algeria"),
+        )
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = "Saudi Arabia", True, 1
+            assert all(
+                (
+                    name not in country_name_choices,
+                    taxed in country_taxed_choices,
+                    country_code in country_country_code_choices,
+                )
+            )
+            await Country.objects.create(
+                name=name, taxed=taxed, country_code=country_code
+            )
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = "Algeria", False, 1
+            assert all(
+                (
+                    name in country_name_choices,
+                    taxed not in country_taxed_choices,
+                    country_code in country_country_code_choices,
+                )
+            )
+            await Country.objects.create(
+                name=name, taxed=taxed, country_code=country_code
+            )
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = "Algeria", True, 967
+            assert all(
+                (
+                    name in country_name_choices,
+                    taxed in country_taxed_choices,
+                    country_code not in country_country_code_choices,
+                )
+            )
+            await Country.objects.create(
+                name=name, taxed=taxed, country_code=country_code
+            )
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = (
+                "United States",
+                True,
+                1,
+            )  # name is too long but is a valid choice
+            assert all(
+                (
+                    name in country_name_choices,
+                    taxed in country_taxed_choices,
+                    country_code in country_country_code_choices,
+                )
+            )
+            await Country.objects.create(
+                name=name, taxed=taxed, country_code=country_code
+            )
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = (
+                "Algeria",
+                True,
+                -10,
+            )  # country code is too small but is a valid choice
+            assert all(
+                (
+                    name in country_name_choices,
+                    taxed in country_taxed_choices,
+                    country_code in country_country_code_choices,
+                )
+            )
+            await Country.objects.create(
+                name=name, taxed=taxed, country_code=country_code
+            )
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = (
+                "Algeria",
+                True,
+                1200,
+            )  # country code is too large but is a valid choice
+            assert all(
+                (
+                    name in country_name_choices,
+                    taxed in country_taxed_choices,
+                    country_code in country_country_code_choices,
+                )
+            )
+            await Country.objects.create(
+                name=name, taxed=taxed, country_code=country_code
+            )
+
 
 @pytest.mark.asyncio
 async def test_model_crud():
@@ -209,7 +334,6 @@ async def test_model_removal_from_relations():
             assert len(album.tracks) == 1
 
 
-
 @pytest.mark.asyncio
 async def test_fk_filter():
     async with database:
@@ -229,8 +353,8 @@ async def test_fk_filter():
 
             tracks = (
                 await Track.objects.select_related("album")
-                .filter(album__name="Fantasies")
-                .all()
+                    .filter(album__name="Fantasies")
+                    .all()
             )
             assert len(tracks) == 3
             for track in tracks:
@@ -238,8 +362,8 @@ async def test_fk_filter():
 
             tracks = (
                 await Track.objects.select_related("album")
-                .filter(album__name__icontains="fan")
-                .all()
+                    .filter(album__name__icontains="fan")
+                    .all()
             )
             assert len(tracks) == 3
             for track in tracks:
@@ -282,12 +406,20 @@ async def test_multiple_fk():
 
             members = (
                 await Member.objects.select_related("team__org")
-                .filter(team__org__ident="ACME Ltd")
-                .all()
+                    .filter(team__org__ident="ACME Ltd")
+                    .all()
             )
             assert len(members) == 4
             for member in members:
                 assert member.team.org.ident == "ACME Ltd"
+
+
+@pytest.mark.asyncio
+async def test_wrong_choices():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            with pytest.raises(ValueError):
+                await Organisation.objects.create(ident="Test 1")
 
 
 @pytest.mark.asyncio
@@ -303,8 +435,8 @@ async def test_pk_filter():
 
             tracks = (
                 await Track.objects.select_related("album")
-                .filter(position=2, album__name="Test")
-                .all()
+                    .filter(position=2, album__name="Test")
+                    .all()
             )
             assert len(tracks) == 1
 

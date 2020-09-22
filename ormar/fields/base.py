@@ -1,7 +1,7 @@
 from typing import Any, List, Optional, TYPE_CHECKING, Union
 
 import sqlalchemy
-from pydantic import Field
+from pydantic import Field, typing
 
 from ormar import ModelDefinitionError  # noqa I101
 
@@ -23,6 +23,7 @@ class BaseField:
     unique: bool
     pydantic_only: bool
     virtual: bool = False
+    choices: typing.Sequence
 
     default: Any
     server_default: Any
