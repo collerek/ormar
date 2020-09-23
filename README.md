@@ -86,6 +86,11 @@ notes = await Note.objects.filter(text__icontains="mum").all()
 # exclude - from ormar >= 0.3.1
 notes = await Note.objects.exclude(text__icontains="mum").all()
 
+# startswith, istartswith, endswith, iendswith - from ormar >= 0.3.3
+notes = await Note.objects.filter(text__iendswith="mum.").all()
+notes = await Note.objects.filter(text__istartswith="call").all()
+notes = await Note.objects.filter(text__startswith="Buy").all()
+
 # .get()
 note = await Note.objects.get(id=1)
 
