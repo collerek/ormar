@@ -126,7 +126,9 @@ async def test_quering_of_the_m2m_models(cleanup):
         category = await Category.objects.filter(posts__author=guido).get()
         assert category == news
         # or:
-        category2 = await Category.objects.filter(posts__author__first_name="Guido").get()
+        category2 = await Category.objects.filter(
+            posts__author__first_name="Guido"
+        ).get()
         assert category2 == news
 
 

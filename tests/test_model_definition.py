@@ -28,6 +28,7 @@ class ExampleModel(Model):
     test_json: fields.JSON(default={})
     test_bigint: fields.BigInteger(default=0)
     test_decimal: fields.Decimal(scale=10, precision=2)
+    test_decimal2: fields.Decimal(max_digits=10, decimal_places=2)
 
 
 fields_to_check = [
@@ -55,7 +56,11 @@ class ExampleModel2(Model):
 @pytest.fixture()
 def example():
     return ExampleModel(
-        pk=1, test_string="test", test_bool=True, test_decimal=decimal.Decimal(3.5)
+        pk=1,
+        test_string="test",
+        test_bool=True,
+        test_decimal=decimal.Decimal(3.5),
+        test_decimal2=decimal.Decimal(5.5),
     )
 
 
@@ -73,6 +78,8 @@ def test_model_attribute_access(example):
     assert example.test_float is None
     assert example.test_bigint == 0
     assert example.test_json == {}
+    assert example.test_decimal == 3.5
+    assert example.test_decimal2 == 5.5
 
     example.test = 12
     assert example.test == 12
@@ -112,6 +119,7 @@ def test_sqlalchemy_table_is_created(example):
 
 def test_no_pk_in_model_definition():
     with pytest.raises(ModelDefinitionError):
+
         class ExampleModel2(Model):
             class Meta:
                 tablename = "example3"
@@ -122,6 +130,7 @@ def test_no_pk_in_model_definition():
 
 def test_two_pks_in_model_definition():
     with pytest.raises(ModelDefinitionError):
+
         class ExampleModel2(Model):
             class Meta:
                 tablename = "example3"
@@ -133,6 +142,7 @@ def test_two_pks_in_model_definition():
 
 def test_setting_pk_column_as_pydantic_only_in_model_definition():
     with pytest.raises(ModelDefinitionError):
+
         class ExampleModel2(Model):
             class Meta:
                 tablename = "example4"
@@ -143,6 +153,7 @@ def test_setting_pk_column_as_pydantic_only_in_model_definition():
 
 def test_decimal_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
+
         class ExampleModel2(Model):
             class Meta:
                 tablename = "example5"
@@ -153,6 +164,7 @@ def test_decimal_error_in_model_definition():
 
 def test_string_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
+
         class ExampleModel2(Model):
             class Meta:
                 tablename = "example6"

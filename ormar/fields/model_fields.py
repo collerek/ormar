@@ -18,7 +18,7 @@ def is_field_nullable(
 
 
 class ModelFieldFactory:
-    _bases = None
+    _bases = BaseField
     _type = None
 
     def __new__(cls, *args: Any, **kwargs: Any) -> Type[BaseField]:
@@ -40,6 +40,7 @@ class ModelFieldFactory:
             pydantic_only=kwargs.pop("pydantic_only", False),
             autoincrement=kwargs.pop("autoincrement", False),
             column_type=cls.get_column_type(**kwargs),
+            choices=set(kwargs.pop("choices", [])),
             **kwargs
         )
         return type(cls.__name__, cls._bases, namespace)
@@ -117,6 +118,8 @@ class Integer(ModelFieldFactory):
                 if k not in ["cls", "__class__", "kwargs"]
             },
         }
+        kwargs["ge"] = kwargs["minimum"]
+        kwargs["le"] = kwargs["maximum"]
         return super().__new__(cls, **kwargs)
 
     @classmethod
@@ -166,6 +169,8 @@ class Float(ModelFieldFactory):
                 if k not in ["cls", "__class__", "kwargs"]
             },
         }
+        kwargs["ge"] = kwargs["minimum"]
+        kwargs["le"] = kwargs["maximum"]
         return super().__new__(cls, **kwargs)
 
     @classmethod
@@ -251,6 +256,19 @@ class Decimal(ModelFieldFactory):
                 if k not in ["cls", "__class__", "kwargs"]
             },
         }
+        kwargs["ge"] = kwargs["minimum"]
+        kwargs["le"] = kwargs["maximum"]
+
+        if kwargs.get("max_digits"):
+            kwargs["scale"] = kwargs["max_digits"]
+        elif kwargs.get("scale"):
+            kwargs["max_digits"] = kwargs["scale"]
+
+        if kwargs.get("decimal_places"):
+            kwargs["precision"] = kwargs["decimal_places"]
+        elif kwargs.get("precision"):
+            kwargs["decimal_places"] = kwargs["precision"]
+
         return super().__new__(cls, **kwargs)
 
     @classmethod

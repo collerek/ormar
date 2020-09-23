@@ -94,6 +94,7 @@ async def create_data():
     await Student.objects.create(name="Jack", category=category2, schoolclass=class2)
     await Teacher.objects.create(name="Joe", category=category2, schoolclass=class1)
 
+
 @pytest.mark.asyncio
 async def test_model_multiple_instances_of_same_table_in_schema():
     async with database:

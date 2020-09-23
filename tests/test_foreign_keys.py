@@ -1,6 +1,9 @@
+import asyncio
+
 import databases
 import pytest
 import sqlalchemy
+from pydantic import root_validator, validator
 
 import ormar
 from ormar.exceptions import NoMatch, MultipleMatches, RelationshipInstanceError
@@ -50,7 +53,7 @@ class Organisation(ormar.Model):
         database = database
 
     id: ormar.Integer(primary_key=True)
-    ident: ormar.String(max_length=100)
+    ident: ormar.String(max_length=100, choices=["ACME Ltd", "Other ltd"])
 
 
 class Team(ormar.Model):
@@ -105,6 +108,7 @@ async def test_related_name():
             album = await Album.objects.create(name="Vanilla")
             await Cover.objects.create(album=album, title="The cover file")
             assert len(album.cover_pictures) == 1
+
 
 @pytest.mark.asyncio
 async def test_model_crud():
@@ -209,7 +213,6 @@ async def test_model_removal_from_relations():
             assert len(album.tracks) == 1
 
 
-
 @pytest.mark.asyncio
 async def test_fk_filter():
     async with database:
@@ -223,9 +226,13 @@ async def test_fk_filter():
             await Track.objects.create(album=malibu, title="The Waters", position=3)
 
             fantasies = await Album.objects.create(name="Fantasies")
-            await Track.objects.create(album=fantasies, title="Help I'm Alive", position=1)
+            await Track.objects.create(
+                album=fantasies, title="Help I'm Alive", position=1
+            )
             await Track.objects.create(album=fantasies, title="Sick Muse", position=2)
-            await Track.objects.create(album=fantasies, title="Satellite Mind", position=3)
+            await Track.objects.create(
+                album=fantasies, title="Satellite Mind", position=3
+            )
 
             tracks = (
                 await Track.objects.select_related("album")
@@ -253,7 +260,9 @@ async def test_fk_filter():
             tracks = await Track.objects.filter(album__name__contains="Malibu%").all()
             assert len(tracks) == 3
 
-            tracks = await Track.objects.filter(album=malibu).select_related("album").all()
+            tracks = (
+                await Track.objects.filter(album=malibu).select_related("album").all()
+            )
             assert len(tracks) == 3
             for track in tracks:
                 assert track.album.name == "Malibu%"
@@ -291,14 +300,26 @@ async def test_multiple_fk():
 
 
 @pytest.mark.asyncio
+async def test_wrong_choices():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            with pytest.raises(ValueError):
+                await Organisation.objects.create(ident="Test 1")
+
+
+@pytest.mark.asyncio
 async def test_pk_filter():
     async with database:
         async with database.transaction(force_rollback=True):
             fantasies = await Album.objects.create(name="Test")
-            track = await Track.objects.create(album=fantasies, title="Test1", position=1)
+            track = await Track.objects.create(
+                album=fantasies, title="Test1", position=1
+            )
             await Track.objects.create(album=fantasies, title="Test2", position=2)
             await Track.objects.create(album=fantasies, title="Test3", position=3)
-            tracks = await Track.objects.select_related("album").filter(pk=track.pk).all()
+            tracks = (
+                await Track.objects.select_related("album").filter(pk=track.pk).all()
+            )
             assert len(tracks) == 1
 
             tracks = (
@@ -314,7 +335,9 @@ async def test_limit_and_offset():
     async with database:
         async with database.transaction(force_rollback=True):
             fantasies = await Album.objects.create(name="Limitless")
-            await Track.objects.create(id=None, album=fantasies, title="Sample", position=1)
+            await Track.objects.create(
+                id=None, album=fantasies, title="Sample", position=1
+            )
             await Track.objects.create(album=fantasies, title="Sample2", position=2)
             await Track.objects.create(album=fantasies, title="Sample3", position=3)
 
