@@ -112,10 +112,14 @@ async def test_model_multiple_instances_of_same_table_in_schema():
             assert classes[0].students[0].schoolclass.name == "Math"
             assert classes[0].students[0].schoolclass.department.name is None
             await classes[0].students[0].schoolclass.department.load()
-            assert classes[0].students[0].schoolclass.department.name == "Math Department"
+            assert (
+                classes[0].students[0].schoolclass.department.name == "Math Department"
+            )
 
             await classes[1].students[0].schoolclass.department.load()
-            assert classes[1].students[0].schoolclass.department.name == "Law Department"
+            assert (
+                classes[1].students[0].schoolclass.department.name == "Law Department"
+            )
 
 
 @pytest.mark.asyncio

@@ -274,7 +274,9 @@ def choices_validator(cls: Type["Model"], values: Dict[str, Any]) -> Dict[str, A
     return values
 
 
-def populate_choices_validators(model: Type["Model"], attrs: Dict) -> None:  # noqa CCR001
+def populate_choices_validators(  # noqa CCR001
+    model: Type["Model"], attrs: Dict
+) -> None:
     if model_initialized_and_has_model_fields(model):
         for _, field in model.Meta.model_fields.items():
             if check_if_field_has_choices(field):

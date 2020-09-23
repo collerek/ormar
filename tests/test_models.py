@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+from typing import List
 
 import databases
 import pydantic
@@ -45,6 +46,27 @@ class Product(ormar.Model):
     rating: ormar.Integer(minimum=1, maximum=5)
     in_stock: ormar.Boolean(default=False)
     last_delivery: ormar.Date(default=datetime.now)
+
+
+country_name_choices = ("Canada", "Algeria", "United States")
+country_taxed_choices = (True,)
+country_country_code_choices = (-10, 1, 213, 1200)
+
+
+class Country(ormar.Model):
+    class Meta:
+        tablename = "country"
+        metadata = metadata
+        database = database
+
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(
+        max_length=9, choices=country_name_choices, default="Canada",
+    )
+    taxed: ormar.Boolean(choices=country_taxed_choices, default=True)
+    country_code: ormar.Integer(
+        minimum=0, maximum=1000, choices=country_country_code_choices, default=1
+    )
 
 
 @pytest.fixture(scope="module")
@@ -242,7 +264,9 @@ async def test_model_limit_with_filter():
             await User.objects.create(name="Tom")
             await User.objects.create(name="Tom")
 
-            assert len(await User.objects.limit(2).filter(name__iexact="Tom").all()) == 2
+            assert (
+                len(await User.objects.limit(2).filter(name__iexact="Tom").all()) == 2
+            )
 
 
 @pytest.mark.asyncio
@@ -268,3 +292,85 @@ async def test_model_first():
             assert await User.objects.filter(name="Jane").first() == jane
             with pytest.raises(NoMatch):
                 await User.objects.filter(name="Lucy").first()
+
+
+def not_contains(a, b):
+    return a not in b
+
+
+def contains(a, b):
+    return a in b
+
+
+def check_choices(values: tuple, ops: List):
+    ops_dict = {"in": contains, "out": not_contains}
+    checks = (country_name_choices, country_taxed_choices, country_country_code_choices)
+    assert all(
+        [ops_dict[op](value, check) for value, op, check in zip(values, ops, checks)]
+    )
+
+
+@pytest.mark.asyncio
+async def test_model_choices():
+    """Test that choices work properly for various types of fields."""
+    async with database:
+        # Test valid choices.
+        await asyncio.gather(
+            Country.objects.create(name="Canada", taxed=True, country_code=1),
+            Country.objects.create(name="Algeria", taxed=True, country_code=213),
+            Country.objects.create(name="Algeria"),
+        )
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = "Saudi Arabia", True, 1
+            check_choices((name, taxed, country_code), ["out", "in", "in"])
+            await Country.objects.create(
+                name=name, taxed=taxed, country_code=country_code
+            )
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = "Algeria", False, 1
+            check_choices((name, taxed, country_code), ["in", "out", "in"])
+            await Country.objects.create(
+                name=name, taxed=taxed, country_code=country_code
+            )
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = "Algeria", True, 967
+            check_choices((name, taxed, country_code), ["in", "in", "out"])
+            await Country.objects.create(
+                name=name, taxed=taxed, country_code=country_code
+            )
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = (
+                "United States",
+                True,
+                1,
+            )  # name is too long but is a valid choice
+            check_choices((name, taxed, country_code), ["in", "in", "in"])
+            await Country.objects.create(
+                name=name, taxed=taxed, country_code=country_code
+            )
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = (
+                "Algeria",
+                True,
+                -10,
+            )  # country code is too small but is a valid choice
+            check_choices((name, taxed, country_code), ["in", "in", "in"])
+            await Country.objects.create(
+                name=name, taxed=taxed, country_code=country_code
+            )
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = (
+                "Algeria",
+                True,
+                1200,
+            )  # country code is too large but is a valid choice
+            check_choices((name, taxed, country_code), ["in", "in", "in"])
+            await Country.objects.create(
+                name=name, taxed=taxed, country_code=country_code
+            )
