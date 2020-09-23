@@ -374,3 +374,33 @@ async def test_model_choices():
             await Country.objects.create(
                 name=name, taxed=taxed, country_code=country_code
             )
+
+
+@pytest.mark.asyncio
+async def test_start_and_end_filters():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            await User.objects.create(name="Markos Uj")
+            await User.objects.create(name="Maqua Bigo")
+            await User.objects.create(name="maqo quidid")
+            await User.objects.create(name="Louis Figo")
+            await User.objects.create(name="Loordi Kami")
+            await User.objects.create(name="Yuuki Sami")
+
+            users = await User.objects.filter(name__startswith="Mar").all()
+            assert len(users) == 1
+
+            users = await User.objects.filter(name__istartswith="ma").all()
+            assert len(users) == 3
+
+            users = await User.objects.filter(name__istartswith="Maq").all()
+            assert len(users) == 2
+
+            users = await User.objects.filter(name__iendswith="AMI").all()
+            assert len(users) == 2
+
+            users = await User.objects.filter(name__endswith="Uj").all()
+            assert len(users) == 1
+
+            users = await User.objects.filter(name__endswith="igo").all()
+            assert len(users) == 2

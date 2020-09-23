@@ -15,6 +15,10 @@ FILTER_OPERATORS = {
     "iexact": "ilike",
     "contains": "like",
     "icontains": "ilike",
+    "startswith": "like",
+    "istartswith": "ilike",
+    "endswith": "like",
+    "iendswith": "ilike",
     "in": "in_",
     "gt": "__gt__",
     "gte": "__ge__",
@@ -169,7 +173,14 @@ class QueryClause:
     ) -> Tuple[str, bool]:
         has_escaped_character = False
 
-        if op not in ["contains", "icontains"]:
+        if op not in [
+            "contains",
+            "icontains",
+            "startswith",
+            "istartswith",
+            "endswith",
+            "iendswith",
+        ]:
             return value, has_escaped_character
 
         if isinstance(value, ormar.Model):
@@ -183,7 +194,9 @@ class QueryClause:
             # enable escape modifier
             for char in ESCAPE_CHARACTERS:
                 value = value.replace(char, f"\\{char}")
-        value = f"%{value}%"
+        prefix = "%" if "start" not in op else ""
+        sufix = "%" if "end" not in op else ""
+        value = f"{prefix}{value}{sufix}"
 
         return value, has_escaped_character
 
