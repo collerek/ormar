@@ -52,7 +52,6 @@ import sqlalchemy
 database = databases.Database("sqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
-
 class Note(ormar.Model):
     class Meta:
         tablename = "notes"
@@ -63,6 +62,8 @@ class Note(ormar.Model):
     id: ormar.Integer(primary_key=True)
     text: ormar.String(length=100)
     completed: ormar.Boolean(default=False)
+    # as of ormar >=0.3.2 you can provide a list of choices that will be validated
+    flag: ormar.String(default='To do', choices=['To do', 'Pending', 'Done'])
 
 # Create the database
 engine = sqlalchemy.create_engine(str(database.url))
