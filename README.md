@@ -264,7 +264,8 @@ await news.posts.clear()
 
 ```
 
-Since version >=0.3.4 Ormar supports also queryset level delete and update statements
+Since version >=0.3.4 Ormar supports also queryset level delete and update statements, 
+as well as get_or_create and update_or_create
 ```python
 import databases
 import ormar
@@ -307,6 +308,23 @@ assert len(all_books) == 3
 await Book.objects.update(each=True, genre='Fiction')
 all_books = await Book.objects.filter(genre='Fiction').all()
 assert len(all_books) == 3
+
+# helper get/update or create methods of queryset
+# if not exists it will be created
+vol1 = await Book.objects.get_or_create(title="Volume I", author='Anonymous', genre='Fiction')
+assert await Book.objects.count() == 1
+
+# if exists it will be returned
+assert await Book.objects.get_or_create(title="Volume I", author='Anonymous', genre='Fiction') == vol1
+assert await Book.objects.count() == 1
+
+# if not exist the instance will be persisted in db
+vol2 = await Book.objects.update_or_create(title="Volume II", author='Anonymous', genre='Fiction')
+assert await Book.objects.count() == 1
+
+# if pk or pkname passed in kwargs (like id here) the object will be updated
+assert await Book.objects.update_or_create(id=vol2.id, genre='Historic')
+assert await Book.objects.count() == 1
 
 ```
 

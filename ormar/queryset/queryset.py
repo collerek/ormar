@@ -203,6 +203,21 @@ class QuerySet:
         self.check_single_result_rows_count(rows)
         return rows[0]
 
+    async def get_or_create(self, **kwargs: Any) -> "Model":
+        try:
+            return await self.get(**kwargs)
+        except NoMatch:
+            return await self.create(**kwargs)
+
+    async def update_or_create(self, **kwargs: Any) -> "Model":
+        pk_name = self.model_cls.Meta.pkname
+        if "pk" in kwargs:
+            kwargs[pk_name] = kwargs.pop("pk")
+        if pk_name not in kwargs or kwargs.get(pk_name) is None:
+            return await self.create(**kwargs)
+        model = await self.get(pk=kwargs[pk_name])
+        return await model.update(**kwargs)
+
     async def all(self, **kwargs: Any) -> List["Model"]:  # noqa: A003
         if kwargs:
             return await self.filter(**kwargs).all()
