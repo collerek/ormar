@@ -26,6 +26,14 @@ class ModelTableProxy:
         return self_fields
 
     @classmethod
+    def extract_db_own_fields(cls) -> set:
+        related_names = cls._extract_related_names()
+        self_fields = {
+            name for name in cls.Meta.model_fields.keys() if name not in related_names
+        }
+        return self_fields
+
+    @classmethod
     def substitute_models_with_pks(cls, model_dict: dict) -> dict:
         for field in cls._extract_related_names():
             field_value = model_dict.get(field, None)

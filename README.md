@@ -264,6 +264,52 @@ await news.posts.clear()
 
 ```
 
+Since version >=0.3.4 Ormar supports also queryset level delete and update statements
+```python
+import databases
+import ormar
+import sqlalchemy
+
+database = databases.Database("sqlite:///db.sqlite")
+metadata = sqlalchemy.MetaData()
+
+class Book(ormar.Model):
+    class Meta:
+        tablename = "books"
+        metadata = metadata
+        database = database
+
+    id: ormar.Integer(primary_key=True)
+    title: ormar.String(max_length=200)
+    author: ormar.String(max_length=100)
+    genre: ormar.String(max_length=100, default='Fiction', choices=['Fiction', 'Adventure', 'Historic', 'Fantasy'])
+
+await Book.objects.create(title='Tom Sawyer', author="Twain, Mark", genre='Adventure')
+await Book.objects.create(title='War and Peace', author="Tolstoy, Leo", genre='Fiction')
+await Book.objects.create(title='Anna Karenina', author="Tolstoy, Leo", genre='Fiction')
+await Book.objects.create(title='Harry Potter', author="Rowling, J.K.", genre='Fantasy')
+await Book.objects.create(title='Lord of the Rings', author="Tolkien, J.R.", genre='Fantasy')
+
+# update accepts kwargs that are used to update queryset model
+# all other arguments are ignored (argument names not in own model table)
+await Book.objects.filter(author="Tolstoy, Leo").update(author="Lenin, Vladimir") # update all Tolstoy's books
+all_books = await Book.objects.filter(author="Lenin, Vladimir").all()
+assert len(all_books) == 2
+
+# delete accepts kwargs that will be used in filter
+# acting in same way as queryset.filter(**kwargs).delete()
+await Book.objects.delete(genre='Fantasy') # delete all fantasy books
+all_books = await Book.objects.all()
+assert len(all_books) == 3
+
+# queryset needs to be filtered before deleting to prevent accidental overwrite
+# to update whole database table each=True needs to be provided as a safety switch
+await Book.objects.update(each=True, genre='Fiction')
+all_books = await Book.objects.filter(genre='Fiction').all()
+assert len(all_books) == 3
+
+```
+
 ## Data types
 
 The following keyword arguments are supported on all field types.

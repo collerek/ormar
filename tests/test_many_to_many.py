@@ -71,10 +71,10 @@ async def create_test_database():
 async def cleanup():
     yield
     async with database:
-        await PostCategory.objects.delete()
-        await Post.objects.delete()
-        await Category.objects.delete()
-        await Author.objects.delete()
+        await PostCategory.objects.delete(each=True)
+        await Post.objects.delete(each=True)
+        await Category.objects.delete(each=True)
+        await Author.objects.delete(each=True)
 
 
 @pytest.mark.asyncio

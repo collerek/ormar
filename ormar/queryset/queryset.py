@@ -5,6 +5,7 @@ import sqlalchemy
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
+from ormar.exceptions import QueryDefinitionError
 from ormar.queryset import FilterQuery
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.query import Query
@@ -135,10 +136,28 @@ class QuerySet:
         expr = sqlalchemy.func.count().select().select_from(expr)
         return await self.database.fetch_val(expr)
 
-    async def delete(self, **kwargs: Any) -> int:
+    async def update(self, each: bool = False, **kwargs: Any) -> int:
+        self_fields = self.model_cls.extract_db_own_fields()
+        updates = {k: v for k, v in kwargs.items() if k in self_fields}
+        if not each and not self.filter_clauses:
+            raise QueryDefinitionError(
+                "You cannot update without filtering the queryset first. "
+                "If you want to update all rows use update(each=True, **kwargs)"
+            )
+        expr = FilterQuery(filter_clauses=self.filter_clauses).apply(
+            self.table.update().values(**updates)
+        )
+        return await self.database.execute(expr)
+
+    async def delete(self, each: bool = False, **kwargs: Any) -> int:
         if kwargs:
             return await self.filter(**kwargs).delete()
-        expr = FilterQuery(filter_clauses=self.filter_clauses,).apply(
+        if not each and not self.filter_clauses:
+            raise QueryDefinitionError(
+                "You cannot delete without filtering the queryset first. "
+                "If you want to delete all rows use delete(each=True)"
+            )
+        expr = FilterQuery(filter_clauses=self.filter_clauses).apply(
             self.table.delete()
         )
         return await self.database.execute(expr)
