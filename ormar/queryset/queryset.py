@@ -5,6 +5,7 @@ import sqlalchemy
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
+from ormar.exceptions import QueryDefinitionError
 from ormar.queryset import FilterQuery
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.query import Query
@@ -15,13 +16,13 @@ if TYPE_CHECKING:  # pragma no cover
 
 class QuerySet:
     def __init__(  # noqa CFQ002
-        self,
-        model_cls: Type["Model"] = None,
-        filter_clauses: List = None,
-        exclude_clauses: List = None,
-        select_related: List = None,
-        limit_count: int = None,
-        offset: int = None,
+            self,
+            model_cls: Type["Model"] = None,
+            filter_clauses: List = None,
+            exclude_clauses: List = None,
+            select_related: List = None,
+            limit_count: int = None,
+            offset: int = None,
     ) -> None:
         self.model_cls = model_cls
         self.filter_clauses = [] if filter_clauses is None else filter_clauses
@@ -52,7 +53,7 @@ class QuerySet:
         pkname = self.model_cls.Meta.pkname
         pk = self.model_cls.Meta.model_fields[pkname]
         if new_kwargs.get(pkname, ormar.Undefined) is None and (
-            pk.nullable or pk.autoincrement
+                pk.nullable or pk.autoincrement
         ):
             del new_kwargs[pkname]
         return new_kwargs
@@ -135,10 +136,25 @@ class QuerySet:
         expr = sqlalchemy.func.count().select().select_from(expr)
         return await self.database.fetch_val(expr)
 
-    async def delete(self, **kwargs: Any) -> int:
+    async def update(self, each: bool = False, **kwargs: Any) -> int:
+        self_fields = self.model_cls.extract_db_own_fields()
+        updates = {k: v for k, v in kwargs.items() if k in self_fields}
+        if not each and not self.filter_clauses:
+            raise QueryDefinitionError('You cannot update without filtering the queryset first. '
+                                       'If you want to update all rows use update(each=True, **kwargs)')
+        expr = FilterQuery(filter_clauses=self.filter_clauses).apply(
+            self.table.update().values(**updates)
+        )
+        # print(expr.compile(compile_kwargs={"literal_binds": True}))
+        return await self.database.execute(expr)
+
+    async def delete(self, each: bool = False, **kwargs: Any) -> int:
         if kwargs:
             return await self.filter(**kwargs).delete()
-        expr = FilterQuery(filter_clauses=self.filter_clauses,).apply(
+        if not each and not self.filter_clauses:
+            raise QueryDefinitionError('You cannot delete without filtering the queryset first. '
+                                       'If you want to delete all rows use delete(each=True)')
+        expr = FilterQuery(filter_clauses=self.filter_clauses).apply(
             self.table.delete()
         )
         return await self.database.execute(expr)

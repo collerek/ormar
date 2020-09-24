@@ -26,6 +26,12 @@ class ModelTableProxy:
         return self_fields
 
     @classmethod
+    def extract_db_own_fields(cls) -> set:
+        related_names = cls._extract_related_names()
+        self_fields = {name for name in cls.Meta.model_fields.keys() if name not in related_names}
+        return self_fields
+
+    @classmethod
     def substitute_models_with_pks(cls, model_dict: dict) -> dict:
         for field in cls._extract_related_names():
             field_value = model_dict.get(field, None)
@@ -51,9 +57,9 @@ class ModelTableProxy:
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
             if (
-                inspect.isclass(field)
-                and issubclass(field, ForeignKeyField)
-                and not field.virtual
+                    inspect.isclass(field)
+                    and issubclass(field, ForeignKeyField)
+                    and not field.virtual
             ):
                 related_names.add(name)
         return related_names
@@ -65,9 +71,9 @@ class ModelTableProxy:
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
             if (
-                inspect.isclass(field)
-                and issubclass(field, ForeignKeyField)
-                and field.nullable
+                    inspect.isclass(field)
+                    and issubclass(field, ForeignKeyField)
+                    and field.nullable
             ):
                 related_names.add(name)
         return related_names
@@ -95,7 +101,7 @@ class ModelTableProxy:
 
     @staticmethod
     def resolve_relation_field(
-        item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
+            item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
     ) -> Type[Field]:
         name = ModelTableProxy.resolve_relation_name(item, related)
         to_field = item.Meta.model_fields.get(name)
@@ -121,12 +127,12 @@ class ModelTableProxy:
         for field in one.Meta.model_fields.keys():
             current_field = getattr(one, field)
             if isinstance(current_field, list) and not isinstance(
-                current_field, ormar.Model
+                    current_field, ormar.Model
             ):
                 setattr(other, field, current_field + getattr(other, field))
             elif (
-                isinstance(current_field, ormar.Model)
-                and current_field.pk == getattr(other, field).pk
+                    isinstance(current_field, ormar.Model)
+                    and current_field.pk == getattr(other, field).pk
             ):
                 setattr(
                     other,
