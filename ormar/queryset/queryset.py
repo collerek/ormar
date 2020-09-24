@@ -215,9 +215,8 @@ class QuerySet:
             kwargs[pk_name] = kwargs.pop("pk")
         if pk_name not in kwargs or kwargs.get(pk_name) is None:
             return await self.create(**kwargs)
-        else:
-            model = await self.get(pk=kwargs[pk_name])
-            return await model.update(**kwargs)
+        model = await self.get(pk=kwargs[pk_name])
+        return await model.update(**kwargs)
 
     async def all(self, **kwargs: Any) -> List["Model"]:  # noqa: A003
         if kwargs:
