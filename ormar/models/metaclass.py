@@ -294,7 +294,6 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         new_model = super().__new__(  # type: ignore
             mcs, name, bases, attrs
         )
-        # breakpoint()
 
         if hasattr(new_model, "Meta"):
             new_model = populate_meta_orm_model_fields(attrs, new_model)

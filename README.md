@@ -268,12 +268,13 @@ await news.posts.clear()
 
 The following keyword arguments are supported on all field types.
 
-  * `primary_key`
-  * `nullable`
-  * `default`
-  * `server_default`
-  * `index`
-  * `unique`
+  * `primary_key: bool`
+  * `nullable: bool`
+  * `default: Any`
+  * `server_default: Any`
+  * `index: bool`
+  * `unique: bool`
+  * `choices: typing.Sequence`
 
 All fields are required unless one of the following is set:
 
@@ -294,7 +295,9 @@ Available Model Fields:
 * `DateTime()`
 * `JSON()`
 * `BigInteger()`
-* `Decimal(lenght, precision)`
+* `Decimal(scale, precision)`
+* `ForeignKey(to)`
+* `Many2Many(to, through)`
 
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [databases]: https://github.com/encode/databases
