@@ -73,3 +73,34 @@ async def test_delete_and_update():
             await Book.objects.delete(each=True)
             all_books = await Book.objects.all()
             assert len(all_books) == 0
+
+
+@pytest.mark.asyncio
+async def test_get_or_create():
+    async with database:
+        tom = await Book.objects.get_or_create(title="Volume I", author='Anonymous', genre='Fiction')
+        assert await Book.objects.count() == 1
+
+        assert await Book.objects.get_or_create(title="Volume I", author='Anonymous', genre='Fiction') == tom
+        assert await Book.objects.count() == 1
+
+        assert await Book.objects.create(title="Volume I", author='Anonymous', genre='Fiction')
+        with pytest.raises(ormar.exceptions.MultipleMatches):
+            await Book.objects.get_or_create(title="Volume I", author='Anonymous', genre='Fiction')
+
+
+@pytest.mark.asyncio
+async def test_update_or_create():
+    async with database:
+        tom = await Book.objects.update_or_create(title="Volume I", author='Anonymous', genre='Fiction')
+        assert await Book.objects.count() == 1
+
+        assert await Book.objects.update_or_create(id=tom.id, genre='Historic')
+        assert await Book.objects.count() == 1
+
+        assert await Book.objects.update_or_create(pk=tom.id, genre='Fantasy')
+        assert await Book.objects.count() == 1
+
+        assert await Book.objects.create(title="Volume I", author='Anonymous', genre='Fantasy')
+        with pytest.raises(ormar.exceptions.MultipleMatches):
+            await Book.objects.get(title="Volume I", author='Anonymous', genre='Fantasy')
