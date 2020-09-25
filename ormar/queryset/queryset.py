@@ -247,3 +247,52 @@ class QuerySet:
         if pk and isinstance(pk, self.model_cls.pk_type()):
             setattr(instance, self.model_cls.Meta.pkname, pk)
         return instance
+
+    async def bulk_create(self, objects: List["Model"]) -> None:
+        ready_objects = []
+        for objt in objects:
+            new_kwargs = objt.dict()
+            new_kwargs = self._remove_pk_from_kwargs(new_kwargs)
+            new_kwargs = self.model_cls.substitute_models_with_pks(new_kwargs)
+            new_kwargs = self._populate_default_values(new_kwargs)
+            ready_objects.append(new_kwargs)
+
+        expr = self.table.insert()
+        await self.database.execute_many(expr, ready_objects)
+
+    async def bulk_update(
+        self, objects: List["Model"], columns: List[str] = None
+    ) -> None:
+        ready_expressions = []
+        pk_name = self.model_cls.Meta.pkname
+        if not columns:
+            columns = self.model_cls.extract_db_own_fields().union(
+                self.model_cls.extract_related_names()
+            )
+
+        if pk_name not in columns:
+            columns.append(pk_name)
+
+        for objt in objects:
+            new_kwargs = objt.dict()
+            if pk_name not in new_kwargs or new_kwargs.get(pk_name) is None:
+                raise QueryDefinitionError(
+                    "You cannot update unsaved objects. "
+                    f"{self.model_cls.__name__} has to have {pk_name} filled."
+                )
+            new_kwargs = self.model_cls.substitute_models_with_pks(new_kwargs)
+            new_kwargs = self._populate_default_values(new_kwargs)
+            new_kwargs = {k: v for k, v in new_kwargs.items() if k in columns}
+            expr = self.table.update().values(
+                **{k: v for k, v in new_kwargs.items() if k != pk_name}
+            )
+            pk_column = self.model_cls.Meta.table.c.get(pk_name)
+            expr = expr.where(pk_column == new_kwargs.get(pk_name))
+            ready_expressions.append(expr)
+
+        # databases does not bind params for where clause and values separately
+        # no way to pass one dict with both uses
+        # so we need to resort to lower connection api
+        async with self.model_cls.Meta.database.connection() as connection:
+            for single_query in ready_expressions:
+                await connection.execute(single_query)

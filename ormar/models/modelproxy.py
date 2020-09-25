@@ -21,13 +21,13 @@ class ModelTableProxy:
         raise NotImplementedError  # pragma no cover
 
     def _extract_own_model_fields(self) -> dict:
-        related_names = self._extract_related_names()
+        related_names = self.extract_related_names()
         self_fields = {k: v for k, v in self.dict().items() if k not in related_names}
         return self_fields
 
     @classmethod
-    def extract_db_own_fields(cls) -> set:
-        related_names = cls._extract_related_names()
+    def extract_db_own_fields(cls) -> Set:
+        related_names = cls.extract_related_names()
         self_fields = {
             name for name in cls.Meta.model_fields.keys() if name not in related_names
         }
@@ -35,7 +35,7 @@ class ModelTableProxy:
 
     @classmethod
     def substitute_models_with_pks(cls, model_dict: dict) -> dict:
-        for field in cls._extract_related_names():
+        for field in cls.extract_related_names():
             field_value = model_dict.get(field, None)
             if field_value is not None:
                 target_field = cls.Meta.model_fields[field]
@@ -47,7 +47,7 @@ class ModelTableProxy:
         return model_dict
 
     @classmethod
-    def _extract_related_names(cls) -> Set:
+    def extract_related_names(cls) -> Set:
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
             if inspect.isclass(field) and issubclass(field, ForeignKeyField):
@@ -69,7 +69,7 @@ class ModelTableProxy:
     @classmethod
     def _exclude_related_names_not_required(cls, nested: bool = False) -> Set:
         if nested:
-            return cls._extract_related_names()
+            return cls.extract_related_names()
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
             if (
