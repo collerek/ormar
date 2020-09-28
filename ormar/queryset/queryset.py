@@ -2,6 +2,7 @@ from typing import Any, List, Mapping, TYPE_CHECKING, Tuple, Type, Union
 
 import databases
 import sqlalchemy
+from sqlalchemy import bindparam
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
@@ -263,7 +264,7 @@ class QuerySet:
     async def bulk_update(
         self, objects: List["Model"], columns: List[str] = None
     ) -> None:
-        ready_expressions = []
+        ready_objects = []
         pk_name = self.model_cls.Meta.pkname
         if not columns:
             columns = self.model_cls.extract_db_own_fields().union(
@@ -281,18 +282,15 @@ class QuerySet:
                     f"{self.model_cls.__name__} has to have {pk_name} filled."
                 )
             new_kwargs = self.model_cls.substitute_models_with_pks(new_kwargs)
-            new_kwargs = self._populate_default_values(new_kwargs)
-            new_kwargs = {k: v for k, v in new_kwargs.items() if k in columns}
-            expr = self.table.update().values(
-                **{k: v for k, v in new_kwargs.items() if k != pk_name}
-            )
-            pk_column = self.model_cls.Meta.table.c.get(pk_name)
-            expr = expr.where(pk_column == new_kwargs.get(pk_name))
-            ready_expressions.append(expr)
+            new_kwargs = {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
+            ready_objects.append(new_kwargs)
 
-        # databases does not bind params for where clause and values separately
-        # no way to pass one dict with both uses
-        # so we need to resort to lower connection api
-        async with self.model_cls.Meta.database.connection() as connection:
-            for single_query in ready_expressions:
-                await connection.execute(single_query)
+        pk_column = self.model_cls.Meta.table.c.get(pk_name)
+        expr = self.table.update().where(pk_column == bindparam("new_" + pk_name))
+        expr = expr.values(
+            **{k: bindparam("new_" + k) for k in columns if k != pk_name}
+        )
+        # databases bind params only where query is passed as string
+        # otherwise it just pases all data to values and results in unconsumed columns
+        expr = str(expr)
+        await self.database.execute_many(expr, ready_objects)

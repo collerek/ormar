@@ -328,6 +328,52 @@ assert await Book.objects.count() == 1
 
 ```
 
+
+Since version >=0.3.5 Ormar supports also bulk operations -> bulk_create and bulk_update
+```python
+import databases
+import ormar
+import sqlalchemy
+
+database = databases.Database("sqlite:///db.sqlite")
+metadata = sqlalchemy.MetaData()
+
+
+class ToDo(ormar.Model):
+    class Meta:
+        tablename = "todos"
+        metadata = metadata
+        database = database
+
+    id: ormar.Integer(primary_key=True)
+    text: ormar.String(max_length=500)
+    completed: ormar.Boolean(default=False)
+
+# create multiple instances at once with bulk_create
+await ToDo.objects.bulk_create(
+            [
+                ToDo(text="Buy the groceries."),
+                ToDo(text="Call Mum.", completed=True),
+                ToDo(text="Send invoices.", completed=True),
+            ]
+        )
+
+todoes = await ToDo.objects.all()
+assert len(todoes) == 3
+
+# update objects
+for todo in todoes:
+    todo.completed = False
+
+# perform update of all objects at once
+# objects need to have pk column set, otherwise exception is raised
+await ToDo.objects.bulk_update(todoes)
+
+completed = await ToDo.objects.filter(completed=False).all()
+assert len(completed) == 3
+
+```
+
 ## Data types
 
 The following keyword arguments are supported on all field types.
