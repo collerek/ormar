@@ -92,7 +92,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         object.__setattr__(self, "__fields_set__", fields_set)
 
         # register the related models after initialization
-        for related in self._extract_related_names():
+        for related in self.extract_related_names():
             self.Meta.model_fields[related].expand_relationship(
                 kwargs.get(related), self, to_register=True
             )
@@ -119,7 +119,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def __getattribute__(self, item: str) -> Any:
         if item in ("_orm_id", "_orm_saved", "_orm", "__fields__"):
             return object.__getattribute__(self, item)
-        if item != "_extract_related_names" and item in self._extract_related_names():
+        if item != "extract_related_names" and item in self.extract_related_names():
             return self._extract_related_model_instead_of_field(item)
         if item == "pk":
             return self.__dict__.get(self.Meta.pkname, None)
@@ -186,7 +186,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             exclude_defaults=exclude_defaults,
             exclude_none=exclude_none,
         )
-        for field in self._extract_related_names():
+        for field in self.extract_related_names():
             nested_model = getattr(self, field)
 
             if self.Meta.model_fields[field].virtual and nested:
