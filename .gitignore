@@ -1,6 +1,7 @@
 p38venv
 .idea
 .pytest_cache
+.mypy_cache
 *.pyc
 *.log
 test.db

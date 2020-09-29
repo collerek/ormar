@@ -1,6 +1,7 @@
-from typing import List, Optional, TYPE_CHECKING, Type, Union
+from typing import List, Optional, TYPE_CHECKING, Type, Union, Dict
 from weakref import proxy
 
+from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.relations.relation import Relation, RelationType
@@ -11,25 +12,28 @@ from ormar.relations.utils import (
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+    from ormar.models import NewBaseModel
 
 
 class RelationsManager:
     def __init__(
-        self, related_fields: List[Type[ForeignKeyField]] = None, owner: "Model" = None
+            self,
+            related_fields: List[Type[ForeignKeyField]] = None,
+            owner: "NewBaseModel" = None,
     ) -> None:
         self.owner = proxy(owner)
         self._related_fields = related_fields or []
         self._related_names = [field.name for field in self._related_fields]
-        self._relations = dict()
+        self._relations: Dict[str, Relation] = dict()
         for field in self._related_fields:
             self._add_relation(field)
 
-    def _get_relation_type(self, field: Type[ForeignKeyField]) -> RelationType:
+    def _get_relation_type(self, field: Type[BaseField]) -> RelationType:
         if issubclass(field, ManyToManyField):
             return RelationType.MULTIPLE
         return RelationType.PRIMARY if not field.virtual else RelationType.REVERSE
 
-    def _add_relation(self, field: Type[ForeignKeyField]) -> None:
+    def _add_relation(self, field: Type[BaseField]) -> None:
         self._relations[field.name] = Relation(
             manager=self,
             type_=self._get_relation_type(field),
@@ -44,15 +48,17 @@ class RelationsManager:
         relation = self._relations.get(name, None)
         if relation is not None:
             return relation.get()
+        return None  # pragma nocover
 
     def _get(self, name: str) -> Optional[Relation]:
         relation = self._relations.get(name, None)
         if relation is not None:
             return relation
+        return None
 
     @staticmethod
     def add(parent: "Model", child: "Model", child_name: str, virtual: bool) -> None:
-        to_field = child.resolve_relation_field(child, parent)
+        to_field: Type[BaseField] = child.resolve_relation_field(child, parent)
 
         (parent, child, child_name, to_name,) = get_relations_sides_and_names(
             to_field, parent, child, child_name, virtual
@@ -61,18 +67,22 @@ class RelationsManager:
         parent_relation = parent._orm._get(child_name)
         if not parent_relation:
             parent_relation = register_missing_relation(parent, child, child_name)
-        parent_relation.add(child)
-        child._orm._get(to_name).add(parent)
+        parent_relation.add(child)  # type: ignore
 
-    def remove(self, name: str, child: "Model") -> None:
+        child_relation = child._orm._get(to_name)
+        if child_relation:
+            child_relation.add(parent)
+
+    def remove(self, name: str, child: Union["NewBaseModel", Type["NewBaseModel"]]) -> None:
         relation = self._get(name)
-        relation.remove(child)
+        if relation:
+            relation.remove(child)
 
     @staticmethod
-    def remove_parent(item: "Model", name: Union[str, "Model"]) -> None:
+    def remove_parent(item: Union["NewBaseModel", Type["NewBaseModel"]], name: "Model") -> None:
         related_model = name
-        name = item.resolve_relation_name(item, related_model)
-        if name in item._orm:
+        rel_name = item.resolve_relation_name(item, related_model)
+        if rel_name in item._orm:
             relation_name = item.resolve_relation_name(related_model, item)
-            item._orm.remove(name, related_model)
+            item._orm.remove(rel_name, related_model)
             related_model._orm.remove(relation_name, item)

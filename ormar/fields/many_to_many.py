@@ -15,7 +15,7 @@ def ManyToMany(
     unique: bool = False,
     related_name: str = None,
     virtual: bool = False,
-) -> Type[object]:
+) -> Type["ManyToManyField"]:
     to_field = to.__fields__[to.Meta.pkname]
     namespace = dict(
         to=to,

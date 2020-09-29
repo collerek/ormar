@@ -22,8 +22,8 @@ class SqlJoin:
         self,
         used_aliases: List,
         select_from: sqlalchemy.sql.select,
-        order_bys: List,
-        columns: List,
+        order_bys: List[sqlalchemy.sql.elements.TextClause],
+        columns: List[sqlalchemy.Column],
     ) -> None:
         self.used_aliases = used_aliases
         self.select_from = select_from

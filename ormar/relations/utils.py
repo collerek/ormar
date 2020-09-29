@@ -1,8 +1,8 @@
-from typing import TYPE_CHECKING, Tuple, Type
+from typing import TYPE_CHECKING, Tuple, Type, Optional
 from weakref import proxy
 
 import ormar
-from ormar.fields.foreign_key import ForeignKeyField
+from ormar.fields import BaseField
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.relations import Relation
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 def register_missing_relation(
     parent: "Model", child: "Model", child_name: str
-) -> Relation:
+) -> Optional[Relation]:
     ormar.models.expand_reverse_relationships(child.__class__)
     name = parent.resolve_relation_name(parent, child)
     field = parent.Meta.model_fields[name]
@@ -22,7 +22,7 @@ def register_missing_relation(
 
 
 def get_relations_sides_and_names(
-    to_field: Type[ForeignKeyField],
+    to_field: Type[BaseField],
     parent: "Model",
     child: "Model",
     child_name: str,

@@ -18,10 +18,10 @@ def is_field_nullable(
 
 
 class ModelFieldFactory:
-    _bases = BaseField
-    _type = None
+    _bases: Any = BaseField
+    _type: Any = None
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> Type[BaseField]:
+    def __new__(cls, *args: Any, **kwargs: Any) -> Type[BaseField]:  # type: ignore
         cls.validate(**kwargs)
 
         default = kwargs.pop("default", None)
@@ -58,7 +58,7 @@ class String(ModelFieldFactory):
     _bases = (pydantic.ConstrainedStr, BaseField)
     _type = str
 
-    def __new__(  # noqa CFQ002
+    def __new__(  # type: ignore # noqa CFQ002
         cls,
         *,
         allow_blank: bool = False,
@@ -68,7 +68,7 @@ class String(ModelFieldFactory):
         curtail_length: int = None,
         regex: str = None,
         **kwargs: Any
-    ) -> Type[str]:
+    ) -> Type[BaseField]:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -96,14 +96,14 @@ class Integer(ModelFieldFactory):
     _bases = (pydantic.ConstrainedInt, BaseField)
     _type = int
 
-    def __new__(
+    def __new__(  # type: ignore
         cls,
         *,
         minimum: int = None,
         maximum: int = None,
         multiple_of: int = None,
         **kwargs: Any
-    ) -> Type[int]:
+    ) -> Type[BaseField]:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
             autoincrement
@@ -131,9 +131,9 @@ class Text(ModelFieldFactory):
     _bases = (pydantic.ConstrainedStr, BaseField)
     _type = str
 
-    def __new__(
+    def __new__(  # type: ignore
         cls, *, allow_blank: bool = False, strip_whitespace: bool = False, **kwargs: Any
-    ) -> Type[str]:
+    ) -> Type[BaseField]:
         kwargs = {
             **kwargs,
             **{
@@ -153,14 +153,14 @@ class Float(ModelFieldFactory):
     _bases = (pydantic.ConstrainedFloat, BaseField)
     _type = float
 
-    def __new__(
+    def __new__(  # type: ignore
         cls,
         *,
         minimum: float = None,
         maximum: float = None,
         multiple_of: int = None,
         **kwargs: Any
-    ) -> Type[int]:
+    ) -> Type[BaseField]:
         kwargs = {
             **kwargs,
             **{
@@ -236,7 +236,7 @@ class Decimal(ModelFieldFactory):
     _bases = (pydantic.ConstrainedDecimal, BaseField)
     _type = decimal.Decimal
 
-    def __new__(  # noqa CFQ002
+    def __new__(  # type: ignore # noqa CFQ002
         cls,
         *,
         minimum: float = None,
@@ -247,7 +247,7 @@ class Decimal(ModelFieldFactory):
         max_digits: int = None,
         decimal_places: int = None,
         **kwargs: Any
-    ) -> Type[decimal.Decimal]:
+    ) -> Type[BaseField]:
         kwargs = {
             **kwargs,
             **{

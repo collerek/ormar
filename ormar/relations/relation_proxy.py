@@ -13,21 +13,29 @@ if TYPE_CHECKING:  # pragma no cover
 class RelationProxy(list):
     def __init__(self, relation: "Relation") -> None:
         super(RelationProxy, self).__init__()
-        self.relation = relation
-        self._owner = self.relation.manager.owner
+        self.relation: Relation = relation
+        self._owner: "Model" = self.relation.manager.owner
         self.queryset_proxy = QuerysetProxy(relation=self.relation)
 
     def __getattribute__(self, item: str) -> Any:
         if item in ["count", "clear"]:
-            if not self.queryset_proxy.queryset:
-                self.queryset_proxy.queryset = self._set_queryset()
+            self._initialize_queryset()
             return getattr(self.queryset_proxy, item)
         return super().__getattribute__(item)
 
     def __getattr__(self, item: str) -> Any:
-        if not self.queryset_proxy.queryset:
-            self.queryset_proxy.queryset = self._set_queryset()
+        self._initialize_queryset()
         return getattr(self.queryset_proxy, item)
+
+    def _initialize_queryset(self) -> None:
+        if not self._check_if_queryset_is_initialized():
+            self.queryset_proxy.queryset = self._set_queryset()
+
+    def _check_if_queryset_is_initialized(self) -> bool:
+        return (
+            hasattr(self.queryset_proxy, "queryset")
+            and self.queryset_proxy.queryset is not None
+        )
 
     def _set_queryset(self) -> "QuerySet":
         owner_table = self.relation._owner.Meta.tablename
@@ -45,10 +53,15 @@ class RelationProxy(list):
         )
         return queryset
 
-    async def remove(self, item: "Model") -> None:
+    async def remove(self, item: "Model") -> None:  # type: ignore
         super().remove(item)
         rel_name = item.resolve_relation_name(item, self._owner)
-        item._orm._get(rel_name).remove(self._owner)
+        relation = item._orm._get(rel_name)
+        if relation is None:  # pragma nocover
+            raise ValueError(
+                f"{self._owner.get_name()} does not have relation {rel_name}"
+            )
+        relation.remove(self._owner)
         if self.relation._type == ormar.RelationType.MULTIPLE:
             await self.queryset_proxy.delete_through_instance(item)
 

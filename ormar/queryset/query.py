@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING, Tuple, Type
+from typing import List, TYPE_CHECKING, Tuple, Type, Optional
 
 import sqlalchemy
 from sqlalchemy import text
@@ -18,8 +18,8 @@ class Query:
         filter_clauses: List,
         exclude_clauses: List,
         select_related: List,
-        limit_count: int,
-        offset: int,
+        limit_count: Optional[int],
+        offset: Optional[int],
     ) -> None:
         self.query_offset = offset
         self.limit_count = limit_count
@@ -30,11 +30,11 @@ class Query:
         self.model_cls = model_cls
         self.table = self.model_cls.Meta.table
 
-        self.used_aliases = []
+        self.used_aliases: List[str] = []
 
-        self.select_from = None
-        self.columns = None
-        self.order_bys = None
+        self.select_from: List[str] = []
+        self.columns = [sqlalchemy.Column]
+        self.order_bys: List[sqlalchemy.sql.elements.TextClause] = []
 
     @property
     def prefixed_pk_name(self) -> str:
@@ -89,7 +89,7 @@ class Query:
         return expr
 
     def _reset_query_parameters(self) -> None:
-        self.select_from = None
-        self.columns = None
-        self.order_bys = None
+        self.select_from = []
+        self.columns = []
+        self.order_bys = []
         self.used_aliases = []

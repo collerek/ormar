@@ -3,13 +3,13 @@ import uuid
 from typing import (
     AbstractSet,
     Any,
+    Callable,
     Dict,
     List,
     Mapping,
     Optional,
     TYPE_CHECKING,
     Type,
-    TypeVar,
     Union,
 )
 
@@ -39,7 +39,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     __slots__ = ("_orm_id", "_orm_saved", "_orm")
 
     if TYPE_CHECKING:  # pragma no cover
-        __model_fields__: Dict[str, TypeVar[BaseField]]
+        __model_fields__: Dict[str, Type[BaseField]]
         __table__: sqlalchemy.Table
         __fields__: Dict[str, pydantic.fields.ModelField]
         __pydantic_model__: Type[BaseModel]
@@ -84,7 +84,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             for k, v in kwargs.items()
         }
 
-        values, fields_set, validation_error = pydantic.validate_model(self, kwargs)
+        values, fields_set, validation_error = pydantic.validate_model(self, kwargs)  # type: ignore
         if validation_error and not pk_only:
             raise validation_error
 
@@ -134,13 +134,14 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     ) -> Optional[Union["Model", List["Model"]]]:
         if item in self._orm:
             return self._orm.get(item)
+        return None
 
-    def __eq__(self, other: "Model") -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, NewBaseModel):
             return self.__same__(other)
         return super().__eq__(other)  # pragma no cover
 
-    def __same__(self, other: "Model") -> bool:
+    def __same__(self, other: "NewBaseModel") -> bool:
         return (
             self._orm_id == other._orm_id
             or self.dict() == other.dict()
@@ -205,19 +206,19 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 dict_instance[field] = None
         return dict_instance
 
-    def from_dict(self, value_dict: Dict) -> "Model":
+    def from_dict(self, value_dict: Dict) -> "NewBaseModel":
         for key, value in value_dict.items():
             setattr(self, key, value)
         return self
 
-    def _convert_json(self, column_name: str, value: Any, op: str) -> Union[str, dict]:
+    def _convert_json(self, column_name: str, value: Any, op: str) -> Union[str, Dict]:
         if not self._is_conversion_to_json_needed(column_name):
             return value
 
         condition = (
             isinstance(value, str) if op == "loads" else not isinstance(value, str)
         )
-        operand = json.loads if op == "loads" else json.dumps
+        operand: Callable[[Any], Any] = json.loads if op == "loads" else json.dumps
 
         if condition:
             try:
@@ -227,4 +228,4 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         return value
 
     def _is_conversion_to_json_needed(self, column_name: str) -> bool:
-        return self.Meta.model_fields.get(column_name).__type__ == pydantic.Json
+        return self.Meta.model_fields[column_name].__type__ == pydantic.Json

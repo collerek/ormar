@@ -28,15 +28,19 @@ class ModelMeta:
     database: databases.Database
     columns: List[sqlalchemy.Column]
     pkname: str
-    model_fields: Dict[str, Union[BaseField, ForeignKey]]
+    model_fields: Dict[
+        str, Union[Type[BaseField], Type[ForeignKeyField], Type[ManyToManyField]]
+    ]
     alias_manager: AliasManager
 
 
-def register_relation_on_build(table_name: str, field: ForeignKey) -> None:
+def register_relation_on_build(table_name: str, field: Type[ForeignKeyField]) -> None:
     alias_manager.add_relation_type(field.to.Meta.tablename, table_name)
 
 
-def register_many_to_many_relation_on_build(table_name: str, field: ManyToMany) -> None:
+def register_many_to_many_relation_on_build(
+    table_name: str, field: Type[ManyToManyField]
+) -> None:
     alias_manager.add_relation_type(field.through.Meta.tablename, table_name)
     alias_manager.add_relation_type(
         field.through.Meta.tablename, field.to.Meta.tablename
@@ -106,7 +110,7 @@ def create_pydantic_field(
 ) -> None:
     model_field.through.__fields__[field_name] = ModelField(
         name=field_name,
-        type_=Optional[model],
+        type_=model,
         model_config=model.__config__,
         required=False,
         class_validators={},
@@ -130,7 +134,7 @@ def create_and_append_m2m_fk(
 
 
 def check_pk_column_validity(
-    field_name: str, field: BaseField, pkname: str
+    field_name: str, field: BaseField, pkname: Optional[str]
 ) -> Optional[str]:
     if pkname is not None:
         raise ModelDefinitionError("Only one primary key column is allowed.")
@@ -218,6 +222,7 @@ def populate_meta_tablename_columns_and_pk(
 ) -> Type["Model"]:
     tablename = name.lower() + "s"
     new_model.Meta.tablename = new_model.Meta.tablename or tablename
+    pkname: Optional[str]
 
     if hasattr(new_model.Meta, "columns"):
         columns = new_model.Meta.table.columns
@@ -226,11 +231,12 @@ def populate_meta_tablename_columns_and_pk(
         pkname, columns = sqlalchemy_columns_from_model_fields(
             new_model.Meta.model_fields, new_model.Meta.tablename
         )
+
+    if pkname is None:
+        raise ModelDefinitionError("Table has to have a primary key.")
+
     new_model.Meta.columns = columns
     new_model.Meta.pkname = pkname
-
-    if not new_model.Meta.pkname:
-        raise ModelDefinitionError("Table has to have a primary key.")
 
     return new_model
 
@@ -253,8 +259,8 @@ def get_pydantic_base_orm_config() -> Type[BaseConfig]:
     return Config
 
 
-def check_if_field_has_choices(field: BaseField) -> bool:
-    return hasattr(field, "choices") and field.choices
+def check_if_field_has_choices(field: Type[BaseField]) -> bool:
+    return hasattr(field, "choices") and bool(field.choices)
 
 
 def model_initialized_and_has_model_fields(model: Type["Model"]) -> bool:
@@ -287,7 +293,7 @@ def populate_choices_validators(  # noqa CCR001
 
 
 class ModelMetaclass(pydantic.main.ModelMetaclass):
-    def __new__(mcs: type, name: str, bases: Any, attrs: dict) -> type:
+    def __new__(mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict) -> "ModelMetaclass":  # type: ignore
         attrs["Config"] = get_pydantic_base_orm_config()
         attrs["__name__"] = name
         attrs = extract_annotations_and_default_vals(attrs, bases)
@@ -306,7 +312,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 field_name = new_model.Meta.pkname
                 field = Integer(name=field_name, primary_key=True)
                 attrs["__annotations__"][field_name] = field
-                populate_default_pydantic_field_value(field, field_name, attrs)
+                populate_default_pydantic_field_value(field, field_name, attrs)  # type: ignore
 
             new_model = super().__new__(  # type: ignore
                 mcs, name, bases, attrs

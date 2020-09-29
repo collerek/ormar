@@ -1,7 +1,7 @@
 import string
 import uuid
 from random import choices
-from typing import List
+from typing import List, Dict
 
 import sqlalchemy
 from sqlalchemy import text
@@ -14,7 +14,7 @@ def get_table_alias() -> str:
 
 class AliasManager:
     def __init__(self) -> None:
-        self._aliases = dict()
+        self._aliases: Dict[str, str] = dict()
 
     @staticmethod
     def prefixed_columns(alias: str, table: sqlalchemy.Table) -> List[text]:

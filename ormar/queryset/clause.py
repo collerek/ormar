@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type
 
 import sqlalchemy
 from sqlalchemy import text
@@ -118,7 +118,7 @@ class QueryClause:
 
     def _determine_filter_target_table(
         self, related_parts: List[str], select_related: List[str]
-    ) -> Tuple[List[str], str, "Model"]:
+    ) -> Tuple[List[str], str, Type["Model"]]:
 
         table_prefix = ""
         model_cls = self.model_cls
@@ -168,9 +168,7 @@ class QueryClause:
         return clause
 
     @staticmethod
-    def _escape_characters_in_clause(
-        op: str, value: Union[str, "Model"]
-    ) -> Tuple[str, bool]:
+    def _escape_characters_in_clause(op: str, value: Any) -> Tuple[Any, bool]:
         has_escaped_character = False
 
         if op not in [

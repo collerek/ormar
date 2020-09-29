@@ -1,5 +1,5 @@
 import inspect
-from typing import List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union
+from typing import List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union, Dict
 
 import ormar
 from ormar.exceptions import RelationshipInstanceError
@@ -9,6 +9,7 @@ from ormar.models.metaclass import ModelMeta
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+    from ormar.models import NewBaseModel
 
 Field = TypeVar("Field", bound=BaseField)
 
@@ -17,10 +18,10 @@ class ModelTableProxy:
     if TYPE_CHECKING:  # pragma no cover
         Meta: ModelMeta
 
-    def dict():  # noqa A003
+    def dict(self):  # noqa A003
         raise NotImplementedError  # pragma no cover
 
-    def _extract_own_model_fields(self) -> dict:
+    def _extract_own_model_fields(self) -> Dict:
         related_names = self.extract_related_names()
         self_fields = {k: v for k, v in self.dict().items() if k not in related_names}
         return self_fields
@@ -34,7 +35,7 @@ class ModelTableProxy:
         return self_fields
 
     @classmethod
-    def substitute_models_with_pks(cls, model_dict: dict) -> dict:
+    def substitute_models_with_pks(cls, model_dict: Dict) -> Dict:
         for field in cls.extract_related_names():
             field_value = model_dict.get(field, None)
             if field_value is not None:
@@ -80,7 +81,7 @@ class ModelTableProxy:
                 related_names.add(name)
         return related_names
 
-    def _extract_model_db_fields(self) -> dict:
+    def _extract_model_db_fields(self) -> Dict:
         self_fields = self._extract_own_model_fields()
         self_fields = {
             k: v for k, v in self_fields.items() if k in self.Meta.table.columns
@@ -92,7 +93,9 @@ class ModelTableProxy:
         return self_fields
 
     @staticmethod
-    def resolve_relation_name(item: "Model", related: "Model") -> Optional[str]:
+    def resolve_relation_name(
+        item: Union["NewBaseModel", Type["NewBaseModel"]], related: Union["NewBaseModel", Type["NewBaseModel"]]
+    ) -> str:
         for name, field in item.Meta.model_fields.items():
             if issubclass(field, ForeignKeyField):
                 # fastapi is creating clones of response model
@@ -100,11 +103,14 @@ class ModelTableProxy:
                 # so we need to compare Meta too as this one is copied as is
                 if field.to == related.__class__ or field.to.Meta == related.Meta:
                     return name
+        raise ValueError(
+            f"No relation between {item.get_name()} and {related.get_name()}"
+        )  # pragma nocover
 
     @staticmethod
     def resolve_relation_field(
         item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
-    ) -> Type[Field]:
+    ) -> Union[Type[BaseField], Type[ForeignKeyField]]:
         name = ModelTableProxy.resolve_relation_name(item, related)
         to_field = item.Meta.model_fields.get(name)
         if not to_field:  # pragma no cover
@@ -116,7 +122,7 @@ class ModelTableProxy:
 
     @classmethod
     def merge_instances_list(cls, result_rows: List["Model"]) -> List["Model"]:
-        merged_rows = []
+        merged_rows: List["Model"] = []
         for index, model in enumerate(result_rows):
             if index > 0 and model.pk == merged_rows[-1].pk:
                 merged_rows[-1] = cls.merge_two_instances(model, merged_rows[-1])

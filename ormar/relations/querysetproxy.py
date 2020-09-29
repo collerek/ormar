@@ -13,8 +13,8 @@ class QuerysetProxy:
         relation: "Relation"
 
     def __init__(self, relation: "Relation") -> None:
-        self.relation = relation
-        self.queryset = None
+        self.relation: Relation = relation
+        self.queryset: "QuerySet"
 
     def _assign_child_to_parent(self, child: "Model") -> None:
         owner = self.relation._owner

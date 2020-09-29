@@ -1,7 +1,8 @@
-from typing import Any, List, Optional, TYPE_CHECKING, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Union, Type
 
 import sqlalchemy
 from pydantic import Field, typing
+from pydantic.fields import FieldInfo
 
 from ormar import ModelDefinitionError  # noqa I101
 
@@ -15,6 +16,7 @@ class BaseField:
 
     column_type: sqlalchemy.Column
     constraints: List = []
+    name: str
 
     primary_key: bool
     autoincrement: bool
@@ -24,12 +26,14 @@ class BaseField:
     pydantic_only: bool
     virtual: bool = False
     choices: typing.Sequence
+    to: Type["Model"]
+    through: Type["Model"]
 
     default: Any
     server_default: Any
 
     @classmethod
-    def default_value(cls) -> Optional[Field]:
+    def default_value(cls) -> Optional[FieldInfo]:
         if cls.is_auto_primary_key():
             return Field(default=None)
         if cls.has_default():

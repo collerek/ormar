@@ -1,5 +1,5 @@
 import itertools
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Dict, Optional
 
 import sqlalchemy
 from databases.backends.postgres import Record
@@ -9,8 +9,8 @@ from ormar.fields.many_to_many import ManyToManyField
 from ormar.models import NewBaseModel  # noqa I100
 
 
-def group_related_list(list_: List) -> dict:
-    test_dict = dict()
+def group_related_list(list_: List) -> Dict:
+    test_dict: Dict[str, Any] = dict()
     grouped = itertools.groupby(list_, key=lambda x: x.split("__")[0])
     for key, group in grouped:
         group_list = list(group)
@@ -29,14 +29,14 @@ class Model(NewBaseModel):
 
     @classmethod
     def from_row(
-        cls,
-        row: sqlalchemy.engine.ResultProxy,
-        select_related: List = None,
-        related_models: Any = None,
-        previous_table: str = None,
-    ) -> Union["Model", Tuple["Model", dict]]:
+            cls,
+            row: sqlalchemy.engine.ResultProxy,
+            select_related: List = None,
+            related_models: Any = None,
+            previous_table: str = None,
+    ) -> Optional["Model"]:
 
-        item = {}
+        item: Dict[str, Any] = {}
         select_related = select_related or []
         related_models = related_models or []
         if select_related:
@@ -44,17 +44,20 @@ class Model(NewBaseModel):
 
         # breakpoint()
         if (
-            previous_table
-            and previous_table in cls.Meta.model_fields
-            and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
+                previous_table
+                and previous_table in cls.Meta.model_fields
+                and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
         ):
             previous_table = cls.Meta.model_fields[
                 previous_table
             ].through.Meta.tablename
 
-        table_prefix = cls.Meta.alias_manager.resolve_relation_join(
-            previous_table, cls.Meta.table.name
-        )
+        if previous_table:
+            table_prefix = cls.Meta.alias_manager.resolve_relation_join(
+                previous_table, cls.Meta.table.name
+            )
+        else:
+            table_prefix = ''
         previous_table = cls.Meta.table.name
 
         item = cls.populate_nested_models_from_row(
@@ -67,11 +70,11 @@ class Model(NewBaseModel):
 
     @classmethod
     def populate_nested_models_from_row(
-        cls,
-        item: dict,
-        row: sqlalchemy.engine.ResultProxy,
-        related_models: Any,
-        previous_table: sqlalchemy.Table,
+            cls,
+            item: dict,
+            row: sqlalchemy.engine.ResultProxy,
+            related_models: Any,
+            previous_table: sqlalchemy.Table,
     ) -> dict:
         for related in related_models:
             if isinstance(related_models, dict) and related_models[related]:
@@ -90,7 +93,7 @@ class Model(NewBaseModel):
 
     @classmethod
     def extract_prefixed_table_columns(  # noqa CCR001
-        cls, item: dict, row: sqlalchemy.engine.result.ResultProxy, table_prefix: str
+            cls, item: dict, row: sqlalchemy.engine.result.ResultProxy, table_prefix: str
     ) -> dict:
         for column in cls.Meta.table.columns:
             if column.name not in item:
@@ -106,7 +109,7 @@ class Model(NewBaseModel):
     async def save(self) -> "Model":
         self_fields = self._extract_model_db_fields()
 
-        if not self.pk and self.Meta.model_fields.get(self.Meta.pkname).autoincrement:
+        if not self.pk and self.Meta.model_fields[self.Meta.pkname].autoincrement:
             self_fields.pop(self.Meta.pkname, None)
         self_fields = self.objects._populate_default_values(self_fields)
         expr = self.Meta.table.insert()
@@ -138,5 +141,7 @@ class Model(NewBaseModel):
     async def load(self) -> "Model":
         expr = self.Meta.table.select().where(self.pk_column == self.pk)
         row = await self.Meta.database.fetch_one(expr)
+        if not row:  # pragma nocover
+            raise ValueError('Instance was deleted from database and cannot be refreshed')
         self.from_dict(dict(row))
         return self
