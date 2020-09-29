@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Tuple, Type, Optional
+from typing import Optional, TYPE_CHECKING, Tuple, Type
 from weakref import proxy
 
 import ormar

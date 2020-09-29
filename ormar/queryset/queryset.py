@@ -1,4 +1,4 @@
-from typing import Any, List, Mapping, TYPE_CHECKING, Type, Union, Optional
+from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
 import databases
 import sqlalchemy
@@ -14,17 +14,18 @@ from ormar.queryset.query import Query
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.models.metaclass import ModelMeta
+    from ormar.relations.querysetproxy import QuerysetProxy
 
 
 class QuerySet:
     def __init__(  # noqa CFQ002
-            self,
-            model_cls: Type["Model"] = None,
-            filter_clauses: List = None,
-            exclude_clauses: List = None,
-            select_related: List = None,
-            limit_count: int = None,
-            offset: int = None,
+        self,
+        model_cls: Type["Model"] = None,
+        filter_clauses: List = None,
+        exclude_clauses: List = None,
+        select_related: List = None,
+        limit_count: int = None,
+        offset: int = None,
     ) -> None:
         self.model_cls = model_cls
         self.filter_clauses = [] if filter_clauses is None else filter_clauses
@@ -34,8 +35,15 @@ class QuerySet:
         self.query_offset = offset
         self.order_bys = None
 
-    def __get__(self, instance: "QuerySet", owner: Type["Model"]) -> "QuerySet":
-        return self.__class__(model_cls=owner)
+    def __get__(
+        self,
+        instance: Union["QuerySet", "QuerysetProxy"],
+        owner: Union[Type["Model"], Type["QuerysetProxy"]],
+    ) -> "QuerySet":
+        if issubclass(owner, ormar.Model):
+            return self.__class__(model_cls=owner)
+        else:  # pragma nocover
+            return self.__class__()
 
     @property
     def model_meta(self) -> "ModelMeta":
@@ -68,7 +76,7 @@ class QuerySet:
         pkname = self.model_meta.pkname
         pk = self.model_meta.model_fields[pkname]
         if new_kwargs.get(pkname, ormar.Undefined) is None and (
-                pk.nullable or pk.autoincrement
+            pk.nullable or pk.autoincrement
         ):
             del new_kwargs[pkname]
         return new_kwargs
@@ -216,7 +224,7 @@ class QuerySet:
         rows = await self.database.fetch_all(expr)
         processed_rows = self._process_query_result_rows(rows)
         self.check_single_result_rows_count(processed_rows)
-        return processed_rows[0] # type: ignore
+        return processed_rows[0]  # type: ignore
 
     async def get_or_create(self, **kwargs: Any) -> "Model":
         try:
@@ -276,7 +284,7 @@ class QuerySet:
         await self.database.execute_many(expr, ready_objects)
 
     async def bulk_update(
-            self, objects: List["Model"], columns: List[str] = None
+        self, objects: List["Model"], columns: List[str] = None
     ) -> None:
         ready_objects = []
         pk_name = self.model_meta.pkname

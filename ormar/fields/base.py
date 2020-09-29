@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, TYPE_CHECKING, Union, Type
+from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
 from pydantic import Field, typing

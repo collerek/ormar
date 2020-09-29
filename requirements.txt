@@ -16,6 +16,7 @@ psycopg2-binary
 mysqlclient
 
 # Testing
+mypy
 pytest
 pytest-cov
 codecov

@@ -1,5 +1,5 @@
 import itertools
-from typing import Any, List, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import sqlalchemy
 from databases.backends.postgres import Record
@@ -28,12 +28,12 @@ class Model(NewBaseModel):
     __abstract__ = False
 
     @classmethod
-    def from_row(
-            cls,
-            row: sqlalchemy.engine.ResultProxy,
-            select_related: List = None,
-            related_models: Any = None,
-            previous_table: str = None,
+    def from_row(  # noqa CCR001
+        cls,
+        row: sqlalchemy.engine.ResultProxy,
+        select_related: List = None,
+        related_models: Any = None,
+        previous_table: str = None,
     ) -> Optional["Model"]:
 
         item: Dict[str, Any] = {}
@@ -44,9 +44,9 @@ class Model(NewBaseModel):
 
         # breakpoint()
         if (
-                previous_table
-                and previous_table in cls.Meta.model_fields
-                and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
+            previous_table
+            and previous_table in cls.Meta.model_fields
+            and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
         ):
             previous_table = cls.Meta.model_fields[
                 previous_table
@@ -57,7 +57,7 @@ class Model(NewBaseModel):
                 previous_table, cls.Meta.table.name
             )
         else:
-            table_prefix = ''
+            table_prefix = ""
         previous_table = cls.Meta.table.name
 
         item = cls.populate_nested_models_from_row(
@@ -70,11 +70,11 @@ class Model(NewBaseModel):
 
     @classmethod
     def populate_nested_models_from_row(
-            cls,
-            item: dict,
-            row: sqlalchemy.engine.ResultProxy,
-            related_models: Any,
-            previous_table: sqlalchemy.Table,
+        cls,
+        item: dict,
+        row: sqlalchemy.engine.ResultProxy,
+        related_models: Any,
+        previous_table: sqlalchemy.Table,
     ) -> dict:
         for related in related_models:
             if isinstance(related_models, dict) and related_models[related]:
@@ -93,7 +93,7 @@ class Model(NewBaseModel):
 
     @classmethod
     def extract_prefixed_table_columns(  # noqa CCR001
-            cls, item: dict, row: sqlalchemy.engine.result.ResultProxy, table_prefix: str
+        cls, item: dict, row: sqlalchemy.engine.result.ResultProxy, table_prefix: str
     ) -> dict:
         for column in cls.Meta.table.columns:
             if column.name not in item:
@@ -142,6 +142,8 @@ class Model(NewBaseModel):
         expr = self.Meta.table.select().where(self.pk_column == self.pk)
         row = await self.Meta.database.fetch_one(expr)
         if not row:  # pragma nocover
-            raise ValueError('Instance was deleted from database and cannot be refreshed')
+            raise ValueError(
+                "Instance was deleted from database and cannot be refreshed"
+            )
         self.from_dict(dict(row))
         return self

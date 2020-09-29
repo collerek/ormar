@@ -1,7 +1,7 @@
 import string
 import uuid
 from random import choices
-from typing import List, Dict
+from typing import Dict, List
 
 import sqlalchemy
 from sqlalchemy import text

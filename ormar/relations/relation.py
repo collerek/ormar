@@ -20,11 +20,11 @@ class RelationType(Enum):
 
 class Relation:
     def __init__(
-            self,
-            manager: "RelationsManager",
-            type_: RelationType,
-            to: Type["Model"],
-            through: Type["Model"] = None,
+        self,
+        manager: "RelationsManager",
+        type_: RelationType,
+        to: Type["Model"],
+        through: Type["Model"] = None,
     ) -> None:
         self.manager = manager
         self._owner: "Model" = manager.owner
@@ -37,7 +37,9 @@ class Relation:
             else None
         )
 
-    def _find_existing(self, child: "Model") -> Optional[int]:
+    def _find_existing(
+        self, child: Union["NewBaseModel", Type["NewBaseModel"]]
+    ) -> Optional[int]:
         if not isinstance(self.related_models, RelationProxy):  # pragma nocover
             raise ValueError("Cannot find existing models in parent relation type")
         for ind, relation_child in enumerate(self.related_models[:]):

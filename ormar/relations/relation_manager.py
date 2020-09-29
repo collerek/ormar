@@ -1,4 +1,4 @@
-from typing import List, Optional, TYPE_CHECKING, Type, Union, Dict
+from typing import Dict, List, Optional, TYPE_CHECKING, Type, Union
 from weakref import proxy
 
 from ormar.fields import BaseField
@@ -17,9 +17,9 @@ if TYPE_CHECKING:  # pragma no cover
 
 class RelationsManager:
     def __init__(
-            self,
-            related_fields: List[Type[ForeignKeyField]] = None,
-            owner: "NewBaseModel" = None,
+        self,
+        related_fields: List[Type[ForeignKeyField]] = None,
+        owner: "NewBaseModel" = None,
     ) -> None:
         self.owner = proxy(owner)
         self._related_fields = related_fields or []
@@ -73,13 +73,17 @@ class RelationsManager:
         if child_relation:
             child_relation.add(parent)
 
-    def remove(self, name: str, child: Union["NewBaseModel", Type["NewBaseModel"]]) -> None:
+    def remove(
+        self, name: str, child: Union["NewBaseModel", Type["NewBaseModel"]]
+    ) -> None:
         relation = self._get(name)
         if relation:
             relation.remove(child)
 
     @staticmethod
-    def remove_parent(item: Union["NewBaseModel", Type["NewBaseModel"]], name: "Model") -> None:
+    def remove_parent(
+        item: Union["NewBaseModel", Type["NewBaseModel"]], name: "Model"
+    ) -> None:
         related_model = name
         rel_name = item.resolve_relation_name(item, related_model)
         if rel_name in item._orm:

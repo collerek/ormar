@@ -1,5 +1,5 @@
 import inspect
-from typing import List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union, Dict
+from typing import Dict, List, Set, TYPE_CHECKING, Type, TypeVar, Union
 
 import ormar
 from ormar.exceptions import RelationshipInstanceError
@@ -94,7 +94,8 @@ class ModelTableProxy:
 
     @staticmethod
     def resolve_relation_name(
-        item: Union["NewBaseModel", Type["NewBaseModel"]], related: Union["NewBaseModel", Type["NewBaseModel"]]
+        item: Union["NewBaseModel", Type["NewBaseModel"]],
+        related: Union["NewBaseModel", Type["NewBaseModel"]],
     ) -> str:
         for name, field in item.Meta.model_fields.items():
             if issubclass(field, ForeignKeyField):

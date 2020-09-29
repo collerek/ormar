@@ -293,7 +293,9 @@ def populate_choices_validators(  # noqa CCR001
 
 
 class ModelMetaclass(pydantic.main.ModelMetaclass):
-    def __new__(mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict) -> "ModelMetaclass":  # type: ignore
+    def __new__(  # type: ignore
+        mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
+    ) -> "ModelMetaclass":
         attrs["Config"] = get_pydantic_base_orm_config()
         attrs["__name__"] = name
         attrs = extract_annotations_and_default_vals(attrs, bases)
@@ -312,7 +314,9 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 field_name = new_model.Meta.pkname
                 field = Integer(name=field_name, primary_key=True)
                 attrs["__annotations__"][field_name] = field
-                populate_default_pydantic_field_value(field, field_name, attrs)  # type: ignore
+                populate_default_pydantic_field_value(
+                    field, field_name, attrs  # type: ignore
+                )
 
             new_model = super().__new__(  # type: ignore
                 mcs, name, bases, attrs

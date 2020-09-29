@@ -27,6 +27,7 @@ script:
   - DATABASE_URL=postgresql://localhost/test_database scripts/test.sh
   - DATABASE_URL=mysql://localhost/test_database scripts/test.sh
   - DATABASE_URL=sqlite:///test.db scripts/test.sh
+  - mypy --config-file mypy.ini ormar
 
 after_script:
   - codecov

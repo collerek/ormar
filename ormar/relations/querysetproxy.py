@@ -1,4 +1,4 @@
-from typing import Any, List, TYPE_CHECKING, Tuple, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Union
 
 import ormar
 
@@ -14,14 +14,25 @@ class QuerysetProxy:
 
     def __init__(self, relation: "Relation") -> None:
         self.relation: Relation = relation
-        self.queryset: "QuerySet"
+        self._queryset: Optional["QuerySet"] = None
 
-    def _assign_child_to_parent(self, child: "Model") -> None:
-        owner = self.relation._owner
-        rel_name = owner.resolve_relation_name(owner, child)
-        setattr(owner, rel_name, child)
+    @property
+    def queryset(self) -> "QuerySet":
+        if not self._queryset:
+            raise AttributeError
+        return self._queryset
 
-    def _register_related(self, child: Union["Model", List["Model"]]) -> None:
+    @queryset.setter
+    def queryset(self, value: "QuerySet") -> None:
+        self._queryset = value
+
+    def _assign_child_to_parent(self, child: Optional["Model"]) -> None:
+        if child:
+            owner = self.relation._owner
+            rel_name = owner.resolve_relation_name(owner, child)
+            setattr(owner, rel_name, child)
+
+    def _register_related(self, child: Union["Model", List[Optional["Model"]]]) -> None:
         if isinstance(child, list):
             for subchild in child:
                 self._assign_child_to_parent(subchild)
@@ -40,13 +51,13 @@ class QuerysetProxy:
         owner_column = self.relation._owner.get_name()
         child_column = child.get_name()
         kwargs = {owner_column: self.relation._owner, child_column: child}
-        link_instance = await queryset.filter(**kwargs).get()
+        link_instance = await queryset.filter(**kwargs).get()  # type: ignore
         await link_instance.delete()
 
     def filter(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
         return self.queryset.filter(**kwargs)
 
-    def select_related(self, related: Union[List, Tuple, str]) -> "QuerySet":
+    def select_related(self, related: Union[List, str]) -> "QuerySet":
         return self.queryset.select_related(related)
 
     async def exists(self) -> bool:
@@ -59,7 +70,7 @@ class QuerysetProxy:
         queryset = ormar.QuerySet(model_cls=self.relation.through)
         owner_column = self.relation._owner.get_name()
         kwargs = {owner_column: self.relation._owner}
-        return await queryset.delete(**kwargs)
+        return await queryset.delete(**kwargs)  # type: ignore
 
     def limit(self, limit_count: int) -> "QuerySet":
         return self.queryset.limit(limit_count)
@@ -77,7 +88,7 @@ class QuerysetProxy:
         self._register_related(get)
         return get
 
-    async def all(self, **kwargs: Any) -> List["Model"]:  # noqa: A003
+    async def all(self, **kwargs: Any) -> List[Optional["Model"]]:  # noqa: A003
         all_items = await self.queryset.all(**kwargs)
         self._register_related(all_items)
         return all_items

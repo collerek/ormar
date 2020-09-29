@@ -84,7 +84,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             for k, v in kwargs.items()
         }
 
-        values, fields_set, validation_error = pydantic.validate_model(self, kwargs)  # type: ignore
+        values, fields_set, validation_error = pydantic.validate_model(
+            self, kwargs  # type: ignore
+        )
         if validation_error and not pk_only:
             raise validation_error
 
@@ -218,7 +220,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         condition = (
             isinstance(value, str) if op == "loads" else not isinstance(value, str)
         )
-        operand: Callable[[Any], Any] = json.loads if op == "loads" else json.dumps
+        operand: Callable[[Any], Any] = (
+            json.loads if op == "loads" else json.dumps  # type: ignore
+        )
 
         if condition:
             try:
