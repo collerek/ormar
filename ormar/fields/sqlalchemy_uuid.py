@@ -35,7 +35,7 @@ class UUID(TypeDecorator):  # pragma nocover
     ) -> Optional[str]:
         if value is None:
             return value
-        elif not isinstance(value, uuid.UUID):
+        if not isinstance(value, uuid.UUID):
             value = self._cast_to_uuid(value)
         return "%.32x" % value.int
 
