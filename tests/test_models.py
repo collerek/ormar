@@ -6,6 +6,7 @@ import databases
 import pydantic
 import pytest
 import sqlalchemy
+import uuid
 
 import ormar
 from ormar.exceptions import QueryDefinitionError, NoMatch
@@ -23,6 +24,16 @@ class JsonSample(ormar.Model):
 
     id: ormar.Integer(primary_key=True)
     test_json: ormar.JSON(nullable=True)
+
+
+class UUIDSample(ormar.Model):
+    class Meta:
+        tablename = "uuids"
+        metadata = metadata
+        database = database
+
+    id: ormar.UUID(primary_key=True, default=uuid.uuid4)
+    test_text: ormar.Text()
 
 
 class User(ormar.Model):
@@ -111,6 +122,28 @@ async def test_json_column():
             assert len(items) == 2
             assert items[0].test_json == dict(aa=12)
             assert items[1].test_json == dict(aa=12)
+
+
+@pytest.mark.asyncio
+async def test_uuid_column():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            u1 = await UUIDSample.objects.create(test_text="aa")
+            u2 = await UUIDSample.objects.create(test_text="bb")
+
+            items = await UUIDSample.objects.all()
+            assert len(items) == 2
+
+            assert isinstance(items[0].id, uuid.UUID)
+            assert isinstance(items[1].id, uuid.UUID)
+
+            assert items[0].id in (u1.id, u2.id)
+            assert items[1].id in (u1.id, u2.id)
+
+            assert items[0].id != items[1].id
+
+            item = await UUIDSample.objects.filter(id=u1.id).get()
+            assert item.id == u1.id
 
 
 @pytest.mark.asyncio

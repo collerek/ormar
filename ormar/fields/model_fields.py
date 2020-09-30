@@ -1,11 +1,13 @@
 import datetime
 import decimal
+import uuid
 from typing import Any, Optional, Type
 
 import pydantic
 import sqlalchemy
 
 from ormar import ModelDefinitionError  # noqa I101
+from ormar.fields import sqlalchemy_uuid
 from ormar.fields.base import BaseField  # noqa I101
 
 
@@ -285,3 +287,12 @@ class Decimal(ModelFieldFactory):
             raise ModelDefinitionError(
                 "Parameters scale and precision are required for field Decimal"
             )
+
+
+class UUID(ModelFieldFactory):
+    _bases = (uuid.UUID, BaseField)
+    _type = uuid.UUID
+
+    @classmethod
+    def get_column_type(cls, **kwargs: Any) -> Any:
+        return sqlalchemy_uuid.UUID()
