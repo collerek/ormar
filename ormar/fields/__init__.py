@@ -13,6 +13,7 @@ from ormar.fields.model_fields import (
     String,
     Text,
     Time,
+    UUID,
 )
 
 __all__ = [
@@ -27,6 +28,7 @@ __all__ = [
     "Text",
     "Float",
     "Time",
+    "UUID",
     "ForeignKey",
     "ManyToMany",
     "ManyToManyField",

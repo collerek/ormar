@@ -261,14 +261,15 @@ class QuerySet:
         expr = self.table.insert()
         expr = expr.values(**new_kwargs)
 
-        # Execute the insert, and return a new model instance.
         instance = self.model(**kwargs)
         pk = await self.database.execute(expr)
+
         pk_name = self.model_meta.pkname
         if pk_name not in kwargs and pk_name in new_kwargs:
             instance.pk = new_kwargs[self.model_meta.pkname]
         if pk and isinstance(pk, self.model.pk_type()):
             setattr(instance, self.model_meta.pkname, pk)
+
         return instance
 
     async def bulk_create(self, objects: List["Model"]) -> None:

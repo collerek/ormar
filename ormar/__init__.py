@@ -13,6 +13,7 @@ from ormar.fields import (
     String,
     Text,
     Time,
+    UUID,
 )
 from ormar.models import Model
 from ormar.queryset import QuerySet
@@ -49,4 +50,5 @@ __all__ = [
     "QuerySet",
     "RelationType",
     "Undefined",
+    "UUID",
 ]
