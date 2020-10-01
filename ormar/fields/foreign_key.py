@@ -1,6 +1,7 @@
 from typing import Any, Generator, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
+from sqlalchemy import UniqueConstraint
 
 import ormar  # noqa I101
 from ormar.exceptions import RelationshipInstanceError
@@ -22,16 +23,20 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
     return fk(**init_dict)
 
 
+class UniqueColumns(UniqueConstraint):
+    pass
+
+
 def ForeignKey(  # noqa CFQ002
-    to: Type["Model"],
-    *,
-    name: str = None,
-    unique: bool = False,
-    nullable: bool = True,
-    related_name: str = None,
-    virtual: bool = False,
-    onupdate: str = None,
-    ondelete: str = None,
+        to: Type["Model"],
+        *,
+        name: str = None,
+        unique: bool = False,
+        nullable: bool = True,
+        related_name: str = None,
+        virtual: bool = False,
+        onupdate: str = None,
+        ondelete: str = None,
 ) -> Type["ForeignKeyField"]:
     fk_string = to.Meta.tablename + "." + to.Meta.pkname
     to_field = to.__fields__[to.Meta.pkname]
@@ -74,7 +79,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _extract_model_from_sequence(
-        cls, value: List, child: "Model", to_register: bool
+            cls, value: List, child: "Model", to_register: bool
     ) -> List["Model"]:
         return [
             cls.expand_relationship(val, child, to_register)  # type: ignore
@@ -83,7 +88,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _register_existing_model(
-        cls, value: "Model", child: "Model", to_register: bool
+            cls, value: "Model", child: "Model", to_register: bool
     ) -> "Model":
         if to_register:
             cls.register_relation(value, child)
@@ -91,7 +96,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _construct_model_from_dict(
-        cls, value: dict, child: "Model", to_register: bool
+            cls, value: dict, child: "Model", to_register: bool
     ) -> "Model":
         if len(value.keys()) == 1 and list(value.keys())[0] == cls.to.Meta.pkname:
             value["__pk_only__"] = True
@@ -102,7 +107,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _construct_model_from_pk(
-        cls, value: Any, child: "Model", to_register: bool
+            cls, value: Any, child: "Model", to_register: bool
     ) -> "Model":
         if not isinstance(value, cls.to.pk_type()):
             raise RelationshipInstanceError(
@@ -123,7 +128,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def expand_relationship(
-        cls, value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True
+            cls, value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True
     ) -> Optional[Union["Model", List["Model"]]]:
         if value is None:
             return None if not cls.virtual else []

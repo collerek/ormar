@@ -394,8 +394,8 @@ All fields are required unless one of the following is set:
   * `primary key` with `autoincrement` - When a column is set to primary key and autoincrement is set on this column. 
 Autoincrement is set by default on int primary keys. 
 
-Available Model Fields:
-* `String(length)`
+Available Model Fields (with required args - optional ones in docs):
+* `String(max_length)`
 * `Text()`
 * `Boolean()`
 * `Integer()`
