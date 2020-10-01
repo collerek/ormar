@@ -374,6 +374,41 @@ assert len(completed) == 3
 
 ```
 
+Since version >=0.3.6 Ormar supports unique constraints on multiple columns
+```python
+import databases
+import ormar
+import sqlalchemy
+
+database = databases.Database("sqlite:///db.sqlite")
+metadata = sqlalchemy.MetaData()
+
+
+class Product(ormar.Model):
+    class Meta:
+        tablename = "products"
+        metadata = metadata
+        database = database
+        # define your constraints in Meta class of the model
+        # it's a list that can contain multiple constraints
+        constraints = [ormar.UniqueColumns("name", "company")]
+
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
+    company: ormar.String(max_length=200)
+
+await Product.objects.create(name="Cookies", company="Nestle")
+await Product.objects.create(name="Mars", company="Mars")
+await Product.objects.create(name="Mars", company="Nestle")
+
+
+# will raise error based on backend 
+# (sqlite3.IntegrityError, pymysql.IntegrityError, asyncpg.exceptions.UniqueViolationError)
+await Product.objects.create(name="Mars", company="Mars")       
+
+```
+
+
 ## Data types
 
 The following keyword arguments are supported on all field types.
@@ -394,8 +429,8 @@ All fields are required unless one of the following is set:
   * `primary key` with `autoincrement` - When a column is set to primary key and autoincrement is set on this column. 
 Autoincrement is set by default on int primary keys. 
 
-Available Model Fields:
-* `String(length)`
+Available Model Fields (with required args - optional ones in docs):
+* `String(max_length)`
 * `Text()`
 * `Boolean()`
 * `Integer()`

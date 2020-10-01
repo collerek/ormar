@@ -6,6 +6,7 @@ import pydantic
 import sqlalchemy
 from pydantic import BaseConfig
 from pydantic.fields import FieldInfo, ModelField
+from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
 from ormar import ForeignKey, ModelDefinitionError, Integer  # noqa I100
@@ -27,6 +28,7 @@ class ModelMeta:
     metadata: sqlalchemy.MetaData
     database: databases.Database
     columns: List[sqlalchemy.Column]
+    constraints: List[ColumnCollectionConstraint]
     pkname: str
     model_fields: Dict[
         str, Union[Type[BaseField], Type[ForeignKeyField], Type[ManyToManyField]]
@@ -246,7 +248,10 @@ def populate_meta_sqlalchemy_table_if_required(
 ) -> Type["Model"]:
     if not hasattr(new_model.Meta, "table"):
         new_model.Meta.table = sqlalchemy.Table(
-            new_model.Meta.tablename, new_model.Meta.metadata, *new_model.Meta.columns
+            new_model.Meta.tablename,
+            new_model.Meta.metadata,
+            *new_model.Meta.columns,
+            *new_model.Meta.constraints,
         )
     return new_model
 
@@ -304,6 +309,8 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         )
 
         if hasattr(new_model, "Meta"):
+            if not hasattr(new_model.Meta, "constraints"):
+                new_model.Meta.constraints = []
             new_model = populate_meta_orm_model_fields(attrs, new_model)
             new_model = populate_meta_tablename_columns_and_pk(name, new_model)
             new_model = populate_meta_sqlalchemy_table_if_required(new_model)

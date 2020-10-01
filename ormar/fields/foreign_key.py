@@ -1,6 +1,7 @@
 from typing import Any, Generator, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
+from sqlalchemy import UniqueConstraint
 
 import ormar  # noqa I101
 from ormar.exceptions import RelationshipInstanceError
@@ -20,6 +21,10 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
         },
     }
     return fk(**init_dict)
+
+
+class UniqueColumns(UniqueConstraint):
+    pass
 
 
 def ForeignKey(  # noqa CFQ002

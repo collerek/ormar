@@ -14,6 +14,7 @@ from ormar.fields import (
     Text,
     Time,
     UUID,
+    UniqueColumns,
 )
 from ormar.models import Model
 from ormar.queryset import QuerySet
@@ -51,4 +52,5 @@ __all__ = [
     "RelationType",
     "Undefined",
     "UUID",
+    "UniqueColumns",
 ]
