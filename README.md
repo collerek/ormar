@@ -35,7 +35,7 @@ Ormar is built with:
 Because ormar is built on SQLAlchemy core, you can use [`alembic`][alembic] to provide
 database migrations.
 
-The goal was to create a simple ORM that can be used directly with [`fastapi`][fastapi] that bases it's data validation on pydantic.
+The goal was to create a simple ORM that can be used directly (as request and response models) with [`fastapi`][fastapi] that bases it's data validation on pydantic.
 Initial work was inspired by [`encode/orm`][encode/orm], later I found `ormantic` and used it as a further inspiration.
 The encode package was too simple (i.e. no ability to join two times to the same table) and used typesystem for data checks.
 
@@ -408,9 +408,9 @@ await Product.objects.create(name="Mars", company="Mars")
 
 ```
 
-Since version >=0.3.6 Ormar supports selecting subset of model columns to limit the data load
+Since version >=0.3.6 Ormar supports selecting subset of model columns to limit the data load.
 Warning - mandatory fields cannot be excluded as it will raise validation error, to exclude a field it has to be nullable.
-pkcolumn cannot be excluded - it's always auto added
+Pk column cannot be excluded - it's always auto added even if not explicitly included.
 ```python
 import databases
 import pydantic
@@ -518,6 +518,7 @@ Available Model Fields (with required args - optional ones in docs):
 * `JSON()`
 * `BigInteger()`
 * `Decimal(scale, precision)`
+* `UUID()`
 * `ForeignKey(to)`
 * `Many2Many(to, through)`
 
