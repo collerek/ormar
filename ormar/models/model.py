@@ -34,6 +34,7 @@ class Model(NewBaseModel):
         select_related: List = None,
         related_models: Any = None,
         previous_table: str = None,
+        fields: List = None,
     ) -> Optional["Model"]:
 
         item: Dict[str, Any] = {}
@@ -61,9 +62,11 @@ class Model(NewBaseModel):
         previous_table = cls.Meta.table.name
 
         item = cls.populate_nested_models_from_row(
-            item, row, related_models, previous_table
+            item, row, related_models, previous_table, fields
         )
-        item = cls.extract_prefixed_table_columns(item, row, table_prefix)
+        item = cls.extract_prefixed_table_columns(
+            item, row, table_prefix, fields, nested=table_prefix != ""
+        )
 
         instance = cls(**item) if item.get(cls.Meta.pkname, None) is not None else None
         return instance
@@ -75,33 +78,47 @@ class Model(NewBaseModel):
         row: sqlalchemy.engine.ResultProxy,
         related_models: Any,
         previous_table: sqlalchemy.Table,
+        fields: List = None,
     ) -> dict:
         for related in related_models:
             if isinstance(related_models, dict) and related_models[related]:
                 first_part, remainder = related, related_models[related]
                 model_cls = cls.Meta.model_fields[first_part].to
                 child = model_cls.from_row(
-                    row, related_models=remainder, previous_table=previous_table
+                    row,
+                    related_models=remainder,
+                    previous_table=previous_table,
+                    fields=fields,
                 )
                 item[first_part] = child
             else:
                 model_cls = cls.Meta.model_fields[related].to
-                child = model_cls.from_row(row, previous_table=previous_table)
+                child = model_cls.from_row(
+                    row, previous_table=previous_table, fields=fields
+                )
                 item[related] = child
 
         return item
 
     @classmethod
     def extract_prefixed_table_columns(  # noqa CCR001
-        cls, item: dict, row: sqlalchemy.engine.result.ResultProxy, table_prefix: str
+        cls,
+        item: dict,
+        row: sqlalchemy.engine.result.ResultProxy,
+        table_prefix: str,
+        fields: List = None,
+        nested: bool = False,
     ) -> dict:
+
+        # databases does not keep aliases in Record for postgres, change to raw row
+        source = row._row if isinstance(row, Record) else row
+
+        selected_columns = cls.own_table_columns(cls, fields or [], nested=nested)
         for column in cls.Meta.table.columns:
-            if column.name not in item:
+            if column.name not in item and column.name in selected_columns:
                 prefixed_name = (
                     f'{table_prefix + "_" if table_prefix else ""}{column.name}'
                 )
-                # databases does not keep aliases in Record for postgres
-                source = row._row if isinstance(row, Record) else row
                 item[column.name] = source[prefixed_name]
 
         return item

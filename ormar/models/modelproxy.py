@@ -149,3 +149,32 @@ class ModelTableProxy:
                     cls.merge_two_instances(current_field, getattr(other, field)),
                 )
         return other
+
+    @staticmethod
+    def own_table_columns(
+        model: Type["Model"], fields: List, nested: bool = False
+    ) -> List[str]:
+        column_names = [col.name for col in model.Meta.table.columns]
+        if not fields:
+            return column_names
+
+        if not nested:
+            columns = [
+                name for name in fields if "__" not in name and name in column_names
+            ]
+        else:
+            model_name = f"{model.get_name()}__"
+            columns = [
+                name[(name.find(model_name) + len(model_name)) :]  # noqa: E203
+                for name in fields
+                if f"{model.get_name()}__" in name
+            ]
+
+        # if the model is in select and no columns in fields, all implied
+        if not columns:
+            columns = column_names
+
+        # always has to return pk column
+        if model.Meta.pkname not in columns:
+            columns.append(model.Meta.pkname)
+        return columns

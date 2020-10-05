@@ -33,7 +33,7 @@ print('name' in course.__dict__)
 print(course.name)
 # Math <- value returned from underlying pydantic model
 print('department' in course.__dict__)
-# False <- related model is not stored on Course instance
+# False <- columns model is not stored on Course instance
 print(course.department)
 # Department(id=None, name='Science') <- Department model
 # returned from AliasManager

@@ -241,19 +241,19 @@ await post.categories.add(news)
 # or from the other end:
 await news.posts.add(post)
 
-# Creating related object from instance:
+# Creating columns object from instance:
 await post.categories.create(name="Tips")
 assert len(await post.categories.all()) == 2
 
-# Many to many relation exposes a list of related models 
+# Many to many relation exposes a list of columns models 
 # and an API of the Queryset:
 assert news == await post.categories.get(name="News")
 
-# with all Queryset methods - filtering, selecting related, counting etc.
+# with all Queryset methods - filtering, selecting columns, counting etc.
 await news.posts.filter(title__contains="M2M").all()
 await Category.objects.filter(posts__author=guido).get()
 
-# related models of many to many relation can be prefetched
+# columns models of many to many relation can be prefetched
 news_posts = await news.posts.select_related("author").all()
 assert news_posts[0].author == guido
 

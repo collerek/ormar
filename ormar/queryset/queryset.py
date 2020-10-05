@@ -26,6 +26,7 @@ class QuerySet:
         select_related: List = None,
         limit_count: int = None,
         offset: int = None,
+        columns: List = None,
     ) -> None:
         self.model_cls = model_cls
         self.filter_clauses = [] if filter_clauses is None else filter_clauses
@@ -33,6 +34,7 @@ class QuerySet:
         self._select_related = [] if select_related is None else select_related
         self.limit_count = limit_count
         self.query_offset = offset
+        self._columns = columns or []
         self.order_bys = None
 
     def __get__(
@@ -59,7 +61,9 @@ class QuerySet:
 
     def _process_query_result_rows(self, rows: List) -> List[Optional["Model"]]:
         result_rows = [
-            self.model.from_row(row, select_related=self._select_related)
+            self.model.from_row(
+                row, select_related=self._select_related, fields=self._columns
+            )
             for row in rows
         ]
         if result_rows:
@@ -104,6 +108,7 @@ class QuerySet:
             exclude_clauses=self.exclude_clauses,
             offset=self.query_offset,
             limit_count=self.limit_count,
+            fields=self._columns,
         )
         exp = qry.build_select_expression()
         # print(exp.compile(compile_kwargs={"literal_binds": True}))
@@ -130,6 +135,7 @@ class QuerySet:
             select_related=select_related,
             limit_count=self.limit_count,
             offset=self.query_offset,
+            columns=self._columns,
         )
 
     def exclude(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
@@ -147,6 +153,22 @@ class QuerySet:
             select_related=related,
             limit_count=self.limit_count,
             offset=self.query_offset,
+            columns=self._columns,
+        )
+
+    def fields(self, columns: Union[List, str]) -> "QuerySet":
+        if not isinstance(columns, list):
+            columns = [columns]
+
+        columns = list(set(list(self._columns) + columns))
+        return self.__class__(
+            model_cls=self.model,
+            filter_clauses=self.filter_clauses,
+            exclude_clauses=self.exclude_clauses,
+            select_related=self._select_related,
+            limit_count=self.limit_count,
+            offset=self.query_offset,
+            columns=columns,
         )
 
     async def exists(self) -> bool:
@@ -193,6 +215,7 @@ class QuerySet:
             select_related=self._select_related,
             limit_count=limit_count,
             offset=self.query_offset,
+            columns=self._columns,
         )
 
     def offset(self, offset: int) -> "QuerySet":
@@ -203,6 +226,7 @@ class QuerySet:
             select_related=self._select_related,
             limit_count=self.limit_count,
             offset=offset,
+            columns=self._columns,
         )
 
     async def first(self, **kwargs: Any) -> "Model":

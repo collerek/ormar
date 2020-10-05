@@ -89,7 +89,7 @@ async def test_assigning_related_objects(cleanup):
         # or from the other end:
         await news.posts.add(post)
 
-        # Creating related object from instance:
+        # Creating columns object from instance:
         await post.categories.create(name="Tips")
         assert len(post.categories) == 2
 
@@ -148,7 +148,7 @@ async def test_removal_of_the_relations(cleanup):
         await news.posts.remove(post)
         assert len(await news.posts.all()) == 0
 
-        # Remove all related objects:
+        # Remove all columns objects:
         await post.categories.add(news)
         await post.categories.clear()
         assert len(await post.categories.all()) == 0

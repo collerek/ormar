@@ -76,7 +76,7 @@ track = Track.objects.filter(name="The Bird").get()
 # will return a track with name equal to 'The Bird'
  
 tracks = Track.objects.filter(album__name="Fantasies").all()
-# will return all tracks where the related album name = 'Fantasies'
+# will return all tracks where the columns album name = 'Fantasies'
 ```
 
 You can use special filter suffix to change the filter operands:
@@ -106,7 +106,7 @@ To chain related `Models` relation use double underscore.
 
 ```python
 album = await Album.objects.select_related("tracks").all()
-# will return album will all related tracks
+# will return album will all columns tracks
 ```
 
 You can provide a string or a list of strings
