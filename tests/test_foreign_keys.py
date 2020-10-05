@@ -1,9 +1,6 @@
-import asyncio
-
 import databases
 import pytest
 import sqlalchemy
-from pydantic import root_validator, validator
 
 import ormar
 from ormar.exceptions import NoMatch, MultipleMatches, RelationshipInstanceError

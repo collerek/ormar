@@ -29,7 +29,7 @@ class Track(ormar.Model):
 album = await Album.objects.create(name="Brooklyn")
 await Track.objects.create(album=album, title="The Bird", position=1)
 
-# explicit preload of related Album Model
+# explicit preload of columns Album Model
 track = await Track.objects.select_related("album").get(title="The Bird")
 assert track.album.name == 'Brooklyn'
 # Will produce: True

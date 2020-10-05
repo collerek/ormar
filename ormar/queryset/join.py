@@ -24,11 +24,13 @@ class SqlJoin:
         select_from: sqlalchemy.sql.select,
         order_bys: List[sqlalchemy.sql.elements.TextClause],
         columns: List[sqlalchemy.Column],
+        fields: List,
     ) -> None:
         self.used_aliases = used_aliases
         self.select_from = select_from
         self.order_bys = order_bys
         self.columns = columns
+        self.fields = fields
 
     @staticmethod
     def relation_manager(model_cls: Type["Model"]) -> AliasManager:
@@ -105,9 +107,12 @@ class SqlJoin:
             self.select_from, target_table, on_clause
         )
         self.order_bys.append(text(f"{alias}_{to_table}.{model_cls.Meta.pkname}"))
+        self_related_fields = model_cls.own_table_columns(
+            model_cls, self.fields, nested=True
+        )
         self.columns.extend(
             self.relation_manager(model_cls).prefixed_columns(
-                alias, model_cls.Meta.table
+                alias, model_cls.Meta.table, self_related_fields
             )
         )
         self.used_aliases.append(alias)

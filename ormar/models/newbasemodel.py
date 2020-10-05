@@ -93,7 +93,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         object.__setattr__(self, "__dict__", values)
         object.__setattr__(self, "__fields_set__", fields_set)
 
-        # register the related models after initialization
+        # register the columns models after initialization
         for related in self.extract_related_names():
             self.Meta.model_fields[related].expand_relationship(
                 kwargs.get(related), self, to_register=True

@@ -17,10 +17,18 @@ class AliasManager:
         self._aliases: Dict[str, str] = dict()
 
     @staticmethod
-    def prefixed_columns(alias: str, table: sqlalchemy.Table) -> List[text]:
+    def prefixed_columns(
+        alias: str, table: sqlalchemy.Table, fields: List = None
+    ) -> List[text]:
+        alias = f"{alias}_" if alias else ""
+        all_columns = (
+            table.columns
+            if not fields
+            else [col for col in table.columns if col.name in fields]
+        )
         return [
-            text(f"{alias}_{table.name}.{column.name} as {alias}_{column.name}")
-            for column in table.columns
+            text(f"{alias}{table.name}.{column.name} as {alias}{column.name}")
+            for column in all_columns
         ]
 
     @staticmethod

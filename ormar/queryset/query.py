@@ -20,12 +20,14 @@ class Query:
         select_related: List,
         limit_count: Optional[int],
         offset: Optional[int],
+        fields: Optional[List],
     ) -> None:
         self.query_offset = offset
         self.limit_count = limit_count
         self._select_related = select_related[:]
         self.filter_clauses = filter_clauses[:]
         self.exclude_clauses = exclude_clauses[:]
+        self.fields = fields[:] if fields else []
 
         self.model_cls = model_cls
         self.table = self.model_cls.Meta.table
@@ -41,7 +43,12 @@ class Query:
         return f"{self.table.name}.{self.model_cls.Meta.pkname}"
 
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
-        self.columns = list(self.table.columns)
+        self_related_fields = self.model_cls.own_table_columns(
+            self.model_cls, self.fields
+        )
+        self.columns = self.model_cls.Meta.alias_manager.prefixed_columns(
+            "", self.table, self_related_fields
+        )
         self.order_bys = [text(self.prefixed_pk_name)]
         self.select_from = self.table
 
@@ -57,6 +64,7 @@ class Query:
                 select_from=self.select_from,
                 columns=self.columns,
                 order_bys=self.order_bys,
+                fields=self.fields,
             )
 
             (
@@ -93,3 +101,4 @@ class Query:
         self.columns = []
         self.order_bys = []
         self.used_aliases = []
+        self.fields = []
