@@ -303,7 +303,7 @@ await Book.objects.delete(genre='Fantasy') # delete all fantasy books
 all_books = await Book.objects.all()
 assert len(all_books) == 3
 
-# queryset needs to be filtered before deleting to prevent accidental overwrite
+# queryset needs to be filtered before deleting/ updating to prevent accidental overwrite
 # to update whole database table each=True needs to be provided as a safety switch
 await Book.objects.update(each=True, genre='Fiction')
 all_books = await Book.objects.filter(genre='Fiction').all()

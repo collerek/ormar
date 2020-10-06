@@ -8,44 +8,59 @@ metadata = sqlalchemy.MetaData()
 
 
 class Course(ormar.Model):
-    __database__ = database
-    __metadata__ = metadata
+    class Meta:
+        database = database
+        metadata = metadata
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
-    completed = ormar.Boolean(default=False)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
+    completed: ormar.Boolean(default=False)
 
-print(Course.__model_fields__)
+print({x:v.__dict__ for x,v in Course.Meta.model_fields.items()})
 """
 Will produce:
-{
-'id':   {'name': 'id', 
-         'primary_key': True, 
-         'autoincrement': True, 
-         'nullable': False, 
-         'default': None, 
-         'server_default': None, 
-         'index': None, 
-         'unique': None, 
-         'pydantic_only': False}, 
-'name':  {'name': 'name', 
-          'primary_key': False, 
-          'autoincrement': False, 
-          'nullable': True, 
-          'default': None, 
-          'server_default': None, 
-          'index': None, 
-          'unique': None, 
-          'pydantic_only': False, 
-          'length': 100}, 
-'completed': {'name': 'completed', 
-              'primary_key': False, 
-              'autoincrement': False, 
-              'nullable': True, 
-              'default': False, 
-              'server_default': None, 
-              'index': None, 
-              'unique': None, 
-              'pydantic_only': False}
-}
+{'completed': mappingproxy({'autoincrement': False,
+                            'choices': set(),
+                            'column_type': Boolean(),
+                            'default': False,
+                            'index': False,
+                            'name': 'completed',
+                            'nullable': True,
+                            'primary_key': False,
+                            'pydantic_only': False,
+                            'server_default': None,
+                            'unique': False}),
+ 'id': mappingproxy({'autoincrement': True,
+                     'choices': set(),
+                     'column_type': Integer(),
+                     'default': None,
+                     'ge': None,
+                     'index': False,
+                     'le': None,
+                     'maximum': None,
+                     'minimum': None,
+                     'multiple_of': None,
+                     'name': 'id',
+                     'nullable': False,
+                     'primary_key': True,
+                     'pydantic_only': False,
+                     'server_default': None,
+                     'unique': False}),
+ 'name': mappingproxy({'allow_blank': False,
+                       'autoincrement': False,
+                       'choices': set(),
+                       'column_type': String(length=100),
+                       'curtail_length': None,
+                       'default': None,
+                       'index': False,
+                       'max_length': 100,
+                       'min_length': None,
+                       'name': 'name',
+                       'nullable': False,
+                       'primary_key': False,
+                       'pydantic_only': False,
+                       'regex': None,
+                       'server_default': None,
+                       'strip_whitespace': False,
+                       'unique': False})}
 """
