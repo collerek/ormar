@@ -1,27 +1,28 @@
 import databases
-import sqlalchemy
-
 import ormar
+import sqlalchemy
 
 database = databases.Database("sqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
 
-class Department(ormar.Model):
+class Album(ormar.Model):
     class Meta:
-        database = database
+        tablename = "album"
         metadata = metadata
+        database = database
 
     id: ormar.Integer(primary_key=True)
     name: ormar.String(max_length=100)
 
 
-class Course(ormar.Model):
+class Track(ormar.Model):
     class Meta:
-        database = database
+        tablename = "track"
         metadata = metadata
+        database = database
 
     id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-    completed: ormar.Boolean(default=False)
-    department: ormar.ForeignKey(Department)
+    album: ormar.ForeignKey(Album)
+    title: ormar.String(max_length=100)
+    position: ormar.Integer()

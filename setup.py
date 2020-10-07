@@ -46,12 +46,17 @@ setup(
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
     keywords=['orm', 'sqlalchemy', 'fastapi', 'pydantic', 'databases', 'async', 'alembic'],
-    author="collerek",
+    author="Radosław Drążkiewicz",
     author_email="collerek@gmail.com",
     packages=get_packages(PACKAGE),
     package_data={PACKAGE: ["py.typed"]},
     data_files=[("", ["LICENSE.md"])],
     install_requires=["databases", "pydantic>=1.5", "sqlalchemy"],
+    extras_require={
+        "postgresql": ["asyncpg", "psycopg2"],
+        "mysql": ["aiomysql", "pymysql"],
+        "sqlite": ["aiosqlite"],
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Web Environment",

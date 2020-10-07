@@ -12,7 +12,7 @@ from ormar.fields.base import BaseField  # noqa I101
 
 
 def is_field_nullable(
-    nullable: Optional[bool], default: Any, server_default: Any
+        nullable: Optional[bool], default: Any, server_default: Any
 ) -> bool:
     if nullable is None:
         return default is not None or server_default is not None
@@ -61,15 +61,15 @@ class String(ModelFieldFactory):
     _type = str
 
     def __new__(  # type: ignore # noqa CFQ002
-        cls,
-        *,
-        allow_blank: bool = False,
-        strip_whitespace: bool = False,
-        min_length: int = None,
-        max_length: int = None,
-        curtail_length: int = None,
-        regex: str = None,
-        **kwargs: Any
+            cls,
+            *,
+            allow_blank: bool = True,
+            strip_whitespace: bool = False,
+            min_length: int = None,
+            max_length: int = None,
+            curtail_length: int = None,
+            regex: str = None,
+            **kwargs: Any
     ) -> Type[BaseField]:  # type: ignore
         kwargs = {
             **kwargs,
@@ -79,6 +79,7 @@ class String(ModelFieldFactory):
                 if k not in ["cls", "__class__", "kwargs"]
             },
         }
+        kwargs['nullable'] = kwargs['allow_blank']
         return super().__new__(cls, **kwargs)
 
     @classmethod
@@ -99,12 +100,12 @@ class Integer(ModelFieldFactory):
     _type = int
 
     def __new__(  # type: ignore
-        cls,
-        *,
-        minimum: int = None,
-        maximum: int = None,
-        multiple_of: int = None,
-        **kwargs: Any
+            cls,
+            *,
+            minimum: int = None,
+            maximum: int = None,
+            multiple_of: int = None,
+            **kwargs: Any
     ) -> Type[BaseField]:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
@@ -134,7 +135,7 @@ class Text(ModelFieldFactory):
     _type = str
 
     def __new__(  # type: ignore
-        cls, *, allow_blank: bool = False, strip_whitespace: bool = False, **kwargs: Any
+            cls, *, allow_blank: bool = True, strip_whitespace: bool = False, **kwargs: Any
     ) -> Type[BaseField]:
         kwargs = {
             **kwargs,
@@ -144,6 +145,7 @@ class Text(ModelFieldFactory):
                 if k not in ["cls", "__class__", "kwargs"]
             },
         }
+        kwargs['nullable'] = kwargs['allow_blank']
         return super().__new__(cls, **kwargs)
 
     @classmethod
@@ -156,12 +158,12 @@ class Float(ModelFieldFactory):
     _type = float
 
     def __new__(  # type: ignore
-        cls,
-        *,
-        minimum: float = None,
-        maximum: float = None,
-        multiple_of: int = None,
-        **kwargs: Any
+            cls,
+            *,
+            minimum: float = None,
+            maximum: float = None,
+            multiple_of: int = None,
+            **kwargs: Any
     ) -> Type[BaseField]:
         kwargs = {
             **kwargs,
@@ -229,6 +231,32 @@ class BigInteger(Integer):
     _bases = (pydantic.ConstrainedInt, BaseField)
     _type = int
 
+    def __new__(  # type: ignore
+            cls,
+            *,
+            minimum: int = None,
+            maximum: int = None,
+            multiple_of: int = None,
+            **kwargs: Any
+    ) -> Type[BaseField]:
+        autoincrement = kwargs.pop("autoincrement", None)
+        autoincrement = (
+            autoincrement
+            if autoincrement is not None
+            else kwargs.get("primary_key", False)
+        )
+        kwargs = {
+            **kwargs,
+            **{
+                k: v
+                for k, v in locals().items()
+                if k not in ["cls", "__class__", "kwargs"]
+            },
+        }
+        kwargs["ge"] = kwargs["minimum"]
+        kwargs["le"] = kwargs["maximum"]
+        return super().__new__(cls, **kwargs)
+
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
         return sqlalchemy.BigInteger()
@@ -239,16 +267,16 @@ class Decimal(ModelFieldFactory):
     _type = decimal.Decimal
 
     def __new__(  # type: ignore # noqa CFQ002
-        cls,
-        *,
-        minimum: float = None,
-        maximum: float = None,
-        multiple_of: int = None,
-        precision: int = None,
-        scale: int = None,
-        max_digits: int = None,
-        decimal_places: int = None,
-        **kwargs: Any
+            cls,
+            *,
+            minimum: float = None,
+            maximum: float = None,
+            multiple_of: int = None,
+            precision: int = None,
+            scale: int = None,
+            max_digits: int = None,
+            decimal_places: int = None,
+            **kwargs: Any
     ) -> Type[BaseField]:
         kwargs = {
             **kwargs,

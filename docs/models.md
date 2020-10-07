@@ -82,6 +82,21 @@ You can overwrite this parameter by providing `Meta` class `tablename` argument.
 --8<-- "../docs_src/models/docs002.py"
 ```
 
+### Constraints
+
+On a model level you can also set model-wise constraints on sql columns.
+
+Right now only `UniqueColumns` constraint is present. 
+
+!!!tip
+    To read more about columns constraints like `primary_key`, `unique`, `ForeignKey` etc. visit [fields][fields].
+
+You can set this parameter by providing `Meta` class `constraints` argument.
+
+```Python hl_lines="14-17"
+--8<-- "../docs_src/models/docs006.py"
+```
+
 ## Initialization
 
 There are two ways to create and persist the `Model` instance in the database.
@@ -97,6 +112,8 @@ If you plan to modify the instance in the later execution of your program you ca
 
 If you want to initiate your `Model` and at the same time save in in the database use a QuerySet's method `create()`.
 
+For creating multiple objects at once a `bulk_create()` QuerySet's method is available.
+
 Each model has a `QuerySet` initialised as `objects` parameter 
 
 ```Python hl_lines="23"
@@ -104,7 +121,31 @@ Each model has a `QuerySet` initialised as `objects` parameter
 ```
 
 !!!info
-    To read more about `QuerySets` and available methods visit [queries][queries]
+    To read more about `QuerySets` (including bulk operations) and available methods visit [queries][queries]
+
+## `Model` methods
+
+### load
+
+By default when you query a table without prefetching related models, the ormar will still construct
+your related models, but populate them only with the pk value.
+
+```python
+track = await Track.objects.get(name='The Bird')
+track.album.pk # will return malibu album pk (1)
+track.album.name # will return None
+
+# you need to actually load the data first
+await track.album.load()
+track.album.name # will return 'Malibu'
+```
+
+### save
+
+### delete
+
+### update
+
 
 ## Internals
 
@@ -114,7 +155,7 @@ Apart from special parameters defined in the `Model` during definition (tablenam
 
 All `Model` classes inherit from `pydantic.BaseModel` so you can access all normal attributes of pydantic models.
 
-For example to list model fields you can:
+For example to list pydantic model fields you can:
 
 ```Python hl_lines="20"
 --8<-- "../docs_src/models/docs003.py"
@@ -137,7 +178,7 @@ For example to list table columns you can:
 ```
 
 !!!tip
-    You can access table primary key name by `Course.__pkname__`
+    You can access table primary key name by `Course.Meta.pkname`
 
 !!!info
     For more options visit official [sqlalchemy-metadata][sqlalchemy-metadata] documentation.

@@ -1,12 +1,17 @@
-site_name: Async ORM
+site_name: ormar
+site_description: An simple async ORM with fastapi in mind and pydantic validation.
 nav:
-  - Home: index.md
+  - Overview: index.md
+  - Installation: install.md
   - Models: models.md
   - Fields: fields.md
   - Relations: relations.md
   - Queries: queries.md
-  - Pydantic models: pydantic.md
   - Use with Fastapi: fastapi.md
+  - Testing: testing.md
+  - Contributing: contributing.md
+repo_name: collerek/ormar
+repo_url: https://github.com/collerek/ormar
 theme:
   name: material
   highlightjs: true

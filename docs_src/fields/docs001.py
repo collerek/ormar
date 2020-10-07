@@ -8,21 +8,23 @@ metadata = sqlalchemy.MetaData()
 
 
 class Department(ormar.Model):
-    __database__ = database
-    __metadata__ = metadata
+    class Meta:
+        database = database
+        metadata = metadata
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
 
 
 class Course(ormar.Model):
-    __database__ = database
-    __metadata__ = metadata
+    class Meta:
+        database = database
+        metadata = metadata
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
-    completed = ormar.Boolean(default=False)
-    department = ormar.ForeignKey(Department)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
+    completed: ormar.Boolean(default=False)
+    department: ormar.ForeignKey(Department)
 
 
 department = Department(name='Science')

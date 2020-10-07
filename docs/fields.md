@@ -1,7 +1,11 @@
 # Fields
 
 
-There are 11 basic model field types and a special `ForeignKey` field to establish relationships between models.
+There are 12 basic model field types and a special `ForeignKey` and `Many2Many` fields to establish relationships between models.
+
+!!!tip
+    For explanation of `ForeignKey` and `Many2Many` fields check [relations][relations].
+
 
 Each of the `Fields` has assigned both `sqlalchemy` column class and python type that is used to create `pydantic` model.
 
@@ -22,11 +26,11 @@ Used in sql only.
 
 `autoincrement`: `bool` = `primary_key and type == int` -> defaults to True if column is a primary key and of type Integer, otherwise False.
 
-Can be only used with int fields.
+Can be only used with int/bigint fields.
 
 If a field has autoincrement it becomes optional.
 
-Used only in sql.
+Used both in sql and pydantic (changes pk field to optional for autoincrement).
 
 ### nullable
 
@@ -37,13 +41,8 @@ Specifies if field is optional or required, used both with sql and pydantic.
 !!!note
     By default all `ForeignKeys` are also nullable, meaning the related `Model` is not required.
     
-    If you change the `ForeignKey` column to `nullable`, it not only becomes required, it changes also the way in which data is loaded in queries.
+    If you change the `ForeignKey` column to `nullable=False`, it becomes required.
     
-    If you select `Model` without explicitly adding related `Model` assigned by not nullable `ForeignKey`, the `Model` is still gona be appended automatically, see example below.
-
-```Python hl_lines="24 32 33 34 35 37 38 39 40 41"
---8<-- "../docs_src/fields/docs003.py"
-```
 
 !!!info
     If you want to know more about how you can preload related models during queries and how the relations work read the [queries][queries] and [relations][relations] sections. 
@@ -93,21 +92,55 @@ Sets the unique constraint on a table's column.
 
 Used in sql only.
 
+### pydantic_only
+
+`pydantic_only`: `bool` = `False` 
+
+Prevents creation of a sql column for given field.
+
+Used for data related to given model but not to be stored in the database.
+
+Used in pydantic only.
+
+### choices
+
+`choices`: `Sequence` = `[]` 
+
+A set of choices allowed to be used for given field.
+
+Used for data validation on pydantic side.
+
+Prevents insertion of value not present in the choices list.
+
+Used in pydantic only.
+
 ## Fields Types
 
 ### String
 
-`String(length)` has a required `length` parameter.  
+`String(max_length, 
+        allow_blank: bool = True,
+        strip_whitespace: bool = False,
+        min_length: int = None,
+        max_length: int = None,
+        curtail_length: int = None,
+        regex: str = None,)` has a required `max_length` parameter.  
 
 * Sqlalchemy column: `sqlalchemy.String`  
 * Type (used for pydantic): `str` 
 
+!!!tip
+    For explanation of other parameters check [pydantic][pydantic] documentation.
+
 ### Text
 
-`Text()` has no required parameters.  
+`Text(allow_blank: bool = True, strip_whitespace: bool = False)` has no required parameters.  
 
 * Sqlalchemy column: `sqlalchemy.Text`  
 * Type (used for pydantic): `str` 
+
+!!!tip
+    For explanation of other parameters check [pydantic][pydantic] documentation.
 
 ### Boolean
 
@@ -118,31 +151,57 @@ Used in sql only.
 
 ### Integer
 
-`Integer()` has no required parameters.  
+`Integer(minimum: int = None,
+        maximum: int = None,
+        multiple_of: int = None)` has no required parameters.  
 
 * Sqlalchemy column: `sqlalchemy.Integer`  
 * Type (used for pydantic): `int` 
 
+!!!tip
+    For explanation of other parameters check [pydantic][pydantic] documentation.
+
 ### BigInteger
 
-`BigInteger()` has no required parameters.  
+`BigInteger(minimum: int = None,
+        maximum: int = None,
+        multiple_of: int = None)` has no required parameters.  
 
 * Sqlalchemy column: `sqlalchemy.BigInteger`  
 * Type (used for pydantic): `int` 
 
+!!!tip
+    For explanation of other parameters check [pydantic][pydantic] documentation.
+
 ### Float
 
-`Float()` has no required parameters.  
+`Float(minimum: float = None,
+        maximum: float = None,
+        multiple_of: int = None)` has no required parameters.  
 
 * Sqlalchemy column: `sqlalchemy.Float`  
 * Type (used for pydantic): `float` 
 
+!!!tip
+    For explanation of other parameters check [pydantic][pydantic] documentation.
+
 ### Decimal
 
-`Decimal(lenght, precision)` has required `length` and `precision` parameters.  
+`Decimal(minimum: float = None,
+        maximum: float = None,
+        multiple_of: int = None,
+        precision: int = None,
+        scale: int = None,
+        max_digits: int = None,
+        decimal_places: int = None)` has no required parameters
+        
+You can use either `length` and `precision` parameters or `max_digits` and `decimal_places`.  
 
 * Sqlalchemy column: `sqlalchemy.DECIMAL`  
 * Type (used for pydantic): `decimal.Decimal` 
+
+!!!tip
+    For explanation of other parameters check [pydantic][pydantic] documentation.
 
 ### Date
 
@@ -172,35 +231,13 @@ Used in sql only.
 * Sqlalchemy column: `sqlalchemy.JSON`  
 * Type (used for pydantic): `pydantic.Json` 
 
-### ForeignKey
+### UUID
 
-`ForeignKey(to, related_name=None)` has required parameters `to` that takes target `Model` class.  
+`UUID()` has no required parameters.  
 
-Sqlalchemy column and Type are automatically taken from target `Model`.
-
-* Sqlalchemy column: class of a target `Model` primary key column  
-* Type (used for pydantic): type of a target `Model` primary key column 
-
-`ForeignKey` fields are automatically registering reverse side of the relation.
-
-By default it's child (source) `Model` name + s, like courses in snippet below: 
-
-```Python hl_lines="25 31"
---8<-- "../docs_src/fields/docs001.py"
-```
-
-But you can overwrite this name by providing `related_name` parameter like below:
-
-```Python hl_lines="25 30"
---8<-- "../docs_src/fields/docs002.py"
-```
-
-!!!tip
-    Since related models are coming from Relationship Manager the reverse relation on access returns list of `wekref.proxy` to avoid circular references.
-
-!!!info
-    All relations are stored in lists, but when you access parent `Model` the ormar is unpacking the value for you. 
-    Read more in [relations][relations].
+* Sqlalchemy column: `ormar.UUID` based on `sqlalchemy.CHAR` field  
+* Type (used for pydantic): `uuid.UUID` 
 
 [relations]: ./relations.md
 [queries]: ./queries.md
+[pydantic]: https://pydantic-docs.helpmanual.io/usage/types/#constrained-types

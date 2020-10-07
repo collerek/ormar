@@ -1,39 +1,48 @@
-import ormar
 import databases
+import ormar
 import sqlalchemy
 
 database = databases.Database("sqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
 
-class Album(ormar.Model):
-    __tablename__ = "album"
-    __metadata__ = metadata
-    __database__ = database
+class Author(ormar.Model):
+    class Meta:
+        tablename = "authors"
+        database = database
+        metadata = metadata
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(length=100)
-
-
-class Track(ormar.Model):
-    __tablename__ = "track"
-    __metadata__ = metadata
-    __database__ = database
-
-    id = ormar.Integer(primary_key=True)
-    album = ormar.ForeignKey(Album)
-    title = ormar.String(length=100)
-    position = ormar.Integer()
+    id: ormar.Integer(primary_key=True)
+    first_name: ormar.String(max_length=80)
+    last_name: ormar.String(max_length=80)
 
 
-print(Track.__table__.columns['album'].__repr__())
-# Will produce:
-# Column('album', Integer(), ForeignKey('album.id'), table=<track>)
+class Category(ormar.Model):
+    class Meta:
+        tablename = "categories"
+        database = database
+        metadata = metadata
 
-print(Track.__pydantic_model__.__fields__['album'])
-# Will produce:
-# ModelField(
-#   name='album'
-#   type=Optional[Album]
-#   required=False
-#   default=None)
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=40)
+
+
+class PostCategory(ormar.Model):
+    class Meta:
+        tablename = "posts_categories"
+        database = database
+        metadata = metadata
+
+    # If there are no additional columns id will be created automatically as Integer
+
+
+class Post(ormar.Model):
+    class Meta:
+        tablename = "posts"
+        database = database
+        metadata = metadata
+
+    id: ormar.Integer(primary_key=True)
+    title: ormar.String(max_length=200)
+    categories: ormar.ManyToMany(Category, through=PostCategory)
+    author: ormar.ForeignKey(Author)
