@@ -8,7 +8,6 @@ nav:
   - Relations: relations.md
   - Queries: queries.md
   - Use with Fastapi: fastapi.md
-  - Testing: testing.md
   - Contributing: contributing.md
 repo_name: collerek/ormar
 repo_url: https://github.com/collerek/ormar

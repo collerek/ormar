@@ -130,6 +130,45 @@ assert len(all_books) == 3
 
 `update_or_create(**kwargs) -> Model`
 
+Updates the model, or in case there is no match in database creates a new one.
+
+```python hl_lines="24-30"
+import databases
+import ormar
+import sqlalchemy
+
+database = databases.Database("sqlite:///db.sqlite")
+metadata = sqlalchemy.MetaData()
+
+class Book(ormar.Model):
+    class Meta:
+        tablename = "books"
+        metadata = metadata
+        database = database
+
+    id: ormar.Integer(primary_key=True)
+    title: ormar.String(max_length=200)
+    author: ormar.String(max_length=100)
+    genre: ormar.String(max_length=100, default='Fiction', choices=['Fiction', 'Adventure', 'Historic', 'Fantasy'])
+
+await Book.objects.create(title='Tom Sawyer', author="Twain, Mark", genre='Adventure')
+await Book.objects.create(title='War and Peace', author="Tolstoy, Leo", genre='Fiction')
+await Book.objects.create(title='Anna Karenina', author="Tolstoy, Leo", genre='Fiction')
+
+
+# if not exist the instance will be persisted in db
+vol2 = await Book.objects.update_or_create(title="Volume II", author='Anonymous', genre='Fiction')
+assert await Book.objects.count() == 1
+
+# if pk or pkname passed in kwargs (like id here) the object will be updated
+assert await Book.objects.update_or_create(id=vol2.id, genre='Historic')
+assert await Book.objects.count() == 1
+```
+
+!!!note
+    Note that if you want to create a new object you either have to pass pk column value or pk column has to be set as autoincrement
+
+
 ### bulk_create
 
 `bulk_create(objects: List["Model"]) -> None`
@@ -238,14 +277,26 @@ assert len(all_books) == 2
 
 ### all
 
-Returns all rows from a database for given model
+`all(self, **kwargs) -> List[Optional["Model"]]`
+
+Returns all rows from a database for given model for set filter options.
+
+Passing kwargs is a shortcut and equals to calling `filter(**kwrags).all()`.
+
+If there are no rows meeting the criteria an empty list is returned.
 
 ```python
-tracks = await Track.objects.select_related("album").all()
-# will return a list of all Tracks
+tracks = await Track.objects.select_related("album").all(title='Sample')
+# will return a list of all Tracks with title Sample
+
+tracks = await Track.objects.all()
+# will return a list of all Tracks in database
+
 ```
 
 ### filter
+
+`filter(**kwargs) -> QuerySet`
 
 Allows you to filter by any `Model` attribute/field 
 as well as to fetch instances, with a filter across an FK relationship.
@@ -269,15 +320,39 @@ You can use special filter suffix to change the filter operands:
 *  gte - like `position__gte=3` (sql >=)
 *  lt - like `position__lt=3` (sql <)
 *  lte - like `position__lte=3` (sql <=)
+*  startswith - like `album__name__startswith='Mal'` (exact start match)
+*  istartswith - like `album__name__istartswith='mal'` (exact start match case insensitive)
+*  endswith - like `album__name__endswith='ibu'` (exact end match)
+*  iendswith - like `album__name__iendswith='IBU'` (exact end match case insensitive)
 
 !!!note
-    `filter()`, `select_related()`, `limit()` and `offset()` returns a QueySet instance so you can chain them together.
+    All methods that do not return the rows explicitly returns a QueySet instance so you can chain them together
+    
+    So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
 
 ### exclude
 
+`exclude(**kwargs) -> QuerySet`
+
+Works exactly the same as filter and all modifiers (suffixes) are the same, but returns a not condition.
+
+So if you use `filter(name='John')` which equals to `where name = 'John'` in SQL, 
+the `exclude(name='John')` equals to `where name <> 'John'`
+
+Note that all conditions are joined so if you pass multiple values it becomes a union of conditions.
+
+`exclude(name='John', age>=35)` will become `where not (name='John' and age>=35)`
+
+```python
+notes = await Track.objects.exclude(position_gt=3).all()
+# returns all tracks with position < 3
+```
+
 ### select_related
+
+`select_related(related: Union[List, str]) -> QuerySet`
 
 Allows to prefetch related models. 
 
@@ -299,16 +374,23 @@ classes = await SchoolClass.objects.select_related(
 # as well as classes students
 ```
 
+Exactly the same behavior is for Many2Many fields, where you put the names of Many2Many fields and the final `Models` are fetched for you.
+
 !!!warning
     If you set `ForeignKey` field as not nullable (so required) during 
     all queries the not nullable `Models` will be auto prefetched, even if you do not include them in select_related.
 
 !!!note
-    `filter()`, `select_related()`, `limit()` and `offset()` returns a QueySet instance so you can chain them together.
+    All methods that do not return the rows explicitly returns a QueySet instance so you can chain them together
+    
+    So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
 
+
 ### limit
+
+`limit(limit_count: int) -> QuerySet`
 
 You can limit the results to desired number of rows.
 
@@ -318,11 +400,15 @@ tracks = await Track.objects.limit(1).all()
 ```
 
 !!!note
-    `filter()`, `select_related()`, `limit()` and `offset()` returns a QueySet instance so you can chain them together.
+    All methods that do not return the rows explicitly returns a QueySet instance so you can chain them together
+    
+    So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
 
 ### offset
+
+`offset(offset: int) -> QuerySet`
 
 You can also offset the results by desired number of rows.
 
@@ -331,18 +417,126 @@ tracks = await Track.objects.offset(1).limit(1).all()
 # will return just one Track, but this time the second one
 ```
 
+!!!note
+    All methods that do not return the rows explicitly returns a QueySet instance so you can chain them together
+    
+    So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
+    
+    Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
+
+
 ### count
 
+`count() -> int`
+
+Returns number of rows matching the given criteria (applied with `filter` and `exclude`)
+
+```python
+# returns count of rows in db
+no_of_books = await Book.objects.count()
+```
 
 ### exists
 
+`exists() -> bool`
+
+Returns a bool value to confirm if there are rows matching the given criteria (applied with `filter` and `exclude`)
+
+```python
+# returns a boolean value if given row exists
+has_sample = await Book.objects.filter(title='Sample').exists()
+```
+
 ### fields
 
+`fields(columns: Union[List, str]) -> QuerySet`
+
+With `fields()` you can select subset of model columns to limit the data load.
+
+```python hl_lines="48 60 61 67"
+import databases
+import sqlalchemy
+
+import ormar
+from tests.settings import DATABASE_URL
+
+database = databases.Database(DATABASE_URL, force_rollback=True)
+metadata = sqlalchemy.MetaData()
+
+
+class Company(ormar.Model):
+    class Meta:
+        tablename = "companies"
+        metadata = metadata
+        database = database
+
+    id: ormar.Integer(primary_key=True)
+    name: ormar.String(max_length=100)
+    founded: ormar.Integer(nullable=True)
+
+
+class Car(ormar.Model):
+    class Meta:
+        tablename = "cars"
+        metadata = metadata
+        database = database
+
+    id: ormar.Integer(primary_key=True)
+    manufacturer: ormar.ForeignKey(Company)
+    name: ormar.String(max_length=100)
+    year: ormar.Integer(nullable=True)
+    gearbox_type: ormar.String(max_length=20, nullable=True)
+    gears: ormar.Integer(nullable=True)
+    aircon_type: ormar.String(max_length=20, nullable=True)
+
+
+
+# build some sample data
+toyota = await Company.objects.create(name="Toyota", founded=1937)
+await Car.objects.create(manufacturer=toyota, name="Corolla", year=2020, gearbox_type='Manual', gears=5,
+                         aircon_type='Manual')
+await Car.objects.create(manufacturer=toyota, name="Yaris", year=2019, gearbox_type='Manual', gears=5,
+                         aircon_type='Manual')
+await Car.objects.create(manufacturer=toyota, name="Supreme", year=2020, gearbox_type='Auto', gears=6,
+                         aircon_type='Auto')
+
+# select manufacturer but only name - to include related models use notation {model_name}__{column}
+all_cars = await Car.objects.select_related('manufacturer').fields(['id', 'name', 'company__name']).all()
+for car in all_cars:
+    # excluded columns will yield None
+    assert all(getattr(car, x) is None for x in ['year', 'gearbox_type', 'gears', 'aircon_type'])
+    # included column on related models will be available, pk column is always included
+    # even if you do not include it in fields list
+    assert car.manufacturer.name == 'Toyota'
+    # also in the nested related models - you cannot exclude pk - it's always auto added 
+    assert car.manufacturer.founded is None
+
+# fields() can be called several times, building up the columns to select
+# models selected in select_related but with no columns in fields list implies all fields
+all_cars = await Car.objects.select_related('manufacturer').fields('id').fields(
+                ['name']).all()
+# all fiels from company model are selected
+assert all_cars[0].manufacturer.name == 'Toyota' 
+assert all_cars[0].manufacturer.founded ==  1937
+
+# cannot exclude mandatory model columns - company__name in this example
+await Car.objects.select_related('manufacturer').fields(['id', 'name', 'company__founded']).all()
+# will raise pydantic ValidationError as company.name is required
+
+```
+
+!!!warning
+    Mandatory fields cannot be excluded as it will raise `ValidationError`, to exclude a field it has to be nullable.
+
+!!!tip
+    Pk column cannot be excluded - it's always auto added even if not explicitly included.
 
 
 !!!note
-    `filter()`, `select_related()`, `limit()` and `offset()` returns a QueySet instance so you can chain them together.
+    All methods that do not return the rows explicitly returns a QueySet instance so you can chain them together
+    
+    So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
-    
+
 [models]: ./models.md

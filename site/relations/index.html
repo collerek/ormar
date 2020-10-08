@@ -1,0 +1,1501 @@
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="An simple async ORM with fastapi in mind and pydantic validation.">
+      
+      
+      
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.5">
+    
+    
+      
+        <title>Relations - ormar</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.63b94e9e.min.css">
+      
+        <link rel="stylesheet" href="../assets/stylesheets/palette.7f672a1f.min.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#3f51b5">
+      
+    
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="indigo" data-md-color-accent="">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#relations" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href=".." title="ormar" class="md-header-nav__button md-logo" aria-label="ormar">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      
+        <div class="md-header-nav__ellipsis">
+          <span class="md-header-nav__topic md-ellipsis">
+            ormar
+          </span>
+          <span class="md-header-nav__topic md-ellipsis">
+            
+              Relations
+            
+          </span>
+        </div>
+      
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active">
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header-nav__source">
+        
+<a href="https://github.com/collerek/ormar/" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    collerek/ormar
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+        
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="ormar" class="md-nav__button md-logo" aria-label="ormar">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    ormar
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/collerek/ormar/" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    collerek/ormar
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href=".." title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../install/" title="Installation" class="md-nav__link">
+      Installation
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../models/" title="Models" class="md-nav__link">
+      Models
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../fields/" title="Fields" class="md-nav__link">
+      Fields
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Relations
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
+        </span>
+      </label>
+    
+    <a href="./" title="Relations" class="md-nav__link md-nav__link--active">
+      Relations
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#defining-a-relationship" class="md-nav__link">
+    Defining a relationship
+  </a>
+  
+    <nav class="md-nav" aria-label="Defining a relationship">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#foreignkey" class="md-nav__link">
+    ForeignKey
+  </a>
+  
+    <nav class="md-nav" aria-label="ForeignKey">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#defining-models" class="md-nav__link">
+    Defining Models
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reverse-relation" class="md-nav__link">
+    Reverse Relation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#related_name" class="md-nav__link">
+    related_name
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relation-setup" class="md-nav__link">
+    Relation Setup
+  </a>
+  
+    <nav class="md-nav" aria-label="Relation Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#model-instance" class="md-nav__link">
+    Model instance
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#primary-key-value" class="md-nav__link">
+    Primary key value
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dictionary" class="md-nav__link">
+    Dictionary
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#none" class="md-nav__link">
+    None
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#many2many" class="md-nav__link">
+    Many2Many
+  </a>
+  
+    <nav class="md-nav" aria-label="Many2Many">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#defining-models_1" class="md-nav__link">
+    Defining Models:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-related-models" class="md-nav__link">
+    Adding related models
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-new-related-model-instances" class="md-nav__link">
+    Creating new related Model instances
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-related-models" class="md-nav__link">
+    Removing related models
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-other-queryset-methods" class="md-nav__link">
+    All other queryset methods
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../queries/" title="Queries" class="md-nav__link">
+      Queries
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../fastapi/" title="Use with Fastapi" class="md-nav__link">
+      Use with Fastapi
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../contributing/" title="Contributing" class="md-nav__link">
+      Contributing
+    </a>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#defining-a-relationship" class="md-nav__link">
+    Defining a relationship
+  </a>
+  
+    <nav class="md-nav" aria-label="Defining a relationship">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#foreignkey" class="md-nav__link">
+    ForeignKey
+  </a>
+  
+    <nav class="md-nav" aria-label="ForeignKey">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#defining-models" class="md-nav__link">
+    Defining Models
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reverse-relation" class="md-nav__link">
+    Reverse Relation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#related_name" class="md-nav__link">
+    related_name
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relation-setup" class="md-nav__link">
+    Relation Setup
+  </a>
+  
+    <nav class="md-nav" aria-label="Relation Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#model-instance" class="md-nav__link">
+    Model instance
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#primary-key-value" class="md-nav__link">
+    Primary key value
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dictionary" class="md-nav__link">
+    Dictionary
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#none" class="md-nav__link">
+    None
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#many2many" class="md-nav__link">
+    Many2Many
+  </a>
+  
+    <nav class="md-nav" aria-label="Many2Many">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#defining-models_1" class="md-nav__link">
+    Defining Models:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-related-models" class="md-nav__link">
+    Adding related models
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-new-related-model-instances" class="md-nav__link">
+    Creating new related Model instances
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-related-models" class="md-nav__link">
+    Removing related models
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-other-queryset-methods" class="md-nav__link">
+    All other queryset methods
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/collerek/ormar/edit/master/docs/relations.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                  
+                
+                
+                <h1 id="relations">Relations</h1>
+<h2 id="defining-a-relationship">Defining a relationship</h2>
+<h3 id="foreignkey">ForeignKey</h3>
+<p><code>ForeignKey(to, related_name=None)</code> has required parameters <code>to</code> that takes target <code>Model</code> class.  </p>
+<p>Sqlalchemy column and Type are automatically taken from target <code>Model</code>.</p>
+<ul>
+<li>Sqlalchemy column: class of a target <code>Model</code> primary key column  </li>
+<li>Type (used for pydantic): type of a target <code>Model</code> </li>
+</ul>
+<h4 id="defining-models">Defining Models</h4>
+<p>To define a relation add <code>ForeignKey</code> field that points to related <code>Model</code>.</p>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27</pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">databases</span>
+<span class="kn">import</span> <span class="nn">sqlalchemy</span>
+
+<span class="kn">import</span> <span class="nn">ormar</span>
+
+<span class="n">database</span> <span class="o">=</span> <span class="n">databases</span><span class="o">.</span><span class="n">Database</span><span class="p">(</span><span class="s2">&quot;sqlite:///db.sqlite&quot;</span><span class="p">)</span>
+<span class="n">metadata</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">MetaData</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">Department</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Course</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">completed</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="hll">    <span class="n">department</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Department</span><span class="p">)</span>
+</span></code></pre></div>
+</td></tr></table>
+
+<h4 id="reverse-relation">Reverse Relation</h4>
+<p><code>ForeignKey</code> fields are automatically registering reverse side of the relation.</p>
+<p>By default it's child (source) <code>Model</code> name + s, like courses in snippet below: </p>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38</pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">databases</span>
+<span class="kn">import</span> <span class="nn">sqlalchemy</span>
+
+<span class="kn">import</span> <span class="nn">ormar</span>
+
+<span class="n">database</span> <span class="o">=</span> <span class="n">databases</span><span class="o">.</span><span class="n">Database</span><span class="p">(</span><span class="s2">&quot;sqlite:///db.sqlite&quot;</span><span class="p">)</span>
+<span class="n">metadata</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">MetaData</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">Department</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Course</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">completed</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="hll">    <span class="n">department</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Department</span><span class="p">)</span>
+</span>
+
+<span class="n">department</span> <span class="o">=</span> <span class="n">Department</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Science&#39;</span><span class="p">)</span>
+<span class="n">course</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="p">)</span>
+
+<span class="hll"><span class="nb">print</span><span class="p">(</span><span class="n">department</span><span class="o">.</span><span class="n">courses</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span class="c1"># Will produce:</span>
+<span class="c1"># Course(id=None,</span>
+<span class="c1">#        name=&#39;Math&#39;,</span>
+<span class="c1">#        completed=False,</span>
+<span class="c1">#        department=Department(id=None, name=&#39;Science&#39;))</span>
+</code></pre></div>
+</td></tr></table>
+
+<h4 id="related_name">related_name</h4>
+<p>But you can overwrite this name by providing <code>related_name</code> parameter like below:</p>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38</pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">databases</span>
+<span class="kn">import</span> <span class="nn">sqlalchemy</span>
+
+<span class="kn">import</span> <span class="nn">ormar</span>
+
+<span class="n">database</span> <span class="o">=</span> <span class="n">databases</span><span class="o">.</span><span class="n">Database</span><span class="p">(</span><span class="s2">&quot;sqlite:///db.sqlite&quot;</span><span class="p">)</span>
+<span class="n">metadata</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">MetaData</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">Department</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Course</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">completed</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="hll">    <span class="n">department</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Department</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;my_courses&quot;</span><span class="p">)</span>
+</span>
+
+<span class="n">department</span> <span class="o">=</span> <span class="n">Department</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Science&#39;</span><span class="p">)</span>
+<span class="n">course</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="p">)</span>
+
+<span class="hll"><span class="nb">print</span><span class="p">(</span><span class="n">department</span><span class="o">.</span><span class="n">my_courses</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span class="c1"># Will produce:</span>
+<span class="c1"># Course(id=None,</span>
+<span class="c1">#        name=&#39;Math&#39;,</span>
+<span class="c1">#        completed=False,</span>
+<span class="c1">#        department=Department(id=None, name=&#39;Science&#39;))</span>
+</code></pre></div>
+</td></tr></table>
+
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>The reverse relation on access returns list of <code>wekref.proxy</code> to avoid circular references.</p>
+</div>
+<h3 id="relation-setup">Relation Setup</h3>
+<p>You have several ways to set-up a relationship connection.</p>
+<h4 id="model-instance"><code>Model</code> instance</h4>
+<p>The most obvious one is to pass a related <code>Model</code> instance to the constructor.</p>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42</pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">databases</span>
+<span class="kn">import</span> <span class="nn">sqlalchemy</span>
+
+<span class="kn">import</span> <span class="nn">ormar</span>
+
+<span class="n">database</span> <span class="o">=</span> <span class="n">databases</span><span class="o">.</span><span class="n">Database</span><span class="p">(</span><span class="s2">&quot;sqlite:///db.sqlite&quot;</span><span class="p">)</span>
+<span class="n">metadata</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">MetaData</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">Department</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Course</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">completed</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">department</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Department</span><span class="p">)</span>
+
+
+<span class="n">department</span> <span class="o">=</span> <span class="n">Department</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Science&#39;</span><span class="p">)</span>
+
+<span class="hll"><span class="c1"># set up a relation with actual Model instance</span>
+</span><span class="hll"><span class="n">course</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="p">)</span>
+</span>
+<span class="c1"># set up  relation with only related model pk value</span>
+<span class="n">course2</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math II&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+<span class="c1"># set up a relation with dictionary corresponding to related model</span>
+<span class="n">course3</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math III&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
+
+<span class="c1"># explicitly set up None</span>
+<span class="n">course4</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math III&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+</td></tr></table>
+
+<h4 id="primary-key-value">Primary key value</h4>
+<p>You can setup the relation also with just the pk column value of the related model.</p>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42</pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">databases</span>
+<span class="kn">import</span> <span class="nn">sqlalchemy</span>
+
+<span class="kn">import</span> <span class="nn">ormar</span>
+
+<span class="n">database</span> <span class="o">=</span> <span class="n">databases</span><span class="o">.</span><span class="n">Database</span><span class="p">(</span><span class="s2">&quot;sqlite:///db.sqlite&quot;</span><span class="p">)</span>
+<span class="n">metadata</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">MetaData</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">Department</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Course</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">completed</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">department</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Department</span><span class="p">)</span>
+
+
+<span class="n">department</span> <span class="o">=</span> <span class="n">Department</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Science&#39;</span><span class="p">)</span>
+
+<span class="c1"># set up a relation with actual Model instance</span>
+<span class="n">course</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="p">)</span>
+
+<span class="hll"><span class="c1"># set up  relation with only related model pk value</span>
+</span><span class="hll"><span class="n">course2</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math II&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+</span>
+<span class="c1"># set up a relation with dictionary corresponding to related model</span>
+<span class="n">course3</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math III&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
+
+<span class="c1"># explicitly set up None</span>
+<span class="n">course4</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math III&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+</td></tr></table>
+
+<h4 id="dictionary">Dictionary</h4>
+<p>Next option is with a dictionary of key-values of the related model.</p>
+<p>You can build the dictionary yourself or get it from existing model with <code>dict()</code> method.</p>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42</pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">databases</span>
+<span class="kn">import</span> <span class="nn">sqlalchemy</span>
+
+<span class="kn">import</span> <span class="nn">ormar</span>
+
+<span class="n">database</span> <span class="o">=</span> <span class="n">databases</span><span class="o">.</span><span class="n">Database</span><span class="p">(</span><span class="s2">&quot;sqlite:///db.sqlite&quot;</span><span class="p">)</span>
+<span class="n">metadata</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">MetaData</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">Department</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Course</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">completed</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">department</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Department</span><span class="p">)</span>
+
+
+<span class="n">department</span> <span class="o">=</span> <span class="n">Department</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Science&#39;</span><span class="p">)</span>
+
+<span class="c1"># set up a relation with actual Model instance</span>
+<span class="n">course</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="p">)</span>
+
+<span class="c1"># set up  relation with only related model pk value</span>
+<span class="n">course2</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math II&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+<span class="hll"><span class="c1"># set up a relation with dictionary corresponding to related model</span>
+</span><span class="hll"><span class="n">course3</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math III&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
+</span>
+<span class="c1"># explicitly set up None</span>
+<span class="n">course4</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math III&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+</td></tr></table>
+
+<h4 id="none">None</h4>
+<p>Finally you can explicitly set it to None (default behavior if no value passed).</p>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42</pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">databases</span>
+<span class="kn">import</span> <span class="nn">sqlalchemy</span>
+
+<span class="kn">import</span> <span class="nn">ormar</span>
+
+<span class="n">database</span> <span class="o">=</span> <span class="n">databases</span><span class="o">.</span><span class="n">Database</span><span class="p">(</span><span class="s2">&quot;sqlite:///db.sqlite&quot;</span><span class="p">)</span>
+<span class="n">metadata</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">MetaData</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">Department</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Course</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">completed</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">department</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Department</span><span class="p">)</span>
+
+
+<span class="n">department</span> <span class="o">=</span> <span class="n">Department</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Science&#39;</span><span class="p">)</span>
+
+<span class="c1"># set up a relation with actual Model instance</span>
+<span class="n">course</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="p">)</span>
+
+<span class="c1"># set up  relation with only related model pk value</span>
+<span class="n">course2</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math II&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+<span class="c1"># set up a relation with dictionary corresponding to related model</span>
+<span class="n">course3</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math III&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="n">department</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
+
+<span class="hll"><span class="c1"># explicitly set up None</span>
+</span><span class="hll"><span class="n">course4</span> <span class="o">=</span> <span class="n">Course</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Math III&#39;</span><span class="p">,</span> <span class="n">completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">department</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span></code></pre></div>
+</td></tr></table>
+
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>In all not None cases the primary key value for related model <strong>has to exist in database</strong>.</p>
+<p>Otherwise an IntegrityError will be raised by your database driver library.</p>
+</div>
+<h3 id="many2many">Many2Many</h3>
+<p><code>Many2Many(to, through)</code> has required parameters <code>to</code> and <code>through</code> that takes target and relation <code>Model</code> classes.  </p>
+<p>Sqlalchemy column and Type are automatically taken from target <code>Model</code>.</p>
+<ul>
+<li>Sqlalchemy column: class of a target <code>Model</code> primary key column  </li>
+<li>Type (used for pydantic): type of a target <code>Model</code> </li>
+</ul>
+<h4 id="defining-models_1">Defining <code>Models</code>:</h4>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48</pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">databases</span>
+<span class="kn">import</span> <span class="nn">ormar</span>
+<span class="kn">import</span> <span class="nn">sqlalchemy</span>
+
+<span class="n">database</span> <span class="o">=</span> <span class="n">databases</span><span class="o">.</span><span class="n">Database</span><span class="p">(</span><span class="s2">&quot;sqlite:///db.sqlite&quot;</span><span class="p">)</span>
+<span class="n">metadata</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">MetaData</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">Author</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">tablename</span> <span class="o">=</span> <span class="s2">&quot;authors&quot;</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">first_name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+    <span class="n">last_name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Category</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">tablename</span> <span class="o">=</span> <span class="s2">&quot;categories&quot;</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">PostCategory</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">tablename</span> <span class="o">=</span> <span class="s2">&quot;posts_categories&quot;</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="c1"># If there are no additional columns id will be created automatically as Integer</span>
+
+
+<span class="k">class</span> <span class="nc">Post</span><span class="p">(</span><span class="n">ormar</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">tablename</span> <span class="o">=</span> <span class="s2">&quot;posts&quot;</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">title</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="n">categories</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ManyToMany</span><span class="p">(</span><span class="n">Category</span><span class="p">,</span> <span class="n">through</span><span class="o">=</span><span class="n">PostCategory</span><span class="p">)</span>
+    <span class="n">author</span><span class="p">:</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Author</span><span class="p">)</span>
+</code></pre></div>
+</td></tr></table>
+
+<p>Create sample data:
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span>1
+2
+3</pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="n">guido</span> <span class="o">=</span> <span class="k">await</span> <span class="n">Author</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">first_name</span><span class="o">=</span><span class="s2">&quot;Guido&quot;</span><span class="p">,</span> <span class="n">last_name</span><span class="o">=</span><span class="s2">&quot;Van Rossum&quot;</span><span class="p">)</span>
+<span class="n">post</span> <span class="o">=</span> <span class="k">await</span> <span class="n">Post</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Hello, M2M&quot;</span><span class="p">,</span> <span class="n">author</span><span class="o">=</span><span class="n">guido</span><span class="p">)</span>
+<span class="n">news</span> <span class="o">=</span> <span class="k">await</span> <span class="n">Category</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;News&quot;</span><span class="p">)</span>
+</code></pre></div>
+</td></tr></table></p>
+<h4 id="adding-related-models">Adding related models</h4>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span>1
+2
+3
+4</pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="c1"># Add a category to a post.</span>
+<span class="k">await</span> <span class="n">post</span><span class="o">.</span><span class="n">categories</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">news</span><span class="p">)</span>
+<span class="c1"># or from the other end:</span>
+<span class="k">await</span> <span class="n">news</span><span class="o">.</span><span class="n">posts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">post</span><span class="p">)</span>
+</code></pre></div>
+</td></tr></table>
+
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>In all not None cases the primary key value for related model <strong>has to exist in database</strong>.</p>
+<p>Otherwise an IntegrityError will be raised by your database driver library.</p>
+</div>
+<h4 id="creating-new-related-model-instances">Creating new related <code>Model</code> instances</h4>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span>1
+2
+3
+4</pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="c1"># Creating columns object from instance:</span>
+<span class="k">await</span> <span class="n">post</span><span class="o">.</span><span class="n">categories</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Tips&quot;</span><span class="p">)</span>
+<span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="k">await</span> <span class="n">post</span><span class="o">.</span><span class="n">categories</span><span class="o">.</span><span class="n">all</span><span class="p">())</span> <span class="o">==</span> <span class="mi">2</span>
+<span class="c1"># newly created instance already have relation persisted in the database</span>
+</code></pre></div>
+</td></tr></table>
+
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Note that when accessing QuerySet API methods through Many2Many relation you don't 
+need to use objects attribute like in normal queries.</p>
+<p>To learn more about available QuerySet methods visit <a href="../queries/">queries</a></p>
+</div>
+<h4 id="removing-related-models">Removing related models</h4>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span>1
+2
+3
+4</pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="c1"># Removal of the relationship by one</span>
+<span class="k">await</span> <span class="n">news</span><span class="o">.</span><span class="n">posts</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">post</span><span class="p">)</span>
+<span class="c1"># or all at once</span>
+<span class="k">await</span> <span class="n">news</span><span class="o">.</span><span class="n">posts</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+</code></pre></div>
+</td></tr></table>
+
+<h4 id="all-other-queryset-methods">All other queryset methods</h4>
+<p>When access directly the related <code>Many2Many</code> field returns the list of related models.</p>
+<p>But at the same time it exposes full QuerySet API, so you can filter, create, select related etc.</p>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11</pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="c1"># Many to many relation exposes a list of columns models</span>
+<span class="c1"># and an API of the Queryset:</span>
+<span class="k">assert</span> <span class="n">news</span> <span class="o">==</span> <span class="k">await</span> <span class="n">post</span><span class="o">.</span><span class="n">categories</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;News&quot;</span><span class="p">)</span>
+
+<span class="c1"># with all Queryset methods - filtering, selecting columns, counting etc.</span>
+<span class="k">await</span> <span class="n">news</span><span class="o">.</span><span class="n">posts</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">title__contains</span><span class="o">=</span><span class="s2">&quot;M2M&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">await</span> <span class="n">Category</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">posts__author</span><span class="o">=</span><span class="n">guido</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+
+<span class="c1"># columns models of many to many relation can be prefetched</span>
+<span class="n">news_posts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">news</span><span class="o">.</span><span class="n">posts</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">&quot;author&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">news_posts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">author</span> <span class="o">==</span> <span class="n">guido</span>
+</code></pre></div>
+</td></tr></table>
+
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>To learn more about available QuerySet methods visit <a href="../queries/">queries</a></p>
+</div>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../fields/" title="Fields" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Fields
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../queries/" title="Queries" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Queries
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../assets/javascripts/vendor.d1f5a259.min.js"></script>
+      <script src="../assets/javascripts/bundle.f9edbbd5.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      
+      <script>
+        app = initialize({
+          base: "..",
+          features: [],
+          search: Object.assign({
+            worker: "../assets/javascripts/worker/search.fae956e7.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+      
+        <script src="../javascripts/config.js"></script>
+      
+    
+  </body>
+</html>
