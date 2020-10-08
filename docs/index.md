@@ -190,4 +190,4 @@ Autoincrement is set by default on int primary keys.
 [encode/orm]: https://github.com/encode/orm/
 [alembic]: https://alembic.sqlalchemy.org/en/latest/
 [fastapi]: https://fastapi.tiangolo.com/
-[documentation]: https://ormar.collerek.com/
+[documentation]: https://collerek.github.io/ormar/
