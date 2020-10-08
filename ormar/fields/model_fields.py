@@ -79,7 +79,7 @@ class String(ModelFieldFactory):
                 if k not in ["cls", "__class__", "kwargs"]
             },
         }
-        kwargs['nullable'] = kwargs['allow_blank']
+        kwargs['allow_blank'] = kwargs.get('nullable',  True)
         return super().__new__(cls, **kwargs)
 
     @classmethod
@@ -145,7 +145,7 @@ class Text(ModelFieldFactory):
                 if k not in ["cls", "__class__", "kwargs"]
             },
         }
-        kwargs['nullable'] = kwargs['allow_blank']
+        kwargs['allow_blank'] = kwargs.get('nullable',  True)
         return super().__new__(cls, **kwargs)
 
     @classmethod

@@ -17,7 +17,7 @@ class Company(ormar.Model):
         database = database
 
     id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
+    name: ormar.String(max_length=100, nullable=False)
     founded: ormar.Integer(nullable=True)
 
 
