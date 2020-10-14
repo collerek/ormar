@@ -38,7 +38,7 @@ def ForeignKey(  # noqa CFQ002
     onupdate: str = None,
     ondelete: str = None,
 ) -> Type["ForeignKeyField"]:
-    fk_string = to.Meta.tablename + "." + to.Meta.pkname
+    fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
     to_field = to.__fields__[to.Meta.pkname]
     namespace = dict(
         to=to,

@@ -90,13 +90,13 @@ class Model(NewBaseModel):
                     previous_table=previous_table,
                     fields=fields,
                 )
-                item[first_part] = child
+                item[model_cls.get_column_name_from_alias(first_part)] = child
             else:
                 model_cls = cls.Meta.model_fields[related].to
                 child = model_cls.from_row(
                     row, previous_table=previous_table, fields=fields
                 )
-                item[related] = child
+                item[model_cls.get_column_name_from_alias(related)] = child
 
         return item
 
@@ -113,13 +113,16 @@ class Model(NewBaseModel):
         # databases does not keep aliases in Record for postgres, change to raw row
         source = row._row if isinstance(row, Record) else row
 
-        selected_columns = cls.own_table_columns(cls, fields or [], nested=nested)
+        selected_columns = cls.own_table_columns(
+            cls, fields or [], nested=nested, use_alias=True
+        )
         for column in cls.Meta.table.columns:
-            if column.name not in item and column.name in selected_columns:
+            alias = cls.get_column_name_from_alias(column.name)
+            if alias not in item and alias in selected_columns:
                 prefixed_name = (
                     f'{table_prefix + "_" if table_prefix else ""}{column.name}'
                 )
-                item[column.name] = source[prefixed_name]
+                item[alias] = source[prefixed_name]
 
         return item
 

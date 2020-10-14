@@ -70,10 +70,27 @@ class QuerySet:
             return self.model.merge_instances_list(result_rows)  # type: ignore
         return result_rows
 
+    def _prepare_model_to_save(self, new_kwargs: dict) -> dict:
+        new_kwargs = self._remove_pk_from_kwargs(new_kwargs)
+        new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
+        new_kwargs = self._populate_default_values(new_kwargs)
+        new_kwargs = self._translate_columns_to_aliases(new_kwargs)
+        return new_kwargs
+
     def _populate_default_values(self, new_kwargs: dict) -> dict:
         for field_name, field in self.model_meta.model_fields.items():
             if field_name not in new_kwargs and field.has_default():
                 new_kwargs[field_name] = field.get_default()
+        return new_kwargs
+
+    def _translate_columns_to_aliases(self, new_kwargs: dict) -> dict:
+        for field_name, field in self.model_meta.model_fields.items():
+            if (
+                field_name in new_kwargs
+                and field.name is not None
+                and field.name != field_name
+            ):
+                new_kwargs[field.name] = new_kwargs.pop(field_name)
         return new_kwargs
 
     def _remove_pk_from_kwargs(self, new_kwargs: dict) -> dict:
@@ -278,9 +295,7 @@ class QuerySet:
     async def create(self, **kwargs: Any) -> "Model":
 
         new_kwargs = dict(**kwargs)
-        new_kwargs = self._remove_pk_from_kwargs(new_kwargs)
-        new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
-        new_kwargs = self._populate_default_values(new_kwargs)
+        new_kwargs = self._prepare_model_to_save(new_kwargs)
 
         expr = self.table.insert()
         expr = expr.values(**new_kwargs)
@@ -288,7 +303,7 @@ class QuerySet:
         instance = self.model(**kwargs)
         pk = await self.database.execute(expr)
 
-        pk_name = self.model_meta.pkname
+        pk_name = self.model.get_column_alias(self.model_meta.pkname)
         if pk_name not in kwargs and pk_name in new_kwargs:
             instance.pk = new_kwargs[self.model_meta.pkname]
         if pk and isinstance(pk, self.model.pk_type()):
@@ -300,9 +315,7 @@ class QuerySet:
         ready_objects = []
         for objt in objects:
             new_kwargs = objt.dict()
-            new_kwargs = self._remove_pk_from_kwargs(new_kwargs)
-            new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
-            new_kwargs = self._populate_default_values(new_kwargs)
+            new_kwargs = self._prepare_model_to_save(new_kwargs)
             ready_objects.append(new_kwargs)
 
         expr = self.table.insert()

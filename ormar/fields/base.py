@@ -64,7 +64,7 @@ class BaseField:
     @classmethod
     def get_column(cls, name: str) -> sqlalchemy.Column:
         return sqlalchemy.Column(
-            name,
+            cls.name or name,
             cls.column_type,
             *cls.constraints,
             primary_key=cls.primary_key,

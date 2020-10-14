@@ -48,6 +48,20 @@ class ModelTableProxy:
         return model_dict
 
     @classmethod
+    def get_column_alias(cls, field_name: str) -> str:
+        field = cls.Meta.model_fields.get(field_name)
+        if field and field.name is not None and field.name != field_name:
+            return field.name
+        return field_name
+
+    @classmethod
+    def get_column_name_from_alias(cls, alias: str) -> str:
+        for field_name, field in cls.Meta.model_fields.items():
+            if field and field.name == alias:
+                return field_name
+        return alias  # if not found it's not an alias but actual name
+
+    @classmethod
     def extract_related_names(cls) -> Set:
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
@@ -151,10 +165,16 @@ class ModelTableProxy:
         return other
 
     @staticmethod
-    def own_table_columns(
-        model: Type["Model"], fields: List, nested: bool = False
+    def own_table_columns(  # noqa: CCR001
+        model: Type["Model"],
+        fields: List,
+        nested: bool = False,
+        use_alias: bool = False,
     ) -> List[str]:
-        column_names = [col.name for col in model.Meta.table.columns]
+        column_names = [
+            model.get_column_name_from_alias(col.name) if use_alias else col.name
+            for col in model.Meta.table.columns
+        ]
         if not fields:
             return column_names
 
@@ -175,6 +195,11 @@ class ModelTableProxy:
             columns = column_names
 
         # always has to return pk column
-        if model.Meta.pkname not in columns:
-            columns.append(model.Meta.pkname)
+        pk_alias = (
+            model.get_column_alias(model.Meta.pkname)
+            if use_alias
+            else model.Meta.pkname
+        )
+        if pk_alias not in columns:
+            columns.append(pk_alias)
         return columns
