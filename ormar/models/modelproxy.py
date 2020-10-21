@@ -3,7 +3,7 @@ from typing import Dict, List, Set, TYPE_CHECKING, Type, TypeVar, Union
 
 import ormar
 from ormar.exceptions import RelationshipInstanceError
-from ormar.fields import BaseField
+from ormar.fields import BaseField, ManyToManyField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.metaclass import ModelMeta
 
@@ -35,7 +35,7 @@ class ModelTableProxy:
         return self_fields
 
     @classmethod
-    def substitute_models_with_pks(cls, model_dict: Dict) -> Dict:
+    def substitute_models_with_pks(cls, model_dict: Dict) -> Dict:  # noqa  CCR001
         for field in cls.extract_related_names():
             field_value = model_dict.get(field, None)
             if field_value is not None:
@@ -43,8 +43,10 @@ class ModelTableProxy:
                 target_pkname = target_field.to.Meta.pkname
                 if isinstance(field_value, ormar.Model):
                     model_dict[field] = getattr(field_value, target_pkname)
-                else:
+                elif field_value:
                     model_dict[field] = field_value.get(target_pkname)
+                else:
+                    model_dict.pop(field, None)
         return model_dict
 
     @classmethod
@@ -76,6 +78,7 @@ class ModelTableProxy:
             if (
                 inspect.isclass(field)
                 and issubclass(field, ForeignKeyField)
+                and not issubclass(field, ManyToManyField)
                 and not field.virtual
             ):
                 related_names.add(name)
@@ -98,7 +101,9 @@ class ModelTableProxy:
     def _extract_model_db_fields(self) -> Dict:
         self_fields = self._extract_own_model_fields()
         self_fields = {
-            k: v for k, v in self_fields.items() if k in self.Meta.table.columns
+            k: v
+            for k, v in self_fields.items()
+            if self.get_column_alias(k) in self.Meta.table.columns
         }
         for field in self._extract_db_related_names():
             target_pk_name = self.Meta.model_fields[field].to.Meta.pkname
@@ -139,7 +144,7 @@ class ModelTableProxy:
     def merge_instances_list(cls, result_rows: List["Model"]) -> List["Model"]:
         merged_rows: List["Model"] = []
         for index, model in enumerate(result_rows):
-            if index > 0 and model.pk == merged_rows[-1].pk:
+            if index > 0 and model is not None and model.pk == merged_rows[-1].pk:
                 merged_rows[-1] = cls.merge_two_instances(model, merged_rows[-1])
             else:
                 merged_rows.append(model)
@@ -179,6 +184,7 @@ class ModelTableProxy:
             return column_names
 
         if not nested:
+            fields = [model.get_column_alias(k) if not use_alias else k for k in fields]
             columns = [
                 name for name in fields if "__" not in name and name in column_names
             ]
@@ -189,6 +195,9 @@ class ModelTableProxy:
                 for name in fields
                 if f"{model.get_name()}__" in name
             ]
+            columns = [
+                model.get_column_alias(k) if not use_alias else k for k in columns
+            ]
 
         # if the model is in select and no columns in fields, all implied
         if not columns:
@@ -197,7 +206,7 @@ class ModelTableProxy:
         # always has to return pk column
         pk_alias = (
             model.get_column_alias(model.Meta.pkname)
-            if use_alias
+            if not use_alias
             else model.Meta.pkname
         )
         if pk_alias not in columns:

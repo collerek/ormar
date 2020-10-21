@@ -110,7 +110,7 @@ class SqlJoin:
         pkname_alias = model_cls.get_column_alias(model_cls.Meta.pkname)
         self.order_bys.append(text(f"{alias}_{to_table}.{pkname_alias}"))
         self_related_fields = model_cls.own_table_columns(
-            model_cls, self.fields, nested=True
+            model_cls, self.fields, nested=True,
         )
         self.columns.extend(
             self.relation_manager(model_cls).prefixed_columns(

@@ -83,7 +83,7 @@ class QueryClause:
 
             else:
                 op = "exact"
-                column = self.table.columns[key]
+                column = self.table.columns[self.model_cls.get_column_alias(key)]
                 table = self.table
 
             clause = self._process_column_clause_for_operator_and_value(
