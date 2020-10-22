@@ -37,7 +37,27 @@ You can disable by passing `autoincremant=False`.
 id: ormar.Integer(primary_key=True, autoincrement=False)
 ```
 
-Names of the fields will be used for both the underlying `pydantic` model and `sqlalchemy` table.
+### Fields names vs Column names
+
+By default names of the fields will be used for both the underlying `pydantic` model and `sqlalchemy` table.
+
+If for whatever reason you prefer to change the name in the database but keep the name in the model you can do this 
+with specifying `name` parameter during Field declaration
+
+Here you have a sample model with changed names
+```Python hl_lines="16-19"
+--8<-- "../docs_src/models/docs008.py"
+```
+
+Note that you can also change the ForeignKey column name
+```Python hl_lines="9"
+--8<-- "../docs_src/models/docs009.py"
+```
+
+But for now you cannot change the ManyToMany column names as they go through other Model anyway.
+```Python hl_lines="18"
+--8<-- "../docs_src/models/docs010.py"
+```
 
 ### Dependencies
 
@@ -128,7 +148,9 @@ Each model has a `QuerySet` initialised as `objects` parameter
 ### load
 
 By default when you query a table without prefetching related models, the ormar will still construct
-your related models, but populate them only with the pk value.
+your related models, but populate them only with the pk value. You can load the related model by calling `load()` method.
+
+`load()` can also be used to refresh the model from the database (if it was changed by some other process). 
 
 ```python
 track = await Track.objects.get(name='The Bird')
@@ -142,10 +164,36 @@ track.album.name # will return 'Malibu'
 
 ### save
 
+You can create new models by using `QuerySet.create()` method or by initializing your model as a normal pydantic model 
+and later calling `save()` method.
+
+`save()` can also be used to persist changes that you made to the model. 
+
+```python
+track = Track(name='The Bird')
+await track.save() # will persist the model in database
+```
+
 ### delete
+
+You can delete models by using `QuerySet.delete()` method or by using your model and calling `delete()` method.
+
+```python
+track = await Track.objects.get(name='The Bird')
+await track.delete() # will delete the model from database
+```
+
+!!!tip
+    Note that that `track` object stays the same, only record in the database is removed.
 
 ### update
 
+You can delete models by using `QuerySet.update()` method or by using your model and calling `update()` method.
+
+```python
+track = await Track.objects.get(name='The Bird')
+await track.update(name='The Bird Strikes Again')
+```
 
 ## Internals
 

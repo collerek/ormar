@@ -106,9 +106,11 @@ class SqlJoin:
         self.select_from = sqlalchemy.sql.outerjoin(
             self.select_from, target_table, on_clause
         )
-        self.order_bys.append(text(f"{alias}_{to_table}.{model_cls.Meta.pkname}"))
+
+        pkname_alias = model_cls.get_column_alias(model_cls.Meta.pkname)
+        self.order_bys.append(text(f"{alias}_{to_table}.{pkname_alias}"))
         self_related_fields = model_cls.own_table_columns(
-            model_cls, self.fields, nested=True
+            model_cls, self.fields, nested=True,
         )
         self.columns.extend(
             self.relation_manager(model_cls).prefixed_columns(
@@ -125,12 +127,13 @@ class SqlJoin:
         part: str,
     ) -> Tuple[str, str]:
         if join_params.prev_model.Meta.model_fields[part].virtual or is_multi:
-            to_field = model_cls.resolve_relation_field(
+            to_field = model_cls.resolve_relation_name(
                 model_cls, join_params.prev_model
             )
-            to_key = to_field.name
-            from_key = model_cls.Meta.pkname
+            to_key = model_cls.get_column_alias(to_field)
+            from_key = join_params.prev_model.get_column_alias(model_cls.Meta.pkname)
         else:
-            to_key = model_cls.Meta.pkname
-            from_key = part
+            to_key = model_cls.get_column_alias(model_cls.Meta.pkname)
+            from_key = join_params.prev_model.get_column_alias(part)
+
         return to_key, from_key

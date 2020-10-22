@@ -85,9 +85,9 @@ Finally you can explicitly set it to None (default behavior if no value passed).
     Otherwise an IntegrityError will be raised by your database driver library.
 
 
-### Many2Many
+### ManyToMany
 
-`Many2Many(to, through)` has required parameters `to` and `through` that takes target and relation `Model` classes.  
+`ManyToMany(to, through)` has required parameters `to` and `through` that takes target and relation `Model` classes.  
 
 Sqlalchemy column and Type are automatically taken from target `Model`.
 
@@ -131,7 +131,7 @@ assert len(await post.categories.all()) == 2
 ```
 
 !!!note
-    Note that when accessing QuerySet API methods through Many2Many relation you don't 
+    Note that when accessing QuerySet API methods through ManyToMany relation you don't 
     need to use objects attribute like in normal queries.
     
     To learn more about available QuerySet methods visit [queries][queries]
@@ -146,7 +146,7 @@ await news.posts.clear()
 
 #### All other queryset methods
 
-When access directly the related `Many2Many` field returns the list of related models.
+When access directly the related `ManyToMany` field returns the list of related models.
 
 But at the same time it exposes full QuerySet API, so you can filter, create, select related etc.
 

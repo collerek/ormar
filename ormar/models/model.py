@@ -43,7 +43,6 @@ class Model(NewBaseModel):
         if select_related:
             related_models = group_related_list(select_related)
 
-        # breakpoint()
         if (
             previous_table
             and previous_table in cls.Meta.model_fields
@@ -90,13 +89,13 @@ class Model(NewBaseModel):
                     previous_table=previous_table,
                     fields=fields,
                 )
-                item[first_part] = child
+                item[model_cls.get_column_name_from_alias(first_part)] = child
             else:
                 model_cls = cls.Meta.model_fields[related].to
                 child = model_cls.from_row(
                     row, previous_table=previous_table, fields=fields
                 )
-                item[related] = child
+                item[model_cls.get_column_name_from_alias(related)] = child
 
         return item
 
@@ -113,13 +112,16 @@ class Model(NewBaseModel):
         # databases does not keep aliases in Record for postgres, change to raw row
         source = row._row if isinstance(row, Record) else row
 
-        selected_columns = cls.own_table_columns(cls, fields or [], nested=nested)
+        selected_columns = cls.own_table_columns(
+            cls, fields or [], nested=nested, use_alias=True
+        )
         for column in cls.Meta.table.columns:
-            if column.name not in item and column.name in selected_columns:
+            alias = cls.get_column_name_from_alias(column.name)
+            if alias not in item and alias in selected_columns:
                 prefixed_name = (
                     f'{table_prefix + "_" if table_prefix else ""}{column.name}'
                 )
-                item[column.name] = source[prefixed_name]
+                item[alias] = source[prefixed_name]
 
         return item
 
@@ -142,7 +144,8 @@ class Model(NewBaseModel):
             self.from_dict(new_values)
 
         self_fields = self._extract_model_db_fields()
-        self_fields.pop(self.Meta.pkname)
+        self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
+        self_fields = self.objects._translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.update().values(**self_fields)
         expr = expr.where(self.pk_column == getattr(self, self.Meta.pkname))
 
@@ -162,5 +165,7 @@ class Model(NewBaseModel):
             raise ValueError(
                 "Instance was deleted from database and cannot be refreshed"
             )
-        self.from_dict(dict(row))
+        kwargs = dict(row)
+        kwargs = self.objects._translate_aliases_to_columns(kwargs)
+        self.from_dict(kwargs)
         return self

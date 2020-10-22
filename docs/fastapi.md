@@ -6,97 +6,66 @@ you need to do is substitute pydantic models with ormar models.
 
 Here you can find a very simple sample application code.
 
+## Imports and initialization 
+
+First take care of the imports and initialization 
+```python hl_lines="1-12"
+--8<-- "../docs_src/fastapi/docs001.py"
+```
+
+## Database connection 
+
+Next define startup and shutdown events (or use middleware)
+- note that this is `databases` specific setting not the ormar one
+```python hl_lines="15-26"
+--8<-- "../docs_src/fastapi/docs001.py"
+```
+
+!!!info
+    You can read more on connecting to databases in [fastapi][fastapi] documentation
+
+## Models definition 
+
+Define ormar models with appropriate fields. 
+
+Those models will be used insted of pydantic ones.
+```python hl_lines="29-47"
+--8<-- "../docs_src/fastapi/docs001.py"
+```
+
+!!!tip
+    You can read more on defining `Models` in [models][models] section.
+
+## Fastapi endpoints definition
+
+Define your desired endpoints, note how `ormar` models are used both 
+as `response_model` and as a requests parameters.
+
+```python hl_lines="50-77"
+--8<-- "../docs_src/fastapi/docs001.py"
+```
+
+!!!note
+    Note how ormar `Model` methods like save() are available straight out of the box after fastapi initializes it for you.
+
+!!!note
+    Note that you can return a `Model` (or list of `Models`) directly - fastapi will jsonize it for you
+
+## Test the application
+
+Here you have a sample test that will prove that everything works as intended.
+
 ```python
-from typing import List
-
-import databases
-import pytest
-import sqlalchemy
-from fastapi import FastAPI
-from starlette.testclient import TestClient
-
-import ormar
-from tests.settings import DATABASE_URL
-
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
-app.state.database = database
-
-# define startup and shutdown events
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
-
-# define ormar models
-class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
-
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-
-
-class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
-
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-    category: ormar.ForeignKey(Category, nullable=True)
-
-# define endpoints in fastapi
-@app.get("/items/", response_model=List[Item])
-async def get_items():
-    items = await Item.objects.select_related("category").all()
-    # not that you can return a model directly - fastapi will json-ize it
-    return items
-
-
-@app.post("/items/", response_model=Item)
-async def create_item(item: Item):
-    # note how ormar methods like save() are available streight out of the box
-    await item.save()
-    return item
-
-
-@app.post("/categories/", response_model=Category)
-async def create_category(category: Category):
-    await category.save()
-    return category
-
-
-@app.put("/items/{item_id}")
-async def get_item(item_id: int, item: Item):
-    # you can work both with item_id or item
-    item_db = await Item.objects.get(pk=item_id)
-    return await item_db.update(**item.dict())
-
-
-@app.delete("/items/{item_id}")
-async def delete_item(item_id: int, item: Item):
-    item_db = await Item.objects.get(pk=item_id)
-    return {"deleted_rows": await item_db.delete()}
 
 # here is a sample test to check the working of the ormar with fastapi
+
+from starlette.testclient import TestClient
+
 def test_all_endpoints():
     # note that TestClient is only sync, don't use asyns here
     client = TestClient(app)
     # note that you need to connect to database manually
-    # or use client as contextmanager
+    # or use client as contextmanager during tests
     with client as client:
         response = client.post("/categories/", json={"name": "test cat"})
         category = response.json()
@@ -124,3 +93,9 @@ def test_all_endpoints():
         items = response.json()
         assert len(items) == 0
 ```
+
+!!!info
+    You can read more on testing fastapi in [fastapi][fastapi] docs. 
+
+[fastapi]: https://fastapi.tiangolo.com/
+[models]: ./models.md

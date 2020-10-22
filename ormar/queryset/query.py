@@ -40,7 +40,8 @@ class Query:
 
     @property
     def prefixed_pk_name(self) -> str:
-        return f"{self.table.name}.{self.model_cls.Meta.pkname}"
+        pkname_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
+        return f"{self.table.name}.{pkname_alias}"
 
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
         self_related_fields = self.model_cls.own_table_columns(

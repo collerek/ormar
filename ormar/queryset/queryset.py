@@ -70,10 +70,33 @@ class QuerySet:
             return self.model.merge_instances_list(result_rows)  # type: ignore
         return result_rows
 
+    def _prepare_model_to_save(self, new_kwargs: dict) -> dict:
+        new_kwargs = self._remove_pk_from_kwargs(new_kwargs)
+        new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
+        new_kwargs = self._populate_default_values(new_kwargs)
+        new_kwargs = self._translate_columns_to_aliases(new_kwargs)
+        return new_kwargs
+
     def _populate_default_values(self, new_kwargs: dict) -> dict:
         for field_name, field in self.model_meta.model_fields.items():
             if field_name not in new_kwargs and field.has_default():
                 new_kwargs[field_name] = field.get_default()
+        return new_kwargs
+
+    def _translate_columns_to_aliases(self, new_kwargs: dict) -> dict:
+        for field_name, field in self.model_meta.model_fields.items():
+            if (
+                field_name in new_kwargs
+                and field.name is not None
+                and field.name != field_name
+            ):
+                new_kwargs[field.name] = new_kwargs.pop(field_name)
+        return new_kwargs
+
+    def _translate_aliases_to_columns(self, new_kwargs: dict) -> dict:
+        for field_name, field in self.model_meta.model_fields.items():
+            if field.name in new_kwargs and field.name != field_name:
+                new_kwargs[field_name] = new_kwargs.pop(field.name)
         return new_kwargs
 
     def _remove_pk_from_kwargs(self, new_kwargs: dict) -> dict:
@@ -184,6 +207,7 @@ class QuerySet:
     async def update(self, each: bool = False, **kwargs: Any) -> int:
         self_fields = self.model.extract_db_own_fields()
         updates = {k: v for k, v in kwargs.items() if k in self_fields}
+        updates = self._translate_columns_to_aliases(updates)
         if not each and not self.filter_clauses:
             raise QueryDefinitionError(
                 "You cannot update without filtering the queryset first. "
@@ -278,9 +302,7 @@ class QuerySet:
     async def create(self, **kwargs: Any) -> "Model":
 
         new_kwargs = dict(**kwargs)
-        new_kwargs = self._remove_pk_from_kwargs(new_kwargs)
-        new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
-        new_kwargs = self._populate_default_values(new_kwargs)
+        new_kwargs = self._prepare_model_to_save(new_kwargs)
 
         expr = self.table.insert()
         expr = expr.values(**new_kwargs)
@@ -288,7 +310,7 @@ class QuerySet:
         instance = self.model(**kwargs)
         pk = await self.database.execute(expr)
 
-        pk_name = self.model_meta.pkname
+        pk_name = self.model.get_column_alias(self.model_meta.pkname)
         if pk_name not in kwargs and pk_name in new_kwargs:
             instance.pk = new_kwargs[self.model_meta.pkname]
         if pk and isinstance(pk, self.model.pk_type()):
@@ -300,9 +322,7 @@ class QuerySet:
         ready_objects = []
         for objt in objects:
             new_kwargs = objt.dict()
-            new_kwargs = self._remove_pk_from_kwargs(new_kwargs)
-            new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
-            new_kwargs = self._populate_default_values(new_kwargs)
+            new_kwargs = self._prepare_model_to_save(new_kwargs)
             ready_objects.append(new_kwargs)
 
         expr = self.table.insert()
@@ -323,6 +343,8 @@ class QuerySet:
         if pk_name not in columns:
             columns.append(pk_name)
 
+        columns = [self.model.get_column_alias(k) for k in columns]
+
         for objt in objects:
             new_kwargs = objt.dict()
             if pk_name not in new_kwargs or new_kwargs.get(pk_name) is None:
@@ -331,15 +353,24 @@ class QuerySet:
                     f"{self.model.__name__} has to have {pk_name} filled."
                 )
             new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
+            new_kwargs = self._translate_columns_to_aliases(new_kwargs)
             new_kwargs = {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
             ready_objects.append(new_kwargs)
 
-        pk_column = self.model_meta.table.c.get(pk_name)
-        expr = self.table.update().where(pk_column == bindparam("new_" + pk_name))
+        pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
+        pk_column_name = self.model.get_column_alias(pk_name)
+        table_columns = [c.name for c in self.model_meta.table.c]
+        expr = self.table.update().where(
+            pk_column == bindparam("new_" + pk_column_name)
+        )
         expr = expr.values(
-            **{k: bindparam("new_" + k) for k in columns if k != pk_name}
+            **{
+                k: bindparam("new_" + k)
+                for k in columns
+                if k != pk_column_name and k in table_columns
+            }
         )
         # databases bind params only where query is passed as string
-        # otherwise it just pases all data to values and results in unconsumed columns
+        # otherwise it just passes all data to values and results in unconsumed columns
         expr = str(expr)
         await self.database.execute_many(expr, ready_objects)

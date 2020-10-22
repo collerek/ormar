@@ -44,7 +44,7 @@ class QueryClause:
     ) -> Tuple[List[sqlalchemy.sql.expression.TextClause], List[str]]:
 
         if kwargs.get("pk"):
-            pk_name = self.model_cls.Meta.pkname
+            pk_name = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
             kwargs[pk_name] = kwargs.pop("pk")
 
         filter_clauses, select_related = self._populate_filter_clauses(**kwargs)
@@ -83,7 +83,7 @@ class QueryClause:
 
             else:
                 op = "exact"
-                column = self.table.columns[key]
+                column = self.table.columns[self.model_cls.get_column_alias(key)]
                 table = self.table
 
             clause = self._process_column_clause_for_operator_and_value(

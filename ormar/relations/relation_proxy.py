@@ -39,7 +39,7 @@ class RelationProxy(list):
 
     def _set_queryset(self) -> "QuerySet":
         owner_table = self.relation._owner.Meta.tablename
-        pkname = self.relation._owner.Meta.pkname
+        pkname = self.relation._owner.get_column_alias(self.relation._owner.Meta.pkname)
         pk_value = self.relation._owner.pk
         if not pk_value:
             raise RelationshipInstanceError(

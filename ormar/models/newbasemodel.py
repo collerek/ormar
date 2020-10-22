@@ -134,8 +134,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def _extract_related_model_instead_of_field(
         self, item: str
     ) -> Optional[Union["Model", List["Model"]]]:
-        if item in self._orm:
-            return self._orm.get(item)
+        alias = self.get_column_alias(item)
+        if alias in self._orm:
+            return self._orm.get(alias)
         return None
 
     def __eq__(self, other: object) -> bool:

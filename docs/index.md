@@ -97,7 +97,9 @@ await Track.objects.create(album=malibu, title="The Bird", position=1)
 await Track.objects.create(album=malibu, title="Heart don't stand a chance", position=2)
 await Track.objects.create(album=malibu, title="The Waters", position=3)
 
-fantasies = await Album.objects.create(name="Fantasies")
+# alternative creation of object divided into 2 steps
+fantasies = Album.objects.create(name="Fantasies")
+await fantasies.save()
 await Track.objects.create(album=fantasies, title="Help I'm Alive", position=1)
 await Track.objects.create(album=fantasies, title="Sick Muse", position=2)
 
@@ -137,12 +139,33 @@ tracks = await Track.objects.limit(1).all()
 assert len(tracks) == 1
 ```
 
-## Data types
+## Ormar Specification
+
+### QuerySet methods
+
+*  `create(**kwargs): -> Model`
+*  `get(**kwargs): -> Model`
+*  `get_or_create(**kwargs) -> Model`
+*  `update(each: bool = False, **kwargs) -> int`
+*  `update_or_create(**kwargs) -> Model`
+*  `bulk_create(objects: List[Model]) -> None`
+*  `bulk_update(objects: List[Model], columns: List[str] = None) -> None`
+*  `delete(each: bool = False, **kwargs) -> int`
+*  `all(self, **kwargs) -> List[Optional[Model]]`
+*  `filter(**kwargs) -> QuerySet`
+*  `exclude(**kwargs) -> QuerySet`
+*  `select_related(related: Union[List, str]) -> QuerySet`
+*  `limit(limit_count: int) -> QuerySet`
+*  `offset(offset: int) -> QuerySet`
+*  `count() -> int`
+*  `exists() -> bool`
+*  `fields(columns: Union[List, str]) -> QuerySet`
+
 
 #### Relation types
 
-*  One to many  - with `ForeignKey`
-*  Many to many - with `Many2Many`
+*  One to many  - with `ForeignKey(to: Model)`
+*  Many to many - with `ManyToMany(to: Model, through: Model)`
 
 #### Model fields types
 
@@ -161,7 +184,7 @@ Available Model Fields (with required args - optional ones in docs):
 * `Decimal(scale, precision)`
 * `UUID()`
 * `ForeignKey(to)`
-* `Many2Many(to, through)`
+* `ManyToMany(to, through)`
 
 ### Available fields options
 The following keyword arguments are supported on all field types.
@@ -173,6 +196,7 @@ The following keyword arguments are supported on all field types.
   * `index: bool`
   * `unique: bool`
   * `choices: typing.Sequence`
+  * `name: str`
 
 All fields are required unless one of the following is set:
 

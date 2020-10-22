@@ -9,6 +9,7 @@ nav:
   - Queries: queries.md
   - Use with Fastapi: fastapi.md
   - Contributing: contributing.md
+  - Release Notes: releases.md
 repo_name: collerek/ormar
 repo_url: https://github.com/collerek/ormar
 google_analytics:
