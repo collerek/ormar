@@ -170,7 +170,31 @@ class ModelTableProxy:
         return other
 
     @staticmethod
-    def own_table_columns(  # noqa: CCR001
+    def _get_not_nested_columns_from_fields(
+        model: Type["Model"],
+        fields: List,
+        column_names: List[str],
+        use_alias: bool = False,
+    ) -> List[str]:
+        fields = [model.get_column_alias(k) if not use_alias else k for k in fields]
+        columns = [name for name in fields if "__" not in name and name in column_names]
+        return columns
+
+    @staticmethod
+    def _get_nested_columns_from_fields(
+        model: Type["Model"], fields: List, use_alias: bool = False,
+    ) -> List[str]:
+        model_name = f"{model.get_name()}__"
+        columns = [
+            name[(name.find(model_name) + len(model_name)) :]  # noqa: E203
+            for name in fields
+            if f"{model.get_name()}__" in name
+        ]
+        columns = [model.get_column_alias(k) if not use_alias else k for k in columns]
+        return columns
+
+    @staticmethod
+    def own_table_columns(
         model: Type["Model"],
         fields: List,
         nested: bool = False,
@@ -184,20 +208,13 @@ class ModelTableProxy:
             return column_names
 
         if not nested:
-            fields = [model.get_column_alias(k) if not use_alias else k for k in fields]
-            columns = [
-                name for name in fields if "__" not in name and name in column_names
-            ]
+            columns = ModelTableProxy._get_not_nested_columns_from_fields(
+                model, fields, column_names, use_alias
+            )
         else:
-            model_name = f"{model.get_name()}__"
-            columns = [
-                name[(name.find(model_name) + len(model_name)) :]  # noqa: E203
-                for name in fields
-                if f"{model.get_name()}__" in name
-            ]
-            columns = [
-                model.get_column_alias(k) if not use_alias else k for k in columns
-            ]
+            columns = ModelTableProxy._get_nested_columns_from_fields(
+                model, fields, use_alias
+            )
 
         # if the model is in select and no columns in fields, all implied
         if not columns:
