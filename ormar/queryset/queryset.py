@@ -357,7 +357,7 @@ class QuerySet:
             new_kwargs = {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
             ready_objects.append(new_kwargs)
 
-        pk_column = self.model_meta.table.c.get(pk_name)
+        pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
         pk_column_name = self.model.get_column_alias(pk_name)
         table_columns = [c.name for c in self.model_meta.table.c]
         expr = self.table.update().where(
@@ -371,6 +371,6 @@ class QuerySet:
             }
         )
         # databases bind params only where query is passed as string
-        # otherwise it just pases all data to values and results in unconsumed columns
+        # otherwise it just passes all data to values and results in unconsumed columns
         expr = str(expr)
         await self.database.execute_many(expr, ready_objects)

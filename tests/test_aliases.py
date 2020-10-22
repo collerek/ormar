@@ -121,6 +121,10 @@ async def test_bulk_operations_and_fields():
 
         await Child.objects.bulk_update(children)
 
+        children = await Child.objects.filter(first_name='Daughter').all()
+        assert len(children) == 2
+        assert children[0].born_year == 1890
+
         children = await Child.objects.fields(['first_name', 'last_name']).all()
         assert len(children) == 2
         for child in children:
