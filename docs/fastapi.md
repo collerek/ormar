@@ -59,6 +59,17 @@ as `response_model` and as a requests parameters.
 
 Here you have a sample test that will prove that everything works as intended.
 
+Be sure to create the tables first. If you are using pytest you can use a fixture.
+
+```python
+@pytest.fixture(autouse=True, scope="module")
+def create_test_database():
+    engine = sqlalchemy.create_engine(DATABASE_URL)
+    metadata.create_all(engine)
+    yield
+    metadata.drop_all(engine)
+```
+
 ```python
 
 # here is a sample test to check the working of the ormar with fastapi
