@@ -58,6 +58,47 @@ But for now you cannot change the ManyToMany column names as they go through oth
 ```Python hl_lines="18"
 --8<-- "../docs_src/models/docs010.py"
 ```
+### Database initialization/ migrations
+
+Note that all examples assume that you already have a database.
+
+If that is not the case and you need to create your tables, that's super easy as `ormar` is using sqlalchemy for underlying table construction.
+
+All you have to do is call `create_all()` like in the example below.
+
+```python
+import sqlalchemy
+# get your database url in sqlalchemy format - same as used with databases instance used in Model definition
+engine = sqlalchemy.create_engine("sqlite:///test.db")
+# note that this has to be the same metadata that is used in ormar Models definition
+metadata.create_all(engine)
+```
+
+You can also create single tables, sqlalchemy tables are exposed in `ormar.Meta` class.
+
+```python
+import sqlalchemy
+# get your database url in sqlalchemy format - same as used with databases instance used in Model definition
+engine = sqlalchemy.create_engine("sqlite:///test.db")
+# Artist is an ormar model from previous examples
+Artist.Meta.table.create(engine)
+```
+
+!!!warning
+    You need to create the tables only once, so use a python console for that or remove the script from your production code after first use.
+
+Likewise as with tables, since we base tables on sqlalchemy for migrations please use [alembic][alembic].
+
+Use command line to reproduce this minimalistic example.
+
+```python
+alembic init alembic
+alembic revision --autogenerate -m "made some changes"
+alembic upgrade head
+```
+
+!!!info
+    You can read more about table creation, altering and migrations in [sqlalchemy table creation][sqlalchemy table creation] documentation.
 
 ### Dependencies
 
@@ -261,3 +302,5 @@ For example to list table model fields you can:
 [sqlalchemy-metadata]: https://docs.sqlalchemy.org/en/13/core/metadata.html
 [databases]: https://github.com/encode/databases
 [sqlalchemy connection string]: https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls
+[sqlalchemy table creation]: https://docs.sqlalchemy.org/en/13/core/metadata.html#creating-and-dropping-database-tables
+[alembic]: https://alembic.sqlalchemy.org/en/latest/tutorial.html

@@ -6,6 +6,10 @@ you need to do is substitute pydantic models with ormar models.
 
 Here you can find a very simple sample application code.
 
+!!!warning
+    This example assumes that you already have a database created. If that is not the case please visit [database initialization][database initialization] section.
+
+
 ## Imports and initialization 
 
 First take care of the imports and initialization 
@@ -99,3 +103,4 @@ def test_all_endpoints():
 
 [fastapi]: https://fastapi.tiangolo.com/
 [models]: ./models.md
+[database initialization]: ./models.md/#database-initialization-migrations
