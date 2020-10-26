@@ -141,6 +141,24 @@ class ModelTableProxy:
         return to_field
 
     @classmethod
+    def translate_columns_to_aliases(cls, new_kwargs: dict) -> dict:
+        for field_name, field in cls.Meta.model_fields.items():
+            if (
+                field_name in new_kwargs
+                and field.name is not None
+                and field.name != field_name
+            ):
+                new_kwargs[field.name] = new_kwargs.pop(field_name)
+        return new_kwargs
+
+    @classmethod
+    def translate_aliases_to_columns(cls, new_kwargs: dict) -> dict:
+        for field_name, field in cls.Meta.model_fields.items():
+            if field.name in new_kwargs and field.name != field_name:
+                new_kwargs[field_name] = new_kwargs.pop(field.name)
+        return new_kwargs
+
+    @classmethod
     def merge_instances_list(cls, result_rows: List["Model"]) -> List["Model"]:
         merged_rows: List["Model"] = []
         for index, model in enumerate(result_rows):

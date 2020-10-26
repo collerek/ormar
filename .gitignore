@@ -2,6 +2,7 @@ p38venv
 .idea
 .pytest_cache
 .mypy_cache
+.coverage
 *.pyc
 *.log
 test.db
