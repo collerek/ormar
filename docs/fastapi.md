@@ -114,4 +114,4 @@ def test_all_endpoints():
 
 [fastapi]: https://fastapi.tiangolo.com/
 [models]: ./models.md
-[database initialization]: ./models.md/#database-initialization-migrations
+[database initialization]:  ../models/#database-initialization-migrations
