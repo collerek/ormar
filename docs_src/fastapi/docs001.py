@@ -72,6 +72,8 @@ async def get_item(item_id: int, item: Item):
 
 
 @app.delete("/items/{item_id}")
-async def delete_item(item_id: int, item: Item):
+async def delete_item(item_id: int, item: Item = None):
+    if item:
+        return {"deleted_rows": await item.delete()}
     item_db = await Item.objects.get(pk=item_id)
     return {"deleted_rows": await item_db.delete()}

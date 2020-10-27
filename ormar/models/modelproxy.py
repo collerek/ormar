@@ -5,7 +5,7 @@ import ormar
 from ormar.exceptions import RelationshipInstanceError
 from ormar.fields import BaseField, ManyToManyField
 from ormar.fields.foreign_key import ForeignKeyField
-from ormar.models.metaclass import ModelMeta
+from ormar.models.metaclass import ModelMeta, expand_reverse_relationships
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -112,9 +112,10 @@ class ModelTableProxy:
         return self_fields
 
     @staticmethod
-    def resolve_relation_name(
+    def resolve_relation_name(  # noqa CCR001
         item: Union["NewBaseModel", Type["NewBaseModel"]],
         related: Union["NewBaseModel", Type["NewBaseModel"]],
+        register_missing: bool = True,
     ) -> str:
         for name, field in item.Meta.model_fields.items():
             if issubclass(field, ForeignKeyField):
@@ -123,6 +124,13 @@ class ModelTableProxy:
                 # so we need to compare Meta too as this one is copied as is
                 if field.to == related.__class__ or field.to.Meta == related.Meta:
                     return name
+        # fallback for not registered relation
+        if register_missing:
+            expand_reverse_relationships(related.__class__)  # type: ignore
+            return ModelTableProxy.resolve_relation_name(
+                item, related, register_missing=False
+            )
+
         raise ValueError(
             f"No relation between {item.get_name()} and {related.get_name()}"
         )  # pragma nocover
@@ -139,6 +147,24 @@ class ModelTableProxy:
                 f"reference to model {related.__class__}"
             )
         return to_field
+
+    @classmethod
+    def translate_columns_to_aliases(cls, new_kwargs: Dict) -> Dict:
+        for field_name, field in cls.Meta.model_fields.items():
+            if (
+                field_name in new_kwargs
+                and field.name is not None
+                and field.name != field_name
+            ):
+                new_kwargs[field.name] = new_kwargs.pop(field_name)
+        return new_kwargs
+
+    @classmethod
+    def translate_aliases_to_columns(cls, new_kwargs: Dict) -> Dict:
+        for field_name, field in cls.Meta.model_fields.items():
+            if field.name in new_kwargs and field.name != field_name:
+                new_kwargs[field_name] = new_kwargs.pop(field.name)
+        return new_kwargs
 
     @classmethod
     def merge_instances_list(cls, result_rows: List["Model"]) -> List["Model"]:

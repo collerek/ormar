@@ -145,7 +145,7 @@ class Model(NewBaseModel):
 
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
-        self_fields = self.objects._translate_columns_to_aliases(self_fields)
+        self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.update().values(**self_fields)
         expr = expr.where(self.pk_column == getattr(self, self.Meta.pkname))
 
@@ -166,6 +166,6 @@ class Model(NewBaseModel):
                 "Instance was deleted from database and cannot be refreshed"
             )
         kwargs = dict(row)
-        kwargs = self.objects._translate_aliases_to_columns(kwargs)
+        kwargs = self.translate_aliases_to_columns(kwargs)
         self.from_dict(kwargs)
         return self

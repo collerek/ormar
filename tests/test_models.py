@@ -1,4 +1,5 @@
 import asyncio
+import uuid
 from datetime import datetime
 from typing import List
 
@@ -6,7 +7,6 @@ import databases
 import pydantic
 import pytest
 import sqlalchemy
-import uuid
 
 import ormar
 from ormar.exceptions import QueryDefinitionError, NoMatch

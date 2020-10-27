@@ -1,10 +1,12 @@
-from typing import TYPE_CHECKING, Type
+from typing import Dict, TYPE_CHECKING, Type
 
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
+
+REF_PREFIX = "#/components/schemas/"
 
 
 def ManyToMany(
@@ -31,6 +33,9 @@ def ManyToMany(
         pydantic_only=False,
         default=None,
         server_default=None,
+        __pydantic_model__=to,
+        # __origin__=List,
+        # __args__=[Optional[to]]
     )
 
     return type("ManyToMany", (ManyToManyField, BaseField), namespace)
@@ -38,3 +43,10 @@ def ManyToMany(
 
 class ManyToManyField(ForeignKeyField):
     through: Type["Model"]
+
+    @classmethod
+    def __modify_schema__(cls, field_schema: Dict) -> None:
+        field_schema["type"] = "array"
+        field_schema["title"] = cls.name.title()
+        field_schema["definitions"] = {f"{cls.to.__name__}": cls.to.schema()}
+        field_schema["items"] = {"$ref": f"{REF_PREFIX}{cls.to.__name__}"}

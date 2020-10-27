@@ -40,6 +40,8 @@ class RelationsManager:
             to=field.to,
             through=getattr(field, "through", None),
         )
+        if field.name not in self._related_names:
+            self._related_names.append(field.name)
 
     def __contains__(self, item: str) -> bool:
         return item in self._related_names

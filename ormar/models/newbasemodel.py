@@ -100,7 +100,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             )
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
-        if name in self.__slots__:
+        if name in ("_orm_id", "_orm_saved", "_orm"):
             object.__setattr__(self, name, value)
         elif name == "pk":
             object.__setattr__(self, self.Meta.pkname, value)
@@ -137,7 +137,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         alias = self.get_column_alias(item)
         if alias in self._orm:
             return self._orm.get(alias)
-        return None
+        return None  # pragma no cover
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, NewBaseModel):
