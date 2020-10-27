@@ -5,7 +5,7 @@ import ormar
 from ormar.exceptions import RelationshipInstanceError
 from ormar.fields import BaseField, ManyToManyField
 from ormar.fields.foreign_key import ForeignKeyField
-from ormar.models.metaclass import ModelMeta
+from ormar.models.metaclass import ModelMeta, expand_reverse_relationships
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -76,10 +76,10 @@ class ModelTableProxy:
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
             if (
-                inspect.isclass(field)
-                and issubclass(field, ForeignKeyField)
-                and not issubclass(field, ManyToManyField)
-                and not field.virtual
+                    inspect.isclass(field)
+                    and issubclass(field, ForeignKeyField)
+                    and not issubclass(field, ManyToManyField)
+                    and not field.virtual
             ):
                 related_names.add(name)
         return related_names
@@ -91,9 +91,9 @@ class ModelTableProxy:
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
             if (
-                inspect.isclass(field)
-                and issubclass(field, ForeignKeyField)
-                and field.nullable
+                    inspect.isclass(field)
+                    and issubclass(field, ForeignKeyField)
+                    and field.nullable
             ):
                 related_names.add(name)
         return related_names
@@ -113,8 +113,9 @@ class ModelTableProxy:
 
     @staticmethod
     def resolve_relation_name(
-        item: Union["NewBaseModel", Type["NewBaseModel"]],
-        related: Union["NewBaseModel", Type["NewBaseModel"]],
+            item: Union["NewBaseModel", Type["NewBaseModel"]],
+            related: Union["NewBaseModel", Type["NewBaseModel"]],
+            register_missing: bool = True
     ) -> str:
         for name, field in item.Meta.model_fields.items():
             if issubclass(field, ForeignKeyField):
@@ -123,13 +124,18 @@ class ModelTableProxy:
                 # so we need to compare Meta too as this one is copied as is
                 if field.to == related.__class__ or field.to.Meta == related.Meta:
                     return name
+        # fallback for not registered relation
+        if register_missing:
+            expand_reverse_relationships(related.__class__)
+            return ModelTableProxy.resolve_relation_name(item, related, register_missing=False)
+
         raise ValueError(
             f"No relation between {item.get_name()} and {related.get_name()}"
         )  # pragma nocover
 
     @staticmethod
     def resolve_relation_field(
-        item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
+            item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
     ) -> Union[Type[BaseField], Type[ForeignKeyField]]:
         name = ModelTableProxy.resolve_relation_name(item, related)
         to_field = item.Meta.model_fields.get(name)
@@ -144,9 +150,9 @@ class ModelTableProxy:
     def translate_columns_to_aliases(cls, new_kwargs: dict) -> dict:
         for field_name, field in cls.Meta.model_fields.items():
             if (
-                field_name in new_kwargs
-                and field.name is not None
-                and field.name != field_name
+                    field_name in new_kwargs
+                    and field.name is not None
+                    and field.name != field_name
             ):
                 new_kwargs[field.name] = new_kwargs.pop(field_name)
         return new_kwargs
@@ -173,12 +179,12 @@ class ModelTableProxy:
         for field in one.Meta.model_fields.keys():
             current_field = getattr(one, field)
             if isinstance(current_field, list) and not isinstance(
-                current_field, ormar.Model
+                    current_field, ormar.Model
             ):
                 setattr(other, field, current_field + getattr(other, field))
             elif (
-                isinstance(current_field, ormar.Model)
-                and current_field.pk == getattr(other, field).pk
+                    isinstance(current_field, ormar.Model)
+                    and current_field.pk == getattr(other, field).pk
             ):
                 setattr(
                     other,
@@ -189,10 +195,10 @@ class ModelTableProxy:
 
     @staticmethod
     def _get_not_nested_columns_from_fields(
-        model: Type["Model"],
-        fields: List,
-        column_names: List[str],
-        use_alias: bool = False,
+            model: Type["Model"],
+            fields: List,
+            column_names: List[str],
+            use_alias: bool = False,
     ) -> List[str]:
         fields = [model.get_column_alias(k) if not use_alias else k for k in fields]
         columns = [name for name in fields if "__" not in name and name in column_names]
@@ -200,11 +206,11 @@ class ModelTableProxy:
 
     @staticmethod
     def _get_nested_columns_from_fields(
-        model: Type["Model"], fields: List, use_alias: bool = False,
+            model: Type["Model"], fields: List, use_alias: bool = False,
     ) -> List[str]:
         model_name = f"{model.get_name()}__"
         columns = [
-            name[(name.find(model_name) + len(model_name)) :]  # noqa: E203
+            name[(name.find(model_name) + len(model_name)):]  # noqa: E203
             for name in fields
             if f"{model.get_name()}__" in name
         ]
@@ -213,10 +219,10 @@ class ModelTableProxy:
 
     @staticmethod
     def own_table_columns(
-        model: Type["Model"],
-        fields: List,
-        nested: bool = False,
-        use_alias: bool = False,
+            model: Type["Model"],
+            fields: List,
+            nested: bool = False,
+            use_alias: bool = False,
     ) -> List[str]:
         column_names = [
             model.get_column_name_from_alias(col.name) if use_alias else col.name

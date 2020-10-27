@@ -132,12 +132,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         return super().__getattribute__(item)
 
     def _extract_related_model_instead_of_field(
-        self, item: str
+            self, item: str
     ) -> Optional[Union["Model", List["Model"]]]:
         alias = self.get_column_alias(item)
         if alias in self._orm:
             return self._orm.get(alias)
-        return None
+        return None  # pragma no cover
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, NewBaseModel):
@@ -146,9 +146,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     def __same__(self, other: "NewBaseModel") -> bool:
         return (
-            self._orm_id == other._orm_id
-            or self.dict() == other.dict()
-            or (self.pk == other.pk and self.pk is not None)
+                self._orm_id == other._orm_id
+                or self.dict() == other.dict()
+                or (self.pk == other.pk and self.pk is not None)
         )
 
     @classmethod
@@ -170,16 +170,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         self._orm.remove_parent(self, name)
 
     def dict(  # noqa A003
-        self,
-        *,
-        include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
-        exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
-        by_alias: bool = False,
-        skip_defaults: bool = None,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        nested: bool = False
+            self,
+            *,
+            include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+            exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+            by_alias: bool = False,
+            skip_defaults: bool = None,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            nested: bool = False
     ) -> "DictStrAny":  # noqa: A003'
         dict_instance = super().dict(
             include=include,

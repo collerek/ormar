@@ -29,25 +29,31 @@ async def shutdown() -> None:
         await database_.disconnect()
 
 
+class LocalMeta:
+    metadata = metadata
+    database = database
+
+
 class Category(ormar.Model):
-    class Meta:
+    class Meta(LocalMeta):
         tablename = "categories"
-        metadata = metadata
-        database = database
 
     id: ormar.Integer(primary_key=True)
     name: ormar.String(max_length=100)
+
+
+class ItemsXCategories(ormar.Model):
+    class Meta(LocalMeta):
+        tablename = 'items_x_categories'
 
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    class Meta(LocalMeta):
+        pass
 
     id: ormar.Integer(primary_key=True)
     name: ormar.String(max_length=100)
-    category: ormar.ForeignKey(Category, nullable=True)
+    categories: ormar.ManyToMany(Category, through=ItemsXCategories)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -60,7 +66,7 @@ def create_test_database():
 
 @app.get("/items/", response_model=List[Item])
 async def get_items():
-    items = await Item.objects.select_related("category").all()
+    items = await Item.objects.select_related("categories").all()
     return items
 
 
@@ -70,24 +76,16 @@ async def create_item(item: Item):
     return item
 
 
+@app.post("/items/add_category/", response_model=Item)
+async def create_item(item: Item, category: Category):
+    await item.categories.add(category)
+    return item
+
+
 @app.post("/categories/", response_model=Category)
 async def create_category(category: Category):
     await category.save()
     return category
-
-
-@app.put("/items/{item_id}")
-async def update_item(item_id: int, item: Item):
-    item_db = await Item.objects.get(pk=item_id)
-    return await item_db.update(**item.dict())
-
-
-@app.delete("/items/{item_id}")
-async def delete_item(item_id: int, item: Item = None):
-    if item:
-        return {"deleted_rows": await item.delete()}
-    item_db = await Item.objects.get(pk=item_id)
-    return {"deleted_rows": await item_db.delete()}
 
 
 def test_all_endpoints():
@@ -95,41 +93,33 @@ def test_all_endpoints():
     with client as client:
         response = client.post("/categories/", json={"name": "test cat"})
         category = response.json()
+        response = client.post("/categories/", json={"name": "test cat2"})
+        category2 = response.json()
+
         response = client.post(
-            "/items/", json={"name": "test", "id": 1, "category": category}
+            "/items/", json={"name": "test", "id": 1}
         )
         item = Item(**response.json())
         assert item.pk is not None
 
+        response = client.post(
+            "/items/add_category/", json={"item": item.dict(), "category": category}
+        )
+        item = Item(**response.json())
+        assert len(item.categories) == 1
+        assert item.categories[0].name == 'test cat'
+
+        client.post(
+            "/items/add_category/", json={"item": item.dict(), "category": category2}
+        )
+
         response = client.get("/items/")
         items = [Item(**item) for item in response.json()]
         assert items[0] == item
-
-        item.name = "New name"
-        response = client.put(f"/items/{item.pk}", json=item.dict())
-        assert response.json() == item.dict()
-
-        response = client.get("/items/")
-        items = [Item(**item) for item in response.json()]
-        assert items[0].name == "New name"
-
-        response = client.delete(f"/items/{item.pk}")
-        assert response.json().get("deleted_rows", "__UNDEFINED__") != "__UNDEFINED__"
-        response = client.get("/items/")
-        items = response.json()
-        assert len(items) == 0
-
-        client.post(
-            "/items/", json={"name": "test_2", "id": 2, "category": category}
-        )
-        response = client.get("/items/")
-        items = response.json()
-        assert len(items) == 1
-
-        item = Item(**items[0])
-        response = client.delete(f"/items/{item.pk}", json=item.dict())
-        assert response.json().get("deleted_rows", "__UNDEFINED__") != "__UNDEFINED__"
+        assert len(items[0].categories) == 2
+        assert items[0].categories[0].name == 'test cat'
+        assert items[0].categories[1].name == 'test cat2'
 
         response = client.get("/docs/")
         assert response.status_code == 200
-
+        assert b'<title>FastAPI - Swagger UI</title>' in response.content

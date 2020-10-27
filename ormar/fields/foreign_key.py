@@ -58,6 +58,7 @@ def ForeignKey(  # noqa CFQ002
         pydantic_only=False,
         default=None,
         server_default=None,
+        __pydantic_model__=to,
     )
 
     return type("ForeignKey", (ForeignKeyField, BaseField), namespace)
