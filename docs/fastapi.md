@@ -45,7 +45,7 @@ Those models will be used insted of pydantic ones.
 Define your desired endpoints, note how `ormar` models are used both 
 as `response_model` and as a requests parameters.
 
-```python hl_lines="50-77"
+```python hl_lines="50-79"
 --8<-- "../docs_src/fastapi/docs001.py"
 ```
 
@@ -56,6 +56,23 @@ as `response_model` and as a requests parameters.
     Note that you can return a `Model` (or list of `Models`) directly - fastapi will jsonize it for you
 
 ## Test the application
+
+### Run fastapi
+
+If you want to run this script and play with fastapi swagger install uvicorn first
+
+`pip install uvicorn`
+
+And launch the fastapi.
+
+`uvicorn <filename_without_extension>:app --reload`
+
+Now you can navigate to your browser (by default fastapi address is `127.0.0.1:8000/docs`) and play with the api.
+
+!!!info
+    You can read more about running fastapi in [fastapi][fastapi] docs. 
+
+### Test with pytest
 
 Here you have a sample test that will prove that everything works as intended.
 
@@ -109,9 +126,13 @@ def test_all_endpoints():
         assert len(items) == 0
 ```
 
+!!!tip
+    If you want to see more test cases and how to test ormar/fastapi see [tests][tests] directory in the github repo
+
 !!!info
     You can read more on testing fastapi in [fastapi][fastapi] docs. 
 
 [fastapi]: https://fastapi.tiangolo.com/
 [models]: ./models.md
 [database initialization]:  ../models/#database-initialization-migrations
+[tests]: https://github.com/collerek/ormar/tree/master/tests
