@@ -119,9 +119,7 @@ def test_all_endpoints():
         items = response.json()
         assert len(items) == 0
 
-        client.post(
-            "/items/", json={"name": "test_2", "id": 2, "category": category}
-        )
+        client.post("/items/", json={"name": "test_2", "id": 2, "category": category})
         response = client.get("/items/")
         items = response.json()
         assert len(items) == 1
@@ -132,4 +130,3 @@ def test_all_endpoints():
 
         response = client.get("/docs/")
         assert response.status_code == 200
-

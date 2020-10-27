@@ -44,7 +44,7 @@ class Category(ormar.Model):
 
 class ItemsXCategories(ormar.Model):
     class Meta(LocalMeta):
-        tablename = 'items_x_categories'
+        tablename = "items_x_categories"
 
 
 class Item(ormar.Model):
@@ -96,9 +96,7 @@ def test_all_endpoints():
         response = client.post("/categories/", json={"name": "test cat2"})
         category2 = response.json()
 
-        response = client.post(
-            "/items/", json={"name": "test", "id": 1}
-        )
+        response = client.post("/items/", json={"name": "test", "id": 1})
         item = Item(**response.json())
         assert item.pk is not None
 
@@ -107,7 +105,7 @@ def test_all_endpoints():
         )
         item = Item(**response.json())
         assert len(item.categories) == 1
-        assert item.categories[0].name == 'test cat'
+        assert item.categories[0].name == "test cat"
 
         client.post(
             "/items/add_category/", json={"item": item.dict(), "category": category2}
@@ -117,9 +115,21 @@ def test_all_endpoints():
         items = [Item(**item) for item in response.json()]
         assert items[0] == item
         assert len(items[0].categories) == 2
-        assert items[0].categories[0].name == 'test cat'
-        assert items[0].categories[1].name == 'test cat2'
+        assert items[0].categories[0].name == "test cat"
+        assert items[0].categories[1].name == "test cat2"
 
         response = client.get("/docs/")
         assert response.status_code == 200
-        assert b'<title>FastAPI - Swagger UI</title>' in response.content
+        assert b"<title>FastAPI - Swagger UI</title>" in response.content
+
+
+def test_schema_modification():
+    schema = Item.schema()
+    assert schema["properties"]["categories"]["type"] == "array"
+    assert schema["properties"]["categories"]["title"] == "Categories"
+
+
+def test_schema_gen():
+    schema = app.openapi()
+    assert "Category" in schema["components"]["schemas"]
+    assert "Item" in schema["components"]["schemas"]

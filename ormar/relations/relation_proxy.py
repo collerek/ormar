@@ -6,7 +6,7 @@ from ormar.relations.querysetproxy import QuerysetProxy
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
-    from ormar.relations import Relation, register_missing_relation
+    from ormar.relations import Relation
     from ormar.queryset import QuerySet
 
 
@@ -33,8 +33,8 @@ class RelationProxy(list):
 
     def _check_if_queryset_is_initialized(self) -> bool:
         return (
-                hasattr(self.queryset_proxy, "queryset")
-                and self.queryset_proxy.queryset is not None
+            hasattr(self.queryset_proxy, "queryset")
+            and self.queryset_proxy.queryset is not None
         )
 
     def _set_queryset(self) -> "QuerySet":
@@ -48,8 +48,8 @@ class RelationProxy(list):
         kwargs = {f"{owner_table}__{pkname}": pk_value}
         queryset = (
             ormar.QuerySet(model_cls=self.relation.to)
-                .select_related(owner_table)
-                .filter(**kwargs)
+            .select_related(owner_table)
+            .filter(**kwargs)
         )
         return queryset
 
@@ -72,6 +72,6 @@ class RelationProxy(list):
         if self.relation._type == ormar.RelationType.MULTIPLE:
             await self.queryset_proxy.create_through_instance(item)
         rel_name = item.resolve_relation_name(item, self._owner)
-        if not rel_name in item._orm:
+        if rel_name not in item._orm:
             item._orm._add_relation(item.Meta.model_fields[rel_name])
         setattr(item, rel_name, self._owner)

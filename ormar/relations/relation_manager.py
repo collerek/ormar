@@ -17,9 +17,9 @@ if TYPE_CHECKING:  # pragma no cover
 
 class RelationsManager:
     def __init__(
-            self,
-            related_fields: List[Type[ForeignKeyField]] = None,
-            owner: "NewBaseModel" = None,
+        self,
+        related_fields: List[Type[ForeignKeyField]] = None,
+        owner: "NewBaseModel" = None,
     ) -> None:
         self.owner = proxy(owner)
         self._related_fields = related_fields or []
@@ -76,7 +76,7 @@ class RelationsManager:
             child_relation.add(parent)
 
     def remove(
-            self, name: str, child: Union["NewBaseModel", Type["NewBaseModel"]]
+        self, name: str, child: Union["NewBaseModel", Type["NewBaseModel"]]
     ) -> None:
         relation = self._get(name)
         if relation:
@@ -84,7 +84,7 @@ class RelationsManager:
 
     @staticmethod
     def remove_parent(
-            item: Union["NewBaseModel", Type["NewBaseModel"]], name: "Model"
+        item: Union["NewBaseModel", Type["NewBaseModel"]], name: "Model"
     ) -> None:
         related_model = name
         rel_name = item.resolve_relation_name(item, related_model)
