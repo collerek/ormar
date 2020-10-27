@@ -1,3 +1,10 @@
+# 0.3.9
+
+*  Fix json schema generation as of [#19][#19]
+*  Fix for not initialized ManyToMany relations in fastapi copies of ormar.Models
+*  Update docs in regard of fastapi use
+*  Add tests to verify fastapi/docs proper generation
+
 # 0.3.8
 
 *  Added possibility to provide alternative database column names with name parameter to all fields.
@@ -43,3 +50,6 @@ Add queryset level methods
 # 0.3.0
 
 * Added ManyToMany field and support for many to many relations
+
+
+[#19]: https://github.com/collerek/ormar/issues/19
