@@ -77,6 +77,9 @@ async def test_model_creation():
 
             p2 = await Product.objects.create(name='Test3')
             assert p2.created is not None
-            assert p1.created != p2.created
             assert p2.company == 'Acme'
             assert p2.sort_order == 10
+
+            if Product.db_backend_name() != 'postgresql':
+                # postgres use transaction timestamp so it will remain the same
+                assert p1.created != p2.created

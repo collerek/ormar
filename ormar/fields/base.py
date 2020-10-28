@@ -44,7 +44,7 @@ class BaseField:
         return None
 
     @classmethod
-    def get_default(cls, use_server: bool = False) -> Any: # noqa CCR001
+    def get_default(cls, use_server: bool = False) -> Any:  # noqa CCR001
         if cls.has_default():
             default = (
                 cls.default
