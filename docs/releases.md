@@ -1,3 +1,7 @@
+# 0.3.10
+
+* Fix 
+
 # 0.3.9
 
 *  Fix json schema generation as of [#19][#19]

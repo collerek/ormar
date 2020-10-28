@@ -68,13 +68,31 @@ Used both in sql and pydantic.
 
 A default value used if no other value is passed.
 
-In sql invoked on the server side so you can pass i.e. sql function (like now() wrapped in sqlalchemy text() clause).
+In sql invoked on the server side so you can pass i.e. sql function (like now() or query/value wrapped in sqlalchemy text() clause).
 
 If the field has a server_default value it becomes optional.
 
 You can pass a static value or a Callable (function etc.)
 
 Used in sql only.
+
+Sample usage:
+
+```Python hl_lines="19-21"
+--8<-- "../docs_src/fields/docs004.py"
+```
+
+!!!warning
+    `server_default` accepts `str`, `sqlalchemy.sql.elements.ClauseElement` or `sqlalchemy.sql.elements.TextClause`
+    so if you want to set i.e. Integer value you need to wrap it in `sqlalchemy.text()` function like above
+
+!!!tip
+    You can pass also valid sql (dialect specific) wrapped in `sqlalchemy.text()`
+    
+    For example `func.now()` above could be exchanged for `text('(CURRENT_TIMESTAMP)')` for sqlite backend
+
+!!!info
+    `server_default` is passed straight to sqlalchemy table definition so you can read more in [server default][server default] sqlalchemy documentation
  
 ### index
 
@@ -241,3 +259,4 @@ You can use either `length` and `precision` parameters or `max_digits` and `deci
 [relations]: ./relations.md
 [queries]: ./queries.md
 [pydantic]: https://pydantic-docs.helpmanual.io/usage/types/#constrained-types
+[server default]: https://docs.sqlalchemy.org/en/13/core/defaults.html#server-invoked-ddl-explicit-default-expressions
