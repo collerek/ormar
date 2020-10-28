@@ -50,6 +50,16 @@ class ModelTableProxy:
         return model_dict
 
     @classmethod
+    def populate_default_values(cls, new_kwargs: Dict) -> Dict:
+        for field_name, field in cls.Meta.model_fields.items():
+            if field_name not in new_kwargs and field.has_default(use_server=False):
+                new_kwargs[field_name] = field.get_default()
+            # clear fields with server_default set as None
+            if field.server_default is not None and not new_kwargs.get(field_name):
+                new_kwargs.pop(field_name, None)
+        return new_kwargs
+
+    @classmethod
     def get_column_alias(cls, field_name: str) -> str:
         field = cls.Meta.model_fields.get(field_name)
         if field and field.name is not None and field.name != field_name:

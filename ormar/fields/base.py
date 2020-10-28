@@ -33,10 +33,10 @@ class BaseField:
     server_default: Any
 
     @classmethod
-    def default_value(cls) -> Optional[FieldInfo]:
+    def default_value(cls, use_server: bool = False) -> Optional[FieldInfo]:
         if cls.is_auto_primary_key():
             return Field(default=None)
-        if cls.has_default():
+        if cls.has_default(use_server=use_server):
             default = cls.default if cls.default is not None else cls.server_default
             if callable(default):
                 return Field(default_factory=default)
@@ -44,16 +44,22 @@ class BaseField:
         return None
 
     @classmethod
-    def get_default(cls) -> Any:
+    def get_default(cls, use_server: bool = False) -> Any: # noqa CCR001
         if cls.has_default():
-            default = cls.default if cls.default is not None else cls.server_default
+            default = (
+                cls.default
+                if cls.default is not None
+                else (cls.server_default if use_server else None)
+            )
             if callable(default):
                 default = default()
             return default
 
     @classmethod
-    def has_default(cls) -> bool:
-        return cls.default is not None or cls.server_default is not None
+    def has_default(cls, use_server: bool = True) -> bool:
+        return cls.default is not None or (
+            cls.server_default is not None and use_server
+        )
 
     @classmethod
     def is_auto_primary_key(cls) -> bool:

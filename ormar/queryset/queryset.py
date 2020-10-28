@@ -73,14 +73,8 @@ class QuerySet:
     def _prepare_model_to_save(self, new_kwargs: dict) -> dict:
         new_kwargs = self._remove_pk_from_kwargs(new_kwargs)
         new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
-        new_kwargs = self._populate_default_values(new_kwargs)
+        new_kwargs = self.model.populate_default_values(new_kwargs)
         new_kwargs = self.model.translate_columns_to_aliases(new_kwargs)
-        return new_kwargs
-
-    def _populate_default_values(self, new_kwargs: dict) -> dict:
-        for field_name, field in self.model_meta.model_fields.items():
-            if field_name not in new_kwargs and field.has_default():
-                new_kwargs[field_name] = field.get_default()
         return new_kwargs
 
     def _remove_pk_from_kwargs(self, new_kwargs: dict) -> dict:
@@ -299,6 +293,9 @@ class QuerySet:
             instance.pk = new_kwargs[self.model_meta.pkname]
         if pk and isinstance(pk, self.model.pk_type()):
             setattr(instance, self.model_meta.pkname, pk)
+
+        # refresh server side defaults
+        instance = await instance.load()
 
         return instance
 
