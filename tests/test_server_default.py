@@ -51,30 +51,32 @@ def test_table_defined_properly():
 
 @pytest.mark.asyncio
 async def test_model_creation():
-    p1 = Product(name='Test')
-    assert p1.created is None
-    await p1.save()
-    await p1.load()
-    assert p1.created is not None
-    assert p1.company == 'Acme'
-    assert p1.sort_order == 10
+    async with database:
+        async with database.transaction(force_rollback=True):
+            p1 = Product(name='Test')
+            assert p1.created is None
+            await p1.save()
+            await p1.load()
+            assert p1.created is not None
+            assert p1.company == 'Acme'
+            assert p1.sort_order == 10
 
-    date = datetime.strptime('2020-10-27 11:30', '%Y-%m-%d %H:%M')
-    p3 = await Product.objects.create(name='Test2', created=date, company='Roadrunner', sort_order=1)
-    assert p3.created is not None
-    assert p3.created == date
-    assert p1.created != p3.created
-    assert p3.company == 'Roadrunner'
-    assert p3.sort_order == 1
+            date = datetime.strptime('2020-10-27 11:30', '%Y-%m-%d %H:%M')
+            p3 = await Product.objects.create(name='Test2', created=date, company='Roadrunner', sort_order=1)
+            assert p3.created is not None
+            assert p3.created == date
+            assert p1.created != p3.created
+            assert p3.company == 'Roadrunner'
+            assert p3.sort_order == 1
 
-    p3 = await Product.objects.get(name='Test2')
-    assert p3.company == 'Roadrunner'
-    assert p3.sort_order == 1
+            p3 = await Product.objects.get(name='Test2')
+            assert p3.company == 'Roadrunner'
+            assert p3.sort_order == 1
 
-    time.sleep(1)
+            time.sleep(1)
 
-    p2 = await Product.objects.create(name='Test3')
-    assert p2.created is not None
-    assert p1.created != p2.created
-    assert p2.company == 'Acme'
-    assert p2.sort_order == 10
+            p2 = await Product.objects.create(name='Test3')
+            assert p2.created is not None
+            assert p1.created != p2.created
+            assert p2.company == 'Acme'
+            assert p2.sort_order == 10
