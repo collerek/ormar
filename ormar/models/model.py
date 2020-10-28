@@ -2,7 +2,6 @@ import itertools
 from typing import Any, Dict, List, Optional
 
 import sqlalchemy
-from databases.backends.postgres import Record
 
 import ormar.queryset  # noqa I100
 from ormar.fields.many_to_many import ManyToManyField
@@ -110,7 +109,7 @@ class Model(NewBaseModel):
     ) -> dict:
 
         # databases does not keep aliases in Record for postgres, change to raw row
-        source = row._row if isinstance(row, Record) else row
+        source = row._row if cls.db_backend_name() == "postgresql" else row
 
         selected_columns = cls.own_table_columns(
             cls, fields or [], nested=nested, use_alias=True
