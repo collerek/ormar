@@ -82,4 +82,4 @@ async def test_model_creation():
 
             if Product.db_backend_name() != 'postgresql':
                 # postgres use transaction timestamp so it will remain the same
-                assert p1.created != p2.created
+                assert p1.created != p2.created  # pragma nocover
