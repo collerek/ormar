@@ -30,7 +30,7 @@ class Car(ormar.Model):
         database = database
 
     id = ormar.Integer(primary_key=True)
-    manufacturer= ormar.ForeignKey(Company)
+    manufacturer = ormar.ForeignKey(Company)
     name = ormar.String(max_length=100)
     year = ormar.Integer(nullable=True)
     gearbox_type = ormar.String(max_length=20, nullable=True)

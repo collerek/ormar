@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, TYPE_CHECKING, Type, Union, Sequence
+from typing import Any, List, Optional, Sequence, TYPE_CHECKING, Type, Union
 
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
@@ -10,13 +10,13 @@ REF_PREFIX = "#/components/schemas/"
 
 
 def ManyToMany(
-        to: Type["Model"],
-        through: Type["Model"],
-        *,
-        name: str = None,
-        unique: bool = False,
-        virtual: bool = False,
-        **kwargs: Any
+    to: Type["Model"],
+    through: Type["Model"],
+    *,
+    name: str = None,
+    unique: bool = False,
+    virtual: bool = False,
+    **kwargs: Any
 ) -> Type["ManyToManyField"]:
     to_field = to.Meta.model_fields[to.Meta.pkname]
     related_name = kwargs.pop("related_name", None)
@@ -50,7 +50,8 @@ def ManyToMany(
 class ManyToManyField(ForeignKeyField):
     through: Type["Model"]
 
-    if TYPE_CHECKING:  # pragma nocover
+    if TYPE_CHECKING:  # noqa: C901; pragma nocover
+
         @staticmethod
         async def add(item: "Model") -> None:
             pass
@@ -62,7 +63,7 @@ class ManyToManyField(ForeignKeyField):
         from ormar import QuerySet
 
         @staticmethod
-        def filter(**kwargs: Any) -> "QuerySet":  # noqa: A003
+        def filter(**kwargs: Any) -> "QuerySet":  # noqa: A003, A001
             pass
 
         @staticmethod
@@ -70,15 +71,15 @@ class ManyToManyField(ForeignKeyField):
             pass
 
         @staticmethod
-        async def exists(self) -> bool:
-            return await self.queryset.exists()
+        async def exists() -> bool:
+            pass
 
         @staticmethod
-        async def count(self) -> int:
-            return await self.queryset.count()
+        async def count() -> int:
+            pass
 
         @staticmethod
-        async def clear(self) -> int:
+        async def clear() -> int:
             pass
 
         @staticmethod
@@ -86,21 +87,21 @@ class ManyToManyField(ForeignKeyField):
             pass
 
         @staticmethod
-        def offset(self, offset: int) -> "QuerySet":
+        def offset(offset: int) -> "QuerySet":
             pass
 
         @staticmethod
-        async def first(self, **kwargs: Any) -> "Model":
+        async def first(**kwargs: Any) -> "Model":
             pass
 
         @staticmethod
-        async def get(self, **kwargs: Any) -> "Model":
+        async def get(**kwargs: Any) -> "Model":
             pass
 
         @staticmethod
-        async def all(self, **kwargs: Any) -> Sequence[Optional["Model"]]:  # noqa: A003
+        async def all(**kwargs: Any) -> Sequence[Optional["Model"]]:  # noqa: A003, A001
             pass
 
         @staticmethod
-        async def create(self, **kwargs: Any) -> "Model":
+        async def create(**kwargs: Any) -> "Model":
             pass

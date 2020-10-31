@@ -49,10 +49,8 @@ class Post(ormar.Model):
 
     id = ormar.Integer(primary_key=True)
     title = ormar.String(max_length=200)
-    categories = ormar.ManyToMany(
-        Category, through=PostCategory
-    )
-    author= ormar.ForeignKey(Author)
+    categories = ormar.ManyToMany(Category, through=PostCategory)
+    author = ormar.ForeignKey(Author)
 
 
 @pytest.fixture(scope="module")

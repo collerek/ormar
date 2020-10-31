@@ -23,7 +23,7 @@ class JsonSample(ormar.Model):
         database = database
 
     id = ormar.Integer(primary_key=True)
-    test_json= ormar.JSON(nullable=True)
+    test_json = ormar.JSON(nullable=True)
 
 
 class UUIDSample(ormar.Model):
@@ -32,7 +32,7 @@ class UUIDSample(ormar.Model):
         metadata = metadata
         database = database
 
-    id= ormar.UUID(primary_key=True, default=uuid.uuid4)
+    id = ormar.UUID(primary_key=True, default=uuid.uuid4)
     test_text = ormar.Text()
 
 
@@ -55,8 +55,8 @@ class Product(ormar.Model):
     id = ormar.Integer(primary_key=True)
     name = ormar.String(max_length=100)
     rating = ormar.Integer(minimum=1, maximum=5)
-    in_stock= ormar.Boolean(default=False)
-    last_delivery= ormar.Date(default=datetime.now)
+    in_stock = ormar.Boolean(default=False)
+    last_delivery = ormar.Date(default=datetime.now)
 
 
 country_name_choices = ("Canada", "Algeria", "United States")
@@ -71,10 +71,8 @@ class Country(ormar.Model):
         database = database
 
     id = ormar.Integer(primary_key=True)
-    name = ormar.String(
-        max_length=9, choices=country_name_choices, default="Canada",
-    )
-    taxed= ormar.Boolean(choices=country_taxed_choices, default=True)
+    name = ormar.String(max_length=9, choices=country_name_choices, default="Canada",)
+    taxed = ormar.Boolean(choices=country_taxed_choices, default=True)
     country_code = ormar.Integer(
         minimum=0, maximum=1000, choices=country_country_code_choices, default=1
     )

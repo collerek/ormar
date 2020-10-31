@@ -139,6 +139,7 @@ def test_sqlalchemy_table_is_created(example):
 @typing.no_type_check
 def test_no_pk_in_model_definition():  # type: ignore
     with pytest.raises(ModelDefinitionError):  # type: ignore
+
         class ExampleModel2(Model):  # type: ignore
             class Meta:
                 tablename = "example2"
@@ -150,6 +151,7 @@ def test_no_pk_in_model_definition():  # type: ignore
 @typing.no_type_check
 def test_two_pks_in_model_definition():
     with pytest.raises(ModelDefinitionError):
+
         @typing.no_type_check
         class ExampleModel2(Model):
             class Meta:
@@ -163,6 +165,7 @@ def test_two_pks_in_model_definition():
 @typing.no_type_check
 def test_setting_pk_column_as_pydantic_only_in_model_definition():
     with pytest.raises(ModelDefinitionError):
+
         class ExampleModel2(Model):
             class Meta:
                 tablename = "example4"
@@ -174,6 +177,7 @@ def test_setting_pk_column_as_pydantic_only_in_model_definition():
 @typing.no_type_check
 def test_decimal_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
+
         class ExampleModel2(Model):
             class Meta:
                 tablename = "example5"
@@ -185,6 +189,7 @@ def test_decimal_error_in_model_definition():
 @typing.no_type_check
 def test_string_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
+
         class ExampleModel2(Model):
             class Meta:
                 tablename = "example6"

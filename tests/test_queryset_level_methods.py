@@ -36,7 +36,7 @@ class ToDo(ormar.Model):
 
     id = ormar.Integer(primary_key=True)
     text = ormar.String(max_length=500)
-    completed= ormar.Boolean(default=False)
+    completed = ormar.Boolean(default=False)
 
 
 class Category(ormar.Model):
@@ -57,7 +57,7 @@ class Note(ormar.Model):
 
     id = ormar.Integer(primary_key=True)
     text = ormar.String(max_length=500)
-    category= ormar.ForeignKey(Category)
+    category = ormar.ForeignKey(Category)
 
 
 @pytest.fixture(autouse=True, scope="module")

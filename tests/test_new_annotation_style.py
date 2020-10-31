@@ -29,7 +29,7 @@ class Track(ormar.Model):
         database = database
 
     id = ormar.Integer(primary_key=True)
-    album= ormar.ForeignKey(Album)
+    album = ormar.ForeignKey(Album)
     title = ormar.String(max_length=100)
     position = ormar.Integer()
 
@@ -41,7 +41,7 @@ class Cover(ormar.Model):
         database = database
 
     id = ormar.Integer(primary_key=True)
-    album= ormar.ForeignKey(Album, related_name="cover_pictures")
+    album = ormar.ForeignKey(Album, related_name="cover_pictures")
     title = ormar.String(max_length=100)
 
 
@@ -62,7 +62,7 @@ class Team(ormar.Model):
         database = database
 
     id = ormar.Integer(primary_key=True)
-    org= ormar.ForeignKey(Organisation)
+    org = ormar.ForeignKey(Organisation)
     name = ormar.String(max_length=100)
 
 
@@ -73,7 +73,7 @@ class Member(ormar.Model):
         database = database
 
     id = ormar.Integer(primary_key=True)
-    team= ormar.ForeignKey(Team)
+    team = ormar.ForeignKey(Team)
     email = ormar.String(max_length=100)
 
 

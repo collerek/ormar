@@ -53,9 +53,7 @@ class Item(ormar.Model):
 
     id = ormar.Integer(primary_key=True)
     name = ormar.String(max_length=100)
-    categories = ormar.ManyToMany(
-        Category, through=ItemsXCategories
-    )
+    categories = ormar.ManyToMany(Category, through=ItemsXCategories)
 
 
 @pytest.fixture(autouse=True, scope="module")

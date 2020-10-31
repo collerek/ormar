@@ -40,7 +40,7 @@ class Category(ormar.Model):
 
     id = ormar.Integer(primary_key=True)
     name = ormar.String(max_length=100)
-    department= ormar.ForeignKey(Department, nullable=False)
+    department = ormar.ForeignKey(Department, nullable=False)
 
 
 class Student(ormar.Model):
@@ -51,8 +51,8 @@ class Student(ormar.Model):
 
     id = ormar.Integer(primary_key=True)
     name = ormar.String(max_length=100)
-    schoolclass= ormar.ForeignKey(SchoolClass)
-    category= ormar.ForeignKey(Category, nullable=True)
+    schoolclass = ormar.ForeignKey(SchoolClass)
+    category = ormar.ForeignKey(Category, nullable=True)
 
 
 class Teacher(ormar.Model):
@@ -63,8 +63,8 @@ class Teacher(ormar.Model):
 
     id = ormar.Integer(primary_key=True)
     name = ormar.String(max_length=100)
-    schoolclass= ormar.ForeignKey(SchoolClass)
-    category= ormar.ForeignKey(Category, nullable=True)
+    schoolclass = ormar.ForeignKey(SchoolClass)
+    category = ormar.ForeignKey(Category, nullable=True)
 
 
 @pytest.fixture(scope="module")
