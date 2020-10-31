@@ -1,5 +1,6 @@
 from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
+import pydantic
 import sqlalchemy
 from pydantic import Field, typing
 from pydantic.fields import FieldInfo
@@ -11,8 +12,9 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.models import NewBaseModel
 
 
-class BaseField:
+class BaseField(FieldInfo):
     __type__ = None
+    __pydantic_type__ = None
 
     column_type: sqlalchemy.Column
     constraints: List = []
@@ -31,6 +33,28 @@ class BaseField:
 
     default: Any
     server_default: Any
+
+    @classmethod
+    def is_valid_field_info_field(cls, field_name: str) -> bool:
+        return (
+            field_name not in ["default", "default_factory"]
+            and not field_name.startswith("__")
+            and hasattr(cls, field_name)
+        )
+
+    @classmethod
+    def convert_to_pydantic_field_info(cls, allow_null: bool = False) -> FieldInfo:
+        base = cls.default_value()
+        if base is None:
+            base = (
+                FieldInfo(default=None)
+                if (cls.nullable or allow_null)
+                else FieldInfo(default=pydantic.fields.Undefined)
+            )
+        for attr_name in FieldInfo.__dict__.keys():
+            if cls.is_valid_field_info_field(attr_name):
+                setattr(base, attr_name, cls.__dict__.get(attr_name))
+        return base
 
     @classmethod
     def default_value(cls, use_server: bool = False) -> Optional[FieldInfo]:

@@ -125,7 +125,9 @@ def test_all_endpoints():
 
 def test_schema_modification():
     schema = Item.schema()
-    assert schema["properties"]["categories"]["type"] == "array"
+    assert any(
+        x.get("type") == "array" for x in schema["properties"]["categories"]["anyOf"]
+    )
     assert schema["properties"]["categories"]["title"] == "Categories"
 
 

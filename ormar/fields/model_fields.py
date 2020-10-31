@@ -20,8 +20,9 @@ def is_field_nullable(
 
 
 class ModelFieldFactory:
-    _bases: Any = BaseField
+    _bases: Any = (BaseField,)
     _type: Any = None
+    _pydantic_type: Any = None
 
     def __new__(cls, *args: Any, **kwargs: Any) -> Type[BaseField]:  # type: ignore
         cls.validate(**kwargs)
@@ -32,6 +33,7 @@ class ModelFieldFactory:
 
         namespace = dict(
             __type__=cls._type,
+            __pydantic_type__=cls._pydantic_type,
             name=kwargs.pop("name", None),
             primary_key=kwargs.pop("primary_key", False),
             default=default,
@@ -57,8 +59,8 @@ class ModelFieldFactory:
 
 
 class String(ModelFieldFactory):
-    _bases = (pydantic.ConstrainedStr, BaseField)
     _type = str
+    _pydantic_type = pydantic.ConstrainedStr
 
     def __new__(  # type: ignore # noqa CFQ002
         cls,
@@ -96,8 +98,8 @@ class String(ModelFieldFactory):
 
 
 class Integer(ModelFieldFactory):
-    _bases = (pydantic.ConstrainedInt, BaseField)
     _type = int
+    _pydantic_type = pydantic.ConstrainedInt
 
     def __new__(  # type: ignore
         cls,
@@ -131,8 +133,8 @@ class Integer(ModelFieldFactory):
 
 
 class Text(ModelFieldFactory):
-    _bases = (pydantic.ConstrainedStr, BaseField)
     _type = str
+    _pydantic_type = pydantic.ConstrainedStr
 
     def __new__(  # type: ignore
         cls, *, allow_blank: bool = True, strip_whitespace: bool = False, **kwargs: Any
@@ -154,8 +156,8 @@ class Text(ModelFieldFactory):
 
 
 class Float(ModelFieldFactory):
-    _bases = (pydantic.ConstrainedFloat, BaseField)
     _type = float
+    _pydantic_type = pydantic.ConstrainedFloat
 
     def __new__(  # type: ignore
         cls,
@@ -183,8 +185,8 @@ class Float(ModelFieldFactory):
 
 
 class Boolean(ModelFieldFactory):
-    _bases = (int, BaseField)
     _type = bool
+    _pydantic_type = bool
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
@@ -192,8 +194,8 @@ class Boolean(ModelFieldFactory):
 
 
 class DateTime(ModelFieldFactory):
-    _bases = (datetime.datetime, BaseField)
     _type = datetime.datetime
+    _pydantic_type = datetime.datetime
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
@@ -201,8 +203,8 @@ class DateTime(ModelFieldFactory):
 
 
 class Date(ModelFieldFactory):
-    _bases = (datetime.date, BaseField)
     _type = datetime.date
+    _pydantic_type = datetime.date
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
@@ -210,8 +212,8 @@ class Date(ModelFieldFactory):
 
 
 class Time(ModelFieldFactory):
-    _bases = (datetime.time, BaseField)
     _type = datetime.time
+    _pydantic_type = datetime.time
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
@@ -219,8 +221,8 @@ class Time(ModelFieldFactory):
 
 
 class JSON(ModelFieldFactory):
-    _bases = (pydantic.Json, BaseField)
     _type = pydantic.Json
+    _pydantic_type = pydantic.Json
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
@@ -228,8 +230,8 @@ class JSON(ModelFieldFactory):
 
 
 class BigInteger(Integer):
-    _bases = (pydantic.ConstrainedInt, BaseField)
     _type = int
+    _pydantic_type = pydantic.ConstrainedInt
 
     def __new__(  # type: ignore
         cls,
@@ -263,8 +265,8 @@ class BigInteger(Integer):
 
 
 class Decimal(ModelFieldFactory):
-    _bases = (pydantic.ConstrainedDecimal, BaseField)
     _type = decimal.Decimal
+    _pydantic_type = pydantic.ConstrainedDecimal
 
     def __new__(  # type: ignore # noqa CFQ002
         cls,
@@ -318,8 +320,8 @@ class Decimal(ModelFieldFactory):
 
 
 class UUID(ModelFieldFactory):
-    _bases = (uuid.UUID, BaseField)
     _type = uuid.UUID
+    _pydantic_type = uuid.UUID
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:

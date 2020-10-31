@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, TYPE_CHECKING, Union
+from typing import Any, List, Optional, Sequence, TYPE_CHECKING, TypeVar, Union
 
 import ormar
 
@@ -6,6 +6,8 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
     from ormar.models import Model
     from ormar.queryset import QuerySet
+
+    T = TypeVar("T", bound=Model)
 
 
 class QuerysetProxy:
@@ -26,27 +28,28 @@ class QuerysetProxy:
     def queryset(self, value: "QuerySet") -> None:
         self._queryset = value
 
-    def _assign_child_to_parent(self, child: Optional["Model"]) -> None:
+    def _assign_child_to_parent(self, child: Optional[T]) -> None:
         if child:
             owner = self.relation._owner
             rel_name = owner.resolve_relation_name(owner, child)
             setattr(owner, rel_name, child)
 
-    def _register_related(self, child: Union["Model", List[Optional["Model"]]]) -> None:
+    def _register_related(self, child: Union[T, Sequence[Optional[T]]]) -> None:
         if isinstance(child, list):
             for subchild in child:
                 self._assign_child_to_parent(subchild)
         else:
+            assert isinstance(child, Model)
             self._assign_child_to_parent(child)
 
-    async def create_through_instance(self, child: "Model") -> None:
+    async def create_through_instance(self, child: T) -> None:
         queryset = ormar.QuerySet(model_cls=self.relation.through)
         owner_column = self.relation._owner.get_name()
         child_column = child.get_name()
         kwargs = {owner_column: self.relation._owner, child_column: child}
         await queryset.create(**kwargs)
 
-    async def delete_through_instance(self, child: "Model") -> None:
+    async def delete_through_instance(self, child: T) -> None:
         queryset = ormar.QuerySet(model_cls=self.relation.through)
         owner_column = self.relation._owner.get_name()
         child_column = child.get_name()
@@ -88,7 +91,7 @@ class QuerysetProxy:
         self._register_related(get)
         return get
 
-    async def all(self, **kwargs: Any) -> List[Optional["Model"]]:  # noqa: A003
+    async def all(self, **kwargs: Any) -> Sequence[Optional["Model"]]:  # noqa: A003
         all_items = await self.queryset.all(**kwargs)
         self._register_related(all_items)
         return all_items

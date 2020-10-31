@@ -5,11 +5,12 @@ from typing import (
     Any,
     Callable,
     Dict,
-    List,
     Mapping,
     Optional,
+    Sequence,
     TYPE_CHECKING,
     Type,
+    TypeVar,
     Union,
 )
 
@@ -27,7 +28,9 @@ from ormar.relations.alias_manager import AliasManager
 from ormar.relations.relation_manager import RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models.model import Model
+    from ormar import Model
+
+    T = TypeVar("T", bound=Model)
 
     IntStr = Union[int, str]
     DictStrAny = Dict[str, Any]
@@ -52,7 +55,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         Meta: ModelMeta
 
     # noinspection PyMissingConstructor
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
 
         object.__setattr__(self, "_orm_id", uuid.uuid4().hex)
         object.__setattr__(self, "_orm_saved", False)
@@ -73,7 +76,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if "pk" in kwargs:
             kwargs[self.Meta.pkname] = kwargs.pop("pk")
         # build the models to set them and validate but don't register
-        kwargs = {
+        new_kwargs = {
             k: self._convert_json(
                 k,
                 self.Meta.model_fields[k].expand_relationship(
@@ -85,7 +88,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         }
 
         values, fields_set, validation_error = pydantic.validate_model(
-            self, kwargs  # type: ignore
+            self, new_kwargs  # type: ignore
         )
         if validation_error and not pk_only:
             raise validation_error
@@ -96,7 +99,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         # register the columns models after initialization
         for related in self.extract_related_names():
             self.Meta.model_fields[related].expand_relationship(
-                kwargs.get(related), self, to_register=True
+                new_kwargs.get(related), self, to_register=True
             )
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
@@ -133,7 +136,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     def _extract_related_model_instead_of_field(
         self, item: str
-    ) -> Optional[Union["Model", List["Model"]]]:
+    ) -> Optional[Union[T, Sequence[T]]]:
         alias = self.get_column_alias(item)
         if alias in self._orm:
             return self._orm.get(alias)
@@ -170,7 +173,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def db_backend_name(cls) -> str:
         return cls.Meta.database._backend._dialect.name
 
-    def remove(self, name: "Model") -> None:
+    def remove(self, name: T) -> None:
         self._orm.remove_parent(self, name)
 
     def dict(  # noqa A003

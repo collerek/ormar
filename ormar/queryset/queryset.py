@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
+from typing import Any, List, Optional, Sequence, TYPE_CHECKING, Type, Union
 
 import databases
 import sqlalchemy
@@ -59,7 +59,7 @@ class QuerySet:
             raise ValueError("Model class of QuerySet is not initialized")
         return self.model_cls
 
-    def _process_query_result_rows(self, rows: List) -> List[Optional["Model"]]:
+    def _process_query_result_rows(self, rows: List) -> Sequence[Optional["Model"]]:
         result_rows = [
             self.model.from_row(
                 row, select_related=self._select_related, fields=self._columns
@@ -87,7 +87,7 @@ class QuerySet:
         return new_kwargs
 
     @staticmethod
-    def check_single_result_rows_count(rows: List[Optional["Model"]]) -> None:
+    def check_single_result_rows_count(rows: Sequence[Optional["Model"]]) -> None:
         if not rows or rows[0] is None:
             raise NoMatch()
         if len(rows) > 1:
@@ -267,7 +267,7 @@ class QuerySet:
         model = await self.get(pk=kwargs[pk_name])
         return await model.update(**kwargs)
 
-    async def all(self, **kwargs: Any) -> List[Optional["Model"]]:  # noqa: A003
+    async def all(self, **kwargs: Any) -> Sequence[Optional["Model"]]:  # noqa: A003
         if kwargs:
             return await self.filter(**kwargs).all()
 

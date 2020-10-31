@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, TYPE_CHECKING, Type, Union
+from typing import List, Optional, TYPE_CHECKING, Type, TypeVar, Union
 
 import ormar  # noqa I100
 from ormar.exceptions import RelationshipInstanceError  # noqa I100
@@ -10,6 +10,8 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.relations import RelationsManager
     from ormar.models import NewBaseModel
+
+    T = TypeVar("T", bound=Model)
 
 
 class RelationType(Enum):
@@ -23,15 +25,15 @@ class Relation:
         self,
         manager: "RelationsManager",
         type_: RelationType,
-        to: Type["Model"],
-        through: Type["Model"] = None,
+        to: Type[T],
+        through: Type[T] = None,
     ) -> None:
         self.manager = manager
         self._owner: "Model" = manager.owner
         self._type: RelationType = type_
-        self.to: Type["Model"] = to
-        self.through: Optional[Type["Model"]] = through
-        self.related_models: Optional[Union[RelationProxy, "Model"]] = (
+        self.to: Type[T] = to
+        self.through: Optional[Type[T]] = through
+        self.related_models: Optional[Union[RelationProxy, T]] = (
             RelationProxy(relation=self)
             if type_ in (RelationType.REVERSE, RelationType.MULTIPLE)
             else None
@@ -50,7 +52,7 @@ class Relation:
                 self.related_models.pop(ind)
         return None
 
-    def add(self, child: "Model") -> None:
+    def add(self, child: T) -> None:
         relation_name = self._owner.resolve_relation_name(self._owner, child)
         if self._type == RelationType.PRIMARY:
             self.related_models = child
@@ -77,7 +79,7 @@ class Relation:
                 self.related_models.pop(position)  # type: ignore
                 del self._owner.__dict__[relation_name][position]
 
-    def get(self) -> Optional[Union[List["Model"], "Model"]]:
+    def get(self) -> Optional[Union[List[T], T]]:
         return self.related_models
 
     def __repr__(self) -> str:  # pragma no cover

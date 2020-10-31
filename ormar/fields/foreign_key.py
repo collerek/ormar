@@ -1,4 +1,4 @@
-from typing import Any, Generator, List, Optional, TYPE_CHECKING, Type, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
 from sqlalchemy import UniqueConstraint
@@ -39,8 +39,15 @@ def ForeignKey(  # noqa CFQ002
     ondelete: str = None,
 ) -> Type["ForeignKeyField"]:
     fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
-    to_field = to.__fields__[to.Meta.pkname]
+    to_field = to.Meta.model_fields[to.Meta.pkname]
+    __type__ = (
+        Union[to_field.__type__, to]
+        if not nullable
+        else Optional[Union[to_field.__type__, to]]
+    )
     namespace = dict(
+        __type__=__type__,
+        __pydantic_type__=__type__,
         to=to,
         name=name,
         nullable=nullable,
@@ -50,7 +57,7 @@ def ForeignKey(  # noqa CFQ002
             )
         ],
         unique=unique,
-        column_type=to_field.type_.column_type,
+        column_type=to_field.column_type,
         related_name=related_name,
         virtual=virtual,
         primary_key=False,
@@ -58,7 +65,6 @@ def ForeignKey(  # noqa CFQ002
         pydantic_only=False,
         default=None,
         server_default=None,
-        __pydantic_model__=to,
     )
 
     return type("ForeignKey", (ForeignKeyField, BaseField), namespace)
@@ -69,14 +75,6 @@ class ForeignKeyField(BaseField):
     name: str
     related_name: str
     virtual: bool
-
-    @classmethod
-    def __get_validators__(cls) -> Generator:
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, value: Any) -> Any:
-        return value
 
     @classmethod
     def _extract_model_from_sequence(

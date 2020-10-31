@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, TYPE_CHECKING, Type, Union
+from typing import Dict, List, Optional, Sequence, TYPE_CHECKING, Type, TypeVar, Union
 from weakref import proxy
 
 from ormar.fields import BaseField
@@ -13,6 +13,8 @@ from ormar.relations.utils import (
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.models import NewBaseModel
+
+    T = TypeVar("T", bound=Model)
 
 
 class RelationsManager:
@@ -46,7 +48,7 @@ class RelationsManager:
     def __contains__(self, item: str) -> bool:
         return item in self._related_names
 
-    def get(self, name: str) -> Optional[Union[List["Model"], "Model"]]:
+    def get(self, name: str) -> Optional[Union[T, Sequence[T]]]:
         relation = self._relations.get(name, None)
         if relation is not None:
             return relation.get()
