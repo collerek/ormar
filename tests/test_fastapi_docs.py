@@ -77,7 +77,7 @@ async def create_item(item: Item):
 
 
 @app.post("/items/add_category/", response_model=Item)
-async def create_item(item: Item, category: Category):
+async def add_item_category(item: Item, category: Category):
     await item.categories.add(category)
     return item
 

@@ -1,7 +1,7 @@
 import asyncio
 import sqlite3
 
-import asyncpg
+import asyncpg # type: ignore
 import databases
 import pymysql
 import pytest
