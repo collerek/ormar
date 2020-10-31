@@ -28,28 +28,28 @@ class QuerysetProxy:
     def queryset(self, value: "QuerySet") -> None:
         self._queryset = value
 
-    def _assign_child_to_parent(self, child: Optional[T]) -> None:
+    def _assign_child_to_parent(self, child: Optional["T"]) -> None:
         if child:
             owner = self.relation._owner
             rel_name = owner.resolve_relation_name(owner, child)
             setattr(owner, rel_name, child)
 
-    def _register_related(self, child: Union[T, Sequence[Optional[T]]]) -> None:
+    def _register_related(self, child: Union["T", Sequence[Optional["T"]]]) -> None:
         if isinstance(child, list):
             for subchild in child:
                 self._assign_child_to_parent(subchild)
         else:
-            assert isinstance(child, Model)
+            assert isinstance(child, ormar.Model)
             self._assign_child_to_parent(child)
 
-    async def create_through_instance(self, child: T) -> None:
+    async def create_through_instance(self, child: "T") -> None:
         queryset = ormar.QuerySet(model_cls=self.relation.through)
         owner_column = self.relation._owner.get_name()
         child_column = child.get_name()
         kwargs = {owner_column: self.relation._owner, child_column: child}
         await queryset.create(**kwargs)
 
-    async def delete_through_instance(self, child: T) -> None:
+    async def delete_through_instance(self, child: "T") -> None:
         queryset = ormar.QuerySet(model_cls=self.relation.through)
         owner_column = self.relation._owner.get_name()
         child_column = child.get_name()

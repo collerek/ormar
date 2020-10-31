@@ -1,3 +1,5 @@
+from typing import Optional
+
 import databases
 import sqlalchemy
 
@@ -12,8 +14,8 @@ class Department(ormar.Model):
         database = database
         metadata = metadata
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(max_length=100)
 
 
 class Course(ormar.Model):
@@ -21,10 +23,10 @@ class Course(ormar.Model):
         database = database
         metadata = metadata
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-    completed: ormar.Boolean(default=False)
-    department: ormar.ForeignKey(Department, related_name="my_courses")
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(max_length=100)
+    completed= ormar.Boolean(default=False)
+    department= ormar.ForeignKey(Department, related_name="my_courses")
 
 
 department = Department(name='Science')

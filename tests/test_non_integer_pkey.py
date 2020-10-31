@@ -21,8 +21,8 @@ class Model(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.String(primary_key=True, default=key, max_length=8)
-    name: ormar.String(max_length=32)
+    id = ormar.String(primary_key=True, default=key, max_length=8)
+    name = ormar.String(max_length=32)
 
 
 @pytest.fixture(autouse=True, scope="function")

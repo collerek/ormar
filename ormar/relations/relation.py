@@ -25,15 +25,15 @@ class Relation:
         self,
         manager: "RelationsManager",
         type_: RelationType,
-        to: Type[T],
-        through: Type[T] = None,
+        to: Type["T"],
+        through: Type["T"] = None,
     ) -> None:
         self.manager = manager
         self._owner: "Model" = manager.owner
         self._type: RelationType = type_
-        self.to: Type[T] = to
-        self.through: Optional[Type[T]] = through
-        self.related_models: Optional[Union[RelationProxy, T]] = (
+        self.to: Type["T"] = to
+        self.through: Optional[Type["T"]] = through
+        self.related_models: Optional[Union[RelationProxy, "T"]] = (
             RelationProxy(relation=self)
             if type_ in (RelationType.REVERSE, RelationType.MULTIPLE)
             else None
@@ -52,7 +52,7 @@ class Relation:
                 self.related_models.pop(ind)
         return None
 
-    def add(self, child: T) -> None:
+    def add(self, child: "T") -> None:
         relation_name = self._owner.resolve_relation_name(self._owner, child)
         if self._type == RelationType.PRIMARY:
             self.related_models = child
@@ -79,7 +79,7 @@ class Relation:
                 self.related_models.pop(position)  # type: ignore
                 del self._owner.__dict__[relation_name][position]
 
-    def get(self) -> Optional[Union[List[T], T]]:
+    def get(self) -> Optional[Union[List["T"], "T"]]:
         return self.related_models
 
     def __repr__(self) -> str:  # pragma no cover

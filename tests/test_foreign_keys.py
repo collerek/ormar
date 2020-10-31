@@ -1,3 +1,5 @@
+from typing import Optional
+
 import databases
 import pytest
 import sqlalchemy
@@ -16,8 +18,8 @@ class Album(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
 
 
 class Track(ormar.Model):
@@ -26,10 +28,10 @@ class Track(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    album: ormar.ForeignKey(Album)
-    title: ormar.String(max_length=100)
-    position: ormar.Integer()
+    id: int = ormar.Integer(primary_key=True)
+    album: Optional[Album] = ormar.ForeignKey(Album)
+    title: str = ormar.String(max_length=100)
+    position: int = ormar.Integer()
 
 
 class Cover(ormar.Model):
@@ -38,9 +40,9 @@ class Cover(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    album: ormar.ForeignKey(Album, related_name="cover_pictures")
-    title: ormar.String(max_length=100)
+    id = ormar.Integer(primary_key=True)
+    album = ormar.ForeignKey(Album, related_name="cover_pictures")
+    title = ormar.String(max_length=100)
 
 
 class Organisation(ormar.Model):
@@ -49,8 +51,12 @@ class Organisation(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    ident: ormar.String(max_length=100, choices=["ACME Ltd", "Other ltd"])
+    id = ormar.Integer(primary_key=True)
+    ident = ormar.String(max_length=100, choices=["ACME Ltd", "Other ltd"])
+
+
+class Organization(object):
+    pass
 
 
 class Team(ormar.Model):
@@ -59,9 +65,9 @@ class Team(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    org: ormar.ForeignKey(Organisation)
-    name: ormar.String(max_length=100)
+    id = ormar.Integer(primary_key=True)
+    org = ormar.ForeignKey(Organisation)
+    name = ormar.String(max_length=100)
 
 
 class Member(ormar.Model):
@@ -70,9 +76,9 @@ class Member(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    team: ormar.ForeignKey(Team)
-    email: ormar.String(max_length=100)
+    id = ormar.Integer(primary_key=True)
+    team = ormar.ForeignKey(Team)
+    email = ormar.String(max_length=100)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -233,8 +239,8 @@ async def test_fk_filter():
 
             tracks = (
                 await Track.objects.select_related("album")
-                .filter(album__name="Fantasies")
-                .all()
+                    .filter(album__name="Fantasies")
+                    .all()
             )
             assert len(tracks) == 3
             for track in tracks:
@@ -242,8 +248,8 @@ async def test_fk_filter():
 
             tracks = (
                 await Track.objects.select_related("album")
-                .filter(album__name__icontains="fan")
-                .all()
+                    .filter(album__name__icontains="fan")
+                    .all()
             )
             assert len(tracks) == 3
             for track in tracks:
@@ -288,8 +294,8 @@ async def test_multiple_fk():
 
             members = (
                 await Member.objects.select_related("team__org")
-                .filter(team__org__ident="ACME Ltd")
-                .all()
+                    .filter(team__org__ident="ACME Ltd")
+                    .all()
             )
             assert len(members) == 4
             for member in members:
@@ -321,8 +327,8 @@ async def test_pk_filter():
 
             tracks = (
                 await Track.objects.select_related("album")
-                .filter(position=2, album__name="Test")
-                .all()
+                    .filter(position=2, album__name="Test")
+                    .all()
             )
             assert len(tracks) == 1
 

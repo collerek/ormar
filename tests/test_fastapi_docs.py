@@ -38,8 +38,8 @@ class Category(ormar.Model):
     class Meta(LocalMeta):
         tablename = "categories"
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(max_length=100)
 
 
 class ItemsXCategories(ormar.Model):
@@ -51,9 +51,11 @@ class Item(ormar.Model):
     class Meta(LocalMeta):
         pass
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-    categories: ormar.ManyToMany(Category, through=ItemsXCategories)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(max_length=100)
+    categories = ormar.ManyToMany(
+        Category, through=ItemsXCategories
+    )
 
 
 @pytest.fixture(autouse=True, scope="module")

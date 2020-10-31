@@ -136,7 +136,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     def _extract_related_model_instead_of_field(
         self, item: str
-    ) -> Optional[Union[T, Sequence[T]]]:
+    ) -> Optional[Union["T", Sequence["T"]]]:
         alias = self.get_column_alias(item)
         if alias in self._orm:
             return self._orm.get(alias)
@@ -173,7 +173,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def db_backend_name(cls) -> str:
         return cls.Meta.database._backend._dialect.name
 
-    def remove(self, name: T) -> None:
+    def remove(self, name: "T") -> None:
         self._orm.remove_parent(self, name)
 
     def dict(  # noqa A003

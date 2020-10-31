@@ -12,7 +12,7 @@ from ormar.fields.base import BaseField  # noqa I101
 
 
 def is_field_nullable(
-    nullable: Optional[bool], default: Any, server_default: Any
+        nullable: Optional[bool], default: Any, server_default: Any
 ) -> bool:
     if nullable is None:
         return default is not None or server_default is not None
@@ -58,20 +58,20 @@ class ModelFieldFactory:
         pass
 
 
-class String(ModelFieldFactory):
+class String(ModelFieldFactory, str):
     _type = str
     _pydantic_type = pydantic.ConstrainedStr
 
     def __new__(  # type: ignore # noqa CFQ002
-        cls,
-        *,
-        allow_blank: bool = True,
-        strip_whitespace: bool = False,
-        min_length: int = None,
-        max_length: int = None,
-        curtail_length: int = None,
-        regex: str = None,
-        **kwargs: Any
+            cls,
+            *,
+            allow_blank: bool = True,
+            strip_whitespace: bool = False,
+            min_length: int = None,
+            max_length: int = None,
+            curtail_length: int = None,
+            regex: str = None,
+            **kwargs: Any
     ) -> Type[BaseField]:  # type: ignore
         kwargs = {
             **kwargs,
@@ -97,17 +97,17 @@ class String(ModelFieldFactory):
             )
 
 
-class Integer(ModelFieldFactory):
+class Integer(ModelFieldFactory, int):
     _type = int
     _pydantic_type = pydantic.ConstrainedInt
 
     def __new__(  # type: ignore
-        cls,
-        *,
-        minimum: int = None,
-        maximum: int = None,
-        multiple_of: int = None,
-        **kwargs: Any
+            cls,
+            *,
+            minimum: int = None,
+            maximum: int = None,
+            multiple_of: int = None,
+            **kwargs: Any
     ) -> Type[BaseField]:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
@@ -132,12 +132,12 @@ class Integer(ModelFieldFactory):
         return sqlalchemy.Integer()
 
 
-class Text(ModelFieldFactory):
+class Text(ModelFieldFactory, str):
     _type = str
     _pydantic_type = pydantic.ConstrainedStr
 
     def __new__(  # type: ignore
-        cls, *, allow_blank: bool = True, strip_whitespace: bool = False, **kwargs: Any
+            cls, *, allow_blank: bool = True, strip_whitespace: bool = False, **kwargs: Any
     ) -> Type[BaseField]:
         kwargs = {
             **kwargs,
@@ -155,17 +155,17 @@ class Text(ModelFieldFactory):
         return sqlalchemy.Text()
 
 
-class Float(ModelFieldFactory):
+class Float(ModelFieldFactory, float):
     _type = float
     _pydantic_type = pydantic.ConstrainedFloat
 
     def __new__(  # type: ignore
-        cls,
-        *,
-        minimum: float = None,
-        maximum: float = None,
-        multiple_of: int = None,
-        **kwargs: Any
+            cls,
+            *,
+            minimum: float = None,
+            maximum: float = None,
+            multiple_of: int = None,
+            **kwargs: Any
     ) -> Type[BaseField]:
         kwargs = {
             **kwargs,
@@ -184,7 +184,7 @@ class Float(ModelFieldFactory):
         return sqlalchemy.Float()
 
 
-class Boolean(ModelFieldFactory):
+class Boolean(ModelFieldFactory, int):
     _type = bool
     _pydantic_type = bool
 
@@ -193,7 +193,7 @@ class Boolean(ModelFieldFactory):
         return sqlalchemy.Boolean()
 
 
-class DateTime(ModelFieldFactory):
+class DateTime(ModelFieldFactory, datetime.datetime):
     _type = datetime.datetime
     _pydantic_type = datetime.datetime
 
@@ -202,7 +202,7 @@ class DateTime(ModelFieldFactory):
         return sqlalchemy.DateTime()
 
 
-class Date(ModelFieldFactory):
+class Date(ModelFieldFactory, datetime.date):
     _type = datetime.date
     _pydantic_type = datetime.date
 
@@ -211,7 +211,7 @@ class Date(ModelFieldFactory):
         return sqlalchemy.Date()
 
 
-class Time(ModelFieldFactory):
+class Time(ModelFieldFactory, datetime.time):
     _type = datetime.time
     _pydantic_type = datetime.time
 
@@ -220,7 +220,7 @@ class Time(ModelFieldFactory):
         return sqlalchemy.Time()
 
 
-class JSON(ModelFieldFactory):
+class JSON(ModelFieldFactory, pydantic.Json):
     _type = pydantic.Json
     _pydantic_type = pydantic.Json
 
@@ -229,17 +229,17 @@ class JSON(ModelFieldFactory):
         return sqlalchemy.JSON()
 
 
-class BigInteger(Integer):
+class BigInteger(Integer, int):
     _type = int
     _pydantic_type = pydantic.ConstrainedInt
 
     def __new__(  # type: ignore
-        cls,
-        *,
-        minimum: int = None,
-        maximum: int = None,
-        multiple_of: int = None,
-        **kwargs: Any
+            cls,
+            *,
+            minimum: int = None,
+            maximum: int = None,
+            multiple_of: int = None,
+            **kwargs: Any
     ) -> Type[BaseField]:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
@@ -264,21 +264,21 @@ class BigInteger(Integer):
         return sqlalchemy.BigInteger()
 
 
-class Decimal(ModelFieldFactory):
+class Decimal(ModelFieldFactory, decimal.Decimal):
     _type = decimal.Decimal
     _pydantic_type = pydantic.ConstrainedDecimal
 
     def __new__(  # type: ignore # noqa CFQ002
-        cls,
-        *,
-        minimum: float = None,
-        maximum: float = None,
-        multiple_of: int = None,
-        precision: int = None,
-        scale: int = None,
-        max_digits: int = None,
-        decimal_places: int = None,
-        **kwargs: Any
+            cls,
+            *,
+            minimum: float = None,
+            maximum: float = None,
+            multiple_of: int = None,
+            precision: int = None,
+            scale: int = None,
+            max_digits: int = None,
+            decimal_places: int = None,
+            **kwargs: Any
     ) -> Type[BaseField]:
         kwargs = {
             **kwargs,
@@ -319,7 +319,7 @@ class Decimal(ModelFieldFactory):
             )
 
 
-class UUID(ModelFieldFactory):
+class UUID(ModelFieldFactory, uuid.UUID):
     _type = uuid.UUID
     _pydantic_type = uuid.UUID
 

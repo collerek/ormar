@@ -1,3 +1,5 @@
+from typing import Optional
+
 import databases
 import ormar
 import sqlalchemy
@@ -12,8 +14,8 @@ class Album(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(max_length=100)
 
 
 class Track(ormar.Model):
@@ -22,7 +24,7 @@ class Track(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    album: ormar.ForeignKey(Album)
-    title: ormar.String(max_length=100)
-    position: ormar.Integer()
+    id = ormar.Integer(primary_key=True)
+    album= ormar.ForeignKey(Album)
+    title = ormar.String(max_length=100)
+    position = ormar.Integer()

@@ -12,9 +12,9 @@ class Course(ormar.Model):
         database = database
         metadata = metadata
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-    completed: ormar.Boolean(default=False)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(max_length=100)
+    completed= ormar.Boolean(default=False)
 
 print({x:v.__dict__ for x,v in Course.Meta.model_fields.items()})
 """

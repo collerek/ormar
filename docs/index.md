@@ -75,8 +75,8 @@ class Album(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
 
 
 class Track(ormar.Model):
@@ -85,10 +85,10 @@ class Track(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    album: ormar.ForeignKey(Album)
-    title: ormar.String(length=100)
-    position: ormar.Integer()
+    id = ormar.Integer(primary_key=True)
+    album: Optional[Album] =ormar.ForeignKey(Album)
+    title = ormar.String(length=100)
+    position = ormar.Integer()
 
 
 # Create some records to work with.

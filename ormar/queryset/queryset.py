@@ -39,7 +39,7 @@ class QuerySet:
 
     def __get__(
         self,
-        instance: Union["QuerySet", "QuerysetProxy"],
+        instance: Optional[Union["QuerySet", "QuerysetProxy"]],
         owner: Union[Type["Model"], Type["QuerysetProxy"]],
     ) -> "QuerySet":
         if issubclass(owner, ormar.Model):

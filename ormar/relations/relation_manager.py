@@ -48,7 +48,7 @@ class RelationsManager:
     def __contains__(self, item: str) -> bool:
         return item in self._related_names
 
-    def get(self, name: str) -> Optional[Union[T, Sequence[T]]]:
+    def get(self, name: str) -> Optional[Union["T", Sequence["T"]]]:
         relation = self._relations.get(name, None)
         if relation is not None:
             return relation.get()

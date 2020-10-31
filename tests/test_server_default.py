@@ -20,11 +20,11 @@ class Product(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-    company: ormar.String(max_length=200, server_default="Acme")
-    sort_order: ormar.Integer(server_default=text("10"))
-    created: ormar.DateTime(server_default=func.now())
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(max_length=100)
+    company = ormar.String(max_length=200, server_default="Acme")
+    sort_order = ormar.Integer(server_default=text("10"))
+    created= ormar.DateTime(server_default=func.now())
 
 
 @pytest.fixture(scope="module")

@@ -24,6 +24,9 @@ def group_related_list(list_: List) -> Dict:
     return test_dict
 
 
+if TYPE_CHECKING:  # pragma nocover
+    from ormar import QuerySet
+
 T = TypeVar("T", bound="Model")
 
 
@@ -31,6 +34,7 @@ class Model(NewBaseModel):
     __abstract__ = False
     if TYPE_CHECKING:  # pragma nocover
         Meta: ModelMeta
+        objects: "QuerySet"
 
     def __repr__(self) -> str:  # pragma nocover
         attrs_to_include = ["tablename", "columns", "pkname"]
@@ -41,12 +45,12 @@ class Model(NewBaseModel):
 
     @classmethod
     def from_row(  # noqa CCR001
-        cls: Type[T],
-        row: sqlalchemy.engine.ResultProxy,
-        select_related: List = None,
-        related_models: Any = None,
-        previous_table: str = None,
-        fields: List = None,
+            cls: Type[T],
+            row: sqlalchemy.engine.ResultProxy,
+            select_related: List = None,
+            related_models: Any = None,
+            previous_table: str = None,
+            fields: List = None,
     ) -> Optional[T]:
 
         item: Dict[str, Any] = {}
@@ -56,9 +60,9 @@ class Model(NewBaseModel):
             related_models = group_related_list(select_related)
 
         if (
-            previous_table
-            and previous_table in cls.Meta.model_fields
-            and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
+                previous_table
+                and previous_table in cls.Meta.model_fields
+                and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
         ):
             previous_table = cls.Meta.model_fields[
                 previous_table
@@ -86,12 +90,12 @@ class Model(NewBaseModel):
 
     @classmethod
     def populate_nested_models_from_row(
-        cls,
-        item: dict,
-        row: sqlalchemy.engine.ResultProxy,
-        related_models: Any,
-        previous_table: sqlalchemy.Table,
-        fields: List = None,
+            cls,
+            item: dict,
+            row: sqlalchemy.engine.ResultProxy,
+            related_models: Any,
+            previous_table: sqlalchemy.Table,
+            fields: List = None,
     ) -> dict:
         for related in related_models:
             if isinstance(related_models, dict) and related_models[related]:
@@ -115,12 +119,12 @@ class Model(NewBaseModel):
 
     @classmethod
     def extract_prefixed_table_columns(  # noqa CCR001
-        cls,
-        item: dict,
-        row: sqlalchemy.engine.result.ResultProxy,
-        table_prefix: str,
-        fields: List = None,
-        nested: bool = False,
+            cls,
+            item: dict,
+            row: sqlalchemy.engine.result.ResultProxy,
+            table_prefix: str,
+            fields: List = None,
+            nested: bool = False,
     ) -> dict:
 
         # databases does not keep aliases in Record for postgres, change to raw row
