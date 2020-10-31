@@ -31,7 +31,7 @@ class ExampleModel(Model):
     test_time = ormar.Time(default=datetime.time)
     test_json = ormar.JSON(default={})
     test_bigint = ormar.BigInteger(default=0)
-    test_decimal = ormar.Decimal(scale=10, precision=2)
+    test_decimal = ormar.Decimal(scale=2, precision=10)
     test_decimal2 = ormar.Decimal(max_digits=10, decimal_places=2)
 
 

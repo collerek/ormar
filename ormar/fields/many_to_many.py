@@ -17,7 +17,7 @@ def ManyToMany(
     unique: bool = False,
     virtual: bool = False,
     **kwargs: Any
-) -> Type["ManyToManyField"]:
+) -> Any:
     to_field = to.Meta.model_fields[to.Meta.pkname]
     related_name = kwargs.pop("related_name", None)
     nullable = kwargs.pop("nullable", True)
@@ -50,7 +50,7 @@ def ManyToMany(
 class ManyToManyField(ForeignKeyField):
     through: Type["Model"]
 
-    if TYPE_CHECKING:  # noqa: C901; pragma nocover
+    if TYPE_CHECKING:  # noqa: C901; #pragma nocover
 
         @staticmethod
         async def add(item: "Model") -> None:

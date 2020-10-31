@@ -37,7 +37,7 @@ def ForeignKey(  # noqa CFQ002
     virtual: bool = False,
     onupdate: str = None,
     ondelete: str = None,
-) -> Type["ForeignKeyField"]:
+) -> Any:
     fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
     to_field = to.Meta.model_fields[to.Meta.pkname]
     __type__ = (

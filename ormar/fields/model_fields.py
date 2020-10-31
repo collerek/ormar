@@ -292,14 +292,14 @@ class Decimal(ModelFieldFactory, decimal.Decimal):
         kwargs["le"] = kwargs["maximum"]
 
         if kwargs.get("max_digits"):
-            kwargs["scale"] = kwargs["max_digits"]
-        elif kwargs.get("scale"):
-            kwargs["max_digits"] = kwargs["scale"]
+            kwargs["precision"] = kwargs["max_digits"]
+        elif kwargs.get("precision"):
+            kwargs["max_digits"] = kwargs["precision"]
 
         if kwargs.get("decimal_places"):
-            kwargs["precision"] = kwargs["decimal_places"]
-        elif kwargs.get("precision"):
-            kwargs["decimal_places"] = kwargs["precision"]
+            kwargs["scale"] = kwargs["decimal_places"]
+        elif kwargs.get("scale"):
+            kwargs["decimal_places"] = kwargs["scale"]
 
         return super().__new__(cls, **kwargs)
 

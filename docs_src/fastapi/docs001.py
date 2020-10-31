@@ -44,7 +44,7 @@ class Item(ormar.Model):
 
     id = ormar.Integer(primary_key=True)
     name = ormar.String(max_length=100)
-    category= ormar.ForeignKey(Category, nullable=True)
+    category = ormar.ForeignKey(Category, nullable=True)
 
 
 @app.get("/items/", response_model=List[Item])
