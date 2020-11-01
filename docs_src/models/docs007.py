@@ -18,5 +18,6 @@ class Course(ormar.Model):
 
 
 course = Course(name="Painting for dummies", completed=False)
-await course.save()  # type: ignore
-await Course.objects.create(name="Painting for dummies", completed=False)  # type: ignore
+await course.save()
+
+await Course.objects.create(name="Painting for dummies", completed=False)

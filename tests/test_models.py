@@ -71,7 +71,9 @@ class Country(ormar.Model):
         database = database
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=9, choices=country_name_choices, default="Canada",)
+    name: str = ormar.String(
+        max_length=9, choices=country_name_choices, default="Canada",
+    )
     taxed: bool = ormar.Boolean(choices=country_taxed_choices, default=True)
     country_code: int = ormar.Integer(
         minimum=0, maximum=1000, choices=country_country_code_choices, default=1

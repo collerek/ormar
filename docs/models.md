@@ -50,14 +50,44 @@ Here you have a sample model with changed names
 ```
 
 Note that you can also change the ForeignKey column name
-```Python hl_lines="9"
+```Python hl_lines="21"
 --8<-- "../docs_src/models/docs009.py"
 ```
 
 But for now you cannot change the ManyToMany column names as they go through other Model anyway.
-```Python hl_lines="18"
+```Python hl_lines="28"
 --8<-- "../docs_src/models/docs010.py"
 ```
+
+### Type Hints & Legacy
+
+Before version 0.4.0 `ormar` supported only one way of defining `Fields` on a `Model` using python type hints as pydantic.
+
+```Python hl_lines="15-17"
+--8<-- "../docs_src/models/docs011.py"
+```
+
+But that didn't play well with static type checkers like `mypy` and `pydantic` PyCharm plugin.
+
+Therefore from version >=0.4.0 `ormar` switched to new notation.
+
+```Python hl_lines="15-17"
+--8<-- "../docs_src/models/docs001.py"
+```
+
+Note that type hints are **optional** so perfectly valid `ormar` code can look like this:
+
+```Python hl_lines="15-17"
+--8<-- "../docs_src/models/docs001.py"
+```
+
+!!!warning
+    Even if you use type hints **`ormar` does not use them to construct `pydantic` fields!**
+    
+    Type hints are there only to support static checkers and linting, 
+    `ormar` construct annotations used by `pydantic` from own fields.
+
+
 ### Database initialization/ migrations
 
 Note that all examples assume that you already have a database.
@@ -132,6 +162,20 @@ Created instance needs to be passed to every `Model` with `Meta` class `metadata
 !!! tip
     You need to create the `MetaData` instance **only once** and use it for all models. 
     You can create several ones if you want to use multiple databases.
+
+#### Best practice
+
+Only thing that `ormar` expects is a class with name `Meta` and two class variables: `metadata` and `databases`.
+
+So instead of providing the same parameters over and over again for all models you should creata a class and subclass it in all models.
+
+```Python hl_lines="14 20 33"
+--8<-- "../docs_src/models/docs013.py"
+```
+
+!!!warning
+    You need to subclass your `MainMeta` class in each `Model` class as those classes store configuration variables 
+    that otherwise would be overwritten by each `Model`.
 
 ### Table Names
 
@@ -278,7 +322,7 @@ To access ormar `Fields` you can use `Model.Meta.model_fields` parameter
 
 For example to list table model fields you can:
 
-```Python hl_lines="19"
+```Python hl_lines="20"
 --8<-- "../docs_src/models/docs005.py"
 ```
 

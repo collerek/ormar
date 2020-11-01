@@ -40,7 +40,9 @@ class Artist(ormar.Model):
     first_name: str = ormar.String(name="fname", max_length=100)
     last_name: str = ormar.String(name="lname", max_length=100)
     born_year: int = ormar.Integer(name="year")
-    children: Optional[Union[Child, List[Child]]] = ormar.ManyToMany(Child, through=ArtistChildren)
+    children: Optional[Union[Child, List[Child]]] = ormar.ManyToMany(
+        Child, through=ArtistChildren
+    )
 
 
 class Album(ormar.Model):

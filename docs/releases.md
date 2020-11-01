@@ -1,6 +1,22 @@
+# 0.4.0
+
+*  Changed notation in Model definition -> now use name = ormar.Field() not name: ormar.Field()
+    * Note that old notation is still supported but deprecated and will not play nice with static checkers like mypy and pydantic pycharm plugin
+*  Type hint docs and test
+*  Use mypy for tests also not, only ormar package
+*  Fix scale and precision translation with max_digits and decimal_places pydantic Decimal field
+*  Update docs - add best practices for dependencies
+*  Refactor metaclass and model_fields to play nice with type hints
+*  Add mypy and pydantic plugin to docs 
+*  Expand the docs on ManyToMany relation
+
+# 0.3.11
+
+* Fix setting server_default as default field value in python
+
 # 0.3.10
 
-* Fix 
+* Fix postgresql check to avoid exceptions with drivers not installed if using different backend
 
 # 0.3.9
 

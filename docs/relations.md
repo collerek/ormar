@@ -15,7 +15,7 @@ Sqlalchemy column and Type are automatically taken from target `Model`.
 
 To define a relation add `ForeignKey` field that points to related `Model`.
 
-```Python hl_lines="27"
+```Python hl_lines="29"
 --8<-- "../docs_src/fields/docs003.py"
 ```
 
@@ -25,7 +25,7 @@ To define a relation add `ForeignKey` field that points to related `Model`.
 
 By default it's child (source) `Model` name + s, like courses in snippet below: 
 
-```Python hl_lines="27 33"
+```Python hl_lines="29 35"
 --8<-- "../docs_src/fields/docs001.py"
 ```
 
@@ -33,7 +33,7 @@ By default it's child (source) `Model` name + s, like courses in snippet below:
 
 But you can overwrite this name by providing `related_name` parameter like below:
 
-```Python hl_lines="27 33"
+```Python hl_lines="29 35"
 --8<-- "../docs_src/fields/docs002.py"
 ```
 
@@ -49,7 +49,7 @@ You have several ways to set-up a relationship connection.
 
 The most obvious one is to pass a related `Model` instance to the constructor.
 
-```Python hl_lines="32-33"
+```Python hl_lines="34-35"
 --8<-- "../docs_src/relations/docs001.py"
 ```
 
@@ -57,7 +57,7 @@ The most obvious one is to pass a related `Model` instance to the constructor.
 
 You can setup the relation also with just the pk column value of the related model.
 
-```Python hl_lines="35-36"
+```Python hl_lines="37-38"
 --8<-- "../docs_src/relations/docs001.py"
 ```
 
@@ -67,7 +67,7 @@ Next option is with a dictionary of key-values of the related model.
 
 You can build the dictionary yourself or get it from existing model with `dict()` method.
 
-```Python hl_lines="38-39"
+```Python hl_lines="40-41"
 --8<-- "../docs_src/relations/docs001.py"
 ```
 
@@ -75,7 +75,7 @@ You can build the dictionary yourself or get it from existing model with `dict()
 
 Finally you can explicitly set it to None (default behavior if no value passed).
 
-```Python hl_lines="41-42"
+```Python hl_lines="43-44"
 --8<-- "../docs_src/relations/docs001.py"
 ```
 
@@ -121,7 +121,11 @@ await news.posts.add(post)
     
     Otherwise an IntegrityError will be raised by your database driver library.
 
-#### Creating new related `Model` instances
+#### create()
+
+Create related `Model` directly from parent `Model`.
+
+The link table is automatically populated, as well as relation ids in the database.
 
 ```python
 # Creating columns object from instance:
@@ -136,15 +140,27 @@ assert len(await post.categories.all()) == 2
     
     To learn more about available QuerySet methods visit [queries][queries]
 
-#### Removing related models
+#### remove()
+
+Removal of the related model one by one.
+
+Removes also the relation in the database.
+
 ```python
-# Removal of the relationship by one
 await news.posts.remove(post)
-# or all at once
+```
+
+#### clear()
+
+Removal all related models in one call.
+
+Removes also the relation in the database.
+
+```python
 await news.posts.clear()
 ```
 
-#### All other queryset methods
+#### Other queryset methods
 
 When access directly the related `ManyToMany` field returns the list of related models.
 
@@ -164,7 +180,18 @@ news_posts = await news.posts.select_related("author").all()
 assert news_posts[0].author == guido
 ```
 
+Currently supported methods are:
+
 !!!tip
     To learn more about available QuerySet methods visit [queries][queries]
+
+##### get()
+##### all()
+##### filter()
+##### select_related()
+##### limit()
+##### offset()
+##### count()
+##### exists()
 
 [queries]: ./queries.md
