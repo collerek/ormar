@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Type, Union
 
 try:
     from typing import Protocol
-except ImportError:
+except ImportError:  # pragma: nocover
     from typing_extensions import Protocol  # type: ignore
 
 if TYPE_CHECKING:  # pragma: nocover
