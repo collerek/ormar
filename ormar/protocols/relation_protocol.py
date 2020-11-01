@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Type, Union
 try:
     from typing import Protocol
 except ImportError:
-    from typing_extentions import Protocol
+    from typing_extensions import Protocol
 
 if TYPE_CHECKING:  # pragma: nocover
     from ormar import Model
