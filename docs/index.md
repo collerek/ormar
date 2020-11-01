@@ -47,6 +47,7 @@ Ormar is built with:
   * [`SQLAlchemy core`][sqlalchemy-core] for query building.
   * [`databases`][databases] for cross-database async support.
   * [`pydantic`][pydantic] for data validation.
+  * typing_extensions for python 3.6 - 3.7
 
 ### Migrations
 
@@ -54,7 +55,7 @@ Because ormar is built on SQLAlchemy core, you can use [`alembic`][alembic] to p
 database migrations.
 
 
-**ormar is still under development:** We recommend pinning any dependencies with `ormar~=0.3.6`
+**ormar is still under development:** We recommend pinning any dependencies with `ormar~=0.4.0`
 
 ### Quick Start
 
@@ -78,8 +79,8 @@ class Album(ormar.Model):
     # note that type hints are optional so 
     # id = ormar.Integer(primary_key=True) 
     # is also valid
-    id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(length=100)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(length=100)
 
 
 class Track(ormar.Model):
@@ -88,10 +89,10 @@ class Track(ormar.Model):
         metadata = metadata
         database = database
 
-    id: int = ormar.Integer(primary_key=True)
-    album: Optional[Album] =ormar.ForeignKey(Album)
-    title: str = ormar.String(length=100)
-    position: int = ormar.Integer()
+    id = ormar.Integer(primary_key=True)
+    album = ormar.ForeignKey(Album)
+    title = ormar.String(length=100)
+    position = ormar.Integer()
 
 
 # Create some records to work with.
