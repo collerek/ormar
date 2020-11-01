@@ -1,4 +1,5 @@
 import logging
+import warnings
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import databases
@@ -192,20 +193,6 @@ def populate_default_pydantic_field_value(
     return attrs
 
 
-def check_if_field_annotation_or_value_is_ormar(
-    field: Any, field_name: str, attrs: Dict
-) -> bool:
-    return lenient_issubclass(field, BaseField) or issubclass(
-        attrs.get(field_name, type), BaseField
-    )
-
-
-def extract_field_from_annotation_or_value(
-    field: Any, field_name: str, attrs: Dict
-) -> Type[ormar.fields.BaseField]:
-    return field if lenient_issubclass(field, BaseField) else attrs.get(field_name)
-
-
 def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
     model_fields = {}
     potential_fields = {
@@ -213,22 +200,22 @@ def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
         for k, v in attrs["__annotations__"].items()
         if lenient_issubclass(v, BaseField)
     }
+    if potential_fields:
+        warnings.warn(
+            "Using ormar.Fields as type Model annotation has been deprecated,"
+            " check documentation of current version",
+            DeprecationWarning,
+        )
+
     potential_fields.update(
         {k: v for k, v in attrs.items() if lenient_issubclass(v, BaseField)}
     )
     for field_name, field in potential_fields.items():
-        # ormar fields can be used as annotation or as default value
-        if check_if_field_annotation_or_value_is_ormar(field, field_name, attrs):
-            ormar_field = extract_field_from_annotation_or_value(
-                field, field_name, attrs
-            )
-            if ormar_field.name is None:
-                ormar_field.name = field_name
-            attrs = populate_default_pydantic_field_value(
-                ormar_field, field_name, attrs
-            )
-            model_fields[field_name] = ormar_field
-            attrs["__annotations__"][field_name] = ormar_field.__type__
+        if field.name is None:
+            field.name = field_name
+        attrs = populate_default_pydantic_field_value(field, field_name, attrs)
+        model_fields[field_name] = field
+        attrs["__annotations__"][field_name] = field.__type__
     return attrs, model_fields
 
 

@@ -1,3 +1,5 @@
+from typing import Optional, Union, List
+
 import databases
 import pytest
 import sqlalchemy
@@ -15,10 +17,10 @@ class Child(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(name="child_id", primary_key=True)
-    first_name = ormar.String(name="fname", max_length=100)
-    last_name = ormar.String(name="lname", max_length=100)
-    born_year = ormar.Integer(name="year_born", nullable=True)
+    id: int = ormar.Integer(name="child_id", primary_key=True)
+    first_name: str = ormar.String(name="fname", max_length=100)
+    last_name: str = ormar.String(name="lname", max_length=100)
+    born_year: int = ormar.Integer(name="year_born", nullable=True)
 
 
 class ArtistChildren(ormar.Model):
@@ -34,11 +36,11 @@ class Artist(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(name="artist_id", primary_key=True)
-    first_name = ormar.String(name="fname", max_length=100)
-    last_name = ormar.String(name="lname", max_length=100)
-    born_year = ormar.Integer(name="year")
-    children = ormar.ManyToMany(Child, through=ArtistChildren)
+    id: int = ormar.Integer(name="artist_id", primary_key=True)
+    first_name: str = ormar.String(name="fname", max_length=100)
+    last_name: str = ormar.String(name="lname", max_length=100)
+    born_year: int = ormar.Integer(name="year")
+    children: Optional[Union[Child, List[Child]]] = ormar.ManyToMany(Child, through=ArtistChildren)
 
 
 class Album(ormar.Model):
@@ -47,9 +49,9 @@ class Album(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(name="album_id", primary_key=True)
-    name = ormar.String(name="album_name", max_length=100)
-    artist = ormar.ForeignKey(Artist, name="artist_id")
+    id: int = ormar.Integer(name="album_id", primary_key=True)
+    name: str = ormar.String(name="album_name", max_length=100)
+    artist: Optional[Artist] = ormar.ForeignKey(Artist, name="artist_id")
 
 
 @pytest.fixture(autouse=True, scope="module")

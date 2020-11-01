@@ -109,10 +109,10 @@ class Book(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
-    title = ormar.String(max_length=200)
-    author = ormar.String(max_length=100)
-    genre = ormar.String(max_length=100, default='Fiction', choices=['Fiction', 'Adventure', 'Historic', 'Fantasy'])
+    id: int = ormar.Integer(primary_key=True)
+    title: str = ormar.String(max_length=200)
+    author: str = ormar.String(max_length=100)
+    genre: str = ormar.String(max_length=100, default='Fiction', choices=['Fiction', 'Adventure', 'Historic', 'Fantasy'])
 
 await Book.objects.create(title='Tom Sawyer', author="Twain, Mark", genre='Adventure')
 await Book.objects.create(title='War and Peace', author="Tolstoy, Leo", genre='Fiction')
@@ -146,10 +146,10 @@ class Book(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
-    title = ormar.String(max_length=200)
-    author = ormar.String(max_length=100)
-    genre = ormar.String(max_length=100, default='Fiction', choices=['Fiction', 'Adventure', 'Historic', 'Fantasy'])
+    id: int = ormar.Integer(primary_key=True)
+    title: str = ormar.String(max_length=200)
+    author: str = ormar.String(max_length=100)
+    genre: str = ormar.String(max_length=100, default='Fiction', choices=['Fiction', 'Adventure', 'Historic', 'Fantasy'])
 
 await Book.objects.create(title='Tom Sawyer', author="Twain, Mark", genre='Adventure')
 await Book.objects.create(title='War and Peace', author="Tolstoy, Leo", genre='Fiction')
@@ -192,8 +192,8 @@ class ToDo(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
-    text = ormar.String(max_length=500)
+    id: int = ormar.Integer(primary_key=True)
+    text: str = ormar.String(max_length=500)
     completed= ormar.Boolean(default=False)
 
 # create multiple instances at once with bulk_create
@@ -259,10 +259,10 @@ class Book(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
-    title = ormar.String(max_length=200)
-    author = ormar.String(max_length=100)
-    genre = ormar.String(max_length=100, default='Fiction', choices=['Fiction', 'Adventure', 'Historic', 'Fantasy'])
+    id: int = ormar.Integer(primary_key=True)
+    title: str = ormar.String(max_length=200)
+    author: str = ormar.String(max_length=100)
+    genre: str = ormar.String(max_length=100, default='Fiction', choices=['Fiction', 'Adventure', 'Historic', 'Fantasy'])
 
 await Book.objects.create(title='Tom Sawyer', author="Twain, Mark", genre='Adventure')
 await Book.objects.create(title='War and Peace in Space', author="Tolstoy, Leo", genre='Fantasy')
@@ -470,9 +470,9 @@ class Company(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(max_length=100)
-    founded = ormar.Integer(nullable=True)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    founded: int = ormar.Integer(nullable=True)
 
 
 class Car(ormar.Model):
@@ -481,13 +481,13 @@ class Car(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
+    id: int = ormar.Integer(primary_key=True)
     manufacturer= ormar.ForeignKey(Company)
-    name = ormar.String(max_length=100)
-    year = ormar.Integer(nullable=True)
-    gearbox_type = ormar.String(max_length=20, nullable=True)
-    gears = ormar.Integer(nullable=True)
-    aircon_type = ormar.String(max_length=20, nullable=True)
+    name: str = ormar.String(max_length=100)
+    year: int = ormar.Integer(nullable=True)
+    gearbox_type: str = ormar.String(max_length=20, nullable=True)
+    gears: int = ormar.Integer(nullable=True)
+    aircon_type: str = ormar.String(max_length=20, nullable=True)
 
 
 

@@ -29,8 +29,8 @@ class Course(ormar.Model):
     department: Optional[Department] = ormar.ForeignKey(Department)
 
 
-department = Department(name='Science')
-course = Course(name='Math', completed=False, department=department)
+department = Department(name="Science")
+course = Course(name="Math", completed=False, department=department)
 
 print(department.courses[0])
 # Will produce:

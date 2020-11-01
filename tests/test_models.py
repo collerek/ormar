@@ -1,6 +1,6 @@
 import asyncio
 import uuid
-from datetime import datetime
+import datetime
 from typing import List
 
 import databases
@@ -22,7 +22,7 @@ class JsonSample(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
+    id: int = ormar.Integer(primary_key=True)
     test_json = ormar.JSON(nullable=True)
 
 
@@ -32,8 +32,8 @@ class UUIDSample(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.UUID(primary_key=True, default=uuid.uuid4)
-    test_text = ormar.Text()
+    id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
+    test_text: str = ormar.Text()
 
 
 class User(ormar.Model):
@@ -42,8 +42,8 @@ class User(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(max_length=100, default="")
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, default="")
 
 
 class Product(ormar.Model):
@@ -52,11 +52,11 @@ class Product(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(max_length=100)
-    rating = ormar.Integer(minimum=1, maximum=5)
-    in_stock = ormar.Boolean(default=False)
-    last_delivery = ormar.Date(default=datetime.now)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    rating: int = ormar.Integer(minimum=1, maximum=5)
+    in_stock: bool = ormar.Boolean(default=False)
+    last_delivery: datetime.date = ormar.Date(default=datetime.datetime.now)
 
 
 country_name_choices = ("Canada", "Algeria", "United States")
@@ -70,10 +70,10 @@ class Country(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(max_length=9, choices=country_name_choices, default="Canada",)
-    taxed = ormar.Boolean(choices=country_taxed_choices, default=True)
-    country_code = ormar.Integer(
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=9, choices=country_name_choices, default="Canada",)
+    taxed: bool = ormar.Boolean(choices=country_taxed_choices, default=True)
+    country_code: int = ormar.Integer(
         minimum=0, maximum=1000, choices=country_country_code_choices, default=1
     )
 
@@ -213,7 +213,7 @@ async def test_model_filter():
             assert product.pk is not None
             assert product.name == "T-Shirt"
             assert product.rating == 5
-            assert product.last_delivery == datetime.now().date()
+            assert product.last_delivery == datetime.datetime.now().date()
 
             products = await Product.objects.all(rating__gte=2, in_stock=True)
             assert len(products) == 2

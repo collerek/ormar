@@ -18,9 +18,9 @@ class Company(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(max_length=100, nullable=False)
-    founded = ormar.Integer(nullable=True)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, nullable=False)
+    founded: int = ormar.Integer(nullable=True)
 
 
 class Car(ormar.Model):
@@ -29,13 +29,13 @@ class Car(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
-    manufacturer = ormar.ForeignKey(Company)
-    name = ormar.String(max_length=100)
-    year = ormar.Integer(nullable=True)
-    gearbox_type = ormar.String(max_length=20, nullable=True)
-    gears = ormar.Integer(nullable=True)
-    aircon_type = ormar.String(max_length=20, nullable=True)
+    id: int = ormar.Integer(primary_key=True)
+    manufacturer: Optional[Company] = ormar.ForeignKey(Company)
+    name: str = ormar.String(max_length=100)
+    year: int = ormar.Integer(nullable=True)
+    gearbox_type: str = ormar.String(max_length=20, nullable=True)
+    gears: int = ormar.Integer(nullable=True)
+    aircon_type: str = ormar.String(max_length=20, nullable=True)
 
 
 @pytest.fixture(autouse=True, scope="module")

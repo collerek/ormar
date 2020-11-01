@@ -1,7 +1,7 @@
 import datetime
 import decimal
 import uuid
-from typing import Any, Optional, Type
+from typing import Any, Optional, TYPE_CHECKING, Type
 
 import pydantic
 import sqlalchemy
@@ -178,12 +178,20 @@ class Float(ModelFieldFactory, float):
         return sqlalchemy.Float()
 
 
-class Boolean(ModelFieldFactory, int):
-    _type = bool
+if TYPE_CHECKING:  # pragma: nocover
 
-    @classmethod
-    def get_column_type(cls, **kwargs: Any) -> Any:
-        return sqlalchemy.Boolean()
+    def Boolean(**kwargs: Any) -> bool:
+        pass
+
+
+else:
+
+    class Boolean(ModelFieldFactory, int):
+        _type = bool
+
+        @classmethod
+        def get_column_type(cls, **kwargs: Any) -> Any:
+            return sqlalchemy.Boolean()
 
 
 class DateTime(ModelFieldFactory, datetime.datetime):

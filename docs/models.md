@@ -34,7 +34,7 @@ By default if you assign primary key to `Integer` field, the `autoincrement` opt
 You can disable by passing `autoincremant=False`.
 
 ```Python 
-id = ormar.Integer(primary_key=True, autoincrement=False)
+id: int = ormar.Integer(primary_key=True, autoincrement=False)
 ```
 
 ### Fields names vs Column names

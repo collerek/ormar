@@ -14,8 +14,8 @@ class Department(ormar.Model):
         database = database
         metadata = metadata
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(max_length=100)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
 
 
 class Course(ormar.Model):
@@ -23,7 +23,7 @@ class Course(ormar.Model):
         database = database
         metadata = metadata
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(max_length=100)
-    completed= ormar.Boolean(default=False)
-    department= ormar.ForeignKey(Department)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    completed: bool = ormar.Boolean(default=False)
+    department: Optional[Department] = ormar.ForeignKey(Department)

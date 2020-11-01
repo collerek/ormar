@@ -8,15 +8,16 @@ metadata = sqlalchemy.MetaData()
 
 
 class Course(ormar.Model):
-    class Meta:
+    class Meta(ormar.ModelMeta):
         database = database
         metadata = metadata
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(max_length=100)
-    completed= ormar.Boolean(default=False)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    completed: bool = ormar.Boolean(default=False)
 
-print({x:v.__dict__ for x,v in Course.Meta.model_fields.items()})
+
+print({x: v.__dict__ for x, v in Course.Meta.model_fields.items()})
 """
 Will produce:
 {'completed': mappingproxy({'autoincrement': False,

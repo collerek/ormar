@@ -21,16 +21,16 @@ class ExampleModel(Model):
         tablename = "example"
         metadata = metadata
 
-    test = ormar.Integer(primary_key=True)
-    test_string = ormar.String(max_length=250)
-    test_text = ormar.Text(default="")
-    test_bool = ormar.Boolean(nullable=False)
+    test: int = ormar.Integer(primary_key=True)
+    test_string: str = ormar.String(max_length=250)
+    test_text: str = ormar.Text(default="")
+    test_bool: bool = ormar.Boolean(nullable=False)
     test_float: ormar.Float() = None  # type: ignore
     test_datetime = ormar.DateTime(default=datetime.datetime.now)
     test_date = ormar.Date(default=datetime.date.today)
     test_time = ormar.Time(default=datetime.time)
     test_json = ormar.JSON(default={})
-    test_bigint = ormar.BigInteger(default=0)
+    test_bigint: int = ormar.BigInteger(default=0)
     test_decimal = ormar.Decimal(scale=2, precision=10)
     test_decimal2 = ormar.Decimal(max_digits=10, decimal_places=2)
 
@@ -53,8 +53,8 @@ class ExampleModel2(Model):
         tablename = "examples"
         metadata = metadata
 
-    test = ormar.Integer(primary_key=True)
-    test_string = ormar.String(max_length=250)
+    test: int = ormar.Integer(primary_key=True)
+    test_string: str = ormar.String(max_length=250)
 
 
 @pytest.fixture(scope="module")
@@ -145,7 +145,7 @@ def test_no_pk_in_model_definition():  # type: ignore
                 tablename = "example2"
                 metadata = metadata
 
-            test_string = ormar.String(max_length=250)  # type: ignore
+            test_string: str = ormar.String(max_length=250)  # type: ignore
 
 
 @typing.no_type_check
@@ -158,8 +158,8 @@ def test_two_pks_in_model_definition():
                 tablename = "example3"
                 metadata = metadata
 
-            id = ormar.Integer(primary_key=True)
-            test_string = ormar.String(max_length=250, primary_key=True)
+            id: int = ormar.Integer(primary_key=True)
+            test_string: str = ormar.String(max_length=250, primary_key=True)
 
 
 @typing.no_type_check
@@ -171,7 +171,7 @@ def test_setting_pk_column_as_pydantic_only_in_model_definition():
                 tablename = "example4"
                 metadata = metadata
 
-            test = ormar.Integer(primary_key=True, pydantic_only=True)
+            test: int = ormar.Integer(primary_key=True, pydantic_only=True)
 
 
 @typing.no_type_check
@@ -183,7 +183,7 @@ def test_decimal_error_in_model_definition():
                 tablename = "example5"
                 metadata = metadata
 
-            test = ormar.Decimal(primary_key=True)
+            test: decimal.Decimal = ormar.Decimal(primary_key=True)
 
 
 @typing.no_type_check
@@ -195,7 +195,7 @@ def test_string_error_in_model_definition():
                 tablename = "example6"
                 metadata = metadata
 
-            test = ormar.String(primary_key=True)
+            test: str = ormar.String(primary_key=True)
 
 
 @typing.no_type_check

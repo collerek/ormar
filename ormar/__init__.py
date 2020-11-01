@@ -18,6 +18,7 @@ from ormar.fields import (  # noqa: I100
     UniqueColumns,
 )
 from ormar.models import Model
+from ormar.models.metaclass import ModelMeta
 from ormar.queryset import QuerySet
 from ormar.relations import RelationType
 
@@ -56,4 +57,5 @@ __all__ = [
     "UniqueColumns",
     "QuerySetProtocol",
     "RelationProtocol",
+    "ModelMeta",
 ]

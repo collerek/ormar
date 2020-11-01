@@ -20,8 +20,8 @@ class Category(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(max_length=100)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
@@ -30,9 +30,9 @@ class Item(ormar.Model):
         metadata = metadata
         database = database
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(max_length=100)
-    category = ormar.ForeignKey(Category, nullable=True)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
 
 
 @app.post("/items/", response_model=Item)
