@@ -51,7 +51,7 @@ setup(
     packages=get_packages(PACKAGE),
     package_data={PACKAGE: ["py.typed"]},
     data_files=[("", ["LICENSE.md"])],
-    install_requires=["databases", "pydantic>=1.5", "sqlalchemy"],
+    install_requires=["databases", "pydantic>=1.5", "sqlalchemy", "typing_extensions"],
     extras_require={
         "postgresql": ["asyncpg", "psycopg2"],
         "mysql": ["aiomysql", "pymysql"],
