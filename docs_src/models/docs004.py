@@ -8,13 +8,13 @@ metadata = sqlalchemy.MetaData()
 
 
 class Course(ormar.Model):
-    class Meta:
+    class Meta(ormar.ModelMeta):  # note you don't have to subclass - but it's recommended for ide completion and mypy
         database = database
         metadata = metadata
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-    completed: ormar.Boolean(default=False)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    completed: bool = ormar.Boolean(default=False)
 
 
 print(Course.Meta.table.columns)

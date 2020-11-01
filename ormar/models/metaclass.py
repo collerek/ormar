@@ -1,11 +1,13 @@
 import logging
+import warnings
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import databases
 import pydantic
 import sqlalchemy
 from pydantic import BaseConfig
-from pydantic.fields import FieldInfo, ModelField
+from pydantic.fields import ModelField
+from pydantic.utils import lenient_issubclass
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
@@ -179,44 +181,49 @@ def register_relation_in_alias_manager(
 
 
 def populate_default_pydantic_field_value(
-    type_: Type[BaseField], field: str, attrs: dict
+    ormar_field: Type[BaseField], field_name: str, attrs: dict
 ) -> dict:
-    def_value = type_.default_value()
-    curr_def_value = attrs.get(field, "NONE")
-    if curr_def_value == "NONE" and isinstance(def_value, FieldInfo):
-        attrs[field] = def_value
-    elif curr_def_value == "NONE" and type_.nullable:
-        attrs[field] = FieldInfo(default=None)
+    curr_def_value = attrs.get(field_name, ormar.Undefined)
+    if lenient_issubclass(curr_def_value, ormar.fields.BaseField):
+        curr_def_value = ormar.Undefined
+    if curr_def_value is None:
+        attrs[field_name] = ormar_field.convert_to_pydantic_field_info(allow_null=True)
+    else:
+        attrs[field_name] = ormar_field.convert_to_pydantic_field_info()
     return attrs
 
 
-def populate_pydantic_default_values(attrs: Dict) -> Dict:
-    for field, type_ in attrs["__annotations__"].items():
-        if issubclass(type_, BaseField):
-            if type_.name is None:
-                type_.name = field
-            attrs = populate_default_pydantic_field_value(type_, field, attrs)
-    return attrs
-
-
-def extract_annotations_and_default_vals(attrs: dict, bases: Tuple) -> dict:
-    attrs["__annotations__"] = attrs.get("__annotations__") or bases[0].__dict__.get(
-        "__annotations__", {}
-    )
-    attrs = populate_pydantic_default_values(attrs)
-    return attrs
-
-
-def populate_meta_orm_model_fields(
-    attrs: dict, new_model: Type["Model"]
-) -> Type["Model"]:
-    model_fields = {
-        field_name: field
-        for field_name, field in attrs["__annotations__"].items()
-        if issubclass(field, BaseField)
+def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
+    model_fields = {}
+    potential_fields = {
+        k: v
+        for k, v in attrs["__annotations__"].items()
+        if lenient_issubclass(v, BaseField)
     }
-    new_model.Meta.model_fields = model_fields
-    return new_model
+    if potential_fields:
+        warnings.warn(
+            "Using ormar.Fields as type Model annotation has been deprecated,"
+            " check documentation of current version",
+            DeprecationWarning,
+        )
+
+    potential_fields.update(
+        {k: v for k, v in attrs.items() if lenient_issubclass(v, BaseField)}
+    )
+    for field_name, field in potential_fields.items():
+        if field.name is None:
+            field.name = field_name
+        attrs = populate_default_pydantic_field_value(field, field_name, attrs)
+        model_fields[field_name] = field
+        attrs["__annotations__"][field_name] = field.__type__
+    return attrs, model_fields
+
+
+def extract_annotations_and_default_vals(attrs: dict) -> Tuple[Dict, Dict]:
+    key = "__annotations__"
+    attrs[key] = attrs.get(key, {})
+    attrs, model_fields = populate_pydantic_default_values(attrs)
+    return attrs, model_fields
 
 
 def populate_meta_tablename_columns_and_pk(
@@ -261,7 +268,7 @@ def populate_meta_sqlalchemy_table_if_required(
 def get_pydantic_base_orm_config() -> Type[BaseConfig]:
     class Config(BaseConfig):
         orm_mode = True
-        arbitrary_types_allowed = True
+        # arbitrary_types_allowed = True
 
     return Config
 
@@ -305,7 +312,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
     ) -> "ModelMetaclass":
         attrs["Config"] = get_pydantic_base_orm_config()
         attrs["__name__"] = name
-        attrs = extract_annotations_and_default_vals(attrs, bases)
+        attrs, model_fields = extract_annotations_and_default_vals(attrs)
         new_model = super().__new__(  # type: ignore
             mcs, name, bases, attrs
         )
@@ -313,7 +320,8 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         if hasattr(new_model, "Meta"):
             if not hasattr(new_model.Meta, "constraints"):
                 new_model.Meta.constraints = []
-            new_model = populate_meta_orm_model_fields(attrs, new_model)
+            if not hasattr(new_model.Meta, "model_fields"):
+                new_model.Meta.model_fields = model_fields
             new_model = populate_meta_tablename_columns_and_pk(name, new_model)
             new_model = populate_meta_sqlalchemy_table_if_required(new_model)
             expand_reverse_relationships(new_model)
@@ -322,7 +330,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             if new_model.Meta.pkname not in attrs["__annotations__"]:
                 field_name = new_model.Meta.pkname
                 field = Integer(name=field_name, primary_key=True)
-                attrs["__annotations__"][field_name] = field
+                attrs["__annotations__"][field_name] = Optional[int]  # type: ignore
                 populate_default_pydantic_field_value(
                     field, field_name, attrs  # type: ignore
                 )

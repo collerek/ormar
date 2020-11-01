@@ -14,8 +14,8 @@ class Course(ormar.Model):
         # define your constraints in Meta class of the model
         # it's a list that can contain multiple constraints
         # hera a combination of name and column will have to be unique in db
-        constraints = [ormar.UniqueColumns('name', 'completed')]
+        constraints = [ormar.UniqueColumns("name", "completed")]
 
-    id = ormar.Integer(primary_key=True)
-    name = ormar.String(max_length=100)
-    completed = ormar.Boolean(default=False)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    completed: bool = ormar.Boolean(default=False)

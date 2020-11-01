@@ -72,6 +72,6 @@ class RelationProxy(list):
         if self.relation._type == ormar.RelationType.MULTIPLE:
             await self.queryset_proxy.create_through_instance(item)
         rel_name = item.resolve_relation_name(item, self._owner)
-        if rel_name not in item._orm:
+        if rel_name not in item._orm:  # pragma nocover
             item._orm._add_relation(item.Meta.model_fields[rel_name])
         setattr(item, rel_name, self._owner)

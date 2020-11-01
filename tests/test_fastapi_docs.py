@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union, Optional
 
 import databases
 import pytest
@@ -38,8 +38,8 @@ class Category(ormar.Model):
     class Meta(LocalMeta):
         tablename = "categories"
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
 
 
 class ItemsXCategories(ormar.Model):
@@ -51,9 +51,9 @@ class Item(ormar.Model):
     class Meta(LocalMeta):
         pass
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-    categories: ormar.ManyToMany(Category, through=ItemsXCategories)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    categories = ormar.ManyToMany(Category, through=ItemsXCategories)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -77,7 +77,7 @@ async def create_item(item: Item):
 
 
 @app.post("/items/add_category/", response_model=Item)
-async def create_item(item: Item, category: Category):
+async def add_item_category(item: Item, category: Category):
     await item.categories.add(category)
     return item
 
@@ -125,7 +125,9 @@ def test_all_endpoints():
 
 def test_schema_modification():
     schema = Item.schema()
-    assert schema["properties"]["categories"]["type"] == "array"
+    assert any(
+        x.get("type") == "array" for x in schema["properties"]["categories"]["anyOf"]
+    )
     assert schema["properties"]["categories"]["title"] == "Categories"
 
 

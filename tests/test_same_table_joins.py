@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 import databases
 import pytest
@@ -17,8 +18,8 @@ class Department(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True, autoincrement=False)
-    name: ormar.String(max_length=100)
+    id: int = ormar.Integer(primary_key=True, autoincrement=False)
+    name: str = ormar.String(max_length=100)
 
 
 class SchoolClass(ormar.Model):
@@ -27,9 +28,9 @@ class SchoolClass(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-    department: ormar.ForeignKey(Department, nullable=False)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    department: Optional[Department] = ormar.ForeignKey(Department, nullable=False)
 
 
 class Category(ormar.Model):
@@ -38,8 +39,8 @@ class Category(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
 
 
 class Student(ormar.Model):
@@ -48,10 +49,10 @@ class Student(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-    schoolclass: ormar.ForeignKey(SchoolClass)
-    category: ormar.ForeignKey(Category, nullable=True)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    schoolclass: Optional[SchoolClass] = ormar.ForeignKey(SchoolClass)
+    category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
 
 
 class Teacher(ormar.Model):
@@ -60,10 +61,10 @@ class Teacher(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-    schoolclass: ormar.ForeignKey(SchoolClass)
-    category: ormar.ForeignKey(Category, nullable=True)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    schoolclass: Optional[SchoolClass] = ormar.ForeignKey(SchoolClass)
+    category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
 
 
 @pytest.fixture(scope="module")

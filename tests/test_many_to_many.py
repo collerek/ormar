@@ -1,4 +1,5 @@
 import asyncio
+from typing import List, Union, Optional
 
 import databases
 import pytest
@@ -18,9 +19,9 @@ class Author(ormar.Model):
         database = database
         metadata = metadata
 
-    id: ormar.Integer(primary_key=True)
-    first_name: ormar.String(max_length=80)
-    last_name: ormar.String(max_length=80)
+    id: int = ormar.Integer(primary_key=True)
+    first_name: str = ormar.String(max_length=80)
+    last_name: str = ormar.String(max_length=80)
 
 
 class Category(ormar.Model):
@@ -29,8 +30,8 @@ class Category(ormar.Model):
         database = database
         metadata = metadata
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=40)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=40)
 
 
 class PostCategory(ormar.Model):
@@ -46,10 +47,12 @@ class Post(ormar.Model):
         database = database
         metadata = metadata
 
-    id: ormar.Integer(primary_key=True)
-    title: ormar.String(max_length=200)
-    categories: ormar.ManyToMany(Category, through=PostCategory)
-    author: ormar.ForeignKey(Author)
+    id: int = ormar.Integer(primary_key=True)
+    title: str = ormar.String(max_length=200)
+    categories: Optional[Union[Category, List[Category]]] = ormar.ManyToMany(
+        Category, through=PostCategory
+    )
+    author: Optional[Author] = ormar.ForeignKey(Author)
 
 
 @pytest.fixture(scope="module")

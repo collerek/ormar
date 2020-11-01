@@ -1,3 +1,5 @@
+from typing import Optional
+
 import databases
 import pytest
 import sqlalchemy
@@ -16,10 +18,10 @@ class Book(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    title: ormar.String(max_length=200)
-    author: ormar.String(max_length=100)
-    genre: ormar.String(
+    id: int = ormar.Integer(primary_key=True)
+    title: str = ormar.String(max_length=200)
+    author: str = ormar.String(max_length=100)
+    genre: str = ormar.String(
         max_length=100,
         default="Fiction",
         choices=["Fiction", "Adventure", "Historic", "Fantasy"],
@@ -32,9 +34,9 @@ class ToDo(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    text: ormar.String(max_length=500)
-    completed: ormar.Boolean(default=False)
+    id: int = ormar.Integer(primary_key=True)
+    text: str = ormar.String(max_length=500)
+    completed: bool = ormar.Boolean(default=False)
 
 
 class Category(ormar.Model):
@@ -43,8 +45,8 @@ class Category(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=500)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=500)
 
 
 class Note(ormar.Model):
@@ -53,9 +55,9 @@ class Note(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(primary_key=True)
-    text: ormar.String(max_length=500)
-    category: ormar.ForeignKey(Category)
+    id: int = ormar.Integer(primary_key=True)
+    text: str = ormar.String(max_length=500)
+    category: Optional[Category] = ormar.ForeignKey(Category)
 
 
 @pytest.fixture(autouse=True, scope="module")

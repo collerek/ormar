@@ -8,6 +8,8 @@ nav:
   - Relations: relations.md
   - Queries: queries.md
   - Use with Fastapi: fastapi.md
+  - Use with mypy: mypy.md
+  - PyCharm plugin: plugin.md
   - Contributing: contributing.md
   - Release Notes: releases.md
 repo_name: collerek/ormar

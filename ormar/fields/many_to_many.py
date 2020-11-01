@@ -1,5 +1,6 @@
-from typing import Dict, TYPE_CHECKING, Type
+from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
+import ormar
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 
@@ -15,17 +16,25 @@ def ManyToMany(
     *,
     name: str = None,
     unique: bool = False,
-    related_name: str = None,
     virtual: bool = False,
-) -> Type["ManyToManyField"]:
-    to_field = to.__fields__[to.Meta.pkname]
+    **kwargs: Any
+) -> Any:
+    to_field = to.Meta.model_fields[to.Meta.pkname]
+    related_name = kwargs.pop("related_name", None)
+    nullable = kwargs.pop("nullable", True)
+    __type__ = (
+        Union[to_field.__type__, to, List[to]]  # type: ignore
+        if not nullable
+        else Optional[Union[to_field.__type__, to, List[to]]]  # type: ignore
+    )
     namespace = dict(
+        __type__=__type__,
         to=to,
         through=through,
         name=name,
         nullable=True,
         unique=unique,
-        column_type=to_field.type_.column_type,
+        column_type=to_field.column_type,
         related_name=related_name,
         virtual=virtual,
         primary_key=False,
@@ -33,20 +42,10 @@ def ManyToMany(
         pydantic_only=False,
         default=None,
         server_default=None,
-        __pydantic_model__=to,
-        # __origin__=List,
-        # __args__=[Optional[to]]
     )
 
     return type("ManyToMany", (ManyToManyField, BaseField), namespace)
 
 
-class ManyToManyField(ForeignKeyField):
+class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationProtocol):
     through: Type["Model"]
-
-    @classmethod
-    def __modify_schema__(cls, field_schema: Dict) -> None:
-        field_schema["type"] = "array"
-        field_schema["title"] = cls.name.title()
-        field_schema["definitions"] = {f"{cls.to.__name__}": cls.to.schema()}
-        field_schema["items"] = {"$ref": f"{REF_PREFIX}{cls.to.__name__}"}

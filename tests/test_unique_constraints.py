@@ -1,7 +1,7 @@
 import asyncio
 import sqlite3
 
-import asyncpg
+import asyncpg  # type: ignore
 import databases
 import pymysql
 import pytest
@@ -21,9 +21,9 @@ class Product(ormar.Model):
         database = database
         constraints = [ormar.UniqueColumns("name", "company")]
 
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-    company: ormar.String(max_length=200)
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    company: str = ormar.String(max_length=200)
 
 
 @pytest.fixture(scope="module")

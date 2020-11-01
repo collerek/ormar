@@ -1,11 +1,12 @@
 import itertools
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Type, TypeVar
 
 import sqlalchemy
 
 import ormar.queryset  # noqa I100
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.models import NewBaseModel  # noqa I100
+from ormar.models.metaclass import ModelMeta
 
 
 def group_related_list(list_: List) -> Dict:
@@ -23,18 +24,34 @@ def group_related_list(list_: List) -> Dict:
     return test_dict
 
 
+if TYPE_CHECKING:  # pragma nocover
+    from ormar import QuerySet
+
+T = TypeVar("T", bound="Model")
+
+
 class Model(NewBaseModel):
     __abstract__ = False
+    if TYPE_CHECKING:  # pragma nocover
+        Meta: ModelMeta
+        objects: "QuerySet"
+
+    def __repr__(self) -> str:  # pragma nocover
+        attrs_to_include = ["tablename", "columns", "pkname"]
+        _repr = {k: v for k, v in self.Meta.model_fields.items()}
+        for atr in attrs_to_include:
+            _repr[atr] = getattr(self.Meta, atr)
+        return f"{self.__class__.__name__}({str(_repr)})"
 
     @classmethod
     def from_row(  # noqa CCR001
-        cls,
+        cls: Type[T],
         row: sqlalchemy.engine.ResultProxy,
         select_related: List = None,
         related_models: Any = None,
         previous_table: str = None,
         fields: List = None,
-    ) -> Optional["Model"]:
+    ) -> Optional[T]:
 
         item: Dict[str, Any] = {}
         select_related = select_related or []
@@ -66,7 +83,9 @@ class Model(NewBaseModel):
             item, row, table_prefix, fields, nested=table_prefix != ""
         )
 
-        instance = cls(**item) if item.get(cls.Meta.pkname, None) is not None else None
+        instance: Optional[T] = cls(**item) if item.get(
+            cls.Meta.pkname, None
+        ) is not None else None
         return instance
 
     @classmethod
@@ -124,7 +143,7 @@ class Model(NewBaseModel):
 
         return item
 
-    async def save(self) -> "Model":
+    async def save(self: T) -> T:
         self_fields = self._extract_model_db_fields()
 
         if not self.pk and self.Meta.model_fields[self.Meta.pkname].autoincrement:
@@ -137,7 +156,7 @@ class Model(NewBaseModel):
             setattr(self, self.Meta.pkname, item_id)
         return self
 
-    async def update(self, **kwargs: Any) -> "Model":
+    async def update(self: T, **kwargs: Any) -> T:
         if kwargs:
             new_values = {**self.dict(), **kwargs}
             self.from_dict(new_values)
@@ -151,13 +170,13 @@ class Model(NewBaseModel):
         await self.Meta.database.execute(expr)
         return self
 
-    async def delete(self) -> int:
+    async def delete(self: T) -> int:
         expr = self.Meta.table.delete()
         expr = expr.where(self.pk_column == (getattr(self, self.Meta.pkname)))
         result = await self.Meta.database.execute(expr)
         return result
 
-    async def load(self) -> "Model":
+    async def load(self: T) -> T:
         expr = self.Meta.table.select().where(self.pk_column == self.pk)
         row = await self.Meta.database.fetch_one(expr)
         if not row:  # pragma nocover

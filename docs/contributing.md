@@ -44,9 +44,9 @@ git checkout -b my-new-feature-branch
 # 5. Formatting and linting
 # ormar uses black for formatting, flake8 for linting and mypy for type hints check
 # run all of the following as all those calls will be run on travis after every push
-black ormar
+black ormar tests
 flake8 ormar
-mypy --config-file mypy.ini ormar
+mypy --config-file mypy.ini ormar tests
 
 # 6. Run tests
 # on localhost all tests are run against sglite backend

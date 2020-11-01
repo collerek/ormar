@@ -13,7 +13,7 @@ class Child(ormar.Model):
         metadata = metadata
         database = database
 
-    id: ormar.Integer(name='child_id', primary_key=True)
-    first_name: ormar.String(name='fname', max_length=100)
-    last_name: ormar.String(name='lname', max_length=100)
-    born_year: ormar.Integer(name='year_born', nullable=True)
+    id: int = ormar.Integer(name="child_id", primary_key=True)
+    first_name: str = ormar.String(name="fname", max_length=100)
+    last_name: str = ormar.String(name="lname", max_length=100)
+    born_year: int = ormar.Integer(name="year_born", nullable=True)

@@ -1,5 +1,5 @@
 import inspect
-from typing import Dict, List, Set, TYPE_CHECKING, Type, TypeVar, Union
+from typing import Dict, List, Sequence, Set, TYPE_CHECKING, Type, TypeVar, Union
 
 import ormar
 from ormar.exceptions import RelationshipInstanceError
@@ -10,6 +10,8 @@ from ormar.models.metaclass import ModelMeta, expand_reverse_relationships
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.models import NewBaseModel
+
+    T = TypeVar("T", bound=Model)
 
 Field = TypeVar("Field", bound=BaseField)
 
@@ -135,7 +137,7 @@ class ModelTableProxy:
                 if field.to == related.__class__ or field.to.Meta == related.Meta:
                     return name
         # fallback for not registered relation
-        if register_missing:
+        if register_missing:  # pragma nocover
             expand_reverse_relationships(related.__class__)  # type: ignore
             return ModelTableProxy.resolve_relation_name(
                 item, related, register_missing=False
@@ -177,7 +179,7 @@ class ModelTableProxy:
         return new_kwargs
 
     @classmethod
-    def merge_instances_list(cls, result_rows: List["Model"]) -> List["Model"]:
+    def merge_instances_list(cls, result_rows: Sequence["Model"]) -> Sequence["Model"]:
         merged_rows: List["Model"] = []
         for index, model in enumerate(result_rows):
             if index > 0 and model is not None and model.pk == merged_rows[-1].pk:

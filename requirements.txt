@@ -3,6 +3,7 @@ databases[postgresql]
 databases[mysql]
 pydantic
 sqlalchemy
+typing_extensions
 
 # Async database drivers
 aiomysql

@@ -2,9 +2,12 @@
 
 ## QuerySet
 
-Each Model is auto registered with a QuerySet that represents the underlaying query and it's options.
+Each Model is auto registered with a `QuerySet` that represents the underlaying query and it's options.
 
 Most of the methods are also available through many to many relation interface.
+
+!!!info
+    To see which one are supported and how to construct relations visit [relations][relations].
 
 Given the Models like this
 
@@ -95,36 +98,15 @@ If you do not provide this flag or a filter a `QueryDefinitionError` will be rai
 
 Return number of rows updated.
 
-```python hl_lines="24-28"
-import databases
-import ormar
-import sqlalchemy
-
-database = databases.Database("sqlite:///db.sqlite")
-metadata = sqlalchemy.MetaData()
-
-class Book(ormar.Model):
-    class Meta:
-        tablename = "books"
-        metadata = metadata
-        database = database
-
-    id: ormar.Integer(primary_key=True)
-    title: ormar.String(max_length=200)
-    author: ormar.String(max_length=100)
-    genre: ormar.String(max_length=100, default='Fiction', choices=['Fiction', 'Adventure', 'Historic', 'Fantasy'])
-
-await Book.objects.create(title='Tom Sawyer', author="Twain, Mark", genre='Adventure')
-await Book.objects.create(title='War and Peace', author="Tolstoy, Leo", genre='Fiction')
-await Book.objects.create(title='Anna Karenina', author="Tolstoy, Leo", genre='Fiction')
-
-
-# queryset needs to be filtered before deleting to prevent accidental overwrite
-# to update whole database table each=True needs to be provided as a safety switch
-await Book.objects.update(each=True, genre='Fiction')
-all_books = await Book.objects.filter(genre='Fiction').all()
-assert len(all_books) == 3
+```Python hl_lines="26-28"
+--8<-- "../docs_src/queries/docs002.py"
 ```
+
+!!!warning
+    Queryset needs to be filtered before updating to prevent accidental overwrite.
+    
+    To update whole database table `each=True` needs to be provided as a safety switch
+    
 
 ### update_or_create
 
@@ -132,37 +114,8 @@ assert len(all_books) == 3
 
 Updates the model, or in case there is no match in database creates a new one.
 
-```python hl_lines="24-30"
-import databases
-import ormar
-import sqlalchemy
-
-database = databases.Database("sqlite:///db.sqlite")
-metadata = sqlalchemy.MetaData()
-
-class Book(ormar.Model):
-    class Meta:
-        tablename = "books"
-        metadata = metadata
-        database = database
-
-    id: ormar.Integer(primary_key=True)
-    title: ormar.String(max_length=200)
-    author: ormar.String(max_length=100)
-    genre: ormar.String(max_length=100, default='Fiction', choices=['Fiction', 'Adventure', 'Historic', 'Fantasy'])
-
-await Book.objects.create(title='Tom Sawyer', author="Twain, Mark", genre='Adventure')
-await Book.objects.create(title='War and Peace', author="Tolstoy, Leo", genre='Fiction')
-await Book.objects.create(title='Anna Karenina', author="Tolstoy, Leo", genre='Fiction')
-
-
-# if not exist the instance will be persisted in db
-vol2 = await Book.objects.update_or_create(title="Volume II", author='Anonymous', genre='Fiction')
-assert await Book.objects.count() == 1
-
-# if pk or pkname passed in kwargs (like id here) the object will be updated
-assert await Book.objects.update_or_create(id=vol2.id, genre='Historic')
-assert await Book.objects.count() == 1
+```Python hl_lines="26-32"
+--8<-- "../docs_src/queries/docs003.py"
 ```
 
 !!!note
@@ -177,36 +130,8 @@ Allows you to create multiple objects at once.
 
 A valid list of `Model` objects needs to be passed.
 
-```python hl_lines="20-26"
-import databases
-import ormar
-import sqlalchemy
-
-database = databases.Database("sqlite:///db.sqlite")
-metadata = sqlalchemy.MetaData()
-
-
-class ToDo(ormar.Model):
-    class Meta:
-        tablename = "todos"
-        metadata = metadata
-        database = database
-
-    id: ormar.Integer(primary_key=True)
-    text: ormar.String(max_length=500)
-    completed: ormar.Boolean(default=False)
-
-# create multiple instances at once with bulk_create
-await ToDo.objects.bulk_create(
-            [
-                ToDo(text="Buy the groceries."),
-                ToDo(text="Call Mum.", completed=True),
-                ToDo(text="Send invoices.", completed=True),
-            ]
-        )
-
-todoes = await ToDo.objects.all()
-assert len(todoes) == 3
+```python hl_lines="21-27"
+--8<-- "../docs_src/queries/docs004.py"
 ```
 
 ### bulk_update
@@ -245,34 +170,8 @@ If you do not provide this flag or a filter a `QueryDefinitionError` will be rai
 
 Return number of rows deleted.
 
-```python hl_lines="23-27"
-import databases
-import ormar
-import sqlalchemy
-
-database = databases.Database("sqlite:///db.sqlite")
-metadata = sqlalchemy.MetaData()
-
-class Book(ormar.Model):
-    class Meta:
-        tablename = "books"
-        metadata = metadata
-        database = database
-
-    id: ormar.Integer(primary_key=True)
-    title: ormar.String(max_length=200)
-    author: ormar.String(max_length=100)
-    genre: ormar.String(max_length=100, default='Fiction', choices=['Fiction', 'Adventure', 'Historic', 'Fantasy'])
-
-await Book.objects.create(title='Tom Sawyer', author="Twain, Mark", genre='Adventure')
-await Book.objects.create(title='War and Peace in Space', author="Tolstoy, Leo", genre='Fantasy')
-await Book.objects.create(title='Anna Karenina', author="Tolstoy, Leo", genre='Fiction')
-
-# delete accepts kwargs that will be used in filter
-# acting in same way as queryset.filter(**kwargs).delete()
-await Book.objects.delete(genre='Fantasy') # delete all fantasy books
-all_books = await Book.objects.all()
-assert len(all_books) == 2
+```python hl_lines="26-30"
+--8<-- "../docs_src/queries/docs005.py"
 ```
 
 ### all
@@ -453,76 +352,8 @@ has_sample = await Book.objects.filter(title='Sample').exists()
 
 With `fields()` you can select subset of model columns to limit the data load.
 
-```python hl_lines="48 60 61 67"
-import databases
-import sqlalchemy
-
-import ormar
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
-
-
-class Company(ormar.Model):
-    class Meta:
-        tablename = "companies"
-        metadata = metadata
-        database = database
-
-    id: ormar.Integer(primary_key=True)
-    name: ormar.String(max_length=100)
-    founded: ormar.Integer(nullable=True)
-
-
-class Car(ormar.Model):
-    class Meta:
-        tablename = "cars"
-        metadata = metadata
-        database = database
-
-    id: ormar.Integer(primary_key=True)
-    manufacturer: ormar.ForeignKey(Company)
-    name: ormar.String(max_length=100)
-    year: ormar.Integer(nullable=True)
-    gearbox_type: ormar.String(max_length=20, nullable=True)
-    gears: ormar.Integer(nullable=True)
-    aircon_type: ormar.String(max_length=20, nullable=True)
-
-
-
-# build some sample data
-toyota = await Company.objects.create(name="Toyota", founded=1937)
-await Car.objects.create(manufacturer=toyota, name="Corolla", year=2020, gearbox_type='Manual', gears=5,
-                         aircon_type='Manual')
-await Car.objects.create(manufacturer=toyota, name="Yaris", year=2019, gearbox_type='Manual', gears=5,
-                         aircon_type='Manual')
-await Car.objects.create(manufacturer=toyota, name="Supreme", year=2020, gearbox_type='Auto', gears=6,
-                         aircon_type='Auto')
-
-# select manufacturer but only name - to include related models use notation {model_name}__{column}
-all_cars = await Car.objects.select_related('manufacturer').fields(['id', 'name', 'company__name']).all()
-for car in all_cars:
-    # excluded columns will yield None
-    assert all(getattr(car, x) is None for x in ['year', 'gearbox_type', 'gears', 'aircon_type'])
-    # included column on related models will be available, pk column is always included
-    # even if you do not include it in fields list
-    assert car.manufacturer.name == 'Toyota'
-    # also in the nested related models - you cannot exclude pk - it's always auto added 
-    assert car.manufacturer.founded is None
-
-# fields() can be called several times, building up the columns to select
-# models selected in select_related but with no columns in fields list implies all fields
-all_cars = await Car.objects.select_related('manufacturer').fields('id').fields(
-                ['name']).all()
-# all fiels from company model are selected
-assert all_cars[0].manufacturer.name == 'Toyota' 
-assert all_cars[0].manufacturer.founded ==  1937
-
-# cannot exclude mandatory model columns - company__name in this example
-await Car.objects.select_related('manufacturer').fields(['id', 'name', 'company__founded']).all()
-# will raise pydantic ValidationError as company.name is required
-
+```python hl_lines="47 59 60 66"
+--8<-- "../docs_src/queries/docs006.py"
 ```
 
 !!!warning
@@ -540,3 +371,4 @@ await Car.objects.select_related('manufacturer').fields(['id', 'name', 'company_
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
 
 [models]: ./models.md
+[relations]: ./relations.md

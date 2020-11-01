@@ -1,13 +1,17 @@
+# type: ignore
+import asyncio
 import datetime
 import decimal
 
 import pydantic
 import pytest
 import sqlalchemy
+import typing
 
-import ormar.fields as fields
+import ormar
 from ormar.exceptions import ModelDefinitionError
 from ormar.models import Model
+from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()
 
@@ -17,18 +21,18 @@ class ExampleModel(Model):
         tablename = "example"
         metadata = metadata
 
-    test: fields.Integer(primary_key=True)
-    test_string: fields.String(max_length=250)
-    test_text: fields.Text(default="")
-    test_bool: fields.Boolean(nullable=False)
-    test_float: fields.Float() = None
-    test_datetime: fields.DateTime(default=datetime.datetime.now)
-    test_date: fields.Date(default=datetime.date.today)
-    test_time: fields.Time(default=datetime.time)
-    test_json: fields.JSON(default={})
-    test_bigint: fields.BigInteger(default=0)
-    test_decimal: fields.Decimal(scale=10, precision=2)
-    test_decimal2: fields.Decimal(max_digits=10, decimal_places=2)
+    test: int = ormar.Integer(primary_key=True)
+    test_string: str = ormar.String(max_length=250)
+    test_text: str = ormar.Text(default="")
+    test_bool: bool = ormar.Boolean(nullable=False)
+    test_float: ormar.Float() = None  # type: ignore
+    test_datetime = ormar.DateTime(default=datetime.datetime.now)
+    test_date = ormar.Date(default=datetime.date.today)
+    test_time = ormar.Time(default=datetime.time)
+    test_json = ormar.JSON(default={})
+    test_bigint: int = ormar.BigInteger(default=0)
+    test_decimal = ormar.Decimal(scale=2, precision=10)
+    test_decimal2 = ormar.Decimal(max_digits=10, decimal_places=2)
 
 
 fields_to_check = [
@@ -46,11 +50,26 @@ fields_to_check = [
 
 class ExampleModel2(Model):
     class Meta:
-        tablename = "example2"
+        tablename = "examples"
         metadata = metadata
 
-    test: fields.Integer(primary_key=True)
-    test_string: fields.String(max_length=250)
+    test: int = ormar.Integer(primary_key=True)
+    test_string: str = ormar.String(max_length=250)
+
+
+@pytest.fixture(scope="module")
+def event_loop():
+    loop = asyncio.get_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(autouse=True, scope="module")
+async def create_test_database():
+    engine = sqlalchemy.create_engine(DATABASE_URL)
+    metadata.create_all(engine)
+    yield
+    metadata.drop_all(engine)
 
 
 @pytest.fixture()
@@ -117,29 +136,33 @@ def test_sqlalchemy_table_is_created(example):
     assert all([field in example.Meta.table.columns for field in fields_to_check])
 
 
-def test_no_pk_in_model_definition():
-    with pytest.raises(ModelDefinitionError):
+@typing.no_type_check
+def test_no_pk_in_model_definition():  # type: ignore
+    with pytest.raises(ModelDefinitionError):  # type: ignore
 
-        class ExampleModel2(Model):
+        class ExampleModel2(Model):  # type: ignore
             class Meta:
-                tablename = "example3"
+                tablename = "example2"
                 metadata = metadata
 
-            test_string: fields.String(max_length=250)
+            test_string: str = ormar.String(max_length=250)  # type: ignore
 
 
+@typing.no_type_check
 def test_two_pks_in_model_definition():
     with pytest.raises(ModelDefinitionError):
 
+        @typing.no_type_check
         class ExampleModel2(Model):
             class Meta:
                 tablename = "example3"
                 metadata = metadata
 
-            id: fields.Integer(primary_key=True)
-            test_string: fields.String(max_length=250, primary_key=True)
+            id: int = ormar.Integer(primary_key=True)
+            test_string: str = ormar.String(max_length=250, primary_key=True)
 
 
+@typing.no_type_check
 def test_setting_pk_column_as_pydantic_only_in_model_definition():
     with pytest.raises(ModelDefinitionError):
 
@@ -148,9 +171,10 @@ def test_setting_pk_column_as_pydantic_only_in_model_definition():
                 tablename = "example4"
                 metadata = metadata
 
-            test: fields.Integer(primary_key=True, pydantic_only=True)
+            test: int = ormar.Integer(primary_key=True, pydantic_only=True)
 
 
+@typing.no_type_check
 def test_decimal_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
 
@@ -159,9 +183,10 @@ def test_decimal_error_in_model_definition():
                 tablename = "example5"
                 metadata = metadata
 
-            test: fields.Decimal(primary_key=True)
+            test: decimal.Decimal = ormar.Decimal(primary_key=True)
 
 
+@typing.no_type_check
 def test_string_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
 
@@ -170,9 +195,10 @@ def test_string_error_in_model_definition():
                 tablename = "example6"
                 metadata = metadata
 
-            test: fields.String(primary_key=True)
+            test: str = ormar.String(primary_key=True)
 
 
+@typing.no_type_check
 def test_json_conversion_in_model():
     with pytest.raises(pydantic.ValidationError):
         ExampleModel(

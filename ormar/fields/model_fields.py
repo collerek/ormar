@@ -1,7 +1,7 @@
 import datetime
 import decimal
 import uuid
-from typing import Any, Optional, Type
+from typing import Any, Optional, TYPE_CHECKING, Type
 
 import pydantic
 import sqlalchemy
@@ -20,7 +20,7 @@ def is_field_nullable(
 
 
 class ModelFieldFactory:
-    _bases: Any = BaseField
+    _bases: Any = (BaseField,)
     _type: Any = None
 
     def __new__(cls, *args: Any, **kwargs: Any) -> Type[BaseField]:  # type: ignore
@@ -56,8 +56,7 @@ class ModelFieldFactory:
         pass
 
 
-class String(ModelFieldFactory):
-    _bases = (pydantic.ConstrainedStr, BaseField)
+class String(ModelFieldFactory, str):
     _type = str
 
     def __new__(  # type: ignore # noqa CFQ002
@@ -95,8 +94,7 @@ class String(ModelFieldFactory):
             )
 
 
-class Integer(ModelFieldFactory):
-    _bases = (pydantic.ConstrainedInt, BaseField)
+class Integer(ModelFieldFactory, int):
     _type = int
 
     def __new__(  # type: ignore
@@ -130,8 +128,7 @@ class Integer(ModelFieldFactory):
         return sqlalchemy.Integer()
 
 
-class Text(ModelFieldFactory):
-    _bases = (pydantic.ConstrainedStr, BaseField)
+class Text(ModelFieldFactory, str):
     _type = str
 
     def __new__(  # type: ignore
@@ -153,8 +150,7 @@ class Text(ModelFieldFactory):
         return sqlalchemy.Text()
 
 
-class Float(ModelFieldFactory):
-    _bases = (pydantic.ConstrainedFloat, BaseField)
+class Float(ModelFieldFactory, float):
     _type = float
 
     def __new__(  # type: ignore
@@ -182,17 +178,23 @@ class Float(ModelFieldFactory):
         return sqlalchemy.Float()
 
 
-class Boolean(ModelFieldFactory):
-    _bases = (int, BaseField)
-    _type = bool
+if TYPE_CHECKING:  # pragma: nocover
 
-    @classmethod
-    def get_column_type(cls, **kwargs: Any) -> Any:
-        return sqlalchemy.Boolean()
+    def Boolean(**kwargs: Any) -> bool:
+        pass
 
 
-class DateTime(ModelFieldFactory):
-    _bases = (datetime.datetime, BaseField)
+else:
+
+    class Boolean(ModelFieldFactory, int):
+        _type = bool
+
+        @classmethod
+        def get_column_type(cls, **kwargs: Any) -> Any:
+            return sqlalchemy.Boolean()
+
+
+class DateTime(ModelFieldFactory, datetime.datetime):
     _type = datetime.datetime
 
     @classmethod
@@ -200,8 +202,7 @@ class DateTime(ModelFieldFactory):
         return sqlalchemy.DateTime()
 
 
-class Date(ModelFieldFactory):
-    _bases = (datetime.date, BaseField)
+class Date(ModelFieldFactory, datetime.date):
     _type = datetime.date
 
     @classmethod
@@ -209,8 +210,7 @@ class Date(ModelFieldFactory):
         return sqlalchemy.Date()
 
 
-class Time(ModelFieldFactory):
-    _bases = (datetime.time, BaseField)
+class Time(ModelFieldFactory, datetime.time):
     _type = datetime.time
 
     @classmethod
@@ -218,8 +218,7 @@ class Time(ModelFieldFactory):
         return sqlalchemy.Time()
 
 
-class JSON(ModelFieldFactory):
-    _bases = (pydantic.Json, BaseField)
+class JSON(ModelFieldFactory, pydantic.Json):
     _type = pydantic.Json
 
     @classmethod
@@ -227,8 +226,7 @@ class JSON(ModelFieldFactory):
         return sqlalchemy.JSON()
 
 
-class BigInteger(Integer):
-    _bases = (pydantic.ConstrainedInt, BaseField)
+class BigInteger(Integer, int):
     _type = int
 
     def __new__(  # type: ignore
@@ -262,8 +260,7 @@ class BigInteger(Integer):
         return sqlalchemy.BigInteger()
 
 
-class Decimal(ModelFieldFactory):
-    _bases = (pydantic.ConstrainedDecimal, BaseField)
+class Decimal(ModelFieldFactory, decimal.Decimal):
     _type = decimal.Decimal
 
     def __new__(  # type: ignore # noqa CFQ002
@@ -290,14 +287,14 @@ class Decimal(ModelFieldFactory):
         kwargs["le"] = kwargs["maximum"]
 
         if kwargs.get("max_digits"):
-            kwargs["scale"] = kwargs["max_digits"]
-        elif kwargs.get("scale"):
-            kwargs["max_digits"] = kwargs["scale"]
+            kwargs["precision"] = kwargs["max_digits"]
+        elif kwargs.get("precision"):
+            kwargs["max_digits"] = kwargs["precision"]
 
         if kwargs.get("decimal_places"):
-            kwargs["precision"] = kwargs["decimal_places"]
-        elif kwargs.get("precision"):
-            kwargs["decimal_places"] = kwargs["precision"]
+            kwargs["scale"] = kwargs["decimal_places"]
+        elif kwargs.get("scale"):
+            kwargs["decimal_places"] = kwargs["scale"]
 
         return super().__new__(cls, **kwargs)
 
@@ -317,8 +314,7 @@ class Decimal(ModelFieldFactory):
             )
 
 
-class UUID(ModelFieldFactory):
-    _bases = (uuid.UUID, BaseField)
+class UUID(ModelFieldFactory, uuid.UUID):
     _type = uuid.UUID
 
     @classmethod
