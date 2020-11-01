@@ -1,5 +1,6 @@
 from ormar.exceptions import ModelDefinitionError, ModelNotSet, MultipleMatches, NoMatch
-from ormar.fields import (
+from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
+from ormar.fields import (  # noqa: I100
     BigInteger,
     Boolean,
     Date,
@@ -28,8 +29,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-
-__version__ = "0.3.11"
+__version__ = "0.4.0"
 __all__ = [
     "Integer",
     "BigInteger",
@@ -54,4 +54,6 @@ __all__ = [
     "Undefined",
     "UUID",
     "UniqueColumns",
+    "QuerySetProtocol",
+    "RelationProtocol",
 ]

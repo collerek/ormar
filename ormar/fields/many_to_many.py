@@ -1,5 +1,6 @@
-from typing import Any, List, Optional, Sequence, TYPE_CHECKING, Type, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
+import ormar
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 
@@ -47,61 +48,5 @@ def ManyToMany(
     return type("ManyToMany", (ManyToManyField, BaseField), namespace)
 
 
-class ManyToManyField(ForeignKeyField):
+class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationProtocol):
     through: Type["Model"]
-
-    if TYPE_CHECKING:  # noqa: C901; #pragma nocover
-
-        @staticmethod
-        async def add(item: "Model") -> None:
-            pass
-
-        @staticmethod
-        async def remove(item: "Model") -> None:
-            pass
-
-        from ormar import QuerySet
-
-        @staticmethod
-        def filter(**kwargs: Any) -> "QuerySet":  # noqa: A003, A001
-            pass
-
-        @staticmethod
-        def select_related(related: Union[List, str]) -> "QuerySet":
-            pass
-
-        @staticmethod
-        async def exists() -> bool:
-            pass
-
-        @staticmethod
-        async def count() -> int:
-            pass
-
-        @staticmethod
-        async def clear() -> int:
-            pass
-
-        @staticmethod
-        def limit(limit_count: int) -> "QuerySet":
-            pass
-
-        @staticmethod
-        def offset(offset: int) -> "QuerySet":
-            pass
-
-        @staticmethod
-        async def first(**kwargs: Any) -> "Model":
-            pass
-
-        @staticmethod
-        async def get(**kwargs: Any) -> "Model":
-            pass
-
-        @staticmethod
-        async def all(**kwargs: Any) -> Sequence[Optional["Model"]]:  # noqa: A003, A001
-            pass
-
-        @staticmethod
-        async def create(**kwargs: Any) -> "Model":
-            pass

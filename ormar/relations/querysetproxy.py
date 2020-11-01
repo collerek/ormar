@@ -10,7 +10,7 @@ if TYPE_CHECKING:  # pragma no cover
     T = TypeVar("T", bound=Model)
 
 
-class QuerysetProxy:
+class QuerysetProxy(ormar.QuerySetProtocol):
     if TYPE_CHECKING:  # pragma no cover
         relation: "Relation"
 
