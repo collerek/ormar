@@ -14,7 +14,6 @@ if TYPE_CHECKING:  # pragma no cover
 
 class BaseField(FieldInfo):
     __type__ = None
-    __pydantic_type__ = None
 
     column_type: sqlalchemy.Column
     constraints: List = []

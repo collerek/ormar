@@ -47,7 +47,6 @@ def ForeignKey(  # noqa CFQ002
     )
     namespace = dict(
         __type__=__type__,
-        __pydantic_type__=__type__,
         to=to,
         name=name,
         nullable=nullable,

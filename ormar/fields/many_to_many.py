@@ -29,7 +29,6 @@ def ManyToMany(
     )
     namespace = dict(
         __type__=__type__,
-        __pydantic_type__=__type__,
         to=to,
         through=through,
         name=name,
