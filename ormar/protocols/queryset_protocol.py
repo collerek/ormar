@@ -3,7 +3,7 @@ from typing import Any, List, Optional, Sequence, TYPE_CHECKING, Union
 try:
     from typing import Protocol
 except ImportError:
-    from typing_extensions import Protocol
+    from typing_extensions import Protocol  # type: ignore
 
 if TYPE_CHECKING:  # noqa: C901; #pragma nocover
     from ormar import QuerySet, Model
