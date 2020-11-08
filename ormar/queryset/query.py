@@ -21,6 +21,7 @@ class Query:
         limit_count: Optional[int],
         offset: Optional[int],
         fields: Optional[List],
+        order_bys: Optional[List],
     ) -> None:
         self.query_offset = offset
         self.limit_count = limit_count
@@ -36,12 +37,22 @@ class Query:
 
         self.select_from: List[str] = []
         self.columns = [sqlalchemy.Column]
+        self.order_columns = order_bys
         self.order_bys: List[sqlalchemy.sql.elements.TextClause] = []
 
     @property
     def prefixed_pk_name(self) -> str:
         pkname_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
         return f"{self.table.name}.{pkname_alias}"
+
+    def apply_order_bys_for_primary_model(self):
+        if self.order_columns:
+            return [
+                text(f"{x[1:]} desc") if x.startswith("-") else text(x)
+                for x in self.order_columns
+                if "__" not in x
+            ]
+        return [text(self.prefixed_pk_name)]
 
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
         self_related_fields = self.model_cls.own_table_columns(
@@ -50,7 +61,7 @@ class Query:
         self.columns = self.model_cls.Meta.alias_manager.prefixed_columns(
             "", self.table, self_related_fields
         )
-        self.order_bys = [text(self.prefixed_pk_name)]
+        self.order_bys = self.apply_order_bys_for_primary_model()
         self.select_from = self.table
 
         self._select_related.sort(key=lambda item: (item, -len(item)))
