@@ -1,6 +1,7 @@
 from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
+from pydantic import BaseModel, create_model
 from sqlalchemy import UniqueConstraint
 
 import ormar  # noqa I101
@@ -9,6 +10,7 @@ from ormar.fields.base import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, NewBaseModel
+    from ormar.fields import ManyToManyField
 
 
 def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
@@ -21,6 +23,15 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
         },
     }
     return fk(**init_dict)
+
+
+def create_dummy_model(
+    base_model: Type["Model"],
+    pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
+) -> Type["BaseModel"]:
+    fields = {f"{pk_field.name}": (pk_field.__type__, None)}
+    dummy_model = create_model(f"PkOnly{base_model.get_name(lower=False)}", **fields)  # type: ignore
+    return dummy_model
 
 
 class UniqueColumns(UniqueConstraint):
@@ -40,10 +51,11 @@ def ForeignKey(  # noqa CFQ002
 ) -> Any:
     fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
     to_field = to.Meta.model_fields[to.Meta.pkname]
+    pk_only_model = create_dummy_model(to, to_field)
     __type__ = (
-        Union[to_field.__type__, to]
+        Union[to_field.__type__, to, pk_only_model]
         if not nullable
-        else Optional[Union[to_field.__type__, to]]
+        else Optional[Union[to_field.__type__, to, pk_only_model]]
     )
     namespace = dict(
         __type__=__type__,

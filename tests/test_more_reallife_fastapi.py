@@ -1,3 +1,4 @@
+import asyncio
 from typing import List, Optional
 
 import databases
@@ -64,6 +65,12 @@ async def get_items():
     return items
 
 
+@app.get("/items/raw/", response_model=List[Item])
+async def get_raw_items():
+    items = await Item.objects.all()
+    return items
+
+
 @app.post("/items/", response_model=Item)
 async def create_item(item: Item):
     await item.save()
@@ -74,6 +81,12 @@ async def create_item(item: Item):
 async def create_category(category: Category):
     await category.save()
     return category
+
+
+@app.get("/items/{item_id}")
+async def get_item(item_id: int):
+    item = await Item.objects.get(pk=item_id)
+    return item
 
 
 @app.put("/items/{item_id}")
@@ -112,6 +125,19 @@ def test_all_endpoints():
         response = client.get("/items/")
         items = [Item(**item) for item in response.json()]
         assert items[0].name == "New name"
+
+        response = client.get("/items/raw/")
+        items = [Item(**item) for item in response.json()]
+        assert items[0].name == "New name"
+        assert items[0].category.name is None
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(items[0].category.load())
+        assert items[0].category.name is not None
+
+        response = client.get(f"/items/{item.pk}")
+        new_item = Item(**response.json())
+        assert new_item == item
 
         response = client.delete(f"/items/{item.pk}")
         assert response.json().get("deleted_rows", "__UNDEFINED__") != "__UNDEFINED__"
