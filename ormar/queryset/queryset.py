@@ -114,7 +114,7 @@ class QuerySet:
             order_bys=self.order_bys,
         )
         exp = qry.build_select_expression()
-        print(exp.compile(compile_kwargs={"literal_binds": True}))
+        # print(exp.compile(compile_kwargs={"literal_binds": True}))
         return exp
 
     def filter(self, _exclude: bool = False, **kwargs: Any) -> "QuerySet":  # noqa: A003

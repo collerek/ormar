@@ -1,4 +1,5 @@
 import inspect
+from collections import OrderedDict
 from typing import Dict, List, Sequence, Set, TYPE_CHECKING, Type, TypeVar, Union
 
 import ormar
@@ -181,11 +182,18 @@ class ModelTableProxy:
     @classmethod
     def merge_instances_list(cls, result_rows: Sequence["Model"]) -> Sequence["Model"]:
         merged_rows: List["Model"] = []
-        for index, model in enumerate(result_rows):
-            if index > 0 and model is not None and model.pk == merged_rows[-1].pk:
-                merged_rows[-1] = cls.merge_two_instances(model, merged_rows[-1])
-            else:
-                merged_rows.append(model)
+        grouped_instances = OrderedDict()
+
+        for model in result_rows:
+            grouped_instances.setdefault(model.pk, []).append(model)
+
+        for group in grouped_instances.values():
+            model = group.pop(0)
+            if group:
+                for next_model in group:
+                    model = cls.merge_two_instances(next_model, model)
+            merged_rows.append(model)
+
         return merged_rows
 
     @classmethod

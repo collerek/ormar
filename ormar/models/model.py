@@ -37,10 +37,7 @@ class Model(NewBaseModel):
         objects: "QuerySet"
 
     def __repr__(self) -> str:  # pragma nocover
-        attrs_to_include = ["tablename", "columns", "pkname"]
-        _repr = {k: v for k, v in self.Meta.model_fields.items()}
-        for atr in attrs_to_include:
-            _repr[atr] = getattr(self.Meta, atr)
+        _repr = {k: getattr(self, k) for k, v in self.Meta.model_fields.items()}
         return f"{self.__class__.__name__}({str(_repr)})"
 
     @classmethod

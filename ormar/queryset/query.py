@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from typing import List, Optional, TYPE_CHECKING, Tuple, Type
 
 import sqlalchemy
@@ -38,21 +39,31 @@ class Query:
         self.select_from: List[str] = []
         self.columns = [sqlalchemy.Column]
         self.order_columns = order_bys
-        self.order_bys: List[sqlalchemy.sql.elements.TextClause] = []
+        self.sorted_orders = OrderedDict()
+        self._init_sorted_orders()
+
+    def _init_sorted_orders(self) -> None:
+        for clause in self.order_columns:
+            self.sorted_orders[clause] = None
 
     @property
     def prefixed_pk_name(self) -> str:
         pkname_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
         return f"{self.table.name}.{pkname_alias}"
 
-    def apply_order_bys_for_primary_model(self):
+    def apply_order_bys_for_primary_model(self) -> None:
         if self.order_columns:
-            return [
-                text(f"{x[1:]} desc") if x.startswith("-") else text(x)
-                for x in self.order_columns
-                if "__" not in x
-            ]
-        return [text(self.prefixed_pk_name)]
+            for clause in self.order_columns:
+                if "__" not in clause:
+                    clause = (
+                        text(f"{clause[1:]} desc")
+                        if clause.startswith("-")
+                        else text(clause)
+                    )
+                    self.sorted_orders[clause] = clause
+        else:
+            order = text(self.prefixed_pk_name)
+            self.sorted_orders[self.prefixed_pk_name] = order
 
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
         self_related_fields = self.model_cls.own_table_columns(
@@ -61,7 +72,7 @@ class Query:
         self.columns = self.model_cls.Meta.alias_manager.prefixed_columns(
             "", self.table, self_related_fields
         )
-        self.order_bys = self.apply_order_bys_for_primary_model()
+        self.apply_order_bys_for_primary_model()
         self.select_from = self.table
 
         self._select_related.sort(key=lambda item: (item, -len(item)))
@@ -75,15 +86,16 @@ class Query:
                 used_aliases=self.used_aliases,
                 select_from=self.select_from,
                 columns=self.columns,
-                order_bys=self.order_bys,
                 fields=self.fields,
+                order_columns=self.order_columns,
+                sorted_orders=self.sorted_orders,
             )
 
             (
                 self.used_aliases,
                 self.select_from,
                 self.columns,
-                self.order_bys,
+                self.sorted_orders,
             ) = sql_join.build_join(item, join_parameters)
 
         expr = sqlalchemy.sql.select(self.columns)
@@ -105,7 +117,7 @@ class Query:
         )
         expr = LimitQuery(limit_count=self.limit_count).apply(expr)
         expr = OffsetQuery(query_offset=self.query_offset).apply(expr)
-        expr = OrderQuery(order_bys=self.order_bys).apply(expr)
+        expr = OrderQuery(sorted_orders=self.sorted_orders).apply(expr)
         return expr
 
     def _reset_query_parameters(self) -> None:
