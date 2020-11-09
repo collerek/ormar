@@ -50,7 +50,7 @@ Will produce:
  'name': mappingproxy({'allow_blank': False,
                        'autoincrement': False,
                        'choices': set(),
-                       'column_type': String(length=100),
+                       'column_type': String(max_length=100),
                        'curtail_length': None,
                        'default': None,
                        'index': False,
