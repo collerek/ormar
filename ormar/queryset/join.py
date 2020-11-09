@@ -162,7 +162,7 @@ class SqlJoin:
                     self.sorted_orders["__".join(condition)] = order
         else:
             order = text(f"{alias}_{to_table}.{pkname_alias}")
-            self.sorted_orders[pkname_alias] = order
+            self.sorted_orders[f"{to_table}.{pkname_alias}"] = order
 
     @staticmethod
     def get_to_and_from_keys(
