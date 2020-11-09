@@ -1,4 +1,5 @@
-from typing import List, NamedTuple, TYPE_CHECKING, Tuple, Type
+from collections import OrderedDict
+from typing import List, NamedTuple, Optional, TYPE_CHECKING, Tuple, Type
 
 import sqlalchemy
 from sqlalchemy import text
@@ -18,19 +19,21 @@ class JoinParameters(NamedTuple):
 
 
 class SqlJoin:
-    def __init__(
+    def __init__(  # noqa:  CFQ002
         self,
         used_aliases: List,
         select_from: sqlalchemy.sql.select,
-        order_bys: List[sqlalchemy.sql.elements.TextClause],
         columns: List[sqlalchemy.Column],
         fields: List,
+        order_columns: Optional[List],
+        sorted_orders: OrderedDict,
     ) -> None:
         self.used_aliases = used_aliases
         self.select_from = select_from
-        self.order_bys = order_bys
         self.columns = columns
         self.fields = fields
+        self.order_columns = order_columns
+        self.sorted_orders = sorted_orders
 
     @staticmethod
     def relation_manager(model_cls: Type["Model"]) -> AliasManager:
@@ -46,20 +49,26 @@ class SqlJoin:
 
     def build_join(
         self, item: str, join_parameters: JoinParameters
-    ) -> Tuple[List, sqlalchemy.sql.select, List, List]:
+    ) -> Tuple[List, sqlalchemy.sql.select, List, OrderedDict]:
         for part in item.split("__"):
             if issubclass(
                 join_parameters.model_cls.Meta.model_fields[part], ManyToManyField
             ):
                 _fields = join_parameters.model_cls.Meta.model_fields
                 new_part = _fields[part].to.get_name()
+                self._switch_many_to_many_order_columns(part, new_part)
                 join_parameters = self._build_join_parameters(
                     part, join_parameters, is_multi=True
                 )
                 part = new_part
             join_parameters = self._build_join_parameters(part, join_parameters)
 
-        return self.used_aliases, self.select_from, self.columns, self.order_bys
+        return (
+            self.used_aliases,
+            self.select_from,
+            self.columns,
+            self.sorted_orders,
+        )
 
     def _build_join_parameters(
         self, part: str, join_params: JoinParameters, is_multi: bool = False
@@ -108,7 +117,9 @@ class SqlJoin:
         )
 
         pkname_alias = model_cls.get_column_alias(model_cls.Meta.pkname)
-        self.order_bys.append(text(f"{alias}_{to_table}.{pkname_alias}"))
+        if not is_multi:
+            self.get_order_bys(alias, to_table, pkname_alias, part)
+
         self_related_fields = model_cls.own_table_columns(
             model_cls, self.fields, nested=True,
         )
@@ -118,6 +129,40 @@ class SqlJoin:
             )
         )
         self.used_aliases.append(alias)
+
+    def _switch_many_to_many_order_columns(self, part: str, new_part: str) -> None:
+        if self.order_columns:
+            split_order_columns = [
+                x.split("__") for x in self.order_columns if "__" in x
+            ]
+            for condition in split_order_columns:
+                if condition[-2] == part or condition[-2][1:] == part:
+                    condition[-2] = condition[-2].replace(part, new_part)
+            self.order_columns = [x for x in self.order_columns if "__" not in x] + [
+                "__".join(x) for x in split_order_columns
+            ]
+
+    @staticmethod
+    def _check_if_condition_apply(condition: List, part: str) -> bool:
+        return len(condition) >= 2 and (
+            condition[-2] == part or condition[-2][1:] == part
+        )
+
+    def get_order_bys(  # noqa: CCR001
+        self, alias: str, to_table: str, pkname_alias: str, part: str
+    ) -> None:
+        if self.order_columns:
+            split_order_columns = [
+                x.split("__") for x in self.order_columns if "__" in x
+            ]
+            for condition in split_order_columns:
+                if self._check_if_condition_apply(condition, part):
+                    direction = f"{'desc' if condition[0][0] == '-' else ''}"
+                    order = text(f"{alias}_{to_table}.{condition[-1]} {direction}")
+                    self.sorted_orders["__".join(condition)] = order
+        else:
+            order = text(f"{alias}_{to_table}.{pkname_alias}")
+            self.sorted_orders[f"{to_table}.{pkname_alias}"] = order
 
     @staticmethod
     def get_to_and_from_keys(

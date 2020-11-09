@@ -1,14 +1,15 @@
-from typing import List
+from typing import Dict
 
 import sqlalchemy
 
 
 class OrderQuery:
-    def __init__(self, order_bys: List) -> None:
-        self.order_bys = order_bys
+    def __init__(self, sorted_orders: Dict) -> None:
+        self.sorted_orders = sorted_orders
 
     def apply(self, expr: sqlalchemy.sql.select) -> sqlalchemy.sql.select:
-        if self.order_bys:
-            for order in self.order_bys:
-                expr = expr.order_by(order)
+        if self.sorted_orders:
+            for order in list(self.sorted_orders.values()):
+                if order is not None:
+                    expr = expr.order_by(order)
         return expr
