@@ -370,5 +370,86 @@ With `fields()` you can select subset of model columns to limit the data load.
     
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
 
+### order_by
+
+`order_by(columns: Union[List, str]) -> QuerySet`
+
+With `order_by()` you can order the results from database based on your choice of fields.
+
+You can provide a string with field name or list of strings with different fields.
+
+Ordering in sql will be applied in order of names you provide in order_by.
+
+!!!tip
+    By default if you do not provide ordering `ormar` explicitly orders by all primary keys
+    
+!!!warning
+    If you are sorting by nested models that causes that the result rows are unsorted by the main model
+    `ormar` will combine those children rows into one main model.
+    
+    Sample raw database rows result (sort by child model desc):
+    ```
+    MODEL: 1 - Child Model - 3
+    MODEL: 2 - Child Model - 2
+    MODEL: 1 - Child Model - 1
+    ```
+    
+    will result in 2 rows of result:
+    ```
+    MODEL: 1 - Child Models: [3, 1] # encountered first in result, all children rows combined
+    MODEL: 2 - Child Modles: [2]
+    ```
+    
+    The main model will never duplicate in the result
+
+Given sample Models like following:
+    
+```python
+--8<-- "../docs_src/queries/docs007.py"
+```
+
+To order by main model field just provide a field name
+
+```python
+toys = await Toy.objects.select_related("owner").order_by("name").all()
+assert [x.name.replace("Toy ", "") for x in toys] == [
+    str(x + 1) for x in range(6)
+]
+assert toys[0].owner == zeus
+assert toys[1].owner == aphrodite
+```
+
+To sort on nested models separate field names with dunder '__'.
+
+You can sort this way across all relation types -> `ForeignKey`, reverse virtual FK and `ManyToMany` fields.
+
+```python
+toys = await Toy.objects.select_related("owner").order_by("owner__name").all()
+assert toys[0].owner.name == toys[1].owner.name == "Aphrodite"
+assert toys[2].owner.name == toys[3].owner.name == "Hermes"
+assert toys[4].owner.name == toys[5].owner.name == "Zeus"
+```
+
+To sort in descending order provide a hyphen in front of the field name
+
+```python
+owner = (
+    await Owner.objects.select_related("toys")
+        .order_by("-toys__name")
+        .filter(name="Zeus")
+        .get()
+)
+assert owner.toys[0].name == "Toy 4"
+assert owner.toys[1].name == "Toy 1"
+```
+
+!!!note
+    All methods that do not return the rows explicitly returns a QueySet instance so you can chain them together
+    
+    So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
+    
+    Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
+
+
 [models]: ./models.md
 [relations]: ./relations.md
