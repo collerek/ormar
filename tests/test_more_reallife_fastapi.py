@@ -1,3 +1,4 @@
+import asyncio
 from typing import List, Optional
 
 import databases
@@ -128,6 +129,11 @@ def test_all_endpoints():
         response = client.get("/items/raw/")
         items = [Item(**item) for item in response.json()]
         assert items[0].name == "New name"
+        assert items[0].category.name is None
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(items[0].category.load())
+        assert items[0].category.name is not None
 
         response = client.get(f"/items/{item.pk}")
         new_item = Item(**response.json())
