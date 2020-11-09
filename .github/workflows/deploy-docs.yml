@@ -1,11 +1,7 @@
-name: Build Documentation using MkDocs 
-# Controls when the action will run. Triggers the workflow on push or pull request 
-# events but only for the master branch 
+name: Build Documentation using MkDocs
 on: 
   push: 
-    branches: [master] 
-  pull_request: 
-    branches: [master] 
+    branches: [master]
 jobs: 
   build: 
     name: Build and Deploy Documentation 
@@ -23,5 +19,5 @@ jobs:
           pip install mkdocs-material 
       - name: Deploy 
         run: | 
-          git pull 
+          git pull origin master
           mkdocs gh-deploy
