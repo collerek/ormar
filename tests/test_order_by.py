@@ -210,7 +210,7 @@ async def test_sort_order_on_many_to_many():
         factory2 = await Factory.objects.create(name="Factory 2")
 
         car1 = await Car.objects.create(name="Buggy", factory=factory1)
-        car2 = await Car.objects.create(name="VW", factory=factory2)
+        car2 = await Car.objects.create(name="Volkswagen", factory=factory2)
         car3 = await Car.objects.create(name="Ferrari", factory=factory1)
         car4 = await Car.objects.create(name="Volvo", factory=factory2)
         car5 = await Car.objects.create(name="Skoda", factory=factory1)
@@ -253,7 +253,7 @@ async def test_sort_order_on_many_to_many():
 
         users = await User.objects.select_related("cars").order_by("-cars__name").all()
         assert users[0].name == "Mark"
-        assert users[1].cars[0].name == "VW"
+        assert users[1].cars[0].name == "Volkswagen"
         assert users[1].cars[1].name == "Skoda"
         assert users[1].cars[2].name == "Seat"
         assert users[1].cars[3].name == "Buggy"
@@ -266,7 +266,7 @@ async def test_sort_order_on_many_to_many():
 
         assert users[0].name == "Julie"
         assert users[0].cars[0].name == "Seat"
-        assert users[0].cars[1].name == "VW"
+        assert users[0].cars[1].name == "Volkswagen"
         assert users[0].cars[2].name == "Buggy"
         assert users[0].cars[3].name == "Skoda"
 
