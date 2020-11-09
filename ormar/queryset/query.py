@@ -39,19 +39,20 @@ class Query:
         self.select_from: List[str] = []
         self.columns = [sqlalchemy.Column]
         self.order_columns = order_bys
-        self.sorted_orders = OrderedDict()
+        self.sorted_orders: OrderedDict = OrderedDict()
         self._init_sorted_orders()
 
     def _init_sorted_orders(self) -> None:
-        for clause in self.order_columns:
-            self.sorted_orders[clause] = None
+        if self.order_columns:
+            for clause in self.order_columns:
+                self.sorted_orders[clause] = None
 
     @property
     def prefixed_pk_name(self) -> str:
         pkname_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
         return f"{self.table.name}.{pkname_alias}"
 
-    def apply_order_bys_for_primary_model(self) -> None:
+    def apply_order_bys_for_primary_model(self) -> None:  # noqa: CCR001
         if self.order_columns:
             for clause in self.order_columns:
                 if "__" not in clause:
@@ -123,6 +124,5 @@ class Query:
     def _reset_query_parameters(self) -> None:
         self.select_from = []
         self.columns = []
-        self.order_bys = []
         self.used_aliases = []
         self.fields = []

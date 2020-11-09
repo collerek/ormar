@@ -182,7 +182,7 @@ class ModelTableProxy:
     @classmethod
     def merge_instances_list(cls, result_rows: Sequence["Model"]) -> Sequence["Model"]:
         merged_rows: List["Model"] = []
-        grouped_instances = OrderedDict()
+        grouped_instances: OrderedDict = OrderedDict()
 
         for model in result_rows:
             grouped_instances.setdefault(model.pk, []).append(model)

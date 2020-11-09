@@ -1,4 +1,5 @@
-from typing import Dict, List, NamedTuple, TYPE_CHECKING, Tuple, Type
+from collections import OrderedDict
+from typing import List, NamedTuple, Optional, TYPE_CHECKING, Tuple, Type
 
 import sqlalchemy
 from sqlalchemy import text
@@ -24,8 +25,8 @@ class SqlJoin:
         select_from: sqlalchemy.sql.select,
         columns: List[sqlalchemy.Column],
         fields: List,
-        order_columns: List,
-        sorted_orders: Dict,
+        order_columns: Optional[List],
+        sorted_orders: OrderedDict,
     ) -> None:
         self.used_aliases = used_aliases
         self.select_from = select_from
@@ -48,7 +49,7 @@ class SqlJoin:
 
     def build_join(
         self, item: str, join_parameters: JoinParameters
-    ) -> Tuple[List, sqlalchemy.sql.select, List, Dict]:
+    ) -> Tuple[List, sqlalchemy.sql.select, List, OrderedDict]:
         for part in item.split("__"):
             if issubclass(
                 join_parameters.model_cls.Meta.model_fields[part], ManyToManyField
@@ -147,7 +148,7 @@ class SqlJoin:
             condition[-2] == part or condition[-2][1:] == part
         )
 
-    def get_order_bys(
+    def get_order_bys(  # noqa: CCR001
         self, alias: str, to_table: str, pkname_alias: str, part: str
     ) -> None:
         if self.order_columns:
