@@ -164,6 +164,7 @@ assert len(tracks) == 1
 *  `count() -> int`
 *  `exists() -> bool`
 *  `fields(columns: Union[List, str]) -> QuerySet`
+*  `exclude_fields(columns: Union[List, str]) -> QuerySet`
 *  `order_by(columns:Union[List, str]) -> QuerySet`
 
 #### Relation types

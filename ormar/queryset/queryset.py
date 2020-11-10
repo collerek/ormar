@@ -27,6 +27,7 @@ class QuerySet:
         limit_count: int = None,
         offset: int = None,
         columns: List = None,
+        exclude_columns: List = None,
         order_bys: List = None,
     ) -> None:
         self.model_cls = model_cls
@@ -36,6 +37,7 @@ class QuerySet:
         self.limit_count = limit_count
         self.query_offset = offset
         self._columns = columns or []
+        self._exclude_columns = exclude_columns or []
         self.order_bys = order_bys or []
 
     def __get__(
@@ -63,7 +65,10 @@ class QuerySet:
     def _process_query_result_rows(self, rows: List) -> Sequence[Optional["Model"]]:
         result_rows = [
             self.model.from_row(
-                row, select_related=self._select_related, fields=self._columns
+                row=row,
+                select_related=self._select_related,
+                fields=self._columns,
+                exclude_fields=self._exclude_columns,
             )
             for row in rows
         ]
@@ -111,6 +116,7 @@ class QuerySet:
             offset=self.query_offset,
             limit_count=self.limit_count,
             fields=self._columns,
+            exclude_fields=self._exclude_columns,
             order_bys=self.order_bys,
         )
         exp = qry.build_select_expression()
@@ -139,6 +145,7 @@ class QuerySet:
             limit_count=self.limit_count,
             offset=self.query_offset,
             columns=self._columns,
+            exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
         )
 
@@ -158,6 +165,24 @@ class QuerySet:
             limit_count=self.limit_count,
             offset=self.query_offset,
             columns=self._columns,
+            exclude_columns=self._exclude_columns,
+            order_bys=self.order_bys,
+        )
+
+    def exclude_fields(self, columns: Union[List, str]) -> "QuerySet":
+        if not isinstance(columns, list):
+            columns = [columns]
+
+        columns = list(set(list(self._exclude_columns) + columns))
+        return self.__class__(
+            model_cls=self.model,
+            filter_clauses=self.filter_clauses,
+            exclude_clauses=self.exclude_clauses,
+            select_related=self._select_related,
+            limit_count=self.limit_count,
+            offset=self.query_offset,
+            columns=self._columns,
+            exclude_columns=columns,
             order_bys=self.order_bys,
         )
 
@@ -174,6 +199,7 @@ class QuerySet:
             limit_count=self.limit_count,
             offset=self.query_offset,
             columns=columns,
+            exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
         )
 
@@ -190,6 +216,7 @@ class QuerySet:
             limit_count=self.limit_count,
             offset=self.query_offset,
             columns=self._columns,
+            exclude_columns=self._exclude_columns,
             order_bys=order_bys,
         )
 
@@ -239,6 +266,7 @@ class QuerySet:
             limit_count=limit_count,
             offset=self.query_offset,
             columns=self._columns,
+            exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
         )
 
@@ -251,6 +279,7 @@ class QuerySet:
             limit_count=self.limit_count,
             offset=offset,
             columns=self._columns,
+            exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
         )
 

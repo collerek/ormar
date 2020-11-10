@@ -48,6 +48,7 @@ class Model(NewBaseModel):
         related_models: Any = None,
         previous_table: str = None,
         fields: List = None,
+        exclude_fields: List = None,
     ) -> Optional[T]:
 
         item: Dict[str, Any] = {}
@@ -74,10 +75,20 @@ class Model(NewBaseModel):
         previous_table = cls.Meta.table.name
 
         item = cls.populate_nested_models_from_row(
-            item, row, related_models, previous_table, fields
+            item=item,
+            row=row,
+            related_models=related_models,
+            previous_table=previous_table,
+            fields=fields,
+            exclude_fields=exclude_fields,
         )
         item = cls.extract_prefixed_table_columns(
-            item, row, table_prefix, fields, nested=table_prefix != ""
+            item=item,
+            row=row,
+            table_prefix=table_prefix,
+            fields=fields,
+            exclude_fields=exclude_fields,
+            nested=table_prefix != "",
         )
 
         instance: Optional[T] = cls(**item) if item.get(
@@ -86,13 +97,14 @@ class Model(NewBaseModel):
         return instance
 
     @classmethod
-    def populate_nested_models_from_row(
+    def populate_nested_models_from_row(  # noqa: CFQ002
         cls,
         item: dict,
         row: sqlalchemy.engine.ResultProxy,
         related_models: Any,
         previous_table: sqlalchemy.Table,
         fields: List = None,
+        exclude_fields: List = None,
     ) -> dict:
         for related in related_models:
             if isinstance(related_models, dict) and related_models[related]:
@@ -103,12 +115,16 @@ class Model(NewBaseModel):
                     related_models=remainder,
                     previous_table=previous_table,
                     fields=fields,
+                    exclude_fields=exclude_fields,
                 )
                 item[model_cls.get_column_name_from_alias(first_part)] = child
             else:
                 model_cls = cls.Meta.model_fields[related].to
                 child = model_cls.from_row(
-                    row, previous_table=previous_table, fields=fields
+                    row,
+                    previous_table=previous_table,
+                    fields=fields,
+                    exclude_fields=exclude_fields,
                 )
                 item[model_cls.get_column_name_from_alias(related)] = child
 
@@ -121,6 +137,7 @@ class Model(NewBaseModel):
         row: sqlalchemy.engine.result.ResultProxy,
         table_prefix: str,
         fields: List = None,
+        exclude_fields: List = None,
         nested: bool = False,
     ) -> dict:
 
@@ -128,8 +145,9 @@ class Model(NewBaseModel):
         source = row._row if cls.db_backend_name() == "postgresql" else row
 
         selected_columns = cls.own_table_columns(
-            cls, fields or [], nested=nested, use_alias=True
+            cls, fields or [], exclude_fields or [], nested=nested, use_alias=True
         )
+
         for column in cls.Meta.table.columns:
             alias = cls.get_column_name_from_alias(column.name)
             if alias not in item and alias in selected_columns:
