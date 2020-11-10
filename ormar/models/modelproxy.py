@@ -219,16 +219,29 @@ class ModelTableProxy:
     def _get_not_nested_columns_from_fields(
         model: Type["Model"],
         fields: List,
+        exclude_fields: List,
         column_names: List[str],
         use_alias: bool = False,
     ) -> List[str]:
         fields = [model.get_column_alias(k) if not use_alias else k for k in fields]
-        columns = [name for name in fields if "__" not in name and name in column_names]
+        fields = fields or column_names
+        exclude_fields = [
+            model.get_column_alias(k) if not use_alias else k for k in exclude_fields
+        ]
+        columns = [
+            name
+            for name in fields
+            if "__" not in name and name in column_names and name not in exclude_fields
+        ]
         return columns
 
     @staticmethod
     def _get_nested_columns_from_fields(
-        model: Type["Model"], fields: List, use_alias: bool = False,
+        model: Type["Model"],
+        fields: List,
+        exclude_fields: List,
+        column_names: List[str],
+        use_alias: bool = False,
     ) -> List[str]:
         model_name = f"{model.get_name()}__"
         columns = [
@@ -236,37 +249,22 @@ class ModelTableProxy:
             for name in fields
             if f"{model.get_name()}__" in name
         ]
+        columns = columns or column_names
+        exclude_columns = [
+            name[(name.find(model_name) + len(model_name)) :]  # noqa: E203
+            for name in exclude_fields
+            if f"{model.get_name()}__" in name
+        ]
         columns = [model.get_column_alias(k) if not use_alias else k for k in columns]
-        return columns
+        exclude_columns = [
+            model.get_column_alias(k) if not use_alias else k for k in exclude_columns
+        ]
+        return [column for column in columns if column not in exclude_columns]
 
     @staticmethod
-    def own_table_columns(
-        model: Type["Model"],
-        fields: List,
-        nested: bool = False,
-        use_alias: bool = False,
+    def _populate_pk_column(
+        model: Type["Model"], columns: List[str], use_alias: bool = False,
     ) -> List[str]:
-        column_names = [
-            model.get_column_name_from_alias(col.name) if use_alias else col.name
-            for col in model.Meta.table.columns
-        ]
-        if not fields:
-            return column_names
-
-        if not nested:
-            columns = ModelTableProxy._get_not_nested_columns_from_fields(
-                model, fields, column_names, use_alias
-            )
-        else:
-            columns = ModelTableProxy._get_nested_columns_from_fields(
-                model, fields, use_alias
-            )
-
-        # if the model is in select and no columns in fields, all implied
-        if not columns:
-            columns = column_names
-
-        # always has to return pk column
         pk_alias = (
             model.get_column_alias(model.Meta.pkname)
             if not use_alias
@@ -274,4 +272,43 @@ class ModelTableProxy:
         )
         if pk_alias not in columns:
             columns.append(pk_alias)
+        return columns
+
+    @staticmethod
+    def own_table_columns(
+        model: Type["Model"],
+        fields: List,
+        exclude_fields: List,
+        nested: bool = False,
+        use_alias: bool = False,
+    ) -> List[str]:
+        column_names = [
+            model.get_column_name_from_alias(col.name) if use_alias else col.name
+            for col in model.Meta.table.columns
+        ]
+        if not fields and not exclude_fields:
+            return column_names
+
+        if not nested:
+            columns = ModelTableProxy._get_not_nested_columns_from_fields(
+                model=model,
+                fields=fields,
+                exclude_fields=exclude_fields,
+                column_names=column_names,
+                use_alias=use_alias,
+            )
+        else:
+            columns = ModelTableProxy._get_nested_columns_from_fields(
+                model=model,
+                fields=fields,
+                exclude_fields=exclude_fields,
+                column_names=column_names,
+                use_alias=use_alias,
+            )
+
+        # always has to return pk column
+        columns = ModelTableProxy._populate_pk_column(
+            model=model, columns=columns, use_alias=use_alias
+        )
+
         return columns

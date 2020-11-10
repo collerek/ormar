@@ -370,6 +370,33 @@ With `fields()` you can select subset of model columns to limit the data load.
     
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
 
+### exclude_fields
+
+`fields(columns: Union[List, str]) -> QuerySet`
+
+With `exclude_fields()` you can select subset of model columns that will be excluded to limit the data load.
+
+It's the oposite of `fields()` method.
+
+```python hl_lines="47 48 60 61 67"
+--8<-- "../docs_src/queries/docs008.py"
+```
+
+!!!warning
+    Mandatory fields cannot be excluded as it will raise `ValidationError`, to exclude a field it has to be nullable.
+
+!!!tip
+    Pk column cannot be excluded - it's always auto added even if explicitly excluded.
+
+
+!!!note
+    All methods that do not return the rows explicitly returns a QueySet instance so you can chain them together
+    
+    So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
+    
+    Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
+
+
 ### order_by
 
 `order_by(columns: Union[List, str]) -> QuerySet`

@@ -25,6 +25,7 @@ class SqlJoin:
         select_from: sqlalchemy.sql.select,
         columns: List[sqlalchemy.Column],
         fields: List,
+        exclude_fields: List,
         order_columns: Optional[List],
         sorted_orders: OrderedDict,
     ) -> None:
@@ -32,6 +33,7 @@ class SqlJoin:
         self.select_from = select_from
         self.columns = columns
         self.fields = fields
+        self.exclude_fields = exclude_fields
         self.order_columns = order_columns
         self.sorted_orders = sorted_orders
 
@@ -121,7 +123,7 @@ class SqlJoin:
             self.get_order_bys(alias, to_table, pkname_alias, part)
 
         self_related_fields = model_cls.own_table_columns(
-            model_cls, self.fields, nested=True,
+            model_cls, self.fields, self.exclude_fields, nested=True,
         )
         self.columns.extend(
             self.relation_manager(model_cls).prefixed_columns(

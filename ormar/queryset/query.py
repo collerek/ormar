@@ -22,6 +22,7 @@ class Query:
         limit_count: Optional[int],
         offset: Optional[int],
         fields: Optional[List],
+        exclude_fields: Optional[List],
         order_bys: Optional[List],
     ) -> None:
         self.query_offset = offset
@@ -30,6 +31,7 @@ class Query:
         self.filter_clauses = filter_clauses[:]
         self.exclude_clauses = exclude_clauses[:]
         self.fields = fields[:] if fields else []
+        self.exclude_fields = exclude_fields[:] if exclude_fields else []
 
         self.model_cls = model_cls
         self.table = self.model_cls.Meta.table
@@ -68,7 +70,7 @@ class Query:
 
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
         self_related_fields = self.model_cls.own_table_columns(
-            self.model_cls, self.fields
+            self.model_cls, self.fields, self.exclude_fields
         )
         self.columns = self.model_cls.Meta.alias_manager.prefixed_columns(
             "", self.table, self_related_fields
@@ -88,6 +90,7 @@ class Query:
                 select_from=self.select_from,
                 columns=self.columns,
                 fields=self.fields,
+                exclude_fields=self.exclude_fields,
                 order_columns=self.order_columns,
                 sorted_orders=self.sorted_orders,
             )
@@ -126,3 +129,4 @@ class Query:
         self.columns = []
         self.used_aliases = []
         self.fields = []
+        self.exclude_fields = []
