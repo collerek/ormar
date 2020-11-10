@@ -30,7 +30,9 @@ def create_dummy_model(
     pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
 ) -> Type["BaseModel"]:
     fields = {f"{pk_field.name}": (pk_field.__type__, None)}
-    dummy_model = create_model(f"PkOnly{base_model.get_name(lower=False)}", **fields)  # type: ignore
+    dummy_model = create_model(
+        f"PkOnly{base_model.get_name(lower=False)}", **fields  # type: ignore
+    )
     return dummy_model
 
 

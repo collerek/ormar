@@ -5,6 +5,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    List,
     Mapping,
     Optional,
     Sequence,
@@ -176,6 +177,24 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def remove(self, name: "T") -> None:
         self._orm.remove_parent(self, name)
 
+    @classmethod
+    def get_properties(
+        cls,
+        include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+        exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+    ) -> List[str]:
+        props = [
+            prop
+            for prop in dir(cls)
+            if isinstance(getattr(cls, prop), property)
+            and prop not in ("__values__", "__fields__", "fields", "pk_column")
+        ]
+        if include:
+            props = [prop for prop in props if prop in include]
+        if exclude:
+            props = [prop for prop in props if prop not in exclude]
+        return props
+
     def dict(  # noqa A003
         self,
         *,
@@ -214,6 +233,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 dict_instance[field] = nested_model.dict(nested=True)
             else:
                 dict_instance[field] = None
+
+        # include model properties as fields
+        props = self.get_properties(include=include, exclude=exclude)
+        if props:
+            dict_instance.update({prop: getattr(self, prop) for prop in props})
+
         return dict_instance
 
     def from_dict(self, value_dict: Dict) -> "NewBaseModel":
