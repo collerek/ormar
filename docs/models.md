@@ -78,7 +78,7 @@ Therefore from version >=0.4.0 `ormar` switched to new notation.
 Note that type hints are **optional** so perfectly valid `ormar` code can look like this:
 
 ```Python hl_lines="15-17"
---8<-- "../docs_src/models/docs001.py"
+--8<-- "../docs_src/models/docs012.py"
 ```
 
 !!!warning
