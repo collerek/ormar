@@ -164,8 +164,11 @@ class Model(NewBaseModel):
         if not self.pk and self.Meta.model_fields[self.Meta.pkname].autoincrement:
             self_fields.pop(self.Meta.pkname, None)
         self_fields = self.populate_default_values(self_fields)
+
+        self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.insert()
         expr = expr.values(**self_fields)
+
         item_id = await self.Meta.database.execute(expr)
         if item_id:  # postgress does not return id if it's already there
             setattr(self, self.Meta.pkname, item_id)

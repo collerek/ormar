@@ -50,17 +50,19 @@ async def test_sort_order_on_main_model():
 
         songs = await Song.objects.all()
         song_dict = [song.dict() for song in songs]
-        assert all('sorted_name' in x for x in song_dict)
-        assert all(x['sorted_name'] == f"{x['sort_order']}: {x['name']}" for x in song_dict)
+        assert all("sorted_name" in x for x in song_dict)
+        assert all(
+            x["sorted_name"] == f"{x['sort_order']}: {x['name']}" for x in song_dict
+        )
         song_json = [song.json() for song in songs]
-        assert all('sorted_name' in x for x in song_json)
+        assert all("sorted_name" in x for x in song_json)
 
         check_include = songs[0].dict(include={"sample"})
-        assert 'sample' in check_include
-        assert 'sample2' not in check_include
-        assert 'sorted_name' not in check_include
+        assert "sample" in check_include
+        assert "sample2" not in check_include
+        assert "sorted_name" not in check_include
 
         check_include = songs[0].dict(exclude={"sample"})
-        assert 'sample' not in check_include
-        assert 'sample2' in check_include
-        assert 'sorted_name' in check_include
+        assert "sample" not in check_include
+        assert "sample2" in check_include
+        assert "sorted_name" in check_include

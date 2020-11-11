@@ -32,6 +32,27 @@ class Owner(ormar.Model):
     name: str = ormar.String(max_length=100)
 
 
+class AliasNested(ormar.Model):
+    class Meta:
+        tablename = "aliases_nested"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(name="alias_id", primary_key=True)
+    name: str = ormar.String(name="alias_name", max_length=100)
+
+
+class AliasTest(ormar.Model):
+    class Meta:
+        tablename = "aliases"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(name="alias_id", primary_key=True)
+    name: str = ormar.String(name="alias_name", max_length=100)
+    nested: str = ormar.ForeignKey(AliasNested, name="nested_alias")
+
+
 class Toy(ormar.Model):
     class Meta:
         tablename = "toys"
@@ -275,3 +296,42 @@ async def test_sort_order_on_many_to_many():
         assert users[1].cars[1].name == "Buggy"
         assert users[1].cars[2].name == "Ferrari"
         assert users[1].cars[3].name == "Skoda"
+
+
+@pytest.mark.asyncio
+async def test_sort_order_with_aliases():
+    async with database:
+        al1 = await AliasTest.objects.create(name="Test4")
+        al2 = await AliasTest.objects.create(name="Test2")
+        al3 = await AliasTest.objects.create(name="Test1")
+        al4 = await AliasTest.objects.create(name="Test3")
+
+        aliases = await AliasTest.objects.order_by("-name").all()
+        assert [alias.name[-1] for alias in aliases] == ["4", "3", "2", "1"]
+
+        nest1 = await AliasNested.objects.create(name="Try1")
+        nest2 = await AliasNested.objects.create(name="Try2")
+        nest3 = await AliasNested.objects.create(name="Try3")
+        nest4 = await AliasNested.objects.create(name="Try4")
+
+        al1.nested = nest1
+        await al1.update()
+
+        al2.nested = nest2
+        await al2.update()
+
+        al3.nested = nest3
+        await al3.update()
+
+        al4.nested = nest4
+        await al4.update()
+
+        aliases = (
+            await AliasTest.objects.select_related("nested")
+            .order_by("-nested__name")
+            .all()
+        )
+        assert aliases[0].nested.name == "Try4"
+        assert aliases[1].nested.name == "Try3"
+        assert aliases[2].nested.name == "Try2"
+        assert aliases[3].nested.name == "Try1"

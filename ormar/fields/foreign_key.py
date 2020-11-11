@@ -50,6 +50,7 @@ def ForeignKey(  # noqa CFQ002
     virtual: bool = False,
     onupdate: str = None,
     ondelete: str = None,
+    **kwargs: Any,
 ) -> Any:
     fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
     to_field = to.Meta.model_fields[to.Meta.pkname]
@@ -62,7 +63,8 @@ def ForeignKey(  # noqa CFQ002
     namespace = dict(
         __type__=__type__,
         to=to,
-        name=name,
+        alias=name,
+        name=kwargs.pop("real_name", None),
         nullable=nullable,
         constraints=[
             sqlalchemy.schema.ForeignKey(

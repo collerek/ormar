@@ -344,7 +344,7 @@ class QuerySet:
         if pk_name not in kwargs and pk_name in new_kwargs:
             instance.pk = new_kwargs[self.model_meta.pkname]
         if pk and isinstance(pk, self.model.pk_type()):
-            setattr(instance, self.model_meta.pkname, pk)
+            instance.pk = pk
 
         # refresh server side defaults
         instance = await instance.load()

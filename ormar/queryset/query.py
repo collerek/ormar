@@ -54,14 +54,17 @@ class Query:
         pkname_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
         return f"{self.table.name}.{pkname_alias}"
 
+    def alias(self, name: str) -> str:
+        return self.model_cls.get_column_alias(name)
+
     def apply_order_bys_for_primary_model(self) -> None:  # noqa: CCR001
         if self.order_columns:
             for clause in self.order_columns:
                 if "__" not in clause:
                     clause = (
-                        text(f"{clause[1:]} desc")
+                        text(f"{self.alias(clause[1:])} desc")
                         if clause.startswith("-")
-                        else text(clause)
+                        else text(self.alias(clause))
                     )
                     self.sorted_orders[clause] = clause
         else:
