@@ -1,5 +1,6 @@
+import copy
 from collections import OrderedDict
-from typing import List, Optional, TYPE_CHECKING, Tuple, Type
+from typing import Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Type, Union
 
 import sqlalchemy
 from sqlalchemy import text
@@ -21,8 +22,8 @@ class Query:
         select_related: List,
         limit_count: Optional[int],
         offset: Optional[int],
-        fields: Optional[List],
-        exclude_fields: Optional[List],
+        fields: Optional[Union[Dict, Set]],
+        exclude_fields: Optional[Union[Dict, Set]],
         order_bys: Optional[List],
     ) -> None:
         self.query_offset = offset
@@ -30,8 +31,8 @@ class Query:
         self._select_related = select_related[:]
         self.filter_clauses = filter_clauses[:]
         self.exclude_clauses = exclude_clauses[:]
-        self.fields = fields[:] if fields else []
-        self.exclude_fields = exclude_fields[:] if exclude_fields else []
+        self.fields = copy.deepcopy(fields) if fields else {}
+        self.exclude_fields = copy.deepcopy(exclude_fields) if exclude_fields else {}
 
         self.model_cls = model_cls
         self.table = self.model_cls.Meta.table
@@ -73,7 +74,10 @@ class Query:
 
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
         self_related_fields = self.model_cls.own_table_columns(
-            self.model_cls, self.fields, self.exclude_fields
+            model=self.model_cls,
+            fields=self.fields,
+            exclude_fields=self.exclude_fields,
+            use_alias=True,
         )
         self.columns = self.model_cls.Meta.alias_manager.prefixed_columns(
             "", self.table, self_related_fields
@@ -87,13 +91,14 @@ class Query:
             join_parameters = JoinParameters(
                 self.model_cls, "", self.table.name, self.model_cls
             )
-
+            fields = self.model_cls.get_included(self.fields, item)
+            exclude_fields = self.model_cls.get_excluded(self.exclude_fields, item)
             sql_join = SqlJoin(
                 used_aliases=self.used_aliases,
                 select_from=self.select_from,
                 columns=self.columns,
-                fields=self.fields,
-                exclude_fields=self.exclude_fields,
+                fields=fields,
+                exclude_fields=exclude_fields,
                 order_columns=self.order_columns,
                 sorted_orders=self.sorted_orders,
             )
@@ -131,5 +136,5 @@ class Query:
         self.select_from = []
         self.columns = []
         self.used_aliases = []
-        self.fields = []
-        self.exclude_fields = []
+        self.fields = {}
+        self.exclude_fields = {}

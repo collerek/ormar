@@ -80,10 +80,53 @@ async def test_selecting_subset():
             all_cars = (
                 await Car.objects.select_related("manufacturer")
                 .exclude_fields(
-                    ["gearbox_type", "gears", "aircon_type", "year", "company__founded"]
+                    [
+                        "gearbox_type",
+                        "gears",
+                        "aircon_type",
+                        "year",
+                        "manufacturer__founded",
+                    ]
                 )
                 .all()
             )
+            for car in all_cars:
+                assert all(
+                    getattr(car, x) is None
+                    for x in ["year", "gearbox_type", "gears", "aircon_type"]
+                )
+                assert car.manufacturer.name == "Toyota"
+                assert car.manufacturer.founded is None
+
+            all_cars = (
+                await Car.objects.select_related("manufacturer")
+                .exclude_fields(
+                    {
+                        "gearbox_type": ...,
+                        "gears": ...,
+                        "aircon_type": ...,
+                        "year": ...,
+                        "manufacturer": {"founded": ...},
+                    }
+                )
+                .all()
+            )
+            all_cars2 = (
+                await Car.objects.select_related("manufacturer")
+                .exclude_fields(
+                    {
+                        "gearbox_type": ...,
+                        "gears": ...,
+                        "aircon_type": ...,
+                        "year": ...,
+                        "manufacturer": {"founded"},
+                    }
+                )
+                .all()
+            )
+
+            assert all_cars == all_cars2
+
             for car in all_cars:
                 assert all(
                     getattr(car, x) is None
@@ -119,7 +162,7 @@ async def test_selecting_subset():
             all_cars_check2 = (
                 await Car.objects.select_related("manufacturer")
                 .fields(["id", "name", "manufacturer"])
-                .exclude_fields("company__founded")
+                .exclude_fields("manufacturer__founded")
                 .all()
             )
             for car in all_cars_check2:
@@ -133,5 +176,5 @@ async def test_selecting_subset():
             with pytest.raises(pydantic.error_wrappers.ValidationError):
                 # cannot exclude mandatory model columns - company__name in this example
                 await Car.objects.select_related("manufacturer").exclude_fields(
-                    ["company__name"]
+                    ["manufacturer__name"]
                 ).all()

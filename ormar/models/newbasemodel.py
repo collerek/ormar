@@ -23,6 +23,7 @@ from pydantic import BaseModel
 import ormar  # noqa I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
+from ormar.models.excludable import Excludable
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
 from ormar.relations.alias_manager import AliasManager
@@ -39,7 +40,9 @@ if TYPE_CHECKING:  # pragma no cover
     MappingIntStrAny = Mapping[IntStr, Any]
 
 
-class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass):
+class NewBaseModel(
+    pydantic.BaseModel, ModelTableProxy, Excludable, metaclass=ModelMetaclass
+):
     __slots__ = ("_orm_id", "_orm_saved", "_orm")
 
     if TYPE_CHECKING:  # pragma no cover

@@ -1,4 +1,5 @@
-from typing import Any, List, Optional, Sequence, TYPE_CHECKING, Type, Union
+import copy
+from typing import Any, Dict, List, Optional, Sequence, Set, TYPE_CHECKING, Type, Union
 
 import databases
 import sqlalchemy
@@ -10,6 +11,7 @@ from ormar.exceptions import QueryDefinitionError
 from ormar.queryset import FilterQuery
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.query import Query
+from ormar.queryset.utils import update, update_dict_from_list
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -26,8 +28,8 @@ class QuerySet:
         select_related: List = None,
         limit_count: int = None,
         offset: int = None,
-        columns: List = None,
-        exclude_columns: List = None,
+        columns: Dict = None,
+        exclude_columns: Dict = None,
         order_bys: List = None,
     ) -> None:
         self.model_cls = model_cls
@@ -36,8 +38,8 @@ class QuerySet:
         self._select_related = [] if select_related is None else select_related
         self.limit_count = limit_count
         self.query_offset = offset
-        self._columns = columns or []
-        self._exclude_columns = exclude_columns or []
+        self._columns = columns or {}
+        self._exclude_columns = exclude_columns or {}
         self.order_bys = order_bys or []
 
     def __get__(
@@ -169,11 +171,16 @@ class QuerySet:
             order_bys=self.order_bys,
         )
 
-    def exclude_fields(self, columns: Union[List, str]) -> "QuerySet":
-        if not isinstance(columns, list):
+    def exclude_fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet":
+        if isinstance(columns, str):
             columns = [columns]
 
-        columns = list(set(list(self._exclude_columns) + columns))
+        current_excluded = copy.deepcopy(self._exclude_columns)
+        if not isinstance(columns, dict):
+            current_excluded = update_dict_from_list(current_excluded, columns)
+        else:
+            current_excluded = update(current_excluded, columns)
+
         return self.__class__(
             model_cls=self.model,
             filter_clauses=self.filter_clauses,
@@ -182,15 +189,20 @@ class QuerySet:
             limit_count=self.limit_count,
             offset=self.query_offset,
             columns=self._columns,
-            exclude_columns=columns,
+            exclude_columns=current_excluded,
             order_bys=self.order_bys,
         )
 
-    def fields(self, columns: Union[List, str]) -> "QuerySet":
-        if not isinstance(columns, list):
+    def fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet":
+        if isinstance(columns, str):
             columns = [columns]
 
-        columns = list(set(list(self._columns) + columns))
+        current_included = copy.deepcopy(self._exclude_columns)
+        if not isinstance(columns, dict):
+            current_included = update_dict_from_list(current_included, columns)
+        else:
+            current_included = update(current_included, columns)
+
         return self.__class__(
             model_cls=self.model,
             filter_clauses=self.filter_clauses,
@@ -198,7 +210,7 @@ class QuerySet:
             select_related=self._select_related,
             limit_count=self.limit_count,
             offset=self.query_offset,
-            columns=columns,
+            columns=current_included,
             exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
         )
