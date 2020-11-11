@@ -88,7 +88,7 @@ def register_reverse_model_fields(
         adjust_through_many_to_many_model(model, child, model_field)
     else:
         model.Meta.model_fields[child_model_name] = ForeignKey(
-            child, name=child_model_name, virtual=True
+            child, real_name=child_model_name, virtual=True
         )
 
 
@@ -96,10 +96,10 @@ def adjust_through_many_to_many_model(
     model: Type["Model"], child: Type["Model"], model_field: Type[ManyToManyField]
 ) -> None:
     model_field.through.Meta.model_fields[model.get_name()] = ForeignKey(
-        model, name=model.get_name(), ondelete="CASCADE"
+        model, real_name=model.get_name(), ondelete="CASCADE"
     )
     model_field.through.Meta.model_fields[child.get_name()] = ForeignKey(
-        child, name=child.get_name(), ondelete="CASCADE"
+        child, real_name=child.get_name(), ondelete="CASCADE"
     )
 
     create_and_append_m2m_fk(model, model_field)
@@ -166,7 +166,7 @@ def sqlalchemy_columns_from_model_fields(
             and not field.virtual
             and not issubclass(field, ManyToManyField)
         ):
-            columns.append(field.get_column(field_name))
+            columns.append(field.get_column(field.get_alias()))
         register_relation_in_alias_manager(table_name, field)
     return pkname, columns
 
@@ -211,8 +211,7 @@ def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
         {k: v for k, v in attrs.items() if lenient_issubclass(v, BaseField)}
     )
     for field_name, field in potential_fields.items():
-        if field.name is None:
-            field.name = field_name
+        field.name = field_name
         attrs = populate_default_pydantic_field_value(field, field_name, attrs)
         model_fields[field_name] = field
         attrs["__annotations__"][field_name] = field.__type__

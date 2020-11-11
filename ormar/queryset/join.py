@@ -120,7 +120,13 @@ class SqlJoin:
 
         pkname_alias = model_cls.get_column_alias(model_cls.Meta.pkname)
         if not is_multi:
-            self.get_order_bys(alias, to_table, pkname_alias, part)
+            self.get_order_bys(
+                alias=alias,
+                to_table=to_table,
+                pkname_alias=pkname_alias,
+                part=part,
+                model_cls=model_cls,
+            )
 
         self_related_fields = model_cls.own_table_columns(
             model_cls, self.fields, self.exclude_fields, nested=True,
@@ -150,8 +156,21 @@ class SqlJoin:
             condition[-2] == part or condition[-2][1:] == part
         )
 
+    def set_aliased_order_by(
+        self, condition: List[str], alias: str, to_table: str, model_cls: Type["Model"],
+    ) -> None:
+        direction = f"{'desc' if condition[0][0] == '-' else ''}"
+        column_alias = model_cls.get_column_alias(condition[-1])
+        order = text(f"{alias}_{to_table}.{column_alias} {direction}")
+        self.sorted_orders["__".join(condition)] = order
+
     def get_order_bys(  # noqa: CCR001
-        self, alias: str, to_table: str, pkname_alias: str, part: str
+        self,
+        alias: str,
+        to_table: str,
+        pkname_alias: str,
+        part: str,
+        model_cls: Type["Model"],
     ) -> None:
         if self.order_columns:
             split_order_columns = [
@@ -159,9 +178,12 @@ class SqlJoin:
             ]
             for condition in split_order_columns:
                 if self._check_if_condition_apply(condition, part):
-                    direction = f"{'desc' if condition[0][0] == '-' else ''}"
-                    order = text(f"{alias}_{to_table}.{condition[-1]} {direction}")
-                    self.sorted_orders["__".join(condition)] = order
+                    self.set_aliased_order_by(
+                        condition=condition,
+                        alias=alias,
+                        to_table=to_table,
+                        model_cls=model_cls,
+                    )
         else:
             order = text(f"{alias}_{to_table}.{pkname_alias}")
             self.sorted_orders[f"{to_table}.{pkname_alias}"] = order

@@ -32,7 +32,8 @@ class ModelFieldFactory:
 
         namespace = dict(
             __type__=cls._type,
-            name=kwargs.pop("name", None),
+            alias=kwargs.pop("name", None),
+            name=None,
             primary_key=kwargs.pop("primary_key", False),
             default=default,
             server_default=server_default,

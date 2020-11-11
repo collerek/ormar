@@ -65,14 +65,14 @@ class ModelTableProxy:
     @classmethod
     def get_column_alias(cls, field_name: str) -> str:
         field = cls.Meta.model_fields.get(field_name)
-        if field and field.name is not None and field.name != field_name:
-            return field.name
+        if field and field.alias is not None:
+            return field.alias
         return field_name
 
     @classmethod
     def get_column_name_from_alias(cls, alias: str) -> str:
         for field_name, field in cls.Meta.model_fields.items():
-            if field and field.name == alias:
+            if field and field.alias == alias:
                 return field_name
         return alias  # if not found it's not an alias but actual name
 
@@ -164,19 +164,15 @@ class ModelTableProxy:
     @classmethod
     def translate_columns_to_aliases(cls, new_kwargs: Dict) -> Dict:
         for field_name, field in cls.Meta.model_fields.items():
-            if (
-                field_name in new_kwargs
-                and field.name is not None
-                and field.name != field_name
-            ):
-                new_kwargs[field.name] = new_kwargs.pop(field_name)
+            if field_name in new_kwargs:
+                new_kwargs[field.get_alias()] = new_kwargs.pop(field_name)
         return new_kwargs
 
     @classmethod
     def translate_aliases_to_columns(cls, new_kwargs: Dict) -> Dict:
         for field_name, field in cls.Meta.model_fields.items():
-            if field.name in new_kwargs and field.name != field_name:
-                new_kwargs[field_name] = new_kwargs.pop(field.name)
+            if field.alias and field.alias in new_kwargs:
+                new_kwargs[field_name] = new_kwargs.pop(field.alias)
         return new_kwargs
 
     @classmethod

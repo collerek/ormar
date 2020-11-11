@@ -31,6 +31,7 @@ def ManyToMany(
         __type__=__type__,
         to=to,
         through=through,
+        alias=name,
         name=name,
         nullable=True,
         unique=unique,

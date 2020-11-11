@@ -337,15 +337,15 @@ class QuerySet:
         expr = self.table.insert()
         expr = expr.values(**new_kwargs)
 
-        instance = self.model(**kwargs)
         pk = await self.database.execute(expr)
 
         pk_name = self.model.get_column_alias(self.model_meta.pkname)
         if pk_name not in kwargs and pk_name in new_kwargs:
-            instance.pk = new_kwargs[self.model_meta.pkname]
+            kwargs["pk"] = new_kwargs[self.model_meta.pkname]
         if pk and isinstance(pk, self.model.pk_type()):
-            setattr(instance, self.model_meta.pkname, pk)
+            kwargs[self.model_meta.pkname] = pk
 
+        instance = self.model(**kwargs)
         # refresh server side defaults
         instance = await instance.load()
 

@@ -18,6 +18,7 @@ class BaseField(FieldInfo):
     column_type: sqlalchemy.Column
     constraints: List = []
     name: str
+    alias: str
 
     primary_key: bool
     autoincrement: bool
@@ -34,9 +35,13 @@ class BaseField(FieldInfo):
     server_default: Any
 
     @classmethod
+    def get_alias(cls) -> str:
+        return cls.alias if cls.alias else cls.name
+
+    @classmethod
     def is_valid_field_info_field(cls, field_name: str) -> bool:
         return (
-            field_name not in ["default", "default_factory"]
+            field_name not in ["default", "default_factory", "alias"]
             and not field_name.startswith("__")
             and hasattr(cls, field_name)
         )
@@ -93,7 +98,7 @@ class BaseField(FieldInfo):
     @classmethod
     def get_column(cls, name: str) -> sqlalchemy.Column:
         return sqlalchemy.Column(
-            cls.name or name,
+            cls.alias or name,
             cls.column_type,
             *cls.constraints,
             primary_key=cls.primary_key,
