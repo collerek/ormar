@@ -1,3 +1,24 @@
+# 0.4.4
+
+*  add exclude_fields() method to exclude fields from sql
+*  refactor column names setting (aliases)
+*  fix ordering by for column with aliases
+*  additional tests for fields and exclude_fields
+*  update docs
+
+# 0.4.3
+
+*  include properties in models.dict() and model.json()
+
+# 0.4.2
+
+*  modify creation of pydantic models to allow returning related models with only pk populated
+
+# 0.4.1
+
+*  add order_by method to queryset to allow sorting
+*  update docs
+
 # 0.4.0
 
 *  Changed notation in Model definition -> now use name = ormar.Field() not name: ormar.Field()
