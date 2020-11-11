@@ -26,10 +26,9 @@ All three should install along the installation of ormar if not present at your 
 ```py
 pip install ormar[postgresql]
 ```
+Will install also `asyncpg` and `psycopg2`.
 
 ### Mysql
-
-Will install also `asyncpg` and `psycopg2`.
 
 ```py
 pip install ormar[mysql]
