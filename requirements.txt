@@ -4,6 +4,7 @@ databases[mysql]
 pydantic
 sqlalchemy
 typing_extensions
+orjson
 
 # Async database drivers
 aiomysql
@@ -34,3 +35,6 @@ flake8-variables-names
 flake8-cognitive-complexity
 flake8-functions
 flake8-expression-complexity
+
+# Performance testing
+yappi

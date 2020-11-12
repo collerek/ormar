@@ -42,7 +42,7 @@ setup(
     version=get_version(PACKAGE),
     url=URL,
     license="MIT",
-    description="An simple async ORM with fastapi in mind and pydantic validation.",
+    description="A simple async ORM with fastapi in mind and pydantic validation.",
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
     keywords=['orm', 'sqlalchemy', 'fastapi', 'pydantic', 'databases', 'async', 'alembic'],
@@ -56,6 +56,7 @@ setup(
         "postgresql": ["asyncpg", "psycopg2"],
         "mysql": ["aiomysql", "pymysql"],
         "sqlite": ["aiosqlite"],
+        "orjson": ["orjson"]
     },
     classifiers=[
         "Development Status :: 3 - Alpha",

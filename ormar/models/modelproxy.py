@@ -12,11 +12,17 @@ from typing import (
     Union,
 )
 
-import ormar
 from ormar.exceptions import RelationshipInstanceError
+
+try:
+    import orjson as json
+except ImportError:  # pragma: nocover
+    import json # type: ignore
+
+import ormar
 from ormar.fields import BaseField, ManyToManyField
 from ormar.fields.foreign_key import ForeignKeyField
-from ormar.models.metaclass import ModelMeta, expand_reverse_relationships
+from ormar.models.metaclass import ModelMeta
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -30,6 +36,8 @@ Field = TypeVar("Field", bound=BaseField)
 class ModelTableProxy:
     if TYPE_CHECKING:  # pragma no cover
         Meta: ModelMeta
+        _related_names: Set
+        _related_names_hash: Union[str, bytes]
 
     def dict(self):  # noqa A003
         raise NotImplementedError  # pragma no cover
@@ -88,10 +96,17 @@ class ModelTableProxy:
 
     @classmethod
     def extract_related_names(cls) -> Set:
+
+        if isinstance(cls._related_names_hash, (str, bytes)):
+            return cls._related_names
+
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
             if inspect.isclass(field) and issubclass(field, ForeignKeyField):
                 related_names.add(name)
+        cls._related_names_hash = json.dumps(list(cls.Meta.model_fields.keys()))
+        cls._related_names = related_names
+
         return related_names
 
     @classmethod
@@ -99,10 +114,10 @@ class ModelTableProxy:
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
             if (
-                inspect.isclass(field)
-                and issubclass(field, ForeignKeyField)
-                and not issubclass(field, ManyToManyField)
-                and not field.virtual
+                    inspect.isclass(field)
+                    and issubclass(field, ForeignKeyField)
+                    and not issubclass(field, ManyToManyField)
+                    and not field.virtual
             ):
                 related_names.add(name)
         return related_names
@@ -114,9 +129,9 @@ class ModelTableProxy:
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
             if (
-                inspect.isclass(field)
-                and issubclass(field, ForeignKeyField)
-                and field.nullable
+                    inspect.isclass(field)
+                    and issubclass(field, ForeignKeyField)
+                    and field.nullable
             ):
                 related_names.add(name)
         return related_names
@@ -136,9 +151,8 @@ class ModelTableProxy:
 
     @staticmethod
     def resolve_relation_name(  # noqa CCR001
-        item: Union["NewBaseModel", Type["NewBaseModel"]],
-        related: Union["NewBaseModel", Type["NewBaseModel"]],
-        register_missing: bool = True,
+            item: Union["NewBaseModel", Type["NewBaseModel"]],
+            related: Union["NewBaseModel", Type["NewBaseModel"]]
     ) -> str:
         for name, field in item.Meta.model_fields.items():
             if issubclass(field, ForeignKeyField):
@@ -147,12 +161,6 @@ class ModelTableProxy:
                 # so we need to compare Meta too as this one is copied as is
                 if field.to == related.__class__ or field.to.Meta == related.Meta:
                     return name
-        # fallback for not registered relation
-        if register_missing:  # pragma nocover
-            expand_reverse_relationships(related.__class__)  # type: ignore
-            return ModelTableProxy.resolve_relation_name(
-                item, related, register_missing=False
-            )
 
         raise ValueError(
             f"No relation between {item.get_name()} and {related.get_name()}"
@@ -160,8 +168,8 @@ class ModelTableProxy:
 
     @staticmethod
     def resolve_relation_field(
-        item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
-    ) -> Union[Type[BaseField], Type[ForeignKeyField]]:
+            item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
+    ) -> Type[BaseField]:
         name = ModelTableProxy.resolve_relation_name(item, related)
         to_field = item.Meta.model_fields.get(name)
         if not to_field:  # pragma no cover
@@ -207,12 +215,12 @@ class ModelTableProxy:
         for field in one.Meta.model_fields.keys():
             current_field = getattr(one, field)
             if isinstance(current_field, list) and not isinstance(
-                current_field, ormar.Model
+                    current_field, ormar.Model
             ):
                 setattr(other, field, current_field + getattr(other, field))
             elif (
-                isinstance(current_field, ormar.Model)
-                and current_field.pk == getattr(other, field).pk
+                    isinstance(current_field, ormar.Model)
+                    and current_field.pk == getattr(other, field).pk
             ):
                 setattr(
                     other,
@@ -223,7 +231,7 @@ class ModelTableProxy:
 
     @staticmethod
     def _populate_pk_column(
-        model: Type["Model"], columns: List[str], use_alias: bool = False,
+            model: Type["Model"], columns: List[str], use_alias: bool = False,
     ) -> List[str]:
         pk_alias = (
             model.get_column_alias(model.Meta.pkname)
@@ -236,10 +244,10 @@ class ModelTableProxy:
 
     @staticmethod
     def own_table_columns(
-        model: Type["Model"],
-        fields: Optional[Union[Set, Dict]],
-        exclude_fields: Optional[Union[Set, Dict]],
-        use_alias: bool = False,
+            model: Type["Model"],
+            fields: Optional[Union[Set, Dict]],
+            exclude_fields: Optional[Union[Set, Dict]],
+            use_alias: bool = False,
     ) -> List[str]:
         columns = [
             model.get_column_name_from_alias(col.name) if not use_alias else col.name

@@ -9,7 +9,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
-    TYPE_CHECKING,
+    Set, TYPE_CHECKING,
     Type,
     TypeVar,
     Union,
@@ -43,7 +43,7 @@ if TYPE_CHECKING:  # pragma no cover
 class NewBaseModel(
     pydantic.BaseModel, ModelTableProxy, Excludable, metaclass=ModelMetaclass
 ):
-    __slots__ = ("_orm_id", "_orm_saved", "_orm")
+    __slots__ = ("_orm_id", "_orm_saved", "_orm", "_related_names", "_related_names_hash", "_props")
 
     if TYPE_CHECKING:  # pragma no cover
         __model_fields__: Dict[str, Type[BaseField]]
@@ -56,6 +56,10 @@ class NewBaseModel(
         __database__: databases.Database
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
+        _orm_saved: bool
+        _related_names: Set
+        _related_names_hash: str
+        _props: List[str]
         Meta: ModelMeta
 
     # noinspection PyMissingConstructor
@@ -107,7 +111,7 @@ class NewBaseModel(
             )
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
-        if name in ("_orm_id", "_orm_saved", "_orm"):
+        if name in ("_orm_id", "_orm_saved", "_orm", "_related_names", "_props"):
             object.__setattr__(self, name, value)
         elif name == "pk":
             object.__setattr__(self, self.Meta.pkname, value)
@@ -126,12 +130,12 @@ class NewBaseModel(
             super().__setattr__(name, value)
 
     def __getattribute__(self, item: str) -> Any:
-        if item in ("_orm_id", "_orm_saved", "_orm", "__fields__"):
+        if item in ("_orm_id", "_orm_saved", "_orm", "__fields__", "_related_names", "_props"):
             return object.__getattribute__(self, item)
-        if item != "extract_related_names" and item in self.extract_related_names():
-            return self._extract_related_model_instead_of_field(item)
         if item == "pk":
             return self.__dict__.get(self.Meta.pkname, None)
+        if item != "extract_related_names" and item in self.extract_related_names():
+            return self._extract_related_model_instead_of_field(item)
         if item != "__fields__" and item in self.__fields__:
             value = self.__dict__.get(item, None)
             value = self._convert_json(item, value, "loads")
@@ -186,12 +190,16 @@ class NewBaseModel(
         include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
         exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
     ) -> List[str]:
-        props = [
-            prop
-            for prop in dir(cls)
-            if isinstance(getattr(cls, prop), property)
-            and prop not in ("__values__", "__fields__", "fields", "pk_column")
-        ]
+        if isinstance(cls._props, list):
+            props = cls._props
+        else:
+            props = [
+                prop
+                for prop in dir(cls)
+                if isinstance(getattr(cls, prop), property)
+                and prop not in ("__values__", "__fields__", "fields", "pk_column")
+            ]
+            cls._props = props
         if include:
             props = [prop for prop in props if prop in include]
         if exclude:
