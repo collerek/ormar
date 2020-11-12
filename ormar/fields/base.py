@@ -5,7 +5,7 @@ import sqlalchemy
 from pydantic import Field, typing
 from pydantic.fields import FieldInfo
 
-import ormar # noqa I101
+import ormar  # noqa I101
 from ormar import ModelDefinitionError  # noqa I101
 
 if TYPE_CHECKING:  # pragma no cover

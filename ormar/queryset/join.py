@@ -67,7 +67,7 @@ class SqlJoin:
         nested_name: str,
     ) -> Tuple[Optional[Union[Dict, Set]], Optional[Union[Dict, Set]]]:
         fields = model_cls.get_included(fields, nested_name)
-        exclude_fields = model_cls.get_included(exclude_fields, nested_name)
+        exclude_fields = model_cls.get_excluded(exclude_fields, nested_name)
         return fields, exclude_fields
 
     def build_join(  # noqa:  CCR001

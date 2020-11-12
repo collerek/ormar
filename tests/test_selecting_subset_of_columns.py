@@ -193,13 +193,31 @@ async def test_selecting_subset():
                 assert car.manufacturer.hq.name is None
 
             all_cars_check = await Car.objects.select_related("manufacturer").all()
-            for car in all_cars_check:
+            all_cars_with_whole_nested = (
+                await Car.objects.select_related("manufacturer")
+                .fields(["id", "name", "year", "gearbox_type", "gears", "aircon_type"])
+                .fields({"manufacturer": ...})
+                .all()
+            )
+            for car in itertools.chain(all_cars_check, all_cars_with_whole_nested):
                 assert all(
                     getattr(car, x) is not None
                     for x in ["year", "gearbox_type", "gears", "aircon_type"]
                 )
                 assert car.manufacturer.name == "Toyota"
                 assert car.manufacturer.founded == 1937
+
+            all_cars_dummy = (
+                await Car.objects.select_related("manufacturer")
+                .fields(["id", "name", "year", "gearbox_type", "gears", "aircon_type"])
+                .fields({"manufacturer": ...})
+                .exclude_fields({"manufacturer": ...})
+                .fields({"manufacturer": {"name"}})
+                .exclude_fields({"manufacturer__founded"})
+                .all()
+            )
+
+            assert all_cars_dummy[0].manufacturer.founded is None
 
             with pytest.raises(pydantic.error_wrappers.ValidationError):
                 # cannot exclude mandatory model columns - company__name in this example

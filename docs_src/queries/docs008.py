@@ -63,6 +63,6 @@ all_cars = await Car.objects.select_related('manufacturer').exclude_fields('year
 assert all_cars[0].manufacturer.name == 'Toyota'
 assert all_cars[0].manufacturer.founded == 1937
 
-# cannot exclude mandatory model columns - company__name in this example
-await Car.objects.select_related('manufacturer').exclude_fields(['company__name']).all()
+# cannot exclude mandatory model columns - company__name in this example - note usage of dict/set this time
+await Car.objects.select_related('manufacturer').exclude_fields([{'company': {'name'}}]).all()
 # will raise pydantic ValidationError as company.name is required

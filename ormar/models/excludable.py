@@ -20,6 +20,8 @@ class Excludable:
     def is_excluded(exclude: Union[Set, Dict, None], key: str = None) -> bool:
         if exclude is None:
             return False
+        if exclude is Ellipsis:  # pragma: nocover
+            return True
         to_exclude = Excludable.get_excluded(exclude=exclude, key=key)
         if isinstance(to_exclude, Set):
             return key in to_exclude
@@ -30,6 +32,8 @@ class Excludable:
     @staticmethod
     def is_included(include: Union[Set, Dict, None], key: str = None) -> bool:
         if include is None:
+            return True
+        if include is Ellipsis:
             return True
         to_include = Excludable.get_included(include=include, key=key)
         if isinstance(to_include, Set):

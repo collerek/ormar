@@ -196,7 +196,7 @@ class QuerySet:
         if isinstance(columns, str):
             columns = [columns]
 
-        current_included = self._exclude_columns
+        current_included = self._columns
         if not isinstance(columns, dict):
             current_included = update_dict_from_list(current_included, columns)
         else:
