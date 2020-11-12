@@ -1,4 +1,3 @@
-import copy
 from typing import Any, Dict, List, Optional, Sequence, Set, TYPE_CHECKING, Type, Union
 
 import databases
@@ -175,7 +174,7 @@ class QuerySet:
         if isinstance(columns, str):
             columns = [columns]
 
-        current_excluded = copy.deepcopy(self._exclude_columns)
+        current_excluded = self._exclude_columns
         if not isinstance(columns, dict):
             current_excluded = update_dict_from_list(current_excluded, columns)
         else:
@@ -197,7 +196,7 @@ class QuerySet:
         if isinstance(columns, str):
             columns = [columns]
 
-        current_included = copy.deepcopy(self._exclude_columns)
+        current_included = self._exclude_columns
         if not isinstance(columns, dict):
             current_included = update_dict_from_list(current_included, columns)
         else:

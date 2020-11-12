@@ -5,6 +5,7 @@ import sqlalchemy
 from pydantic import Field, typing
 from pydantic.fields import FieldInfo
 
+import ormar # noqa I101
 from ormar import ModelDefinitionError  # noqa I101
 
 if TYPE_CHECKING:  # pragma no cover
@@ -33,6 +34,10 @@ class BaseField(FieldInfo):
 
     default: Any
     server_default: Any
+
+    @classmethod
+    def is_valid_uni_relation(cls) -> bool:
+        return not issubclass(cls, ormar.fields.ManyToManyField) and not cls.virtual
 
     @classmethod
     def get_alias(cls) -> str:

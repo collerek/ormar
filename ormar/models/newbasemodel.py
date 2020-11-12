@@ -9,7 +9,8 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
-    Set, TYPE_CHECKING,
+    Set,
+    TYPE_CHECKING,
     Type,
     TypeVar,
     Union,
@@ -43,7 +44,14 @@ if TYPE_CHECKING:  # pragma no cover
 class NewBaseModel(
     pydantic.BaseModel, ModelTableProxy, Excludable, metaclass=ModelMetaclass
 ):
-    __slots__ = ("_orm_id", "_orm_saved", "_orm", "_related_names", "_related_names_hash", "_props")
+    __slots__ = (
+        "_orm_id",
+        "_orm_saved",
+        "_orm",
+        "_related_names",
+        "_related_names_hash",
+        "_props",
+    )
 
     if TYPE_CHECKING:  # pragma no cover
         __model_fields__: Dict[str, Type[BaseField]]
@@ -130,7 +138,14 @@ class NewBaseModel(
             super().__setattr__(name, value)
 
     def __getattribute__(self, item: str) -> Any:
-        if item in ("_orm_id", "_orm_saved", "_orm", "__fields__", "_related_names", "_props"):
+        if item in (
+            "_orm_id",
+            "_orm_saved",
+            "_orm",
+            "__fields__",
+            "_related_names",
+            "_props",
+        ):
             return object.__getattribute__(self, item)
         if item == "pk":
             return self.__dict__.get(self.Meta.pkname, None)

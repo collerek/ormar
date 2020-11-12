@@ -9,11 +9,11 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def get_relations_sides_and_names(
-        to_field: Type[BaseField],
-        parent: "Model",
-        child: "Model",
-        child_name: str,
-        virtual: bool,
+    to_field: Type[BaseField],
+    parent: "Model",
+    child: "Model",
+    child_name: str,
+    virtual: bool,
 ) -> Tuple["Model", "Model", str, str]:
     to_name = to_field.name
     if issubclass(to_field, ManyToManyField):

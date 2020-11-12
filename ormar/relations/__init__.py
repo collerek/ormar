@@ -1,9 +1,7 @@
 from ormar.relations.alias_manager import AliasManager
 from ormar.relations.relation import Relation, RelationType
 from ormar.relations.relation_manager import RelationsManager
-from ormar.relations.utils import (
-    get_relations_sides_and_names,
-)
+from ormar.relations.utils import get_relations_sides_and_names
 
 __all__ = [
     "AliasManager",

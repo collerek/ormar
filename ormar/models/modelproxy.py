@@ -17,10 +17,10 @@ from ormar.exceptions import RelationshipInstanceError
 try:
     import orjson as json
 except ImportError:  # pragma: nocover
-    import json # type: ignore
+    import json  # type: ignore
 
-import ormar
-from ormar.fields import BaseField, ManyToManyField
+import ormar  # noqa:  I100
+from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.metaclass import ModelMeta
 
@@ -111,29 +111,22 @@ class ModelTableProxy:
 
     @classmethod
     def _extract_db_related_names(cls) -> Set:
-        related_names = set()
-        for name, field in cls.Meta.model_fields.items():
-            if (
-                    inspect.isclass(field)
-                    and issubclass(field, ForeignKeyField)
-                    and not issubclass(field, ManyToManyField)
-                    and not field.virtual
-            ):
-                related_names.add(name)
+        related_names = cls.extract_related_names()
+        related_names = {
+            name
+            for name in related_names
+            if cls.Meta.model_fields[name].is_valid_uni_relation()
+        }
         return related_names
 
     @classmethod
     def _exclude_related_names_not_required(cls, nested: bool = False) -> Set:
         if nested:
             return cls.extract_related_names()
-        related_names = set()
-        for name, field in cls.Meta.model_fields.items():
-            if (
-                    inspect.isclass(field)
-                    and issubclass(field, ForeignKeyField)
-                    and field.nullable
-            ):
-                related_names.add(name)
+        related_names = cls.extract_related_names()
+        related_names = {
+            name for name in related_names if cls.Meta.model_fields[name].nullable
+        }
         return related_names
 
     def _extract_model_db_fields(self) -> Dict:
@@ -151,8 +144,8 @@ class ModelTableProxy:
 
     @staticmethod
     def resolve_relation_name(  # noqa CCR001
-            item: Union["NewBaseModel", Type["NewBaseModel"]],
-            related: Union["NewBaseModel", Type["NewBaseModel"]]
+        item: Union["NewBaseModel", Type["NewBaseModel"]],
+        related: Union["NewBaseModel", Type["NewBaseModel"]],
     ) -> str:
         for name, field in item.Meta.model_fields.items():
             if issubclass(field, ForeignKeyField):
@@ -168,7 +161,7 @@ class ModelTableProxy:
 
     @staticmethod
     def resolve_relation_field(
-            item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
+        item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
     ) -> Type[BaseField]:
         name = ModelTableProxy.resolve_relation_name(item, related)
         to_field = item.Meta.model_fields.get(name)
@@ -215,12 +208,12 @@ class ModelTableProxy:
         for field in one.Meta.model_fields.keys():
             current_field = getattr(one, field)
             if isinstance(current_field, list) and not isinstance(
-                    current_field, ormar.Model
+                current_field, ormar.Model
             ):
                 setattr(other, field, current_field + getattr(other, field))
             elif (
-                    isinstance(current_field, ormar.Model)
-                    and current_field.pk == getattr(other, field).pk
+                isinstance(current_field, ormar.Model)
+                and current_field.pk == getattr(other, field).pk
             ):
                 setattr(
                     other,
@@ -231,7 +224,7 @@ class ModelTableProxy:
 
     @staticmethod
     def _populate_pk_column(
-            model: Type["Model"], columns: List[str], use_alias: bool = False,
+        model: Type["Model"], columns: List[str], use_alias: bool = False,
     ) -> List[str]:
         pk_alias = (
             model.get_column_alias(model.Meta.pkname)
@@ -244,10 +237,10 @@ class ModelTableProxy:
 
     @staticmethod
     def own_table_columns(
-            model: Type["Model"],
-            fields: Optional[Union[Set, Dict]],
-            exclude_fields: Optional[Union[Set, Dict]],
-            use_alias: bool = False,
+        model: Type["Model"],
+        fields: Optional[Union[Set, Dict]],
+        exclude_fields: Optional[Union[Set, Dict]],
+        use_alias: bool = False,
     ) -> List[str]:
         columns = [
             model.get_column_name_from_alias(col.name) if not use_alias else col.name

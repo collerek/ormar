@@ -5,9 +5,7 @@ from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.relations.relation import Relation, RelationType
-from ormar.relations.utils import (
-    get_relations_sides_and_names,
-)
+from ormar.relations.utils import get_relations_sides_and_names
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
