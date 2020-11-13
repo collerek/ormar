@@ -42,13 +42,13 @@ class Model(NewBaseModel):
 
     @classmethod
     def from_row(  # noqa CCR001
-            cls: Type[T],
-            row: sqlalchemy.engine.ResultProxy,
-            select_related: List = None,
-            related_models: Any = None,
-            previous_table: str = None,
-            fields: Optional[Union[Dict, Set]] = None,
-            exclude_fields: Optional[Union[Dict, Set]] = None,
+        cls: Type[T],
+        row: sqlalchemy.engine.ResultProxy,
+        select_related: List = None,
+        related_models: Any = None,
+        previous_table: str = None,
+        fields: Optional[Union[Dict, Set]] = None,
+        exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> Optional[T]:
 
         item: Dict[str, Any] = {}
@@ -58,9 +58,9 @@ class Model(NewBaseModel):
             related_models = group_related_list(select_related)
 
         if (
-                previous_table
-                and previous_table in cls.Meta.model_fields
-                and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
+            previous_table
+            and previous_table in cls.Meta.model_fields
+            and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
         ):
             previous_table = cls.Meta.model_fields[
                 previous_table
@@ -90,8 +90,9 @@ class Model(NewBaseModel):
             exclude_fields=exclude_fields,
         )
 
+        instance: Optional[T] = None
         if item.get(cls.Meta.pkname, None) is not None:
-            instance: Optional[T] = cls(**item)
+            instance = cls(**item)
             instance.set_save_status(True)
         else:
             instance = None
@@ -100,13 +101,13 @@ class Model(NewBaseModel):
 
     @classmethod
     def populate_nested_models_from_row(  # noqa: CFQ002
-            cls,
-            item: dict,
-            row: sqlalchemy.engine.ResultProxy,
-            related_models: Any,
-            previous_table: sqlalchemy.Table,
-            fields: Optional[Union[Dict, Set]] = None,
-            exclude_fields: Optional[Union[Dict, Set]] = None,
+        cls,
+        item: dict,
+        row: sqlalchemy.engine.ResultProxy,
+        related_models: Any,
+        previous_table: sqlalchemy.Table,
+        fields: Optional[Union[Dict, Set]] = None,
+        exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> dict:
         for related in related_models:
             if isinstance(related_models, dict) and related_models[related]:
@@ -140,12 +141,12 @@ class Model(NewBaseModel):
 
     @classmethod
     def extract_prefixed_table_columns(  # noqa CCR001
-            cls,
-            item: dict,
-            row: sqlalchemy.engine.result.ResultProxy,
-            table_prefix: str,
-            fields: Optional[Union[Dict, Set]] = None,
-            exclude_fields: Optional[Union[Dict, Set]] = None,
+        cls,
+        item: dict,
+        row: sqlalchemy.engine.result.ResultProxy,
+        table_prefix: str,
+        fields: Optional[Union[Dict, Set]] = None,
+        exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> dict:
 
         # databases does not keep aliases in Record for postgres, change to raw row

@@ -358,8 +358,11 @@ class QuerySet:
             instance.pk = pk
 
         # refresh server side defaults
-        if any(field.server_default is not None
-               for name, field in self.model.Meta.model_fields.items() if name not in kwargs):
+        if any(
+            field.server_default is not None
+            for name, field in self.model.Meta.model_fields.items()
+            if name not in kwargs
+        ):
             instance = await instance.load()
         instance.set_save_status(True)
         return instance
@@ -377,7 +380,7 @@ class QuerySet:
         for objt in objects:
             objt.set_save_status(True)
 
-    async def bulk_update(
+    async def bulk_update(  # noqa:  CCR001
         self, objects: List["Model"], columns: List[str] = None
     ) -> None:
         ready_objects = []
