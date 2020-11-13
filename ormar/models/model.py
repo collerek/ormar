@@ -42,13 +42,13 @@ class Model(NewBaseModel):
 
     @classmethod
     def from_row(  # noqa CCR001
-        cls: Type[T],
-        row: sqlalchemy.engine.ResultProxy,
-        select_related: List = None,
-        related_models: Any = None,
-        previous_table: str = None,
-        fields: Optional[Union[Dict, Set]] = None,
-        exclude_fields: Optional[Union[Dict, Set]] = None,
+            cls: Type[T],
+            row: sqlalchemy.engine.ResultProxy,
+            select_related: List = None,
+            related_models: Any = None,
+            previous_table: str = None,
+            fields: Optional[Union[Dict, Set]] = None,
+            exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> Optional[T]:
 
         item: Dict[str, Any] = {}
@@ -58,9 +58,9 @@ class Model(NewBaseModel):
             related_models = group_related_list(select_related)
 
         if (
-            previous_table
-            and previous_table in cls.Meta.model_fields
-            and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
+                previous_table
+                and previous_table in cls.Meta.model_fields
+                and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
         ):
             previous_table = cls.Meta.model_fields[
                 previous_table
@@ -90,20 +90,23 @@ class Model(NewBaseModel):
             exclude_fields=exclude_fields,
         )
 
-        instance: Optional[T] = cls(**item) if item.get(
-            cls.Meta.pkname, None
-        ) is not None else None
+        if item.get(cls.Meta.pkname, None) is not None:
+            instance: Optional[T] = cls(**item)
+            instance.set_save_status(True)
+        else:
+            instance = None
+
         return instance
 
     @classmethod
     def populate_nested_models_from_row(  # noqa: CFQ002
-        cls,
-        item: dict,
-        row: sqlalchemy.engine.ResultProxy,
-        related_models: Any,
-        previous_table: sqlalchemy.Table,
-        fields: Optional[Union[Dict, Set]] = None,
-        exclude_fields: Optional[Union[Dict, Set]] = None,
+            cls,
+            item: dict,
+            row: sqlalchemy.engine.ResultProxy,
+            related_models: Any,
+            previous_table: sqlalchemy.Table,
+            fields: Optional[Union[Dict, Set]] = None,
+            exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> dict:
         for related in related_models:
             if isinstance(related_models, dict) and related_models[related]:
@@ -137,12 +140,12 @@ class Model(NewBaseModel):
 
     @classmethod
     def extract_prefixed_table_columns(  # noqa CCR001
-        cls,
-        item: dict,
-        row: sqlalchemy.engine.result.ResultProxy,
-        table_prefix: str,
-        fields: Optional[Union[Dict, Set]] = None,
-        exclude_fields: Optional[Union[Dict, Set]] = None,
+            cls,
+            item: dict,
+            row: sqlalchemy.engine.result.ResultProxy,
+            table_prefix: str,
+            fields: Optional[Union[Dict, Set]] = None,
+            exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> dict:
 
         # databases does not keep aliases in Record for postgres, change to raw row
@@ -179,6 +182,7 @@ class Model(NewBaseModel):
         item_id = await self.Meta.database.execute(expr)
         if item_id:  # postgress does not return id if it's already there
             setattr(self, self.Meta.pkname, item_id)
+        self.set_save_status(True)
         return self
 
     async def update(self: T, **kwargs: Any) -> T:
@@ -193,12 +197,14 @@ class Model(NewBaseModel):
         expr = expr.where(self.pk_column == getattr(self, self.Meta.pkname))
 
         await self.Meta.database.execute(expr)
+        self.set_save_status(True)
         return self
 
     async def delete(self: T) -> int:
         expr = self.Meta.table.delete()
         expr = expr.where(self.pk_column == (getattr(self, self.Meta.pkname)))
         result = await self.Meta.database.execute(expr)
+        self.set_save_status(False)
         return result
 
     async def load(self: T) -> T:
@@ -211,4 +217,5 @@ class Model(NewBaseModel):
         kwargs = dict(row)
         kwargs = self.translate_aliases_to_columns(kwargs)
         self.from_dict(kwargs)
+        self.set_save_status(True)
         return self

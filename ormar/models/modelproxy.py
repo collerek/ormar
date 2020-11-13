@@ -220,6 +220,7 @@ class ModelTableProxy:
                     field,
                     cls.merge_two_instances(current_field, getattr(other, field)),
                 )
+        other.set_save_status(True)
         return other
 
     @staticmethod

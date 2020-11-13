@@ -123,12 +123,16 @@ class NewBaseModel(
             object.__setattr__(self, name, value)
         elif name == "pk":
             object.__setattr__(self, self.Meta.pkname, value)
+            self.set_save_status(False)
         elif name in self._orm:
             model = self.Meta.model_fields[name].expand_relationship(value, self)
             if isinstance(self.__dict__.get(name), list):
+                # virtual foreign key or many to many
                 self.__dict__[name].append(model)
             else:
+                # foreign key relation
                 self.__dict__[name] = model
+                self.set_save_status(False)
         else:
             value = (
                 self._convert_json(name, value, "dumps")
@@ -136,15 +140,16 @@ class NewBaseModel(
                 else value
             )
             super().__setattr__(name, value)
+            self.set_save_status(False)
 
     def __getattribute__(self, item: str) -> Any:
         if item in (
-            "_orm_id",
-            "_orm_saved",
-            "_orm",
-            "__fields__",
-            "_related_names",
-            "_props",
+                "_orm_id",
+                "_orm_saved",
+                "_orm",
+                "__fields__",
+                "_related_names",
+                "_props",
         ):
             return object.__getattribute__(self, item)
         if item == "pk":
@@ -158,7 +163,7 @@ class NewBaseModel(
         return super().__getattribute__(item)
 
     def _extract_related_model_instead_of_field(
-        self, item: str
+            self, item: str
     ) -> Optional[Union["T", Sequence["T"]]]:
         # alias = self.get_column_alias(item)
         if item in self._orm:
@@ -172,9 +177,9 @@ class NewBaseModel(
 
     def __same__(self, other: "NewBaseModel") -> bool:
         return (
-            self._orm_id == other._orm_id
-            or self.dict() == other.dict()
-            or (self.pk == other.pk and self.pk is not None)
+                self._orm_id == other._orm_id
+                or self.dict() == other.dict()
+                or (self.pk == other.pk and self.pk is not None)
         )
 
     @classmethod
@@ -199,11 +204,14 @@ class NewBaseModel(
     def remove(self, name: "T") -> None:
         self._orm.remove_parent(self, name)
 
+    def set_save_status(self, status: bool) -> None:
+        object.__setattr__(self, "_orm_saved", status)
+
     @classmethod
     def get_properties(
-        cls,
-        include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
-        exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+            cls,
+            include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+            exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
     ) -> List[str]:
         if isinstance(cls._props, list):
             props = cls._props
@@ -212,7 +220,7 @@ class NewBaseModel(
                 prop
                 for prop in dir(cls)
                 if isinstance(getattr(cls, prop), property)
-                and prop not in ("__values__", "__fields__", "fields", "pk_column")
+                   and prop not in ("__values__", "__fields__", "fields", "pk_column")
             ]
             cls._props = props
         if include:
@@ -222,16 +230,16 @@ class NewBaseModel(
         return props
 
     def dict(  # noqa A003
-        self,
-        *,
-        include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
-        exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
-        by_alias: bool = False,
-        skip_defaults: bool = None,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        nested: bool = False
+            self,
+            *,
+            include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+            exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+            by_alias: bool = False,
+            skip_defaults: bool = None,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            nested: bool = False
     ) -> "DictStrAny":  # noqa: A003'
         dict_instance = super().dict(
             include=include,
