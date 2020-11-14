@@ -12,7 +12,7 @@ from typing import (
     Union,
 )
 
-from ormar.exceptions import RelationshipInstanceError
+from ormar.exceptions import ModelPersistenceError, RelationshipInstanceError
 
 try:
     import orjson as json
@@ -63,8 +63,14 @@ class ModelTableProxy:
                 target_field = cls.Meta.model_fields[field]
                 target_pkname = target_field.to.Meta.pkname
                 if isinstance(field_value, ormar.Model):
-                    model_dict[field] = getattr(field_value, target_pkname)
-                elif field_value:
+                    pk_value = getattr(field_value, target_pkname)
+                    if not pk_value:
+                        raise ModelPersistenceError(
+                            f"You cannot save {field_value.get_name()} "
+                            f"model without pk set!"
+                        )
+                    model_dict[field] = pk_value
+                elif field_value:  # nested dict
                     model_dict[field] = field_value.get(target_pkname)
                 else:
                     model_dict.pop(field, None)

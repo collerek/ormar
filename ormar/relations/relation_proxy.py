@@ -1,7 +1,7 @@
 from typing import Any, TYPE_CHECKING
 
 import ormar
-from ormar.exceptions import RelationshipInstanceError
+from ormar.exceptions import NoMatch, RelationshipInstanceError
 from ormar.relations.querysetproxy import QuerysetProxy
 
 if TYPE_CHECKING:  # pragma no cover
@@ -54,6 +54,11 @@ class RelationProxy(list):
         return queryset
 
     async def remove(self, item: "Model") -> None:  # type: ignore
+        if item not in self:
+            raise NoMatch(
+                f"Object {self._owner.get_name()} has no "
+                f"{item.get_name()} with given primary key!"
+            )
         super().remove(item)
         rel_name = item.resolve_relation_name(item, self._owner)
         relation = item._orm._get(rel_name)

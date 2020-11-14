@@ -192,7 +192,7 @@ class Model(NewBaseModel):
         self.set_save_status(True)
         return self
 
-    async def save_related(self) -> int:
+    async def save_related(self) -> int:  # noqa: CCR001
         update_count = 0
         for related in self.extract_related_names():
             if self.Meta.model_fields[related].virtual or issubclass(
