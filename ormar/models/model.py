@@ -192,6 +192,23 @@ class Model(NewBaseModel):
         self.set_save_status(True)
         return self
 
+    async def save_related(self) -> int:
+        update_count = 0
+        for related in self.extract_related_names():
+            if self.Meta.model_fields[related].virtual or issubclass(
+                self.Meta.model_fields[related], ManyToManyField
+            ):
+                for rel in getattr(self, related):
+                    if not rel.saved:
+                        await rel.upsert()
+                        update_count += 1
+            else:
+                rel = getattr(self, related)
+                if not rel.saved:
+                    await rel.upsert()
+                    update_count += 1
+        return update_count
+
     async def update(self: T, **kwargs: Any) -> T:
         if kwargs:
             new_values = {**self.dict(), **kwargs}

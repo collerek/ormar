@@ -1,8 +1,6 @@
-import itertools
-from typing import Optional, List
+from typing import List
 
 import databases
-import pydantic
 import pytest
 import sqlalchemy
 
