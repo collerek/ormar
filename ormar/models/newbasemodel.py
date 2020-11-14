@@ -193,6 +193,10 @@ class NewBaseModel(
     def pk_column(self) -> sqlalchemy.Column:
         return self.Meta.table.primary_key.columns.values()[0]
 
+    @property
+    def saved(self) -> bool:
+        return self._orm_saved
+
     @classmethod
     def pk_type(cls) -> Any:
         return cls.Meta.model_fields[cls.Meta.pkname].__type__
@@ -220,7 +224,8 @@ class NewBaseModel(
                 prop
                 for prop in dir(cls)
                 if isinstance(getattr(cls, prop), property)
-                and prop not in ("__values__", "__fields__", "fields", "pk_column")
+                and prop
+                not in ("__values__", "__fields__", "fields", "pk_column", "saved")
             ]
             cls._props = props
         if include:
