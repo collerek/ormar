@@ -7,6 +7,7 @@ import pytest
 import sqlalchemy
 
 import ormar
+from ormar.exceptions import ModelPersistenceError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -67,7 +68,7 @@ def create_test_database():
 async def test_instantation_false_save_true():
     async with database:
         async with database.transaction(force_rollback=True):
-            comp = Company(name='Banzai', founded=1988)
+            comp = Company(name="Banzai", founded=1988)
             assert not comp._orm_saved
             await comp.save()
             assert comp._orm_saved
@@ -77,21 +78,21 @@ async def test_instantation_false_save_true():
 async def test_saved_edited_not_saved():
     async with database:
         async with database.transaction(force_rollback=True):
-            comp = await Company.objects.create(name='Banzai', founded=1988)
+            comp = await Company.objects.create(name="Banzai", founded=1988)
             assert comp._orm_saved
-            comp.name = 'Banzai2'
+            comp.name = "Banzai2"
             assert not comp._orm_saved
 
             await comp.update()
             assert comp._orm_saved
 
-            await comp.update(name='Banzai3')
+            await comp.update(name="Banzai3")
             assert comp._orm_saved
 
             comp.pk = 999
             assert not comp._orm_saved
 
-            await comp.save()
+            await comp.update()
             assert comp._orm_saved
 
 
@@ -99,8 +100,8 @@ async def test_saved_edited_not_saved():
 async def test_adding_related_gets_dirty():
     async with database:
         async with database.transaction(force_rollback=True):
-            hq = await HQ.objects.create(name='Main')
-            comp = await Company.objects.create(name='Banzai', founded=1988)
+            hq = await HQ.objects.create(name="Main")
+            comp = await Company.objects.create(name="Banzai", founded=1988)
             assert comp._orm_saved
 
             comp.hq = hq
@@ -108,9 +109,17 @@ async def test_adding_related_gets_dirty():
             await comp.update()
             assert comp._orm_saved
 
-            comp = await Company.objects.select_related('hq').get(name='Banzai')
+            comp = await Company.objects.select_related("hq").get(name="Banzai")
             assert comp._orm_saved
+
             assert comp.hq.pk == hq.pk
+            assert comp.hq._orm_saved
+
+            comp.hq.name = "Suburbs"
+            assert not comp.hq._orm_saved
+            assert comp._orm_saved
+
+            await comp.hq.update()
             assert comp.hq._orm_saved
 
 
@@ -118,10 +127,10 @@ async def test_adding_related_gets_dirty():
 async def test_adding_many_to_many_does_not_gets_dirty():
     async with database:
         async with database.transaction(force_rollback=True):
-            nick1 = await NickNames.objects.create(name='Bazinga', is_lame=False)
-            nick2 = await NickNames.objects.create(name='Bazinga2', is_lame=True)
+            nick1 = await NickNames.objects.create(name="Bazinga", is_lame=False)
+            nick2 = await NickNames.objects.create(name="Bazinga2", is_lame=True)
 
-            hq = await HQ.objects.create(name='Main')
+            hq = await HQ.objects.create(name="Main")
             assert hq._orm_saved
 
             await hq.nicks.add(nick1)
@@ -129,24 +138,30 @@ async def test_adding_many_to_many_does_not_gets_dirty():
             await hq.nicks.add(nick2)
             assert hq._orm_saved
 
-            hq = await HQ.objects.select_related('nicks').get(name='Main')
+            hq = await HQ.objects.select_related("nicks").get(name="Main")
             assert hq._orm_saved
             assert hq.nicks[0]._orm_saved
 
             await hq.nicks.remove(nick1)
             assert hq._orm_saved
 
+            hq.nicks[0].name = "Kabucha"
+            assert not hq.nicks[0]._orm_saved
+
+            await hq.nicks[0].update()
+            assert hq.nicks[0]._orm_saved
+
 
 @pytest.mark.asyncio
 async def test_delete():
     async with database:
         async with database.transaction(force_rollback=True):
-            comp = await Company.objects.create(name='Banzai', founded=1988)
+            comp = await Company.objects.create(name="Banzai", founded=1988)
             assert comp._orm_saved
             await comp.delete()
             assert not comp._orm_saved
 
-            await comp.save()
+            await comp.update()
             assert comp._orm_saved
 
 
@@ -154,26 +169,26 @@ async def test_delete():
 async def test_load():
     async with database:
         async with database.transaction(force_rollback=True):
-            comp = await Company.objects.create(name='Banzai', founded=1988)
+            comp = await Company.objects.create(name="Banzai", founded=1988)
             assert comp._orm_saved
-            comp.name = 'AA'
+            comp.name = "AA"
             assert not comp._orm_saved
 
             await comp.load()
             assert comp._orm_saved
-            assert comp.name == 'Banzai'
+            assert comp.name == "Banzai"
 
 
 @pytest.mark.asyncio
 async def test_queryset_methods():
     async with database:
         async with database.transaction(force_rollback=True):
-            await Company.objects.create(name='Banzai', founded=1988)
-            await Company.objects.create(name='Yuhu', founded=1989)
-            await Company.objects.create(name='Konono', founded=1990)
-            await Company.objects.create(name='Sumaaa', founded=1991)
+            await Company.objects.create(name="Banzai", founded=1988)
+            await Company.objects.create(name="Yuhu", founded=1989)
+            await Company.objects.create(name="Konono", founded=1990)
+            await Company.objects.create(name="Sumaaa", founded=1991)
 
-            comp = await Company.objects.get(name='Banzai')
+            comp = await Company.objects.get(name="Banzai")
             assert comp._orm_saved
 
             comp = await Company.objects.first()
@@ -182,20 +197,20 @@ async def test_queryset_methods():
             comps = await Company.objects.all()
             assert [comp._orm_saved for comp in comps]
 
-            comp2 = await Company.objects.get_or_create(name='Banzai_new', founded=2001)
+            comp2 = await Company.objects.get_or_create(name="Banzai_new", founded=2001)
             assert comp2._orm_saved
 
-            comp3 = await Company.objects.get_or_create(name='Banzai', founded=1988)
+            comp3 = await Company.objects.get_or_create(name="Banzai", founded=1988)
             assert comp3._orm_saved
             assert comp3.pk == comp.pk
 
             update_dict = comp.dict()
-            update_dict['founded'] = 2010
+            update_dict["founded"] = 2010
             comp = await Company.objects.update_or_create(**update_dict)
             assert comp._orm_saved
             assert comp.founded == 2010
 
-            create_dict = {'name': "Yoko", "founded": 2005}
+            create_dict = {"name": "Yoko", "founded": 2005}
             comp = await Company.objects.update_or_create(**create_dict)
             assert comp._orm_saved
             assert comp.founded == 2005
@@ -205,16 +220,16 @@ async def test_queryset_methods():
 async def test_bulk_methods():
     async with database:
         async with database.transaction(force_rollback=True):
-            c1 = Company(name='Banzai', founded=1988)
-            c2 = Company(name='Yuhu', founded=1989)
+            c1 = Company(name="Banzai", founded=1988)
+            c2 = Company(name="Yuhu", founded=1989)
 
             await Company.objects.bulk_create([c1, c2])
             assert c1._orm_saved
             assert c2._orm_saved
 
             c1, c2 = await Company.objects.all()
-            c1.name = 'Banzai2'
-            c2.name = 'Yuhu2'
+            c1.name = "Banzai2"
+            c2.name = "Yuhu2"
 
             assert not c1._orm_saved
             assert not c2._orm_saved
@@ -222,3 +237,23 @@ async def test_bulk_methods():
             await Company.objects.bulk_update([c1, c2])
             assert c1._orm_saved
             assert c2._orm_saved
+
+            c3 = Company(name="Cobra", founded=2088)
+            assert not c3._orm_saved
+
+            with pytest.raises(ModelPersistenceError):
+                await c3.update()
+
+            await c3.upsert()
+            assert c3._orm_saved
+
+            c3.name = "Python"
+            assert not c3._orm_saved
+
+            await c3.upsert()
+            assert c3._orm_saved
+            assert c3.name == "Python"
+
+            await c3.upsert(founded=2077)
+            assert c3._orm_saved
+            assert c3.founded == 2077

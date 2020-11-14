@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, Type, TypeVar,
 import sqlalchemy
 
 import ormar.queryset  # noqa I100
+from ormar.exceptions import ModelPersistenceError
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.models import NewBaseModel  # noqa I100
 from ormar.models.metaclass import ModelMeta
@@ -169,6 +170,11 @@ class Model(NewBaseModel):
 
         return item
 
+    async def upsert(self: T, **kwargs: Any) -> T:
+        if not self.pk:
+            return await self.save()
+        return await self.update(**kwargs)
+
     async def save(self: T) -> T:
         self_fields = self._extract_model_db_fields()
 
@@ -190,6 +196,11 @@ class Model(NewBaseModel):
         if kwargs:
             new_values = {**self.dict(), **kwargs}
             self.from_dict(new_values)
+
+        if not self.pk:
+            raise ModelPersistenceError(
+                "You cannot update not saved model! Use save or upsert method."
+            )
 
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
