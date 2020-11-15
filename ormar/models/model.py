@@ -1,5 +1,16 @@
 import itertools
-from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import sqlalchemy
 
@@ -192,22 +203,47 @@ class Model(NewBaseModel):
         self.set_save_status(True)
         return self
 
-    async def save_related(self) -> int:  # noqa: CCR001
-        update_count = 0
+    async def save_related(  # noqa: CCR001
+        self, follow: bool = False, visited: Set = None, update_count: int = 0
+    ) -> int:  # noqa: CCR001
+        if not visited:
+            visited = {self.__class__}
+        else:
+            visited = {x for x in visited}
+            visited.add(self.__class__)
+
         for related in self.extract_related_names():
             if self.Meta.model_fields[related].virtual or issubclass(
                 self.Meta.model_fields[related], ManyToManyField
             ):
                 for rel in getattr(self, related):
-                    if not rel.saved:
-                        await rel.upsert()
-                        update_count += 1
+                    update_count, visited = await self._update_and_follow(
+                        rel=rel,
+                        follow=follow,
+                        visited=visited,
+                        update_count=update_count,
+                    )
+                visited.add(self.Meta.model_fields[related].to)
             else:
                 rel = getattr(self, related)
-                if not rel.saved:
-                    await rel.upsert()
-                    update_count += 1
+                update_count, visited = await self._update_and_follow(
+                    rel=rel, follow=follow, visited=visited, update_count=update_count
+                )
+                visited.add(rel.__class__)
         return update_count
+
+    @staticmethod
+    async def _update_and_follow(
+        rel: "Model", follow: bool, visited: Set, update_count: int
+    ) -> Tuple[int, Set]:
+        if follow and rel.__class__ not in visited:
+            update_count = await rel.save_related(
+                follow=follow, visited=visited, update_count=update_count
+            )
+        if not rel.saved:
+            await rel.upsert()
+            update_count += 1
+        return update_count, visited
 
     async def update(self: T, **kwargs: Any) -> T:
         if kwargs:

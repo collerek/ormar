@@ -11,6 +11,16 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
+class CringeLevel(ormar.Model):
+    class Meta:
+        tablename = "levels"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
 class NickNames(ormar.Model):
     class Meta:
         tablename = "nicks"
@@ -20,6 +30,7 @@ class NickNames(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
     is_lame: bool = ormar.Boolean(nullable=True)
+    level: CringeLevel = ormar.ForeignKey(CringeLevel)
 
 
 class NicksHq(ormar.Model):
@@ -82,7 +93,7 @@ async def test_saving_related_fk_rel():
 
 
 @pytest.mark.asyncio
-async def test_adding_many_to_many_does_not_gets_dirty():
+async def test_saving_many_to_many():
     async with database:
         async with database.transaction(force_rollback=True):
             nick1 = await NickNames.objects.create(name="BazingaO", is_lame=False)
@@ -111,7 +122,7 @@ async def test_adding_many_to_many_does_not_gets_dirty():
 
 
 @pytest.mark.asyncio
-async def test_queryset_methods():
+async def test_saving_reversed_relation():
     async with database:
         async with database.transaction(force_rollback=True):
             hq = await HQ.objects.create(name="Main")
@@ -149,3 +160,47 @@ async def test_queryset_methods():
             assert count == 2
             assert hq.companies[0].saved
             assert hq.companies[1].saved
+
+
+@pytest.mark.asyncio
+async def test_saving_nested():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            level = await CringeLevel.objects.create(name='High')
+            level2 = await CringeLevel.objects.create(name='Low')
+            nick1 = await NickNames.objects.create(name="BazingaO", is_lame=False, level=level)
+            nick2 = await NickNames.objects.create(name="Bazinga20", is_lame=True, level=level2)
+
+            hq = await HQ.objects.create(name="Main")
+            assert hq.saved
+
+            await hq.nicks.add(nick1)
+            assert hq.saved
+            await hq.nicks.add(nick2)
+            assert hq.saved
+
+            count = await hq.save_related()
+            assert count == 0
+
+            hq.nicks[0].level.name = "Medium"
+            assert not hq.nicks[0].level.saved
+            assert hq.nicks[0].saved
+
+            count = await hq.save_related(follow=True)
+            assert count == 1
+            assert hq.nicks[0].saved
+            assert hq.nicks[0].level.saved
+
+            hq.nicks[0].level.name = "Low"
+            hq.nicks[1].level.name = "Medium"
+            assert not hq.nicks[0].level.saved
+            assert not hq.nicks[1].level.saved
+            assert hq.nicks[0].saved
+            assert hq.nicks[1].saved
+
+            count = await hq.save_related(follow=True)
+            assert count == 2
+            assert hq.nicks[0].saved
+            assert hq.nicks[0].level.saved
+            assert hq.nicks[1].saved
+            assert hq.nicks[1].level.saved
