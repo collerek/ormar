@@ -24,3 +24,7 @@ class QueryDefinitionError(AsyncOrmException):
 
 class RelationshipInstanceError(AsyncOrmException):
     pass
+
+
+class ModelPersistenceError(AsyncOrmException):
+    pass

@@ -1,9 +1,21 @@
 import itertools
-from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import sqlalchemy
 
 import ormar.queryset  # noqa I100
+from ormar.exceptions import ModelPersistenceError
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.models import NewBaseModel  # noqa I100
 from ormar.models.metaclass import ModelMeta
@@ -90,9 +102,13 @@ class Model(NewBaseModel):
             exclude_fields=exclude_fields,
         )
 
-        instance: Optional[T] = cls(**item) if item.get(
-            cls.Meta.pkname, None
-        ) is not None else None
+        instance: Optional[T] = None
+        if item.get(cls.Meta.pkname, None) is not None:
+            instance = cls(**item)
+            instance.set_save_status(True)
+        else:
+            instance = None
+
         return instance
 
     @classmethod
@@ -165,6 +181,11 @@ class Model(NewBaseModel):
 
         return item
 
+    async def upsert(self: T, **kwargs: Any) -> T:
+        if not self.pk:
+            return await self.save()
+        return await self.update(**kwargs)
+
     async def save(self: T) -> T:
         self_fields = self._extract_model_db_fields()
 
@@ -179,12 +200,60 @@ class Model(NewBaseModel):
         item_id = await self.Meta.database.execute(expr)
         if item_id:  # postgress does not return id if it's already there
             setattr(self, self.Meta.pkname, item_id)
+        self.set_save_status(True)
         return self
+
+    async def save_related(  # noqa: CCR001
+        self, follow: bool = False, visited: Set = None, update_count: int = 0
+    ) -> int:  # noqa: CCR001
+        if not visited:
+            visited = {self.__class__}
+        else:
+            visited = {x for x in visited}
+            visited.add(self.__class__)
+
+        for related in self.extract_related_names():
+            if self.Meta.model_fields[related].virtual or issubclass(
+                self.Meta.model_fields[related], ManyToManyField
+            ):
+                for rel in getattr(self, related):
+                    update_count, visited = await self._update_and_follow(
+                        rel=rel,
+                        follow=follow,
+                        visited=visited,
+                        update_count=update_count,
+                    )
+                visited.add(self.Meta.model_fields[related].to)
+            else:
+                rel = getattr(self, related)
+                update_count, visited = await self._update_and_follow(
+                    rel=rel, follow=follow, visited=visited, update_count=update_count
+                )
+                visited.add(rel.__class__)
+        return update_count
+
+    @staticmethod
+    async def _update_and_follow(
+        rel: T, follow: bool, visited: Set, update_count: int
+    ) -> Tuple[int, Set]:
+        if follow and rel.__class__ not in visited:
+            update_count = await rel.save_related(
+                follow=follow, visited=visited, update_count=update_count
+            )
+        if not rel.saved:
+            await rel.upsert()
+            update_count += 1
+        return update_count, visited
 
     async def update(self: T, **kwargs: Any) -> T:
         if kwargs:
             new_values = {**self.dict(), **kwargs}
             self.from_dict(new_values)
+
+        if not self.pk:
+            raise ModelPersistenceError(
+                "You cannot update not saved model! Use save or upsert method."
+            )
 
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
@@ -193,12 +262,14 @@ class Model(NewBaseModel):
         expr = expr.where(self.pk_column == getattr(self, self.Meta.pkname))
 
         await self.Meta.database.execute(expr)
+        self.set_save_status(True)
         return self
 
     async def delete(self: T) -> int:
         expr = self.Meta.table.delete()
         expr = expr.where(self.pk_column == (getattr(self, self.Meta.pkname)))
         result = await self.Meta.database.execute(expr)
+        self.set_save_status(False)
         return result
 
     async def load(self: T) -> T:
@@ -211,4 +282,5 @@ class Model(NewBaseModel):
         kwargs = dict(row)
         kwargs = self.translate_aliases_to_columns(kwargs)
         self.from_dict(kwargs)
+        self.set_save_status(True)
         return self

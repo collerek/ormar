@@ -228,6 +228,33 @@ Each model has a `QuerySet` initialised as `objects` parameter
 !!!info
     To read more about `QuerySets` (including bulk operations) and available methods visit [queries][queries]
 
+## `Model` save status
+
+Each model instance is a separate python object and they do not know anything about each other.
+
+```python
+track1 = await Track.objects.get(name='The Bird')
+track2 = await Track.objects.get(name='The Bird')
+assert track1 == track2 # True
+
+track1.name = 'The Bird2'
+await track1.save()
+assert track1.name == track2.name # False
+# track2 does not update and knows nothing about track1
+```
+
+The objects itself have a saved status, which is set as following:
+
+*  Model is saved after `save/update/load/upsert` method on model
+*  Model is saved after `create/get/first/all/get_or_create/update_or_create` method
+*  Model is saved when passed to `bulk_update` and `bulk_create`
+*  Model is saved after `adding/removing` `ManyToMany` related objects (through model instance auto saved/deleted)
+*  Model is **not** saved after change of any own field (including `pk` as `Model.pk` alias)
+*  Model is **not** saved after adding/removing `ForeignKey` related object (fk column not saved)
+*  Model is **not** saved after instantiation with `__init__` (w/o `QuerySet.create` or before calling `save`)
+
+You can check if model is saved with `ModelInstance.saved` property
+
 ## `Model` methods
 
 ### load
@@ -249,15 +276,56 @@ track.album.name # will return 'Malibu'
 
 ### save
 
+`save() -> self`
+
 You can create new models by using `QuerySet.create()` method or by initializing your model as a normal pydantic model 
 and later calling `save()` method.
 
-`save()` can also be used to persist changes that you made to the model. 
+`save()` can also be used to persist changes that you made to the model, but only if the primary key is not set or the model does not exist in database.
+
+The `save()` method does not check if the model exists in db, so if it does you will get a integrity error from your selected db backend if trying to save model with already existing primary key. 
 
 ```python
 track = Track(name='The Bird')
 await track.save() # will persist the model in database
+
+track = await Track.objects.get(name='The Bird')
+await track.save() # will raise integrity error as pk is populated
 ```
+
+### update
+
+`update(**kwargs) -> self`
+
+You can update models by using `QuerySet.update()` method or by updating your model attributes (fields) and calling `update()` method.
+
+If you try to update a model without a primary key set a `ModelPersistenceError` exception will be thrown.
+
+To persist a newly created model use `save()` or `upsert(**kwargs)` methods.
+
+```python
+track = await Track.objects.get(name='The Bird')
+await track.update(name='The Bird Strikes Again')
+```
+
+### upsert
+
+`upsert(**kwargs) -> self`
+
+It's an proxy to either `save()` or `update(**kwargs)` methods described above.
+
+If the primary key is set -> the `update` method will be called.
+
+If the pk is not set the `save()` method will be called.
+
+```python
+track = Track(name='The Bird')
+await track.upsert() # will call save as the pk is empty
+
+track = await Track.objects.get(name='The Bird')
+await track.upsert(name='The Bird Strikes Again') # will call update as pk is already populated
+```
+
 
 ### delete
 
@@ -271,14 +339,29 @@ await track.delete() # will delete the model from database
 !!!tip
     Note that that `track` object stays the same, only record in the database is removed.
 
-### update
+### save_related
 
-You can delete models by using `QuerySet.update()` method or by using your model and calling `update()` method.
+`save_related(follow: bool = False) -> None`
 
-```python
-track = await Track.objects.get(name='The Bird')
-await track.update(name='The Bird Strikes Again')
-```
+Method goes through all relations of the `Model` on which the method is called, 
+and calls `upsert()` method on each model that is **not** saved. 
+
+To understand when a model is saved check [save status][save status] section above.
+
+By default the `save_related` method saved only models that are directly related (one step away) to the model on which the method is called.
+
+But you can specify the `follow=True` parameter to traverse through nested models and save all of them in the relation tree.
+
+!!!warning
+    To avoid circular updates with `follow=True` set, `save_related` keeps a set of already visited Models, 
+    and won't perform nested `save_related` on Models that were already visited.
+    
+    So if you have a diamond or circular relations types you need to perform the updates in a manual way.
+    
+    ```python
+    # in example like this the second Street (coming from City) won't be save_related, so ZipCode won't be updated
+    Street -> District -> City -> Street -> ZipCode
+    ```
 
 ## Internals
 
@@ -348,3 +431,4 @@ For example to list table model fields you can:
 [sqlalchemy connection string]: https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls
 [sqlalchemy table creation]: https://docs.sqlalchemy.org/en/13/core/metadata.html#creating-and-dropping-database-tables
 [alembic]: https://alembic.sqlalchemy.org/en/latest/tutorial.html
+[save status]:  ../models/#model-save-status

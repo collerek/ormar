@@ -123,12 +123,16 @@ class NewBaseModel(
             object.__setattr__(self, name, value)
         elif name == "pk":
             object.__setattr__(self, self.Meta.pkname, value)
+            self.set_save_status(False)
         elif name in self._orm:
             model = self.Meta.model_fields[name].expand_relationship(value, self)
             if isinstance(self.__dict__.get(name), list):
+                # virtual foreign key or many to many
                 self.__dict__[name].append(model)
             else:
+                # foreign key relation
                 self.__dict__[name] = model
+                self.set_save_status(False)
         else:
             value = (
                 self._convert_json(name, value, "dumps")
@@ -136,6 +140,7 @@ class NewBaseModel(
                 else value
             )
             super().__setattr__(name, value)
+            self.set_save_status(False)
 
     def __getattribute__(self, item: str) -> Any:
         if item in (
@@ -188,6 +193,10 @@ class NewBaseModel(
     def pk_column(self) -> sqlalchemy.Column:
         return self.Meta.table.primary_key.columns.values()[0]
 
+    @property
+    def saved(self) -> bool:
+        return self._orm_saved
+
     @classmethod
     def pk_type(cls) -> Any:
         return cls.Meta.model_fields[cls.Meta.pkname].__type__
@@ -198,6 +207,9 @@ class NewBaseModel(
 
     def remove(self, name: "T") -> None:
         self._orm.remove_parent(self, name)
+
+    def set_save_status(self, status: bool) -> None:
+        object.__setattr__(self, "_orm_saved", status)
 
     @classmethod
     def get_properties(
@@ -212,7 +224,8 @@ class NewBaseModel(
                 prop
                 for prop in dir(cls)
                 if isinstance(getattr(cls, prop), property)
-                and prop not in ("__values__", "__fields__", "fields", "pk_column")
+                and prop
+                not in ("__values__", "__fields__", "fields", "pk_column", "saved")
             ]
             cls._props = props
         if include:

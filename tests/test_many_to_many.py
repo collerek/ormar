@@ -6,7 +6,7 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar.exceptions import RelationshipInstanceError
+from ormar.exceptions import ModelPersistenceError, NoMatch, RelationshipInstanceError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -196,3 +196,27 @@ async def test_selecting_related_fail_without_saving(cleanup):
         post = Post(title="Hello, M2M", author=guido)
         with pytest.raises(RelationshipInstanceError):
             await post.categories.all()
+
+
+@pytest.mark.asyncio
+async def test_adding_unsaved_related(cleanup):
+    async with database:
+        guido = await Author.objects.create(first_name="Guido", last_name="Van Rossum")
+        post = await Post.objects.create(title="Hello, M2M", author=guido)
+        news = Category(name="News")
+        with pytest.raises(ModelPersistenceError):
+            await post.categories.add(news)
+
+        await news.save()
+        await post.categories.add(news)
+        assert len(await post.categories.all()) == 1
+
+
+@pytest.mark.asyncio
+async def test_removing_unsaved_related(cleanup):
+    async with database:
+        guido = await Author.objects.create(first_name="Guido", last_name="Van Rossum")
+        post = await Post.objects.create(title="Hello, M2M", author=guido)
+        news = Category(name="News")
+        with pytest.raises(NoMatch):
+            await post.categories.remove(news)
