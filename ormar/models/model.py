@@ -234,7 +234,7 @@ class Model(NewBaseModel):
 
     @staticmethod
     async def _update_and_follow(
-        rel: "Model", follow: bool, visited: Set, update_count: int
+        rel: T, follow: bool, visited: Set, update_count: int
     ) -> Tuple[int, Set]:
         if follow and rel.__class__ not in visited:
             update_count = await rel.save_related(

@@ -359,8 +359,8 @@ But you can specify the `follow=True` parameter to traverse through nested model
     So if you have a diamond or circular relations types you need to perform the updates in a manual way.
     
     ```python
-    # in example like this the second Street (coming from Company) won't be save_related, so Whatever won't be updated
-    Street -> District -> City -> Companies -> Street -> Whatever
+    # in example like this the second Street (coming from City) won't be save_related, so ZipCode won't be updated
+    Street -> District -> City -> Street -> ZipCode
     ```
 
 ## Internals

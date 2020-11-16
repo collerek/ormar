@@ -161,15 +161,27 @@ async def test_saving_reversed_relation():
             assert hq.companies[0].saved
             assert hq.companies[1].saved
 
+            hq = await HQ.objects.select_related(
+                ["companies", "companies__hq__nicks"]
+            ).get(name="Main")
+            hq.companies[0].hq.nicks[0].name = "Sub"
+            assert not hq.companies[0].hq.nicks[0].saved
+            await hq.save_related(follow=True)
+            assert not hq.companies[0].hq.nicks[0].saved
+
 
 @pytest.mark.asyncio
 async def test_saving_nested():
     async with database:
         async with database.transaction(force_rollback=True):
-            level = await CringeLevel.objects.create(name='High')
-            level2 = await CringeLevel.objects.create(name='Low')
-            nick1 = await NickNames.objects.create(name="BazingaO", is_lame=False, level=level)
-            nick2 = await NickNames.objects.create(name="Bazinga20", is_lame=True, level=level2)
+            level = await CringeLevel.objects.create(name="High")
+            level2 = await CringeLevel.objects.create(name="Low")
+            nick1 = await NickNames.objects.create(
+                name="BazingaO", is_lame=False, level=level
+            )
+            nick2 = await NickNames.objects.create(
+                name="Bazinga20", is_lame=True, level=level2
+            )
 
             hq = await HQ.objects.create(name="Main")
             assert hq.saved
