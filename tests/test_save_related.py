@@ -161,14 +161,6 @@ async def test_saving_reversed_relation():
             assert hq.companies[0].saved
             assert hq.companies[1].saved
 
-            hq = await HQ.objects.select_related(
-                ["companies", "companies__hq__nicks"]
-            ).get(name="Main")
-            hq.companies[0].hq.nicks[0].name = "Sub"
-            assert not hq.companies[0].hq.nicks[0].saved
-            await hq.save_related(follow=True)
-            assert not hq.companies[0].hq.nicks[0].saved
-
 
 @pytest.mark.asyncio
 async def test_saving_nested():
