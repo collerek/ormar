@@ -1,3 +1,24 @@
+# 0.5.0
+
+* Added save status -> you can check if model is saved with `ModelInstance.saved` property
+    *  Model is saved after `save/update/load/upsert` method on model
+    *  Model is saved after `create/get/first/all/get_or_create/update_or_create` method
+    *  Model is saved when passed to `bulk_update` and `bulk_create`
+    *  Model is saved after adding/removing `ManyToMany` related objects (through model instance auto saved/deleted)
+    *  Model is **not** saved after change of any own field (including pk as `Model.pk` alias)
+    *  Model is **not** saved after adding/removing `ForeignKey` related object (fk column not saved)
+    *  Model is **not** saved after instantation with `__init__` (w/o `QuerySet.create` or before calling `save`)
+*  Added `Model.upsert(**kwargs)` that performs `save()` if pk not set otherwise `update(**kwargs)`
+*  Added `Model.save_related(follow=False)` that iterates all related objects in all relations and checks if they are saved. If not it calls `upsert()` on each of them.
+*  **Breaking:** added raising exceptions if `add`-ing/`remove`-ing not saved (pk is None) models to `ManyToMany` relation
+*  Allow passing dictionaries and sets to fields and exclude_fields
+*  Auto translate str and lists to dicts for fields and exclude_fields
+*  **Breaking:** passing nested models to fields and exclude_fields is now by related ForeignKey name and not by target model name 
+*  Performance optimizations - in modelproxy, newbasemodel - > less queries, some properties are cached on models
+*  Cleanup of unused relations code
+*  Optional performance dependency orjson added (**strongly recommended**)
+*  Updated docs
+
 # 0.4.4
 
 *  add exclude_fields() method to exclude fields from sql
