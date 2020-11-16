@@ -1,12 +1,28 @@
 import inspect
 from collections import OrderedDict
-from typing import Dict, List, Sequence, Set, TYPE_CHECKING, Type, TypeVar, Union
+from typing import (
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    TYPE_CHECKING,
+    Type,
+    TypeVar,
+    Union,
+)
 
-import ormar
 from ormar.exceptions import RelationshipInstanceError
-from ormar.fields import BaseField, ManyToManyField
+
+try:
+    import orjson as json
+except ImportError:  # pragma: nocover
+    import json  # type: ignore
+
+import ormar  # noqa:  I100
+from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
-from ormar.models.metaclass import ModelMeta, expand_reverse_relationships
+from ormar.models.metaclass import ModelMeta
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -20,6 +36,8 @@ Field = TypeVar("Field", bound=BaseField)
 class ModelTableProxy:
     if TYPE_CHECKING:  # pragma no cover
         Meta: ModelMeta
+        _related_names: Set
+        _related_names_hash: Union[str, bytes]
 
     def dict(self):  # noqa A003
         raise NotImplementedError  # pragma no cover
@@ -65,50 +83,50 @@ class ModelTableProxy:
     @classmethod
     def get_column_alias(cls, field_name: str) -> str:
         field = cls.Meta.model_fields.get(field_name)
-        if field and field.alias is not None:
+        if field is not None and field.alias is not None:
             return field.alias
         return field_name
 
     @classmethod
     def get_column_name_from_alias(cls, alias: str) -> str:
         for field_name, field in cls.Meta.model_fields.items():
-            if field and field.alias == alias:
+            if field is not None and field.alias == alias:
                 return field_name
         return alias  # if not found it's not an alias but actual name
 
     @classmethod
     def extract_related_names(cls) -> Set:
+
+        if isinstance(cls._related_names_hash, (str, bytes)):
+            return cls._related_names
+
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
             if inspect.isclass(field) and issubclass(field, ForeignKeyField):
                 related_names.add(name)
+        cls._related_names_hash = json.dumps(list(cls.Meta.model_fields.keys()))
+        cls._related_names = related_names
+
         return related_names
 
     @classmethod
     def _extract_db_related_names(cls) -> Set:
-        related_names = set()
-        for name, field in cls.Meta.model_fields.items():
-            if (
-                inspect.isclass(field)
-                and issubclass(field, ForeignKeyField)
-                and not issubclass(field, ManyToManyField)
-                and not field.virtual
-            ):
-                related_names.add(name)
+        related_names = cls.extract_related_names()
+        related_names = {
+            name
+            for name in related_names
+            if cls.Meta.model_fields[name].is_valid_uni_relation()
+        }
         return related_names
 
     @classmethod
     def _exclude_related_names_not_required(cls, nested: bool = False) -> Set:
         if nested:
             return cls.extract_related_names()
-        related_names = set()
-        for name, field in cls.Meta.model_fields.items():
-            if (
-                inspect.isclass(field)
-                and issubclass(field, ForeignKeyField)
-                and field.nullable
-            ):
-                related_names.add(name)
+        related_names = cls.extract_related_names()
+        related_names = {
+            name for name in related_names if cls.Meta.model_fields[name].nullable
+        }
         return related_names
 
     def _extract_model_db_fields(self) -> Dict:
@@ -128,7 +146,6 @@ class ModelTableProxy:
     def resolve_relation_name(  # noqa CCR001
         item: Union["NewBaseModel", Type["NewBaseModel"]],
         related: Union["NewBaseModel", Type["NewBaseModel"]],
-        register_missing: bool = True,
     ) -> str:
         for name, field in item.Meta.model_fields.items():
             if issubclass(field, ForeignKeyField):
@@ -137,12 +154,6 @@ class ModelTableProxy:
                 # so we need to compare Meta too as this one is copied as is
                 if field.to == related.__class__ or field.to.Meta == related.Meta:
                     return name
-        # fallback for not registered relation
-        if register_missing:  # pragma nocover
-            expand_reverse_relationships(related.__class__)  # type: ignore
-            return ModelTableProxy.resolve_relation_name(
-                item, related, register_missing=False
-            )
 
         raise ValueError(
             f"No relation between {item.get_name()} and {related.get_name()}"
@@ -151,7 +162,7 @@ class ModelTableProxy:
     @staticmethod
     def resolve_relation_field(
         item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
-    ) -> Union[Type[BaseField], Type[ForeignKeyField]]:
+    ) -> Type[BaseField]:
         name = ModelTableProxy.resolve_relation_name(item, related)
         to_field = item.Meta.model_fields.get(name)
         if not to_field:  # pragma no cover
@@ -212,58 +223,12 @@ class ModelTableProxy:
         return other
 
     @staticmethod
-    def _get_not_nested_columns_from_fields(
-        model: Type["Model"],
-        fields: List,
-        exclude_fields: List,
-        column_names: List[str],
-        use_alias: bool = False,
-    ) -> List[str]:
-        fields = [model.get_column_alias(k) if not use_alias else k for k in fields]
-        fields = fields or column_names
-        exclude_fields = [
-            model.get_column_alias(k) if not use_alias else k for k in exclude_fields
-        ]
-        columns = [
-            name
-            for name in fields
-            if "__" not in name and name in column_names and name not in exclude_fields
-        ]
-        return columns
-
-    @staticmethod
-    def _get_nested_columns_from_fields(
-        model: Type["Model"],
-        fields: List,
-        exclude_fields: List,
-        column_names: List[str],
-        use_alias: bool = False,
-    ) -> List[str]:
-        model_name = f"{model.get_name()}__"
-        columns = [
-            name[(name.find(model_name) + len(model_name)) :]  # noqa: E203
-            for name in fields
-            if f"{model.get_name()}__" in name
-        ]
-        columns = columns or column_names
-        exclude_columns = [
-            name[(name.find(model_name) + len(model_name)) :]  # noqa: E203
-            for name in exclude_fields
-            if f"{model.get_name()}__" in name
-        ]
-        columns = [model.get_column_alias(k) if not use_alias else k for k in columns]
-        exclude_columns = [
-            model.get_column_alias(k) if not use_alias else k for k in exclude_columns
-        ]
-        return [column for column in columns if column not in exclude_columns]
-
-    @staticmethod
     def _populate_pk_column(
         model: Type["Model"], columns: List[str], use_alias: bool = False,
     ) -> List[str]:
         pk_alias = (
             model.get_column_alias(model.Meta.pkname)
-            if not use_alias
+            if use_alias
             else model.Meta.pkname
         )
         if pk_alias not in columns:
@@ -273,34 +238,30 @@ class ModelTableProxy:
     @staticmethod
     def own_table_columns(
         model: Type["Model"],
-        fields: List,
-        exclude_fields: List,
-        nested: bool = False,
+        fields: Optional[Union[Set, Dict]],
+        exclude_fields: Optional[Union[Set, Dict]],
         use_alias: bool = False,
     ) -> List[str]:
-        column_names = [
-            model.get_column_name_from_alias(col.name) if use_alias else col.name
+        columns = [
+            model.get_column_name_from_alias(col.name) if not use_alias else col.name
             for col in model.Meta.table.columns
         ]
-        if not fields and not exclude_fields:
-            return column_names
-
-        if not nested:
-            columns = ModelTableProxy._get_not_nested_columns_from_fields(
-                model=model,
-                fields=fields,
-                exclude_fields=exclude_fields,
-                column_names=column_names,
-                use_alias=use_alias,
-            )
-        else:
-            columns = ModelTableProxy._get_nested_columns_from_fields(
-                model=model,
-                fields=fields,
-                exclude_fields=exclude_fields,
-                column_names=column_names,
-                use_alias=use_alias,
-            )
+        field_names = [
+            model.get_column_name_from_alias(col.name)
+            for col in model.Meta.table.columns
+        ]
+        if fields:
+            columns = [
+                col
+                for col, name in zip(columns, field_names)
+                if model.is_included(fields, name)
+            ]
+        if exclude_fields:
+            columns = [
+                col
+                for col, name in zip(columns, field_names)
+                if not model.is_excluded(exclude_fields, name)
+            ]
 
         # always has to return pk column
         columns = ModelTableProxy._populate_pk_column(

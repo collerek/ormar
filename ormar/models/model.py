@@ -1,5 +1,5 @@
 import itertools
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Type, TypeVar
+from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union
 
 import sqlalchemy
 
@@ -47,8 +47,8 @@ class Model(NewBaseModel):
         select_related: List = None,
         related_models: Any = None,
         previous_table: str = None,
-        fields: List = None,
-        exclude_fields: List = None,
+        fields: Optional[Union[Dict, Set]] = None,
+        exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> Optional[T]:
 
         item: Dict[str, Any] = {}
@@ -88,7 +88,6 @@ class Model(NewBaseModel):
             table_prefix=table_prefix,
             fields=fields,
             exclude_fields=exclude_fields,
-            nested=table_prefix != "",
         )
 
         instance: Optional[T] = cls(**item) if item.get(
@@ -103,13 +102,17 @@ class Model(NewBaseModel):
         row: sqlalchemy.engine.ResultProxy,
         related_models: Any,
         previous_table: sqlalchemy.Table,
-        fields: List = None,
-        exclude_fields: List = None,
+        fields: Optional[Union[Dict, Set]] = None,
+        exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> dict:
         for related in related_models:
             if isinstance(related_models, dict) and related_models[related]:
                 first_part, remainder = related, related_models[related]
                 model_cls = cls.Meta.model_fields[first_part].to
+
+                fields = cls.get_included(fields, first_part)
+                exclude_fields = cls.get_excluded(exclude_fields, first_part)
+
                 child = model_cls.from_row(
                     row,
                     related_models=remainder,
@@ -120,6 +123,8 @@ class Model(NewBaseModel):
                 item[model_cls.get_column_name_from_alias(first_part)] = child
             else:
                 model_cls = cls.Meta.model_fields[related].to
+                fields = cls.get_included(fields, related)
+                exclude_fields = cls.get_excluded(exclude_fields, related)
                 child = model_cls.from_row(
                     row,
                     previous_table=previous_table,
@@ -136,16 +141,18 @@ class Model(NewBaseModel):
         item: dict,
         row: sqlalchemy.engine.result.ResultProxy,
         table_prefix: str,
-        fields: List = None,
-        exclude_fields: List = None,
-        nested: bool = False,
+        fields: Optional[Union[Dict, Set]] = None,
+        exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> dict:
 
         # databases does not keep aliases in Record for postgres, change to raw row
         source = row._row if cls.db_backend_name() == "postgresql" else row
 
         selected_columns = cls.own_table_columns(
-            cls, fields or [], exclude_fields or [], nested=nested, use_alias=True
+            model=cls,
+            fields=fields or {},
+            exclude_fields=exclude_fields or {},
+            use_alias=False,
         )
 
         for column in cls.Meta.table.columns:

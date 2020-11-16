@@ -5,10 +5,7 @@ from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.relations.relation import Relation, RelationType
-from ormar.relations.utils import (
-    get_relations_sides_and_names,
-    register_missing_relation,
-)
+from ormar.relations.utils import get_relations_sides_and_names
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -42,8 +39,6 @@ class RelationsManager:
             to=field.to,
             through=getattr(field, "through", None),
         )
-        if field.name not in self._related_names:
-            self._related_names.append(field.name)
 
     def __contains__(self, item: str) -> bool:
         return item in self._related_names
@@ -69,9 +64,10 @@ class RelationsManager:
         )
 
         parent_relation = parent._orm._get(child_name)
-        if not parent_relation:
-            parent_relation = register_missing_relation(parent, child, child_name)
-        parent_relation.add(child)  # type: ignore
+        if parent_relation:
+            # print('missing', child_name)
+            # parent_relation = register_missing_relation(parent, child, child_name)
+            parent_relation.add(child)  # type: ignore
 
         child_relation = child._orm._get(to_name)
         if child_relation:

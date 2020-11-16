@@ -117,8 +117,8 @@ async def test_working_with_aliases():
                         "first_name",
                         "last_name",
                         "born_year",
-                        "child__first_name",
-                        "child__last_name",
+                        "children__first_name",
+                        "children__last_name",
                     ]
                 )
                 .get()
