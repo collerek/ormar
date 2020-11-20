@@ -197,9 +197,19 @@ class Model(NewBaseModel):
         expr = self.Meta.table.insert()
         expr = expr.values(**self_fields)
 
-        item_id = await self.Meta.database.execute(expr)
-        if item_id:  # postgress does not return id if it's already there
-            setattr(self, self.Meta.pkname, item_id)
+        pk = await self.Meta.database.execute(expr)
+        if pk and isinstance(pk, self.pk_type()):
+            setattr(self, self.Meta.pkname, pk)
+
+        # refresh server side defaults
+        if any(
+            field.server_default is not None
+            for name, field in self.Meta.model_fields.items()
+            if name not in self_fields
+        ):
+            await self.load()
+            return self
+
         self.set_save_status(True)
         return self
 
