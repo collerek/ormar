@@ -50,6 +50,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Run sqlite
+      env:
+        DATABASE_URL: "sqlite:///testsuite"
+      run: bash scripts/test.sh
     - name: Run mysql
       env:
         DATABASE_URL: "mysql://username:password@localhost:3306/testsuite"
@@ -57,10 +61,6 @@ jobs:
     - name: Run postgres
       env:
         DATABASE_URL: "postgresql://username:password@localhost:5432/testsuite"
-      run: bash scripts/test.sh
-    - name: Run sqlite
-      env:
-        DATABASE_URL: "sqlite:///testsuite"
       run: bash scripts/test.sh
     - run: mypy --config-file mypy.ini ormar tests
     - name: Upload coverage
