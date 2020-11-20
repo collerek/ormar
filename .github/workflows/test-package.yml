@@ -50,9 +50,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - run: bash DATABASE_URL=sqlite:///testsuite.db scripts/test.sh
     - run: bash DATABASE_URL=mysql://username:password@localhost:3306/testsuite scripts/test.sh
     - run: bash DATABASE_URL=postgresql://username:password@localhost:5432/testsuite scripts/test.sh
+    - run: bash DATABASE_URL=sqlite:///testsuite scripts/test.sh
     - run: mypy --config-file mypy.ini ormar tests
     - name: Upload coverage
       uses: codecov/codecov-action@v1
