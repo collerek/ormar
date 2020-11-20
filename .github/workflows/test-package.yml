@@ -60,7 +60,7 @@ jobs:
       run: bash scripts/test.sh
     - name: Run mysql
       env:
-        DATABASE_URL: "mysql://username:password@localhost:3306/testsuite"
+        DATABASE_URL: "mysql://username:password@127.0.0.1:3306/testsuite"
       run: bash scripts/test.sh
     - run: mypy --config-file mypy.ini ormar tests
     - name: Upload coverage
