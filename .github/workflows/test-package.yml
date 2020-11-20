@@ -55,13 +55,13 @@ jobs:
         DATABASE_URL: "mysql://username:password@localhost:3306/testsuite"
       run: bash scripts/test.sh
     - name: Run postgres
-        env:
-          DATABASE_URL: "postgresql://username:password@localhost:5432/testsuite"
-        run: bash scripts/test.sh
+      env:
+        DATABASE_URL: "postgresql://username:password@localhost:5432/testsuite"
+      run: bash scripts/test.sh
     - name: Run sqlite
-        env:
-          DATABASE_URL: "sqlite:///testsuite"
-        run: bash scripts/test.sh
+      env:
+        DATABASE_URL: "sqlite:///testsuite"
+      run: bash scripts/test.sh
     - run: mypy --config-file mypy.ini ormar tests
     - name: Upload coverage
       uses: codecov/codecov-action@v1
