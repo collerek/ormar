@@ -6,9 +6,7 @@
 <a href="https://pypi.org/project/ormar">
     <img src="https://img.shields.io/pypi/pyversions/ormar.svg" alt="Pypi version">
 </a>
-<a href="https://travis-ci.com/collerek/ormar">
-    <img src="https://travis-ci.com/collerek/ormar.svg?branch=master" alt="Build Status">
-</a>
+<img src="https://github.com/collerek/ormar/workflows/build/badge.svg" alt="Build Status">
 <a href="https://codecov.io/gh/collerek/ormar">
     <img src="https://codecov.io/gh/collerek/ormar/branch/master/graph/badge.svg" alt="Coverage">
 </a>
