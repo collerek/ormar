@@ -100,7 +100,7 @@ await Track.objects.create(album=malibu, title="Heart don't stand a chance", pos
 await Track.objects.create(album=malibu, title="The Waters", position=3)
 
 # alternative creation of object divided into 2 steps
-fantasies = Album.objects.create(name="Fantasies")
+fantasies = Album(name="Fantasies")
 await fantasies.save()
 await Track.objects.create(album=fantasies, title="Help I'm Alive", position=1)
 await Track.objects.create(album=fantasies, title="Sick Muse", position=2)
