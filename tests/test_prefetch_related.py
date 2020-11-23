@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 import databases
 import pytest
@@ -21,6 +21,23 @@ class Tonation(ormar.Model):
     name: str = ormar.String(max_length=100)
 
 
+class Shop(ormar.Model):
+    class Meta:
+        tablename = "shops"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
+class AlbumShops(ormar.Model):
+    class Meta:
+        tablename = "albums_x_shops"
+        metadata = metadata
+        database = database
+
+
 class Album(ormar.Model):
     class Meta:
         tablename = "albums"
@@ -29,6 +46,7 @@ class Album(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
+    shops: List[Shop] = ormar.ManyToMany(to=Shop, through=AlbumShops)
 
 
 class Track(ormar.Model):
@@ -113,6 +131,32 @@ async def test_prefetch_related():
 
             tracks = await Track.objects.prefetch_related("album").all()
             assert len(tracks) == 6
+
+
+@pytest.mark.asyncio
+async def test_prefetch_related_with_many_to_many():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            shop1 = await Shop.objects.create(name='Shop 1')
+            shop2 = await Shop.objects.create(name='Shop 2')
+            album = Album(name="Malibu")
+            await album.save()
+            await album.shops.add(shop1)
+            await album.shops.add(shop2)
+
+            await Track.objects.create(album=album, title="The Bird", position=1)
+            await Track.objects.create(album=album, title="Heart don't stand a chance", position=2)
+            await Track.objects.create(album=album, title="The Waters", position=3)
+            await Cover.objects.create(title='Cover1', album=album, artist='Artist 1')
+            await Cover.objects.create(title='Cover2', album=album, artist='Artist 2')
+
+            track = await Track.objects.prefetch_related(["album__cover_pictures", "album__shops"]).get(
+                title="The Bird")
+            assert track.album.name == "Malibu"
+            assert len(track.album.cover_pictures) == 2
+            assert track.album.cover_pictures[0].artist == 'Artist 1'
+
+            assert len(track.album.shops) == 2
 
 
 @pytest.mark.asyncio

@@ -57,7 +57,17 @@ class PrefetchQuery:
             )
             if reverse:
                 field = target_model.resolve_relation_field(target_model, parent_model)
-                kwargs = {f'{field.get_alias()}__in': ids}
+                if issubclass(field, ManyToManyField):
+                    sub_field = target_model.resolve_relation_field(field.through, parent_model)
+                    kwargs = {f'{sub_field.get_alias()}__in': ids}
+                    qryclause = QueryClause(
+                        model_cls=field.through,
+                        select_related=[],
+                        filter_clauses=[],
+                    )
+
+                else:
+                    kwargs = {f'{field.get_alias()}__in': ids}
             else:
                 target_field = target_model.Meta.model_fields[target_model.Meta.pkname].get_alias()
                 kwargs = {f'{target_field}__in': ids}
@@ -73,12 +83,14 @@ class PrefetchQuery:
             reverse = False
 
             target_field = model.Meta.model_fields[related]
-            if target_field.virtual or issubclass(target_field, ManyToManyField):
-                reverse = True
-
             target_model = target_field.to.get_name()
-            if reverse:
+            if target_field.virtual:
+                reverse = True
                 field_name = model.resolve_relation_name(target_field.to, model)
+                model_id = model.pk
+            elif issubclass(target_field, ManyToManyField):
+                reverse = True
+                field_name = model.resolve_relation_name(target_field.through, model)
                 model_id = model.pk
             else:
                 related_name = model.resolve_relation_name(model, target_field.to)
@@ -89,17 +101,16 @@ class PrefetchQuery:
                 field_name = target_field.to.Meta.pkname
 
             if target_model in already_extracted and already_extracted[target_model]['models']:
-                print('*****POPULATING RELATED:', target_model, field_name)
+                print('*****POPULATING RELATED:', target_model, field_name, '*****', end='\n')
                 print(already_extracted[target_model]['models'])
-                for child_model in already_extracted[target_model]['models']:
-                    related_model = getattr(child_model, field_name)
-                    if isinstance(related_model, list):
-                        for child in related_model:
-                            if child.pk == model_id:
-                                setattr(model, related, child)
+                for ind, child_model in enumerate(already_extracted[target_model]['models']):
+                    if issubclass(target_field, ManyToManyField):
+                        raw_data = already_extracted[target_model]['raw'][ind]
+                        if raw_data[field_name] == model_id:
+                            setattr(model, related, child_model)
 
-                    elif isinstance(related_model, ormar.Model):
-                        if related_model.pk == model_id:
+                    elif isinstance(getattr(child_model, field_name), ormar.Model):
+                        if getattr(child_model, field_name).pk == model_id:
                             if reverse:
                                 setattr(model, related, child_model)
                             else:
@@ -123,12 +134,16 @@ class PrefetchQuery:
             exclude_fields = self._exclude_columns
             for part in related.split('__'):
                 fields = target_model.get_included(fields, part)
+                select_related = []
                 exclude_fields = target_model.get_excluded(exclude_fields, part)
 
                 target_field = target_model.Meta.model_fields[part]
                 reverse = False
                 if target_field.virtual or issubclass(target_field, ManyToManyField):
                     reverse = True
+
+                if issubclass(target_field, ManyToManyField):
+                    select_related = [target_field.through.get_name()]
 
                 parent_model = target_model
                 target_model = target_field.to
@@ -141,9 +156,17 @@ class PrefetchQuery:
                     if not filter_clauses:  # related field is empty
                         continue
 
+                    query_target = target_model
+                    table_prefix = ''
+                    if issubclass(target_field, ManyToManyField):
+                        query_target = target_field.through
+                        select_related = [target_field.to.get_name()]
+                        table_prefix = target_field.to.Meta.alias_manager.resolve_relation_join(
+                            from_table=query_target.Meta.tablename, to_table=target_field.to.Meta.tablename)
+
                     qry = Query(
-                        model_cls=target_model,
-                        select_related=[],
+                        model_cls=query_target,
+                        select_related=select_related,
                         filter_clauses=filter_clauses,
                         exclude_clauses=[],
                         offset=None,
@@ -161,7 +184,7 @@ class PrefetchQuery:
                             item = target_model.extract_prefixed_table_columns(
                                 item={},
                                 row=row,
-                                table_prefix='',
+                                table_prefix=table_prefix,
                                 fields=fields,
                                 exclude_fields=exclude_fields
                             )
@@ -174,12 +197,22 @@ class PrefetchQuery:
             for part in related.split('__')[:-1]:
                 fields = target_model.get_included(fields, part)
                 exclude_fields = target_model.get_excluded(exclude_fields, part)
-                target_model = target_model.Meta.model_fields[part].to
+
+                target_field = target_model.Meta.model_fields[part]
+                target_model = target_field.to
+                table_prefix = ''
+
+                if issubclass(target_field, ManyToManyField):
+                    from_table = target_field.through.Meta.tablename
+                    to_name = target_field.to.Meta.tablename
+                    table_prefix = target_field.to.Meta.alias_manager.resolve_relation_join(
+                        from_table=from_table, to_table=to_name)
+
                 for row in already_extracted.get(target_model.get_name(), {}).get('raw', []):
                     item = target_model.extract_prefixed_table_columns(
                         item={},
                         row=row,
-                        table_prefix='',
+                        table_prefix=table_prefix,
                         fields=fields,
                         exclude_fields=exclude_fields
                     )
