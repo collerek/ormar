@@ -379,13 +379,29 @@ async def test_wrong_model_passed_as_fk():
 
 
 @pytest.mark.asyncio
-async def test_bulk_update_model_with_children():
+async def test_bulk_update_model_with_no_children():
     async with database:
         async with database.transaction(force_rollback=True):
             album = await Album.objects.create(name="Test")
             track = await Track.objects.create(album=album, title="Test1", position=1)
             album.name = "Test2"
             await Album.objects.bulk_update([album], columns=["name"])
+
+            updated_album = await Album.objects.get(id=album.id)
+            assert updated_album.name == "Test2"
+
+
+@pytest.mark.asyncio
+async def test_bulk_update_model_with_children():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            album = await Album.objects.create(name="Test")
+            track = await Track.objects.create(album=album, title="Test1", position=1)
+            album_with_tracks = await Album.objects.select_related("tracks").get(
+                name="Test"
+            )
+            album_with_tracks.name = "Test2"
+            await Album.objects.bulk_update([album_with_tracks], columns=["name"])
 
             updated_album = await Album.objects.get(id=album.id)
             assert updated_album.name == "Test2"
