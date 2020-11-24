@@ -70,6 +70,12 @@ class ModelTableProxy:
                             f"model without pk set!"
                         )
                     model_dict[field] = pk_value
+                elif isinstance(field_value, list):
+                    targets = [target.get(target_pkname) for target in field_value]
+                    if targets:
+                        model_dict[field] = targets
+                    else:
+                        model_dict.pop(field)
                 elif field_value:  # nested dict
                     model_dict[field] = field_value.get(target_pkname)
                 else:

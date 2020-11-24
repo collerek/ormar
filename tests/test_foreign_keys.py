@@ -376,3 +376,16 @@ async def test_wrong_model_passed_as_fk():
             with pytest.raises(RelationshipInstanceError):
                 org = await Organisation.objects.create(ident="ACME Ltd")
                 await Track.objects.create(album=org, title="Test1", position=1)
+
+
+@pytest.mark.asyncio
+async def test_bulk_update_model_with_children():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            album = await Album.objects.create(name="Test")
+            track = await Track.objects.create(album=album, title="Test1", position=1)
+            album.name = "Test2"
+            await Album.objects.bulk_update([album], columns=["name"])
+
+            updated_album = await Album.objects.get(id=album.id)
+            assert updated_album.name == "Test2"
