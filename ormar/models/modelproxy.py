@@ -76,10 +76,8 @@ class ModelTableProxy:
                         model_dict[field] = targets
                     else:
                         model_dict.pop(field)
-                elif field_value:  # nested dict
+                else:  # nested dict
                     model_dict[field] = field_value.get(target_pkname)
-                else:
-                    model_dict.pop(field, None)
         return model_dict
 
     @classmethod
@@ -237,7 +235,9 @@ class ModelTableProxy:
 
     @staticmethod
     def _populate_pk_column(
-        model: Type["Model"], columns: List[str], use_alias: bool = False,
+        model: Type["Model"],
+        columns: List[str],
+        use_alias: bool = False,
     ) -> List[str]:
         pk_alias = (
             model.get_column_alias(model.Meta.pkname)
