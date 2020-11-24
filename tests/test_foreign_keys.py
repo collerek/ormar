@@ -383,7 +383,6 @@ async def test_bulk_update_model_with_no_children():
     async with database:
         async with database.transaction(force_rollback=True):
             album = await Album.objects.create(name="Test")
-            track = await Track.objects.create(album=album, title="Test1", position=1)
             album.name = "Test2"
             await Album.objects.bulk_update([album], columns=["name"])
 
@@ -396,12 +395,13 @@ async def test_bulk_update_model_with_children():
     async with database:
         async with database.transaction(force_rollback=True):
             album = await Album.objects.create(name="Test")
-            track = await Track.objects.create(album=album, title="Test1", position=1)
-            album_with_tracks = await Album.objects.select_related("tracks").get(
-                name="Test"
-            )
-            album_with_tracks.name = "Test2"
-            await Album.objects.bulk_update([album_with_tracks], columns=["name"])
+            track = await Track.objects.create(title="Test1", position=1)
+            album.tracks = [track]
+            album.name = "Test2"
+            await Album.objects.bulk_update([album], columns=["name"])
 
-            updated_album = await Album.objects.get(id=album.id)
+            updated_album = await Album.objects.select_related("tracks").get(
+                id=album.id
+            )
             assert updated_album.name == "Test2"
+            assert len(updated_album.tracks) == 0
