@@ -1,6 +1,9 @@
 import collections.abc
 import copy
-from typing import Any, Dict, List, Set, Union
+from typing import Any, Dict, List, Sequence, Set, TYPE_CHECKING, Type, Union
+
+if TYPE_CHECKING:  # pragma no cover
+    from ormar import Model
 
 
 def check_node_not_dict_or_not_last_node(
@@ -55,3 +58,39 @@ def update_dict_from_list(curr_dict: Dict, list_to_update: Union[List, Set]) -> 
     dict_to_update = translate_list_to_dict(list_to_update)
     update(updated_dict, dict_to_update)
     return updated_dict
+
+
+def extract_nested_models(  # noqa: CCR001
+    model: "Model", model_type: Type["Model"], select_dict: Dict, extracted: Dict
+) -> None:
+    follow = [rel for rel in model_type.extract_related_names() if rel in select_dict]
+    for related in follow:
+        child = getattr(model, related)
+        if child:
+            target_model = model_type.Meta.model_fields[related].to
+            if isinstance(child, list):
+                extracted.setdefault(target_model.get_name(), []).extend(child)
+                if select_dict[related] is not Ellipsis:
+                    for sub_child in child:
+                        extract_nested_models(
+                            sub_child, target_model, select_dict[related], extracted,
+                        )
+            else:
+                extracted.setdefault(target_model.get_name(), []).append(child)
+                if select_dict[related] is not Ellipsis:
+                    extract_nested_models(
+                        child, target_model, select_dict[related], extracted,
+                    )
+
+
+def extract_models_to_dict_of_lists(
+    model_type: Type["Model"],
+    models: Sequence["Model"],
+    select_dict: Dict,
+    extracted: Dict = None,
+) -> Dict:
+    if not extracted:
+        extracted = dict()
+    for model in models:
+        extract_nested_models(model, model_type, select_dict, extracted)
+    return extracted

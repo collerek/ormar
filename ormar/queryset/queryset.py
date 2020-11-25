@@ -67,16 +67,16 @@ class QuerySet:
         return self.model_cls
 
     async def _prefetch_related_models(
-        self, models: Sequence["Model"], rows: List
-    ) -> Sequence["Model"]:
+        self, models: Sequence[Optional["Model"]], rows: List
+    ) -> Sequence[Optional["Model"]]:
         query = PrefetchQuery(
-            model_cls=self.model_cls,
+            model_cls=self.model,
             fields=self._columns,
             exclude_fields=self._exclude_columns,
             prefetch_related=self._prefetch_related,
             select_related=self._select_related,
         )
-        return await query.prefetch_related(models=models, rows=rows)
+        return await query.prefetch_related(models=models, rows=rows)  # type: ignore
 
     def _process_query_result_rows(self, rows: List) -> Sequence[Optional["Model"]]:
         result_rows = [
@@ -191,7 +191,7 @@ class QuerySet:
         if not isinstance(related, list):
             related = [related]
 
-        related = list(set(list(self._select_related) + related))
+        related = list(set(list(self._prefetch_related) + related))
         return self.__class__(
             model_cls=self.model,
             filter_clauses=self.filter_clauses,
@@ -352,7 +352,7 @@ class QuerySet:
 
         rows = await self.database.fetch_all(expr)
         processed_rows = self._process_query_result_rows(rows)
-        if self._prefetch_related:
+        if self._prefetch_related and processed_rows:
             processed_rows = await self._prefetch_related_models(processed_rows, rows)
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
@@ -379,7 +379,7 @@ class QuerySet:
         expr = self.build_select_expression()
         rows = await self.database.fetch_all(expr)
         result_rows = self._process_query_result_rows(rows)
-        if self._prefetch_related:
+        if self._prefetch_related and result_rows:
             result_rows = await self._prefetch_related_models(result_rows, rows)
 
         return result_rows

@@ -11,6 +11,16 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
+class RandomSet(ormar.Model):
+    class Meta:
+        tablename = "randoms"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
 class Tonation(ormar.Model):
     class Meta:
         tablename = "tonations"
@@ -19,6 +29,7 @@ class Tonation(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
+    rand_set: Optional[RandomSet] = ormar.ForeignKey(RandomSet)
 
 
 class Division(ormar.Model):
@@ -181,3 +192,53 @@ async def test_prefetch_related_empty():
             track = await Track.objects.prefetch_related(["album__cover_pictures"]).get(title="The Bird")
             assert track.title == 'The Bird'
             assert track.album is None
+
+
+@pytest.mark.asyncio
+async def test_prefetch_related_with_select_related():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            div = await Division.objects.create(name='Div 1')
+            shop1 = await Shop.objects.create(name='Shop 1', division=div)
+            shop2 = await Shop.objects.create(name='Shop 2', division=div)
+            album = Album(name="Malibu")
+            await album.save()
+            await album.shops.add(shop1)
+            await album.shops.add(shop2)
+
+            await Cover.objects.create(title='Cover1', album=album, artist='Artist 1')
+            await Cover.objects.create(title='Cover2', album=album, artist='Artist 2')
+
+            album = await Album.objects.select_related(['tracks', 'shops']).filter(name='Malibu').prefetch_related(
+                ['cover_pictures', 'shops__division']).get()
+            assert len(album.tracks) == 0
+            assert len(album.cover_pictures) == 2
+            assert album.shops[0].division.name == 'Div 1'
+
+            rand_set = await RandomSet.objects.create(name='Rand 1')
+            ton1 = await Tonation.objects.create(name='B-mol', rand_set=rand_set)
+            await Track.objects.create(album=album, title="The Bird", position=1, tonation=ton1)
+            await Track.objects.create(album=album, title="Heart don't stand a chance", position=2, tonation=ton1)
+            await Track.objects.create(album=album, title="The Waters", position=3, tonation=ton1)
+
+            album = await Album.objects.select_related('tracks__tonation__rand_set').filter(name='Malibu').prefetch_related(
+                ['cover_pictures', 'shops__division']).get()
+            assert len(album.tracks) == 3
+            assert album.tracks[0].tonation == album.tracks[2].tonation == ton1
+            assert len(album.cover_pictures) == 2
+            assert album.cover_pictures[0].artist == 'Artist 1'
+
+            assert len(album.shops) == 2
+            assert album.shops[0].name == 'Shop 1'
+            assert album.shops[0].division.name == 'Div 1'
+
+            track = await Track.objects.select_related('album').prefetch_related(
+                ["album__cover_pictures", "album__shops__division"]).get(
+                title="The Bird")
+            assert track.album.name == "Malibu"
+            assert len(track.album.cover_pictures) == 2
+            assert track.album.cover_pictures[0].artist == 'Artist 1'
+
+            assert len(track.album.shops) == 2
+            assert track.album.shops[0].name == 'Shop 1'
+            assert track.album.shops[0].division.name == 'Div 1'
