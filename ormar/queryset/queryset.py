@@ -21,17 +21,17 @@ if TYPE_CHECKING:  # pragma no cover
 
 class QuerySet:
     def __init__(  # noqa CFQ002
-            self,
-            model_cls: Type["Model"] = None,
-            filter_clauses: List = None,
-            exclude_clauses: List = None,
-            select_related: List = None,
-            limit_count: int = None,
-            offset: int = None,
-            columns: Dict = None,
-            exclude_columns: Dict = None,
-            order_bys: List = None,
-            prefetch_related: List = None,
+        self,
+        model_cls: Type["Model"] = None,
+        filter_clauses: List = None,
+        exclude_clauses: List = None,
+        select_related: List = None,
+        limit_count: int = None,
+        offset: int = None,
+        columns: Dict = None,
+        exclude_columns: Dict = None,
+        order_bys: List = None,
+        prefetch_related: List = None,
     ) -> None:
         self.model_cls = model_cls
         self.filter_clauses = [] if filter_clauses is None else filter_clauses
@@ -45,9 +45,9 @@ class QuerySet:
         self.order_bys = order_bys or []
 
     def __get__(
-            self,
-            instance: Optional[Union["QuerySet", "QuerysetProxy"]],
-            owner: Union[Type["Model"], Type["QuerysetProxy"]],
+        self,
+        instance: Optional[Union["QuerySet", "QuerysetProxy"]],
+        owner: Union[Type["Model"], Type["QuerysetProxy"]],
     ) -> "QuerySet":
         if issubclass(owner, ormar.Model):
             return self.__class__(model_cls=owner)
@@ -66,11 +66,16 @@ class QuerySet:
             raise ValueError("Model class of QuerySet is not initialized")
         return self.model_cls
 
-    async def _prefetch_related_models(self, models: Sequence["Model"], rows: List) -> Sequence["Model"]:
-        query = PrefetchQuery(model_cls=self.model_cls,
-                              fields=self._columns,
-                              exclude_fields=self._exclude_columns,
-                              prefetch_related=self._prefetch_related)
+    async def _prefetch_related_models(
+        self, models: Sequence["Model"], rows: List
+    ) -> Sequence["Model"]:
+        query = PrefetchQuery(
+            model_cls=self.model_cls,
+            fields=self._columns,
+            exclude_fields=self._exclude_columns,
+            prefetch_related=self._prefetch_related,
+            select_related=self._select_related,
+        )
         return await query.prefetch_related(models=models, rows=rows)
 
     def _process_query_result_rows(self, rows: List) -> Sequence[Optional["Model"]]:
@@ -98,7 +103,7 @@ class QuerySet:
         pkname = self.model_meta.pkname
         pk = self.model_meta.model_fields[pkname]
         if new_kwargs.get(pkname, ormar.Undefined) is None and (
-                pk.nullable or pk.autoincrement
+            pk.nullable or pk.autoincrement
         ):
             del new_kwargs[pkname]
         return new_kwargs
@@ -197,7 +202,7 @@ class QuerySet:
             columns=self._columns,
             exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
-            prefetch_related=related
+            prefetch_related=related,
         )
 
     def exclude_fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet":
@@ -398,9 +403,9 @@ class QuerySet:
 
         # refresh server side defaults
         if any(
-                field.server_default is not None
-                for name, field in self.model.Meta.model_fields.items()
-                if name not in kwargs
+            field.server_default is not None
+            for name, field in self.model.Meta.model_fields.items()
+            if name not in kwargs
         ):
             instance = await instance.load()
         instance.set_save_status(True)
@@ -420,7 +425,7 @@ class QuerySet:
             objt.set_save_status(True)
 
     async def bulk_update(  # noqa:  CCR001
-            self, objects: List["Model"], columns: List[str] = None
+        self, objects: List["Model"], columns: List[str] = None
     ) -> None:
         ready_objects = []
         pk_name = self.model_meta.pkname

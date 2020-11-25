@@ -21,6 +21,16 @@ class Tonation(ormar.Model):
     name: str = ormar.String(max_length=100)
 
 
+class Division(ormar.Model):
+    class Meta:
+        tablename = "divisions"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
 class Shop(ormar.Model):
     class Meta:
         tablename = "shops"
@@ -29,6 +39,7 @@ class Shop(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
+    division: Optional[Division] = ormar.ForeignKey(Division)
 
 
 class AlbumShops(ormar.Model):
@@ -137,8 +148,9 @@ async def test_prefetch_related():
 async def test_prefetch_related_with_many_to_many():
     async with database:
         async with database.transaction(force_rollback=True):
-            shop1 = await Shop.objects.create(name='Shop 1')
-            shop2 = await Shop.objects.create(name='Shop 2')
+            div = await Division.objects.create(name='Div 1')
+            shop1 = await Shop.objects.create(name='Shop 1', division=div)
+            shop2 = await Shop.objects.create(name='Shop 2', division=div)
             album = Album(name="Malibu")
             await album.save()
             await album.shops.add(shop1)
@@ -150,13 +162,15 @@ async def test_prefetch_related_with_many_to_many():
             await Cover.objects.create(title='Cover1', album=album, artist='Artist 1')
             await Cover.objects.create(title='Cover2', album=album, artist='Artist 2')
 
-            track = await Track.objects.prefetch_related(["album__cover_pictures", "album__shops"]).get(
+            track = await Track.objects.prefetch_related(["album__cover_pictures", "album__shops__division"]).get(
                 title="The Bird")
             assert track.album.name == "Malibu"
             assert len(track.album.cover_pictures) == 2
             assert track.album.cover_pictures[0].artist == 'Artist 1'
 
             assert len(track.album.shops) == 2
+            assert track.album.shops[0].name == 'Shop 1'
+            assert track.album.shops[0].division.name == 'Div 1'
 
 
 @pytest.mark.asyncio
