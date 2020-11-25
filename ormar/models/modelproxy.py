@@ -78,7 +78,7 @@ class ModelTableProxy:
                     else:
                         model_dict[field] = field_value.get(target_pkname)
                 else:
-                    model_dict.pop(field)
+                    model_dict.pop(field, None)
         return model_dict
 
     @classmethod
