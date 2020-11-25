@@ -127,6 +127,124 @@ alembic revision --autogenerate -m "made some changes"
 alembic upgrade head
 ```
 
+A quick example of alembic migrations should be something similar to:
+
+When you have application structure like:
+
+```
+-> app
+    -> alembic (initialized folder - so run alembic init alembic inside app folder)
+    -> models (here are the models)
+      -> __init__.py
+      -> my_models.py
+```
+
+Your `env.py` file (in alembic folder) can look something like:
+
+```python
+from logging.config import fileConfig
+from sqlalchemy import create_engine
+
+from alembic import context
+import sys, os
+
+# add app folder to system path (alternative is running it from parent folder with python -m ...)
+myPath = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, myPath + '/../../')
+
+# this is the Alembic Config object, which provides
+# access to the values within the .ini file in use.
+config = context.config
+
+# Interpret the config file for Python logging.
+# This line sets up loggers basically.
+fileConfig(config.config_file_name)
+
+# add your model's MetaData object here (the one used in ormar)
+# for 'autogenerate' support
+from app.models.my_models import metadata
+target_metadata = metadata
+
+
+# set your url here or import from settings
+URL = "sqlite:///test.db"
+
+
+def run_migrations_offline():
+    """Run migrations in 'offline' mode.
+
+    This configures the context with just a URL
+    and not an Engine, though an Engine is acceptable
+    here as well.  By skipping the Engine creation
+    we don't even need a DBAPI to be available.
+
+    Calls to context.execute() here emit the given string to the
+    script output.
+
+    """
+    context.configure(
+        url=URL
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def run_migrations_online():
+    """Run migrations in 'online' mode.
+
+    In this scenario we need to create an Engine
+    and associate a connection with the context.
+
+    """
+    connectable = create_engine(URL)
+
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()
+
+```
+
+You can also include/exclude specific tables with `include_object` parameter passed to `context.configure`. That should be a function returning `True/False` for given objects.
+
+A sample function excluding tables starting with `data_` in name unless it's 'data_jobs':
+```python
+def include_object(object, name, type_, reflected, compare_to):
+    if name and name.startswith('data_') and name not in ['data_jobs']:
+        return False
+
+    return True
+```
+
+!!!note
+    Function parameters for `include_objects` (you can change the name) are required and defined in alembic
+    to check what they do check the [alembic][alembic] documentation
+
+And you pass it into context like (both in online and offline):
+```python
+context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+        include_object=include_object
+    )
+```
+
 !!!info
     You can read more about table creation, altering and migrations in [sqlalchemy table creation][sqlalchemy table creation] documentation.
 
