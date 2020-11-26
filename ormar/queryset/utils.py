@@ -14,18 +14,28 @@ def check_node_not_dict_or_not_last_node(
     )
 
 
-def translate_list_to_dict(list_to_trans: Union[List, Set]) -> Dict:  # noqa: CCR001
+def translate_list_to_dict(  # noqa: CCR001
+    list_to_trans: Union[List, Set], is_order: bool = False
+) -> Dict:
     new_dict: Dict = dict()
     for path in list_to_trans:
         current_level = new_dict
         parts = path.split("__")
+        def_val: Any = ...
+        if is_order:
+            if parts[0][0] == "-":
+                def_val = "desc"
+                parts[0] = parts[0][1:]
+            else:
+                def_val = "asc"
+
         for part in parts:
             if check_node_not_dict_or_not_last_node(
                 part=part, parts=parts, current_level=current_level
             ):
                 current_level[part] = dict()
             elif part not in current_level:
-                current_level[part] = ...
+                current_level[part] = def_val
             current_level = current_level[part]
     return new_dict
 

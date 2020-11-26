@@ -228,6 +228,7 @@ async def test_prefetch_related_with_select_related():
 
             album = await Album.objects.select_related(['tracks', 'shops']).filter(name='Malibu').prefetch_related(
                 ['cover_pictures', 'shops__division']).get()
+
             assert len(album.tracks) == 0
             assert len(album.cover_pictures) == 2
             assert album.shops[0].division.name == 'Div 1'
@@ -240,14 +241,15 @@ async def test_prefetch_related_with_select_related():
 
             album = await Album.objects.select_related('tracks__tonation__rand_set').filter(
                 name='Malibu').prefetch_related(
-                ['cover_pictures', 'shops__division']).get()
+                ['cover_pictures', 'shops__division']).order_by(
+                ['-shops__name', '-cover_pictures__artist', 'shops__division__name']).get()
             assert len(album.tracks) == 3
             assert album.tracks[0].tonation == album.tracks[2].tonation == ton1
             assert len(album.cover_pictures) == 2
-            assert album.cover_pictures[0].artist == 'Artist 1'
+            assert album.cover_pictures[0].artist == 'Artist 2'
 
             assert len(album.shops) == 2
-            assert album.shops[0].name == 'Shop 1'
+            assert album.shops[0].name == 'Shop 2'
             assert album.shops[0].division.name == 'Div 1'
 
             track = await Track.objects.select_related('album').prefetch_related(

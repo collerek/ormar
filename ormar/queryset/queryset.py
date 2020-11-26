@@ -75,6 +75,7 @@ class QuerySet:
             exclude_fields=self._exclude_columns,
             prefetch_related=self._prefetch_related,
             select_related=self._select_related,
+            orders_by=self.order_bys,
         )
         return await query.prefetch_related(models=models, rows=rows)  # type: ignore
 
