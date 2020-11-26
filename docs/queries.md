@@ -267,8 +267,11 @@ To chain related `Models` relation use double underscores between names.
     only singe relation types, while in `ormar` you can select related across `ForeignKey` relation, 
     reverse side of `ForeignKey` (so virtual auto generated keys) and `ManyToMany` fields (so all relations as of current version).
 
-!!!note
+!!!tip
     To control which model fields to select use `fields()` and `exclude_fields()` `QuerySet` methods.
+    
+!!!tip
+    To control order of models (both main or nested) use `order_by()` method.
 
 ```python
 album = await Album.objects.select_related("tracks").all()
@@ -311,8 +314,11 @@ To fetch related model use `ForeignKey` names.
 
 To chain related `Models` relation use double underscores between names.
 
-!!!note
+!!!tip
     To control which model fields to select use `fields()` and `exclude_fields()` `QuerySet` methods.
+    
+!!!tip
+    To control order of models (both main or nested) use `order_by()` method.
 
 ```python
 album = await Album.objects.prefetch_related("tracks").all()
