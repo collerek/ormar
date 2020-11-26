@@ -71,8 +71,7 @@ class ModelTableProxy:
                     field.through, parent_model
                 )
                 return field.through, sub_field.get_alias()
-            else:
-                return target_model, field.get_alias()
+            return target_model, field.get_alias()
         target_field = target_model.get_column_alias(target_model.Meta.pkname)
         return target_model, target_field
 
@@ -88,9 +87,8 @@ class ModelTableProxy:
             return (
                 parent_model.get_column_alias(column_name) if use_raw else column_name
             )
-        else:
-            column = target_model.resolve_relation_field(parent_model, target_model)
-            return column.get_alias() if use_raw else column.name
+        column = target_model.resolve_relation_field(parent_model, target_model)
+        return column.get_alias() if use_raw else column.name
 
     @classmethod
     def get_filtered_names_to_extract(cls, prefetch_dict: Dict) -> List:

@@ -51,8 +51,7 @@ class QuerySet:
     ) -> "QuerySet":
         if issubclass(owner, ormar.Model):
             return self.__class__(model_cls=owner)
-        else:  # pragma nocover
-            return self.__class__()
+        return self.__class__()  # pragma: no cover
 
     @property
     def model_meta(self) -> "ModelMeta":
