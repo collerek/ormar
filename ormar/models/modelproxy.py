@@ -1,12 +1,15 @@
 import inspect
 from collections import OrderedDict
 from typing import (
+    Any,
+    Callable,
     Dict,
     List,
     Optional,
     Sequence,
     Set,
     TYPE_CHECKING,
+    Tuple,
     Type,
     TypeVar,
     Union,
@@ -38,6 +41,8 @@ class ModelTableProxy:
         Meta: ModelMeta
         _related_names: Set
         _related_names_hash: Union[str, bytes]
+        pk: Any
+        get_name: Callable
 
     def dict(self):  # noqa A003
         raise NotImplementedError  # pragma no cover
@@ -46,6 +51,66 @@ class ModelTableProxy:
         related_names = self.extract_related_names()
         self_fields = {k: v for k, v in self.dict().items() if k not in related_names}
         return self_fields
+
+    @classmethod
+    def get_related_field_name(cls, target_field: Type["BaseField"]) -> str:
+        if issubclass(target_field, ormar.fields.ManyToManyField):
+            return cls.resolve_relation_name(target_field.through, cls)
+        if target_field.virtual:
+            return cls.resolve_relation_name(target_field.to, cls)
+        return target_field.to.Meta.pkname
+
+    @staticmethod
+    def get_clause_target_and_filter_column_name(
+        parent_model: Type["Model"], target_model: Type["Model"], reverse: bool
+    ) -> Tuple[Type["Model"], str]:
+        if reverse:
+            field = target_model.resolve_relation_field(target_model, parent_model)
+            if issubclass(field, ormar.fields.ManyToManyField):
+                sub_field = target_model.resolve_relation_field(
+                    field.through, parent_model
+                )
+                return field.through, sub_field.get_alias()
+            else:
+                return target_model, field.get_alias()
+        target_field = target_model.get_column_alias(target_model.Meta.pkname)
+        return target_model, target_field
+
+    @staticmethod
+    def get_column_name_for_id_extraction(
+        parent_model: Type["Model"],
+        target_model: Type["Model"],
+        reverse: bool,
+        use_raw: bool,
+    ) -> str:
+        if reverse:
+            column_name = parent_model.Meta.pkname
+            return (
+                parent_model.get_column_alias(column_name) if use_raw else column_name
+            )
+        else:
+            column = target_model.resolve_relation_field(parent_model, target_model)
+            return column.get_alias() if use_raw else column.name
+
+    @classmethod
+    def get_filtered_names_to_extract(cls, prefetch_dict: Dict) -> List:
+        related_to_extract = []
+        if prefetch_dict and prefetch_dict is not Ellipsis:
+            related_to_extract = [
+                related
+                for related in cls.extract_related_names()
+                if related in prefetch_dict
+            ]
+        return related_to_extract
+
+    def get_relation_model_id(self, target_field: Type["BaseField"]) -> Optional[int]:
+        if target_field.virtual or issubclass(
+            target_field, ormar.fields.ManyToManyField
+        ):
+            return self.pk
+        related_name = self.resolve_relation_name(self, target_field.to)
+        related_model = getattr(self, related_name)
+        return None if not related_model else related_model.pk
 
     @classmethod
     def extract_db_own_fields(cls) -> Set:
@@ -155,8 +220,18 @@ class ModelTableProxy:
 
     @staticmethod
     def resolve_relation_name(  # noqa CCR001
-        item: Union["NewBaseModel", Type["NewBaseModel"]],
-        related: Union["NewBaseModel", Type["NewBaseModel"]],
+        item: Union[
+            "NewBaseModel",
+            Type["NewBaseModel"],
+            "ModelTableProxy",
+            Type["ModelTableProxy"],
+        ],
+        related: Union[
+            "NewBaseModel",
+            Type["NewBaseModel"],
+            "ModelTableProxy",
+            Type["ModelTableProxy"],
+        ],
     ) -> str:
         for name, field in item.Meta.model_fields.items():
             if issubclass(field, ForeignKeyField):

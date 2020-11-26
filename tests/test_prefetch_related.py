@@ -39,7 +39,7 @@ class Division(ormar.Model):
         database = database
 
     id: int = ormar.Integer(name='division_id', primary_key=True)
-    name: str = ormar.String(max_length=100)
+    name: str = ormar.String(max_length=100, nullable=True)
 
 
 class Shop(ormar.Model):
@@ -49,7 +49,7 @@ class Shop(ormar.Model):
         database = database
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=100)
+    name: str = ormar.String(max_length=100, nullable=True)
     division: Optional[Division] = ormar.ForeignKey(Division)
 
 
@@ -67,7 +67,7 @@ class Album(ormar.Model):
         database = database
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=100)
+    name: str = ormar.String(max_length=100, nullable=True)
     shops: List[Shop] = ormar.ManyToMany(to=Shop, through=AlbumShops)
 
 
@@ -243,3 +243,50 @@ async def test_prefetch_related_with_select_related():
             assert len(track.album.shops) == 2
             assert track.album.shops[0].name == 'Shop 1'
             assert track.album.shops[0].division.name == 'Div 1'
+
+
+@pytest.mark.asyncio
+async def test_prefetch_related_with_select_related_and_fields():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            div = await Division.objects.create(name='Div 1')
+            shop1 = await Shop.objects.create(name='Shop 1', division=div)
+            shop2 = await Shop.objects.create(name='Shop 2', division=div)
+            album = Album(name="Malibu")
+            await album.save()
+            await album.shops.add(shop1)
+            await album.shops.add(shop2)
+            await Cover.objects.create(title='Cover1', album=album, artist='Artist 1')
+            await Cover.objects.create(title='Cover2', album=album, artist='Artist 2')
+            rand_set = await RandomSet.objects.create(name='Rand 1')
+            ton1 = await Tonation.objects.create(name='B-mol', rand_set=rand_set)
+            await Track.objects.create(album=album, title="The Bird", position=1, tonation=ton1)
+            await Track.objects.create(album=album, title="Heart don't stand a chance", position=2, tonation=ton1)
+            await Track.objects.create(album=album, title="The Waters", position=3, tonation=ton1)
+
+            album = await Album.objects.select_related('tracks__tonation__rand_set').filter(
+                name='Malibu').prefetch_related(
+                ['cover_pictures', 'shops__division']).exclude_fields({'shops': {'division': {'name'}}}).get()
+            assert len(album.tracks) == 3
+            assert album.tracks[0].tonation == album.tracks[2].tonation == ton1
+            assert len(album.cover_pictures) == 2
+            assert album.cover_pictures[0].artist == 'Artist 1'
+
+            assert len(album.shops) == 2
+            assert album.shops[0].name == 'Shop 1'
+            assert album.shops[0].division.name is None
+
+            album = await Album.objects.select_related('tracks').filter(
+                name='Malibu').prefetch_related(
+                ['cover_pictures', 'shops__division']).fields(
+                {'name': ..., 'shops': {'division'}, 'cover_pictures': {'id': ..., 'title': ...}}
+            ).exclude_fields({'shops': {'division': {'name'}}}).get()
+            assert len(album.tracks) == 3
+            assert len(album.cover_pictures) == 2
+            assert album.cover_pictures[0].artist is None
+            assert album.cover_pictures[0].title is not None
+
+            assert len(album.shops) == 2
+            assert album.shops[0].name is None
+            assert album.shops[0].division is not None
+            assert album.shops[0].division.name is None
