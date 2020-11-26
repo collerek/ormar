@@ -9,6 +9,7 @@ from ormar import MultipleMatches, NoMatch
 from ormar.exceptions import QueryDefinitionError
 from ormar.queryset import FilterQuery
 from ormar.queryset.clause import QueryClause
+from ormar.queryset.prefetch_query import PrefetchQuery
 from ormar.queryset.query import Query
 from ormar.queryset.utils import update, update_dict_from_list
 
@@ -30,11 +31,13 @@ class QuerySet:
         columns: Dict = None,
         exclude_columns: Dict = None,
         order_bys: List = None,
+        prefetch_related: List = None,
     ) -> None:
         self.model_cls = model_cls
         self.filter_clauses = [] if filter_clauses is None else filter_clauses
         self.exclude_clauses = [] if exclude_clauses is None else exclude_clauses
         self._select_related = [] if select_related is None else select_related
+        self._prefetch_related = [] if prefetch_related is None else prefetch_related
         self.limit_count = limit_count
         self.query_offset = offset
         self._columns = columns or {}
@@ -48,8 +51,7 @@ class QuerySet:
     ) -> "QuerySet":
         if issubclass(owner, ormar.Model):
             return self.__class__(model_cls=owner)
-        else:  # pragma nocover
-            return self.__class__()
+        return self.__class__()  # pragma: no cover
 
     @property
     def model_meta(self) -> "ModelMeta":
@@ -62,6 +64,19 @@ class QuerySet:
         if not self.model_cls:  # pragma nocover
             raise ValueError("Model class of QuerySet is not initialized")
         return self.model_cls
+
+    async def _prefetch_related_models(
+        self, models: Sequence[Optional["Model"]], rows: List
+    ) -> Sequence[Optional["Model"]]:
+        query = PrefetchQuery(
+            model_cls=self.model,
+            fields=self._columns,
+            exclude_fields=self._exclude_columns,
+            prefetch_related=self._prefetch_related,
+            select_related=self._select_related,
+            orders_by=self.order_bys,
+        )
+        return await query.prefetch_related(models=models, rows=rows)  # type: ignore
 
     def _process_query_result_rows(self, rows: List) -> Sequence[Optional["Model"]]:
         result_rows = [
@@ -148,6 +163,7 @@ class QuerySet:
             columns=self._columns,
             exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
+            prefetch_related=self._prefetch_related,
         )
 
     def exclude(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
@@ -168,6 +184,25 @@ class QuerySet:
             columns=self._columns,
             exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
+            prefetch_related=self._prefetch_related,
+        )
+
+    def prefetch_related(self, related: Union[List, str]) -> "QuerySet":
+        if not isinstance(related, list):
+            related = [related]
+
+        related = list(set(list(self._prefetch_related) + related))
+        return self.__class__(
+            model_cls=self.model,
+            filter_clauses=self.filter_clauses,
+            exclude_clauses=self.exclude_clauses,
+            select_related=self._select_related,
+            limit_count=self.limit_count,
+            offset=self.query_offset,
+            columns=self._columns,
+            exclude_columns=self._exclude_columns,
+            order_bys=self.order_bys,
+            prefetch_related=related,
         )
 
     def exclude_fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet":
@@ -190,6 +225,7 @@ class QuerySet:
             columns=self._columns,
             exclude_columns=current_excluded,
             order_bys=self.order_bys,
+            prefetch_related=self._prefetch_related,
         )
 
     def fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet":
@@ -212,6 +248,7 @@ class QuerySet:
             columns=current_included,
             exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
+            prefetch_related=self._prefetch_related,
         )
 
     def order_by(self, columns: Union[List, str]) -> "QuerySet":
@@ -229,6 +266,7 @@ class QuerySet:
             columns=self._columns,
             exclude_columns=self._exclude_columns,
             order_bys=order_bys,
+            prefetch_related=self._prefetch_related,
         )
 
     async def exists(self) -> bool:
@@ -279,6 +317,7 @@ class QuerySet:
             columns=self._columns,
             exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
+            prefetch_related=self._prefetch_related,
         )
 
     def offset(self, offset: int) -> "QuerySet":
@@ -292,6 +331,7 @@ class QuerySet:
             columns=self._columns,
             exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
+            prefetch_related=self._prefetch_related,
         )
 
     async def first(self, **kwargs: Any) -> "Model":
@@ -312,6 +352,8 @@ class QuerySet:
 
         rows = await self.database.fetch_all(expr)
         processed_rows = self._process_query_result_rows(rows)
+        if self._prefetch_related and processed_rows:
+            processed_rows = await self._prefetch_related_models(processed_rows, rows)
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
@@ -337,6 +379,8 @@ class QuerySet:
         expr = self.build_select_expression()
         rows = await self.database.fetch_all(expr)
         result_rows = self._process_query_result_rows(rows)
+        if self._prefetch_related and result_rows:
+            result_rows = await self._prefetch_related_models(result_rows, rows)
 
         return result_rows
 

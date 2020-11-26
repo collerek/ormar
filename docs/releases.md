@@ -1,3 +1,13 @@
+# 0.5.2
+
+*  Added `prefetch_related` method to load subsequent models in separate queries.
+*  Update docs
+
+# 0.5.1
+
+* Switched to github actions instead of travis
+* Update badges in the docs
+
 # 0.5.0
 
 * Added save status -> you can check if model is saved with `ModelInstance.saved` property
