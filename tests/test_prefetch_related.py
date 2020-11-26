@@ -183,6 +183,23 @@ async def test_prefetch_related_with_many_to_many():
             assert track.album.shops[0].name == 'Shop 1'
             assert track.album.shops[0].division.name == 'Div 1'
 
+            album2 = Album(name="Malibu 2")
+            await album2.save()
+            await album2.shops.add(shop1)
+            await album2.shops.add(shop2)
+            await Track.objects.create(album=album2, title="The Bird 2", position=1)
+
+            tracks = await Track.objects.prefetch_related(["album__shops"]).all()
+            assert tracks[0].album.name == 'Malibu'
+            assert tracks[0].album.shops[0].name == "Shop 1"
+            assert tracks[3].album.name == 'Malibu 2'
+            assert tracks[3].album.shops[0].name == "Shop 1"
+
+            assert tracks[0].album.shops[0] == tracks[3].album.shops[0]
+            assert id(tracks[0].album.shops[0]) == id(tracks[3].album.shops[0])
+            tracks[0].album.shops[0].name = 'Dummy'
+            assert tracks[0].album.shops[0].name == tracks[3].album.shops[0].name
+
 
 @pytest.mark.asyncio
 async def test_prefetch_related_empty():

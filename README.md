@@ -45,7 +45,7 @@ Ormar is built with:
   * [`SQLAlchemy core`][sqlalchemy-core] for query building.
   * [`databases`][databases] for cross-database async support.
   * [`pydantic`][pydantic] for data validation.
-  * typing_extensions for python 3.6 - 3.7
+  * `typing_extensions` for python 3.6 - 3.7
 
 ### Migrations
 
@@ -53,7 +53,8 @@ Because ormar is built on SQLAlchemy core, you can use [`alembic`][alembic] to p
 database migrations.
 
 
-**ormar is still under development:** We recommend pinning any dependencies with `ormar~=0.4.0`
+**ormar is still under development:** 
+We recommend pinning any dependencies (with i.e. `ormar~=0.5.2`)
 
 ### Quick Start
 
@@ -157,6 +158,7 @@ assert len(tracks) == 1
 *  `filter(**kwargs) -> QuerySet`
 *  `exclude(**kwargs) -> QuerySet`
 *  `select_related(related: Union[List, str]) -> QuerySet`
+*  `prefetch_related(related: Union[List, str]) -> QuerySet`
 *  `limit(limit_count: int) -> QuerySet`
 *  `offset(offset: int) -> QuerySet`
 *  `count() -> int`
@@ -164,6 +166,7 @@ assert len(tracks) == 1
 *  `fields(columns: Union[List, str, set, dict]) -> QuerySet`
 *  `exclude_fields(columns: Union[List, str, set, dict]) -> QuerySet`
 *  `order_by(columns:Union[List, str]) -> QuerySet`
+
 
 #### Relation types
 

@@ -145,20 +145,25 @@ class PrefetchQuery:
             field_name = model.get_related_field_name(target_field=target_field)
 
             children = self.already_extracted.get(target_model, {}).get(field_name, {})
+            models = self.already_extracted.get(target_model, {}).get("pk_models", {})
             self._set_children_on_model(
-                model=model, related=related, children=children, model_id=model_id
+                model=model,
+                related=related,
+                children=children,
+                model_id=model_id,
+                models=models,
             )
 
         return model
 
     @staticmethod
     def _set_children_on_model(
-        model: "Model", related: str, children: Dict, model_id: int
+        model: "Model", related: str, children: Dict, model_id: int, models: Dict
     ) -> None:
         for key, child_models in children.items():
             if key == model_id:
                 for child in child_models:
-                    setattr(model, related, child)
+                    setattr(model, related, models.get(child))
 
     async def _prefetch_related_models(
         self, models: Sequence["Model"], rows: List
@@ -338,6 +343,11 @@ class PrefetchQuery:
                 model=instance, prefetch_dict=prefetch_dict,
             )
             field_db_name = target_model.get_column_alias(field_name)
+            models = self.already_extracted[target_model.get_name()].setdefault(
+                "pk_models", {}
+            )
+            if instance.pk not in models:
+                models[instance.pk] = instance
             self.already_extracted[target_model.get_name()].setdefault(
                 field_name, dict()
-            ).setdefault(row[field_db_name], []).append(instance)
+            ).setdefault(row[field_db_name], set()).add(instance.pk)
