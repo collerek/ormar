@@ -385,6 +385,7 @@ class PrefetchQuery:
             instance = self._populate_nested_related(
                 model=instance, prefetch_dict=prefetch_dict,
             )
+            field_db_name = target_model.get_column_alias(field_name)
             self.already_extracted[target_model.get_name()].setdefault(
                 field_name, dict()
-            ).setdefault(row[field_name], []).append(instance)
+            ).setdefault(row[field_db_name], []).append(instance)

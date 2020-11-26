@@ -236,9 +236,7 @@ class ModelTableProxy:
 
     @staticmethod
     def _populate_pk_column(
-        model: Type["Model"],
-        columns: List[str],
-        use_alias: bool = False,
+        model: Type["Model"], columns: List[str], use_alias: bool = False,
     ) -> List[str]:
         pk_alias = (
             model.get_column_alias(model.Meta.pkname)

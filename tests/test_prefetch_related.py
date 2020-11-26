@@ -17,7 +17,7 @@ class RandomSet(ormar.Model):
         metadata = metadata
         database = database
 
-    id: int = ormar.Integer(primary_key=True)
+    id: int = ormar.Integer(name='random_id', primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
@@ -28,7 +28,7 @@ class Tonation(ormar.Model):
         database = database
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=100)
+    name: str = ormar.String(name='tonation_name', max_length=100)
     rand_set: Optional[RandomSet] = ormar.ForeignKey(RandomSet)
 
 
@@ -38,7 +38,7 @@ class Division(ormar.Model):
         metadata = metadata
         database = database
 
-    id: int = ormar.Integer(primary_key=True)
+    id: int = ormar.Integer(name='division_id', primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
@@ -77,11 +77,11 @@ class Track(ormar.Model):
         metadata = metadata
         database = database
 
-    id: int = ormar.Integer(primary_key=True)
+    id: int = ormar.Integer(name='track_id', primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
     title: str = ormar.String(max_length=100)
     position: int = ormar.Integer()
-    tonation: Optional[Tonation] = ormar.ForeignKey(Tonation)
+    tonation: Optional[Tonation] = ormar.ForeignKey(Tonation, name='tonation_id')
 
 
 class Cover(ormar.Model):
@@ -91,7 +91,7 @@ class Cover(ormar.Model):
         database = database
 
     id: int = ormar.Integer(primary_key=True)
-    album: Optional[Album] = ormar.ForeignKey(Album, related_name="cover_pictures")
+    album: Optional[Album] = ormar.ForeignKey(Album, related_name="cover_pictures", name='album_id')
     title: str = ormar.String(max_length=100)
     artist: str = ormar.String(max_length=200, nullable=True)
 
@@ -221,7 +221,8 @@ async def test_prefetch_related_with_select_related():
             await Track.objects.create(album=album, title="Heart don't stand a chance", position=2, tonation=ton1)
             await Track.objects.create(album=album, title="The Waters", position=3, tonation=ton1)
 
-            album = await Album.objects.select_related('tracks__tonation__rand_set').filter(name='Malibu').prefetch_related(
+            album = await Album.objects.select_related('tracks__tonation__rand_set').filter(
+                name='Malibu').prefetch_related(
                 ['cover_pictures', 'shops__division']).get()
             assert len(album.tracks) == 3
             assert album.tracks[0].tonation == album.tracks[2].tonation == ton1
