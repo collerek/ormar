@@ -1,3 +1,7 @@
+# 0.5.3
+
+*  Fixed bug in `Model.dict()` method that was ignoring exclude parameter and not include dictionary argument.
+
 # 0.5.2
 
 *  Added `prefetch_related` method to load subsequent models in separate queries.
