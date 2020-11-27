@@ -31,7 +31,7 @@ class Excludable:
         to_exclude = Excludable.get_excluded(exclude=exclude, key=key)
         if isinstance(to_exclude, Set):
             return key in to_exclude
-        elif to_exclude is ...:
+        if to_exclude is ...:
             return True
         return False
 
@@ -44,6 +44,6 @@ class Excludable:
         to_include = Excludable.get_included(include=include, key=key)
         if isinstance(to_include, Set):
             return key in to_include
-        elif to_include is ...:
+        if to_include is ...:
             return True
         return False
