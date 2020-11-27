@@ -3,18 +3,24 @@ from typing import Dict, Set, Union
 
 class Excludable:
     @staticmethod
+    def get_child(
+        items: Union[Set, Dict, None], key: str = None
+    ) -> Union[Set, Dict, None]:
+        if isinstance(items, dict):
+            return items.get(key, {})
+        return items
+
+    @staticmethod
     def get_excluded(
         exclude: Union[Set, Dict, None], key: str = None
     ) -> Union[Set, Dict, None]:
-        if isinstance(exclude, dict):
-            return exclude.get(key, {})
-        return exclude
+        return Excludable.get_child(items=exclude, key=key)
 
     @staticmethod
     def get_included(
         include: Union[Set, Dict, None], key: str = None
     ) -> Union[Set, Dict, None]:
-        return Excludable.get_excluded(exclude=include, key=key)
+        return Excludable.get_child(items=include, key=key)
 
     @staticmethod
     def is_excluded(exclude: Union[Set, Dict, None], key: str = None) -> bool:

@@ -1,10 +1,12 @@
 import inspect
 from collections import OrderedDict
 from typing import (
+    AbstractSet,
     Any,
     Callable,
     Dict,
     List,
+    Mapping,
     Optional,
     Sequence,
     Set,
@@ -16,6 +18,7 @@ from typing import (
 )
 
 from ormar.exceptions import ModelPersistenceError, RelationshipInstanceError
+from ormar.queryset.utils import translate_list_to_dict, update
 
 try:
     import orjson as json
@@ -32,6 +35,9 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.models import NewBaseModel
 
     T = TypeVar("T", bound=Model)
+    IntStr = Union[int, str]
+    AbstractSetIntStr = AbstractSet[IntStr]
+    MappingIntStrAny = Mapping[IntStr, Any]
 
 Field = TypeVar("Field", bound=BaseField)
 
@@ -202,6 +208,21 @@ class ModelTableProxy:
             name for name in related_names if cls.Meta.model_fields[name].nullable
         }
         return related_names
+
+    @classmethod
+    def _update_excluded_with_related_not_required(
+        cls,
+        exclude: Union["AbstractSetIntStr", "MappingIntStrAny", None],
+        nested: bool = False,
+    ) -> Union[Set, Dict]:
+        exclude = exclude or {}
+        related_set = cls._exclude_related_names_not_required(nested=nested)
+        if isinstance(exclude, set):
+            exclude.union(related_set)
+        else:
+            related_dict = translate_list_to_dict(related_set)
+            exclude = update(related_dict, exclude)
+        return exclude
 
     def _extract_model_db_fields(self) -> Dict:
         self_fields = self._extract_own_model_fields()

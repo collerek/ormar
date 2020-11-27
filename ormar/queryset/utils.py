@@ -1,6 +1,15 @@
 import collections.abc
 import copy
-from typing import Any, Dict, List, Sequence, Set, TYPE_CHECKING, Type, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    Sequence,
+    Set,
+    TYPE_CHECKING,
+    Type,
+    Union,
+)
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model

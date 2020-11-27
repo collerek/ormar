@@ -27,6 +27,7 @@ from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.excludable import Excludable
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
+from ormar.queryset.utils import translate_list_to_dict
 from ormar.relations.alias_manager import AliasManager
 from ormar.relations.relation_manager import RelationsManager
 
@@ -213,9 +214,7 @@ class NewBaseModel(
 
     @classmethod
     def get_properties(
-        cls,
-        include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
-        exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+        cls, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None]
     ) -> List[str]:
         if isinstance(cls._props, list):
             props = cls._props
@@ -234,11 +233,76 @@ class NewBaseModel(
             props = [prop for prop in props if prop not in exclude]
         return props
 
-    def dict(  # noqa A003
+    def _get_related_not_excluded_fields(
+        self, include: Optional[Dict], exclude: Optional[Dict],
+    ) -> List:
+        fields = [field for field in self.extract_related_names()]
+        if include:
+            fields = [field for field in fields if field in include]
+        if exclude:
+            fields = [
+                field
+                for field in fields
+                if field not in exclude or exclude.get(field) is not Ellipsis
+            ]
+        return fields
+
+    @staticmethod
+    def _extract_nested_models_from_list(
+        models: List, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None],
+    ) -> List:
+        result = []
+        for model in models:
+            try:
+                result.append(
+                    model.dict(nested=True, include=include, exclude=exclude,)
+                )
+            except ReferenceError:  # pragma no cover
+                continue
+        return result
+
+    @staticmethod
+    def _skip_ellipsis(
+        items: Union[Set, Dict, None], key: str
+    ) -> Union[Set, Dict, None]:
+        result = Excludable.get_child(items, key)
+        return result if result is not Ellipsis else None
+
+    def _extract_nested_models(  # noqa: CCR001
+        self,
+        nested: bool,
+        dict_instance: Dict,
+        include: Optional[Dict],
+        exclude: Optional[Dict],
+    ) -> Dict:
+
+        fields = self._get_related_not_excluded_fields(include=include, exclude=exclude)
+
+        for field in fields:
+            if self.Meta.model_fields[field].virtual and nested:
+                continue
+            nested_model = getattr(self, field)
+            if isinstance(nested_model, list):
+                dict_instance[field] = self._extract_nested_models_from_list(
+                    models=nested_model,
+                    include=self._skip_ellipsis(include, field),
+                    exclude=self._skip_ellipsis(exclude, field),
+                )
+            elif nested_model is not None:
+                dict_instance[field] = nested_model.dict(
+                    nested=True,
+                    include=self._skip_ellipsis(include, field),
+                    exclude=self._skip_ellipsis(exclude, field),
+                )
+            else:
+                dict_instance[field] = None
+        return dict_instance
+
+    def dict(  # type: ignore # noqa A003
         self,
         *,
-        include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
-        exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+        include: Union[Set, Dict] = None,
+        exclude: Union[Set, Dict] = None,
         by_alias: bool = False,
         skip_defaults: bool = None,
         exclude_unset: bool = False,
@@ -248,30 +312,25 @@ class NewBaseModel(
     ) -> "DictStrAny":  # noqa: A003'
         dict_instance = super().dict(
             include=include,
-            exclude=self._exclude_related_names_not_required(nested),
+            exclude=self._update_excluded_with_related_not_required(exclude, nested),
             by_alias=by_alias,
             skip_defaults=skip_defaults,
             exclude_unset=exclude_unset,
             exclude_defaults=exclude_defaults,
             exclude_none=exclude_none,
         )
-        for field in self.extract_related_names():
-            nested_model = getattr(self, field)
 
-            if self.Meta.model_fields[field].virtual and nested:
-                continue
-            if isinstance(nested_model, list):
-                result = []
-                for model in nested_model:
-                    try:
-                        result.append(model.dict(nested=True))
-                    except ReferenceError:  # pragma no cover
-                        continue
-                dict_instance[field] = result
-            elif nested_model is not None:
-                dict_instance[field] = nested_model.dict(nested=True)
-            else:
-                dict_instance[field] = None
+        if include and isinstance(include, Set):
+            include = translate_list_to_dict(include)
+        if exclude and isinstance(exclude, Set):
+            exclude = translate_list_to_dict(exclude)
+
+        dict_instance = self._extract_nested_models(
+            nested=nested,
+            dict_instance=dict_instance,
+            include=include,  # type: ignore
+            exclude=exclude,  # type: ignore
+        )
 
         # include model properties as fields
         props = self.get_properties(include=include, exclude=exclude)

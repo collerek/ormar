@@ -237,8 +237,8 @@ async def test_fk_filter():
 
             tracks = (
                 await Track.objects.select_related("album")
-                    .filter(album__name="Fantasies")
-                    .all()
+                .filter(album__name="Fantasies")
+                .all()
             )
             assert len(tracks) == 3
             for track in tracks:
@@ -246,8 +246,8 @@ async def test_fk_filter():
 
             tracks = (
                 await Track.objects.select_related("album")
-                    .filter(album__name__icontains="fan")
-                    .all()
+                .filter(album__name__icontains="fan")
+                .all()
             )
             assert len(tracks) == 3
             for track in tracks:
@@ -292,8 +292,8 @@ async def test_multiple_fk():
 
             members = (
                 await Member.objects.select_related("team__org")
-                    .filter(team__org__ident="ACME Ltd")
-                    .all()
+                .filter(team__org__ident="ACME Ltd")
+                .all()
             )
             assert len(members) == 4
             for member in members:
@@ -325,8 +325,8 @@ async def test_pk_filter():
 
             tracks = (
                 await Track.objects.select_related("album")
-                    .filter(position=2, album__name="Test")
-                    .all()
+                .filter(position=2, album__name="Test")
+                .all()
             )
             assert len(tracks) == 1
 
@@ -408,9 +408,11 @@ async def test_bulk_update_model_with_children():
                 album=best_seller, title="t4", position=1, play_count=500
             )
 
-            tracks = await Track.objects.select_related("album").filter(
-                play_count__gt=10
-            ).all()
+            tracks = (
+                await Track.objects.select_related("album")
+                .filter(play_count__gt=10)
+                .all()
+            )
             best_seller_albums = {}
             for track in tracks:
                 album = track.album
@@ -421,5 +423,7 @@ async def test_bulk_update_model_with_children():
             await Album.objects.bulk_update(
                 best_seller_albums.values(), columns=["is_best_seller"]
             )
-            best_seller_albums_db = await Album.objects.filter(is_best_seller=True).all()
+            best_seller_albums_db = await Album.objects.filter(
+                is_best_seller=True
+            ).all()
             assert len(best_seller_albums_db) == 2
