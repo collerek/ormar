@@ -36,6 +36,16 @@ class UUIDSample(ormar.Model):
     test_text: str = ormar.Text()
 
 
+class UUIDSample2(ormar.Model):
+    class Meta:
+        tablename = "uuids2"
+        metadata = metadata
+        database = database
+
+    id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4, uuid_format='string')
+    test_text: str = ormar.Text()
+
+
 class User(ormar.Model):
     class Meta:
         tablename = "users"
@@ -149,6 +159,14 @@ async def test_uuid_column():
             item3 = await UUIDSample.objects.get(pk=item2.id)
             assert item2.id == item3.id
             assert isinstance(item3.id, uuid.UUID)
+
+            u3 = await UUIDSample2(**u1.dict()).save()
+
+            u1_2 = await UUIDSample.objects.get(pk=u3.id)
+            assert u1_2 == u1
+
+            u4 = await UUIDSample2.objects.get(pk=u3.id)
+            assert u3 == u4
 
 
 @pytest.mark.asyncio
@@ -303,7 +321,7 @@ async def test_model_limit_with_filter():
             await User.objects.create(name="Tom")
 
             assert (
-                len(await User.objects.limit(2).filter(name__iexact="Tom").all()) == 2
+                    len(await User.objects.limit(2).filter(name__iexact="Tom").all()) == 2
             )
 
 

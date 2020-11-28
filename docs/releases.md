@@ -1,7 +1,11 @@
-# 0.6.0
+# 0.5.4
 
-*  **Breaking** Changed `UUID` field that was trimmed to 32 chars (without dashes) instead of 36 (with dashes) 
-   to more in line with other libraries.
+*  Allow to pass `uuid_format` (allowed 'hex'(default) or 'string') to `UUID` field to change the format in which it's saved.
+   By default field is saved in hex format (trimmed to 32 chars (without dashes)), but you can pass 
+   format='string' to use 36 (with dashes) instead to adjust to existing db or other libraries.
+   Sample:
+   hex value = c616ab438cce49dbbf4380d109251dce
+   string value = c616ab43-8cce-49db-bf43-80d109251dce
 
 # 0.5.3
 

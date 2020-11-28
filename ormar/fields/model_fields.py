@@ -318,6 +318,21 @@ class Decimal(ModelFieldFactory, decimal.Decimal):
 class UUID(ModelFieldFactory, uuid.UUID):
     _type = uuid.UUID
 
+    def __new__(  # type: ignore # noqa CFQ002
+        cls, *, uuid_format: str = "hex", **kwargs: Any
+    ) -> Type[BaseField]:
+        kwargs = {
+            **kwargs,
+            **{
+                k: v
+                for k, v in locals().items()
+                if k not in ["cls", "__class__", "kwargs"]
+            },
+        }
+
+        return super().__new__(cls, **kwargs)
+
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
-        return sqlalchemy_uuid.UUID()
+        uuid_format = kwargs.get("uuid_format", "hex")
+        return sqlalchemy_uuid.UUID(uuid_format=uuid_format)
