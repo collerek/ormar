@@ -37,7 +37,7 @@ class UUID(TypeDecorator):  # pragma nocover
             return value
         if not isinstance(value, uuid.UUID):
             value = self._cast_to_uuid(value)
-        return "%.32x" % value.int
+        return str(value)
 
     def process_result_value(
         self, value: Optional[str], dialect: DefaultDialect

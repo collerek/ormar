@@ -1,8 +1,7 @@
-# 0.5.4
+# 0.6.0
 
-*  Fixed bug in `UUID` field that was trimmed to 32 chars instead of 36 (with dashes).
-*  Since first 32 characters of uuid should still be unique I consider this as non-breaking, but if you 
-   were using UUID field before you might consider re-generating the ids.
+*  **Breaking** Changed `UUID` field that was trimmed to 32 chars (without dashes) instead of 36 (with dashes) 
+   to more in line with other libraries.
 
 # 0.5.3
 
