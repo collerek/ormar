@@ -15,6 +15,10 @@ class UUID(TypeDecorator):  # pragma nocover
 
     impl = CHAR
 
+    def __init__(self, *args: Any, uuid_format: str = "hex", **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.uuid_format = uuid_format
+
     def _cast_to_uuid(self, value: Union[str, int, bytes]) -> uuid.UUID:
         if not isinstance(value, uuid.UUID):
             if isinstance(value, bytes):
@@ -28,7 +32,11 @@ class UUID(TypeDecorator):  # pragma nocover
         return ret_value
 
     def load_dialect_impl(self, dialect: DefaultDialect) -> Any:
-        return dialect.type_descriptor(CHAR(32))
+        return (
+            dialect.type_descriptor(CHAR(36))
+            if self.uuid_format == "string"
+            else dialect.type_descriptor(CHAR(32))
+        )
 
     def process_bind_param(
         self, value: Union[str, int, bytes, uuid.UUID, None], dialect: DefaultDialect
@@ -37,7 +45,7 @@ class UUID(TypeDecorator):  # pragma nocover
             return value
         if not isinstance(value, uuid.UUID):
             value = self._cast_to_uuid(value)
-        return "%.32x" % value.int
+        return str(value) if self.uuid_format == "string" else "%.32x" % value.int
 
     def process_result_value(
         self, value: Optional[str], dialect: DefaultDialect

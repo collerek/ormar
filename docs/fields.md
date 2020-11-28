@@ -251,10 +251,20 @@ You can use either `length` and `precision` parameters or `max_digits` and `deci
 
 ### UUID
 
-`UUID()` has no required parameters.  
+`UUID(uuid_format: str = 'hex')` has no required parameters.  
 
-* Sqlalchemy column: `ormar.UUID` based on `sqlalchemy.CHAR` field  
+* Sqlalchemy column: `ormar.UUID` based on `sqlalchemy.CHAR(36)` or `sqlalchemy.CHAR(32)` field (for string or hex format respectively)  
 * Type (used for pydantic): `uuid.UUID` 
+
+`uuid_format` parameters allow 'hex'(default) or 'string' values.
+
+Depending on the format either 32 or 36 char is used in the database.
+
+Sample:
+*  'hex' format value = "c616ab438cce49dbbf4380d109251dce" (CHAR(32))
+*  'string' value = "c616ab43-8cce-49db-bf43-80d109251dce" (CHAR(36))  
+
+When loaded it's always python UUID so you can compare it and compare two formats values between each other.
 
 [relations]: ./relations.md
 [queries]: ./queries.md

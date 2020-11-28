@@ -73,7 +73,7 @@ def test_dumping_to_dict_no_exclusion(sample_data):
     dict1 = item1.dict()
     assert dict1["name"] == "Teddy Bear"
     assert dict1["category"]["name"] == "Toys"
-    assert dict1["category"]["tier"]['name'] == "Tier I"
+    assert dict1["category"]["tier"]["name"] == "Tier I"
     assert dict1["created_by"]["email"] == "test@test.com"
 
     dict2 = item2.dict()
@@ -114,26 +114,29 @@ def test_dumping_to_dict_exclude_nested_dict(sample_data):
     dict1 = item2.dict(exclude={"category": {"tier": {"name"}}, "name": ...})
     assert "name" not in dict1
     assert "category" in dict1
-    assert dict1["category"]['name'] == 'Weapons'
+    assert dict1["category"]["name"] == "Weapons"
     assert dict1["created_by"]["email"] == "test@test.com"
-    assert dict1["category"]["tier"].get('name') is None
+    assert dict1["category"]["tier"].get("name") is None
 
 
 def test_dumping_to_dict_exclude_and_include_nested_dict(sample_data):
     item1, item2 = sample_data
-    dict1 = item2.dict(exclude={"category": {"tier": {"name"}}},
-                       include={'name', 'category'})
-    assert dict1.get('name') == 'M16'
+    dict1 = item2.dict(
+        exclude={"category": {"tier": {"name"}}}, include={"name", "category"}
+    )
+    assert dict1.get("name") == "M16"
     assert "category" in dict1
-    assert dict1["category"]['name'] == 'Weapons'
+    assert dict1["category"]["name"] == "Weapons"
     assert "created_by" not in dict1
-    assert dict1["category"]["tier"].get('name') is None
+    assert dict1["category"]["tier"].get("name") is None
 
-    dict2 = item1.dict(exclude={"id": ...},
-                       include={'name': ..., 'category': {'name': ..., 'tier': {'id'}}})
-    assert dict2.get('name') == 'Teddy Bear'
-    assert dict2.get('id') is None  # models not saved
-    assert dict2["category"]['name'] == 'Toys'
+    dict2 = item1.dict(
+        exclude={"id": ...},
+        include={"name": ..., "category": {"name": ..., "tier": {"id"}}},
+    )
+    assert dict2.get("name") == "Teddy Bear"
+    assert dict2.get("id") is None  # models not saved
+    assert dict2["category"]["name"] == "Toys"
     assert "created_by" not in dict1
-    assert dict1["category"]["tier"].get('name') is None
-    assert dict1["category"]["tier"]['id'] is None
+    assert dict1["category"]["tier"].get("name") is None
+    assert dict1["category"]["tier"]["id"] is None

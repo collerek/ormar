@@ -66,9 +66,11 @@ class RandomModel(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     password: str = ormar.String(max_length=255, default=gen_pass)
-    first_name: str = ormar.String(max_length=255, default='John')
+    first_name: str = ormar.String(max_length=255, default="John")
     last_name: str = ormar.String(max_length=255)
-    created_date: datetime.datetime = ormar.DateTime(server_default=sqlalchemy.func.now())
+    created_date: datetime.datetime = ormar.DateTime(
+        server_default=sqlalchemy.func.now()
+    )
 
 
 class User(ormar.Model):
@@ -115,7 +117,7 @@ async def create_user(user: User):
 @app.post("/users2/", response_model=User)
 async def create_user2(user: User):
     user = await user.save()
-    return user.dict(exclude={'password'})
+    return user.dict(exclude={"password"})
 
 
 @app.post("/users3/", response_model=UserBase)
@@ -126,7 +128,7 @@ async def create_user3(user: User2):
 @app.post("/users4/")
 async def create_user4(user: User2):
     user = await user.save()
-    return user.dict(exclude={'password'})
+    return user.dict(exclude={"password"})
 
 
 @app.post("/random/", response_model=RandomModel)
@@ -166,13 +168,23 @@ def test_all_endpoints():
 
         # response has only 3 fields from UserBase
         response = client.post("/users3/", json=user)
-        assert list(response.json().keys()) == ['email', 'first_name', 'last_name']
+        assert list(response.json().keys()) == ["email", "first_name", "last_name"]
 
         response = client.post("/users4/", json=user)
-        assert list(response.json().keys()) == ['id', 'email', 'first_name', 'last_name', 'category']
+        assert list(response.json().keys()) == [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "category",
+        ]
 
-        user3 = {
-            'last_name': 'Test'
-        }
+        user3 = {"last_name": "Test"}
         response = client.post("/random/", json=user3)
-        assert list(response.json().keys()) == ['id', 'password', 'first_name', 'last_name', 'created_date']
+        assert list(response.json().keys()) == [
+            "id",
+            "password",
+            "first_name",
+            "last_name",
+            "created_date",
+        ]
