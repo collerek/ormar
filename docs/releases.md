@@ -1,3 +1,9 @@
+# 0.5.4
+
+*  Fixed bug in `UUID` field that was trimmed to 32 chars instead of 36 (with dashes).
+*  Since first 32 characters of uuid should still be unique I consider this as non-breaking, but if you 
+   were using UUID field before you might consider re-generating the ids.
+
 # 0.5.3
 
 *  Fixed bug in `Model.dict()` method that was ignoring exclude parameter and not include dictionary argument.

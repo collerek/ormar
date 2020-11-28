@@ -145,6 +145,11 @@ async def test_uuid_column():
             item = await UUIDSample.objects.filter(id=u1.id).get()
             assert item.id == u1.id
 
+            item2 = await UUIDSample.objects.first()
+            item3 = await UUIDSample.objects.get(pk=item2.id)
+            assert item2.id == item3.id
+            assert isinstance(item3.id, uuid.UUID)
+
 
 @pytest.mark.asyncio
 async def test_model_crud():

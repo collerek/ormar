@@ -28,7 +28,7 @@ class UUID(TypeDecorator):  # pragma nocover
         return ret_value
 
     def load_dialect_impl(self, dialect: DefaultDialect) -> Any:
-        return dialect.type_descriptor(CHAR(32))
+        return dialect.type_descriptor(CHAR(36))
 
     def process_bind_param(
         self, value: Union[str, int, bytes, uuid.UUID, None], dialect: DefaultDialect
