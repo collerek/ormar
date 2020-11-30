@@ -189,6 +189,8 @@ def run_migrations_offline():
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         # if you use UUID field set also this param
+        # the prefix has to match sqlalchemy import name in alembic
+        # that can be set by sqlalchemy_module_prefix option (default 'sa.')
         user_module_prefix='sa.'
     )
 
@@ -210,6 +212,8 @@ def run_migrations_online():
             connection=connection,
             target_metadata=target_metadata,
             # if you use UUID field set also this param
+            # the prefix has to match sqlalchemy import name in alembic
+            # that can be set by sqlalchemy_module_prefix option (default 'sa.')
             user_module_prefix='sa.'
         )
 
