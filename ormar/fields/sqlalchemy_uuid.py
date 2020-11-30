@@ -1,15 +1,15 @@
 import uuid
 from typing import Any, Optional, Union
 
+from sqlalchemy import CHAR
 from sqlalchemy.engine.default import DefaultDialect
-from sqlalchemy.types import CHAR, TypeDecorator
+from sqlalchemy.types import TypeDecorator
 
 
 class UUID(TypeDecorator):  # pragma nocover
     """Platform-independent GUID type.
 
-    Uses Postgresql's UUID type, otherwise uses
-    CHAR(32), to store UUID.
+    Uses CHAR(36) if in a string mode, otherwise uses CHAR(32), to store UUID.
 
     """
 
@@ -18,6 +18,11 @@ class UUID(TypeDecorator):  # pragma nocover
     def __init__(self, *args: Any, uuid_format: str = "hex", **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.uuid_format = uuid_format
+
+    def __repr__(self) -> str:
+        if self.uuid_format == "string":
+            return "CHAR(36)"
+        return "CHAR(32)"
 
     def _cast_to_uuid(self, value: Union[str, int, bytes]) -> uuid.UUID:
         if not isinstance(value, uuid.UUID):

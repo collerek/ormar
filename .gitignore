@@ -1,4 +1,6 @@
 p38venv
+alembic
+alembic.ini
 .idea
 .pytest_cache
 .mypy_cache

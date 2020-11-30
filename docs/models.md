@@ -167,6 +167,7 @@ target_metadata = metadata
 
 
 # set your url here or import from settings
+# note that by default url is in saved sqlachemy.url variable in alembic.ini file
 URL = "sqlite:///test.db"
 
 
@@ -183,10 +184,12 @@ def run_migrations_offline():
 
     """
     context.configure(
-        url=URL
+        url=URL,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        # if you use UUID field set also this param
+        user_module_prefix='sa.'
     )
 
     with context.begin_transaction():
@@ -205,7 +208,9 @@ def run_migrations_online():
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
-            target_metadata=target_metadata
+            target_metadata=target_metadata,
+            # if you use UUID field set also this param
+            user_module_prefix='sa.'
         )
 
         with context.begin_transaction():
@@ -237,10 +242,11 @@ def include_object(object, name, type_, reflected, compare_to):
 And you pass it into context like (both in online and offline):
 ```python
 context.configure(
-        url=url,
+        url=URL,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        user_module_prefix='sa.',
         include_object=include_object
     )
 ```
