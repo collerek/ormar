@@ -5,17 +5,18 @@ from ormar.exceptions import NoMatch, RelationshipInstanceError
 from ormar.relations.querysetproxy import QuerysetProxy
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
+    from ormar import Model, RelationType
     from ormar.relations import Relation
     from ormar.queryset import QuerySet
 
 
 class RelationProxy(list):
-    def __init__(self, relation: "Relation") -> None:
-        super(RelationProxy, self).__init__()
-        self.relation: Relation = relation
+    def __init__(self, relation: "Relation", type_: "RelationType") -> None:
+        super().__init__()
+        self.relation: "Relation" = relation
+        self.type_: "RelationType" = type_
         self._owner: "Model" = self.relation.manager.owner
-        self.queryset_proxy = QuerysetProxy(relation=self.relation)
+        self.queryset_proxy = QuerysetProxy(relation=self.relation, type_=type_)
 
     def __getattribute__(self, item: str) -> Any:
         if item in ["count", "clear"]:
@@ -38,17 +39,19 @@ class RelationProxy(list):
         )
 
     def _set_queryset(self) -> "QuerySet":
-        owner_table = self.relation._owner.Meta.tablename
-        pkname = self.relation._owner.get_column_alias(self.relation._owner.Meta.pkname)
-        pk_value = self.relation._owner.pk
+        related_field = self._owner.resolve_relation_field(
+            self.relation.to, self._owner
+        )
+        pkname = self._owner.get_column_alias(self._owner.Meta.pkname)
+        pk_value = self._owner.pk
         if not pk_value:
             raise RelationshipInstanceError(
-                "You cannot query many to many relationship on unsaved model."
+                "You cannot query relationships from unsaved model."
             )
-        kwargs = {f"{owner_table}__{pkname}": pk_value}
+        kwargs = {f"{related_field.get_alias()}__{pkname}": pk_value}
         queryset = (
             ormar.QuerySet(model_cls=self.relation.to)
-            .select_related(owner_table)
+            .select_related(related_field.name)
             .filter(**kwargs)
         )
         return queryset
@@ -67,14 +70,21 @@ class RelationProxy(list):
                 f"{self._owner.get_name()} does not have relation {rel_name}"
             )
         relation.remove(self._owner)
-        if self.relation._type == ormar.RelationType.MULTIPLE:
+        self.relation.remove(item)
+        if self.type_ == ormar.RelationType.MULTIPLE:
             await self.queryset_proxy.delete_through_instance(item)
-
-    def append(self, item: "Model") -> None:
-        super().append(item)
+        else:
+            setattr(item, rel_name, None)
+            await item.update()
 
     async def add(self, item: "Model") -> None:
-        if self.relation._type == ormar.RelationType.MULTIPLE:
+        if self.type_ == ormar.RelationType.MULTIPLE:
             await self.queryset_proxy.create_through_instance(item)
-        rel_name = item.resolve_relation_name(item, self._owner)
-        setattr(item, rel_name, self._owner)
+            rel_name = item.resolve_relation_name(item, self._owner)
+            setattr(item, rel_name, self._owner)
+        else:
+            related_field = self._owner.resolve_relation_field(
+                self.relation.to, self._owner
+            )
+            setattr(item, related_field.name, self._owner)
+            await item.update()

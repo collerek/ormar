@@ -65,8 +65,6 @@ class RelationsManager:
 
         parent_relation = parent._orm._get(child_name)
         if parent_relation:
-            # print('missing', child_name)
-            # parent_relation = register_missing_relation(parent, child, child_name)
             parent_relation.add(child)  # type: ignore
 
         child_relation = child._orm._get(to_name)

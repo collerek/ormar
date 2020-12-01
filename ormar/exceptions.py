@@ -6,6 +6,10 @@ class ModelDefinitionError(AsyncOrmException):
     pass
 
 
+class ModelError(AsyncOrmException):
+    pass
+
+
 class ModelNotSet(AsyncOrmException):
     pass
 

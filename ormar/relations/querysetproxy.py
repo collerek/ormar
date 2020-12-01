@@ -1,4 +1,15 @@
-from typing import Any, List, Optional, Sequence, TYPE_CHECKING, TypeVar, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    MutableSequence,
+    Optional,
+    Sequence,
+    Set,
+    TYPE_CHECKING,
+    TypeVar,
+    Union,
+)
 
 import ormar
 
@@ -6,6 +17,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
     from ormar.models import Model
     from ormar.queryset import QuerySet
+    from ormar import RelationType
 
     T = TypeVar("T", bound=Model)
 
@@ -14,9 +26,17 @@ class QuerysetProxy(ormar.QuerySetProtocol):
     if TYPE_CHECKING:  # pragma no cover
         relation: "Relation"
 
-    def __init__(self, relation: "Relation") -> None:
+    def __init__(
+        self, relation: "Relation", type_: "RelationType", qryset: "QuerySet" = None
+    ) -> None:
         self.relation: Relation = relation
-        self._queryset: Optional["QuerySet"] = None
+        self._queryset: Optional["QuerySet"] = qryset
+        self.type_: "RelationType" = type_
+        self._owner: "Model" = self.relation.manager.owner
+        self.related_field = self._owner.resolve_relation_field(
+            self.relation.to, self._owner
+        )
+        self.owner_pk_value = self._owner.pk
 
     @property
     def queryset(self) -> "QuerySet":
@@ -30,7 +50,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
 
     def _assign_child_to_parent(self, child: Optional["T"]) -> None:
         if child:
-            owner = self.relation._owner
+            owner = self._owner
             rel_name = owner.resolve_relation_name(owner, child)
             setattr(owner, rel_name, child)
 
@@ -42,26 +62,25 @@ class QuerysetProxy(ormar.QuerySetProtocol):
             assert isinstance(child, ormar.Model)
             self._assign_child_to_parent(child)
 
+    def _clean_items_on_load(self) -> None:
+        if isinstance(self.relation.related_models, MutableSequence):
+            for item in self.relation.related_models[:]:
+                self.relation.remove(item)
+
     async def create_through_instance(self, child: "T") -> None:
         queryset = ormar.QuerySet(model_cls=self.relation.through)
-        owner_column = self.relation._owner.get_name()
+        owner_column = self._owner.get_name()
         child_column = child.get_name()
-        kwargs = {owner_column: self.relation._owner, child_column: child}
+        kwargs = {owner_column: self._owner, child_column: child}
         await queryset.create(**kwargs)
 
     async def delete_through_instance(self, child: "T") -> None:
         queryset = ormar.QuerySet(model_cls=self.relation.through)
-        owner_column = self.relation._owner.get_name()
+        owner_column = self._owner.get_name()
         child_column = child.get_name()
-        kwargs = {owner_column: self.relation._owner, child_column: child}
+        kwargs = {owner_column: self._owner, child_column: child}
         link_instance = await queryset.filter(**kwargs).get()  # type: ignore
         await link_instance.delete()
-
-    def filter(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
-        return self.queryset.filter(**kwargs)
-
-    def select_related(self, related: Union[List, str]) -> "QuerySet":
-        return self.queryset.select_related(related)
 
     async def exists(self) -> bool:
         return await self.queryset.exists()
@@ -70,16 +89,15 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         return await self.queryset.count()
 
     async def clear(self) -> int:
-        queryset = ormar.QuerySet(model_cls=self.relation.through)
-        owner_column = self.relation._owner.get_name()
-        kwargs = {owner_column: self.relation._owner}
+        if self.type_ == ormar.RelationType.MULTIPLE:
+            queryset = ormar.QuerySet(model_cls=self.relation.through)
+            owner_column = self._owner.get_name()
+        else:
+            queryset = ormar.QuerySet(model_cls=self.relation.to)
+            owner_column = self.related_field.name
+        kwargs = {owner_column: self._owner}
+        self._clean_items_on_load()
         return await queryset.delete(**kwargs)  # type: ignore
-
-    def limit(self, limit_count: int) -> "QuerySet":
-        return self.queryset.limit(limit_count)
-
-    def offset(self, offset: int) -> "QuerySet":
-        return self.queryset.offset(offset)
 
     async def first(self, **kwargs: Any) -> "Model":
         first = await self.queryset.first(**kwargs)
@@ -88,16 +106,72 @@ class QuerysetProxy(ormar.QuerySetProtocol):
 
     async def get(self, **kwargs: Any) -> "Model":
         get = await self.queryset.get(**kwargs)
+        self._clean_items_on_load()
         self._register_related(get)
         return get
 
     async def all(self, **kwargs: Any) -> Sequence[Optional["Model"]]:  # noqa: A003
         all_items = await self.queryset.all(**kwargs)
+        self._clean_items_on_load()
         self._register_related(all_items)
         return all_items
 
     async def create(self, **kwargs: Any) -> "Model":
-        create = await self.queryset.create(**kwargs)
-        self._register_related(create)
-        await self.create_through_instance(create)
-        return create
+        if self.type_ == ormar.RelationType.REVERSE:
+            kwargs[self.related_field.name] = self._owner
+        created = await self.queryset.create(**kwargs)
+        self._register_related(created)
+        if self.type_ == ormar.RelationType.MULTIPLE:
+            await self.create_through_instance(created)
+        return created
+
+    async def get_or_create(self, **kwargs: Any) -> "Model":
+        try:
+            return await self.get(**kwargs)
+        except ormar.NoMatch:
+            return await self.create(**kwargs)
+
+    async def update_or_create(self, **kwargs: Any) -> "Model":
+        pk_name = self.queryset.model_meta.pkname
+        if "pk" in kwargs:
+            kwargs[pk_name] = kwargs.pop("pk")
+        if pk_name not in kwargs or kwargs.get(pk_name) is None:
+            return await self.create(**kwargs)
+        model = await self.queryset.get(pk=kwargs[pk_name])
+        return await model.update(**kwargs)
+
+    def filter(self, **kwargs: Any) -> "QuerysetProxy":  # noqa: A003, A001
+        queryset = self.queryset.filter(**kwargs)
+        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+
+    def exclude(self, **kwargs: Any) -> "QuerysetProxy":  # noqa: A003, A001
+        queryset = self.queryset.exclude(**kwargs)
+        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+
+    def select_related(self, related: Union[List, str]) -> "QuerysetProxy":
+        queryset = self.queryset.select_related(related)
+        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+
+    def prefetch_related(self, related: Union[List, str]) -> "QuerysetProxy":
+        queryset = self.queryset.prefetch_related(related)
+        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+
+    def limit(self, limit_count: int) -> "QuerysetProxy":
+        queryset = self.queryset.limit(limit_count)
+        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+
+    def offset(self, offset: int) -> "QuerysetProxy":
+        queryset = self.queryset.offset(offset)
+        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+
+    def fields(self, columns: Union[List, str, Set, Dict]) -> "QuerysetProxy":
+        queryset = self.queryset.fields(columns)
+        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+
+    def exclude_fields(self, columns: Union[List, str, Set, Dict]) -> "QuerysetProxy":
+        queryset = self.queryset.exclude_fields(columns=columns)
+        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+
+    def order_by(self, columns: Union[List, str]) -> "QuerysetProxy":
+        queryset = self.queryset.order_by(columns)
+        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)

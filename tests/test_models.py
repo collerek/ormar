@@ -9,7 +9,7 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar.exceptions import QueryDefinitionError, NoMatch
+from ormar.exceptions import QueryDefinitionError, NoMatch, ModelError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -115,6 +115,11 @@ def test_model_class():
     assert issubclass(User.Meta.model_fields["name"], pydantic.fields.FieldInfo)
     assert User.Meta.model_fields["name"].max_length == 100
     assert isinstance(User.Meta.table, sqlalchemy.Table)
+
+
+def test_wrong_field_name():
+    with pytest.raises(ModelError):
+        User(non_existing_pk=1)
 
 
 def test_model_pk():
