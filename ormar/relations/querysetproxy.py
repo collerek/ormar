@@ -88,7 +88,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
     async def count(self) -> int:
         return await self.queryset.count()
 
-    async def clear(self) -> int:
+    async def clear(self, keep_reversed: bool = True) -> int:
         if self.type_ == ormar.RelationType.MULTIPLE:
             queryset = ormar.QuerySet(model_cls=self.relation.through)
             owner_column = self._owner.get_name()
@@ -97,10 +97,16 @@ class QuerysetProxy(ormar.QuerySetProtocol):
             owner_column = self.related_field.name
         kwargs = {owner_column: self._owner}
         self._clean_items_on_load()
+        if keep_reversed and self.type_ == ormar.RelationType.REVERSE:
+            update_kwrgs = {f"{owner_column}": None}
+            return await queryset.filter(_exclude=False, **kwargs).update(
+                each=False, **update_kwrgs
+            )
         return await queryset.delete(**kwargs)  # type: ignore
 
     async def first(self, **kwargs: Any) -> "Model":
         first = await self.queryset.first(**kwargs)
+        self._clean_items_on_load()
         self._register_related(first)
         return first
 

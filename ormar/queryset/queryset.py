@@ -280,7 +280,9 @@ class QuerySet:
         return await self.database.fetch_val(expr)
 
     async def update(self, each: bool = False, **kwargs: Any) -> int:
-        self_fields = self.model.extract_db_own_fields()
+        self_fields = self.model.extract_db_own_fields().union(
+            self.model.extract_related_names()
+        )
         updates = {k: v for k, v in kwargs.items() if k in self_fields}
         updates = self.model.translate_columns_to_aliases(updates)
         if not each and not self.filter_clauses:

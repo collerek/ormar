@@ -154,7 +154,7 @@ assert len(tracks) == 1
 *  `bulk_create(objects: List[Model]) -> None`
 *  `bulk_update(objects: List[Model], columns: List[str] = None) -> None`
 *  `delete(each: bool = False, **kwargs) -> int`
-*  `all(self, **kwargs) -> List[Optional[Model]]`
+*  `all(**kwargs) -> List[Optional[Model]]`
 *  `filter(**kwargs) -> QuerySet`
 *  `exclude(**kwargs) -> QuerySet`
 *  `select_related(related: Union[List, str]) -> QuerySet`

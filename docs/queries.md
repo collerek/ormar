@@ -176,7 +176,7 @@ Return number of rows deleted.
 
 ### all
 
-`all(self, **kwargs) -> List[Optional["Model"]]`
+`all(**kwargs) -> List[Optional["Model"]]`
 
 Returns all rows from a database for given model for set filter options.
 

@@ -5,6 +5,7 @@ import pytest
 import sqlalchemy
 
 import ormar
+from ormar import NoMatch
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -190,6 +191,26 @@ async def test_getting():
             assert len(tracks) == 0
             assert len(album.tracks) == 0
 
+            still_tracks = await Track.objects.all()
+            assert len(still_tracks) == 4
+            for track in still_tracks:
+                assert track.album is None
+
+
+@pytest.mark.asyncio
+async def test_cleaning_related():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            sample_data = await get_sample_data()
+            album = sample_data[0]
+            await album.tracks.clear(keep_reversed=False)
+            tracks = await album.tracks.all()
+            assert len(tracks) == 0
+            assert len(album.tracks) == 0
+
+            no_tracks = await Track.objects.all()
+            assert len(no_tracks) == 0
+
 
 @pytest.mark.asyncio
 async def test_loading_related():
@@ -224,12 +245,14 @@ async def test_adding_removing():
             track_check = await Track.objects.get(title="Rainbow")
             assert track_check.album == album
 
-            track_test = await Track.objects.get(title="Rainbow")
-            assert track_test.album == album
-
             await album.tracks.remove(track_new)
             assert track_new.album is None
             assert len(album.tracks) == 3
+
+            track1 = album.tracks[0]
+            await album.tracks.remove(track1, keep_reversed=False)
+            with pytest.raises(NoMatch):
+                await track1.load()
 
             track_test = await Track.objects.get(title="Rainbow")
             assert track_test.album is None

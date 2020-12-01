@@ -38,17 +38,20 @@ class RelationProxy(list):
             and self.queryset_proxy.queryset is not None
         )
 
-    def _set_queryset(self) -> "QuerySet":
-        related_field = self._owner.resolve_relation_field(
-            self.relation.to, self._owner
-        )
-        pkname = self._owner.get_column_alias(self._owner.Meta.pkname)
+    def _check_if_model_saved(self) -> None:
         pk_value = self._owner.pk
         if not pk_value:
             raise RelationshipInstanceError(
                 "You cannot query relationships from unsaved model."
             )
-        kwargs = {f"{related_field.get_alias()}__{pkname}": pk_value}
+
+    def _set_queryset(self) -> "QuerySet":
+        related_field = self._owner.resolve_relation_field(
+            self.relation.to, self._owner
+        )
+        pkname = self._owner.get_column_alias(self._owner.Meta.pkname)
+        self._check_if_model_saved()
+        kwargs = {f"{related_field.get_alias()}__{pkname}": self._owner.pk}
         queryset = (
             ormar.QuerySet(model_cls=self.relation.to)
             .select_related(related_field.name)
@@ -56,7 +59,9 @@ class RelationProxy(list):
         )
         return queryset
 
-    async def remove(self, item: "Model") -> None:  # type: ignore
+    async def remove(  # type: ignore
+        self, item: "Model", keep_reversed: bool = True
+    ) -> None:
         if item not in self:
             raise NoMatch(
                 f"Object {self._owner.get_name()} has no "
@@ -74,8 +79,11 @@ class RelationProxy(list):
         if self.type_ == ormar.RelationType.MULTIPLE:
             await self.queryset_proxy.delete_through_instance(item)
         else:
-            setattr(item, rel_name, None)
-            await item.update()
+            if keep_reversed:
+                setattr(item, rel_name, None)
+                await item.update()
+            else:
+                await item.delete()
 
     async def add(self, item: "Model") -> None:
         if self.type_ == ormar.RelationType.MULTIPLE:
@@ -83,6 +91,7 @@ class RelationProxy(list):
             rel_name = item.resolve_relation_name(item, self._owner)
             setattr(item, rel_name, self._owner)
         else:
+            self._check_if_model_saved()
             related_field = self._owner.resolve_relation_field(
                 self.relation.to, self._owner
             )
