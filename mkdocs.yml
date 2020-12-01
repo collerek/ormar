@@ -1,5 +1,5 @@
 site_name: ormar
-site_description: An simple async ORM with fastapi in mind and pydantic validation.
+site_description: A simple async ORM with fastapi in mind and pydantic validation.
 nav:
   - Overview: index.md
   - Installation: install.md

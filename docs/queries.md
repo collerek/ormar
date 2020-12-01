@@ -176,7 +176,7 @@ Return number of rows deleted.
 
 ### all
 
-`all(self, **kwargs) -> List[Optional["Model"]]`
+`all(**kwargs) -> List[Optional["Model"]]`
 
 Returns all rows from a database for given model for set filter options.
 
@@ -212,7 +212,7 @@ You can use special filter suffix to change the filter operands:
 
 *  exact - like `album__name__exact='Malibu'` (exact match)
 *  iexact - like `album__name__iexact='malibu'` (exact match case insensitive)
-*  contains - like `album__name__conatins='Mal'` (sql like)
+*  contains - like `album__name__contains='Mal'` (sql like)
 *  icontains - like `album__name__icontains='mal'` (sql like case insensitive)
 *  in - like `album__name__in=['Malibu', 'Barclay']` (sql in)
 *  gt - like `position__gt=3` (sql >)

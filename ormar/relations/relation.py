@@ -34,7 +34,7 @@ class Relation:
         self.to: Type["T"] = to
         self.through: Optional[Type["T"]] = through
         self.related_models: Optional[Union[RelationProxy, "T"]] = (
-            RelationProxy(relation=self)
+            RelationProxy(relation=self, type_=type_)
             if type_ in (RelationType.REVERSE, RelationType.MULTIPLE)
             else None
         )

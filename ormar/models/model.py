@@ -15,7 +15,7 @@ from typing import (
 import sqlalchemy
 
 import ormar.queryset  # noqa I100
-from ormar.exceptions import ModelPersistenceError
+from ormar.exceptions import ModelPersistenceError, NoMatch
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.models import NewBaseModel  # noqa I100
 from ormar.models.metaclass import ModelMeta
@@ -286,9 +286,7 @@ class Model(NewBaseModel):
         expr = self.Meta.table.select().where(self.pk_column == self.pk)
         row = await self.Meta.database.fetch_one(expr)
         if not row:  # pragma nocover
-            raise ValueError(
-                "Instance was deleted from database and cannot be refreshed"
-            )
+            raise NoMatch("Instance was deleted from database and cannot be refreshed")
         kwargs = dict(row)
         kwargs = self.translate_aliases_to_columns(kwargs)
         self.from_dict(kwargs)

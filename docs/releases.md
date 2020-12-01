@@ -1,3 +1,15 @@
+# 0.6.0
+
+*  **Breaking:** calling instance.load() when the instance row was deleted from db now raises ormar.NoMatch instead of ValueError
+*  **Breaking:** calling add and remove on ReverseForeignKey relation now updates the child model in db setting/removing fk column
+*  **Breaking:** ReverseForeignKey relation now exposes QuerySetProxy API like ManyToMany relation
+*  **Breaking:** querying related models from ManyToMany cleans list of related models loaded on parent model:
+    *  Example: `post.categories.first()` will set post.categories to list of 1 related model -> the one returned by first()
+    *  Example 2: if post has 4 categories so `len(post.categories) == 4` calling `post.categories.limit(2).all()` -> will load only 2 children and now `assert len(post.categories) == 2`
+*  Added `get_or_create`, `update_or_create`, `fields`, `exclude_fields`, `exclude`, `prefetch_related` and `order_by` to QuerySetProxy 
+so now you can use those methods directly from relation  
+*  Update docs
+
 # 0.5.5
 
 *  Fix for alembic autogenaration of migration `UUID` columns. It should just produce sqlalchemy `CHAR(32)` or `CHAR(36)`

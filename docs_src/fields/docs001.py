@@ -29,7 +29,7 @@ class Course(ormar.Model):
     department: Optional[Department] = ormar.ForeignKey(Department)
 
 
-department = Department(name="Science")
+department = await Department(name="Science").save()
 course = Course(name="Math", completed=False, department=department)
 
 print(department.courses[0])

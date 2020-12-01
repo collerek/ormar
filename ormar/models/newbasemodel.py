@@ -7,6 +7,7 @@ from typing import (
     Dict,
     List,
     Mapping,
+    MutableSequence,
     Optional,
     Sequence,
     Set,
@@ -22,6 +23,7 @@ import sqlalchemy
 from pydantic import BaseModel
 
 import ormar  # noqa I100
+from ormar.exceptions import ModelError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.excludable import Excludable
@@ -93,16 +95,21 @@ class NewBaseModel(
         if "pk" in kwargs:
             kwargs[self.Meta.pkname] = kwargs.pop("pk")
         # build the models to set them and validate but don't register
-        new_kwargs = {
-            k: self._convert_json(
-                k,
-                self.Meta.model_fields[k].expand_relationship(
-                    v, self, to_register=False
-                ),
-                "dumps",
+        try:
+            new_kwargs = {
+                k: self._convert_json(
+                    k,
+                    self.Meta.model_fields[k].expand_relationship(
+                        v, self, to_register=False
+                    ),
+                    "dumps",
+                )
+                for k, v in kwargs.items()
+            }
+        except KeyError as e:
+            raise ModelError(
+                f"Unknown field '{e.args[0]}' for model {self.get_name(lower=False)}"
             )
-            for k, v in kwargs.items()
-        }
 
         values, fields_set, validation_error = pydantic.validate_model(
             self, new_kwargs  # type: ignore
@@ -249,7 +256,9 @@ class NewBaseModel(
 
     @staticmethod
     def _extract_nested_models_from_list(
-        models: List, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None],
+        models: MutableSequence,
+        include: Union[Set, Dict, None],
+        exclude: Union[Set, Dict, None],
     ) -> List:
         result = []
         for model in models:
@@ -282,7 +291,7 @@ class NewBaseModel(
             if self.Meta.model_fields[field].virtual and nested:
                 continue
             nested_model = getattr(self, field)
-            if isinstance(nested_model, list):
+            if isinstance(nested_model, MutableSequence):
                 dict_instance[field] = self._extract_nested_models_from_list(
                     models=nested_model,
                     include=self._skip_ellipsis(include, field),
@@ -308,7 +317,7 @@ class NewBaseModel(
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         exclude_none: bool = False,
-        nested: bool = False
+        nested: bool = False,
     ) -> "DictStrAny":  # noqa: A003'
         dict_instance = super().dict(
             include=include,
