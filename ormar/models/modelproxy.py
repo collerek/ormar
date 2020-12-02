@@ -125,6 +125,36 @@ class ModelTableProxy:
         return self_fields
 
     @classmethod
+    def get_names_to_exclude(
+        cls,
+        fields: Optional[Union[Dict, Set]] = None,
+        exclude_fields: Optional[Union[Dict, Set]] = None,
+    ) -> Set:
+        fields_names = cls.extract_db_own_fields()
+        if fields and fields is not Ellipsis:
+            fields_to_keep = {name for name in fields if name in fields_names}
+        else:
+            fields_to_keep = fields_names
+
+        fields_to_exclude = fields_names - fields_to_keep
+
+        if isinstance(exclude_fields, Set):
+            fields_to_exclude = fields_to_exclude.union(
+                {name for name in exclude_fields if name in fields_names}
+            )
+        elif isinstance(exclude_fields, Dict):
+            new_to_exclude = {
+                name
+                for name in exclude_fields
+                if name in fields_names and exclude_fields[name] is Ellipsis
+            }
+            fields_to_exclude = fields_to_exclude.union(new_to_exclude)
+
+        fields_to_exclude = fields_to_exclude - {cls.Meta.pkname}
+
+        return fields_to_exclude
+
+    @classmethod
     def substitute_models_with_pks(cls, model_dict: Dict) -> Dict:  # noqa  CCR001
         for field in cls.extract_related_names():
             field_value = model_dict.get(field, None)

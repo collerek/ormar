@@ -92,11 +92,13 @@ class NewBaseModel(
         )
 
         pk_only = kwargs.pop("__pk_only__", False)
+        excluded: Set[str] = kwargs.pop("__excluded__", set())
+
         if "pk" in kwargs:
             kwargs[self.Meta.pkname] = kwargs.pop("pk")
         # build the models to set them and validate but don't register
         try:
-            new_kwargs = {
+            new_kwargs: Dict[str, Any] = {
                 k: self._convert_json(
                     k,
                     self.Meta.model_fields[k].expand_relationship(
@@ -110,6 +112,11 @@ class NewBaseModel(
             raise ModelError(
                 f"Unknown field '{e.args[0]}' for model {self.get_name(lower=False)}"
             )
+
+        # explicitly set None to excluded fields with default
+        # as pydantic populates them with default
+        for field_to_nullify in excluded:
+            new_kwargs[field_to_nullify] = None
 
         values, fields_set, validation_error = pydantic.validate_model(
             self, new_kwargs  # type: ignore
