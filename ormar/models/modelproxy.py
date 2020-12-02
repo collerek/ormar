@@ -69,7 +69,7 @@ class ModelTableProxy:
 
     @staticmethod
     def get_clause_target_and_filter_column_name(
-            parent_model: Type["Model"], target_model: Type["Model"], reverse: bool
+        parent_model: Type["Model"], target_model: Type["Model"], reverse: bool
     ) -> Tuple[Type["Model"], str]:
         if reverse:
             field = target_model.resolve_relation_field(target_model, parent_model)
@@ -84,10 +84,10 @@ class ModelTableProxy:
 
     @staticmethod
     def get_column_name_for_id_extraction(
-            parent_model: Type["Model"],
-            target_model: Type["Model"],
-            reverse: bool,
-            use_raw: bool,
+        parent_model: Type["Model"],
+        target_model: Type["Model"],
+        reverse: bool,
+        use_raw: bool,
     ) -> str:
         if reverse:
             column_name = parent_model.Meta.pkname
@@ -110,7 +110,7 @@ class ModelTableProxy:
 
     def get_relation_model_id(self, target_field: Type["BaseField"]) -> Optional[int]:
         if target_field.virtual or issubclass(
-                target_field, ormar.fields.ManyToManyField
+            target_field, ormar.fields.ManyToManyField
         ):
             return self.pk
         related_name = self.resolve_relation_name(self, target_field.to)
@@ -127,9 +127,9 @@ class ModelTableProxy:
 
     @classmethod
     def get_names_to_exclude(
-            cls,
-            fields: Optional[Union[Dict, Set]] = None,
-            exclude_fields: Optional[Union[Dict, Set]] = None,
+        cls,
+        fields: Optional[Union[Dict, Set]] = None,
+        exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> Set:
         fields_names = cls.extract_db_own_fields()
         if fields and fields is not Ellipsis:
@@ -241,9 +241,9 @@ class ModelTableProxy:
 
     @classmethod
     def _update_excluded_with_related_not_required(
-            cls,
-            exclude: Union["AbstractSetIntStr", "MappingIntStrAny", None],
-            nested: bool = False,
+        cls,
+        exclude: Union["AbstractSetIntStr", "MappingIntStrAny", None],
+        nested: bool = False,
     ) -> Union[Set, Dict]:
         exclude = exclude or {}
         related_set = cls._exclude_related_names_not_required(nested=nested)
@@ -269,18 +269,18 @@ class ModelTableProxy:
 
     @staticmethod
     def resolve_relation_name(  # noqa CCR001
-            item: Union[
-                "NewBaseModel",
-                Type["NewBaseModel"],
-                "ModelTableProxy",
-                Type["ModelTableProxy"],
-            ],
-            related: Union[
-                "NewBaseModel",
-                Type["NewBaseModel"],
-                "ModelTableProxy",
-                Type["ModelTableProxy"],
-            ],
+        item: Union[
+            "NewBaseModel",
+            Type["NewBaseModel"],
+            "ModelTableProxy",
+            Type["ModelTableProxy"],
+        ],
+        related: Union[
+            "NewBaseModel",
+            Type["NewBaseModel"],
+            "ModelTableProxy",
+            Type["ModelTableProxy"],
+        ],
     ) -> str:
         for name, field in item.Meta.model_fields.items():
             if issubclass(field, ForeignKeyField):
@@ -296,7 +296,7 @@ class ModelTableProxy:
 
     @staticmethod
     def resolve_relation_field(
-            item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
+        item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
     ) -> Type[BaseField]:
         name = ModelTableProxy.resolve_relation_name(item, related)
         to_field = item.Meta.model_fields.get(name)
@@ -343,12 +343,12 @@ class ModelTableProxy:
         for field in one.Meta.model_fields.keys():
             current_field = getattr(one, field)
             if isinstance(current_field, list) and not isinstance(
-                    current_field, ormar.Model
+                current_field, ormar.Model
             ):
                 setattr(other, field, current_field + getattr(other, field))
             elif (
-                    isinstance(current_field, ormar.Model)
-                    and current_field.pk == getattr(other, field).pk
+                isinstance(current_field, ormar.Model)
+                and current_field.pk == getattr(other, field).pk
             ):
                 setattr(
                     other,
@@ -360,7 +360,7 @@ class ModelTableProxy:
 
     @staticmethod
     def _populate_pk_column(
-            model: Type["Model"], columns: List[str], use_alias: bool = False,
+        model: Type["Model"], columns: List[str], use_alias: bool = False,
     ) -> List[str]:
         pk_alias = (
             model.get_column_alias(model.Meta.pkname)
@@ -373,10 +373,10 @@ class ModelTableProxy:
 
     @staticmethod
     def own_table_columns(
-            model: Type["Model"],
-            fields: Optional[Union[Set, Dict]],
-            exclude_fields: Optional[Union[Set, Dict]],
-            use_alias: bool = False,
+        model: Type["Model"],
+        fields: Optional[Union[Set, Dict]],
+        exclude_fields: Optional[Union[Set, Dict]],
+        use_alias: bool = False,
     ) -> List[str]:
         columns = [
             model.get_column_name_from_alias(col.name) if not use_alias else col.name
