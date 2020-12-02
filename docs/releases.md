@@ -1,3 +1,7 @@
+# 0.6.1
+
+* Explicitly set None to excluded nullable fields to avoid pydantic setting a default value (fix [#60][#60]). 
+
 # 0.6.0
 
 *  **Breaking:** calling instance.load() when the instance row was deleted from db now raises ormar.NoMatch instead of ValueError
@@ -156,3 +160,4 @@ Add queryset level methods
 
 
 [#19]: https://github.com/collerek/ormar/issues/19
+[#60]: https://github.com/collerek/ormar/issues/60

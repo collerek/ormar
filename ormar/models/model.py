@@ -104,6 +104,9 @@ class Model(NewBaseModel):
 
         instance: Optional[T] = None
         if item.get(cls.Meta.pkname, None) is not None:
+            item["__excluded__"] = cls.get_names_to_exclude(
+                fields=fields, exclude_fields=exclude_fields
+            )
             instance = cls(**item)
             instance.set_save_status(True)
         else:

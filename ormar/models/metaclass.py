@@ -214,7 +214,9 @@ def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
         field.name = field_name
         attrs = populate_default_pydantic_field_value(field, field_name, attrs)
         model_fields[field_name] = field
-        attrs["__annotations__"][field_name] = field.__type__
+        attrs["__annotations__"][field_name] = (
+            field.__type__ if not field.nullable else Optional[field.__type__]
+        )
     return attrs, model_fields
 
 
