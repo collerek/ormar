@@ -1,6 +1,7 @@
+import inspect
 import logging
 import warnings
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Type, Union
 
 import databases
 import pydantic
@@ -15,6 +16,7 @@ from ormar import ForeignKey, ModelDefinitionError, Integer  # noqa I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToMany, ManyToManyField
+from ormar.fields.model_fields import ModelFieldFactory
 from ormar.queryset import QuerySet
 from ormar.relations.alias_manager import AliasManager
 
@@ -36,6 +38,8 @@ class ModelMeta:
         str, Union[Type[BaseField], Type[ForeignKeyField], Type[ManyToManyField]]
     ]
     alias_manager: AliasManager
+    include_props_in_dict: bool
+    include_props_in_fields: bool
 
 
 def register_relation_on_build(table_name: str, field: Type[ForeignKeyField]) -> None:
@@ -43,7 +47,7 @@ def register_relation_on_build(table_name: str, field: Type[ForeignKeyField]) ->
 
 
 def register_many_to_many_relation_on_build(
-    table_name: str, field: Type[ManyToManyField]
+        table_name: str, field: Type[ManyToManyField]
 ) -> None:
     alias_manager.add_relation_type(field.through.Meta.tablename, table_name)
     alias_manager.add_relation_type(
@@ -52,11 +56,11 @@ def register_many_to_many_relation_on_build(
 
 
 def reverse_field_not_already_registered(
-    child: Type["Model"], child_model_name: str, parent_model: Type["Model"]
+        child: Type["Model"], child_model_name: str, parent_model: Type["Model"]
 ) -> bool:
     return (
-        child_model_name not in parent_model.__fields__
-        and child.get_name() not in parent_model.__fields__
+            child_model_name not in parent_model.__fields__
+            and child.get_name() not in parent_model.__fields__
     )
 
 
@@ -67,7 +71,7 @@ def expand_reverse_relationships(model: Type["Model"]) -> None:
             parent_model = model_field.to
             child = model
             if reverse_field_not_already_registered(
-                child, child_model_name, parent_model
+                    child, child_model_name, parent_model
             ):
                 register_reverse_model_fields(
                     parent_model, child, child_model_name, model_field
@@ -75,10 +79,10 @@ def expand_reverse_relationships(model: Type["Model"]) -> None:
 
 
 def register_reverse_model_fields(
-    model: Type["Model"],
-    child: Type["Model"],
-    child_model_name: str,
-    model_field: Type["ForeignKeyField"],
+        model: Type["Model"],
+        child: Type["Model"],
+        child_model_name: str,
+        model_field: Type["ForeignKeyField"],
 ) -> None:
     if issubclass(model_field, ManyToManyField):
         model.Meta.model_fields[child_model_name] = ManyToMany(
@@ -93,7 +97,7 @@ def register_reverse_model_fields(
 
 
 def adjust_through_many_to_many_model(
-    model: Type["Model"], child: Type["Model"], model_field: Type[ManyToManyField]
+        model: Type["Model"], child: Type["Model"], model_field: Type[ManyToManyField]
 ) -> None:
     model_field.through.Meta.model_fields[model.get_name()] = ForeignKey(
         model, real_name=model.get_name(), ondelete="CASCADE"
@@ -110,7 +114,7 @@ def adjust_through_many_to_many_model(
 
 
 def create_pydantic_field(
-    field_name: str, model: Type["Model"], model_field: Type[ManyToManyField]
+        field_name: str, model: Type["Model"], model_field: Type[ManyToManyField]
 ) -> None:
     model_field.through.__fields__[field_name] = ModelField(
         name=field_name,
@@ -121,8 +125,18 @@ def create_pydantic_field(
     )
 
 
+def get_pydantic_field(field_name: str, model: Type["Model"]) -> "ModelField":
+    return ModelField(
+        name=field_name,
+        type_=model.Meta.model_fields[field_name].__type__,
+        model_config=model.__config__,
+        required=not model.Meta.model_fields[field_name].nullable,
+        class_validators={},
+    )
+
+
 def create_and_append_m2m_fk(
-    model: Type["Model"], model_field: Type[ManyToManyField]
+        model: Type["Model"], model_field: Type[ManyToManyField]
 ) -> None:
     column = sqlalchemy.Column(
         model.get_name(),
@@ -138,7 +152,7 @@ def create_and_append_m2m_fk(
 
 
 def check_pk_column_validity(
-    field_name: str, field: BaseField, pkname: Optional[str]
+        field_name: str, field: BaseField, pkname: Optional[str]
 ) -> Optional[str]:
     if pkname is not None:
         raise ModelDefinitionError("Only one primary key column is allowed.")
@@ -148,7 +162,7 @@ def check_pk_column_validity(
 
 
 def sqlalchemy_columns_from_model_fields(
-    model_fields: Dict, table_name: str
+        model_fields: Dict, table_name: str
 ) -> Tuple[Optional[str], List[sqlalchemy.Column]]:
     columns = []
     pkname = None
@@ -162,9 +176,9 @@ def sqlalchemy_columns_from_model_fields(
         if field.primary_key:
             pkname = check_pk_column_validity(field_name, field, pkname)
         if (
-            not field.pydantic_only
-            and not field.virtual
-            and not issubclass(field, ManyToManyField)
+                not field.pydantic_only
+                and not field.virtual
+                and not issubclass(field, ManyToManyField)
         ):
             columns.append(field.get_column(field.get_alias()))
         register_relation_in_alias_manager(table_name, field)
@@ -172,7 +186,7 @@ def sqlalchemy_columns_from_model_fields(
 
 
 def register_relation_in_alias_manager(
-    table_name: str, field: Type[ForeignKeyField]
+        table_name: str, field: Type[ForeignKeyField]
 ) -> None:
     if issubclass(field, ManyToManyField):
         register_many_to_many_relation_on_build(table_name, field)
@@ -181,7 +195,7 @@ def register_relation_in_alias_manager(
 
 
 def populate_default_pydantic_field_value(
-    ormar_field: Type[BaseField], field_name: str, attrs: dict
+        ormar_field: Type[BaseField], field_name: str, attrs: dict
 ) -> dict:
     curr_def_value = attrs.get(field_name, ormar.Undefined)
     if lenient_issubclass(curr_def_value, ormar.fields.BaseField):
@@ -228,7 +242,7 @@ def extract_annotations_and_default_vals(attrs: dict) -> Tuple[Dict, Dict]:
 
 
 def populate_meta_tablename_columns_and_pk(
-    name: str, new_model: Type["Model"]
+        name: str, new_model: Type["Model"]
 ) -> Type["Model"]:
     tablename = name.lower() + "s"
     new_model.Meta.tablename = (
@@ -254,7 +268,7 @@ def populate_meta_tablename_columns_and_pk(
 
 
 def populate_meta_sqlalchemy_table_if_required(
-    new_model: Type["Model"],
+        new_model: Type["Model"],
 ) -> Type["Model"]:
     if not hasattr(new_model.Meta, "table"):
         new_model.Meta.table = sqlalchemy.Table(
@@ -295,21 +309,66 @@ def choices_validator(cls: Type["Model"], values: Dict[str, Any]) -> Dict[str, A
     return values
 
 
-def populate_choices_validators(  # noqa CCR001
-    model: Type["Model"], attrs: Dict
-) -> None:
+def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
     if model_initialized_and_has_model_fields(model):
         for _, field in model.Meta.model_fields.items():
             if check_if_field_has_choices(field):
-                validators = attrs.get("__pre_root_validators__", [])
+                validators = getattr(model, "__pre_root_validators__", [])
                 if choices_validator not in validators:
                     validators.append(choices_validator)
-                    attrs["__pre_root_validators__"] = validators
+                    setattr(model, "__pre_root_validators__", validators)
+
+
+def populate_default_options_values(new_model: Type["Model"], model_fields: Dict):
+    if not hasattr(new_model.Meta, "constraints"):
+        new_model.Meta.constraints = []
+    if not hasattr(new_model.Meta, "model_fields"):
+        new_model.Meta.model_fields = model_fields
+
+    if not hasattr(new_model.Meta, "include_props_in_dict"):
+        new_model.Meta.include_props_in_dict = True
+    if not hasattr(new_model.Meta, "include_props_in_fields"):
+        new_model.Meta.include_props_in_fields = False
+
+
+def add_cached_properties(new_model):
+    new_model._props = {
+                prop
+                for prop in vars(new_model)
+                if isinstance(getattr(new_model, prop), property)
+                and prop
+                not in ("__values__", "__fields__", "fields", "pk_column", "saved")
+            }
+    new_model._quick_access_fields = {
+                "_orm_id",
+                "_orm_saved",
+                "_orm",
+                "__fields__",
+                "_related_names",
+                "_props",
+                "__class__",
+                "extract_related_names",
+        }
+    new_model._related_names = None
+
+
+def add_property_fields(new_model):
+    if new_model.Meta.include_props_in_fields:
+        for prop in new_model._props:
+            field_type = getattr(new_model, prop).fget.__annotations__.get('return')
+            new_model.Meta.model_fields[prop] = ModelFieldFactory(nullable=True, pydantic_only=True)
+            new_model.__fields__[prop] = ModelField(
+                name=prop,
+                type_=Optional[field_type] if field_type else Any,
+                model_config=new_model.__config__,
+                required=False,
+                class_validators={},
+            )
 
 
 class ModelMetaclass(pydantic.main.ModelMetaclass):
     def __new__(  # type: ignore
-        mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
+            mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
     ) -> "ModelMetaclass":
         attrs["Config"] = get_pydantic_base_orm_config()
         attrs["__name__"] = name
@@ -319,28 +378,21 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         )
 
         if hasattr(new_model, "Meta"):
-            if not hasattr(new_model.Meta, "constraints"):
-                new_model.Meta.constraints = []
-            if not hasattr(new_model.Meta, "model_fields"):
-                new_model.Meta.model_fields = model_fields
+            populate_default_options_values(new_model, model_fields)
             new_model = populate_meta_tablename_columns_and_pk(name, new_model)
             new_model = populate_meta_sqlalchemy_table_if_required(new_model)
             expand_reverse_relationships(new_model)
-            populate_choices_validators(new_model, attrs)
-
+            populate_choices_validators(new_model)
             if new_model.Meta.pkname not in attrs["__annotations__"]:
                 field_name = new_model.Meta.pkname
-                field = Integer(name=field_name, primary_key=True)
                 attrs["__annotations__"][field_name] = Optional[int]  # type: ignore
-                populate_default_pydantic_field_value(
-                    field, field_name, attrs  # type: ignore
+                attrs[field_name] = None
+                new_model.__fields__[field_name] = get_pydantic_field(
+                    field_name=field_name, model=new_model
                 )
-
-            new_model = super().__new__(  # type: ignore
-                mcs, name, bases, attrs
-            )
-
             new_model.Meta.alias_manager = alias_manager
             new_model.objects = QuerySet(new_model)
+            add_cached_properties(new_model)
+            add_property_fields(new_model)
 
         return new_model

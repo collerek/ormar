@@ -51,9 +51,6 @@ class NewBaseModel(
         "_orm_id",
         "_orm_saved",
         "_orm",
-        "_related_names",
-        "_related_names_hash",
-        "_props",
     )
 
     if TYPE_CHECKING:  # pragma no cover
@@ -70,7 +67,7 @@ class NewBaseModel(
         _orm_saved: bool
         _related_names: Set
         _related_names_hash: str
-        _props: List[str]
+        _props: Set
         Meta: ModelMeta
 
     # noinspection PyMissingConstructor
@@ -158,27 +155,22 @@ class NewBaseModel(
             self.set_save_status(False)
 
     def __getattribute__(self, item: str) -> Any:
-        if item in (
-            "_orm_id",
-            "_orm_saved",
-            "_orm",
-            "__fields__",
-            "_related_names",
-            "_props",
-        ):
+        if item in object.__getattribute__(self, '_quick_access_fields'):
             return object.__getattribute__(self, item)
         if item == "pk":
             return self.__dict__.get(self.Meta.pkname, None)
-        if item != "extract_related_names" and item in self.extract_related_names():
+        if item in self.extract_related_names():
             return self._extract_related_model_instead_of_field(item)
-        if item != "__fields__" and item in self.__fields__:
+        if item in self._props:
+            return object.__getattribute__(self, item)
+        if item in self.__fields__:
             value = self.__dict__.get(item, None)
             value = self._convert_json(item, value, "loads")
             return value
         return super().__getattribute__(item)
 
     def _extract_related_model_instead_of_field(
-        self, item: str
+            self, item: str
     ) -> Optional[Union["T", Sequence["T"]]]:
         # alias = self.get_column_alias(item)
         if item in self._orm:
@@ -192,9 +184,9 @@ class NewBaseModel(
 
     def __same__(self, other: "NewBaseModel") -> bool:
         return (
-            self._orm_id == other._orm_id
-            or self.dict() == other.dict()
-            or (self.pk == other.pk and self.pk is not None)
+                self._orm_id == other._orm_id
+                or self.dict() == other.dict()
+                or (self.pk == other.pk and self.pk is not None)
         )
 
     @classmethod
@@ -228,19 +220,10 @@ class NewBaseModel(
 
     @classmethod
     def get_properties(
-        cls, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None]
+            cls, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None]
     ) -> List[str]:
-        if isinstance(cls._props, list):
-            props = cls._props
-        else:
-            props = [
-                prop
-                for prop in dir(cls)
-                if isinstance(getattr(cls, prop), property)
-                and prop
-                not in ("__values__", "__fields__", "fields", "pk_column", "saved")
-            ]
-            cls._props = props
+
+        props = cls._props
         if include:
             props = [prop for prop in props if prop in include]
         if exclude:
@@ -248,7 +231,7 @@ class NewBaseModel(
         return props
 
     def _get_related_not_excluded_fields(
-        self, include: Optional[Dict], exclude: Optional[Dict],
+            self, include: Optional[Dict], exclude: Optional[Dict],
     ) -> List:
         fields = [field for field in self.extract_related_names()]
         if include:
@@ -263,15 +246,15 @@ class NewBaseModel(
 
     @staticmethod
     def _extract_nested_models_from_list(
-        models: MutableSequence,
-        include: Union[Set, Dict, None],
-        exclude: Union[Set, Dict, None],
+            models: MutableSequence,
+            include: Union[Set, Dict, None],
+            exclude: Union[Set, Dict, None],
     ) -> List:
         result = []
         for model in models:
             try:
                 result.append(
-                    model.dict(nested=True, include=include, exclude=exclude,)
+                    model.dict(nested=True, include=include, exclude=exclude, )
                 )
             except ReferenceError:  # pragma no cover
                 continue
@@ -279,17 +262,17 @@ class NewBaseModel(
 
     @staticmethod
     def _skip_ellipsis(
-        items: Union[Set, Dict, None], key: str
+            items: Union[Set, Dict, None], key: str
     ) -> Union[Set, Dict, None]:
         result = Excludable.get_child(items, key)
         return result if result is not Ellipsis else None
 
     def _extract_nested_models(  # noqa: CCR001
-        self,
-        nested: bool,
-        dict_instance: Dict,
-        include: Optional[Dict],
-        exclude: Optional[Dict],
+            self,
+            nested: bool,
+            dict_instance: Dict,
+            include: Optional[Dict],
+            exclude: Optional[Dict],
     ) -> Dict:
 
         fields = self._get_related_not_excluded_fields(include=include, exclude=exclude)
@@ -315,16 +298,16 @@ class NewBaseModel(
         return dict_instance
 
     def dict(  # type: ignore # noqa A003
-        self,
-        *,
-        include: Union[Set, Dict] = None,
-        exclude: Union[Set, Dict] = None,
-        by_alias: bool = False,
-        skip_defaults: bool = None,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        nested: bool = False,
+            self,
+            *,
+            include: Union[Set, Dict] = None,
+            exclude: Union[Set, Dict] = None,
+            by_alias: bool = False,
+            skip_defaults: bool = None,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            nested: bool = False,
     ) -> "DictStrAny":  # noqa: A003'
         dict_instance = super().dict(
             include=include,
@@ -349,9 +332,10 @@ class NewBaseModel(
         )
 
         # include model properties as fields
-        props = self.get_properties(include=include, exclude=exclude)
-        if props:
-            dict_instance.update({prop: getattr(self, prop) for prop in props})
+        if self.Meta.include_props_in_dict:
+            props = self.get_properties(include=include, exclude=exclude)
+            if props:
+                dict_instance.update({prop: getattr(self, prop) for prop in props})
 
         return dict_instance
 
@@ -379,4 +363,4 @@ class NewBaseModel(
         return value
 
     def _is_conversion_to_json_needed(self, column_name: str) -> bool:
-        return self.Meta.model_fields[column_name].__type__ == pydantic.Json
+        return column_name in self.Meta.model_fields and self.Meta.model_fields[column_name].__type__ == pydantic.Json

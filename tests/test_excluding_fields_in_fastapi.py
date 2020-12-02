@@ -64,6 +64,8 @@ class RandomModel(ormar.Model):
         metadata = metadata
         database = database
 
+        include_props_in_fields = True
+
     id: int = ormar.Integer(primary_key=True)
     password: str = ormar.String(max_length=255, default=gen_pass)
     first_name: str = ormar.String(max_length=255, default="John")
@@ -71,6 +73,10 @@ class RandomModel(ormar.Model):
     created_date: datetime.datetime = ormar.DateTime(
         server_default=sqlalchemy.func.now()
     )
+
+    @property
+    def full_name(self):
+        return ' '.join([self.first_name, self.last_name])
 
 
 class User(ormar.Model):
@@ -136,6 +142,12 @@ async def create_user5(user: RandomModel):
     return await user.save()
 
 
+@app.post("/random2/", response_model=RandomModel)
+async def create_user6(user: RandomModel):
+    user = await user.save()
+    return user.dict()
+
+
 def test_all_endpoints():
     client = TestClient(app)
     with client as client:
@@ -187,4 +199,30 @@ def test_all_endpoints():
             "first_name",
             "last_name",
             "created_date",
+            "full_name"
+        ]
+        assert response.json().get("full_name") == "John Test"
+
+        RandomModel.Meta.include_props_in_fields = False
+        user3 = {"last_name": "Test"}
+        response = client.post("/random/", json=user3)
+        assert list(response.json().keys()) == [
+            "id",
+            "password",
+            "first_name",
+            "last_name",
+            "created_date",
+            "full_name"
+        ]
+
+        RandomModel.Meta.include_props_in_dict = True
+        user3 = {"last_name": "Test"}
+        response = client.post("/random2/", json=user3)
+        assert list(response.json().keys()) == [
+            "id",
+            "password",
+            "first_name",
+            "last_name",
+            "created_date",
+            "full_name"
         ]
