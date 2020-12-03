@@ -1,6 +1,5 @@
 import json
 import uuid
-from collections import Counter
 from typing import (
     AbstractSet,
     Any,
@@ -66,9 +65,11 @@ class NewBaseModel(
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
         _orm_saved: bool
-        _related_names: Set
+        _related_names: Optional[Set]
         _related_names_hash: str
         _props: Set
+        _pydantic_fields: Set
+        _quick_access_fields: Set
         Meta: ModelMeta
 
     # noinspection PyMissingConstructor
@@ -170,7 +171,7 @@ class NewBaseModel(
             value = object.__getattribute__(self, "__dict__").get(item, None)
             value = object.__getattribute__(self, "_convert_json")(item, value, "loads")
             return value
-        return object.__getattribute__(self, item)
+        return object.__getattribute__(self, item)  # pragma: no cover
 
     def _extract_related_model_instead_of_field(
         self, item: str
@@ -223,13 +224,13 @@ class NewBaseModel(
     @classmethod
     def get_properties(
         cls, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None]
-    ) -> List[str]:
+    ) -> Set[str]:
 
         props = cls._props
         if include:
-            props = [prop for prop in props if prop in include]
+            props = {prop for prop in props if prop in include}
         if exclude:
-            props = [prop for prop in props if prop not in exclude]
+            props = {prop for prop in props if prop not in exclude}
         return props
 
     def _get_related_not_excluded_fields(

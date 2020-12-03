@@ -76,7 +76,7 @@ class RandomModel(ormar.Model):
 
     @property
     def full_name(self):
-        return ' '.join([self.first_name, self.last_name])
+        return " ".join([self.first_name, self.last_name])
 
 
 class User(ormar.Model):
@@ -199,7 +199,7 @@ def test_all_endpoints():
             "first_name",
             "last_name",
             "created_date",
-            "full_name"
+            "full_name",
         ]
         assert response.json().get("full_name") == "John Test"
 
@@ -212,7 +212,7 @@ def test_all_endpoints():
             "first_name",
             "last_name",
             "created_date",
-            "full_name"
+            "full_name",
         ]
 
         RandomModel.Meta.include_props_in_dict = True
@@ -224,5 +224,5 @@ def test_all_endpoints():
             "first_name",
             "last_name",
             "created_date",
-            "full_name"
+            "full_name",
         ]

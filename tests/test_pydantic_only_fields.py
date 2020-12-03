@@ -26,9 +26,9 @@ class Album(ormar.Model):
 
     @property
     def name10(self) -> str:
-        return self.name + '_10'
+        return self.name + "_10"
 
-    @validator('name')
+    @validator("name")
     def test(cls, v):
         return v
 
@@ -46,30 +46,30 @@ def create_test_database():
 async def test_pydantic_only_fields():
     async with database:
         async with database.transaction(force_rollback=True):
-            album = await Album.objects.create(name='Hitchcock')
+            album = await Album.objects.create(name="Hitchcock")
             assert album.pk is not None
             assert album.saved
             assert album.timestamp is None
 
-            album = await Album.objects.exclude_fields('timestamp').get()
+            album = await Album.objects.exclude_fields("timestamp").get()
             assert album.timestamp is None
 
-            album = await Album.objects.fields({'name', 'timestamp'}).get()
+            album = await Album.objects.fields({"name", "timestamp"}).get()
             assert album.timestamp is None
 
             test_dict = album.dict()
-            assert 'timestamp' in test_dict
-            assert test_dict['timestamp'] is None
+            assert "timestamp" in test_dict
+            assert test_dict["timestamp"] is None
 
             album.timestamp = datetime.datetime.now()
             test_dict = album.dict()
-            assert 'timestamp' in test_dict
-            assert test_dict['timestamp'] is not None
-            assert test_dict.get('name10') == 'Hitchcock_10'
+            assert "timestamp" in test_dict
+            assert test_dict["timestamp"] is not None
+            assert test_dict.get("name10") == "Hitchcock_10"
 
             Album.Meta.include_props_in_dict = False
             test_dict = album.dict()
-            assert 'timestamp' in test_dict
-            assert test_dict['timestamp'] is not None
+            assert "timestamp" in test_dict
+            assert test_dict["timestamp"] is not None
             # key is still there as now it's a field
-            assert test_dict['name10'] is None
+            assert test_dict["name10"] is None

@@ -1,7 +1,6 @@
-import inspect
 import logging
 import warnings
-from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import databases
 import pydantic
@@ -12,11 +11,12 @@ from pydantic.utils import lenient_issubclass
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
-from ormar import ForeignKey, ModelDefinitionError, Integer  # noqa I100
+from ormar import ForeignKey, Integer, ModelDefinitionError  # noqa I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToMany, ManyToManyField
 from ormar.fields.model_fields import ModelFieldFactory
+from ormar.models.quick_access_views import quick_access_set
 from ormar.queryset import QuerySet
 from ormar.relations.alias_manager import AliasManager
 
@@ -128,7 +128,7 @@ def create_pydantic_field(
 def get_pydantic_field(field_name: str, model: Type["Model"]) -> "ModelField":
     return ModelField(
         name=field_name,
-        type_=model.Meta.model_fields[field_name].__type__,
+        type_=model.Meta.model_fields[field_name].__type__,  # type: ignore
         model_config=model.__config__,
         required=not model.Meta.model_fields[field_name].nullable,
         class_validators={},
@@ -316,10 +316,12 @@ def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
                 validators = getattr(model, "__pre_root_validators__", [])
                 if choices_validator not in validators:
                     validators.append(choices_validator)
-                    setattr(model, "__pre_root_validators__", validators)
+                    model.__pre_root_validators__ = validators
 
 
-def populate_default_options_values(new_model: Type["Model"], model_fields: Dict):
+def populate_default_options_values(
+    new_model: Type["Model"], model_fields: Dict
+) -> None:
     if not hasattr(new_model.Meta, "constraints"):
         new_model.Meta.constraints = []
     if not hasattr(new_model.Meta, "model_fields"):
@@ -331,59 +333,28 @@ def populate_default_options_values(new_model: Type["Model"], model_fields: Dict
         new_model.Meta.include_props_in_fields = False
 
 
-def add_cached_properties(new_model):
+def add_cached_properties(new_model: Type["Model"]) -> None:
     new_model._props = {
         prop
         for prop in vars(new_model)
         if isinstance(getattr(new_model, prop), property)
         and prop not in ("__values__", "__fields__", "fields", "pk_column", "saved")
     }
-    new_model._quick_access_fields = {
-        "_orm_id",
-        "_orm_saved",
-        "_orm",
-        "_convert_json",
-        "__fields__",
-        "_related_names",
-        "_props",
-        "__class__",
-        "__dict__",
-        "__config__",
-        "_iter",
-        "_get_value",
-        "_is_conversion_to_json_needed",
-        "__fields_set__",
-        "_skip_ellipsis",
-        "_calculate_keys",
-        "dict",
-        "_update_excluded_with_related_not_required",
-        "_extract_nested_models",
-        "_get_related_not_excluded_fields",
-        "get_properties",
-        "resolve_relation_name",
-        "resolve_relation_field",
-        "set_save_status",
-        "__pre_root_validators__",
-        "__post_root_validators__",
-        "_extract_nested_models_from_list",
-        "get_name",
-        "extract_related_names",
-        "Meta",
-    }
+    new_model._quick_access_fields = quick_access_set
     new_model._related_names = None
     new_model._pydantic_fields = {name for name in new_model.__fields__}
 
 
-def add_property_fields(new_model):
+def add_property_fields(new_model: Type["Model"]) -> None:
     if new_model.Meta.include_props_in_fields:
         for prop in new_model._props:
             field_type = getattr(new_model, prop).fget.__annotations__.get("return")
-            new_model.Meta.model_fields[prop] = ModelFieldFactory(
+            new_model.Meta.model_fields[prop] = ModelFieldFactory(  # type: ignore
                 nullable=True, pydantic_only=True
             )
             new_model.__fields__[prop] = ModelField(
                 name=prop,
-                type_=Optional[field_type] if field_type else Any,
+                type_=Optional[field_type] if field_type is not None else Any,  # type: ignore
                 model_config=new_model.__config__,
                 required=False,
                 class_validators={},

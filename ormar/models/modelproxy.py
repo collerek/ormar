@@ -20,10 +20,6 @@ from typing import (
 from ormar.exceptions import ModelPersistenceError, RelationshipInstanceError
 from ormar.queryset.utils import translate_list_to_dict, update
 
-try:
-    import orjson as json
-except ImportError:  # pragma: nocover
-    import json  # type: ignore
 
 import ormar  # noqa:  I100
 from ormar.fields import BaseField
@@ -45,7 +41,7 @@ Field = TypeVar("Field", bound=BaseField)
 class ModelTableProxy:
     if TYPE_CHECKING:  # pragma no cover
         Meta: ModelMeta
-        _related_names: Set
+        _related_names: Optional[Set]
         _related_names_hash: Union[str, bytes]
         pk: Any
         get_name: Callable

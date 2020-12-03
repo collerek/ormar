@@ -18,11 +18,15 @@ def is_field_nullable(
     pydantic_only: Optional[bool],
 ) -> bool:
     if nullable is None:
-        return default is not None or server_default is not None or pydantic_only
+        return (
+            default is not None
+            or server_default is not None
+            or (pydantic_only is not None and pydantic_only)
+        )
     return nullable
 
 
-def is_auto_primary_key(primary_key: bool, autoincrement: bool):
+def is_auto_primary_key(primary_key: bool, autoincrement: bool) -> bool:
     return primary_key and autoincrement
 
 
