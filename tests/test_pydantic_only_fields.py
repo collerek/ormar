@@ -28,10 +28,6 @@ class Album(ormar.Model):
     def name10(self) -> str:
         return self.name + "_10"
 
-    @validator("name")
-    def test(cls, v):
-        return v
-
 
 @pytest.fixture(autouse=True, scope="module")
 def create_test_database():
@@ -71,5 +67,4 @@ async def test_pydantic_only_fields():
             test_dict = album.dict()
             assert "timestamp" in test_dict
             assert test_dict["timestamp"] is not None
-            # key is still there as now it's a field
-            assert test_dict["name10"] is None
+            assert test_dict.get("name10", 'aa') == 'aa'

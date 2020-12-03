@@ -1,3 +1,4 @@
+import inspect
 import json
 import uuid
 from typing import (
@@ -74,7 +75,7 @@ class NewBaseModel(
 
     # noinspection PyMissingConstructor
     def __init__(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
-
+        caller_name = inspect.currentframe().f_back.f_code.co_name
         object.__setattr__(self, "_orm_id", uuid.uuid4().hex)
         object.__setattr__(self, "_orm_saved", False)
         object.__setattr__(
@@ -96,6 +97,8 @@ class NewBaseModel(
         if "pk" in kwargs:
             kwargs[self.Meta.pkname] = kwargs.pop("pk")
         # build the models to set them and validate but don't register
+        if self.Meta.include_props_in_dict:
+            kwargs = {k: v for k, v in kwargs.items() if k not in object.__getattribute__(self, '_props')}
         try:
             new_kwargs: Dict[str, Any] = {
                 k: self._convert_json(
@@ -174,7 +177,7 @@ class NewBaseModel(
         return object.__getattribute__(self, item)  # pragma: no cover
 
     def _extract_related_model_instead_of_field(
-        self, item: str
+            self, item: str
     ) -> Optional[Union["T", Sequence["T"]]]:
         if item in self._orm:
             return self._orm.get(item)
@@ -187,9 +190,9 @@ class NewBaseModel(
 
     def __same__(self, other: "NewBaseModel") -> bool:
         return (
-            self._orm_id == other._orm_id
-            or (self.pk == other.pk and self.pk is not None)
-            or self.dict() == other.dict()
+                self._orm_id == other._orm_id
+                or (self.pk == other.pk and self.pk is not None)
+                or self.dict() == other.dict()
         )
 
     @classmethod
@@ -223,7 +226,7 @@ class NewBaseModel(
 
     @classmethod
     def get_properties(
-        cls, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None]
+            cls, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None]
     ) -> Set[str]:
 
         props = cls._props
@@ -234,7 +237,7 @@ class NewBaseModel(
         return props
 
     def _get_related_not_excluded_fields(
-        self, include: Optional[Dict], exclude: Optional[Dict],
+            self, include: Optional[Dict], exclude: Optional[Dict],
     ) -> List:
         fields = [field for field in self.extract_related_names()]
         if include:
@@ -249,15 +252,15 @@ class NewBaseModel(
 
     @staticmethod
     def _extract_nested_models_from_list(
-        models: MutableSequence,
-        include: Union[Set, Dict, None],
-        exclude: Union[Set, Dict, None],
+            models: MutableSequence,
+            include: Union[Set, Dict, None],
+            exclude: Union[Set, Dict, None],
     ) -> List:
         result = []
         for model in models:
             try:
                 result.append(
-                    model.dict(nested=True, include=include, exclude=exclude,)
+                    model.dict(nested=True, include=include, exclude=exclude, )
                 )
             except ReferenceError:  # pragma no cover
                 continue
@@ -265,17 +268,17 @@ class NewBaseModel(
 
     @staticmethod
     def _skip_ellipsis(
-        items: Union[Set, Dict, None], key: str
+            items: Union[Set, Dict, None], key: str
     ) -> Union[Set, Dict, None]:
         result = Excludable.get_child(items, key)
         return result if result is not Ellipsis else None
 
     def _extract_nested_models(  # noqa: CCR001
-        self,
-        nested: bool,
-        dict_instance: Dict,
-        include: Optional[Dict],
-        exclude: Optional[Dict],
+            self,
+            nested: bool,
+            dict_instance: Dict,
+            include: Optional[Dict],
+            exclude: Optional[Dict],
     ) -> Dict:
 
         fields = self._get_related_not_excluded_fields(include=include, exclude=exclude)
@@ -301,17 +304,19 @@ class NewBaseModel(
         return dict_instance
 
     def dict(  # type: ignore # noqa A003
-        self,
-        *,
-        include: Union[Set, Dict] = None,
-        exclude: Union[Set, Dict] = None,
-        by_alias: bool = False,
-        skip_defaults: bool = None,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        nested: bool = False,
+            self,
+            *,
+            include: Union[Set, Dict] = None,
+            exclude: Union[Set, Dict] = None,
+            by_alias: bool = False,
+            skip_defaults: bool = None,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            nested: bool = False,
     ) -> "DictStrAny":  # noqa: A003'
+        # callable_name = inspect.currentframe().f_back.f_code.co_name
+        # print('dict', callable_name)
         dict_instance = super().dict(
             include=include,
             exclude=self._update_excluded_with_related_not_required(exclude, nested),
@@ -367,6 +372,6 @@ class NewBaseModel(
 
     def _is_conversion_to_json_needed(self, column_name: str) -> bool:
         return (
-            column_name in self.Meta.model_fields
-            and self.Meta.model_fields[column_name].__type__ == pydantic.Json
+                column_name in self.Meta.model_fields
+                and self.Meta.model_fields[column_name].__type__ == pydantic.Json
         )

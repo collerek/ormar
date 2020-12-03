@@ -20,7 +20,6 @@ from typing import (
 from ormar.exceptions import ModelPersistenceError, RelationshipInstanceError
 from ormar.queryset.utils import translate_list_to_dict, update
 
-
 import ormar  # noqa:  I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
@@ -46,13 +45,11 @@ class ModelTableProxy:
         pk: Any
         get_name: Callable
         _props: Set
-
-    def dict(self):  # noqa A003
-        raise NotImplementedError  # pragma no cover
+        dict: Callable
 
     def _extract_own_model_fields(self) -> Dict:
         related_names = self.extract_related_names()
-        self_fields = {k: v for k, v in self.dict().items() if k not in related_names}
+        self_fields = self.dict(exclude=related_names)
         return self_fields
 
     @classmethod

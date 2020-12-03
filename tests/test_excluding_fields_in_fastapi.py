@@ -64,7 +64,7 @@ class RandomModel(ormar.Model):
         metadata = metadata
         database = database
 
-        include_props_in_fields = True
+        include_props_in_dict = True
 
     id: int = ormar.Integer(primary_key=True)
     password: str = ormar.String(max_length=255, default=gen_pass)
@@ -139,7 +139,9 @@ async def create_user4(user: User2):
 
 @app.post("/random/", response_model=RandomModel)
 async def create_user5(user: RandomModel):
-    return await user.save()
+    user = await user.save()
+    print('returning')
+    return user
 
 
 @app.post("/random2/", response_model=RandomModel)
@@ -148,7 +150,7 @@ async def create_user6(user: RandomModel):
     return user.dict()
 
 
-def test_all_endpoints():
+def test_excluding_fields_in_endpoints():
     client = TestClient(app)
     with client as client:
         user = {
@@ -168,20 +170,24 @@ def test_all_endpoints():
             "last_name": "Doe",
         }
 
+        print('before call')
         response = client.post("/users/", json=user2)
         created_user = User(**response.json())
         assert created_user.pk is not None
         assert created_user.password is None
 
+        print('before call')
         response = client.post("/users2/", json=user)
         created_user2 = User(**response.json())
         assert created_user2.pk is not None
         assert created_user2.password is None
 
         # response has only 3 fields from UserBase
+        print('before call')
         response = client.post("/users3/", json=user)
         assert list(response.json().keys()) == ["email", "first_name", "last_name"]
 
+        print('before call')
         response = client.post("/users4/", json=user)
         assert list(response.json().keys()) == [
             "id",
@@ -191,32 +197,40 @@ def test_all_endpoints():
             "category",
         ]
 
-        user3 = {"last_name": "Test"}
-        response = client.post("/random/", json=user3)
-        assert list(response.json().keys()) == [
-            "id",
-            "password",
-            "first_name",
-            "last_name",
-            "created_date",
-            "full_name",
-        ]
-        assert response.json().get("full_name") == "John Test"
+        # user3 = {"last_name": "Test"}
+        # print('before call')
+        # response = client.post("/random/", json=user3)
+        # assert list(response.json().keys()) == [
+        #     "id",
+        #     "password",
+        #     "first_name",
+        #     "last_name",
+        #     "created_date",
+        #     "full_name",
+        # ]
+        # assert response.json().get("full_name") == "John Test"
+        #
+        # RandomModel.Meta.include_props_in_fields = False
+        # user3 = {"last_name": "Test"}
+        # print('before call')
+        # response = client.post("/random/", json=user3)
+        # assert list(response.json().keys()) == [
+        #     "id",
+        #     "password",
+        #     "first_name",
+        #     "last_name",
+        #     "created_date",
+        #     "full_name",
+        # ]
+        # assert response.json().get("full_name") == "John Test"
 
-        RandomModel.Meta.include_props_in_fields = False
-        user3 = {"last_name": "Test"}
-        response = client.post("/random/", json=user3)
-        assert list(response.json().keys()) == [
-            "id",
-            "password",
-            "first_name",
-            "last_name",
-            "created_date",
-            "full_name",
-        ]
 
+def test_adding_fields_in_endpoints():
+    client = TestClient(app)
+    with client as client:
         RandomModel.Meta.include_props_in_dict = True
         user3 = {"last_name": "Test"}
+        print('before call')
         response = client.post("/random2/", json=user3)
         assert list(response.json().keys()) == [
             "id",
@@ -226,3 +240,4 @@ def test_all_endpoints():
             "created_date",
             "full_name",
         ]
+        assert response.json().get("full_name") == "John Test"
