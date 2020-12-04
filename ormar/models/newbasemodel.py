@@ -318,8 +318,6 @@ class NewBaseModel(
         exclude_none: bool = False,
         nested: bool = False,
     ) -> "DictStrAny":  # noqa: A003'
-        # callable_name = inspect.currentframe().f_back.f_code.co_name
-        # print('dict', callable_name)
         dict_instance = super().dict(
             include=include,
             exclude=self._update_excluded_with_related_not_required(exclude, nested),

@@ -177,7 +177,11 @@ class ModelTableProxy:
     @classmethod
     def populate_default_values(cls, new_kwargs: Dict) -> Dict:
         for field_name, field in cls.Meta.model_fields.items():
-            if field_name not in new_kwargs and field.has_default(use_server=False):
+            if (
+                field_name not in new_kwargs
+                and field.has_default(use_server=False)
+                and not field.pydantic_only
+            ):
                 new_kwargs[field_name] = field.get_default()
             # clear fields with server_default set as None
             if field.server_default is not None and not new_kwargs.get(field_name):

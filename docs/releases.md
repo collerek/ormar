@@ -1,3 +1,11 @@
+# 0.6.2
+
+*  Performance optimization
+*  Fix for bug with `pydantic_only` fields being required
+*  Add `property_field` decorator that registers a function as a property that will 
+   be included in `Model.dict()` and in `fastapi` response
+*  Update docs
+
 # 0.6.1
 
 * Explicitly set None to excluded nullable fields to avoid pydantic setting a default value (fix [#60][#60]). 

@@ -17,6 +17,8 @@ To build an ormar model you simply need to inherit a `ormar.Model` class.
 
 Next assign one or more of the [Fields][fields] as a class level variables.
 
+#### Basic Field Types
+
 Each table **has to** have a primary key column, which you specify by setting `primary_key=True` on selected field.
 
 Only one primary key column is allowed.
@@ -37,7 +39,212 @@ You can disable by passing `autoincremant=False`.
 id: int = ormar.Integer(primary_key=True, autoincrement=False)
 ```
 
-### Fields names vs Column names
+#### Non Database Fields
+
+Note that if you need a normal pydantic field in your model (used to store value on model or pass around some value) you can define a 
+field with parameter `pydantic_only=True`.
+
+Fields created like this are added to the `pydantic` model fields -> so are subject to validation according to `Field` type, 
+also appear in `dict()` and `json()` result. 
+
+The difference is that **those fields are not saved in the database**. So they won't be included in underlying sqlalchemy `columns`, 
+or `table` variables (check [Internals][Internals] section below to see how you can access those if you need).
+
+Subsequently `pydantic_only` fields won't be included in migrations or any database operation (like `save`, `update` etc.)
+
+Fields like those can be passed around into payload in `fastapi` request and will be returned in `fastapi` response 
+(of course only if you set their value somewhere in your code as the value is **not** fetched from the db. 
+If you pass a value in `fastapi` `request` and return the same instance that `fastapi` constructs for you in `request_model`
+you should get back exactly same value in `response`.).
+
+!!!warning
+    `pydantic_only=True` fields are always **Optional** and it cannot be changed (otherwise db load validation would fail)
+
+!!!tip
+    `pydantic_only=True` fields are a good solution if you need to pass additional information from outside of your API 
+    (i.e. frontend). They are not stored in db but you can access them in your `APIRoute` code and they also have `pydantic` validation. 
+
+```Python hl_lines="18"
+--8<-- "../docs_src/models/docs014.py"
+```
+
+If you combine `pydantic_only=True` field with `default` parameter and do not pass actual value in request you will always get default value.
+Since it can be a function you can set `default=datetime.datetime.now` and get current timestamp each time you call an endpoint etc.
+
+!!!note
+    Note that both `pydantic_only` and `property_field` decorated field can be included/excluded in both `dict()` and `fastapi`
+    response with `include`/`exclude` and `response_model_include`/`response_model_exclude` accordingly.
+
+```python
+# <==part of code removed for clarity==>
+class User(ormar.Model):
+    class Meta:
+        tablename: str = "users2"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    email: str = ormar.String(max_length=255, nullable=False)
+    password: str = ormar.String(max_length=255)
+    first_name: str = ormar.String(max_length=255)
+    last_name: str = ormar.String(max_length=255)
+    category: str = ormar.String(max_length=255, nullable=True)
+    timestamp: datetime.datetime = ormar.DateTime(
+        pydantic_only=True, default=datetime.datetime.now
+    )
+
+# <==part of code removed for clarity==>
+app =FastAPI()
+
+@app.post("/users/")
+async def create_user(user: User):
+    return await user.save()
+
+# <==part of code removed for clarity==>
+
+def test_excluding_fields_in_endpoints():
+    client = TestClient(app)
+    with client as client:
+        timestamp = datetime.datetime.now()
+
+        user = {
+            "email": "test@domain.com",
+            "password": "^*^%A*DA*IAAA",
+            "first_name": "John",
+            "last_name": "Doe",
+            "timestamp": str(timestamp),
+        }
+        response = client.post("/users/", json=user)
+        assert list(response.json().keys()) == [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "category",
+            "timestamp",
+        ]
+        # returned is the same timestamp
+        assert response.json().get("timestamp") == str(timestamp).replace(" ", "T")
+
+
+# <==part of code removed for clarity==>
+```
+
+#### Property fields
+
+Sometimes it's desirable to do some kind of calculation on the model instance. One of the most common examples can be concatenating
+two or more fields. Imagine you have `first_name` and `last_name` fields on your model, but would like to have `full_name` in the result
+of the `fastapi` query. 
+
+You can create a new `pydantic` model with a `method` that accepts only `self` (so like default python `@property`) 
+and populate it in your code. 
+
+But it's so common that `ormar` has you covered. You can "materialize" a `property_field` on you `Model`.   
+
+!!!warning
+    `property_field` fields are always **Optional** and it cannot be changed (otherwise db load validation would fail)
+
+```Python hl_lines="20-22"
+--8<-- "../docs_src/models/docs015.py"
+```
+
+!!!warning
+    The decorated function has to accept only one parameter, and that parameter have to be `self`. 
+    
+    If you try to decorate a function with more parameters `ormar` will raise `ModelDefinitionError`.
+    
+    Sample:
+    
+    ```python
+    # will raise ModelDefinitionError
+    @property_field
+    def prefixed_name(self, prefix="prefix_"):
+        return 'custom_prefix__' + self.name
+    
+    # will raise ModelDefinitionError 
+    # (calling first param something else than 'self' is a bad practice anyway)
+    @property_field
+    def prefixed_name(instance):
+        return 'custom_prefix__' + self.name
+    ```
+    
+Note that `property_field` decorated methods do not go through verification (but that might change in future) and are only available
+in the response from `fastapi` and `dict()` and `json()` methods. You cannot pass a value for this field in the request 
+(or rather you can but it will be discarded by ormar so really no point but no Exception will be raised).
+
+!!!note
+    Note that both `pydantic_only` and `property_field` decorated field can be included/excluded in both `dict()` and `fastapi`
+    response with `include`/`exclude` and `response_model_include`/`response_model_exclude` accordingly.
+    
+!!!tip
+    Note that `@property_field` decorator is designed to replace the python `@property` decorator, you do not have to combine them.
+    
+    In theory you can cause `ormar` have a failsafe mechanism, but note that i.e. `mypy` will complain about re-decorating a property.
+    
+    ```python
+    # valid and working but unnecessary and mypy will complain
+    @property_field
+    @property
+    def prefixed_name(self):
+        return 'custom_prefix__' + self.name
+    ```
+    
+```python
+# <==part of code removed for clarity==>
+def gen_pass():  # note: NOT production ready 
+    choices = string.ascii_letters + string.digits + "!@#$%^&*()"
+    return "".join(random.choice(choices) for _ in range(20))
+
+class RandomModel(ormar.Model):
+    class Meta:
+        tablename: str = "random_users"
+        metadata = metadata
+        database = database
+
+        include_props_in_dict = True
+
+    id: int = ormar.Integer(primary_key=True)
+    password: str = ormar.String(max_length=255, default=gen_pass)
+    first_name: str = ormar.String(max_length=255, default="John")
+    last_name: str = ormar.String(max_length=255)
+    created_date: datetime.datetime = ormar.DateTime(
+        server_default=sqlalchemy.func.now()
+    )
+
+    @property_field
+    def full_name(self) -> str:
+        return " ".join([self.first_name, self.last_name])
+
+# <==part of code removed for clarity==>
+app =FastAPI()
+
+# explicitly exclude property_field in this endpoint
+@app.post("/random/", response_model=RandomModel, response_model_exclude={"full_name"})
+async def create_user(user: RandomModel):
+    return await user.save()
+
+# <==part of code removed for clarity==>
+
+def test_excluding_property_field_in_endpoints2():
+    client = TestClient(app)
+    with client as client:
+        RandomModel.Meta.include_props_in_dict = True
+        user3 = {"last_name": "Test"}
+        response = client.post("/random3/", json=user3)
+        assert list(response.json().keys()) == [
+            "id",
+            "password",
+            "first_name",
+            "last_name",
+            "created_date",
+        ]
+        # despite being decorated with property_field if you explictly exclude it it will be gone
+        assert response.json().get("full_name") is None
+
+# <==part of code removed for clarity==>
+```
+
+#### Fields names vs Column names
 
 By default names of the fields will be used for both the underlying `pydantic` model and `sqlalchemy` table.
 
@@ -330,7 +537,7 @@ You can set this parameter by providing `Meta` class `constraints` argument.
 --8<-- "../docs_src/models/docs006.py"
 ```
 
-## Initialization
+## Model Initialization
 
 There are two ways to create and persist the `Model` instance in the database.
 
@@ -560,3 +767,4 @@ For example to list table model fields you can:
 [sqlalchemy table creation]: https://docs.sqlalchemy.org/en/13/core/metadata.html#creating-and-dropping-database-tables
 [alembic]: https://alembic.sqlalchemy.org/en/latest/tutorial.html
 [save status]:  ../models/#model-save-status
+[Internals]:  #internals
