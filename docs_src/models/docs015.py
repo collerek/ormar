@@ -20,4 +20,3 @@ class Course(ormar.Model):
     @property_field
     def prefixed_name(self):
         return 'custom_prefix__' + self.name
-
