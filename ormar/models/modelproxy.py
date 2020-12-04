@@ -20,11 +20,6 @@ from typing import (
 from ormar.exceptions import ModelPersistenceError, RelationshipInstanceError
 from ormar.queryset.utils import translate_list_to_dict, update
 
-try:
-    import orjson as json
-except ImportError:  # pragma: nocover
-    import json  # type: ignore
-
 import ormar  # noqa:  I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
@@ -45,17 +40,16 @@ Field = TypeVar("Field", bound=BaseField)
 class ModelTableProxy:
     if TYPE_CHECKING:  # pragma no cover
         Meta: ModelMeta
-        _related_names: Set
+        _related_names: Optional[Set]
         _related_names_hash: Union[str, bytes]
         pk: Any
         get_name: Callable
-
-    def dict(self):  # noqa A003
-        raise NotImplementedError  # pragma no cover
+        _props: Set
+        dict: Callable  # noqa:  A001, VNE003
 
     def _extract_own_model_fields(self) -> Dict:
         related_names = self.extract_related_names()
-        self_fields = {k: v for k, v in self.dict().items() if k not in related_names}
+        self_fields = self.dict(exclude=related_names)
         return self_fields
 
     @classmethod
@@ -183,7 +177,11 @@ class ModelTableProxy:
     @classmethod
     def populate_default_values(cls, new_kwargs: Dict) -> Dict:
         for field_name, field in cls.Meta.model_fields.items():
-            if field_name not in new_kwargs and field.has_default(use_server=False):
+            if (
+                field_name not in new_kwargs
+                and field.has_default(use_server=False)
+                and not field.pydantic_only
+            ):
                 new_kwargs[field_name] = field.get_default()
             # clear fields with server_default set as None
             if field.server_default is not None and not new_kwargs.get(field_name):
@@ -207,14 +205,13 @@ class ModelTableProxy:
     @classmethod
     def extract_related_names(cls) -> Set:
 
-        if isinstance(cls._related_names_hash, (str, bytes)):
+        if isinstance(cls._related_names, Set):
             return cls._related_names
 
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
             if inspect.isclass(field) and issubclass(field, ForeignKeyField):
                 related_names.add(name)
-        cls._related_names_hash = json.dumps(list(cls.Meta.model_fields.keys()))
         cls._related_names = related_names
 
         return related_names

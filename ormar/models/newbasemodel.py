@@ -51,9 +51,6 @@ class NewBaseModel(
         "_orm_id",
         "_orm_saved",
         "_orm",
-        "_related_names",
-        "_related_names_hash",
-        "_props",
     )
 
     if TYPE_CHECKING:  # pragma no cover
@@ -68,14 +65,14 @@ class NewBaseModel(
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
         _orm_saved: bool
-        _related_names: Set
+        _related_names: Optional[Set]
         _related_names_hash: str
-        _props: List[str]
+        _pydantic_fields: Set
+        _quick_access_fields: Set
         Meta: ModelMeta
 
     # noinspection PyMissingConstructor
     def __init__(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
-
         object.__setattr__(self, "_orm_id", uuid.uuid4().hex)
         object.__setattr__(self, "_orm_saved", False)
         object.__setattr__(
@@ -96,6 +93,13 @@ class NewBaseModel(
 
         if "pk" in kwargs:
             kwargs[self.Meta.pkname] = kwargs.pop("pk")
+
+        # remove property fields values from validation
+        kwargs = {
+            k: v
+            for k, v in kwargs.items()
+            if k not in object.__getattribute__(self, "Meta").property_fields
+        }
         # build the models to set them and validate but don't register
         try:
             new_kwargs: Dict[str, Any] = {
@@ -134,7 +138,7 @@ class NewBaseModel(
             )
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
-        if name in ("_orm_id", "_orm_saved", "_orm", "_related_names", "_props"):
+        if name in object.__getattribute__(self, "_quick_access_fields"):
             object.__setattr__(self, name, value)
         elif name == "pk":
             object.__setattr__(self, self.Meta.pkname, value)
@@ -158,29 +162,26 @@ class NewBaseModel(
             self.set_save_status(False)
 
     def __getattribute__(self, item: str) -> Any:
-        if item in (
-            "_orm_id",
-            "_orm_saved",
-            "_orm",
-            "__fields__",
-            "_related_names",
-            "_props",
-        ):
+        if item in object.__getattribute__(self, "_quick_access_fields"):
             return object.__getattribute__(self, item)
         if item == "pk":
-            return self.__dict__.get(self.Meta.pkname, None)
-        if item != "extract_related_names" and item in self.extract_related_names():
-            return self._extract_related_model_instead_of_field(item)
-        if item != "__fields__" and item in self.__fields__:
-            value = self.__dict__.get(item, None)
-            value = self._convert_json(item, value, "loads")
+            return object.__getattribute__(self, "__dict__").get(self.Meta.pkname, None)
+        if item in object.__getattribute__(self, "extract_related_names")():
+            return object.__getattribute__(
+                self, "_extract_related_model_instead_of_field"
+            )(item)
+        if item in object.__getattribute__(self, "Meta").property_fields:
+            value = object.__getattribute__(self, item)
+            return value() if callable(value) else value
+        if item in object.__getattribute__(self, "_pydantic_fields"):
+            value = object.__getattribute__(self, "__dict__").get(item, None)
+            value = object.__getattribute__(self, "_convert_json")(item, value, "loads")
             return value
-        return super().__getattribute__(item)
+        return object.__getattribute__(self, item)  # pragma: no cover
 
     def _extract_related_model_instead_of_field(
         self, item: str
     ) -> Optional[Union["T", Sequence["T"]]]:
-        # alias = self.get_column_alias(item)
         if item in self._orm:
             return self._orm.get(item)
         return None  # pragma no cover
@@ -193,8 +194,8 @@ class NewBaseModel(
     def __same__(self, other: "NewBaseModel") -> bool:
         return (
             self._orm_id == other._orm_id
-            or self.dict() == other.dict()
             or (self.pk == other.pk and self.pk is not None)
+            or self.dict() == other.dict()
         )
 
     @classmethod
@@ -229,22 +230,13 @@ class NewBaseModel(
     @classmethod
     def get_properties(
         cls, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None]
-    ) -> List[str]:
-        if isinstance(cls._props, list):
-            props = cls._props
-        else:
-            props = [
-                prop
-                for prop in dir(cls)
-                if isinstance(getattr(cls, prop), property)
-                and prop
-                not in ("__values__", "__fields__", "fields", "pk_column", "saved")
-            ]
-            cls._props = props
+    ) -> Set[str]:
+
+        props = cls.Meta.property_fields
         if include:
-            props = [prop for prop in props if prop in include]
+            props = {prop for prop in props if prop in include}
         if exclude:
-            props = [prop for prop in props if prop not in exclude]
+            props = {prop for prop in props if prop not in exclude}
         return props
 
     def _get_related_not_excluded_fields(
@@ -348,10 +340,11 @@ class NewBaseModel(
             exclude=exclude,  # type: ignore
         )
 
-        # include model properties as fields
-        props = self.get_properties(include=include, exclude=exclude)
-        if props:
-            dict_instance.update({prop: getattr(self, prop) for prop in props})
+        # include model properties as fields in dict
+        if object.__getattribute__(self, "Meta").property_fields:
+            props = self.get_properties(include=include, exclude=exclude)
+            if props:
+                dict_instance.update({prop: getattr(self, prop) for prop in props})
 
         return dict_instance
 
@@ -379,4 +372,7 @@ class NewBaseModel(
         return value
 
     def _is_conversion_to_json_needed(self, column_name: str) -> bool:
-        return self.Meta.model_fields[column_name].__type__ == pydantic.Json
+        return (
+            column_name in self.Meta.model_fields
+            and self.Meta.model_fields[column_name].__type__ == pydantic.Json
+        )

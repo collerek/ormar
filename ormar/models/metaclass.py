@@ -1,6 +1,6 @@
 import logging
 import warnings
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Type, Union
 
 import databases
 import pydantic
@@ -11,10 +11,11 @@ from pydantic.utils import lenient_issubclass
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
-from ormar import ForeignKey, ModelDefinitionError, Integer  # noqa I100
+from ormar import ForeignKey, Integer, ModelDefinitionError  # noqa I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToMany, ManyToManyField
+from ormar.models.quick_access_views import quick_access_set
 from ormar.queryset import QuerySet
 from ormar.relations.alias_manager import AliasManager
 
@@ -36,6 +37,7 @@ class ModelMeta:
         str, Union[Type[BaseField], Type[ForeignKeyField], Type[ManyToManyField]]
     ]
     alias_manager: AliasManager
+    property_fields: Set
 
 
 def register_relation_on_build(table_name: str, field: Type[ForeignKeyField]) -> None:
@@ -117,6 +119,16 @@ def create_pydantic_field(
         type_=model,
         model_config=model.__config__,
         required=False,
+        class_validators={},
+    )
+
+
+def get_pydantic_field(field_name: str, model: Type["Model"]) -> "ModelField":
+    return ModelField(
+        name=field_name,
+        type_=model.Meta.model_fields[field_name].__type__,  # type: ignore
+        model_config=model.__config__,
+        required=not model.Meta.model_fields[field_name].nullable,
         class_validators={},
     )
 
@@ -295,16 +307,48 @@ def choices_validator(cls: Type["Model"], values: Dict[str, Any]) -> Dict[str, A
     return values
 
 
-def populate_choices_validators(  # noqa CCR001
-    model: Type["Model"], attrs: Dict
-) -> None:
+def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
     if model_initialized_and_has_model_fields(model):
         for _, field in model.Meta.model_fields.items():
             if check_if_field_has_choices(field):
-                validators = attrs.get("__pre_root_validators__", [])
+                validators = getattr(model, "__pre_root_validators__", [])
                 if choices_validator not in validators:
                     validators.append(choices_validator)
-                    attrs["__pre_root_validators__"] = validators
+                    model.__pre_root_validators__ = validators
+
+
+def populate_default_options_values(
+    new_model: Type["Model"], model_fields: Dict
+) -> None:
+    if not hasattr(new_model.Meta, "constraints"):
+        new_model.Meta.constraints = []
+    if not hasattr(new_model.Meta, "model_fields"):
+        new_model.Meta.model_fields = model_fields
+
+
+def add_cached_properties(new_model: Type["Model"]) -> None:
+    new_model._quick_access_fields = quick_access_set
+    new_model._related_names = None
+    new_model._pydantic_fields = {name for name in new_model.__fields__}
+
+
+def property_fields_not_set(new_model: Type["Model"]) -> bool:
+    return (
+        not hasattr(new_model.Meta, "property_fields")
+        or not new_model.Meta.property_fields
+    )
+
+
+def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa: CCR001
+    if property_fields_not_set(new_model):
+        props = set()
+        for var_name, value in attrs.items():
+            if isinstance(value, property):
+                value = value.fget
+            field_config = getattr(value, "__property_field__", None)
+            if field_config:
+                props.add(var_name)
+        new_model.Meta.property_fields = props
 
 
 class ModelMetaclass(pydantic.main.ModelMetaclass):
@@ -317,30 +361,23 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         new_model = super().__new__(  # type: ignore
             mcs, name, bases, attrs
         )
+        add_cached_properties(new_model)
 
         if hasattr(new_model, "Meta"):
-            if not hasattr(new_model.Meta, "constraints"):
-                new_model.Meta.constraints = []
-            if not hasattr(new_model.Meta, "model_fields"):
-                new_model.Meta.model_fields = model_fields
+            populate_default_options_values(new_model, model_fields)
             new_model = populate_meta_tablename_columns_and_pk(name, new_model)
             new_model = populate_meta_sqlalchemy_table_if_required(new_model)
             expand_reverse_relationships(new_model)
-            populate_choices_validators(new_model, attrs)
-
+            populate_choices_validators(new_model)
             if new_model.Meta.pkname not in attrs["__annotations__"]:
                 field_name = new_model.Meta.pkname
-                field = Integer(name=field_name, primary_key=True)
                 attrs["__annotations__"][field_name] = Optional[int]  # type: ignore
-                populate_default_pydantic_field_value(
-                    field, field_name, attrs  # type: ignore
+                attrs[field_name] = None
+                new_model.__fields__[field_name] = get_pydantic_field(
+                    field_name=field_name, model=new_model
                 )
-
-            new_model = super().__new__(  # type: ignore
-                mcs, name, bases, attrs
-            )
-
             new_model.Meta.alias_manager = alias_manager
             new_model.objects = QuerySet(new_model)
+            add_property_fields(new_model, attrs)
 
         return new_model

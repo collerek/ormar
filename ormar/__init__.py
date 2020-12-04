@@ -1,3 +1,4 @@
+from ormar.decorators import property_field
 from ormar.exceptions import ModelDefinitionError, ModelNotSet, MultipleMatches, NoMatch
 from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
 from ormar.fields import (  # noqa: I100
@@ -30,7 +31,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 __all__ = [
     "Integer",
     "BigInteger",
@@ -58,4 +59,5 @@ __all__ = [
     "QuerySetProtocol",
     "RelationProtocol",
     "ModelMeta",
+    "property_field",
 ]

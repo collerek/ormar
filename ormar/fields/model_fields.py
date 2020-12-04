@@ -12,11 +12,22 @@ from ormar.fields.base import BaseField  # noqa I101
 
 
 def is_field_nullable(
-    nullable: Optional[bool], default: Any, server_default: Any
+    nullable: Optional[bool],
+    default: Any,
+    server_default: Any,
+    pydantic_only: Optional[bool],
 ) -> bool:
     if nullable is None:
-        return default is not None or server_default is not None
+        return (
+            default is not None
+            or server_default is not None
+            or (pydantic_only is not None and pydantic_only)
+        )
     return nullable
+
+
+def is_auto_primary_key(primary_key: bool, autoincrement: bool) -> bool:
+    return primary_key and autoincrement
 
 
 class ModelFieldFactory:
@@ -29,19 +40,24 @@ class ModelFieldFactory:
         default = kwargs.pop("default", None)
         server_default = kwargs.pop("server_default", None)
         nullable = kwargs.pop("nullable", None)
+        pydantic_only = kwargs.pop("pydantic_only", False)
+
+        primary_key = kwargs.pop("primary_key", False)
+        autoincrement = kwargs.pop("autoincrement", False)
 
         namespace = dict(
             __type__=cls._type,
             alias=kwargs.pop("name", None),
             name=None,
-            primary_key=kwargs.pop("primary_key", False),
+            primary_key=primary_key,
             default=default,
             server_default=server_default,
-            nullable=is_field_nullable(nullable, default, server_default),
+            nullable=is_field_nullable(nullable, default, server_default, pydantic_only)
+            or is_auto_primary_key(primary_key, autoincrement),
             index=kwargs.pop("index", False),
             unique=kwargs.pop("unique", False),
-            pydantic_only=kwargs.pop("pydantic_only", False),
-            autoincrement=kwargs.pop("autoincrement", False),
+            pydantic_only=pydantic_only,
+            autoincrement=autoincrement,
             column_type=cls.get_column_type(**kwargs),
             choices=set(kwargs.pop("choices", [])),
             **kwargs
