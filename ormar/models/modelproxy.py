@@ -45,7 +45,7 @@ class ModelTableProxy:
         pk: Any
         get_name: Callable
         _props: Set
-        dict: Callable
+        dict: Callable  # noqa:  A001, VNE003
 
     def _extract_own_model_fields(self) -> Dict:
         related_names = self.extract_related_names()

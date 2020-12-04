@@ -1,3 +1,4 @@
+from ormar.decorators import property_field
 from ormar.exceptions import ModelDefinitionError, ModelNotSet, MultipleMatches, NoMatch
 from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
 from ormar.fields import (  # noqa: I100
@@ -58,4 +59,5 @@ __all__ = [
     "QuerySetProtocol",
     "RelationProtocol",
     "ModelMeta",
+    "property_field",
 ]

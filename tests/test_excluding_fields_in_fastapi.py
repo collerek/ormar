@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 import ormar
+from ormar import property_field
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -74,8 +75,8 @@ class RandomModel(ormar.Model):
         server_default=sqlalchemy.func.now()
     )
 
-    @property
-    def full_name(self):
+    @property_field
+    def full_name(self) -> str:
         return " ".join([self.first_name, self.last_name])
 
 
@@ -140,7 +141,6 @@ async def create_user4(user: User2):
 @app.post("/random/", response_model=RandomModel)
 async def create_user5(user: RandomModel):
     user = await user.save()
-    print('returning')
     return user
 
 
@@ -170,24 +170,20 @@ def test_excluding_fields_in_endpoints():
             "last_name": "Doe",
         }
 
-        print('before call')
         response = client.post("/users/", json=user2)
         created_user = User(**response.json())
         assert created_user.pk is not None
         assert created_user.password is None
 
-        print('before call')
         response = client.post("/users2/", json=user)
         created_user2 = User(**response.json())
         assert created_user2.pk is not None
         assert created_user2.password is None
 
         # response has only 3 fields from UserBase
-        print('before call')
         response = client.post("/users3/", json=user)
         assert list(response.json().keys()) == ["email", "first_name", "last_name"]
 
-        print('before call')
         response = client.post("/users4/", json=user)
         assert list(response.json().keys()) == [
             "id",
@@ -197,40 +193,41 @@ def test_excluding_fields_in_endpoints():
             "category",
         ]
 
-        # user3 = {"last_name": "Test"}
-        # print('before call')
-        # response = client.post("/random/", json=user3)
-        # assert list(response.json().keys()) == [
-        #     "id",
-        #     "password",
-        #     "first_name",
-        #     "last_name",
-        #     "created_date",
-        #     "full_name",
-        # ]
-        # assert response.json().get("full_name") == "John Test"
-        #
-        # RandomModel.Meta.include_props_in_fields = False
-        # user3 = {"last_name": "Test"}
-        # print('before call')
-        # response = client.post("/random/", json=user3)
-        # assert list(response.json().keys()) == [
-        #     "id",
-        #     "password",
-        #     "first_name",
-        #     "last_name",
-        #     "created_date",
-        #     "full_name",
-        # ]
-        # assert response.json().get("full_name") == "John Test"
-
 
 def test_adding_fields_in_endpoints():
     client = TestClient(app)
     with client as client:
+        user3 = {"last_name": "Test"}
+        response = client.post("/random/", json=user3)
+        assert list(response.json().keys()) == [
+            "id",
+            "password",
+            "first_name",
+            "last_name",
+            "created_date",
+            "full_name",
+        ]
+        assert response.json().get("full_name") == "John Test"
+
+        RandomModel.Meta.include_props_in_fields = False
+        user3 = {"last_name": "Test"}
+        response = client.post("/random/", json=user3)
+        assert list(response.json().keys()) == [
+            "id",
+            "password",
+            "first_name",
+            "last_name",
+            "created_date",
+            "full_name",
+        ]
+        assert response.json().get("full_name") == "John Test"
+
+
+def test_adding_fields_in_endpoints2():
+    client = TestClient(app)
+    with client as client:
         RandomModel.Meta.include_props_in_dict = True
         user3 = {"last_name": "Test"}
-        print('before call')
         response = client.post("/random2/", json=user3)
         assert list(response.json().keys()) == [
             "id",

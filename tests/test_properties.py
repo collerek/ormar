@@ -1,8 +1,10 @@
+# type: ignore
 import databases
 import pytest
 import sqlalchemy
 
 import ormar
+from ormar import ModelDefinitionError, property_field
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -19,15 +21,15 @@ class Song(ormar.Model):
     name: str = ormar.String(max_length=100)
     sort_order: int = ormar.Integer()
 
-    @property
+    @property_field
     def sorted_name(self):
         return f"{self.sort_order}: {self.name}"
 
-    @property
+    @property_field
     def sample(self):
         return "sample"
 
-    @property
+    @property_field
     def sample2(self):
         return "sample2"
 
@@ -66,3 +68,12 @@ async def test_sort_order_on_main_model():
         assert "sample" not in check_include
         assert "sample2" in check_include
         assert "sorted_name" in check_include
+
+
+def test_wrong_definition():
+    with pytest.raises(ModelDefinitionError):
+
+        class WrongModel(ormar.Model):  # pragma: no cover
+            @property_field
+            def test(self, aa=10, bb=30):
+                pass

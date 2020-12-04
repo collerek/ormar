@@ -3,9 +3,9 @@ import datetime
 import databases
 import pytest
 import sqlalchemy
-from pydantic import validator
 
 import ormar
+from ormar import property_field
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -17,16 +17,26 @@ class Album(ormar.Model):
         tablename = "albums"
         metadata = metadata
         database = database
-        include_props_in_dict = True
-        include_props_in_fields = True
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     timestamp: datetime.datetime = ormar.DateTime(pydantic_only=True)
 
-    @property
+    @property_field
     def name10(self) -> str:
         return self.name + "_10"
+
+    @property_field
+    def name20(self) -> str:
+        return self.name + "_20"
+
+    @property
+    def name30(self) -> str:
+        return self.name + "_30"
+
+    @property_field
+    def name40(self) -> str:
+        return self.name + "_40"
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -57,14 +67,13 @@ async def test_pydantic_only_fields():
             assert "timestamp" in test_dict
             assert test_dict["timestamp"] is None
 
+            assert album.name30 == "Hitchcock_30"
+
             album.timestamp = datetime.datetime.now()
             test_dict = album.dict()
             assert "timestamp" in test_dict
             assert test_dict["timestamp"] is not None
             assert test_dict.get("name10") == "Hitchcock_10"
-
-            Album.Meta.include_props_in_dict = False
-            test_dict = album.dict()
-            assert "timestamp" in test_dict
-            assert test_dict["timestamp"] is not None
-            assert test_dict.get("name10", 'aa') == 'aa'
+            assert test_dict.get("name20") == "Hitchcock_20"
+            assert test_dict.get("name40") == "Hitchcock_40"
+            assert "name30" not in test_dict

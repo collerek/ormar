@@ -25,7 +25,6 @@ quick_access_set = {
     "_orm",
     "_orm_id",
     "_orm_saved",
-    "_props",
     "_related_names",
     "_skip_ellipsis",
     "_update_and_follow",
