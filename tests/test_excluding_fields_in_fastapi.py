@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 import ormar
-from ormar import property_field
+from ormar import post_save, property_field
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -64,8 +64,6 @@ class RandomModel(ormar.Model):
         tablename: str = "random_users"
         metadata = metadata
         database = database
-
-        include_props_in_dict = True
 
     id: int = ormar.Integer(primary_key=True)
     password: str = ormar.String(max_length=255, default=gen_pass)
@@ -251,7 +249,6 @@ def test_adding_fields_in_endpoints():
         ]
         assert response.json().get("full_name") == "John Test"
 
-        RandomModel.Meta.include_props_in_fields = False
         user3 = {"last_name": "Test"}
         response = client.post("/random/", json=user3)
         assert list(response.json().keys()) == [
@@ -268,7 +265,6 @@ def test_adding_fields_in_endpoints():
 def test_adding_fields_in_endpoints2():
     client = TestClient(app)
     with client as client:
-        RandomModel.Meta.include_props_in_dict = True
         user3 = {"last_name": "Test"}
         response = client.post("/random2/", json=user3)
         assert list(response.json().keys()) == [
@@ -283,9 +279,15 @@ def test_adding_fields_in_endpoints2():
 
 
 def test_excluding_property_field_in_endpoints2():
+
+    dummy_registry = {}
+
+    @post_save(RandomModel)
+    async def after_save(sender, instance, **kwargs):
+        dummy_registry[instance.pk] = instance.dict()
+
     client = TestClient(app)
     with client as client:
-        RandomModel.Meta.include_props_in_dict = True
         user3 = {"last_name": "Test"}
         response = client.post("/random3/", json=user3)
         assert list(response.json().keys()) == [
@@ -296,3 +298,7 @@ def test_excluding_property_field_in_endpoints2():
             "created_date",
         ]
         assert response.json().get("full_name") is None
+        assert len(dummy_registry) == 1
+        check_dict = dummy_registry.get(response.json().get("id"))
+        check_dict.pop("full_name")
+        assert response.json().get("password") == check_dict.get("password")

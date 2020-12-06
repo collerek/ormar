@@ -7,6 +7,7 @@ nav:
   - Fields: fields.md
   - Relations: relations.md
   - Queries: queries.md
+  - Signals: signals.md
   - Use with Fastapi: fastapi.md
   - Use with mypy: mypy.md
   - PyCharm plugin: plugin.md

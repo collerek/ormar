@@ -6,7 +6,7 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar.decorators.signals import (
+from ormar import (
     post_delete,
     post_save,
     post_update,
@@ -51,6 +51,7 @@ class Album(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     is_best_seller: bool = ormar.Boolean(default=False)
+    play_count: int = ormar.Integer(default=0)
     cover: Optional[Cover] = ormar.ForeignKey(Cover)
 
 
@@ -70,6 +71,7 @@ def test_passing_not_callable():
 
 def test_passing_callable_without_kwargs():
     with pytest.raises(SignalDefinitionError):
+
         @pre_save(Album)
         def trigger(sender, instance):  # pragma: no cover
             pass
@@ -79,6 +81,7 @@ def test_passing_callable_without_kwargs():
 async def test_signal_functions():
     async with database:
         async with database.transaction(force_rollback=True):
+
             @pre_save(Album)
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
@@ -162,9 +165,9 @@ async def test_signal_functions():
             assert len(audits) == 2
             assert audits[0].event_type == "PRE_DELETE_album"
             assert (
-                    audits[0].event_log.get("id")
-                    == audits[1].event_log.get("id")
-                    == album.id
+                audits[0].event_log.get("id")
+                == audits[1].event_log.get("id")
+                == album.id
             )
             assert audits[1].event_type == "POST_DELETE_album"
 
@@ -178,6 +181,7 @@ async def test_signal_functions():
 async def test_multiple_signals():
     async with database:
         async with database.transaction(force_rollback=True):
+
             @pre_save(Album)
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
@@ -208,6 +212,7 @@ async def test_multiple_signals():
 async def test_static_methods_as_signals():
     async with database:
         async with database.transaction(force_rollback=True):
+
             class AlbumAuditor:
                 event_type = "ALBUM_INSTANCE"
 
@@ -232,6 +237,7 @@ async def test_static_methods_as_signals():
 async def test_methods_as_signals():
     async with database:
         async with database.transaction(force_rollback=True):
+
             class AlbumAuditor:
                 def __init__(self):
                     self.event_type = "ALBUM_INSTANCE"
@@ -252,10 +258,12 @@ async def test_methods_as_signals():
 
             album.signals.pre_save.disconnect(auditor.before_save)
 
+
 @pytest.mark.asyncio
 async def test_multiple_senders_signal():
     async with database:
         async with database.transaction(force_rollback=True):
+
             @pre_save([Album, Cover])
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
@@ -263,7 +271,7 @@ async def test_multiple_senders_signal():
                     event_log=instance.json(),
                 ).save()
 
-            cover = await Cover(title='Blue').save()
+            cover = await Cover(title="Blue").save()
             album = await Album.objects.create(name="San Francisco", cover=cover)
 
             audits = await AuditLog.objects.all()
@@ -271,7 +279,72 @@ async def test_multiple_senders_signal():
             assert audits[0].event_type == "PRE_SAVE_cover"
             assert audits[0].event_log.get("title") == cover.title
             assert audits[1].event_type == "PRE_SAVE_album"
-            assert audits[1].event_log.get("cover") == album.cover.dict(exclude={'albums'})
+            assert audits[1].event_log.get("cover") == album.cover.dict(
+                exclude={"albums"}
+            )
 
             album.signals.pre_save.disconnect(before_save)
             cover.signals.pre_save.disconnect(before_save)
+
+
+@pytest.mark.asyncio
+async def test_modifing_the_instance():
+    async with database:
+        async with database.transaction(force_rollback=True):
+
+            @pre_update(Album)
+            async def before_update(sender, instance, **kwargs):
+                if instance.play_count > 50 and not instance.is_best_seller:
+                    instance.is_best_seller = True
+
+            # here album.play_count ans is_best_seller get default values
+            album = await Album.objects.create(name="Venice")
+            assert not album.is_best_seller
+            assert album.play_count == 0
+
+            album.play_count = 30
+            # here a trigger is called but play_count is too low
+            await album.update()
+            assert not album.is_best_seller
+
+            album.play_count = 60
+            await album.update()
+            assert album.is_best_seller
+            album.signals.pre_update.disconnect(before_update)
+
+
+@pytest.mark.asyncio
+async def test_custom_signal():
+    async with database:
+        async with database.transaction(force_rollback=True):
+
+            async def after_update(sender, instance, **kwargs):
+                if instance.play_count > 50 and not instance.is_best_seller:
+                    instance.is_best_seller = True
+                elif instance.play_count < 50 and instance.is_best_seller:
+                    instance.is_best_seller = False
+                await instance.update()
+
+            Album.Meta.signals.custom.connect(after_update)
+
+            # here album.play_count ans is_best_seller get default values
+            album = await Album.objects.create(name="Venice")
+            assert not album.is_best_seller
+            assert album.play_count == 0
+
+            album.play_count = 30
+            # here a trigger is called but play_count is too low
+            await album.update()
+            assert not album.is_best_seller
+
+            album.play_count = 60
+            await album.update()
+            assert not album.is_best_seller
+            await Album.Meta.signals.custom.send(sender=Album, instance=album)
+            assert album.is_best_seller
+
+            album.play_count = 30
+            await album.update()
+            assert album.is_best_seller
+            await Album.Meta.signals.custom.send(sender=Album, instance=album)
+            assert not album.is_best_seller

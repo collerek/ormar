@@ -2,9 +2,11 @@
 
 *  **Breaking:** QuerySet `bulk_update` method now raises `ModelPersistenceError` for unsaved models passed instead of `QueryDefinitionError`
 *  **Breaking:** Model initialization with unknown field name now raises `ModelError` instead of `KeyError`
-*  
-*  Add py.typed and modify setup.py for mypy support 
+*  Added **Signals**, with pre-defined list signals and decorators: `post_delete`, `post_save`, `post_update`, `pre_delete`, 
+`pre_save`, `pre_update`
+*  Add `py.typed` and modify `setup.py` for mypy support 
 *  Performance optimization
+*  Updated docs
 
 # 0.6.2
 
