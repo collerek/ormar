@@ -219,7 +219,7 @@ def test_excluding_fields_in_endpoints():
         assert isinstance(user_instance.timestamp, datetime.datetime)
         assert user_instance.timestamp == timestamp
 
-        response = client.post("/users4/", json=user)
+        response = client.post("/users4/", json=user3)
         assert list(response.json().keys()) == [
             "id",
             "email",
@@ -228,8 +228,12 @@ def test_excluding_fields_in_endpoints():
             "category",
             "timestamp",
         ]
-        assert response.json().get("timestamp") != str(timestamp).replace(" ", "T")
-        assert response.json().get("timestamp") is not None
+        assert (
+            datetime.datetime.strptime(
+                response.json().get("timestamp"), "%Y-%m-%dT%H:%M:%S.%f"
+            )
+            == timestamp
+        )
 
 
 def test_adding_fields_in_endpoints():
