@@ -57,7 +57,7 @@ class Signal:
 
 
 class SignalEmitter:
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
         signals: Dict[str, Signal]
 
     def __init__(self) -> None:
