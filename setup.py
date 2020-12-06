@@ -50,6 +50,8 @@ setup(
     author_email="collerek@gmail.com",
     packages=get_packages(PACKAGE),
     package_data={PACKAGE: ["py.typed"]},
+    include_package_data=True,
+    zip_safe=False,
     data_files=[("", ["LICENSE.md"])],
     install_requires=["databases", "pydantic>=1.5", "sqlalchemy", "typing_extensions"],
     extras_require={
@@ -65,9 +67,11 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Topic :: Internet :: WWW/HTTP",
+        "Framework :: AsyncIO",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3 :: Only",
     ],
 )

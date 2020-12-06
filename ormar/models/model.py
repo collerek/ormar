@@ -195,6 +195,9 @@ class Model(NewBaseModel):
         if not self.pk and self.Meta.model_fields[self.Meta.pkname].autoincrement:
             self_fields.pop(self.Meta.pkname, None)
         self_fields = self.populate_default_values(self_fields)
+        self.from_dict(self_fields)
+
+        await self.signals.pre_save.send(sender=self.__class__, instance=self)
 
         self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.insert()
@@ -204,6 +207,7 @@ class Model(NewBaseModel):
         if pk and isinstance(pk, self.pk_type()):
             setattr(self, self.Meta.pkname, pk)
 
+        self.set_save_status(True)
         # refresh server side defaults
         if any(
             field.server_default is not None
@@ -211,9 +215,8 @@ class Model(NewBaseModel):
             if name not in self_fields
         ):
             await self.load()
-            return self
 
-        self.set_save_status(True)
+        await self.signals.post_save.send(sender=self.__class__, instance=self)
         return self
 
     async def save_related(  # noqa: CCR001
@@ -268,6 +271,7 @@ class Model(NewBaseModel):
                 "You cannot update not saved model! Use save or upsert method."
             )
 
+        await self.signals.pre_update.send(sender=self.__class__, instance=self)
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
         self_fields = self.translate_columns_to_aliases(self_fields)
@@ -276,13 +280,16 @@ class Model(NewBaseModel):
 
         await self.Meta.database.execute(expr)
         self.set_save_status(True)
+        await self.signals.post_update.send(sender=self.__class__, instance=self)
         return self
 
     async def delete(self: T) -> int:
+        await self.signals.pre_delete.send(sender=self.__class__, instance=self)
         expr = self.Meta.table.delete()
         expr = expr.where(self.pk_column == (getattr(self, self.Meta.pkname)))
         result = await self.Meta.database.execute(expr)
         self.set_save_status(False)
+        await self.signals.post_delete.send(sender=self.__class__, instance=self)
         return result
 
     async def load(self: T) -> T:

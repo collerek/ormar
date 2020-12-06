@@ -1,3 +1,13 @@
+# 0.7.0
+
+*  **Breaking:** QuerySet `bulk_update` method now raises `ModelPersistenceError` for unsaved models passed instead of `QueryDefinitionError`
+*  **Breaking:** Model initialization with unknown field name now raises `ModelError` instead of `KeyError`
+*  Added **Signals**, with pre-defined list signals and decorators: `post_delete`, `post_save`, `post_update`, `pre_delete`, 
+`pre_save`, `pre_update`
+*  Add `py.typed` and modify `setup.py` for mypy support 
+*  Performance optimization
+*  Updated docs
+
 # 0.6.2
 
 *  Performance optimization
@@ -12,7 +22,7 @@
 
 # 0.6.0
 
-*  **Breaking:** calling instance.load() when the instance row was deleted from db now raises ormar.NoMatch instead of ValueError
+*  **Breaking:** calling instance.load() when the instance row was deleted from db now raises `NoMatch` instead of `ValueError`
 *  **Breaking:** calling add and remove on ReverseForeignKey relation now updates the child model in db setting/removing fk column
 *  **Breaking:** ReverseForeignKey relation now exposes QuerySetProxy API like ManyToMany relation
 *  **Breaking:** querying related models from ManyToMany cleans list of related models loaded on parent model:

@@ -35,6 +35,7 @@ from ormar.relations.relation_manager import RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+    from ormar.signals import SignalEmitter
 
     T = TypeVar("T", bound=Model)
 
@@ -47,11 +48,7 @@ if TYPE_CHECKING:  # pragma no cover
 class NewBaseModel(
     pydantic.BaseModel, ModelTableProxy, Excludable, metaclass=ModelMetaclass
 ):
-    __slots__ = (
-        "_orm_id",
-        "_orm_saved",
-        "_orm",
-    )
+    __slots__ = ("_orm_id", "_orm_saved", "_orm", "_pk_column")
 
     if TYPE_CHECKING:  # pragma no cover
         __model_fields__: Dict[str, Type[BaseField]]
@@ -75,6 +72,7 @@ class NewBaseModel(
     def __init__(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
         object.__setattr__(self, "_orm_id", uuid.uuid4().hex)
         object.__setattr__(self, "_orm_saved", False)
+        object.__setattr__(self, "_pk_column", None)
         object.__setattr__(
             self,
             "_orm",
@@ -94,13 +92,8 @@ class NewBaseModel(
         if "pk" in kwargs:
             kwargs[self.Meta.pkname] = kwargs.pop("pk")
 
-        # remove property fields values from validation
-        kwargs = {
-            k: v
-            for k, v in kwargs.items()
-            if k not in object.__getattribute__(self, "Meta").property_fields
-        }
         # build the models to set them and validate but don't register
+        # also remove property fields values from validation
         try:
             new_kwargs: Dict[str, Any] = {
                 k: self._convert_json(
@@ -111,14 +104,15 @@ class NewBaseModel(
                     "dumps",
                 )
                 for k, v in kwargs.items()
+                if k not in object.__getattribute__(self, "Meta").property_fields
             }
         except KeyError as e:
             raise ModelError(
                 f"Unknown field '{e.args[0]}' for model {self.get_name(lower=False)}"
             )
 
-        # explicitly set None to excluded fields with default
-        # as pydantic populates them with default
+        # explicitly set None to excluded fields
+        # as pydantic populates them with default if set
         for field_to_nullify in excluded:
             new_kwargs[field_to_nullify] = None
 
@@ -195,7 +189,8 @@ class NewBaseModel(
         return (
             self._orm_id == other._orm_id
             or (self.pk == other.pk and self.pk is not None)
-            or self.dict() == other.dict()
+            or self.dict(exclude=self.extract_related_names())
+            == other.dict(exclude=other.extract_related_names())
         )
 
     @classmethod
@@ -207,11 +202,20 @@ class NewBaseModel(
 
     @property
     def pk_column(self) -> sqlalchemy.Column:
-        return self.Meta.table.primary_key.columns.values()[0]
+        if object.__getattribute__(self, "_pk_column") is not None:
+            return object.__getattribute__(self, "_pk_column")
+        pk_columns = self.Meta.table.primary_key.columns.values()
+        pk_col = pk_columns[0]
+        object.__setattr__(self, "_pk_column", pk_col)
+        return pk_col
 
     @property
     def saved(self) -> bool:
         return self._orm_saved
+
+    @property
+    def signals(self) -> "SignalEmitter":
+        return self.Meta.signals
 
     @classmethod
     def pk_type(cls) -> Any:

@@ -203,6 +203,7 @@ The following keyword arguments are supported on all field types.
   * `unique: bool`
   * `choices: typing.Sequence`
   * `name: str`
+  * `pydantic_only: bool`
 
 All fields are required unless one of the following is set:
 
@@ -211,7 +212,18 @@ All fields are required unless one of the following is set:
   * `server_default` - Set a default value for the field on server side (like sqlalchemy's `func.now()`).
   * `primary key` with `autoincrement` - When a column is set to primary key and autoincrement is set on this column. 
 Autoincrement is set by default on int primary keys. 
+  * `pydantic_only` - Field is available only as normal pydantic field, not stored in the database.
+  
+### Available signals
 
+Signals allow to trigger your function for a given event on a given Model.
+
+  * `pre_save`
+  * `post_save`
+  * `pre_update`
+  * `post_update`
+  * `pre_delete`
+  * `post_delete`
 
 
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
