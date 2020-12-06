@@ -6,7 +6,7 @@ from sqlalchemy import bindparam
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
-from ormar.exceptions import QueryDefinitionError
+from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
 from ormar.queryset import FilterQuery
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.prefetch_query import PrefetchQuery
@@ -446,7 +446,7 @@ class QuerySet:
         for objt in objects:
             new_kwargs = objt.dict()
             if pk_name not in new_kwargs or new_kwargs.get(pk_name) is None:
-                raise QueryDefinitionError(
+                raise ModelPersistenceError(
                     "You cannot update unsaved objects. "
                     f"{self.model.__name__} has to have {pk_name} filled."
                 )

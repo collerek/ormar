@@ -5,7 +5,7 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar.exceptions import QueryDefinitionError
+from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -302,7 +302,7 @@ async def test_bulk_update_with_relation():
 async def test_bulk_update_not_saved_objts():
     async with database:
         category = await Category.objects.create(name="Sample Category")
-        with pytest.raises(QueryDefinitionError):
+        with pytest.raises(ModelPersistenceError):
             await Note.objects.bulk_update(
                 [
                     Note(text="Buy the groceries.", category=category),

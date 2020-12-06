@@ -13,7 +13,7 @@ def property_field(func: Callable) -> Union[property, Callable]:
         if len(arguments) > 1 or arguments[0] != "self":
             raise ModelDefinitionError(
                 "property_field decorator can be used "
-                "only on class methods with no arguments"
+                "only on methods with no arguments"
             )
         func.__dict__["__property_field__"] = True
     return func

@@ -1,5 +1,5 @@
 from ormar.decorators import property_field
-from ormar.exceptions import ModelDefinitionError, ModelNotSet, MultipleMatches, NoMatch
+from ormar.exceptions import ModelDefinitionError, MultipleMatches, NoMatch
 from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
 from ormar.fields import (  # noqa: I100
     BigInteger,
@@ -47,7 +47,6 @@ __all__ = [
     "ManyToMany",
     "Model",
     "ModelDefinitionError",
-    "ModelNotSet",
     "MultipleMatches",
     "NoMatch",
     "ForeignKey",
