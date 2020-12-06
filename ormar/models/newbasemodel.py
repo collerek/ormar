@@ -35,6 +35,7 @@ from ormar.relations.relation_manager import RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+    from ormar.signals import SignalEmitter
 
     T = TypeVar("T", bound=Model)
 
@@ -211,6 +212,10 @@ class NewBaseModel(
     @property
     def saved(self) -> bool:
         return self._orm_saved
+
+    @property
+    def signals(self) -> "SignalEmitter":
+        return self.Meta.signals
 
     @classmethod
     def pk_type(cls) -> Any:

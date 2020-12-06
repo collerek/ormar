@@ -18,6 +18,7 @@ from ormar.fields.many_to_many import ManyToMany, ManyToManyField
 from ormar.models.quick_access_views import quick_access_set
 from ormar.queryset import QuerySet
 from ormar.relations.alias_manager import AliasManager
+from ormar.signals import Signal, SignalEmitter
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -38,6 +39,7 @@ class ModelMeta:
     ]
     alias_manager: AliasManager
     property_fields: Set
+    signals: SignalEmitter
 
 
 def register_relation_on_build(table_name: str, field: Type[ForeignKeyField]) -> None:
@@ -332,15 +334,12 @@ def add_cached_properties(new_model: Type["Model"]) -> None:
     new_model._pydantic_fields = {name for name in new_model.__fields__}
 
 
-def property_fields_not_set(new_model: Type["Model"]) -> bool:
-    return (
-        not hasattr(new_model.Meta, "property_fields")
-        or not new_model.Meta.property_fields
-    )
+def meta_field_not_set(model: Type["Model"], field_name: str) -> bool:
+    return not hasattr(model.Meta, field_name) or not getattr(model.Meta, field_name)
 
 
 def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa: CCR001
-    if property_fields_not_set(new_model):
+    if meta_field_not_set(model=new_model, field_name="property_fields"):
         props = set()
         for var_name, value in attrs.items():
             if isinstance(value, property):
@@ -349,6 +348,18 @@ def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa:
             if field_config:
                 props.add(var_name)
         new_model.Meta.property_fields = props
+
+
+def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
+    if meta_field_not_set(model=new_model, field_name="signals"):
+        signals = SignalEmitter()
+        signals.pre_save = Signal()
+        signals.pre_update = Signal()
+        signals.pre_delete = Signal()
+        signals.post_save = Signal()
+        signals.post_update = Signal()
+        signals.post_delete = Signal()
+        new_model.Meta.signals = signals
 
 
 class ModelMetaclass(pydantic.main.ModelMetaclass):
@@ -379,5 +390,6 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             new_model.Meta.alias_manager = alias_manager
             new_model.objects = QuerySet(new_model)
             add_property_fields(new_model, attrs)
+            register_signals(new_model=new_model)
 
         return new_model

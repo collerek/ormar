@@ -1,8 +1,11 @@
 import asyncio
 import inspect
-from typing import Any, Callable, List, Tuple, Union
+from typing import Any, Callable, Dict, List, TYPE_CHECKING, Tuple, Type, Union
 
 from ormar.exceptions import SignalDefinitionError
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ormar import Model
 
 
 def callable_accepts_kwargs(func: Callable) -> bool:
@@ -45,9 +48,24 @@ class Signal:
                 break
         return removed
 
-    async def send(self, sender: Any, **kwargs: Any) -> None:
+    async def send(self, sender: Type["Model"], **kwargs: Any) -> None:
         receivers = []
         for receiver in self._receivers:
             _, receiver_func = receiver
-            receivers.append(receiver_func(sender, **kwargs))
+            receivers.append(receiver_func(sender=sender, **kwargs))
         await asyncio.gather(*receivers)
+
+
+class SignalEmitter:
+    if TYPE_CHECKING:
+        signals: Dict[str, Signal]
+
+    def __init__(self) -> None:
+        object.__setattr__(self, "signals", dict())
+
+    def __getattr__(self, item: str) -> Signal:
+        return self.signals.setdefault(item, Signal())
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        signals = object.__getattribute__(self, "signals")
+        signals[key] = value

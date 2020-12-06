@@ -395,6 +395,9 @@ class QuerySet:
         expr = expr.values(**new_kwargs)
 
         instance = self.model(**kwargs)
+        await self.model.Meta.signals.pre_save.send(
+            sender=self.model, instance=instance
+        )
         pk = await self.database.execute(expr)
 
         pk_name = self.model.get_column_alias(self.model_meta.pkname)
@@ -411,6 +414,9 @@ class QuerySet:
         ):
             instance = await instance.load()
         instance.set_save_status(True)
+        await self.model.Meta.signals.post_save.send(
+            sender=self.model, instance=instance
+        )
         return instance
 
     async def bulk_create(self, objects: List["Model"]) -> None:
