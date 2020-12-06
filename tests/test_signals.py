@@ -64,6 +64,13 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
+@pytest.fixture(scope="function")
+async def cleanup():
+    yield
+    async with database:
+        await AuditLog.objects.delete(each=True)
+
+
 def test_passing_not_callable():
     with pytest.raises(SignalDefinitionError):
         pre_save(Album)("wrong")
@@ -71,17 +78,15 @@ def test_passing_not_callable():
 
 def test_passing_callable_without_kwargs():
     with pytest.raises(SignalDefinitionError):
-
         @pre_save(Album)
         def trigger(sender, instance):  # pragma: no cover
             pass
 
 
 @pytest.mark.asyncio
-async def test_signal_functions():
+async def test_signal_functions(cleanup):
     async with database:
         async with database.transaction(force_rollback=True):
-
             @pre_save(Album)
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
@@ -165,9 +170,9 @@ async def test_signal_functions():
             assert len(audits) == 2
             assert audits[0].event_type == "PRE_DELETE_album"
             assert (
-                audits[0].event_log.get("id")
-                == audits[1].event_log.get("id")
-                == album.id
+                    audits[0].event_log.get("id")
+                    == audits[1].event_log.get("id")
+                    == album.id
             )
             assert audits[1].event_type == "POST_DELETE_album"
 
@@ -178,10 +183,9 @@ async def test_signal_functions():
 
 
 @pytest.mark.asyncio
-async def test_multiple_signals():
+async def test_multiple_signals(cleanup):
     async with database:
         async with database.transaction(force_rollback=True):
-
             @pre_save(Album)
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
@@ -192,7 +196,7 @@ async def test_multiple_signals():
             @pre_save(Album)
             async def before_save2(sender, instance, **kwargs):
                 await AuditLog(
-                    event_type=f"PRE_SAVE2_{sender.get_name()}",
+                    event_type=f"PRE_SAVE_{sender.get_name()}",
                     event_log=instance.json(),
                 ).save()
 
@@ -201,7 +205,7 @@ async def test_multiple_signals():
             assert len(audits) == 2
             assert audits[0].event_type == "PRE_SAVE_album"
             assert audits[0].event_log.get("name") == album.name
-            assert audits[1].event_type == "PRE_SAVE2_album"
+            assert audits[1].event_type == "PRE_SAVE_album"
             assert audits[1].event_log.get("name") == album.name
 
             album.signals.pre_save.disconnect(before_save)
@@ -209,10 +213,9 @@ async def test_multiple_signals():
 
 
 @pytest.mark.asyncio
-async def test_static_methods_as_signals():
+async def test_static_methods_as_signals(cleanup):
     async with database:
         async with database.transaction(force_rollback=True):
-
             class AlbumAuditor:
                 event_type = "ALBUM_INSTANCE"
 
@@ -234,10 +237,9 @@ async def test_static_methods_as_signals():
 
 
 @pytest.mark.asyncio
-async def test_methods_as_signals():
+async def test_methods_as_signals(cleanup):
     async with database:
         async with database.transaction(force_rollback=True):
-
             class AlbumAuditor:
                 def __init__(self):
                     self.event_type = "ALBUM_INSTANCE"
@@ -260,10 +262,9 @@ async def test_methods_as_signals():
 
 
 @pytest.mark.asyncio
-async def test_multiple_senders_signal():
+async def test_multiple_senders_signal(cleanup):
     async with database:
         async with database.transaction(force_rollback=True):
-
             @pre_save([Album, Cover])
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
@@ -288,10 +289,9 @@ async def test_multiple_senders_signal():
 
 
 @pytest.mark.asyncio
-async def test_modifing_the_instance():
+async def test_modifing_the_instance(cleanup):
     async with database:
         async with database.transaction(force_rollback=True):
-
             @pre_update(Album)
             async def before_update(sender, instance, **kwargs):
                 if instance.play_count > 50 and not instance.is_best_seller:
@@ -314,7 +314,7 @@ async def test_modifing_the_instance():
 
 
 @pytest.mark.asyncio
-async def test_custom_signal():
+async def test_custom_signal(cleanup):
     async with database:
         async with database.transaction(force_rollback=True):
 
@@ -348,3 +348,5 @@ async def test_custom_signal():
             assert album.is_best_seller
             await Album.Meta.signals.custom.send(sender=Album, instance=album)
             assert not album.is_best_seller
+
+            Album.Meta.signals.custom.disconnect(after_update)
