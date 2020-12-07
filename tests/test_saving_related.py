@@ -46,9 +46,11 @@ def create_test_database():
 
 @pytest.mark.asyncio
 async def test_model_relationship():
-    cat = await Category(name="Foo", code=123).save()
-    ws = await Workshop(topic="Topic 1", category=cat).save()
+    async with db:
+        async with db.transaction(force_rollback=True):
+            cat = await Category(name="Foo", code=123).save()
+            ws = await Workshop(topic="Topic 1", category=cat).save()
 
-    assert ws.id == 1
-    assert ws.topic == "Topic 1"
-    assert ws.category.name == "Foo"
+            assert ws.id == 1
+            assert ws.topic == "Topic 1"
+            assert ws.category.name == "Foo"
