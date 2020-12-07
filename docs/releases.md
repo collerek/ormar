@@ -1,3 +1,7 @@
+# 0.7.1
+
+* Fix for overwriting related models with pk only in `Model.save()` (fix [#68][#68])
+
 # 0.7.0
 
 *  **Breaking:** QuerySet `bulk_update` method now raises `ModelPersistenceError` for unsaved models passed instead of `QueryDefinitionError`
@@ -179,3 +183,4 @@ Add queryset level methods
 
 [#19]: https://github.com/collerek/ormar/issues/19
 [#60]: https://github.com/collerek/ormar/issues/60
+[#68]: https://github.com/collerek/ormar/issues/68

@@ -195,7 +195,13 @@ class Model(NewBaseModel):
         if not self.pk and self.Meta.model_fields[self.Meta.pkname].autoincrement:
             self_fields.pop(self.Meta.pkname, None)
         self_fields = self.populate_default_values(self_fields)
-        self.from_dict(self_fields)
+        self.from_dict(
+            {
+                k: v
+                for k, v in self_fields.items()
+                if k not in self.extract_related_names()
+            }
+        )
 
         await self.signals.pre_save.send(sender=self.__class__, instance=self)
 

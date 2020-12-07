@@ -78,6 +78,7 @@ def test_passing_not_callable():
 
 def test_passing_callable_without_kwargs():
     with pytest.raises(SignalDefinitionError):
+
         @pre_save(Album)
         def trigger(sender, instance):  # pragma: no cover
             pass
@@ -87,6 +88,7 @@ def test_passing_callable_without_kwargs():
 async def test_signal_functions(cleanup):
     async with database:
         async with database.transaction(force_rollback=True):
+
             @pre_save(Album)
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
@@ -170,9 +172,9 @@ async def test_signal_functions(cleanup):
             assert len(audits) == 2
             assert audits[0].event_type == "PRE_DELETE_album"
             assert (
-                    audits[0].event_log.get("id")
-                    == audits[1].event_log.get("id")
-                    == album.id
+                audits[0].event_log.get("id")
+                == audits[1].event_log.get("id")
+                == album.id
             )
             assert audits[1].event_type == "POST_DELETE_album"
 
@@ -186,6 +188,7 @@ async def test_signal_functions(cleanup):
 async def test_multiple_signals(cleanup):
     async with database:
         async with database.transaction(force_rollback=True):
+
             @pre_save(Album)
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
@@ -216,6 +219,7 @@ async def test_multiple_signals(cleanup):
 async def test_static_methods_as_signals(cleanup):
     async with database:
         async with database.transaction(force_rollback=True):
+
             class AlbumAuditor:
                 event_type = "ALBUM_INSTANCE"
 
@@ -240,6 +244,7 @@ async def test_static_methods_as_signals(cleanup):
 async def test_methods_as_signals(cleanup):
     async with database:
         async with database.transaction(force_rollback=True):
+
             class AlbumAuditor:
                 def __init__(self):
                     self.event_type = "ALBUM_INSTANCE"
@@ -265,6 +270,7 @@ async def test_methods_as_signals(cleanup):
 async def test_multiple_senders_signal(cleanup):
     async with database:
         async with database.transaction(force_rollback=True):
+
             @pre_save([Album, Cover])
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
@@ -292,6 +298,7 @@ async def test_multiple_senders_signal(cleanup):
 async def test_modifing_the_instance(cleanup):
     async with database:
         async with database.transaction(force_rollback=True):
+
             @pre_update(Album)
             async def before_update(sender, instance, **kwargs):
                 if instance.play_count > 50 and not instance.is_best_seller:
