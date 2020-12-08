@@ -14,6 +14,24 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
+    """
+    Ormar never returns you a raw data.
+    So if you have a related field that has a value populated
+    it will construct you a Model instance out of it.
+
+    Creates a "fake" instance of passed Model from pk value.
+    The instantiated Model has only pk value filled.
+    To achieve this __pk_only__ flag has to be passed as it skips the validation.
+
+    If the nested related Models are required they are set with -1 as pk value.
+
+    :param fk: class of the related Model to which instance should be constructed
+    :type fk: Model class
+    :param pk: value of the primary_key column
+    :type pk: Any
+    :return: Model instance populated with only pk
+    :rtype: Model
+    """
     init_dict = {
         **{fk.Meta.pkname: pk or -1, "__pk_only__": True},
         **{
@@ -29,6 +47,17 @@ def create_dummy_model(
     base_model: Type["Model"],
     pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
 ) -> Type["BaseModel"]:
+    """
+    Used to construct a dummy pydantic model for type hints and pydantic validation.
+    Populates only pk field and set it to desired type.
+
+    :param base_model: class of target dummy model
+    :type base_model: Model class
+    :param pk_field: ormar Field to be set on pydantic Model
+    :type pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]]
+    :return: constructed dummy model
+    :rtype: pydantic.BaseModel
+    """
     fields = {f"{pk_field.name}": (pk_field.__type__, None)}
     dummy_model = create_model(
         f"PkOnly{base_model.get_name(lower=False)}", **fields  # type: ignore
@@ -37,6 +66,11 @@ def create_dummy_model(
 
 
 class UniqueColumns(UniqueConstraint):
+    """
+    Subclass of sqlalchemy.UniqueConstraint.
+    Used to avoid importing anything from sqlalchemy by user.
+    """
+
     pass
 
 
@@ -52,6 +86,36 @@ def ForeignKey(  # noqa CFQ002
     ondelete: str = None,
     **kwargs: Any,
 ) -> Any:
+    """
+    Despite a name it's a function that returns constructed ForeignKeyField.
+    This function is actually used in model declaration (as ormar.ForeignKey(ToModel)).
+
+    Accepts number of relation setting parameters as well as all BaseField ones.
+
+    :param to: target related ormar Model
+    :type to: Model class
+    :param name: name of the database field - later called alias
+    :type name: str
+    :param unique: parameter passed to sqlalchemy.ForeignKey, unique flag
+    :type unique: bool
+    :param nullable: marks field as optional/ required
+    :type nullable: bool
+    :param related_name: name of reversed FK relation populated for you on to model
+    :type related_name: str
+    :param virtual: marks if relation is virtual.
+    It is for reversed FK and auto generated FK on through model in Many2Many relations.
+    :type virtual: bool
+    :param onupdate: parameter passed to sqlalchemy.ForeignKey.
+    How to treat child rows on update of parent (the one wher FK is defined) model.
+    :type onupdate: str
+    :param ondelete: parameter passed to sqlalchemy.ForeignKey.
+    How to treat child rows on delete of parent (the one wher FK is defined) model.
+    :type ondelete: str
+    :param kwargs: all other args to be populated by BaseField
+    :type kwargs: Any
+    :return: ormar ForeignKeyField with relation to selected model
+    :rtype: returns ForeignKeyField
+    """
     fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
     to_field = to.Meta.model_fields[to.Meta.pkname]
     pk_only_model = create_dummy_model(to, to_field)
@@ -86,6 +150,10 @@ def ForeignKey(  # noqa CFQ002
 
 
 class ForeignKeyField(BaseField):
+    """
+    Actual class returned from ForeignKey function call and stored in model_fields.
+    """
+
     to: Type["Model"]
     name: str
     related_name: str
@@ -95,6 +163,21 @@ class ForeignKeyField(BaseField):
     def _extract_model_from_sequence(
         cls, value: List, child: "Model", to_register: bool
     ) -> List["Model"]:
+        """
+        Takes a list of Models and registers them on parent.
+        Registration is mutual, so children have also reference to parent.
+
+        Used in reverse FK relations.
+
+        :param value: list of Model
+        :type value: List
+        :param child: child/ related Model
+        :type child: Model
+        :param to_register: flag if the relation should be set in RelationshipManager
+        :type to_register: bool
+        :return: list (if needed) registered Models
+        :rtype: List["Model"]
+        """
         return [
             cls.expand_relationship(val, child, to_register)  # type: ignore
             for val in value
@@ -104,6 +187,21 @@ class ForeignKeyField(BaseField):
     def _register_existing_model(
         cls, value: "Model", child: "Model", to_register: bool
     ) -> "Model":
+        """
+        Takes already created instance and registers it for parent.
+        Registration is mutual, so children have also reference to parent.
+
+        Used in reverse FK relations and normal FK for single models.
+
+        :param value: already instantiated Model
+        :type value: Model
+        :param child: child/ related Model
+        :type child: Model
+        :param to_register: flag if the relation should be set in RelationshipManager
+        :type to_register: bool
+        :return: (if needed) registered Model
+        :rtype: Model
+        """
         if to_register:
             cls.register_relation(value, child)
         return value
@@ -112,6 +210,22 @@ class ForeignKeyField(BaseField):
     def _construct_model_from_dict(
         cls, value: dict, child: "Model", to_register: bool
     ) -> "Model":
+        """
+        Takes a dictionary, creates a instance and registers it for parent.
+        If dictionary contains only one field and it's a pk it is a __pk_only__ model.
+        Registration is mutual, so children have also reference to parent.
+
+        Used in normal FK for dictionaries.
+
+        :param value: dictionary of a Model
+        :type value: dict
+        :param child: child/ related Model
+        :type child: Model
+        :param to_register: flag if the relation should be set in RelationshipManager
+        :type to_register: bool
+        :return: (if needed) registered Model
+        :rtype: Model
+        """
         if len(value.keys()) == 1 and list(value.keys())[0] == cls.to.Meta.pkname:
             value["__pk_only__"] = True
         model = cls.to(**value)
@@ -123,6 +237,21 @@ class ForeignKeyField(BaseField):
     def _construct_model_from_pk(
         cls, value: Any, child: "Model", to_register: bool
     ) -> "Model":
+        """
+        Takes a pk value, creates a dummy instance and registers it for parent.
+        Registration is mutual, so children have also reference to parent.
+
+        Used in normal FK for dictionaries.
+
+        :param value: value of a related pk / fk column
+        :type value: Any
+        :param child: child/ related Model
+        :type child: Model
+        :param to_register: flag if the relation should be set in RelationshipManager
+        :type to_register: bool
+        :return: (if needed) registered Model
+        :rtype: Model
+        """
         if not isinstance(value, cls.to.pk_type()):
             raise RelationshipInstanceError(
                 f"Relationship error - ForeignKey {cls.to.__name__} "
@@ -136,6 +265,18 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def register_relation(cls, model: "Model", child: "Model") -> None:
+        """
+        Registers relation between parent and child in relation manager.
+        Relation manager is kep on each model (different instance).
+
+        Used in Metaclass and sometimes some relations are missing
+        (i.e. cloned Models in fastapi might miss one).
+
+        :param model: parent model (with relation definition)
+        :type model: Model class
+        :param child: child model
+        :type child: Model class
+        """
         model._orm.add(
             parent=model, child=child, child_name=cls.related_name, virtual=cls.virtual
         )
@@ -144,6 +285,23 @@ class ForeignKeyField(BaseField):
     def expand_relationship(
         cls, value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True
     ) -> Optional[Union["Model", List["Model"]]]:
+        """
+        For relations the child model is first constructed (if needed),
+        registered in relation and returned.
+        For relation fields the value can be a pk value (Any type of field),
+        dict (from Model) or actual instance/list of a "Model".
+
+        Selects the appropriate constructor based on a passed value.
+
+        :param value: a Model field value, returned untouched for non relation fields.
+        :type value: Any
+        :param child: a child Model to register
+        :type child: Union["Model", "NewBaseModel"]
+        :param to_register: flag if the relation should be set in RelationshipManager
+        :type to_register: bool
+        :return: returns a Model or a list of Models
+        :rtype: Optional[Union["Model", List["Model"]]]
+        """
         if value is None:
             return None if not cls.virtual else []
 
