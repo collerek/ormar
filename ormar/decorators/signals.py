@@ -7,7 +7,28 @@ if TYPE_CHECKING:  # pragma: no cover
 def receiver(
     signal: str, senders: Union[Type["Model"], List[Type["Model"]]]
 ) -> Callable:
+    """
+    Connect given function to all senders for given signal name.
+
+    :param signal: name of the signal to register to
+    :type signal: str
+    :param senders: one or a list of "Model" classes
+    that should have the signal receiver registered
+    :type senders: Union[Type["Model"], List[Type["Model"]]]
+    :return: returns the original function untouched
+    :rtype: Callable
+    """
+
     def _decorator(func: Callable) -> Callable:
+        """
+
+        Internal decorator that does all the registeriing.
+
+        :param func: function to register as receiver
+        :type func: Callable
+        :return: untouched function already registered for given signal
+        :rtype: Callable
+        """
         if not isinstance(senders, list):
             _senders = [senders]
         else:
@@ -21,24 +42,78 @@ def receiver(
 
 
 def post_save(senders: Union[Type["Model"], List[Type["Model"]]],) -> Callable:
+    """
+    Connect given function to all senders for post_save signal.
+
+    :param senders: one or a list of "Model" classes
+    that should have the signal receiver registered
+    :type senders: Union[Type["Model"], List[Type["Model"]]]
+    :return: returns the original function untouched
+    :rtype: Callable
+    """
     return receiver(signal="post_save", senders=senders)
 
 
 def post_update(senders: Union[Type["Model"], List[Type["Model"]]],) -> Callable:
+    """
+    Connect given function to all senders for post_update signal.
+
+    :param senders: one or a list of "Model" classes
+    that should have the signal receiver registered
+    :type senders: Union[Type["Model"], List[Type["Model"]]]
+    :return: returns the original function untouched
+    :rtype: Callable
+    """
     return receiver(signal="post_update", senders=senders)
 
 
 def post_delete(senders: Union[Type["Model"], List[Type["Model"]]],) -> Callable:
+    """
+    Connect given function to all senders for post_delete signal.
+
+    :param senders: one or a list of "Model" classes
+    that should have the signal receiver registered
+    :type senders: Union[Type["Model"], List[Type["Model"]]]
+    :return: returns the original function untouched
+    :rtype: Callable
+    """
     return receiver(signal="post_delete", senders=senders)
 
 
 def pre_save(senders: Union[Type["Model"], List[Type["Model"]]],) -> Callable:
+    """
+    Connect given function to all senders for pre_save signal.
+
+    :param senders: one or a list of "Model" classes
+    that should have the signal receiver registered
+    :type senders: Union[Type["Model"], List[Type["Model"]]]
+    :return: returns the original function untouched
+    :rtype: Callable
+    """
     return receiver(signal="pre_save", senders=senders)
 
 
 def pre_update(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
+    """
+    Connect given function to all senders for pre_update signal.
+
+    :param senders: one or a list of "Model" classes
+    that should have the signal receiver registered
+    :type senders: Union[Type["Model"], List[Type["Model"]]]
+    :return: returns the original function untouched
+    :rtype: Callable
+    """
     return receiver(signal="pre_update", senders=senders)
 
 
 def pre_delete(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
+    """
+    Connect given function to all senders for pre_delete signal.
+
+    :param senders: one or a list of "Model" classes
+    that should have the signal receiver registered
+    :type senders: Union[Type["Model"], List[Type["Model"]]]
+    :return: returns the original function untouched
+    :rtype: Callable
+    """
     return receiver(signal="pre_delete", senders=senders)

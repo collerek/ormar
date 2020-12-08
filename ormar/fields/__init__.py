@@ -1,3 +1,9 @@
+"""
+Module with classes and constructors for ormar Fields.
+Base Fields types (like String, Integer etc.)
+as well as relation Fields (ForeignKey, ManyToMany).
+Also a definition for custom CHAR based sqlalchemy UUID field
+"""
 from ormar.fields.base import BaseField
 from ormar.fields.foreign_key import ForeignKey, UniqueColumns
 from ormar.fields.many_to_many import ManyToMany, ManyToManyField
