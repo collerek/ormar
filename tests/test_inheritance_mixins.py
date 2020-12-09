@@ -18,7 +18,7 @@ engine = create_engine(DATABASE_URL)
 
 class AuditMixin:
     created_by: str = ormar.String(max_length=100)
-    updated_by: str = ormar.String(max_length=100)
+    updated_by: str = ormar.String(max_length=100, default="Sam")
 
 
 class DateFieldsMixins:
@@ -128,6 +128,9 @@ async def test_fields_inherited_from_mixin():
             )
             assert sub2.created_date == sub.created_date
             assert sub2.category.updated_date is not None
-            assert sub2.category.created_date == cat.created_date
+            assert sub2.category.created_date.strftime(
+                "%Y-%m-%d %H:%M:%S.%f"
+            ) == cat.created_date.strftime("%Y-%m-%d %H:%M:%S.%f")
             assert sub2.updated_date is None
             assert sub2.category.created_by == "Sam"
+            assert sub2.category.updated_by == cat.updated_by
