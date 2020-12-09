@@ -57,6 +57,7 @@ def create_test_database():
 
 def test_field_redefining_raises_error():
     with pytest.raises(ModelDefinitionError):
+
         class WrongField(ormar.Model, DateFieldsMixins):  # pragma: no cover
             class Meta(ormar.ModelMeta):
                 tablename = "wrongs"
@@ -77,6 +78,7 @@ def test_field_redefining_in_second_raises_error():
         id: int = ormar.Integer(primary_key=True)
 
     with pytest.raises(ModelDefinitionError):
+
         class WrongField(ormar.Model, DateFieldsMixins):  # pragma: no cover
             class Meta(ormar.ModelMeta):
                 tablename = "wrongs"
@@ -87,7 +89,9 @@ def test_field_redefining_in_second_raises_error():
             created_date: datetime.datetime = ormar.DateTime()
 
 
-def round_date_to_seconds(date: datetime.datetime) -> datetime.datetime:  # pragma: no cover
+def round_date_to_seconds(
+    date: datetime.datetime,
+) -> datetime.datetime:  # pragma: no cover
     if date.microsecond >= 500000:
         date = date + datetime.timedelta(seconds=1)
     return date.replace(microsecond=0)
@@ -126,13 +130,17 @@ async def test_fields_inherited_from_mixin():
 
             sub2 = (
                 await Subject.objects.select_related("category")
-                    .order_by("-created_date")
-                    .exclude_fields("updated_date")
-                    .get()
+                .order_by("-created_date")
+                .exclude_fields("updated_date")
+                .get()
             )
-            assert round_date_to_seconds(sub2.created_date) == round_date_to_seconds(sub.created_date)
+            assert round_date_to_seconds(sub2.created_date) == round_date_to_seconds(
+                sub.created_date
+            )
             assert sub2.category.updated_date is not None
-            assert round_date_to_seconds(sub2.category.created_date) == round_date_to_seconds(cat.created_date)
+            assert round_date_to_seconds(
+                sub2.category.created_date
+            ) == round_date_to_seconds(cat.created_date)
             assert sub2.updated_date is None
             assert sub2.category.created_by == "Sam"
             assert sub2.category.updated_by == cat.updated_by
