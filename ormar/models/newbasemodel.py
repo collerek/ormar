@@ -1,4 +1,7 @@
-import json
+try:
+    import orjson as json
+except ImportError:  # pragma: no cover
+    import json  # type: ignore
 import uuid
 from typing import (
     AbstractSet,
@@ -370,10 +373,10 @@ class NewBaseModel(
 
         if condition:
             try:
-                return operand(value)
+                value = operand(value)
             except TypeError:  # pragma no cover
                 pass
-        return value
+        return value.decode("utf-8") if isinstance(value, bytes) else value
 
     def _is_conversion_to_json_needed(self, column_name: str) -> bool:
         return (
