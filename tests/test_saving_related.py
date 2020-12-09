@@ -55,7 +55,7 @@ async def test_model_relationship():
             assert ws.topic == "Topic 1"
             assert ws.category.name == "Foo"
 
-            ws.topic = 'Topic 2'
+            ws.topic = "Topic 2"
             await ws.update()
 
             assert ws.id == 1

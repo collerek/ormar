@@ -41,7 +41,7 @@ class ModelTableProxy:
     if TYPE_CHECKING:  # pragma no cover
         Meta: ModelMeta
         _related_names: Optional[Set]
-        _related_names_hash: Union[str, bytes]
+        _related_fields: Optional[List]
         pk: Any
         get_name: Callable
         _props: Set
@@ -201,6 +201,19 @@ class ModelTableProxy:
             if field is not None and field.alias == alias:
                 return field_name
         return alias  # if not found it's not an alias but actual name
+
+    @classmethod
+    def extract_related_fields(cls) -> List:
+
+        if isinstance(cls._related_fields, List):
+            return cls._related_fields
+
+        related_fields = []
+        for name in cls.extract_related_names():
+            related_fields.append(cls.Meta.model_fields[name])
+        cls._related_fields = related_fields
+
+        return related_fields
 
     @classmethod
     def extract_related_names(cls) -> Set:

@@ -28,7 +28,6 @@ from pydantic import BaseModel
 import ormar  # noqa I100
 from ormar.exceptions import ModelError
 from ormar.fields import BaseField
-from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.excludable import Excludable
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
@@ -79,14 +78,7 @@ class NewBaseModel(
         object.__setattr__(
             self,
             "_orm",
-            RelationsManager(
-                related_fields=[
-                    field
-                    for name, field in self.Meta.model_fields.items()
-                    if issubclass(field, ForeignKeyField)
-                ],
-                owner=self,
-            ),
+            RelationsManager(related_fields=self.extract_related_fields(), owner=self,),
         )
 
         pk_only = kwargs.pop("__pk_only__", False)
