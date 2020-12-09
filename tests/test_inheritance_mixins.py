@@ -130,9 +130,9 @@ async def test_fields_inherited_from_mixin():
                     .exclude_fields("updated_date")
                     .get()
             )
-            assert sub2.created_date == round_date_to_seconds(sub.created_date)
+            assert round_date_to_seconds(sub2.created_date) == round_date_to_seconds(sub.created_date)
             assert sub2.category.updated_date is not None
-            assert sub2.category.created_date == round_date_to_seconds(cat.created_date)
+            assert round_date_to_seconds(sub2.category.created_date) == round_date_to_seconds(cat.created_date)
             assert sub2.updated_date is None
             assert sub2.category.created_by == "Sam"
             assert sub2.category.updated_by == cat.updated_by
