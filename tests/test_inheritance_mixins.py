@@ -87,7 +87,7 @@ def test_field_redefining_in_second_raises_error():
             created_date: datetime.datetime = ormar.DateTime()
 
 
-def round_date_to_seconds(date: datetime.datetime) -> datetime.datetime:
+def round_date_to_seconds(date: datetime.datetime) -> datetime.datetime:  # pragma: no cover
     if date.microsecond >= 500000:
         date = date + datetime.timedelta(seconds=1)
     return date.replace(microsecond=0)
