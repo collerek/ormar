@@ -269,8 +269,7 @@ class Model(NewBaseModel):
 
     async def update(self: T, **kwargs: Any) -> T:
         if kwargs:
-            new_values = {**self.dict(), **kwargs}
-            self.from_dict(new_values)
+            self.from_dict(kwargs)
 
         if not self.pk:
             raise ModelPersistenceError(
