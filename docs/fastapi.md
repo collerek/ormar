@@ -133,6 +133,6 @@ def test_all_endpoints():
     You can read more on testing fastapi in [fastapi][fastapi] docs. 
 
 [fastapi]: https://fastapi.tiangolo.com/
-[models]: ./models.md
-[database initialization]:  ../models/#database-initialization-migrations
+[models]: ./models/index.md
+[database initialization]:  ./models/migrations.md
 [tests]: https://github.com/collerek/ormar/tree/master/tests

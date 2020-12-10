@@ -701,5 +701,5 @@ assert owner.toys[1].name == "Toy 1"
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
 
 
-[models]: ./models.md
-[relations]: ./relations.md
+[models]: ./models/index.md
+[relations]: ./relations/index.md
