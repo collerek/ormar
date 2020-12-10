@@ -1,3 +1,7 @@
+# 0.7.2
+
+* Fix for overwriting related models with pk only in `Model.update() with fields passed as parameters` (fix [#70][#70])
+
 # 0.7.1
 
 * Fix for overwriting related models with pk only in `Model.save()` (fix [#68][#68])
@@ -184,3 +188,4 @@ Add queryset level methods
 [#19]: https://github.com/collerek/ormar/issues/19
 [#60]: https://github.com/collerek/ormar/issues/60
 [#68]: https://github.com/collerek/ormar/issues/68
+[#70]: https://github.com/collerek/ormar/issues/70
