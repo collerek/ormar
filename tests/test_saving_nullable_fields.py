@@ -49,19 +49,18 @@ def create_test_database():
 
 @pytest.mark.asyncio
 async def test_create_models():
-    primary = await PrimaryModel(
-        name="Foo", some_text="Bar", some_other_text="Baz"
-    ).save()
-    assert primary.id == 1
+    async with db:
+        async with db.transaction(force_rollback=True):
+            primary = await PrimaryModel(
+                name="Foo", some_text="Bar", some_other_text="Baz"
+            ).save()
+            assert primary.id == 1
 
-    secondary = await SecondaryModel(name="Foo", primary_model=primary).save()
-    assert secondary.id == 1
-    assert secondary.primary_model.id == 1
+            secondary = await SecondaryModel(name="Foo", primary_model=primary).save()
+            assert secondary.id == 1
+            assert secondary.primary_model.id == 1
 
-
-@pytest.mark.asyncio
-async def test_update_secondary():
-    secondary = await SecondaryModel.objects.get(id=1)
-    assert secondary.name == "Foo"
-    await secondary.update(name="Updated")
-    assert secondary.name == "Updated"
+            secondary = await SecondaryModel.objects.get()
+            assert secondary.name == "Foo"
+            await secondary.update(name="Updated")
+            assert secondary.name == "Updated"
