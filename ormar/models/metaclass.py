@@ -25,6 +25,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 alias_manager = AliasManager()
 PARSED_FIELDS_KEY = "__parsed_fields__"
+CONFIG_KEY = "Config"
 
 
 class ModelMeta:
@@ -478,13 +479,19 @@ def get_potential_fields(attrs: Dict) -> Dict:
 
 
 def check_conflicting_fields(
-    new_fields: Set, attrs: Dict, base_class: type, curr_class: type
+    new_fields: Set,
+    attrs: Dict,
+    base_class: type,
+    curr_class: type,
+    previous_fields: Set = None,
 ) -> None:
     """
     You cannot redefine fields with same names in inherited classes.
     Ormar will raise an exception if it encounters a field that is an ormar
     Field and at the same time was already declared in one of base classes.
 
+    :param previous_fields: set of names of fields defined in base model
+    :type previous_fields: Set[str]
     :param new_fields: set of names of fields defined in current model
     :type new_fields: Set[str]
     :param attrs: namespace of current class
@@ -494,7 +501,8 @@ def check_conflicting_fields(
     :param curr_class: current constructed class
     :type curr_class: Model or model parent class
     """
-    previous_fields = set({k for k, v in attrs.items() if isinstance(v, FieldInfo)})
+    if not previous_fields:
+        previous_fields = set({k for k, v in attrs.items() if isinstance(v, FieldInfo)})
     overwrite = new_fields.intersection(previous_fields)
 
     if overwrite:
@@ -539,7 +547,8 @@ def extract_mixin_fields_from_dict(
     model_fields: Dict[
         str, Union[Type[BaseField], Type[ForeignKeyField], Type[ManyToManyField]]
     ],
-) -> Tuple[Dict, Dict]:
+    bases: Any,
+) -> Tuple[Dict, Dict, Any]:
     """
     Extracts fields from base classes if they have valid oramr fields.
 
@@ -565,14 +574,29 @@ def extract_mixin_fields_from_dict(
     """
     if hasattr(base_class, "Meta"):
         new_fields = set(base_class.Meta.model_fields.keys())  # type: ignore
+        previous_fields = set({k for k, v in attrs.items() if isinstance(v, FieldInfo)})
         check_conflicting_fields(
             new_fields=new_fields,
             attrs=attrs,
             base_class=base_class,
             curr_class=curr_class,
+            previous_fields=previous_fields,
         )
+        if previous_fields and not base_class.Meta.abstract:  # type: ignore
+            raise ModelDefinitionError(
+                f"{curr_class.__name__} cannot inherit "
+                f"from non abstract class {base_class.__name__}"
+            )
         model_fields.update(base_class.Meta.model_fields)  # type: ignore
-        return attrs, model_fields
+        # keep only parent ormar models as they already have all the predecessors
+        # keeping also Model, NewBaseModel etc. would cause mro conflicts
+        new_bases = tuple(
+            base
+            for base in bases
+            if issubclass(base, ormar.Model) and base != ormar.Model
+        )
+
+        return attrs, model_fields, new_bases
 
     key = "__annotations__"
     if hasattr(base_class, PARSED_FIELDS_KEY):
@@ -596,7 +620,7 @@ def extract_mixin_fields_from_dict(
             new_model_fields=new_model_fields,
             new_fields=new_fields,
         )
-        return attrs, model_fields
+        return attrs, model_fields, bases
 
     potential_fields = get_potential_fields(base_class.__dict__)
     if potential_fields:
@@ -624,7 +648,7 @@ def extract_mixin_fields_from_dict(
             new_model_fields=new_model_fields,
             new_fields=new_fields,
         )
-    return attrs, model_fields
+    return attrs, model_fields, bases
 
 
 class ModelMetaclass(pydantic.main.ModelMetaclass):
@@ -634,13 +658,19 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         attrs["Config"] = get_pydantic_base_orm_config()
         attrs["__name__"] = name
         attrs, model_fields = extract_annotations_and_default_vals(attrs)
+        new_bases = bases
         for base in reversed(bases):
-            attrs, model_fields = extract_mixin_fields_from_dict(
-                base_class=base, curr_class=mcs, attrs=attrs, model_fields=model_fields
+            attrs, model_fields, new_bases = extract_mixin_fields_from_dict(
+                base_class=base,
+                curr_class=mcs,
+                attrs=attrs,
+                model_fields=model_fields,
+                bases=new_bases,
             )
         # print(attrs, model_fields)
+
         new_model = super().__new__(  # type: ignore
-            mcs, name, bases, attrs
+            mcs, name, new_bases, attrs
         )
 
         add_cached_properties(new_model)
