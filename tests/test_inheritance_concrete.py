@@ -43,7 +43,7 @@ class DateFieldsModel(ormar.Model):
     updated_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
 
 
-class Category(ormar.Model, DateFieldsModel, AuditModel):
+class Category(DateFieldsModel, AuditModel):
     class Meta(ormar.ModelMeta):
         tablename = "categories"
         metadata = metadata
@@ -54,7 +54,7 @@ class Category(ormar.Model, DateFieldsModel, AuditModel):
     code: int = ormar.Integer()
 
 
-class Subject(ormar.Model, DateFieldsModel):
+class Subject(DateFieldsModel):
     class Meta(ormar.ModelMeta):
         tablename = "subjects"
         metadata = metadata
@@ -74,7 +74,7 @@ def create_test_database():
 
 def test_field_redefining_raises_error():
     with pytest.raises(ModelDefinitionError):
-        class WrongField(ormar.Model, DateFieldsModel):  # pragma: no cover
+        class WrongField(DateFieldsModel):  # pragma: no cover
             class Meta(ormar.ModelMeta):
                 tablename = "wrongs"
                 metadata = metadata
@@ -86,7 +86,7 @@ def test_field_redefining_raises_error():
 
 def test_model_subclassing_non_abstract_raises_error():
     with pytest.raises(ModelDefinitionError):
-        class WrongField2(ormar.Model, DateFieldsModelNoSubclass):  # pragma: no cover
+        class WrongField2(DateFieldsModelNoSubclass):  # pragma: no cover
             class Meta(ormar.ModelMeta):
                 tablename = "wrongs"
                 metadata = metadata

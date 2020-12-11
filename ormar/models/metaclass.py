@@ -547,8 +547,7 @@ def extract_mixin_fields_from_dict(
     model_fields: Dict[
         str, Union[Type[BaseField], Type[ForeignKeyField], Type[ManyToManyField]]
     ],
-    bases: Any,
-) -> Tuple[Dict, Dict, Any]:
+) -> Tuple[Dict, Dict]:
     """
     Extracts fields from base classes if they have valid oramr fields.
 
@@ -588,15 +587,7 @@ def extract_mixin_fields_from_dict(
                 f"from non abstract class {base_class.__name__}"
             )
         model_fields.update(base_class.Meta.model_fields)  # type: ignore
-        # keep only parent ormar models as they already have all the predecessors
-        # keeping also Model, NewBaseModel etc. would cause mro conflicts
-        new_bases = tuple(
-            base
-            for base in bases
-            if issubclass(base, ormar.Model) and base != ormar.Model
-        )
-
-        return attrs, model_fields, new_bases
+        return attrs, model_fields
 
     key = "__annotations__"
     if hasattr(base_class, PARSED_FIELDS_KEY):
@@ -620,7 +611,7 @@ def extract_mixin_fields_from_dict(
             new_model_fields=new_model_fields,
             new_fields=new_fields,
         )
-        return attrs, model_fields, bases
+        return attrs, model_fields
 
     potential_fields = get_potential_fields(base_class.__dict__)
     if potential_fields:
@@ -648,7 +639,7 @@ def extract_mixin_fields_from_dict(
             new_model_fields=new_model_fields,
             new_fields=new_fields,
         )
-    return attrs, model_fields, bases
+    return attrs, model_fields
 
 
 class ModelMetaclass(pydantic.main.ModelMetaclass):
@@ -658,19 +649,15 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         attrs["Config"] = get_pydantic_base_orm_config()
         attrs["__name__"] = name
         attrs, model_fields = extract_annotations_and_default_vals(attrs)
-        new_bases = bases
         for base in reversed(bases):
-            attrs, model_fields, new_bases = extract_mixin_fields_from_dict(
+            attrs, model_fields = extract_mixin_fields_from_dict(
                 base_class=base,
                 curr_class=mcs,
                 attrs=attrs,
-                model_fields=model_fields,
-                bases=new_bases,
+                model_fields=model_fields
             )
-        # print(attrs, model_fields)
-
         new_model = super().__new__(  # type: ignore
-            mcs, name, new_bases, attrs
+            mcs, name, bases, attrs
         )
 
         add_cached_properties(new_model)
