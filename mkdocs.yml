@@ -5,6 +5,7 @@ nav:
   - Installation: install.md
   - Models:
     - Definition: models/index.md
+    - Inheritance: models/inheritance.md
     - Methods: models/methods.md
     - Migrations: models/migrations.md
     - Internals: models/internals.md
@@ -25,9 +26,9 @@ nav:
   - Release Notes: releases.md
 repo_name: collerek/ormar
 repo_url: https://github.com/collerek/ormar
-#google_analytics:
-#  - UA-72514911-3
-#  - auto
+google_analytics:
+  - UA-72514911-3
+  - auto
 theme:
   name: material
   highlightjs: true

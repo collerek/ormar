@@ -72,6 +72,8 @@ class NewBaseModel(
 
     # noinspection PyMissingConstructor
     def __init__(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
+        if self.Meta.abstract:
+            raise ModelError(f"You cannot initialize abstract model {self.get_name()}")
         object.__setattr__(self, "_orm_id", uuid.uuid4().hex)
         object.__setattr__(self, "_orm_saved", False)
         object.__setattr__(self, "_pk_column", None)

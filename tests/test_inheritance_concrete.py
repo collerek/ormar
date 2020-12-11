@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 
 import ormar
 from ormar import ModelDefinitionError
+from ormar.exceptions import ModelError
 from tests.settings import DATABASE_URL
 
 metadata = sa.MetaData()
@@ -38,6 +39,8 @@ class DateFieldsModelNoSubclass(ormar.Model):
 class DateFieldsModel(ormar.Model):
     class Meta:
         abstract = True
+        metadata = metadata
+        database = db
 
     created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
     updated_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
@@ -46,8 +49,6 @@ class DateFieldsModel(ormar.Model):
 class Category(DateFieldsModel, AuditModel):
     class Meta(ormar.ModelMeta):
         tablename = "categories"
-        metadata = metadata
-        database = db
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
@@ -56,9 +57,7 @@ class Category(DateFieldsModel, AuditModel):
 
 class Subject(DateFieldsModel):
     class Meta(ormar.ModelMeta):
-        tablename = "subjects"
-        metadata = metadata
-        database = db
+        pass
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
@@ -70,6 +69,11 @@ def create_test_database():
     metadata.create_all(engine)
     yield
     metadata.drop_all(engine)
+
+
+def test_init_of_abstract_model():
+    with pytest.raises(ModelError):
+        DateFieldsModel()
 
 
 def test_field_redefining_raises_error():

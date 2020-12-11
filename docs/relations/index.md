@@ -45,10 +45,42 @@ class Department(ormar.Model):
 
 !!!tip
     Reverse ForeignKey allows you to query the related models with [queryset-proxy][queryset-proxy].
+    
+    It allows you to use `await department.courses.all()` to fetch data related only to specific department etc. 
 
 ##ManyToMany
 
 To define many-to-many relation use `ManyToMany` field.
+
+```python hl_lines="25-26"
+class Category(ormar.Model):
+    class Meta:
+        tablename = "categories"
+        database = database
+        metadata = metadata
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=40)
+
+# note: you need to specify through model
+class PostCategory(ormar.Model):
+    class Meta:
+        tablename = "posts_categories"
+        database = database
+        metadata = metadata
+
+class Post(ormar.Model):
+    class Meta:
+        tablename = "posts"
+        database = database
+        metadata = metadata
+
+    id: int = ormar.Integer(primary_key=True)
+    title: str = ormar.String(max_length=200)
+    categories: Optional[Union[Category, List[Category]]] = ormar.ManyToMany(
+        Category, through=PostCategory
+    )
+```
 
 
 !!!tip
@@ -57,6 +89,8 @@ To define many-to-many relation use `ManyToMany` field.
 
 !!!tip
     ManyToMany allows you to query the related models with [queryset-proxy][queryset-proxy].
+
+    It allows you to use `await post.categories.all()` but also `await category.posts.all()` to fetch data related only to specific post, category etc.
 
 
 [foreign-keys]: ./foreign-key.md
