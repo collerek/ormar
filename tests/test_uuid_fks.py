@@ -60,8 +60,4 @@ async def test_uuid_fk():
                 is_superuser=False,
             )
             await Token.objects.create(text="AAAA", user=user)
-            page_size = 20
-            page_num = 0
-            await Token.objects.order_by("-created_at").limit(page_size).offset(
-                page_size * (page_num - 1)
-            ).all()
+            await Token.objects.order_by("-created_at").all()
