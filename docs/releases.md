@@ -1,3 +1,7 @@
+# 0.7.3
+
+* Fix for setting fetching related model with UUDI pk, which is a string in raw (fix [#71][#71])
+
 # 0.7.2
 
 * Fix for overwriting related models with pk only in `Model.update() with fields passed as parameters` (fix [#70][#70])
@@ -189,3 +193,4 @@ Add queryset level methods
 [#60]: https://github.com/collerek/ormar/issues/60
 [#68]: https://github.com/collerek/ormar/issues/68
 [#70]: https://github.com/collerek/ormar/issues/70
+[#71]: https://github.com/collerek/ormar/issues/71
