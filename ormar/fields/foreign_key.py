@@ -1,3 +1,4 @@
+import uuid
 from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
@@ -123,6 +124,8 @@ class ForeignKeyField(BaseField):
     def _construct_model_from_pk(
         cls, value: Any, child: "Model", to_register: bool
     ) -> "Model":
+        if cls.to.pk_type() == uuid.UUID and isinstance(value, str):
+            value = uuid.UUID(value)
         if not isinstance(value, cls.to.pk_type()):
             raise RelationshipInstanceError(
                 f"Relationship error - ForeignKey {cls.to.__name__} "
