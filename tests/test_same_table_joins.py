@@ -102,7 +102,7 @@ async def test_model_multiple_instances_of_same_table_in_schema():
         async with database.transaction(force_rollback=True):
             await create_data()
             classes = await SchoolClass.objects.select_related(
-                ["teachers__category", "students"]
+                ["teachers__category", "students__schoolclass"]
             ).all()
             assert classes[0].name == "Math"
             assert classes[0].students[0].name == "Jane"

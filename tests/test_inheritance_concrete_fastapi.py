@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 from tests.settings import DATABASE_URL
-from tests.test_inheritance_concrete import Category, Subject, metadata
+from tests.test_inheritance_concrete import Category, Subject, metadata  # type: ignore
 
 app = FastAPI()
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -53,25 +53,25 @@ def test_read_main():
         test_category = dict(name="Foo", code=123, created_by="Sam", updated_by="Max")
         test_subject = dict(name="Bar")
 
-        response = client.post(
-            "/categories/", json=test_category
-        )
+        response = client.post("/categories/", json=test_category)
         assert response.status_code == 200
         cat = Category(**response.json())
-        assert cat.name == 'Foo'
-        assert cat.created_by == 'Sam'
+        assert cat.name == "Foo"
+        assert cat.created_by == "Sam"
         assert cat.created_date is not None
         assert cat.id == 1
 
         cat_dict = cat.dict()
-        cat_dict['updated_date'] = cat_dict['updated_date'].strftime("%Y-%m-%d %H:%M:%S.%f")
-        cat_dict['created_date'] = cat_dict['created_date'].strftime("%Y-%m-%d %H:%M:%S.%f")
-        test_subject['category'] = cat_dict
-        response = client.post(
-            "/subjects/", json=test_subject
+        cat_dict["updated_date"] = cat_dict["updated_date"].strftime(
+            "%Y-%m-%d %H:%M:%S.%f"
         )
+        cat_dict["created_date"] = cat_dict["created_date"].strftime(
+            "%Y-%m-%d %H:%M:%S.%f"
+        )
+        test_subject["category"] = cat_dict
+        response = client.post("/subjects/", json=test_subject)
         assert response.status_code == 200
         sub = Subject(**response.json())
-        assert sub.name == 'Bar'
+        assert sub.name == "Bar"
         assert sub.category.pk == cat.pk
         assert isinstance(sub.updated_date, datetime.datetime)

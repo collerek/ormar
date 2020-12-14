@@ -56,8 +56,7 @@ class SecondaryModel(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     primary_model: PrimaryModel = ormar.ForeignKey(
-        PrimaryModel,
-        related_name="secondary_models",
+        PrimaryModel, related_name="secondary_models",
     )
 
 
@@ -74,7 +73,8 @@ async def test_create_primary_models():
             ("Primary 7", "Some text 7", "Some other text 7"),
             ("Primary 8", "Some text 8", "Some other text 8"),
             ("Primary 9", "Some text 9", "Some other text 9"),
-            ("Primary 10", "Some text 10", "Some other text 10")]:
+            ("Primary 10", "Some text 10", "Some other text 10"),
+        ]:
             await PrimaryModel(
                 name=name, some_text=some_text, some_other_text=some_other_text
             ).save()

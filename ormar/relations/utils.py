@@ -18,8 +18,11 @@ def get_relations_sides_and_names(
     to_name = to_field.name
     if issubclass(to_field, ManyToManyField):
         child_name, to_name = (
-            child.resolve_relation_name(parent, child),
-            child.resolve_relation_name(child, parent),
+            to_field.related_name
+            or child.resolve_relation_name(
+                parent, to_field.through, explicit_multi=True
+            ),
+            to_name,
         )
         child = proxy(child)
     elif virtual:

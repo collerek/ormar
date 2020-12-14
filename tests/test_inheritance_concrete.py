@@ -8,7 +8,7 @@ import sqlalchemy as sa
 from sqlalchemy import create_engine
 
 import ormar
-from ormar import ModelDefinitionError
+from ormar import ModelDefinitionError, property_field
 from ormar.exceptions import ModelError
 from tests.settings import DATABASE_URL
 
@@ -23,6 +23,10 @@ class AuditModel(ormar.Model):
 
     created_by: str = ormar.String(max_length=100)
     updated_by: str = ormar.String(max_length=100, default="Sam")
+
+    @property_field
+    def audit(self):  # pragma: no cover
+        return f"{self.created_by} {self.updated_by}"
 
 
 class DateFieldsModelNoSubclass(ormar.Model):
@@ -41,6 +45,7 @@ class DateFieldsModel(ormar.Model):
         abstract = True
         metadata = metadata
         database = db
+        constraints = [ormar.UniqueColumns("created_date", "updated_date")]
 
     created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
     updated_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
@@ -49,10 +54,19 @@ class DateFieldsModel(ormar.Model):
 class Category(DateFieldsModel, AuditModel):
     class Meta(ormar.ModelMeta):
         tablename = "categories"
+        constraints = [ormar.UniqueColumns("name", "code")]
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
     code: int = ormar.Integer()
+
+    @property_field
+    def code_name(self):
+        return f"{self.code}:{self.name}"
+
+    @property_field
+    def audit(self):
+        return f"{self.created_by} {self.updated_by}"
 
 
 class Subject(DateFieldsModel):
@@ -99,6 +113,13 @@ def test_model_subclassing_non_abstract_raises_error():
             id: int = ormar.Integer(primary_key=True)
 
 
+def test_params_are_inherited():
+    assert Category.Meta.metadata == metadata
+    assert Category.Meta.database == db
+    assert len(Category.Meta.constraints) == 2
+    assert len(Category.Meta.property_fields) == 2
+
+
 def round_date_to_seconds(
         date: datetime.datetime,
 ) -> datetime.datetime:  # pragma: no cover
@@ -132,7 +153,9 @@ async def test_fields_inherited_from_mixin():
             inspector = sa.inspect(engine)
             assert "categories" in inspector.get_table_names()
             table_columns = [x.get("name") for x in inspector.get_columns("categories")]
-            assert all(col in table_columns for col in mixin_columns)  # + mixin2_columns)
+            assert all(
+                col in table_columns for col in mixin_columns
+            )  # + mixin2_columns)
 
             assert "subjects" in inspector.get_table_names()
             table_columns = [x.get("name") for x in inspector.get_columns("subjects")]

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, TYPE_CHECKING, Type, TypeVar, Union
+from typing import List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union
 
 import ormar  # noqa I100
 from ormar.exceptions import RelationshipInstanceError  # noqa I100
@@ -31,6 +31,7 @@ class Relation:
         self.manager = manager
         self._owner: "Model" = manager.owner
         self._type: RelationType = type_
+        self._to_remove: Set = set()
         self.to: Type["T"] = to
         self.through: Optional[Type["T"]] = through
         self.related_models: Optional[Union[RelationProxy, "T"]] = (
@@ -39,17 +40,32 @@ class Relation:
             else None
         )
 
+    def _clean_related(self) -> None:
+        cleaned_data = [
+            x
+            for i, x in enumerate(self.related_models)  # type: ignore
+            if i not in self._to_remove
+        ]
+        self.related_models = RelationProxy(
+            relation=self, type_=self._type, data_=cleaned_data
+        )
+        relation_name = self._owner.resolve_relation_name(self._owner, self.to)
+        self._owner.__dict__[relation_name] = cleaned_data
+        self._to_remove = set()
+
     def _find_existing(
         self, child: Union["NewBaseModel", Type["NewBaseModel"]]
     ) -> Optional[int]:
         if not isinstance(self.related_models, RelationProxy):  # pragma nocover
             raise ValueError("Cannot find existing models in parent relation type")
+        if self._to_remove:
+            self._clean_related()
         for ind, relation_child in enumerate(self.related_models[:]):
             try:
                 if relation_child == child:
                     return ind
             except ReferenceError:  # pragma no cover
-                self.related_models.pop(ind)
+                self._to_remove.add(ind)
         return None
 
     def add(self, child: "T") -> None:
@@ -83,4 +99,6 @@ class Relation:
         return self.related_models
 
     def __repr__(self) -> str:  # pragma no cover
+        if self._to_remove:
+            self._clean_related()
         return str(self.related_models)

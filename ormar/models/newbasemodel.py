@@ -96,7 +96,7 @@ class NewBaseModel(
                 k: self._convert_json(
                     k,
                     self.Meta.model_fields[k].expand_relationship(
-                        v, self, to_register=False
+                        v, self, to_register=False, relation_name=k
                     ),
                     "dumps",
                 )
@@ -125,7 +125,7 @@ class NewBaseModel(
         # register the columns models after initialization
         for related in self.extract_related_names():
             self.Meta.model_fields[related].expand_relationship(
-                new_kwargs.get(related), self, to_register=True
+                new_kwargs.get(related), self, to_register=True, relation_name=related
             )
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
@@ -135,7 +135,9 @@ class NewBaseModel(
             object.__setattr__(self, self.Meta.pkname, value)
             self.set_save_status(False)
         elif name in self._orm:
-            model = self.Meta.model_fields[name].expand_relationship(value, self)
+            model = self.Meta.model_fields[name].expand_relationship(
+                value=value, child=self, relation_name=name
+            )
             if isinstance(self.__dict__.get(name), list):
                 # virtual foreign key or many to many
                 self.__dict__[name].append(model)

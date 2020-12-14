@@ -56,8 +56,14 @@ class RelationsManager:
         return None
 
     @staticmethod
-    def add(parent: "Model", child: "Model", child_name: str, virtual: bool) -> None:
-        to_field: Type[BaseField] = child.resolve_relation_field(child, parent)
+    def add(
+        parent: "Model",
+        child: "Model",
+        child_name: str,
+        virtual: bool,
+        relation_name: str,
+    ) -> None:
+        to_field: Type[BaseField] = child.Meta.model_fields[relation_name]
 
         (parent, child, child_name, to_name,) = get_relations_sides_and_names(
             to_field, parent, child, child_name, virtual

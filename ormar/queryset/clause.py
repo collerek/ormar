@@ -131,17 +131,19 @@ class QueryClause:
 
         # Walk the relationships to the actual model class
         # against which the comparison is being made.
-        previous_table = model_cls.Meta.tablename
+        previous_model = model_cls
         for part in related_parts:
+            part2 = part
             if issubclass(model_cls.Meta.model_fields[part], ManyToManyField):
-                previous_table = model_cls.Meta.model_fields[
-                    part
-                ].through.Meta.tablename
-            current_table = model_cls.Meta.model_fields[part].to.Meta.tablename
+                through_field = model_cls.Meta.model_fields[part]
+                previous_model = through_field.through
+                part2 = model_cls.resolve_relation_name(
+                    through_field.through, through_field.to, explicit_multi=True
+                )
             manager = model_cls.Meta.alias_manager
-            table_prefix = manager.resolve_relation_join(previous_table, current_table)
+            table_prefix = manager.resolve_relation_join_new(previous_model, part2)
             model_cls = model_cls.Meta.model_fields[part].to
-            previous_table = current_table
+            previous_model = model_cls
         return select_related, table_prefix, model_cls
 
     def _compile_clause(
