@@ -135,8 +135,8 @@ class SqlJoin:
             model_cls = join_params.model_cls.Meta.model_fields[part].to
         to_table = model_cls.Meta.table.name
 
-        alias = model_cls.Meta.alias_manager.resolve_relation_join(
-            join_params.from_table, to_table
+        alias = model_cls.Meta.alias_manager.resolve_relation_join_new(
+            join_params.prev_model, part
         )
         if alias not in self.used_aliases:
             self._process_join(
@@ -267,7 +267,9 @@ class SqlJoin:
                 model_cls, join_params.prev_model
             )
             to_key = model_cls.get_column_alias(to_field)
-            from_key = join_params.prev_model.get_column_alias(model_cls.Meta.pkname)
+            from_key = join_params.prev_model.get_column_alias(
+                join_params.prev_model.Meta.pkname
+            )
         else:
             to_key = model_cls.get_column_alias(model_cls.Meta.pkname)
             from_key = join_params.prev_model.get_column_alias(part)

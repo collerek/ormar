@@ -42,16 +42,19 @@ class ModelMeta:
     signals: SignalEmitter
 
 
-def register_relation_on_build(table_name: str, field: Type[ForeignKeyField]) -> None:
-    alias_manager.add_relation_type(field.to.Meta.tablename, table_name)
+def register_relation_on_build_new(new_model: Type["Model"], field_name: str) -> None:
+    alias_manager.add_relation_type_new(new_model, field_name)
 
 
-def register_many_to_many_relation_on_build(
-    table_name: str, field: Type[ManyToManyField]
+def register_many_to_many_relation_on_build_new(
+    new_model: Type["Model"], field: Type[ManyToManyField]
 ) -> None:
-    alias_manager.add_relation_type(field.through.Meta.tablename, table_name)
-    alias_manager.add_relation_type(
-        field.through.Meta.tablename, field.to.Meta.tablename
+
+    alias_manager.add_relation_type_new(
+        field.through, new_model.get_name(), is_multi=True
+    )
+    alias_manager.add_relation_type_new(
+        field.through, field.to.get_name(), is_multi=True
     )
 
 
@@ -161,8 +164,27 @@ def check_pk_column_validity(
     return field_name
 
 
+def validate_related_names_in_relations(
+    model_fields: Dict, new_model: Type["Model"]
+) -> None:
+    already_registered: Dict[str, List[Optional[str]]] = dict()
+    for field in model_fields.values():
+        if issubclass(field, ForeignKeyField):
+            previous_related_names = already_registered.setdefault(field.to, [])
+            if field.related_name in previous_related_names:
+                raise ModelDefinitionError(
+                    f"Multiple fields declared on {new_model.get_name(lower=False)} "
+                    f"model leading to {field.to.get_name(lower=False)} model without "
+                    f"related_name property set. \nThere can be only one relation with "
+                    f"default/empty name: '{new_model.get_name() + 's'}'"
+                    f"\nTip: provide different related_name for FK and/or M2M fields"
+                )
+            else:
+                previous_related_names.append(field.related_name)
+
+
 def sqlalchemy_columns_from_model_fields(
-    model_fields: Dict, table_name: str
+    model_fields: Dict, table_name: str, new_model: Type["Model"]
 ) -> Tuple[Optional[str], List[sqlalchemy.Column]]:
     columns = []
     pkname = None
@@ -172,6 +194,7 @@ def sqlalchemy_columns_from_model_fields(
             "Table {table_name} had no fields so auto "
             "Integer primary key named `id` created."
         )
+    validate_related_names_in_relations(model_fields, new_model)
     for field_name, field in model_fields.items():
         if field.primary_key:
             pkname = check_pk_column_validity(field_name, field, pkname)
@@ -181,17 +204,16 @@ def sqlalchemy_columns_from_model_fields(
             and not issubclass(field, ManyToManyField)
         ):
             columns.append(field.get_column(field.get_alias()))
-        register_relation_in_alias_manager(table_name, field)
     return pkname, columns
 
 
-def register_relation_in_alias_manager(
-    table_name: str, field: Type[ForeignKeyField]
+def register_relation_in_alias_manager_new(
+    new_model: Type["Model"], field: Type[ForeignKeyField], field_name: str
 ) -> None:
     if issubclass(field, ManyToManyField):
-        register_many_to_many_relation_on_build(table_name, field)
+        register_many_to_many_relation_on_build_new(new_model=new_model, field=field)
     elif issubclass(field, ForeignKeyField):
-        register_relation_on_build(table_name, field)
+        register_relation_on_build_new(new_model=new_model, field_name=field_name)
 
 
 def populate_default_pydantic_field_value(
@@ -255,7 +277,7 @@ def populate_meta_tablename_columns_and_pk(
         pkname = new_model.Meta.pkname
     else:
         pkname, columns = sqlalchemy_columns_from_model_fields(
-            new_model.Meta.model_fields, new_model.Meta.tablename
+            new_model.Meta.model_fields, new_model.Meta.tablename, new_model
         )
 
     if pkname is None:
@@ -263,7 +285,6 @@ def populate_meta_tablename_columns_and_pk(
 
     new_model.Meta.columns = columns
     new_model.Meta.pkname = pkname
-
     return new_model
 
 
@@ -379,6 +400,8 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             new_model = populate_meta_tablename_columns_and_pk(name, new_model)
             new_model = populate_meta_sqlalchemy_table_if_required(new_model)
             expand_reverse_relationships(new_model)
+            for field_name, field in new_model.Meta.model_fields.items():
+                register_relation_in_alias_manager_new(new_model, field, field_name)
             populate_choices_validators(new_model)
             if new_model.Meta.pkname not in attrs["__annotations__"]:
                 field_name = new_model.Meta.pkname

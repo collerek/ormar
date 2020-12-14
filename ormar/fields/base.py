@@ -25,6 +25,7 @@ class BaseField(FieldInfo):
     """
 
     __type__ = None
+    related_name = None
 
     column_type: sqlalchemy.Column
     constraints: List = []
@@ -222,7 +223,11 @@ class BaseField(FieldInfo):
 
     @classmethod
     def expand_relationship(
-        cls, value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True
+        cls,
+        value: Any,
+        child: Union["Model", "NewBaseModel"],
+        to_register: bool = True,
+        relation_name: str = None,
     ) -> Any:
         """
         Function overwritten for relations, in basic field the value is returned as is.

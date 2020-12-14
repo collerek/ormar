@@ -1,3 +1,10 @@
+# 0.7.4
+
+* Allow multiple relations to the same related model/table.
+* Fix for wrong relation column used in many_to_many relation joins (fix [#71][#71])
+* Fix for wrong relation population for m2m relations when also fk relation present for same model.
+* Add check if user provide related_name if there are multiple relations to same table on one model
+
 # 0.7.3
 
 * Fix for setting fetching related model with UUDI pk, which is a string in raw (fix [#71][#71])

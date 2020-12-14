@@ -21,7 +21,7 @@ from ormar.exceptions import ModelPersistenceError, RelationshipInstanceError
 from ormar.queryset.utils import translate_list_to_dict, update
 
 import ormar  # noqa:  I100
-from ormar.fields import BaseField
+from ormar.fields import BaseField, ManyToManyField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.metaclass import ModelMeta
 
@@ -278,12 +278,21 @@ class ModelTableProxy:
             "ModelTableProxy",
             Type["ModelTableProxy"],
         ],
+        explicit_multi: bool = False,
     ) -> str:
         for name, field in item.Meta.model_fields.items():
-            if issubclass(field, ForeignKeyField):
-                # fastapi is creating clones of response model
-                # that's why it can be a subclass of the original model
-                # so we need to compare Meta too as this one is copied as is
+            # fastapi is creating clones of response model
+            # that's why it can be a subclass of the original model
+            # so we need to compare Meta too as this one is copied as is
+            if issubclass(field, ManyToManyField):
+                attrib = "to" if not explicit_multi else "through"
+                if (
+                    getattr(field, attrib) == related.__class__
+                    or getattr(field, attrib).Meta == related.Meta
+                ):
+                    return name
+
+            elif issubclass(field, ForeignKeyField):
                 if field.to == related.__class__ or field.to.Meta == related.Meta:
                     return name
 

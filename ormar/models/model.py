@@ -58,7 +58,8 @@ class Model(NewBaseModel):
         row: sqlalchemy.engine.ResultProxy,
         select_related: List = None,
         related_models: Any = None,
-        previous_table: str = None,
+        previous_model: Type[T] = None,
+        related_name: str = None,
         fields: Optional[Union[Dict, Set]] = None,
         exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> Optional[T]:
@@ -69,28 +70,32 @@ class Model(NewBaseModel):
         if select_related:
             related_models = group_related_list(select_related)
 
-        if (
-            previous_table
-            and previous_table in cls.Meta.model_fields
-            and issubclass(cls.Meta.model_fields[previous_table], ManyToManyField)
-        ):
-            previous_table = cls.Meta.model_fields[
-                previous_table
-            ].through.Meta.tablename
+        rel_name2 = related_name
 
-        if previous_table:
-            table_prefix = cls.Meta.alias_manager.resolve_relation_join(
-                previous_table, cls.Meta.table.name
+        if (
+            previous_model
+            and related_name
+            and issubclass(
+                previous_model.Meta.model_fields[related_name], ManyToManyField
+            )
+        ):
+            through_field = previous_model.Meta.model_fields[related_name]
+            rel_name2 = previous_model.resolve_relation_name(
+                through_field.through, through_field.to, explicit_multi=True
+            )
+            previous_model = through_field.through  # type: ignore
+
+        if previous_model and rel_name2:
+            table_prefix = cls.Meta.alias_manager.resolve_relation_join_new(
+                previous_model, rel_name2
             )
         else:
             table_prefix = ""
-        previous_table = cls.Meta.table.name
 
         item = cls.populate_nested_models_from_row(
             item=item,
             row=row,
             related_models=related_models,
-            previous_table=previous_table,
             fields=fields,
             exclude_fields=exclude_fields,
         )
@@ -111,7 +116,6 @@ class Model(NewBaseModel):
             instance.set_save_status(True)
         else:
             instance = None
-
         return instance
 
     @classmethod
@@ -120,7 +124,6 @@ class Model(NewBaseModel):
         item: dict,
         row: sqlalchemy.engine.ResultProxy,
         related_models: Any,
-        previous_table: sqlalchemy.Table,
         fields: Optional[Union[Dict, Set]] = None,
         exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> dict:
@@ -135,7 +138,8 @@ class Model(NewBaseModel):
                 child = model_cls.from_row(
                     row,
                     related_models=remainder,
-                    previous_table=previous_table,
+                    previous_model=cls,
+                    related_name=related,
                     fields=fields,
                     exclude_fields=exclude_fields,
                 )
@@ -146,7 +150,8 @@ class Model(NewBaseModel):
                 exclude_fields = cls.get_excluded(exclude_fields, related)
                 child = model_cls.from_row(
                     row,
-                    previous_table=previous_table,
+                    previous_model=cls,
+                    related_name=related,
                     fields=fields,
                     exclude_fields=exclude_fields,
                 )

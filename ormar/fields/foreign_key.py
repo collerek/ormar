@@ -94,35 +94,40 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _extract_model_from_sequence(
-        cls, value: List, child: "Model", to_register: bool
+        cls, value: List, child: "Model", to_register: bool, relation_name: str
     ) -> List["Model"]:
         return [
-            cls.expand_relationship(val, child, to_register)  # type: ignore
+            cls.expand_relationship(
+                value=val,
+                child=child,
+                to_register=to_register,
+                relation_name=relation_name,
+            )  # type: ignore
             for val in value
         ]
 
     @classmethod
     def _register_existing_model(
-        cls, value: "Model", child: "Model", to_register: bool
+        cls, value: "Model", child: "Model", to_register: bool, relation_name: str
     ) -> "Model":
         if to_register:
-            cls.register_relation(value, child)
+            cls.register_relation(model=value, child=child, relation_name=relation_name)
         return value
 
     @classmethod
     def _construct_model_from_dict(
-        cls, value: dict, child: "Model", to_register: bool
+        cls, value: dict, child: "Model", to_register: bool, relation_name: str
     ) -> "Model":
         if len(value.keys()) == 1 and list(value.keys())[0] == cls.to.Meta.pkname:
             value["__pk_only__"] = True
         model = cls.to(**value)
         if to_register:
-            cls.register_relation(model, child)
+            cls.register_relation(model=model, child=child, relation_name=relation_name)
         return model
 
     @classmethod
     def _construct_model_from_pk(
-        cls, value: Any, child: "Model", to_register: bool
+        cls, value: Any, child: "Model", to_register: bool, relation_name: str
     ) -> "Model":
         if cls.to.pk_type() == uuid.UUID and isinstance(value, str):
             value = uuid.UUID(value)
@@ -134,18 +139,28 @@ class ForeignKeyField(BaseField):
             )
         model = create_dummy_instance(fk=cls.to, pk=value)
         if to_register:
-            cls.register_relation(model, child)
+            cls.register_relation(model=model, child=child, relation_name=relation_name)
         return model
 
     @classmethod
-    def register_relation(cls, model: "Model", child: "Model") -> None:
+    def register_relation(
+        cls, model: "Model", child: "Model", relation_name: str
+    ) -> None:
         model._orm.add(
-            parent=model, child=child, child_name=cls.related_name, virtual=cls.virtual
+            parent=model,
+            child=child,
+            child_name=cls.related_name or child.get_name() + "s",
+            virtual=cls.virtual,
+            relation_name=relation_name,
         )
 
     @classmethod
     def expand_relationship(
-        cls, value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True
+        cls,
+        value: Any,
+        child: Union["Model", "NewBaseModel"],
+        to_register: bool = True,
+        relation_name: str = None,
     ) -> Optional[Union["Model", List["Model"]]]:
         if value is None:
             return None if not cls.virtual else []
@@ -158,5 +173,5 @@ class ForeignKeyField(BaseField):
 
         model = constructors.get(  # type: ignore
             value.__class__.__name__, cls._construct_model_from_pk
-        )(value, child, to_register)
+        )(value, child, to_register, relation_name)
         return model
