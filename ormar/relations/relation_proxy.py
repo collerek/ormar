@@ -11,8 +11,10 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 class RelationProxy(list):
-    def __init__(self, relation: "Relation", type_: "RelationType") -> None:
-        super().__init__()
+    def __init__(
+        self, relation: "Relation", type_: "RelationType", data_: Any = None
+    ) -> None:
+        super().__init__(data_ or ())
         self.relation: "Relation" = relation
         self.type_: "RelationType" = type_
         self._owner: "Model" = self.relation.manager.owner

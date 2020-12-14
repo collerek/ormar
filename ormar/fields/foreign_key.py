@@ -97,12 +97,12 @@ class ForeignKeyField(BaseField):
         cls, value: List, child: "Model", to_register: bool, relation_name: str
     ) -> List["Model"]:
         return [
-            cls.expand_relationship(
+            cls.expand_relationship(  # type: ignore
                 value=val,
                 child=child,
                 to_register=to_register,
                 relation_name=relation_name,
-            )  # type: ignore
+            )
             for val in value
         ]
 
