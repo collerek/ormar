@@ -24,7 +24,7 @@ class Role(ormar.Model):
     class Meta(MainMeta):
         pass
 
-    name: str = ormar.Text(primary_key=True)
+    name: str = ormar.String(primary_key=True, max_length=1000)
     order: int = ormar.Integer(default=0, name="sort_order")
     description: str = ormar.Text()
 
@@ -33,7 +33,7 @@ class Company(ormar.Model):
     class Meta(MainMeta):
         pass
 
-    name: str = ormar.Text(primary_key=True)
+    name: str = ormar.String(primary_key=True, max_length=1000)
 
 
 class UserRoleCompany(ormar.Model):
@@ -45,7 +45,7 @@ class User(ormar.Model):
     class Meta(MainMeta):
         pass
 
-    registrationnumber: str = ormar.Text(primary_key=True)
+    registrationnumber: str = ormar.String(primary_key=True, max_length=1000)
     company: Company = ormar.ForeignKey(Company)
     company2: Company = ormar.ForeignKey(Company, related_name="secondary_users")
     name: str = ormar.Text()
