@@ -1,7 +1,7 @@
 # 0.7.4
 
 * Allow multiple relations to the same related model/table.
-* Fix for wrong relation column used in many_to_many relation joins (fix [#71][#71])
+* Fix for wrong relation column used in many_to_many relation joins (fix [#73][#73])
 * Fix for wrong relation population for m2m relations when also fk relation present for same model.
 * Add check if user provide related_name if there are multiple relations to same table on one model.
 * More eager cleaning of the dead weak proxy models.
@@ -202,3 +202,4 @@ Add queryset level methods
 [#68]: https://github.com/collerek/ormar/issues/68
 [#70]: https://github.com/collerek/ormar/issues/70
 [#71]: https://github.com/collerek/ormar/issues/71
+[#73]: https://github.com/collerek/ormar/issues/73
