@@ -1,16 +1,14 @@
 import datetime
 
-import databases
 import pytest
 import sqlalchemy
 from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 from tests.settings import DATABASE_URL
-from tests.test_inheritance_concrete import Category, Subject, metadata  # type: ignore
+from tests.test_inheritance_concrete import Category, Subject, metadata, db as database  # type: ignore
 
 app = FastAPI()
-database = databases.Database(DATABASE_URL, force_rollback=True)
 app.state.database = database
 
 
