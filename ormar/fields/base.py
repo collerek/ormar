@@ -87,9 +87,9 @@ class BaseField(FieldInfo):
         :rtype: bool
         """
         return (
-            field_name not in ["default", "default_factory", "alias"]
-            and not field_name.startswith("__")
-            and hasattr(cls, field_name)
+                field_name not in ["default", "default_factory", "alias"]
+                and not field_name.startswith("__")
+                and hasattr(cls, field_name)
         )
 
     @classmethod
@@ -180,7 +180,7 @@ class BaseField(FieldInfo):
         :rtype: bool
         """
         return cls.default is not None or (
-            cls.server_default is not None and use_server
+                cls.server_default is not None and use_server
         )
 
     @classmethod
@@ -198,6 +198,12 @@ class BaseField(FieldInfo):
         return False
 
     @classmethod
+    def construct_contraints(cls) -> List:
+        return [sqlalchemy.schema.ForeignKey(
+            con.name, ondelete=con.ondelete, onupdate=con.onupdate
+        ) for con in cls.constraints]
+
+    @classmethod
     def get_column(cls, name: str) -> sqlalchemy.Column:
         """
         Returns definition of sqlalchemy.Column used in creation of sqlalchemy.Table.
@@ -212,7 +218,7 @@ class BaseField(FieldInfo):
         return sqlalchemy.Column(
             cls.alias or name,
             cls.column_type,
-            *cls.constraints,
+            *cls.construct_contraints(),
             primary_key=cls.primary_key,
             nullable=cls.nullable and not cls.primary_key,
             index=cls.index,
@@ -223,11 +229,11 @@ class BaseField(FieldInfo):
 
     @classmethod
     def expand_relationship(
-        cls,
-        value: Any,
-        child: Union["Model", "NewBaseModel"],
-        to_register: bool = True,
-        relation_name: str = None,
+            cls,
+            value: Any,
+            child: Union["Model", "NewBaseModel"],
+            to_register: bool = True,
+            relation_name: str = None,
     ) -> Any:
         """
         Function overwritten for relations, in basic field the value is returned as is.

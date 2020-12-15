@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import dataclass
 from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
@@ -45,8 +46,8 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
 
 
 def create_dummy_model(
-    base_model: Type["Model"],
-    pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
+        base_model: Type["Model"],
+        pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
 ) -> Type["BaseModel"]:
     """
     Used to construct a dummy pydantic model for type hints and pydantic validation.
@@ -75,17 +76,24 @@ class UniqueColumns(UniqueConstraint):
     pass
 
 
+@dataclass
+class ForeignKeyConstraint:
+    name: str
+    ondelete: str
+    onupdate: str
+
+
 def ForeignKey(  # noqa CFQ002
-    to: Type["Model"],
-    *,
-    name: str = None,
-    unique: bool = False,
-    nullable: bool = True,
-    related_name: str = None,
-    virtual: bool = False,
-    onupdate: str = None,
-    ondelete: str = None,
-    **kwargs: Any,
+        to: Type["Model"],
+        *,
+        name: str = None,
+        unique: bool = False,
+        nullable: bool = True,
+        related_name: str = None,
+        virtual: bool = False,
+        onupdate: str = None,
+        ondelete: str = None,
+        **kwargs: Any,
 ) -> Any:
     """
     Despite a name it's a function that returns constructed ForeignKeyField.
@@ -132,9 +140,7 @@ def ForeignKey(  # noqa CFQ002
         name=kwargs.pop("real_name", None),
         nullable=nullable,
         constraints=[
-            sqlalchemy.schema.ForeignKey(
-                fk_string, ondelete=ondelete, onupdate=onupdate
-            )
+            ForeignKeyConstraint(name=fk_string, ondelete=ondelete, onupdate=onupdate)
         ],
         unique=unique,
         column_type=to_field.column_type,
@@ -162,7 +168,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _extract_model_from_sequence(
-        cls, value: List, child: "Model", to_register: bool, relation_name: str
+            cls, value: List, child: "Model", to_register: bool, relation_name: str
     ) -> List["Model"]:
         """
         Takes a list of Models and registers them on parent.
@@ -191,7 +197,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _register_existing_model(
-        cls, value: "Model", child: "Model", to_register: bool, relation_name: str
+            cls, value: "Model", child: "Model", to_register: bool, relation_name: str
     ) -> "Model":
         """
         Takes already created instance and registers it for parent.
@@ -214,7 +220,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _construct_model_from_dict(
-        cls, value: dict, child: "Model", to_register: bool, relation_name: str
+            cls, value: dict, child: "Model", to_register: bool, relation_name: str
     ) -> "Model":
         """
         Takes a dictionary, creates a instance and registers it for parent.
@@ -241,7 +247,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _construct_model_from_pk(
-        cls, value: Any, child: "Model", to_register: bool, relation_name: str
+            cls, value: Any, child: "Model", to_register: bool, relation_name: str
     ) -> "Model":
         """
         Takes a pk value, creates a dummy instance and registers it for parent.
@@ -273,7 +279,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def register_relation(
-        cls, model: "Model", child: "Model", relation_name: str
+            cls, model: "Model", child: "Model", relation_name: str
     ) -> None:
         """
         Registers relation between parent and child in relation manager.
@@ -297,11 +303,11 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def expand_relationship(
-        cls,
-        value: Any,
-        child: Union["Model", "NewBaseModel"],
-        to_register: bool = True,
-        relation_name: str = None,
+            cls,
+            value: Any,
+            child: Union["Model", "NewBaseModel"],
+            to_register: bool = True,
+            relation_name: str = None,
     ) -> Optional[Union["Model", List["Model"]]]:
         """
         For relations the child model is first constructed (if needed),

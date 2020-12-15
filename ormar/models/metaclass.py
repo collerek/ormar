@@ -1,3 +1,4 @@
+import copy
 import logging
 import warnings
 from typing import (
@@ -60,7 +61,7 @@ def register_relation_on_build_new(new_model: Type["Model"], field_name: str) ->
 
 
 def register_many_to_many_relation_on_build_new(
-    new_model: Type["Model"], field: Type[ManyToManyField]
+        new_model: Type["Model"], field: Type[ManyToManyField]
 ) -> None:
     alias_manager.add_relation_type_new(
         field.through, new_model.get_name(), is_multi=True
@@ -71,11 +72,11 @@ def register_many_to_many_relation_on_build_new(
 
 
 def reverse_field_not_already_registered(
-    child: Type["Model"], child_model_name: str, parent_model: Type["Model"]
+        child: Type["Model"], child_model_name: str, parent_model: Type["Model"]
 ) -> bool:
     return (
-        child_model_name not in parent_model.__fields__
-        and child.get_name() not in parent_model.__fields__
+            child_model_name not in parent_model.__fields__
+            and child.get_name() not in parent_model.__fields__
     )
 
 
@@ -86,7 +87,7 @@ def expand_reverse_relationships(model: Type["Model"]) -> None:
             parent_model = model_field.to
             child = model
             if reverse_field_not_already_registered(
-                child, child_model_name, parent_model
+                    child, child_model_name, parent_model
             ):
                 register_reverse_model_fields(
                     parent_model, child, child_model_name, model_field
@@ -94,10 +95,10 @@ def expand_reverse_relationships(model: Type["Model"]) -> None:
 
 
 def register_reverse_model_fields(
-    model: Type["Model"],
-    child: Type["Model"],
-    child_model_name: str,
-    model_field: Type["ForeignKeyField"],
+        model: Type["Model"],
+        child: Type["Model"],
+        child_model_name: str,
+        model_field: Type["ForeignKeyField"],
 ) -> None:
     if issubclass(model_field, ManyToManyField):
         model.Meta.model_fields[child_model_name] = ManyToMany(
@@ -119,10 +120,10 @@ def register_reverse_model_fields(
 
 
 def adjust_through_many_to_many_model(
-    model: Type["Model"],
-    child: Type["Model"],
-    model_field: Type[ManyToManyField],
-    child_model_name: str,
+        model: Type["Model"],
+        child: Type["Model"],
+        model_field: Type[ManyToManyField],
+        child_model_name: str,
 ) -> None:
     model_field.through.Meta.model_fields[model.get_name()] = ForeignKey(
         model, real_name=model.get_name(), ondelete="CASCADE"
@@ -139,7 +140,7 @@ def adjust_through_many_to_many_model(
 
 
 def create_pydantic_field(
-    field_name: str, model: Type["Model"], model_field: Type[ManyToManyField]
+        field_name: str, model: Type["Model"], model_field: Type[ManyToManyField]
 ) -> None:
     model_field.through.__fields__[field_name] = ModelField(
         name=field_name,
@@ -161,7 +162,7 @@ def get_pydantic_field(field_name: str, model: Type["Model"]) -> "ModelField":
 
 
 def create_and_append_m2m_fk(
-    model: Type["Model"], model_field: Type[ManyToManyField]
+        model: Type["Model"], model_field: Type[ManyToManyField]
 ) -> None:
     column = sqlalchemy.Column(
         model.get_name(),
@@ -177,7 +178,7 @@ def create_and_append_m2m_fk(
 
 
 def check_pk_column_validity(
-    field_name: str, field: BaseField, pkname: Optional[str]
+        field_name: str, field: BaseField, pkname: Optional[str]
 ) -> Optional[str]:
     if pkname is not None:
         raise ModelDefinitionError("Only one primary key column is allowed.")
@@ -187,7 +188,7 @@ def check_pk_column_validity(
 
 
 def validate_related_names_in_relations(
-    model_fields: Dict, new_model: Type["Model"]
+        model_fields: Dict, new_model: Type["Model"]
 ) -> None:
     already_registered: Dict[str, List[Optional[str]]] = dict()
     for field in model_fields.values():
@@ -206,7 +207,7 @@ def validate_related_names_in_relations(
 
 
 def sqlalchemy_columns_from_model_fields(
-    model_fields: Dict, new_model: Type["Model"]
+        model_fields: Dict, new_model: Type["Model"]
 ) -> Tuple[Optional[str], List[sqlalchemy.Column]]:
     columns = []
     pkname = None
@@ -221,16 +222,16 @@ def sqlalchemy_columns_from_model_fields(
         if field.primary_key:
             pkname = check_pk_column_validity(field_name, field, pkname)
         if (
-            not field.pydantic_only
-            and not field.virtual
-            and not issubclass(field, ManyToManyField)
+                not field.pydantic_only
+                and not field.virtual
+                and not issubclass(field, ManyToManyField)
         ):
             columns.append(field.get_column(field.get_alias()))
     return pkname, columns
 
 
 def register_relation_in_alias_manager_new(
-    new_model: Type["Model"], field: Type[ForeignKeyField], field_name: str
+        new_model: Type["Model"], field: Type[ForeignKeyField], field_name: str
 ) -> None:
     if issubclass(field, ManyToManyField):
         register_many_to_many_relation_on_build_new(new_model=new_model, field=field)
@@ -239,7 +240,7 @@ def register_relation_in_alias_manager_new(
 
 
 def populate_default_pydantic_field_value(
-    ormar_field: Type[BaseField], field_name: str, attrs: dict
+        ormar_field: Type[BaseField], field_name: str, attrs: dict
 ) -> dict:
     curr_def_value = attrs.get(field_name, ormar.Undefined)
     if lenient_issubclass(curr_def_value, ormar.fields.BaseField):
@@ -284,7 +285,7 @@ def extract_annotations_and_default_vals(attrs: dict) -> Tuple[Dict, Dict]:
 
 
 def populate_meta_tablename_columns_and_pk(
-    name: str, new_model: Type["Model"]
+        name: str, new_model: Type["Model"]
 ) -> Type["Model"]:
     tablename = name.lower() + "s"
     new_model.Meta.tablename = (
@@ -309,7 +310,7 @@ def populate_meta_tablename_columns_and_pk(
 
 
 def populate_meta_sqlalchemy_table_if_required(
-    new_model: Type["Model"],
+        new_model: Type["Model"],
 ) -> Type["Model"]:
     """
     Constructs sqlalchemy table out of columns and parameters set on Meta class.
@@ -400,7 +401,7 @@ def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
 
 
 def populate_default_options_values(
-    new_model: Type["Model"], model_fields: Dict
+        new_model: Type["Model"], model_fields: Dict
 ) -> None:
     """
     Sets all optional Meta values to it's defaults
@@ -522,11 +523,11 @@ def get_potential_fields(attrs: Dict) -> Dict:
 
 
 def check_conflicting_fields(
-    new_fields: Set,
-    attrs: Dict,
-    base_class: type,
-    curr_class: type,
-    previous_fields: Set = None,
+        new_fields: Set,
+        attrs: Dict,
+        base_class: type,
+        curr_class: type,
+        previous_fields: Set = None,
 ) -> None:
     """
     You cannot redefine fields with same names in inherited classes.
@@ -556,11 +557,11 @@ def check_conflicting_fields(
 
 
 def update_attrs_and_fields(
-    attrs: Dict,
-    new_attrs: Dict,
-    model_fields: Dict,
-    new_model_fields: Dict,
-    new_fields: Set,
+        attrs: Dict,
+        new_attrs: Dict,
+        model_fields: Dict,
+        new_model_fields: Dict,
+        new_fields: Set,
 ) -> None:
     """
     Updates __annotations__, values of model fields (so pydantic FieldInfos)
@@ -584,7 +585,7 @@ def update_attrs_and_fields(
 
 
 def update_attrs_from_base_meta(  # noqa: CCR001
-    base_class: "Model", attrs: Dict,
+        base_class: "Model", attrs: Dict,
 ) -> None:
     """
     Updates Meta parameters in child from parent if needed.
@@ -612,12 +613,12 @@ def update_attrs_from_base_meta(  # noqa: CCR001
 
 
 def extract_from_parents_definition(  # noqa: CCR001
-    base_class: type,
-    curr_class: type,
-    attrs: Dict,
-    model_fields: Dict[
-        str, Union[Type[BaseField], Type[ForeignKeyField], Type[ManyToManyField]]
-    ],
+        base_class: type,
+        curr_class: type,
+        attrs: Dict,
+        model_fields: Dict[
+            str, Union[Type[BaseField], Type[ForeignKeyField], Type[ManyToManyField]]
+        ],
 ) -> Tuple[Dict, Dict]:
     """
     Extracts fields from base classes if they have valid oramr fields.
@@ -664,7 +665,18 @@ def extract_from_parents_definition(  # noqa: CCR001
                 base_class=base_class,  # type: ignore
                 attrs=attrs,
             )
-            model_fields.update(base_class.Meta.model_fields)  # type: ignore
+            parent_fields = dict()
+            table_name = attrs.get("Meta").tablename if hasattr(attrs.get("Meta"), "tablename") else attrs.get(
+                '__name__').lower() + 's'
+            for field_name, field in base_class.Meta.model_fields.items():
+                if issubclass(field, ForeignKeyField) and field.related_name:
+                    copy_field = type(field.__name__, (field,), dict(field.__dict__))
+                    copy_field.related_name = field.related_name + '_' + table_name
+                    parent_fields[field_name] = copy_field
+                else:
+                    parent_fields[field_name] = field
+
+            model_fields.update(parent_fields)  # type: ignore
         return attrs, model_fields
 
     key = "__annotations__"
@@ -722,7 +734,7 @@ def extract_from_parents_definition(  # noqa: CCR001
 
 class ModelMetaclass(pydantic.main.ModelMetaclass):
     def __new__(  # type: ignore # noqa: CCR001
-        mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
+            mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
     ) -> "ModelMetaclass":
         attrs["Config"] = get_pydantic_base_orm_config()
         attrs["__name__"] = name
