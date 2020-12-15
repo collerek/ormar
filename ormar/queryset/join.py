@@ -262,9 +262,16 @@ class SqlJoin:
         model_cls: Type["Model"],
         part: str,
     ) -> Tuple[str, str]:
-        if join_params.prev_model.Meta.model_fields[part].virtual or is_multi:
-            to_field = model_cls.resolve_relation_name(
-                model_cls, join_params.prev_model
+        if is_multi:
+            to_field = join_params.prev_model.get_name()
+            to_key = model_cls.get_column_alias(to_field)
+            from_key = join_params.prev_model.get_column_alias(
+                join_params.prev_model.Meta.pkname
+            )
+        elif join_params.prev_model.Meta.model_fields[part].virtual:
+            to_field = (
+                join_params.prev_model.Meta.model_fields[part].related_name
+                or join_params.prev_model.get_name() + "s"
             )
             to_key = model_cls.get_column_alias(to_field)
             from_key = join_params.prev_model.get_column_alias(

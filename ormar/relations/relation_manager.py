@@ -36,6 +36,7 @@ class RelationsManager:
         self._relations[field.name] = Relation(
             manager=self,
             type_=self._get_relation_type(field),
+            field_name=field.name,
             to=field.to,
             through=getattr(field, "through", None),
         )
@@ -64,15 +65,17 @@ class RelationsManager:
         relation_name: str,
     ) -> None:
         to_field: Type[BaseField] = child.Meta.model_fields[relation_name]
-
+        # print('comming', child_name, relation_name)
         (parent, child, child_name, to_name,) = get_relations_sides_and_names(
             to_field, parent, child, child_name, virtual
         )
 
+        # print('adding', parent.get_name(), child.get_name(), child_name)
         parent_relation = parent._orm._get(child_name)
         if parent_relation:
             parent_relation.add(child)  # type: ignore
 
+        # print('adding', child.get_name(), parent.get_name(), child_name)
         child_relation = child._orm._get(to_name)
         if child_relation:
             child_relation.add(parent)
