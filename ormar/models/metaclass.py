@@ -158,7 +158,6 @@ def create_and_append_m2m_fk(
             model.Meta.tablename + "." + model.get_column_alias(model.Meta.pkname),
             ondelete="CASCADE",
             onupdate="CASCADE",
-            related_name=model_field.name,
         ),
     )
     model_field.through.Meta.columns.append(column)
