@@ -145,7 +145,7 @@ class PrefetchQuery:
         )
 
     def _get_filter_for_prefetch(
-        self, parent_model: Type["Model"], target_model: Type["Model"], reverse: bool,
+        self, parent_model: Type["Model"], target_model: Type["Model"], reverse: bool, related: str,
     ) -> List:
         ids = self._extract_required_ids(
             parent_model=parent_model, target_model=target_model, reverse=reverse,
@@ -155,7 +155,7 @@ class PrefetchQuery:
                 clause_target,
                 filter_column,
             ) = parent_model.get_clause_target_and_filter_column_name(
-                parent_model=parent_model, target_model=target_model, reverse=reverse
+                parent_model=parent_model, target_model=target_model, reverse=reverse, related=related
             )
             qryclause = QueryClause(
                 model_cls=clause_target, select_related=[], filter_clauses=[],
@@ -246,7 +246,7 @@ class PrefetchQuery:
         parent_model = target_model
 
         filter_clauses = self._get_filter_for_prefetch(
-            parent_model=parent_model, target_model=target_field.to, reverse=reverse,
+            parent_model=parent_model, target_model=target_field.to, reverse=reverse, related=related
         )
         if not filter_clauses:  # related field is empty
             return

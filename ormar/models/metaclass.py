@@ -89,13 +89,13 @@ def register_reverse_model_fields(
 ) -> None:
     if issubclass(model_field, ManyToManyField):
         model.Meta.model_fields[child_model_name] = ManyToMany(
-            child, through=model_field.through, name=child_model_name, virtual=True
+            child, through=model_field.through, name=child_model_name, virtual=True, related_name=model_field.name
         )
         # register foreign keys on through model
         adjust_through_many_to_many_model(model, child, model_field)
     else:
         model.Meta.model_fields[child_model_name] = ForeignKey(
-            child, real_name=child_model_name, virtual=True
+            child, real_name=child_model_name, virtual=True, related_name=model_field.name
         )
 
 

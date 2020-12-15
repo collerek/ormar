@@ -25,6 +25,7 @@ class Relation:
         self,
         manager: "RelationsManager",
         type_: RelationType,
+        field_name: str,
         to: Type["T"],
         through: Type["T"] = None,
     ) -> None:
@@ -34,8 +35,9 @@ class Relation:
         self._to_remove: Set = set()
         self.to: Type["T"] = to
         self.through: Optional[Type["T"]] = through
+        self.field_name = field_name
         self.related_models: Optional[Union[RelationProxy, "T"]] = (
-            RelationProxy(relation=self, type_=type_)
+            RelationProxy(relation=self, type_=type_, field_name=field_name)
             if type_ in (RelationType.REVERSE, RelationType.MULTIPLE)
             else None
         )
@@ -47,7 +49,7 @@ class Relation:
             if i not in self._to_remove
         ]
         self.related_models = RelationProxy(
-            relation=self, type_=self._type, data_=cleaned_data
+            relation=self, type_=self._type,  field_name=self.field_name, data_=cleaned_data
         )
         relation_name = self._owner.resolve_relation_name(self._owner, self.to)
         self._owner.__dict__[relation_name] = cleaned_data
@@ -69,7 +71,7 @@ class Relation:
         return None
 
     def add(self, child: "T") -> None:
-        relation_name = self._owner.resolve_relation_name(self._owner, child)
+        relation_name = self.field_name
         if self._type == RelationType.PRIMARY:
             self.related_models = child
             self._owner.__dict__[relation_name] = child
@@ -84,7 +86,7 @@ class Relation:
                 self._owner.__dict__[relation_name] = rel
 
     def remove(self, child: Union["NewBaseModel", Type["NewBaseModel"]]) -> None:
-        relation_name = self._owner.resolve_relation_name(self._owner, child)
+        relation_name = self.field_name
         if self._type == RelationType.PRIMARY:
             if self.related_models == child:
                 self.related_models = None
