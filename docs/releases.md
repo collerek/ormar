@@ -1,3 +1,7 @@
+# 0.7.5
+
+* Fix for wrong relation column name in many_to_many relation joins (fix [#73][#73])
+
 # 0.7.4
 
 * Allow multiple relations to the same related model/table.
