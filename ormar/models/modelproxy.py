@@ -62,10 +62,17 @@ class ModelTableProxy:
 
     @staticmethod
     def get_clause_target_and_filter_column_name(
-        parent_model: Type["Model"], target_model: Type["Model"], reverse: bool
+        parent_model: Type["Model"],
+        target_model: Type["Model"],
+        reverse: bool,
+        related: str,
     ) -> Tuple[Type["Model"], str]:
         if reverse:
-            field = target_model.resolve_relation_field(target_model, parent_model)
+            field_name = (
+                parent_model.Meta.model_fields[related].related_name
+                or parent_model.get_name() + "s"
+            )
+            field = target_model.Meta.model_fields[field_name]
             if issubclass(field, ormar.fields.ManyToManyField):
                 sub_field = target_model.resolve_relation_field(
                     field.through, parent_model

@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 import ormar
 from ormar.exceptions import NoMatch, RelationshipInstanceError
@@ -12,13 +12,29 @@ if TYPE_CHECKING:  # pragma no cover
 
 class RelationProxy(list):
     def __init__(
-        self, relation: "Relation", type_: "RelationType", data_: Any = None
+        self,
+        relation: "Relation",
+        type_: "RelationType",
+        field_name: str,
+        data_: Any = None,
     ) -> None:
         super().__init__(data_ or ())
         self.relation: "Relation" = relation
         self.type_: "RelationType" = type_
+        self.field_name = field_name
         self._owner: "Model" = self.relation.manager.owner
         self.queryset_proxy = QuerysetProxy(relation=self.relation, type_=type_)
+        self._related_field_name: Optional[str] = None
+
+    @property
+    def related_field_name(self) -> str:
+        if self._related_field_name:
+            return self._related_field_name
+        owner_field = self._owner.Meta.model_fields[self.field_name]
+        self._related_field_name = (
+            owner_field.related_name or self._owner.get_name() + "s"
+        )
+        return self._related_field_name
 
     def __getattribute__(self, item: str) -> Any:
         if item in ["count", "clear"]:
@@ -48,9 +64,8 @@ class RelationProxy(list):
             )
 
     def _set_queryset(self) -> "QuerySet":
-        related_field = self._owner.resolve_relation_field(
-            self.relation.to, self._owner
-        )
+        related_field_name = self.related_field_name
+        related_field = self.relation.to.Meta.model_fields[related_field_name]
         pkname = self._owner.get_column_alias(self._owner.Meta.pkname)
         self._check_if_model_saved()
         kwargs = {f"{related_field.get_alias()}__{pkname}": self._owner.pk}
@@ -70,11 +85,11 @@ class RelationProxy(list):
                 f"{item.get_name()} with given primary key!"
             )
         super().remove(item)
-        rel_name = item.resolve_relation_name(item, self._owner)
-        relation = item._orm._get(rel_name)
+        relation_name = self.related_field_name
+        relation = item._orm._get(relation_name)
         if relation is None:  # pragma nocover
             raise ValueError(
-                f"{self._owner.get_name()} does not have relation {rel_name}"
+                f"{self._owner.get_name()} does not have relation {relation_name}"
             )
         relation.remove(self._owner)
         self.relation.remove(item)
@@ -82,20 +97,17 @@ class RelationProxy(list):
             await self.queryset_proxy.delete_through_instance(item)
         else:
             if keep_reversed:
-                setattr(item, rel_name, None)
+                setattr(item, relation_name, None)
                 await item.update()
             else:
                 await item.delete()
 
     async def add(self, item: "Model") -> None:
+        relation_name = self.related_field_name
         if self.type_ == ormar.RelationType.MULTIPLE:
             await self.queryset_proxy.create_through_instance(item)
-            rel_name = item.resolve_relation_name(item, self._owner)
-            setattr(item, rel_name, self._owner)
+            setattr(item, relation_name, self._owner)
         else:
             self._check_if_model_saved()
-            related_field = self._owner.resolve_relation_field(
-                self.relation.to, self._owner
-            )
-            setattr(item, related_field.name, self._owner)
+            setattr(item, relation_name, self._owner)
             await item.update()

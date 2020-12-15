@@ -322,7 +322,6 @@ class ForeignKeyField(BaseField):
         """
         if value is None:
             return None if not cls.virtual else []
-
         constructors = {
             f"{cls.to.__name__}": cls._register_existing_model,
             "dict": cls._construct_model_from_dict,
