@@ -200,7 +200,7 @@ class Model(NewBaseModel):
         if not self.pk and self.Meta.model_fields[self.Meta.pkname].autoincrement:
             self_fields.pop(self.Meta.pkname, None)
         self_fields = self.populate_default_values(self_fields)
-        self.from_dict(
+        self.update_from_dict(
             {
                 k: v
                 for k, v in self_fields.items()
@@ -274,7 +274,7 @@ class Model(NewBaseModel):
 
     async def update(self: T, **kwargs: Any) -> T:
         if kwargs:
-            self.from_dict(kwargs)
+            self.update_from_dict(kwargs)
 
         if not self.pk:
             raise ModelPersistenceError(
@@ -309,6 +309,6 @@ class Model(NewBaseModel):
             raise NoMatch("Instance was deleted from database and cannot be refreshed")
         kwargs = dict(row)
         kwargs = self.translate_aliases_to_columns(kwargs)
-        self.from_dict(kwargs)
+        self.update_from_dict(kwargs)
         self.set_save_status(True)
         return self

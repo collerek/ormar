@@ -45,10 +45,14 @@ class DateFieldsModel(ormar.Model):
         abstract = True
         metadata = metadata
         database = db
-        constraints = [ormar.UniqueColumns("created_date", "updated_date")]
+        constraints = [ormar.UniqueColumns("creation_date", "modification_date")]
 
-    created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
-    updated_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
+    created_date: datetime.datetime = ormar.DateTime(
+        default=datetime.datetime.now, name="creation_date"
+    )
+    updated_date: datetime.datetime = ormar.DateTime(
+        default=datetime.datetime.now, name="modification_date"
+    )
 
 
 class Category(DateFieldsModel, AuditModel):
@@ -139,6 +143,7 @@ async def test_fields_inherited_from_mixin():
             ).save()
             sub = await Subject(name="Bar", category=cat).save()
             mixin_columns = ["created_date", "updated_date"]
+            mixin_db_columns = ["creation_date", "modification_date"]
             mixin2_columns = ["created_by", "updated_by"]
             assert all(field in Category.Meta.model_fields for field in mixin_columns)
             assert cat.created_date is not None
@@ -156,12 +161,12 @@ async def test_fields_inherited_from_mixin():
             assert "categories" in inspector.get_table_names()
             table_columns = [x.get("name") for x in inspector.get_columns("categories")]
             assert all(
-                col in table_columns for col in mixin_columns
+                col in table_columns for col in mixin_db_columns
             )  # + mixin2_columns)
 
             assert "subjects" in inspector.get_table_names()
             table_columns = [x.get("name") for x in inspector.get_columns("subjects")]
-            assert all(col in table_columns for col in mixin_columns)
+            assert all(col in table_columns for col in mixin_db_columns)
 
             sub2 = (
                 await Subject.objects.select_related("category")
@@ -179,3 +184,20 @@ async def test_fields_inherited_from_mixin():
             assert sub2.updated_date is None
             assert sub2.category.created_by == "Sam"
             assert sub2.category.updated_by == cat.updated_by
+
+            sub3 = (
+                await Subject.objects.prefetch_related("category")
+                .order_by("-created_date")
+                .exclude_fields({"updated_date": ..., "category": {"updated_date"}})
+                .get()
+            )
+            assert round_date_to_seconds(sub3.created_date) == round_date_to_seconds(
+                sub.created_date
+            )
+            assert sub3.category.updated_date is None
+            assert round_date_to_seconds(
+                sub3.category.created_date
+            ) == round_date_to_seconds(cat.created_date)
+            assert sub3.updated_date is None
+            assert sub3.category.created_by == "Sam"
+            assert sub3.category.updated_by == cat.updated_by

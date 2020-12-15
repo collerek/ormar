@@ -33,7 +33,7 @@ quick_access_set = {
     "delete",
     "dict",
     "extract_related_names",
-    "from_dict",
+    "update_from_dict",
     "get_column_alias",
     "get_column_name_from_alias",
     "get_filtered_names_to_extract",

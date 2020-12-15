@@ -388,6 +388,9 @@ class PrefetchQuery:
                 fields=fields,
                 exclude_fields=exclude_fields,
             )
+            item["__excluded__"] = target_model.get_names_to_exclude(
+                fields=fields, exclude_fields=exclude_fields
+            )
             instance = target_model(**item)
             instance = self._populate_nested_related(
                 model=instance, prefetch_dict=prefetch_dict, orders_by=orders_by

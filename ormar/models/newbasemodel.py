@@ -351,7 +351,7 @@ class NewBaseModel(
 
         return dict_instance
 
-    def from_dict(self, value_dict: Dict) -> "NewBaseModel":
+    def update_from_dict(self, value_dict: Dict) -> "NewBaseModel":
         for key, value in value_dict.items():
             setattr(self, key, value)
         return self
