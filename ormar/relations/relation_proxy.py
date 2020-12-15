@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 import ormar
 from ormar.exceptions import NoMatch, RelationshipInstanceError
@@ -12,7 +12,11 @@ if TYPE_CHECKING:  # pragma no cover
 
 class RelationProxy(list):
     def __init__(
-        self, relation: "Relation", type_: "RelationType",  field_name: str, data_: Any = None
+        self,
+        relation: "Relation",
+        type_: "RelationType",
+        field_name: str,
+        data_: Any = None,
     ) -> None:
         super().__init__(data_ or ())
         self.relation: "Relation" = relation
@@ -20,8 +24,17 @@ class RelationProxy(list):
         self.field_name = field_name
         self._owner: "Model" = self.relation.manager.owner
         self.queryset_proxy = QuerysetProxy(relation=self.relation, type_=type_)
+        self._related_field_name: Optional[str] = None
+
+    @property
+    def related_field_name(self) -> str:
+        if self._related_field_name:
+            return self._related_field_name
         owner_field = self._owner.Meta.model_fields[self.field_name]
-        self.related_field_name = owner_field.related_name or self._owner.get_name() + 's'
+        self._related_field_name = (
+            owner_field.related_name or self._owner.get_name() + "s"
+        )
+        return self._related_field_name
 
     def __getattribute__(self, item: str) -> Any:
         if item in ["count", "clear"]:

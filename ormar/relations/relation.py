@@ -49,7 +49,10 @@ class Relation:
             if i not in self._to_remove
         ]
         self.related_models = RelationProxy(
-            relation=self, type_=self._type,  field_name=self.field_name, data_=cleaned_data
+            relation=self,
+            type_=self._type,
+            field_name=self.field_name,
+            data_=cleaned_data,
         )
         relation_name = self._owner.resolve_relation_name(self._owner, self.to)
         self._owner.__dict__[relation_name] = cleaned_data
