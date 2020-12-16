@@ -168,7 +168,32 @@ class Model(NewBaseModel):
         fields: Optional[Union[Dict, Set]] = None,
         exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> dict:
+        """
+        Extracts own fields from raw sql result, using a given prefix.
+        Prefix changes depending on the table's position in a join.
 
+        If the table is a main table, there is no prefix.
+        All joined tables have prefixes to allow duplicate column names,
+        as well as duplicated joins to the same table from multiple different tables.
+
+        Extracted fields populates the item dict that is later used to construct a Model.
+
+        :param item: dictionary of already populated nested models, otherwise empty dict
+        :type item: Dict
+        :param row: raw result row from the database
+        :type row: sqlalchemy.engine.result.ResultProxy
+        :param table_prefix: prefix of the table from AliasManager
+        each pair of tables have own prefix (two of them depending on direction) - used in joins
+        to allow multiple joins to the same table.
+        :type table_prefix: str
+        :param fields: fields and related model fields to include - if provided only those are included
+        :type fields: Optional[Union[Dict, Set]]
+        :param exclude_fields: fields and related model fields to exclude
+        excludes the fields even if they are provided in fields
+        :type exclude_fields: Optional[Union[Dict, Set]]
+        :return: dictionary with keys corresponding to model fields names and values are database values
+        :rtype: Dict
+        """
         # databases does not keep aliases in Record for postgres, change to raw row
         source = row._row if cls.db_backend_name() == "postgresql" else row
 
@@ -190,11 +215,41 @@ class Model(NewBaseModel):
         return item
 
     async def upsert(self: T, **kwargs: Any) -> T:
+        """
+        Performs either a save or an update depending on the presence of the primary key.
+        If the pk field is filled it's an update, otherwise the save is performed.
+        For save kwargs are ignored, used only in update if provided.
+
+        :param kwargs: list of fields to update
+        :type kwargs: Any
+        :return: saved Model
+        :rtype: Model
+        """
         if not self.pk:
             return await self.save()
         return await self.update(**kwargs)
 
     async def save(self: T) -> T:
+        """
+        Performs a save of given Model instance.
+        If primary key is already saved, db backend will throw integrity error.
+
+        Related models are saved by pk number, reverse relation and many to many fields
+        are not saved - use corresponding relations methods.
+
+        If there are fields with server_default set and those fields are not already filled
+        save will trigger also a second query to refreshed the fields populated server side.
+
+        Does not recognize if model was previously saved. If you want to perform update or
+        insert depending on the pk fields presence use upsert.
+
+        Sends pre_save and post_save signals.
+
+        Sets model save status to True.
+
+        :return: saved Model
+        :rtype: Model
+        """
         self_fields = self._extract_model_db_fields()
 
         if not self.pk and self.Meta.model_fields[self.Meta.pkname].autoincrement:
@@ -233,6 +288,30 @@ class Model(NewBaseModel):
     async def save_related(  # noqa: CCR001
         self, follow: bool = False, visited: Set = None, update_count: int = 0
     ) -> int:  # noqa: CCR001
+        """
+        Triggers a upsert method on all related models if the instances are not already saved.
+        By default saves only the directly related ones.
+
+        If follow=True is set it saves also related models of related models.
+
+        To not get stuck in an infinite loop as related models also keep a relation
+        to parent model visited models set is kept.
+
+        That way already visited models that are nested are saved, but the save do not
+        follow them inside. So Model A -> Model B -> Model A -> Model C will save second
+        Model A but will never follow into Model C. Nested relations of those kind need to
+        be persisted manually.
+
+        :param follow: flag to trigger deep save - by default only directly related models are saved
+        with follow=True also related models of related models are saved
+        :type follow: bool
+        :param visited: internal parameter for recursive calls - already visited models
+        :type visited: Set
+        :param update_count: internal parameter for recursive calls - no uf updated instances
+        :type update_count: int
+        :return: number of updated/saved models
+        :rtype: int
+        """
         if not visited:
             visited = {self.__class__}
         else:
@@ -263,6 +342,22 @@ class Model(NewBaseModel):
     async def _update_and_follow(
         rel: T, follow: bool, visited: Set, update_count: int
     ) -> Tuple[int, Set]:
+        """
+        Internal method used in save_related to follow related models and update numbers
+        of updated related instances.
+
+        :param rel: Model to follow
+        :type rel: Model
+        :param follow: flag to trigger deep save - by default only directly related models are saved
+        with follow=True also related models of related models are saved
+        :type follow: bool
+        :param visited: internal parameter for recursive calls - already visited models
+        :type visited: Set
+        :param update_count: internal parameter for recursive calls - no uf updated instances
+        :type update_count: int
+        :return: tuple of update count and visited
+        :rtype: Tuple[int, Set]
+        """
         if follow and rel.__class__ not in visited:
             update_count = await rel.save_related(
                 follow=follow, visited=visited, update_count=update_count
@@ -273,6 +368,21 @@ class Model(NewBaseModel):
         return update_count, visited
 
     async def update(self: T, **kwargs: Any) -> T:
+        """
+        Performs update of Model instance in the database.
+        Fields can be updated before or you can pass them as kwargs.
+
+        Sends pre_update and post_update signals.
+
+        Sets model save status to True.
+
+        :raises: If the pk column is not set will throw ModelPersistenceError
+
+        :param kwargs: list of fields to update as field=value pairs
+        :type kwargs: Any
+        :return: updated Model
+        :rtype: Model
+        """
         if kwargs:
             self.update_from_dict(kwargs)
 
@@ -294,6 +404,20 @@ class Model(NewBaseModel):
         return self
 
     async def delete(self: T) -> int:
+        """
+        Removes the Model instance from the database.
+
+        Sends pre_delete and post_delete signals.
+
+        Sets model save status to False.
+
+        Note it does not delete the Model itself (python object).
+        So you can delete and later save (since pk is deleted no conflict will arise)
+        or update and the Model will be saved in database again.
+
+        :return: number of deleted rows (for some backends)
+        :rtype: int
+        """
         await self.signals.pre_delete.send(sender=self.__class__, instance=self)
         expr = self.Meta.table.delete()
         expr = expr.where(self.pk_column == (getattr(self, self.Meta.pkname)))
@@ -303,6 +427,16 @@ class Model(NewBaseModel):
         return result
 
     async def load(self: T) -> T:
+        """
+        Allow to refresh existing Models fields from database.
+        Be careful as the related models can be overwritten by pk_only models during load.
+        Does NOT refresh the related models fields if they were loaded before.
+
+        :raises: If given primary key is not found in database the NoMatch exception is raised.
+
+        :return: reloaded Model
+        :rtype: Model
+        """
         expr = self.Meta.table.select().where(self.pk_column == self.pk)
         row = await self.Meta.database.fetch_one(expr)
         if not row:  # pragma nocover

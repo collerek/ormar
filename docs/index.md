@@ -130,11 +130,11 @@ album = await Album.objects.select_related("tracks").all()
 assert len(album.tracks) == 3
 
 # Fetch instances, with a filter across an FK relationship.
-tracks = Track.objects.filter(album__name="Fantasies")
+tracks = await Track.objects.filter(album__name="Fantasies").all()
 assert len(tracks) == 2
 
 # Fetch instances, with a filter and operator across an FK relationship.
-tracks = Track.objects.filter(album__name__iexact="fantasies")
+tracks = await Track.objects.filter(album__name__iexact="fantasies").all()
 assert len(tracks) == 2
 
 # Limit a query
