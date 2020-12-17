@@ -22,6 +22,20 @@ from ormar.models.metaclass import ModelMeta
 
 
 def group_related_list(list_: List) -> Dict:
+    """
+    Translates the list of related strings into a dictionary.
+    That way nested models are grouped to traverse them in a right order
+    and to avoid repetition.
+
+    Sample: ["people__houses", "people__cars__models", "people__cars__colors"]
+    will become:
+    {'people': {'houses': [], 'cars': ['models', 'colors']}}
+
+    :param list_: list of related models used in select related
+    :type list_: List[str]
+    :return: list converted to dictionary to avoid repetition and group nested models
+    :rtype: Dict[str, List]
+    """
     test_dict: Dict[str, Any] = dict()
     grouped = itertools.groupby(list_, key=lambda x: x.split("__")[0])
     for key, group in grouped:
@@ -63,7 +77,38 @@ class Model(NewBaseModel):
         fields: Optional[Union[Dict, Set]] = None,
         exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> Optional[T]:
+        """
+        Model method to convert raw sql row from database into ormar.Model instance.
+        Traverses nested models if they were specified in select_related for query.
 
+        Called recurrently and returns model instance if it's present in the row.
+        Note that it's processing one row at a time, so if there are duplicates of
+        parent row that needs to be joined/combined
+        (like parent row in sql join with 2+ child rows)
+        instances populated in this method are later combined in the QuerySet.
+        Other method working directly on raw database results is in prefetch_query,
+        where rows are populated in a different way as they do not have
+        nested models in result.
+
+        :param row: raw result row from the database
+        :type row: sqlalchemy.engine.result.ResultProxy
+        :param select_related: list of names of related models fetched from database
+        :type select_related: List
+        :param related_models: list or dict of related models
+        :type related_models: Union[List, Dict]
+        :param previous_model: internal param for nested models to specify table_prefix
+        :type previous_model: Model class
+        :param related_name: internal parameter - name of current nested model
+        :type related_name: str
+        :param fields: fields and related model fields to include
+        if provided only those are included
+        :type fields: Optional[Union[Dict, Set]]
+        :param exclude_fields: fields and related model fields to exclude
+        excludes the fields even if they are provided in fields
+        :type exclude_fields: Optional[Union[Dict, Set]]
+        :return: returns model if model is populated from database
+        :rtype: Optional[Model]
+        """
         item: Dict[str, Any] = {}
         select_related = select_related or []
         related_models = related_models or []
@@ -86,7 +131,7 @@ class Model(NewBaseModel):
             previous_model = through_field.through  # type: ignore
 
         if previous_model and rel_name2:
-            table_prefix = cls.Meta.alias_manager.resolve_relation_join_new(
+            table_prefix = cls.Meta.alias_manager.resolve_relation_join(
                 previous_model, rel_name2
             )
         else:
@@ -127,6 +172,32 @@ class Model(NewBaseModel):
         fields: Optional[Union[Dict, Set]] = None,
         exclude_fields: Optional[Union[Dict, Set]] = None,
     ) -> dict:
+        """
+        Traverses structure of related models and populates the nested models
+        from the database row.
+        Related models can be a list if only directly related models are to be
+        populated, converted to dict if related models also have their own related
+        models to be populated.
+
+        Recurrently calls from_row method on nested instances and create nested
+        instances. In the end those instances are added to the final model dictionary.
+
+        :param item: dictionary of already populated nested models, otherwise empty dict
+        :type item: Dict
+        :param row: raw result row from the database
+        :type row: sqlalchemy.engine.result.ResultProxy
+        :param related_models: list or dict of related models
+        :type related_models: Union[Dict, List]
+        :param fields: fields and related model fields to include -
+        if provided only those are included
+        :type fields: Optional[Union[Dict, Set]]
+        :param exclude_fields: fields and related model fields to exclude
+        excludes the fields even if they are provided in fields
+        :type exclude_fields: Optional[Union[Dict, Set]]
+        :return: dictionary with keys corresponding to model fields names
+        and values are database values
+        :rtype: Dict
+        """
         for related in related_models:
             if isinstance(related_models, dict) and related_models[related]:
                 first_part, remainder = related, related_models[related]
@@ -176,22 +247,26 @@ class Model(NewBaseModel):
         All joined tables have prefixes to allow duplicate column names,
         as well as duplicated joins to the same table from multiple different tables.
 
-        Extracted fields populates the item dict that is later used to construct a Model.
+        Extracted fields populates the item dict later used to construct a Model.
+
+        Used in Model.from_row and PrefetchQuery._populate_rows methods.
 
         :param item: dictionary of already populated nested models, otherwise empty dict
         :type item: Dict
         :param row: raw result row from the database
         :type row: sqlalchemy.engine.result.ResultProxy
         :param table_prefix: prefix of the table from AliasManager
-        each pair of tables have own prefix (two of them depending on direction) - used in joins
-        to allow multiple joins to the same table.
+        each pair of tables have own prefix (two of them depending on direction) -
+        used in joins to allow multiple joins to the same table.
         :type table_prefix: str
-        :param fields: fields and related model fields to include - if provided only those are included
+        :param fields: fields and related model fields to include -
+        if provided only those are included
         :type fields: Optional[Union[Dict, Set]]
         :param exclude_fields: fields and related model fields to exclude
         excludes the fields even if they are provided in fields
         :type exclude_fields: Optional[Union[Dict, Set]]
-        :return: dictionary with keys corresponding to model fields names and values are database values
+        :return: dictionary with keys corresponding to model fields names
+        and values are database values
         :rtype: Dict
         """
         # databases does not keep aliases in Record for postgres, change to raw row
@@ -216,7 +291,7 @@ class Model(NewBaseModel):
 
     async def upsert(self: T, **kwargs: Any) -> T:
         """
-        Performs either a save or an update depending on the presence of the primary key.
+        Performs either a save or an update depending on the presence of the pk.
         If the pk field is filled it's an update, otherwise the save is performed.
         For save kwargs are ignored, used only in update if provided.
 
@@ -237,11 +312,13 @@ class Model(NewBaseModel):
         Related models are saved by pk number, reverse relation and many to many fields
         are not saved - use corresponding relations methods.
 
-        If there are fields with server_default set and those fields are not already filled
-        save will trigger also a second query to refreshed the fields populated server side.
+        If there are fields with server_default set and those fields
+        are not already filled save will trigger also a second query
+        to refreshed the fields populated server side.
 
-        Does not recognize if model was previously saved. If you want to perform update or
-        insert depending on the pk fields presence use upsert.
+        Does not recognize if model was previously saved.
+        If you want to perform update or insert depending on the pk
+        fields presence use upsert.
 
         Sends pre_save and post_save signals.
 
@@ -289,7 +366,8 @@ class Model(NewBaseModel):
         self, follow: bool = False, visited: Set = None, update_count: int = 0
     ) -> int:  # noqa: CCR001
         """
-        Triggers a upsert method on all related models if the instances are not already saved.
+        Triggers a upsert method on all related models
+        if the instances are not already saved.
         By default saves only the directly related ones.
 
         If follow=True is set it saves also related models of related models.
@@ -299,15 +377,17 @@ class Model(NewBaseModel):
 
         That way already visited models that are nested are saved, but the save do not
         follow them inside. So Model A -> Model B -> Model A -> Model C will save second
-        Model A but will never follow into Model C. Nested relations of those kind need to
-        be persisted manually.
+        Model A but will never follow into Model C.
+        Nested relations of those kind need to be persisted manually.
 
-        :param follow: flag to trigger deep save - by default only directly related models are saved
+        :param follow: flag to trigger deep save -
+        by default only directly related models are saved
         with follow=True also related models of related models are saved
         :type follow: bool
         :param visited: internal parameter for recursive calls - already visited models
         :type visited: Set
-        :param update_count: internal parameter for recursive calls - no uf updated instances
+        :param update_count: internal parameter for recursive calls -
+        number of updated instances
         :type update_count: int
         :return: number of updated/saved models
         :rtype: int
@@ -348,12 +428,14 @@ class Model(NewBaseModel):
 
         :param rel: Model to follow
         :type rel: Model
-        :param follow: flag to trigger deep save - by default only directly related models are saved
+        :param follow: flag to trigger deep save -
+        by default only directly related models are saved
         with follow=True also related models of related models are saved
         :type follow: bool
         :param visited: internal parameter for recursive calls - already visited models
         :type visited: Set
-        :param update_count: internal parameter for recursive calls - no uf updated instances
+        :param update_count: internal parameter for recursive calls -
+        number of updated instances
         :type update_count: int
         :return: tuple of update count and visited
         :rtype: Tuple[int, Set]
@@ -429,10 +511,10 @@ class Model(NewBaseModel):
     async def load(self: T) -> T:
         """
         Allow to refresh existing Models fields from database.
-        Be careful as the related models can be overwritten by pk_only models during load.
+        Be careful as the related models can be overwritten by pk_only models in load.
         Does NOT refresh the related models fields if they were loaded before.
 
-        :raises: If given primary key is not found in database the NoMatch exception is raised.
+        :raises: If given pk is not found in database the NoMatch exception is raised.
 
         :return: reloaded Model
         :rtype: Model

@@ -100,7 +100,7 @@ class Car(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50)
     owner: Person = ormar.ForeignKey(Person)
-    co_owner: Person = ormar.ForeignKey(Person, related_name='coowned')
+    co_owner: Person = ormar.ForeignKey(Person, related_name="coowned")
 
 
 class Truck(Car):
@@ -113,7 +113,7 @@ class Truck(Car):
 
 class Bus(Car):
     class Meta:
-        tablename = 'buses'
+        tablename = "buses"
         metadata = metadata
         database = db
 
@@ -134,6 +134,7 @@ def test_init_of_abstract_model():
 
 def test_field_redefining_raises_error():
     with pytest.raises(ModelDefinitionError):
+
         class WrongField(DateFieldsModel):  # pragma: no cover
             class Meta(ormar.ModelMeta):
                 tablename = "wrongs"
@@ -146,6 +147,7 @@ def test_field_redefining_raises_error():
 
 def test_model_subclassing_non_abstract_raises_error():
     with pytest.raises(ModelDefinitionError):
+
         class WrongField2(DateFieldsModelNoSubclass):  # pragma: no cover
             class Meta(ormar.ModelMeta):
                 tablename = "wrongs"
@@ -163,7 +165,7 @@ def test_params_are_inherited():
 
 
 def round_date_to_seconds(
-        date: datetime.datetime,
+    date: datetime.datetime,
 ) -> datetime.datetime:  # pragma: no cover
     if date.microsecond >= 500000:
         date = date + datetime.timedelta(seconds=1)
@@ -206,9 +208,9 @@ async def test_fields_inherited_from_mixin():
 
             sub2 = (
                 await Subject.objects.select_related("category")
-                    .order_by("-created_date")
-                    .exclude_fields("updated_date")
-                    .get()
+                .order_by("-created_date")
+                .exclude_fields("updated_date")
+                .get()
             )
             assert round_date_to_seconds(sub2.created_date) == round_date_to_seconds(
                 sub.created_date
@@ -223,9 +225,9 @@ async def test_fields_inherited_from_mixin():
 
             sub3 = (
                 await Subject.objects.prefetch_related("category")
-                    .order_by("-created_date")
-                    .exclude_fields({"updated_date": ..., "category": {"updated_date"}})
-                    .get()
+                .order_by("-created_date")
+                .exclude_fields({"updated_date": ..., "category": {"updated_date"}})
+                .get()
             )
             assert round_date_to_seconds(sub3.created_date) == round_date_to_seconds(
                 sub.created_date
@@ -243,15 +245,19 @@ async def test_fields_inherited_from_mixin():
 async def test_inheritance_with_relation():
     async with db:
         async with db.transaction(force_rollback=True):
-            sam = await Person(name='Sam').save()
-            joe = await Person(name='Joe').save()
-            await Truck(name='Shelby wanna be', max_capacity=1400, owner=sam, co_owner=joe).save()
+            sam = await Person(name="Sam").save()
+            joe = await Person(name="Joe").save()
+            await Truck(
+                name="Shelby wanna be", max_capacity=1400, owner=sam, co_owner=joe
+            ).save()
 
-            shelby = await Truck.objects.select_related(['owner', 'co_owner']).get()
-            assert shelby.name == 'Shelby wanna be'
-            assert shelby.owner.name == 'Sam'
-            assert shelby.co_owner.name == 'Joe'
+            shelby = await Truck.objects.select_related(["owner", "co_owner"]).get()
+            assert shelby.name == "Shelby wanna be"
+            assert shelby.owner.name == "Sam"
+            assert shelby.co_owner.name == "Joe"
 
-            joe_check = await Person.objects.select_related('coowned_trucks').get(name='Joe')
+            joe_check = await Person.objects.select_related("coowned_trucks").get(
+                name="Joe"
+            )
             assert joe_check.pk == joe.pk
             assert joe_check.coowned_trucks[0] == shelby

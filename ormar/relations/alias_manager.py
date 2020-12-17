@@ -39,7 +39,7 @@ class AliasManager:
     def prefixed_table_name(alias: str, name: str) -> text:
         return text(f"{name} {alias}_{name}")
 
-    def add_relation_type_new(
+    def add_relation_type(
         self, source_model: Type["Model"], relation_name: str, is_multi: bool = False
     ) -> None:
         parent_key = f"{source_model.get_name()}_{relation_name}"
@@ -56,7 +56,7 @@ class AliasManager:
         if child_key not in self._aliases_new:
             self._aliases_new[child_key] = get_table_alias()
 
-    def resolve_relation_join_new(
+    def resolve_relation_join(
         self, from_model: Type["Model"], relation_name: str
     ) -> str:
         alias = self._aliases_new.get(f"{from_model.get_name()}_{relation_name}", "")

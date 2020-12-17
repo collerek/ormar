@@ -87,9 +87,9 @@ class BaseField(FieldInfo):
         :rtype: bool
         """
         return (
-                field_name not in ["default", "default_factory", "alias"]
-                and not field_name.startswith("__")
-                and hasattr(cls, field_name)
+            field_name not in ["default", "default_factory", "alias"]
+            and not field_name.startswith("__")
+            and hasattr(cls, field_name)
         )
 
     @classmethod
@@ -180,7 +180,7 @@ class BaseField(FieldInfo):
         :rtype: bool
         """
         return cls.default is not None or (
-                cls.server_default is not None and use_server
+            cls.server_default is not None and use_server
         )
 
     @classmethod
@@ -199,9 +199,12 @@ class BaseField(FieldInfo):
 
     @classmethod
     def construct_contraints(cls) -> List:
-        return [sqlalchemy.schema.ForeignKey(
-            con.name, ondelete=con.ondelete, onupdate=con.onupdate
-        ) for con in cls.constraints]
+        return [
+            sqlalchemy.schema.ForeignKey(
+                con.name, ondelete=con.ondelete, onupdate=con.onupdate
+            )
+            for con in cls.constraints
+        ]
 
     @classmethod
     def get_column(cls, name: str) -> sqlalchemy.Column:
@@ -229,11 +232,11 @@ class BaseField(FieldInfo):
 
     @classmethod
     def expand_relationship(
-            cls,
-            value: Any,
-            child: Union["Model", "NewBaseModel"],
-            to_register: bool = True,
-            relation_name: str = None,
+        cls,
+        value: Any,
+        child: Union["Model", "NewBaseModel"],
+        to_register: bool = True,
+        relation_name: str = None,
     ) -> Any:
         """
         Function overwritten for relations, in basic field the value is returned as is.

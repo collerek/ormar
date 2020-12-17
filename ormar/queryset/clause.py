@@ -141,7 +141,7 @@ class QueryClause:
                     through_field.through, through_field.to, explicit_multi=True
                 )
             manager = model_cls.Meta.alias_manager
-            table_prefix = manager.resolve_relation_join_new(previous_model, part2)
+            table_prefix = manager.resolve_relation_join(previous_model, part2)
             model_cls = model_cls.Meta.model_fields[part].to
             previous_model = model_cls
         return select_related, table_prefix, model_cls
