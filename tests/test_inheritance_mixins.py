@@ -4,6 +4,7 @@ from typing import Optional
 
 import databases
 import pytest
+import sqlalchemy
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 
@@ -55,17 +56,19 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-def test_field_redefining_raises_error():
-    with pytest.raises(ModelDefinitionError):
+def test_field_redefining():
+    class RedefinedField(ormar.Model, DateFieldsMixins):
+        class Meta(ormar.ModelMeta):
+            tablename = "redefined"
+            metadata = metadata
+            database = db
 
-        class WrongField(ormar.Model, DateFieldsMixins):  # pragma: no cover
-            class Meta(ormar.ModelMeta):
-                tablename = "wrongs"
-                metadata = metadata
-                database = db
+        id: int = ormar.Integer(primary_key=True)
+        created_date: datetime.datetime = ormar.DateTime(name="creation_date")
 
-            id: int = ormar.Integer(primary_key=True)
-            created_date: datetime.datetime = ormar.DateTime()
+    assert RedefinedField.Meta.model_fields["created_date"].default is None
+    assert RedefinedField.Meta.model_fields["created_date"].alias == "creation_date"
+    assert any(x.name == "creation_date" for x in RedefinedField.Meta.table.columns)
 
 
 def test_field_redefining_in_second_raises_error():
@@ -77,16 +80,22 @@ def test_field_redefining_in_second_raises_error():
 
         id: int = ormar.Integer(primary_key=True)
 
-    with pytest.raises(ModelDefinitionError):
+    class RedefinedField2(ormar.Model, DateFieldsMixins):
+        class Meta(ormar.ModelMeta):
+            tablename = "redefines2"
+            metadata = metadata
+            database = db
 
-        class WrongField(ormar.Model, DateFieldsMixins):  # pragma: no cover
-            class Meta(ormar.ModelMeta):
-                tablename = "wrongs"
-                metadata = metadata
-                database = db
+        id: int = ormar.Integer(primary_key=True)
+        created_date: str = ormar.String(max_length=200, name="creation_date")
 
-            id: int = ormar.Integer(primary_key=True)
-            created_date: datetime.datetime = ormar.DateTime()
+    assert RedefinedField2.Meta.model_fields["created_date"].default is None
+    assert RedefinedField2.Meta.model_fields["created_date"].alias == "creation_date"
+    assert any(x.name == "creation_date" for x in RedefinedField2.Meta.table.columns)
+    assert isinstance(
+        RedefinedField2.Meta.table.columns["creation_date"].type,
+        sqlalchemy.sql.sqltypes.String,
+    )
 
 
 def round_date_to_seconds(

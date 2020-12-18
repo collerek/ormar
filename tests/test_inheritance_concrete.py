@@ -4,6 +4,7 @@ from typing import Optional
 
 import databases
 import pytest
+import sqlalchemy
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 
@@ -132,17 +133,37 @@ def test_init_of_abstract_model():
         DateFieldsModel()
 
 
-def test_field_redefining_raises_error():
+def test_field_redefining_in_concrete_models():
+    class RedefinedField(DateFieldsModel):
+        class Meta(ormar.ModelMeta):
+            tablename = "redefines"
+            metadata = metadata
+            database = db
+
+        id: int = ormar.Integer(primary_key=True)
+        created_date: str = ormar.String(max_length=200, name="creation_date")
+
+    changed_field = RedefinedField.Meta.model_fields["created_date"]
+    assert changed_field.default is None
+    assert changed_field.alias == "creation_date"
+    assert any(x.name == "creation_date" for x in RedefinedField.Meta.table.columns)
+    assert isinstance(
+        RedefinedField.Meta.table.columns["creation_date"].type,
+        sqlalchemy.sql.sqltypes.String,
+    )
+
+
+def test_model_subclassing_that_redefines_constraints_column_names():
     with pytest.raises(ModelDefinitionError):
 
-        class WrongField(DateFieldsModel):  # pragma: no cover
+        class WrongField2(DateFieldsModel):  # pragma: no cover
             class Meta(ormar.ModelMeta):
                 tablename = "wrongs"
                 metadata = metadata
                 database = db
 
             id: int = ormar.Integer(primary_key=True)
-            created_date: datetime.datetime = ormar.DateTime()
+            created_date: str = ormar.String(max_length=200)
 
 
 def test_model_subclassing_non_abstract_raises_error():
