@@ -54,7 +54,7 @@ class Relation:
             field_name=self.field_name,
             data_=cleaned_data,
         )
-        relation_name = self._owner.resolve_relation_name(self._owner, self.to)
+        relation_name = self.field_name
         self._owner.__dict__[relation_name] = cleaned_data
         self._to_remove = set()
 

@@ -118,6 +118,7 @@ class Bus(Car):
         metadata = metadata
         database = db
 
+    owner: Person = ormar.ForeignKey(Person, related_name="buses")
     max_persons: int = ormar.Integer()
 
 
@@ -271,14 +272,30 @@ async def test_inheritance_with_relation():
             await Truck(
                 name="Shelby wanna be", max_capacity=1400, owner=sam, co_owner=joe
             ).save()
+            await Bus(name="Unicorn", max_persons=50, owner=sam, co_owner=joe).save()
 
             shelby = await Truck.objects.select_related(["owner", "co_owner"]).get()
             assert shelby.name == "Shelby wanna be"
             assert shelby.owner.name == "Sam"
             assert shelby.co_owner.name == "Joe"
+            assert shelby.max_capacity == 1400
 
-            joe_check = await Person.objects.select_related("coowned_trucks").get(
-                name="Joe"
-            )
+            unicorn = await Bus.objects.select_related(["owner", "co_owner"]).get()
+            assert unicorn.name == "Unicorn"
+            assert unicorn.owner.name == "Sam"
+            assert unicorn.co_owner.name == "Joe"
+            assert unicorn.max_persons == 50
+
+            joe_check = await Person.objects.select_related(
+                ["coowned_trucks", "coowned_buses"]
+            ).get(name="Joe")
             assert joe_check.pk == joe.pk
             assert joe_check.coowned_trucks[0] == shelby
+            assert joe_check.coowned_buses[0] == unicorn
+
+            joe_check = await Person.objects.prefetch_related(
+                ["coowned_trucks", "coowned_buses"]
+            ).get(name="Joe")
+            assert joe_check.pk == joe.pk
+            assert joe_check.coowned_trucks[0] == shelby
+            assert joe_check.coowned_buses[0] == unicorn

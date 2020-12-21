@@ -33,9 +33,11 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         self._queryset: Optional["QuerySet"] = qryset
         self.type_: "RelationType" = type_
         self._owner: "Model" = self.relation.manager.owner
-        self.related_field = self._owner.resolve_relation_field(
-            self.relation.to, self._owner
+        self.related_field_name = (
+            self._owner.Meta.model_fields[self.relation.field_name].related_name
+            or self._owner.get_name() + "s"
         )
+        self.related_field = self.relation.to.Meta.model_fields[self.related_field_name]
         self.owner_pk_value = self._owner.pk
 
     @property

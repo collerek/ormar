@@ -55,9 +55,11 @@ class ModelTableProxy:
     @classmethod
     def get_related_field_name(cls, target_field: Type["BaseField"]) -> str:
         if issubclass(target_field, ormar.fields.ManyToManyField):
-            return cls.resolve_relation_name(target_field.through, cls)
+            return cls.resolve_relation_name(
+                target_field.through, cls, explicit_multi=True
+            )
         if target_field.virtual:
-            return cls.resolve_relation_name(target_field.to, cls)
+            return target_field.related_name or cls.get_name() + "s"
         return target_field.to.Meta.pkname
 
     @staticmethod
@@ -113,7 +115,7 @@ class ModelTableProxy:
             target_field, ormar.fields.ManyToManyField
         ):
             return self.pk
-        related_name = self.resolve_relation_name(self, target_field.to)
+        related_name = target_field.name
         related_model = getattr(self, related_name)
         return None if not related_model else related_model.pk
 

@@ -240,7 +240,8 @@ def verify_constraint_names(
 ) -> None:
     """
     Verifies if redefined fields that are overwritten in subclasses did not remove
-    any name of the column that is used in constraint as it will fail.
+    any name of the column that is used in constraint as it will fail in sqlalchemy
+    Table creation.
 
     :param base_class: one of the parent classes
     :type base_class: Model or model parent class
