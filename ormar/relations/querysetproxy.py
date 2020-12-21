@@ -53,7 +53,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
     def _assign_child_to_parent(self, child: Optional["T"]) -> None:
         if child:
             owner = self._owner
-            rel_name = owner.resolve_relation_name(owner, child)
+            rel_name = self.relation.field_name
             setattr(owner, rel_name, child)
 
     def _register_related(self, child: Union["T", Sequence[Optional["T"]]]) -> None:

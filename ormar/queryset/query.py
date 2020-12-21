@@ -25,6 +25,7 @@ class Query:
         fields: Optional[Union[Dict, Set]],
         exclude_fields: Optional[Union[Dict, Set]],
         order_bys: Optional[List],
+        limit_raw_sql: bool,
     ) -> None:
         self.query_offset = offset
         self.limit_count = limit_count
@@ -45,6 +46,8 @@ class Query:
         self.sorted_orders: OrderedDict = OrderedDict()
         self._init_sorted_orders()
 
+        self.limit_raw_sql = limit_raw_sql
+
     def _init_sorted_orders(self) -> None:
         if self.order_columns:
             for clause in self.order_columns:
@@ -62,15 +65,30 @@ class Query:
         if self.order_columns:
             for clause in self.order_columns:
                 if "__" not in clause:
-                    clause = (
+                    text_clause = (
                         text(f"{self.alias(clause[1:])} desc")
                         if clause.startswith("-")
                         else text(self.alias(clause))
                     )
-                    self.sorted_orders[clause] = clause
+                    self.sorted_orders[clause] = text_clause
         else:
             order = text(self.prefixed_pk_name)
             self.sorted_orders[self.prefixed_pk_name] = order
+
+    def _pagination_query_required(self) -> bool:
+        """
+        Checks if limit or offset are set, the flag limit_sql_raw is not set
+        and query has select_related applied. Otherwise we can limit/offset normally
+        at the end of whole query.
+
+        :return: result of the check
+        :rtype: bool
+        """
+        return bool(
+            (self.limit_count or self.query_offset)
+            and not self.limit_raw_sql
+            and self._select_related
+        )
 
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
         self_related_fields = self.model_cls.own_table_columns(
@@ -83,7 +101,10 @@ class Query:
             "", self.table, self_related_fields
         )
         self.apply_order_bys_for_primary_model()
-        self.select_from = self.table
+        if self._pagination_query_required():
+            self.select_from = self._build_pagination_subquery()
+        else:
+            self.select_from = self.table
 
         self._select_related.sort(key=lambda item: (item, -len(item)))
 
@@ -120,6 +141,46 @@ class Query:
 
         return expr
 
+    def _build_pagination_subquery(self) -> sqlalchemy.sql.select:
+        """
+        In order to apply limit and offset on main table in join only
+        (otherwise you can get only partially constructed main model
+        if number of children exceeds the applied limit and select_related is used)
+
+        Used also to change first and get() without argument behaviour.
+        Needed only if limit or offset are set, the flag limit_sql_raw is not set
+        and query has select_related applied. Otherwise we can limit/offset normally
+        at the end of whole query.
+
+        :return: constructed subquery on main table with limit, offset and order applied
+        :rtype: sqlalchemy.sql.select
+        """
+        expr = sqlalchemy.sql.select(self.model_cls.Meta.table.columns)
+        expr = LimitQuery(limit_count=self.limit_count).apply(expr)
+        expr = OffsetQuery(query_offset=self.query_offset).apply(expr)
+        filters_to_use = [
+            filter_clause
+            for filter_clause in self.filter_clauses
+            if filter_clause.text.startswith(f"{self.table.name}.")
+        ]
+        excludes_to_use = [
+            filter_clause
+            for filter_clause in self.exclude_clauses
+            if filter_clause.text.startswith(f"{self.table.name}.")
+        ]
+        sorts_to_use = {
+            k: v
+            for k, v in self.sorted_orders.items()
+            if k.startswith(f"{self.table.name}.")
+        }
+        expr = FilterQuery(filter_clauses=filters_to_use).apply(expr)
+        expr = FilterQuery(filter_clauses=excludes_to_use, exclude=True).apply(expr)
+        expr = OrderQuery(sorted_orders=sorts_to_use).apply(expr)
+        expr = expr.alias(f"{self.table}")
+        self.filter_clauses = list(set(self.filter_clauses) - set(filters_to_use))
+        self.exclude_clauses = list(set(self.exclude_clauses) - set(excludes_to_use))
+        return expr
+
     def _apply_expression_modifiers(
         self, expr: sqlalchemy.sql.select
     ) -> sqlalchemy.sql.select:
@@ -127,8 +188,9 @@ class Query:
         expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
             expr
         )
-        expr = LimitQuery(limit_count=self.limit_count).apply(expr)
-        expr = OffsetQuery(query_offset=self.query_offset).apply(expr)
+        if not self._pagination_query_required():
+            expr = LimitQuery(limit_count=self.limit_count).apply(expr)
+            expr = OffsetQuery(query_offset=self.query_offset).apply(expr)
         expr = OrderQuery(sorted_orders=self.sorted_orders).apply(expr)
         return expr
 

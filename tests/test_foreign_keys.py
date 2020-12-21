@@ -205,11 +205,11 @@ async def test_model_removal_from_relations():
             album = await Album.objects.select_related("tracks").get(name="Chichi")
             assert track1.album == album
 
-            track1.remove(album)
+            track1.remove(album, name="album")
             assert track1.album is None
             assert len(album.tracks) == 2
 
-            track2.remove(album)
+            track2.remove(album, name="album")
             assert track2.album is None
             assert len(album.tracks) == 1
 

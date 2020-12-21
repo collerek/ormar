@@ -90,13 +90,64 @@ async def test_create_primary_models():
                 await p1.keywords.add(keyword)
             else:
                 await p2.keywords.add(keyword)
-        models = await PrimaryModel.objects.prefetch_related("keywords").limit(5).all()
+        models = await PrimaryModel.objects.select_related("keywords").limit(5).all()
 
-        # This test fails, because of the keywords relation.
         assert len(models) == 5
         assert len(models[0].keywords) == 2
         assert len(models[1].keywords) == 3
         assert len(models[2].keywords) == 0
+
+        models2 = (
+            await PrimaryModel.objects.select_related("keywords")
+            .limit(5)
+            .offset(3)
+            .all()
+        )
+        assert len(models2) == 5
+        assert [x.name for x in models2] != [x.name for x in models]
+        assert [x.name for x in models2] == [
+            "Primary 4",
+            "Primary 5",
+            "Primary 6",
+            "Primary 7",
+            "Primary 8",
+        ]
+
+        models3 = (
+            await PrimaryModel.objects.select_related("keywords")
+            .limit(5, limit_raw_sql=True)
+            .all()
+        )
+
+        assert len(models3) == 2
+        assert len(models3[0].keywords) == 2
+        assert len(models3[1].keywords) == 3
+
+        models4 = (
+            await PrimaryModel.objects.offset(1)
+            .select_related("keywords")
+            .limit(5, limit_raw_sql=True)
+            .all()
+        )
+
+        assert len(models4) == 3
+        assert [x.name for x in models4] == ["Primary 1", "Primary 2", "Primary 3"]
+        assert len(models4[0].keywords) == 1
+        assert len(models4[1].keywords) == 3
+        assert len(models4[2].keywords) == 0
+
+        models5 = (
+            await PrimaryModel.objects.select_related("keywords")
+            .offset(2, limit_raw_sql=True)
+            .limit(5)
+            .all()
+        )
+
+        assert len(models5) == 3
+        assert [x.name for x in models5] == ["Primary 2", "Primary 3", "Primary 4"]
+        assert len(models5[0].keywords) == 3
+        assert len(models5[1].keywords) == 0
+        assert len(models5[2].keywords) == 0
 
 
 @pytest.fixture(autouse=True, scope="module")

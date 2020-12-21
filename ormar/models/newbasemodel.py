@@ -224,8 +224,8 @@ class NewBaseModel(
     def db_backend_name(cls) -> str:
         return cls.Meta.database._backend._dialect.name
 
-    def remove(self, name: "T") -> None:
-        self._orm.remove_parent(self, name)
+    def remove(self, parent: "T", name: str) -> None:
+        self._orm.remove_parent(self, parent, name)
 
     def set_save_status(self, status: bool) -> None:
         object.__setattr__(self, "_orm_saved", status)

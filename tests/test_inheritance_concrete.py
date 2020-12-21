@@ -102,6 +102,7 @@ class Car(ormar.Model):
     name: str = ormar.String(max_length=50)
     owner: Person = ormar.ForeignKey(Person)
     co_owner: Person = ormar.ForeignKey(Person, related_name="coowned")
+    created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
 
 
 class Truck(Car):
@@ -291,11 +292,22 @@ async def test_inheritance_with_relation():
             ).get(name="Joe")
             assert joe_check.pk == joe.pk
             assert joe_check.coowned_trucks[0] == shelby
+            assert joe_check.coowned_trucks[0].created_date is not None
             assert joe_check.coowned_buses[0] == unicorn
+            assert joe_check.coowned_buses[0].created_date is not None
 
-            joe_check = await Person.objects.prefetch_related(
-                ["coowned_trucks", "coowned_buses"]
-            ).get(name="Joe")
+            joe_check = (
+                await Person.objects.exclude_fields(
+                    {
+                        "coowned_trucks": {"created_date"},
+                        "coowned_buses": {"created_date"},
+                    }
+                )
+                .prefetch_related(["coowned_trucks", "coowned_buses"])
+                .get(name="Joe")
+            )
             assert joe_check.pk == joe.pk
             assert joe_check.coowned_trucks[0] == shelby
+            assert joe_check.coowned_trucks[0].created_date is None
             assert joe_check.coowned_buses[0] == unicorn
+            assert joe_check.coowned_buses[0].created_date is None

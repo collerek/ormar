@@ -17,13 +17,12 @@ from typing import (
     Union,
 )
 
-from ormar.exceptions import ModelPersistenceError, RelationshipInstanceError
-from ormar.queryset.utils import translate_list_to_dict, update
-
 import ormar  # noqa:  I100
+from ormar.exceptions import ModelPersistenceError
 from ormar.fields import BaseField, ManyToManyField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.metaclass import ModelMeta
+from ormar.queryset.utils import translate_list_to_dict, update
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -76,9 +75,10 @@ class ModelTableProxy:
             )
             field = target_model.Meta.model_fields[field_name]
             if issubclass(field, ormar.fields.ManyToManyField):
-                sub_field = target_model.resolve_relation_field(
-                    field.through, parent_model
+                field_name = parent_model.resolve_relation_name(
+                    field.through, field.to, explicit_multi=True
                 )
+                sub_field = field.through.Meta.model_fields[field_name]
                 return field.through, sub_field.get_alias()
             return target_model, field.get_alias()
         target_field = target_model.get_column_alias(target_model.Meta.pkname)
@@ -86,17 +86,14 @@ class ModelTableProxy:
 
     @staticmethod
     def get_column_name_for_id_extraction(
-        parent_model: Type["Model"],
-        target_model: Type["Model"],
-        reverse: bool,
-        use_raw: bool,
+        parent_model: Type["Model"], reverse: bool, related: str, use_raw: bool,
     ) -> str:
         if reverse:
             column_name = parent_model.Meta.pkname
             return (
                 parent_model.get_column_alias(column_name) if use_raw else column_name
             )
-        column = target_model.resolve_relation_field(parent_model, target_model)
+        column = parent_model.Meta.model_fields[related]
         return column.get_alias() if use_raw else column.name
 
     @classmethod
@@ -321,19 +318,6 @@ class ModelTableProxy:
         raise ValueError(
             f"No relation between {item.get_name()} and {related.get_name()}"
         )  # pragma nocover
-
-    @staticmethod
-    def resolve_relation_field(
-        item: Union["Model", Type["Model"]], related: Union["Model", Type["Model"]]
-    ) -> Type[BaseField]:
-        name = ModelTableProxy.resolve_relation_name(item, related)
-        to_field = item.Meta.model_fields.get(name)
-        if not to_field:  # pragma no cover
-            raise RelationshipInstanceError(
-                f"Model {item.__class__} does not have "
-                f"reference to model {related.__class__}"
-            )
-        return to_field
 
     @classmethod
     def translate_columns_to_aliases(cls, new_kwargs: Dict) -> Dict:

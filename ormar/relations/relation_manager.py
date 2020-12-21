@@ -89,11 +89,10 @@ class RelationsManager:
 
     @staticmethod
     def remove_parent(
-        item: Union["NewBaseModel", Type["NewBaseModel"]], name: "Model"
+        item: Union["NewBaseModel", Type["NewBaseModel"]], parent: "Model", name: str
     ) -> None:
-        related_model = name
-        rel_name = item.resolve_relation_name(item, related_model)
-        if rel_name in item._orm:
-            relation_name = item.resolve_relation_name(related_model, item)
-            item._orm.remove(rel_name, related_model)
-            related_model._orm.remove(relation_name, item)
+        relation_name = (
+            item.Meta.model_fields[name].related_name or item.get_name() + "s"
+        )
+        item._orm.remove(name, parent)
+        parent._orm.remove(relation_name, item)

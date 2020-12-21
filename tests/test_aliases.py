@@ -89,6 +89,10 @@ async def test_working_with_aliases():
                 first_name="Son", last_name="2", born_year=1995
             )
 
+            await artist.children.create(
+                first_name="Son", last_name="3", born_year=1998
+            )
+
             album = await Album.objects.select_related("artist").first()
             assert album.artist.last_name == "Mosbey"
 
@@ -99,9 +103,10 @@ async def test_working_with_aliases():
             assert album.name == "Aunt Robin"
 
             artist = await Artist.objects.select_related("children").get()
-            assert len(artist.children) == 2
+            assert len(artist.children) == 3
             assert artist.children[0].first_name == "Son"
             assert artist.children[1].last_name == "2"
+            assert artist.children[2].last_name == "3"
 
             await artist.update(last_name="Bundy")
             await Artist.objects.filter(pk=artist.pk).update(born_year=1974)

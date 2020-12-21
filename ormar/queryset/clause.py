@@ -138,7 +138,7 @@ class QueryClause:
                 through_field = model_cls.Meta.model_fields[part]
                 previous_model = through_field.through
                 part2 = model_cls.resolve_relation_name(
-                    through_field.through, through_field.to, explicit_multi=True
+                    previous_model, through_field.to, explicit_multi=True
                 )
             manager = model_cls.Meta.alias_manager
             table_prefix = manager.resolve_relation_join(previous_model, part2)

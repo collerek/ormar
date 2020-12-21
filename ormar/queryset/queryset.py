@@ -32,6 +32,7 @@ class QuerySet:
         exclude_columns: Dict = None,
         order_bys: List = None,
         prefetch_related: List = None,
+        limit_raw_sql: bool = False,
     ) -> None:
         self.model_cls = model_cls
         self.filter_clauses = [] if filter_clauses is None else filter_clauses
@@ -43,6 +44,7 @@ class QuerySet:
         self._columns = columns or {}
         self._exclude_columns = exclude_columns or {}
         self.order_bys = order_bys or []
+        self.limit_sql_raw = limit_raw_sql
 
     def __get__(
         self,
@@ -123,17 +125,20 @@ class QuerySet:
     def table(self) -> sqlalchemy.Table:
         return self.model_meta.table
 
-    def build_select_expression(self) -> sqlalchemy.sql.select:
+    def build_select_expression(
+        self, limit: int = None, offset: int = None, order_bys: List = None,
+    ) -> sqlalchemy.sql.select:
         qry = Query(
             model_cls=self.model,
             select_related=self._select_related,
             filter_clauses=self.filter_clauses,
             exclude_clauses=self.exclude_clauses,
-            offset=self.query_offset,
-            limit_count=self.limit_count,
+            offset=offset or self.query_offset,
+            limit_count=limit or self.limit_count,
             fields=self._columns,
             exclude_fields=self._exclude_columns,
-            order_bys=self.order_bys,
+            order_bys=order_bys or self.order_bys,
+            limit_raw_sql=self.limit_sql_raw,
         )
         exp = qry.build_select_expression()
         # print(exp.compile(compile_kwargs={"literal_binds": True}))
@@ -164,6 +169,7 @@ class QuerySet:
             exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
             prefetch_related=self._prefetch_related,
+            limit_raw_sql=self.limit_sql_raw,
         )
 
     def exclude(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
@@ -185,6 +191,7 @@ class QuerySet:
             exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
             prefetch_related=self._prefetch_related,
+            limit_raw_sql=self.limit_sql_raw,
         )
 
     def prefetch_related(self, related: Union[List, str]) -> "QuerySet":
@@ -203,6 +210,7 @@ class QuerySet:
             exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
             prefetch_related=related,
+            limit_raw_sql=self.limit_sql_raw,
         )
 
     def exclude_fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet":
@@ -226,6 +234,7 @@ class QuerySet:
             exclude_columns=current_excluded,
             order_bys=self.order_bys,
             prefetch_related=self._prefetch_related,
+            limit_raw_sql=self.limit_sql_raw,
         )
 
     def fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet":
@@ -249,6 +258,7 @@ class QuerySet:
             exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
             prefetch_related=self._prefetch_related,
+            limit_raw_sql=self.limit_sql_raw,
         )
 
     def order_by(self, columns: Union[List, str]) -> "QuerySet":
@@ -267,6 +277,7 @@ class QuerySet:
             exclude_columns=self._exclude_columns,
             order_bys=order_bys,
             prefetch_related=self._prefetch_related,
+            limit_raw_sql=self.limit_sql_raw,
         )
 
     async def exists(self) -> bool:
@@ -308,7 +319,8 @@ class QuerySet:
         )
         return await self.database.execute(expr)
 
-    def limit(self, limit_count: int) -> "QuerySet":
+    def limit(self, limit_count: int, limit_raw_sql: bool = None) -> "QuerySet":
+        limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
         return self.__class__(
             model_cls=self.model,
             filter_clauses=self.filter_clauses,
@@ -320,9 +332,11 @@ class QuerySet:
             exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
             prefetch_related=self._prefetch_related,
+            limit_raw_sql=limit_raw_sql,
         )
 
-    def offset(self, offset: int) -> "QuerySet":
+    def offset(self, offset: int, limit_raw_sql: bool = None) -> "QuerySet":
+        limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
         return self.__class__(
             model_cls=self.model,
             filter_clauses=self.filter_clauses,
@@ -334,23 +348,33 @@ class QuerySet:
             exclude_columns=self._exclude_columns,
             order_bys=self.order_bys,
             prefetch_related=self._prefetch_related,
+            limit_raw_sql=limit_raw_sql,
         )
 
     async def first(self, **kwargs: Any) -> "Model":
         if kwargs:
             return await self.filter(**kwargs).first()
 
-        rows = await self.limit(1).all()
-        self.check_single_result_rows_count(rows)
-        return rows[0]  # type: ignore
+        expr = self.build_select_expression(
+            limit=1, order_bys=[f"{self.model.Meta.pkname}"]
+        )
+        rows = await self.database.fetch_all(expr)
+        processed_rows = self._process_query_result_rows(rows)
+        if self._prefetch_related and processed_rows:
+            processed_rows = await self._prefetch_related_models(processed_rows, rows)
+        self.check_single_result_rows_count(processed_rows)
+        return processed_rows[0]  # type: ignore
 
     async def get(self, **kwargs: Any) -> "Model":
         if kwargs:
             return await self.filter(**kwargs).get()
 
-        expr = self.build_select_expression()
         if not self.filter_clauses:
-            expr = expr.limit(2)
+            expr = self.build_select_expression(
+                limit=1, order_bys=[f"-{self.model.Meta.pkname}"]
+            )
+        else:
+            expr = self.build_select_expression()
 
         rows = await self.database.fetch_all(expr)
         processed_rows = self._process_query_result_rows(rows)

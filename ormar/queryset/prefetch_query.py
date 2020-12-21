@@ -123,15 +123,15 @@ class PrefetchQuery:
         return list_of_ids
 
     def _extract_required_ids(
-        self, parent_model: Type["Model"], target_model: Type["Model"], reverse: bool,
+        self, parent_model: Type["Model"], reverse: bool, related: str,
     ) -> Set:
 
         use_raw = parent_model.get_name() not in self.models
 
         column_name = parent_model.get_column_name_for_id_extraction(
             parent_model=parent_model,
-            target_model=target_model,
             reverse=reverse,
+            related=related,
             use_raw=use_raw,
         )
 
@@ -152,7 +152,7 @@ class PrefetchQuery:
         related: str,
     ) -> List:
         ids = self._extract_required_ids(
-            parent_model=parent_model, target_model=target_model, reverse=reverse,
+            parent_model=parent_model, reverse=reverse, related=related
         )
         if ids:
             (
@@ -343,6 +343,7 @@ class PrefetchQuery:
             fields=fields,
             exclude_fields=exclude_fields,
             order_bys=None,
+            limit_raw_sql=False,
         )
         expr = qry.build_select_expression()
         # print(expr.compile(compile_kwargs={"literal_binds": True}))

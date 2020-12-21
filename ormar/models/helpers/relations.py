@@ -48,8 +48,8 @@ def register_many_to_many_relation_on_build(
     :param field: relation field
     :type field: ManyToManyField class
     """
-    alias_manager.add_relation_type(field.through, new_model.get_name(), is_multi=True)
-    alias_manager.add_relation_type(field.through, field.to.get_name(), is_multi=True)
+    alias_manager.add_relation_type(field.through, new_model.get_name())
+    alias_manager.add_relation_type(field.through, field.to.get_name())
 
 
 def expand_reverse_relationships(model: Type["Model"]) -> None:

@@ -40,7 +40,7 @@ class AliasManager:
         return text(f"{name} {alias}_{name}")
 
     def add_relation_type(
-        self, source_model: Type["Model"], relation_name: str, is_multi: bool = False
+        self, source_model: Type["Model"], relation_name: str
     ) -> None:
         parent_key = f"{source_model.get_name()}_{relation_name}"
         if parent_key not in self._aliases_new:
@@ -50,7 +50,7 @@ class AliasManager:
         related_name = to_field.related_name
         if not related_name:
             related_name = child_model.resolve_relation_name(
-                child_model, source_model, explicit_multi=is_multi
+                child_model, source_model, explicit_multi=True
             )
         child_key = f"{child_model.get_name()}_{related_name}"
         if child_key not in self._aliases_new:
