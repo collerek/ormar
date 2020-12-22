@@ -112,7 +112,11 @@ But you can overwrite this name by providing `related_name` parameter like below
 
 !!!tip
     The reverse relation on access returns list of `wekref.proxy` to avoid circular references.
-    
+
+!!!warning
+    When you provide multiple relations to the same model `ormar` can no longer auto generate
+    the `related_name` for you. Therefore, in that situation you **have to** provide `related_name`
+    for all but one (one can be default and generated) or all related fields.
 
 ## Relation Setup
 

@@ -107,8 +107,7 @@ class Car(ormar.Model):
 
 class Truck(Car):
     class Meta:
-        metadata = metadata
-        database = db
+        pass
 
     max_capacity: int = ormar.Integer()
 

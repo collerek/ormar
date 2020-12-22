@@ -1,18 +1,30 @@
 # 0.8.0
 
-* **Breaking:** removing parent from child side in reverse ForeignKey relation now requires passing a relation `name`,
-as the same model can be registered multiple times and ormar needs to know from which relation on the parent you want to remove the child.
-* **Breaking:** applying limit and offset with select related is by default applied only on the main table before the join -> meaning that not the total
-  number of rows is limited but just main models (first one in the query, the one to used to construct it)
-* **Breaking:** issuing `first()` now fetches the first row ordered by the primary key asc (so first one inserted (can be different for non number primary keys - i.e. alphabetical order of string)) and also can be used with `prefetch_related`
+## Breaking
+* **Breaking:** `remove()` parent from child side in reverse ForeignKey relation now requires passing a relation `name`,
+as the same model can be registered multiple times and `ormar` needs to know from which relation on the parent you want to remove the child.
+* **Breaking:** applying `limit` and `offset` with `select_related` is by default applied only on the main table before the join -> meaning that not the total
+  number of rows is limited but just main models (first one in the query, the one to used to construct it). Yu can still limit all rows from db response with `limit_raw_sql=True` flag on either `limit` or `offset` (or both)
+* **Breaking:** issuing `first()` now fetches the first row ordered by the primary key asc (so first one inserted (can be different for non number primary keys - i.e. alphabetical order of string))
 * **Breaking:** issuing `get()` **without any filters** now fetches the first row ordered by the primary key desc (so should be last one inserted (can be different for non number primary keys - i.e. alphabetical order of string))
-* Introduce inheritance, for now two types of inheritance are possible:
-  * **Mixins** - don't subclass `ormar.Model`, just define fields that are later used on different models (like `created_date` and `updated_date` on each model), only actual models create tables, but those fields from mixins are added
-  * **Concrete table inheritance** - means that parent is marked as abstract and each child has its own table with columns from the parent and own child columns, kind of similar to Mixins but parent also is a Model
-  * To read more check the docs on models -> inheritance section.
-* Fix bug in order_by for primary model order bys
+
+## Features
+* Introduce **inheritance**, for now two types of inheritance are possible:
+    * **Mixins** - don't subclass `ormar.Model`, just define fields that are later used on different models (like `created_date` and `updated_date` on each child model), only actual models create tables, but those fields from mixins are added
+    * **Concrete table inheritance** - means that parent is marked as `abstract=True` in Meta class and each child has its own table with columns from the parent and own child columns, kind of similar to Mixins but parent also is a (an abstract) Model
+    * To read more check the docs on models -> inheritance section.
+* QuerySet `first()` can be used with `prefetch_related`
+
+## Fixes
+* Fix minor bug in `order_by` for primary model order bys
 * Fix in `prefetch_query` for multiple related_names for the same model.
-* Split and cleanup in docs.
+
+## Docs
+* Split and cleanup in docs:
+    *  Divide models section into subsections
+    *  Divide relations section into subsections
+    *  Divide fields section into subsections
+* Add model inheritance section
 
 # 0.7.5
 

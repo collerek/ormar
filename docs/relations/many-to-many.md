@@ -9,7 +9,7 @@ Sqlalchemy column and Type are automatically taken from target `Model`.
 
 ## Defining Models
 
-```Python
+```Python hl_lines="32 49-50"
 --8<-- "../docs_src/relations/docs002.py"
 ```
 
@@ -59,6 +59,22 @@ await news.posts.clear()
 Reverse relation exposes QuerysetProxy API that allows you to query related model like you would issue a normal Query.
 
 To read which methods of QuerySet are available read below [querysetproxy][querysetproxy]
+
+## related_name
+
+By default, the related_name is generated in the same way as for the `ForeignKey` relation (class.name.lower()+'s'), 
+but in the same way you can overwrite this name by providing `related_name` parameter like below:
+
+```Python
+categories: Optional[Union[Category, List[Category]]] = ormar.ManyToMany(
+        Category, through=PostCategory, related_name="new_categories"
+    )
+```
+
+!!!warning
+    When you provide multiple relations to the same model `ormar` can no longer auto generate
+    the `related_name` for you. Therefore, in that situation you **have to** provide `related_name`
+    for all but one (one can be default and generated) or all related fields.
 
 
 [queries]: ./queries.md

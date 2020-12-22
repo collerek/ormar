@@ -10,8 +10,8 @@ nav:
     - Migrations: models/migrations.md
     - Internals: models/internals.md
   - Fields:
-    - Fields types: fields/field-types.md
     - Common parameters: fields/common-parameters.md
+    - Fields types: fields/field-types.md
   - Relations:
     - relations/index.md
     - relations/foreign-key.md
