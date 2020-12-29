@@ -362,10 +362,8 @@ def copy_data_from_parent_model(  # noqa: CCR001
                 copy_field.related_name = related_name
 
                 through_class = field.through
-                new_meta: ormar.ModelMeta = type(
-                    "Meta",
-                    (),  # type: ignore
-                    dict(through_class.Meta.__dict__),
+                new_meta: ormar.ModelMeta = type(  # type: ignore
+                    "Meta", (), dict(through_class.Meta.__dict__),
                 )
                 new_meta.tablename += "_" + meta.tablename
                 # create new table with copied columns but remove foreign keys
