@@ -58,7 +58,7 @@ def create_and_append_m2m_fk(
     """
     pk_alias = model.get_column_alias(model.Meta.pkname)
     pk_column = next((col for col in model.Meta.columns if col.name == pk_alias), None)
-    if not pk_column:  # pragma: no cover
+    if pk_column is None:  # pragma: no cover
         raise ModelDefinitionError(
             "ManyToMany relation cannot lead to field without pk"
         )
