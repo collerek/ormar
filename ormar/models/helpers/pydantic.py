@@ -33,7 +33,7 @@ def verify_related_name_dont_duplicate(
     """
     if parent_model.Meta.model_fields.get(related_name):
         fk_field = parent_model.Meta.model_fields.get(related_name)
-        if not fk_field:
+        if not fk_field:  # pragma: no cover
             return
         if fk_field.to != child and fk_field.to.Meta != child.Meta:
             raise ormar.ModelDefinitionError(
