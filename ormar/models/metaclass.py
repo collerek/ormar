@@ -354,10 +354,45 @@ def copy_data_from_parent_model(  # noqa: CCR001
             else attrs.get("__name__", "").lower() + "s"
         )
         for field_name, field in base_class.Meta.model_fields.items():
-            if issubclass(field, ForeignKeyField) and field.related_name:
-                copy_field = type(field.__name__, (field,), dict(field.__dict__))
+            if issubclass(field, ManyToManyField):
+                copy_field: Type[BaseField] = type(  # type: ignore
+                    field.__name__, (ManyToManyField, BaseField), dict(field.__dict__)
+                )
                 related_name = field.related_name + "_" + table_name
-                copy_field.related_name = related_name  # type: ignore
+                copy_field.related_name = related_name
+
+                through_class = field.through
+                new_meta: ormar.ModelMeta = type(
+                    "Meta",
+                    (),  # type: ignore
+                    dict(through_class.Meta.__dict__),
+                )
+                new_meta.tablename += "_" + meta.tablename
+                # create new table with copied columns but remove foreign keys
+                # they will be populated later in expanding reverse relation
+                del new_meta.table
+                new_meta.columns = [
+                    col for col in new_meta.columns if not col.foreign_keys
+                ]
+                new_meta.model_fields = {
+                    name: field
+                    for name, field in new_meta.model_fields.items()
+                    if not issubclass(field, ForeignKeyField)
+                }
+                populate_meta_sqlalchemy_table_if_required(new_meta)
+                copy_name = through_class.__name__ + attrs.get("__name__", "")
+                # TODO: when adding additional fields they need to be copied here
+                copy_through = type(copy_name, (ormar.Model,), {"Meta": new_meta})
+                copy_field.through = copy_through
+
+                parent_fields[field_name] = copy_field
+
+            elif issubclass(field, ForeignKeyField) and field.related_name:
+                copy_field = type(  # type: ignore
+                    field.__name__, (ForeignKeyField, BaseField), dict(field.__dict__)
+                )
+                related_name = field.related_name + "_" + table_name
+                copy_field.related_name = related_name
                 parent_fields[field_name] = copy_field
             else:
                 parent_fields[field_name] = field
@@ -500,7 +535,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
 
             if not new_model.Meta.abstract:
                 new_model = populate_meta_tablename_columns_and_pk(name, new_model)
-                new_model = populate_meta_sqlalchemy_table_if_required(new_model)
+                populate_meta_sqlalchemy_table_if_required(new_model.Meta)
                 expand_reverse_relationships(new_model)
                 for field_name, field in new_model.Meta.model_fields.items():
                     register_relation_in_alias_manager(new_model, field, field_name)

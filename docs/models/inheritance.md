@@ -13,7 +13,7 @@ The short summary of different types of inheritance is:
   later used on different models (like `created_date` and `updated_date` on each model),
   only actual models create tables, but those fields from mixins are added
 * **Concrete table inheritance [SUPPORTED]** - means that parent is marked as abstract
-  and each child has it's own table with columns from parent and own child columns, kind
+  and each child has its own table with columns from a parent and own child columns, kind
   of similar to Mixins but parent also is a Model
 * **Single table inheritance [NOT SUPPORTED]** - means that only one table is created
   with fields that are combination/sum of the parent and all children models but child
@@ -194,10 +194,14 @@ assert isinstance(
 ## Relations in inheritance
 
 You can declare relations in every step of inheritance, so both in parent and child
-classes.
+classes. 
+
+When you define a relation on a child model level it's either overwriting the relation 
+defined in parent model (if the same field name is used), or is accessible only to this 
+child if you define a new relation.
 
 When inheriting relations, you always need to be aware of `related_name` parameter, that
-has to be unique across a model, when you define multiple child classes that inherit the
+has to be unique across a related model, when you define multiple child classes that inherit the
 same relation.
 
 If you do not provide `related_name` parameter ormar calculates it for you. This works

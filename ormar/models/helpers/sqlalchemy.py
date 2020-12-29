@@ -1,3 +1,4 @@
+import copy
 import logging
 from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type
 
@@ -9,7 +10,7 @@ from ormar.models.helpers.models import validate_related_names_in_relations
 from ormar.models.helpers.pydantic import create_pydantic_field
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
+    from ormar import Model, ModelMeta
 
 
 def adjust_through_many_to_many_model(
@@ -55,17 +56,24 @@ def create_and_append_m2m_fk(
     :param model_field: field with ManyToMany relation
     :type model_field: ManyToManyField field
     """
+    pk_alias = model.get_column_alias(model.Meta.pkname)
+    pk_column = next((col for col in model.Meta.columns if col.name == pk_alias), None)
+    if not pk_column:  # pragma: no cover
+        raise ModelDefinitionError(
+            "ManyToMany relation cannot lead to field without pk"
+        )
     column = sqlalchemy.Column(
         model.get_name(),
-        model.Meta.table.columns.get(model.get_column_alias(model.Meta.pkname)).type,
+        pk_column.type,
         sqlalchemy.schema.ForeignKey(
-            model.Meta.tablename + "." + model.get_column_alias(model.Meta.pkname),
+            model.Meta.tablename + "." + pk_alias,
             ondelete="CASCADE",
             onupdate="CASCADE",
         ),
     )
     model_field.through.Meta.columns.append(column)
-    model_field.through.Meta.table.append_column(column)
+    # breakpoint()
+    model_field.through.Meta.table.append_column(copy.deepcopy(column))
 
 
 def check_pk_column_validity(
@@ -122,8 +130,6 @@ def sqlalchemy_columns_from_model_fields(
     :return: pkname, list of sqlalchemy columns
     :rtype: Tuple[Optional[str], List[sqlalchemy.Column]]
     """
-    columns = []
-    pkname = None
     if len(model_fields.keys()) == 0:
         model_fields["id"] = Integer(name="id", primary_key=True)
         logging.warning(
@@ -131,6 +137,8 @@ def sqlalchemy_columns_from_model_fields(
             "Integer primary key named `id` created."
         )
     validate_related_names_in_relations(model_fields, new_model)
+    columns = []
+    pkname = None
     for field_name, field in model_fields.items():
         if field.primary_key:
             pkname = check_pk_column_validity(field_name, field, pkname)
@@ -171,7 +179,7 @@ def populate_meta_tablename_columns_and_pk(
     pkname: Optional[str]
 
     if hasattr(new_model.Meta, "columns"):
-        columns = new_model.Meta.table.columns
+        columns = new_model.Meta.columns
         pkname = new_model.Meta.pkname
     else:
         pkname, columns = sqlalchemy_columns_from_model_fields(
@@ -186,23 +194,20 @@ def populate_meta_tablename_columns_and_pk(
     return new_model
 
 
-def populate_meta_sqlalchemy_table_if_required(
-    new_model: Type["Model"],
-) -> Type["Model"]:
+def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
     """
     Constructs sqlalchemy table out of columns and parameters set on Meta class.
     It populates name, metadata, columns and constraints.
 
-    :param new_model: class without sqlalchemy table constructed
-    :type new_model: Model class
+    :param meta: Meta class of the Model without sqlalchemy table constructed
+    :type meta: Model class Meta
     :return: class with populated Meta.table
     :rtype: Model class
     """
-    if not hasattr(new_model.Meta, "table"):
-        new_model.Meta.table = sqlalchemy.Table(
-            new_model.Meta.tablename,
-            new_model.Meta.metadata,
-            *new_model.Meta.columns,
-            *new_model.Meta.constraints,
+    if not hasattr(meta, "table"):
+        meta.table = sqlalchemy.Table(
+            meta.tablename,
+            meta.metadata,
+            *[copy.deepcopy(col) for col in meta.columns],
+            *meta.constraints,
         )
-    return new_model

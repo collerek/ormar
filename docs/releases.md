@@ -4,12 +4,13 @@
 * **Breaking:** `remove()` parent from child side in reverse ForeignKey relation now requires passing a relation `name`,
 as the same model can be registered multiple times and `ormar` needs to know from which relation on the parent you want to remove the child.
 * **Breaking:** applying `limit` and `offset` with `select_related` is by default applied only on the main table before the join -> meaning that not the total
-  number of rows is limited but just main models (first one in the query, the one to used to construct it). Yu can still limit all rows from db response with `limit_raw_sql=True` flag on either `limit` or `offset` (or both)
+  number of rows is limited but just number of main models (first one in the query, the one used to construct it). You can still limit all rows from db response with `limit_raw_sql=True` flag on either `limit` or `offset` (or both)
 * **Breaking:** issuing `first()` now fetches the first row ordered by the primary key asc (so first one inserted (can be different for non number primary keys - i.e. alphabetical order of string))
 * **Breaking:** issuing `get()` **without any filters** now fetches the first row ordered by the primary key desc (so should be last one inserted (can be different for non number primary keys - i.e. alphabetical order of string))
+* **Breaking (internal):** sqlalchemy columns kept at `Meta.columns` are no longer bind to table, so you cannot get the column straight from there
 
 ## Features
-* Introduce **inheritance**, for now two types of inheritance are possible:
+* Introduce **inheritance**. For now two types of inheritance are possible:
     * **Mixins** - don't subclass `ormar.Model`, just define fields that are later used on different models (like `created_date` and `updated_date` on each child model), only actual models create tables, but those fields from mixins are added
     * **Concrete table inheritance** - means that parent is marked as `abstract=True` in Meta class and each child has its own table with columns from the parent and own child columns, kind of similar to Mixins but parent also is a (an abstract) Model
     * To read more check the docs on models -> inheritance section.
@@ -18,6 +19,7 @@ as the same model can be registered multiple times and `ormar` needs to know fro
 ## Fixes
 * Fix minor bug in `order_by` for primary model order bys
 * Fix in `prefetch_query` for multiple related_names for the same model.
+* Fix using same `related_name` on different models leading to the same related `Model` overwriting each other, now `ModelDefinitionError` is raised and you need to change the name. 
 
 ## Docs
 * Split and cleanup in docs:

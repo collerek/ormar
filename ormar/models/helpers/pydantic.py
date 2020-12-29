@@ -12,12 +12,50 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
 
+def verify_related_name_dont_duplicate(
+    child: Type["Model"], parent_model: Type["Model"], related_name: str,
+) -> None:
+    """
+    Verifies whether the used related_name (regardless of the fact if user defined or
+    auto generated) is already used on related model, but is connected with other model
+    than the one that we connect right now.
+
+    :raises: ModelDefinitionError if name is already used but lead to different related
+    model
+    :param child: related Model class
+    :type child: ormar.models.metaclass.ModelMetaclass
+    :param parent_model: parent Model class
+    :type parent_model: ormar.models.metaclass.ModelMetaclass
+    :param related_name:
+    :type related_name:
+    :return: None
+    :rtype: None
+    """
+    if parent_model.Meta.model_fields.get(related_name):
+        fk_field = parent_model.Meta.model_fields.get(related_name)
+        if not fk_field:
+            return
+        if fk_field.to != child and fk_field.to.Meta != child.Meta:
+            raise ormar.ModelDefinitionError(
+                f"Relation with related_name "
+                f"'{related_name}' "
+                f"leading to model "
+                f"{parent_model.get_name(lower=False)} "
+                f"cannot be used on model "
+                f"{child.get_name(lower=False)} "
+                f"because it's already used by model "
+                f"{fk_field.to.get_name(lower=False)}"
+            )
+
+
 def reverse_field_not_already_registered(
     child: Type["Model"], child_model_name: str, parent_model: Type["Model"]
 ) -> bool:
     """
     Checks if child is already registered in parents pydantic fields.
 
+    :raises: ModelDefinitionError if related name is already used but lead to different
+    related model
     :param child: related Model class
     :type child: ormar.models.metaclass.ModelMetaclass
     :param child_model_name: related_name of the child if provided
@@ -27,10 +65,19 @@ def reverse_field_not_already_registered(
     :return: result of the check
     :rtype: bool
     """
-    return (
-        child_model_name not in parent_model.__fields__
-        and child.get_name() not in parent_model.__fields__
-    )
+    check_result = child_model_name not in parent_model.Meta.model_fields
+    check_result2 = child.get_name() not in parent_model.Meta.model_fields
+
+    if not check_result:
+        verify_related_name_dont_duplicate(
+            child=child, parent_model=parent_model, related_name=child_model_name
+        )
+    if not check_result2:
+        verify_related_name_dont_duplicate(
+            child=child, parent_model=parent_model, related_name=child.get_name()
+        )
+
+    return check_result and check_result2
 
 
 def create_pydantic_field(

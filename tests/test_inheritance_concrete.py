@@ -1,6 +1,6 @@
 # type: ignore
 import datetime
-from typing import Optional
+from typing import List, Optional
 
 import databases
 import pytest
@@ -122,6 +122,42 @@ class Bus(Car):
     max_persons: int = ormar.Integer()
 
 
+class PersonsCar(ormar.Model):
+    class Meta:
+        tablename = "cars_x_persons"
+        metadata = metadata
+        database = db
+
+
+class Car2(ormar.Model):
+    class Meta:
+        abstract = True
+        metadata = metadata
+        database = db
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=50)
+    owner: Person = ormar.ForeignKey(Person, related_name="owned")
+    co_owners: List[Person] = ormar.ManyToMany(
+        Person, through=PersonsCar, related_name="coowned"
+    )
+    created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
+
+
+class Truck2(Car2):
+    class Meta:
+        tablename = "trucks2"
+
+    max_capacity: int = ormar.Integer()
+
+
+class Bus2(Car2):
+    class Meta:
+        tablename = "buses2"
+
+    max_persons: int = ormar.Integer()
+
+
 @pytest.fixture(autouse=True, scope="module")
 def create_test_database():
     metadata.create_all(engine)
@@ -132,6 +168,17 @@ def create_test_database():
 def test_init_of_abstract_model():
     with pytest.raises(ModelError):
         DateFieldsModel()
+
+
+def test_duplicated_related_name_on_different_model():
+    with pytest.raises(ModelDefinitionError):
+
+        class Bus3(Car2):  # pragma: no cover
+            class Meta:
+                tablename = "buses3"
+
+            owner: Person = ormar.ForeignKey(Person, related_name="buses")
+            max_persons: int = ormar.Integer()
 
 
 def test_field_redefining_in_concrete_models():
@@ -310,3 +357,59 @@ async def test_inheritance_with_relation():
             assert joe_check.coowned_trucks[0].created_date is None
             assert joe_check.coowned_buses[0] == unicorn
             assert joe_check.coowned_buses[0].created_date is None
+
+
+@pytest.mark.asyncio
+async def test_inheritance_with_multi_relation():
+    async with db:
+        async with db.transaction(force_rollback=True):
+            sam = await Person(name="Sam").save()
+            joe = await Person(name="Joe").save()
+            alex = await Person(name="Alex").save()
+            truck = await Truck2(
+                name="Shelby wanna be 2", max_capacity=1400, owner=sam
+            ).save()
+            await truck.co_owners.add(joe)
+            await truck.co_owners.add(alex)
+            bus = await Bus2(name="Unicorn 2", max_persons=50, owner=sam).save()
+            await bus.co_owners.add(joe)
+            await bus.co_owners.add(alex)
+
+            shelby = await Truck2.objects.select_related(["owner", "co_owners"]).get()
+            assert shelby.name == "Shelby wanna be 2"
+            assert shelby.owner.name == "Sam"
+            assert shelby.co_owners[0].name == "Joe"
+            assert len(shelby.co_owners) == 2
+            assert shelby.max_capacity == 1400
+
+            unicorn = await Bus2.objects.select_related(["owner", "co_owners"]).get()
+            assert unicorn.name == "Unicorn 2"
+            assert unicorn.owner.name == "Sam"
+            assert unicorn.co_owners[0].name == "Joe"
+            assert len(unicorn.co_owners) == 2
+            assert unicorn.max_persons == 50
+
+            joe_check = await Person.objects.select_related(
+                ["coowned_trucks2", "coowned_buses2"]
+            ).get(name="Joe")
+            assert joe_check.pk == joe.pk
+            assert joe_check.coowned_trucks2[0] == shelby
+            assert joe_check.coowned_trucks2[0].created_date is not None
+            assert joe_check.coowned_buses2[0] == unicorn
+            assert joe_check.coowned_buses2[0].created_date is not None
+
+            joe_check = (
+                await Person.objects.exclude_fields(
+                    {
+                        "coowned_trucks2": {"created_date"},
+                        "coowned_buses2": {"created_date"},
+                    }
+                )
+                .prefetch_related(["coowned_trucks2", "coowned_buses2"])
+                .get(name="Joe")
+            )
+            assert joe_check.pk == joe.pk
+            assert joe_check.coowned_trucks2[0] == shelby
+            assert joe_check.coowned_trucks2[0].created_date is None
+            assert joe_check.coowned_buses2[0] == unicorn
+            assert joe_check.coowned_buses2[0].created_date is None
