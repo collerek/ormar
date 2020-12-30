@@ -21,12 +21,14 @@ from ormar import ForeignKey, Integer, ModelDefinitionError  # noqa I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
-from ormar.models.helpers.pydantic import (
+from ormar.models.helpers.models import (
     extract_annotations_and_default_vals,
+    populate_default_options_values,
+)
+from ormar.models.helpers.pydantic import (
     get_potential_fields,
     get_pydantic_base_orm_config,
     get_pydantic_field,
-    populate_default_options_values,
 )
 from ormar.models.helpers.relations import (
     alias_manager,
@@ -50,6 +52,12 @@ CONFIG_KEY = "Config"
 
 
 class ModelMeta:
+    """
+    Class used for type hinting.
+    Users can subclass this one for conveniance but it's not required.
+    The only requirement is that ormar.Model has to have inner class with name Meta.
+    """
+
     tablename: str
     table: sqlalchemy.Table
     metadata: sqlalchemy.MetaData

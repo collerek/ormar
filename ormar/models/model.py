@@ -125,13 +125,11 @@ class Model(NewBaseModel):
             )
         ):
             through_field = previous_model.Meta.model_fields[related_name]
-            rel_name2 = previous_model.resolve_relation_name(
-                through_field.through, through_field.to, explicit_multi=True
-            )
+            rel_name2 = through_field.default_target_field_name()  # type: ignore
             previous_model = through_field.through  # type: ignore
 
         if previous_model and rel_name2:
-            table_prefix = cls.Meta.alias_manager.resolve_relation_join(
+            table_prefix = cls.Meta.alias_manager.resolve_relation_alias(
                 previous_model, rel_name2
             )
         else:

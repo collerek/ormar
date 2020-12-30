@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, Type
 
+import ormar
 from ormar import ForeignKey, ManyToMany
 from ormar.fields import ManyToManyField
 from ormar.fields.foreign_key import ForeignKeyField
-from ormar.models.helpers.pydantic import reverse_field_not_already_registered
 from ormar.models.helpers.sqlalchemy import adjust_through_many_to_many_model
 from ormar.relations import AliasManager
 
@@ -31,7 +31,7 @@ def register_relation_on_build(new_model: Type["Model"], field_name: str) -> Non
 
 
 def register_many_to_many_relation_on_build(
-    new_model: Type["Model"], field: Type[ManyToManyField]
+    new_model: Type["Model"], field: Type[ManyToManyField], field_name: str
 ) -> None:
     """
     Registers connection between through model and both sides of the m2m relation.
@@ -43,13 +43,22 @@ def register_many_to_many_relation_on_build(
 
     By default relation name is a model.name.lower().
 
+    :param field_name: name of the relation key
+    :type field_name: str
     :param new_model: model on which m2m field is declared
     :type new_model: Model class
     :param field: relation field
     :type field: ManyToManyField class
     """
-    alias_manager.add_relation_type(field.through, new_model.get_name())
-    alias_manager.add_relation_type(field.through, field.to.get_name())
+    alias_manager.add_relation_type(
+        field.through, new_model.get_name(), is_multi=True, reverse_name=field_name
+    )
+    alias_manager.add_relation_type(
+        field.through,
+        field.to.get_name(),
+        is_multi=True,
+        reverse_name=field.related_name or new_model.get_name() + "s",
+    )
 
 
 def expand_reverse_relationships(model: Type["Model"]) -> None:
@@ -133,6 +142,76 @@ def register_relation_in_alias_manager(
     :type field_name: str
     """
     if issubclass(field, ManyToManyField):
-        register_many_to_many_relation_on_build(new_model=new_model, field=field)
+        register_many_to_many_relation_on_build(
+            new_model=new_model, field=field, field_name=field_name
+        )
     elif issubclass(field, ForeignKeyField):
         register_relation_on_build(new_model=new_model, field_name=field_name)
+
+
+def verify_related_name_dont_duplicate(
+    child: Type["Model"], parent_model: Type["Model"], related_name: str,
+) -> None:
+    """
+    Verifies whether the used related_name (regardless of the fact if user defined or
+    auto generated) is already used on related model, but is connected with other model
+    than the one that we connect right now.
+
+    :raises: ModelDefinitionError if name is already used but lead to different related
+    model
+    :param child: related Model class
+    :type child: ormar.models.metaclass.ModelMetaclass
+    :param parent_model: parent Model class
+    :type parent_model: ormar.models.metaclass.ModelMetaclass
+    :param related_name:
+    :type related_name:
+    :return: None
+    :rtype: None
+    """
+    if parent_model.Meta.model_fields.get(related_name):
+        fk_field = parent_model.Meta.model_fields.get(related_name)
+        if not fk_field:  # pragma: no cover
+            return
+        if fk_field.to != child and fk_field.to.Meta != child.Meta:
+            raise ormar.ModelDefinitionError(
+                f"Relation with related_name "
+                f"'{related_name}' "
+                f"leading to model "
+                f"{parent_model.get_name(lower=False)} "
+                f"cannot be used on model "
+                f"{child.get_name(lower=False)} "
+                f"because it's already used by model "
+                f"{fk_field.to.get_name(lower=False)}"
+            )
+
+
+def reverse_field_not_already_registered(
+    child: Type["Model"], child_model_name: str, parent_model: Type["Model"]
+) -> bool:
+    """
+    Checks if child is already registered in parents pydantic fields.
+
+    :raises: ModelDefinitionError if related name is already used but lead to different
+    related model
+    :param child: related Model class
+    :type child: ormar.models.metaclass.ModelMetaclass
+    :param child_model_name: related_name of the child if provided
+    :type child_model_name: str
+    :param parent_model: parent Model class
+    :type parent_model: ormar.models.metaclass.ModelMetaclass
+    :return: result of the check
+    :rtype: bool
+    """
+    check_result = child_model_name not in parent_model.Meta.model_fields
+    check_result2 = child.get_name() not in parent_model.Meta.model_fields
+
+    if not check_result:
+        verify_related_name_dont_duplicate(
+            child=child, parent_model=parent_model, related_name=child_model_name
+        )
+    if not check_result2:
+        verify_related_name_dont_duplicate(
+            child=child, parent_model=parent_model, related_name=child.get_name()
+        )
+
+    return check_result and check_result2

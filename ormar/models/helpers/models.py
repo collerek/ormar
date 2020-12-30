@@ -1,12 +1,56 @@
-from typing import Dict, List, Optional, TYPE_CHECKING, Type
+from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type
 
-from ormar import ModelDefinitionError
+import ormar
 from ormar.fields.foreign_key import ForeignKeyField
+from ormar.models.helpers.pydantic import populate_pydantic_default_values
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
 
+def populate_default_options_values(
+    new_model: Type["Model"], model_fields: Dict
+) -> None:
+    """
+    Sets all optional Meta values to it's defaults
+    and set model_fields that were already previously extracted.
+
+    Here should live all options that are not overwritten/set for all models.
+
+    Current options are:
+    * constraints = []
+    * abstract = False
+
+    :param new_model: newly constructed Model
+    :type new_model: Model class
+    :param model_fields:
+    :type model_fields: Union[Dict[str, type], Dict]
+    """
+    if not hasattr(new_model.Meta, "constraints"):
+        new_model.Meta.constraints = []
+    if not hasattr(new_model.Meta, "model_fields"):
+        new_model.Meta.model_fields = model_fields
+    if not hasattr(new_model.Meta, "abstract"):
+        new_model.Meta.abstract = False
+
+
+def extract_annotations_and_default_vals(attrs: Dict) -> Tuple[Dict, Dict]:
+    """
+    Extracts annotations from class namespace dict and triggers
+    extraction of ormar model_fields.
+
+    :param attrs: namespace of the class created
+    :type attrs: Dict
+    :return: namespace of the class updated, dict of extracted model_fields
+    :rtype: Tuple[Dict, Dict]
+    """
+    key = "__annotations__"
+    attrs[key] = attrs.get(key, {})
+    attrs, model_fields = populate_pydantic_default_values(attrs)
+    return attrs, model_fields
+
+
+# cannot be in relations helpers due to cyclical import
 def validate_related_names_in_relations(
     model_fields: Dict, new_model: Type["Model"]
 ) -> None:
@@ -28,7 +72,7 @@ def validate_related_names_in_relations(
         if issubclass(field, ForeignKeyField):
             previous_related_names = already_registered.setdefault(field.to, [])
             if field.related_name in previous_related_names:
-                raise ModelDefinitionError(
+                raise ormar.ModelDefinitionError(
                     f"Multiple fields declared on {new_model.get_name(lower=False)} "
                     f"model leading to {field.to.get_name(lower=False)} model without "
                     f"related_name property set. \nThere can be only one relation with "

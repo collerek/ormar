@@ -67,7 +67,7 @@ class RelationsManager:
         to_field: Type[BaseField] = child.Meta.model_fields[relation_name]
         # print('comming', child_name, relation_name)
         (parent, child, child_name, to_name,) = get_relations_sides_and_names(
-            to_field, parent, child, child_name, virtual
+            to_field, parent, child, child_name, virtual, relation_name
         )
 
         # print('adding', parent.get_name(), child.get_name(), child_name)

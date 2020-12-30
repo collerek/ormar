@@ -328,7 +328,7 @@ class PrefetchQuery:
         if issubclass(target_field, ManyToManyField):
             query_target = target_field.through
             select_related = [target_name]
-            table_prefix = target_field.to.Meta.alias_manager.resolve_relation_join(
+            table_prefix = target_field.to.Meta.alias_manager.resolve_relation_alias(
                 query_target, target_name
             )
             self.already_extracted.setdefault(target_name, {})["prefix"] = table_prefix

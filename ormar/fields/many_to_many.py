@@ -50,3 +50,7 @@ def ManyToMany(
 
 class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationProtocol):
     through: Type["Model"]
+
+    @classmethod
+    def default_target_field_name(cls) -> str:
+        return cls.to.get_name()

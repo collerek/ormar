@@ -379,3 +379,30 @@ class NewBaseModel(
             column_name in self.Meta.model_fields
             and self.Meta.model_fields[column_name].__type__ == pydantic.Json
         )
+
+    def _extract_own_model_fields(self) -> Dict:
+        related_names = self.extract_related_names()
+        self_fields = self.dict(exclude=related_names)
+        return self_fields
+
+    def _extract_model_db_fields(self) -> Dict:
+        self_fields = self._extract_own_model_fields()
+        self_fields = {
+            k: v
+            for k, v in self_fields.items()
+            if self.get_column_alias(k) in self.Meta.table.columns
+        }
+        for field in self._extract_db_related_names():
+            target_pk_name = self.Meta.model_fields[field].to.Meta.pkname
+            target_field = getattr(self, field)
+            self_fields[field] = getattr(target_field, target_pk_name, None)
+        return self_fields
+
+    def get_relation_model_id(self, target_field: Type["BaseField"]) -> Optional[int]:
+        if target_field.virtual or issubclass(
+            target_field, ormar.fields.ManyToManyField
+        ):
+            return self.pk
+        related_name = target_field.name
+        related_model = getattr(self, related_name)
+        return None if not related_model else related_model.pk

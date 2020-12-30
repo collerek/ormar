@@ -135,7 +135,7 @@ class SqlJoin:
             model_cls = join_params.model_cls.Meta.model_fields[part].to
         to_table = model_cls.Meta.table.name
 
-        alias = model_cls.Meta.alias_manager.resolve_relation_join(
+        alias = model_cls.Meta.alias_manager.resolve_relation_alias(
             join_params.prev_model, part
         )
         if alias not in self.used_aliases:

@@ -12,74 +12,6 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
 
-def verify_related_name_dont_duplicate(
-    child: Type["Model"], parent_model: Type["Model"], related_name: str,
-) -> None:
-    """
-    Verifies whether the used related_name (regardless of the fact if user defined or
-    auto generated) is already used on related model, but is connected with other model
-    than the one that we connect right now.
-
-    :raises: ModelDefinitionError if name is already used but lead to different related
-    model
-    :param child: related Model class
-    :type child: ormar.models.metaclass.ModelMetaclass
-    :param parent_model: parent Model class
-    :type parent_model: ormar.models.metaclass.ModelMetaclass
-    :param related_name:
-    :type related_name:
-    :return: None
-    :rtype: None
-    """
-    if parent_model.Meta.model_fields.get(related_name):
-        fk_field = parent_model.Meta.model_fields.get(related_name)
-        if not fk_field:  # pragma: no cover
-            return
-        if fk_field.to != child and fk_field.to.Meta != child.Meta:
-            raise ormar.ModelDefinitionError(
-                f"Relation with related_name "
-                f"'{related_name}' "
-                f"leading to model "
-                f"{parent_model.get_name(lower=False)} "
-                f"cannot be used on model "
-                f"{child.get_name(lower=False)} "
-                f"because it's already used by model "
-                f"{fk_field.to.get_name(lower=False)}"
-            )
-
-
-def reverse_field_not_already_registered(
-    child: Type["Model"], child_model_name: str, parent_model: Type["Model"]
-) -> bool:
-    """
-    Checks if child is already registered in parents pydantic fields.
-
-    :raises: ModelDefinitionError if related name is already used but lead to different
-    related model
-    :param child: related Model class
-    :type child: ormar.models.metaclass.ModelMetaclass
-    :param child_model_name: related_name of the child if provided
-    :type child_model_name: str
-    :param parent_model: parent Model class
-    :type parent_model: ormar.models.metaclass.ModelMetaclass
-    :return: result of the check
-    :rtype: bool
-    """
-    check_result = child_model_name not in parent_model.Meta.model_fields
-    check_result2 = child.get_name() not in parent_model.Meta.model_fields
-
-    if not check_result:
-        verify_related_name_dont_duplicate(
-            child=child, parent_model=parent_model, related_name=child_model_name
-        )
-    if not check_result2:
-        verify_related_name_dont_duplicate(
-            child=child, parent_model=parent_model, related_name=child.get_name()
-        )
-
-    return check_result and check_result2
-
-
 def create_pydantic_field(
     field_name: str, model: Type["Model"], model_field: Type[ManyToManyField]
 ) -> None:
@@ -214,32 +146,6 @@ def get_pydantic_base_orm_config() -> Type[BaseConfig]:
     return Config
 
 
-def populate_default_options_values(
-    new_model: Type["Model"], model_fields: Dict
-) -> None:
-    """
-    Sets all optional Meta values to it's defaults
-    and set model_fields that were already previously extracted.
-
-    Here should live all options that are not overwritten/set for all models.
-
-    Current options are:
-    * constraints = []
-    * abstract = False
-
-    :param new_model: newly constructed Model
-    :type new_model: Model class
-    :param model_fields:
-    :type model_fields: Union[Dict[str, type], Dict]
-    """
-    if not hasattr(new_model.Meta, "constraints"):
-        new_model.Meta.constraints = []
-    if not hasattr(new_model.Meta, "model_fields"):
-        new_model.Meta.model_fields = model_fields
-    if not hasattr(new_model.Meta, "abstract"):
-        new_model.Meta.abstract = False
-
-
 def get_potential_fields(attrs: Dict) -> Dict:
     """
     Gets all the fields in current class namespace that are Fields.
@@ -250,19 +156,3 @@ def get_potential_fields(attrs: Dict) -> Dict:
     :rtype: Dict
     """
     return {k: v for k, v in attrs.items() if lenient_issubclass(v, BaseField)}
-
-
-def extract_annotations_and_default_vals(attrs: Dict) -> Tuple[Dict, Dict]:
-    """
-    Extracts annotations from class namespace dict and triggers
-    extraction of ormar model_fields.
-
-    :param attrs: namespace of the class created
-    :type attrs: Dict
-    :return: namespace of the class updated, dict of extracted model_fields
-    :rtype: Tuple[Dict, Dict]
-    """
-    key = "__annotations__"
-    attrs[key] = attrs.get(key, {})
-    attrs, model_fields = populate_pydantic_default_values(attrs)
-    return attrs, model_fields
