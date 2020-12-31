@@ -6,6 +6,10 @@ from ormar.models.mixins.relation_mixin import RelationMixin
 
 
 class PrefetchQueryMixin(RelationMixin):
+    """
+    Used in PrefetchQuery to extract ids and names of models to prefetch.
+    """
+
     if TYPE_CHECKING:  # pragma no cover
         from ormar import Model
 
@@ -18,6 +22,20 @@ class PrefetchQueryMixin(RelationMixin):
         reverse: bool,
         related: str,
     ) -> Tuple[Type["Model"], str]:
+        """
+        Returns Model on which query clause should be performed and name of the column.
+
+        :param parent_model: related model that the relation lead to
+        :type parent_model: Type[Model]
+        :param target_model: model on which query should be perfomed
+        :type target_model: Type[Model]
+        :param reverse: flag if the relation is reverse
+        :type reverse: bool
+        :param related: name of the relation field
+        :type related: str
+        :return: Model on which query clause should be performed and name of the column
+        :rtype: Tuple[Type[Model], str]
+        """
         if reverse:
             field_name = (
                 parent_model.Meta.model_fields[related].related_name
@@ -36,6 +54,22 @@ class PrefetchQueryMixin(RelationMixin):
     def get_column_name_for_id_extraction(
         parent_model: Type["Model"], reverse: bool, related: str, use_raw: bool,
     ) -> str:
+        """
+        Returns name of the column that should be used to extract ids from model.
+        Depending on the relation side it's either primary key column of parent model
+        or field name specified by related parameter.
+
+        :param parent_model: model from which id column should be extracted
+        :type parent_model: Type[Model]
+        :param reverse: flag if the relation is reverse
+        :type reverse: bool
+        :param related: name of the relation field
+        :type related: str
+        :param use_raw: flag if aliases or field names should be used
+        :type use_raw: bool
+        :return:
+        :rtype:
+        """
         if reverse:
             column_name = parent_model.Meta.pkname
             return (
@@ -46,6 +80,16 @@ class PrefetchQueryMixin(RelationMixin):
 
     @classmethod
     def get_related_field_name(cls, target_field: Type["BaseField"]) -> str:
+        """
+        Returns name of the relation field that should be used in prefetch query.
+        This field is later used to register relation in prefetch query,
+        populate relations dict, and populate nested model in prefetch query.
+
+        :param target_field: relation field that should be used in prefetch
+        :type target_field: Type[BaseField]
+        :return: name of the field
+        :rtype: str
+        """
         if issubclass(target_field, ormar.fields.ManyToManyField):
             return cls.get_name()
         if target_field.virtual:
@@ -54,6 +98,20 @@ class PrefetchQueryMixin(RelationMixin):
 
     @classmethod
     def get_filtered_names_to_extract(cls, prefetch_dict: Dict) -> List:
+        """
+        Returns list of related fields names that should be followed to prefetch related
+        models from.
+
+        List of models is translated into dict to assure each model is extracted only
+        once in one query, that's why this function accepts prefetch_dict not list.
+
+        Only relations from current model are returned.
+
+        :param prefetch_dict: dictionary of fields to extract
+        :type prefetch_dict: Dict
+        :return: list of fields names to extract
+        :rtype: List
+        """
         related_to_extract = []
         if prefetch_dict and prefetch_dict is not Ellipsis:
             related_to_extract = [

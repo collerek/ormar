@@ -2,6 +2,10 @@ from typing import Dict, TYPE_CHECKING
 
 
 class AliasMixin:
+    """
+    Used to translate field names into database column names.
+    """
+
     if TYPE_CHECKING:  # pragma: no cover
         from ormar import ModelMeta
 

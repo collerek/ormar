@@ -6,8 +6,21 @@ from ormar.models.mixins.relation_mixin import RelationMixin
 
 
 class SavePrepareMixin(RelationMixin):
+    """
+    Used to prepare models to be saved in database
+    """
+
     @classmethod
     def substitute_models_with_pks(cls, model_dict: Dict) -> Dict:  # noqa  CCR001
+        """
+        Receives dictionary of model that is about to be saved and changes all related
+        models that are stored as foreign keys to their fk value.
+
+        :param model_dict: dictionary of model that is about to be saved
+        :type model_dict: Dict
+        :return: dictionary of model that is about to be saved
+        :rtype: Dict
+        """
         for field in cls.extract_related_names():
             field_value = model_dict.get(field, None)
             if field_value is not None:
@@ -34,6 +47,16 @@ class SavePrepareMixin(RelationMixin):
 
     @classmethod
     def populate_default_values(cls, new_kwargs: Dict) -> Dict:
+        """
+        Receives dictionary of model that is about to be saved and populates the default
+        value on the fields that have the default value set, but no actual value was
+        passed by the user.
+
+        :param new_kwargs: dictionary of model that is about to be saved
+        :type new_kwargs: Dict
+        :return: dictionary of model that is about to be saved
+        :rtype: Dict
+        """
         for field_name, field in cls.Meta.model_fields.items():
             if (
                 field_name not in new_kwargs
