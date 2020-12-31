@@ -2,14 +2,14 @@ from typing import Callable, Dict, List, TYPE_CHECKING, Tuple, Type
 
 import ormar
 from ormar.fields import BaseField
+from ormar.models.mixins.relation_mixin import RelationMixin
 
 
-class PrefetchQueryMixin:
+class PrefetchQueryMixin(RelationMixin):
     if TYPE_CHECKING:  # pragma no cover
         from ormar import Model
 
         get_name: Callable  # defined in NewBaseModel
-        extract_related_names: Callable  # defined in ModelTableProxy
 
     @staticmethod
     def get_clause_target_and_filter_column_name(

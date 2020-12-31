@@ -28,7 +28,6 @@ from pydantic import BaseModel
 import ormar  # noqa I100
 from ormar.exceptions import ModelError
 from ormar.fields import BaseField
-from ormar.models.excludable import Excludable
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
 from ormar.queryset.utils import translate_list_to_dict
@@ -47,9 +46,7 @@ if TYPE_CHECKING:  # pragma no cover
     MappingIntStrAny = Mapping[IntStr, Any]
 
 
-class NewBaseModel(
-    pydantic.BaseModel, ModelTableProxy, Excludable, metaclass=ModelMetaclass
-):
+class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass):
     __slots__ = ("_orm_id", "_orm_saved", "_orm", "_pk_column")
 
     if TYPE_CHECKING:  # pragma no cover
@@ -272,11 +269,10 @@ class NewBaseModel(
                 continue
         return result
 
-    @staticmethod
     def _skip_ellipsis(
-        items: Union[Set, Dict, None], key: str
+        self, items: Union[Set, Dict, None], key: str
     ) -> Union[Set, Dict, None]:
-        result = Excludable.get_child(items, key)
+        result = self.get_child(items, key)
         return result if result is not Ellipsis else None
 
     def _extract_nested_models(  # noqa: CCR001

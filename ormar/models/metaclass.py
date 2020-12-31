@@ -21,23 +21,17 @@ from ormar import ForeignKey, Integer, ModelDefinitionError  # noqa I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
-from ormar.models.helpers.models import (
+from ormar.models.helpers import (
+    alias_manager,
+    expand_reverse_relationships,
     extract_annotations_and_default_vals,
-    populate_default_options_values,
-)
-from ormar.models.helpers.pydantic import (
     get_potential_fields,
     get_pydantic_base_orm_config,
     get_pydantic_field,
-)
-from ormar.models.helpers.relations import (
-    alias_manager,
-    register_relation_in_alias_manager,
-)
-from ormar.models.helpers.relations import expand_reverse_relationships
-from ormar.models.helpers.sqlalchemy import (
+    populate_default_options_values,
     populate_meta_sqlalchemy_table_if_required,
     populate_meta_tablename_columns_and_pk,
+    register_relation_in_alias_manager,
 )
 from ormar.models.quick_access_views import quick_access_set
 from ormar.queryset import QuerySet
@@ -387,7 +381,6 @@ def copy_data_from_parent_model(  # noqa: CCR001
                 }
                 populate_meta_sqlalchemy_table_if_required(new_meta)
                 copy_name = through_class.__name__ + attrs.get("__name__", "")
-                # TODO: when adding additional fields they need to be copied here
                 copy_through = type(copy_name, (ormar.Model,), {"Meta": new_meta})
                 copy_field.through = copy_through
 
