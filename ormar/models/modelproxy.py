@@ -1,4 +1,3 @@
-import ormar  # noqa:  I100
 from ormar.models.mixins import (
     AliasMixin,
     ExcludableMixin,
@@ -11,4 +10,7 @@ from ormar.models.mixins import (
 class ModelTableProxy(
     PrefetchQueryMixin, MergeModelMixin, AliasMixin, SavePrepareMixin, ExcludableMixin
 ):
-    pass
+    """
+    Used to combine all mixins with different set of functionalities.
+    One of the bases of the ormar Model class.
+    """

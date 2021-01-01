@@ -7,10 +7,9 @@ from sqlalchemy.types import TypeDecorator
 
 
 class UUID(TypeDecorator):  # pragma nocover
-    """Platform-independent GUID type.
-
+    """
+    Platform-independent GUID type.
     Uses CHAR(36) if in a string mode, otherwise uses CHAR(32), to store UUID.
-
     """
 
     impl = CHAR
