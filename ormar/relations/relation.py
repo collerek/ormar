@@ -15,12 +15,23 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 class RelationType(Enum):
+    """
+    Different types of relations supported by ormar.
+    ForeignKey = PRIMARY
+    reverse ForeignKey = REVERSE
+    ManyToMany = MULTIPLE
+    """
+
     PRIMARY = 1
     REVERSE = 2
     MULTIPLE = 3
 
 
 class Relation:
+    """
+    Keeps related Models and handles adding/removing of the children.
+    """
+
     def __init__(
         self,
         manager: "RelationsManager",
@@ -29,6 +40,23 @@ class Relation:
         to: Type["T"],
         through: Type["T"] = None,
     ) -> None:
+        """
+        Initialize the Relation and keep the related models either as instances of
+        passed Model, or as a RelationProxy which is basically a list of models with
+        some special behavior, as it exposes QuerySetProxy and allows querying the
+        related models already pre filtered by parent model.
+
+        :param manager: reference to relation manager
+        :type manager: RelationsManager
+        :param type_: type of the relation
+        :type type_: RelationType
+        :param field_name: name of the relation field
+        :type field_name: str
+        :param to: model to which relation leads to
+        :type to: Type[Model]
+        :param through: model through which relation goes for m2m relations
+        :type through: Type[Model]
+        """
         self.manager = manager
         self._owner: "Model" = manager.owner
         self._type: RelationType = type_
@@ -43,6 +71,9 @@ class Relation:
         )
 
     def _clean_related(self) -> None:
+        """
+        Removes dead weakrefs from RelationProxy.
+        """
         cleaned_data = [
             x
             for i, x in enumerate(self.related_models)  # type: ignore
@@ -61,6 +92,14 @@ class Relation:
     def _find_existing(
         self, child: Union["NewBaseModel", Type["NewBaseModel"]]
     ) -> Optional[int]:
+        """
+        Find child model in RelationProxy if exists.
+
+        :param child: child model to find
+        :type child: Model
+        :return: index of child in RelationProxy
+        :rtype: Optional[ind]
+        """
         if not isinstance(self.related_models, RelationProxy):  # pragma nocover
             raise ValueError("Cannot find existing models in parent relation type")
         if self._to_remove:
@@ -74,6 +113,13 @@ class Relation:
         return None
 
     def add(self, child: "T") -> None:
+        """
+        Adds child Model to relation, either sets child as related model or adds
+        it to the list in RelationProxy depending on relation type.
+
+        :param child: model to add to relation
+        :type child: Model
+        """
         relation_name = self.field_name
         if self._type == RelationType.PRIMARY:
             self.related_models = child
@@ -89,6 +135,13 @@ class Relation:
                 self._owner.__dict__[relation_name] = rel
 
     def remove(self, child: Union["NewBaseModel", Type["NewBaseModel"]]) -> None:
+        """
+        Removes child Model from relation, either sets None as related model or removes
+        it from the list in RelationProxy depending on relation type.
+
+        :param child: model to remove from relation
+        :type child: Model
+        """
         relation_name = self.field_name
         if self._type == RelationType.PRIMARY:
             if self.related_models == child:
@@ -101,6 +154,12 @@ class Relation:
                 del self._owner.__dict__[relation_name][position]
 
     def get(self) -> Optional[Union[List["T"], "T"]]:
+        """
+        Return the related model or models from RelationProxy.
+
+        :return: related model/models if set
+        :rtype: Optional[Union[List[Model], Model]]
+        """
         return self.related_models
 
     def __repr__(self) -> str:  # pragma no cover

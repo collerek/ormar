@@ -11,6 +11,10 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 class RelationProxy(list):
+    """
+    Proxy of the Relation that is a list with special methods.
+    """
+
     def __init__(
         self,
         relation: "Relation",
@@ -28,6 +32,13 @@ class RelationProxy(list):
 
     @property
     def related_field_name(self) -> str:
+        """
+        On first access calculates the name of the related field, later stored in
+        _related_field_name property.
+
+        :return: name of the related field
+        :rtype: str
+        """
         if self._related_field_name:
             return self._related_field_name
         owner_field = self._owner.Meta.model_fields[self.field_name]
@@ -37,26 +48,55 @@ class RelationProxy(list):
         return self._related_field_name
 
     def __getattribute__(self, item: str) -> Any:
+        """
+        Since some QuerySetProxy methods overwrite builtin list methods we
+        catch calls to them and delegate it to QuerySetProxy instead.
+
+        :param item: name of attribute
+        :type item: str
+        :return: value of attribute
+        :rtype: Any
+        """
         if item in ["count", "clear"]:
             self._initialize_queryset()
             return getattr(self.queryset_proxy, item)
         return super().__getattribute__(item)
 
     def __getattr__(self, item: str) -> Any:
+        """
+        Delegates calls for non existing attributes to QuerySetProxy.
+
+        :param item: name of attribute/method
+        :type item: str
+        :return: method from QuerySetProxy if exists
+        :rtype: method
+        """
         self._initialize_queryset()
         return getattr(self.queryset_proxy, item)
 
     def _initialize_queryset(self) -> None:
+        """
+        Initializes the QuerySetProxy if not yet initialized.
+        """
         if not self._check_if_queryset_is_initialized():
             self.queryset_proxy.queryset = self._set_queryset()
 
     def _check_if_queryset_is_initialized(self) -> bool:
+        """
+        Checks if the QuerySetProxy is already set and ready.
+        :return: result of the check
+        :rtype: bool
+        """
         return (
             hasattr(self.queryset_proxy, "queryset")
             and self.queryset_proxy.queryset is not None
         )
 
     def _check_if_model_saved(self) -> None:
+        """
+        Verifies if the parent model of the relation has been already saved.
+        Otherwise QuerySetProxy cannot filter by parent primary key.
+        """
         pk_value = self._owner.pk
         if not pk_value:
             raise RelationshipInstanceError(
@@ -64,6 +104,14 @@ class RelationProxy(list):
             )
 
     def _set_queryset(self) -> "QuerySet":
+        """
+        Creates new QuerySet with relation model and pre filters it with currents
+        parent model primary key, so all queries by definition are already related
+        to the parent model only, without need for user to filter them.
+
+        :return: initialized QuerySet
+        :rtype: QuerySet
+        """
         related_field_name = self.related_field_name
         related_field = self.relation.to.Meta.model_fields[related_field_name]
         pkname = self._owner.get_column_alias(self._owner.Meta.pkname)
@@ -79,6 +127,20 @@ class RelationProxy(list):
     async def remove(  # type: ignore
         self, item: "Model", keep_reversed: bool = True
     ) -> None:
+        """
+        Removes the item from relation with parent.
+
+        Through models are automatically deleted for m2m relations.
+
+        For reverse FK relations keep_reversed flag marks if the reversed models
+        should be kept or deleted from the database too (False means that models
+        will be deleted, and not only removed from relation).
+
+        :param item: child to remove from relation
+        :type item: Model
+        :param keep_reversed: flag if the reversed model should be kept or deleted too
+        :type keep_reversed: bool
+        """
         if item not in self:
             raise NoMatch(
                 f"Object {self._owner.get_name()} has no "
@@ -103,11 +165,19 @@ class RelationProxy(list):
                 await item.delete()
 
     async def add(self, item: "Model") -> None:
+        """
+        Adds child model to relation.
+
+        For ManyToMany relations through instance is automatically created.
+
+        :param item: child to add to relation
+        :type item: Model
+        """
         relation_name = self.related_field_name
+        self._check_if_model_saved()
         if self.type_ == ormar.RelationType.MULTIPLE:
             await self.queryset_proxy.create_through_instance(item)
             setattr(item, relation_name, self._owner)
         else:
-            self._check_if_model_saved()
             setattr(item, relation_name, self._owner)
             await item.update()

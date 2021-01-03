@@ -47,7 +47,7 @@ await malibu.save()
 
 Get's the first row from the db meeting the criteria set by kwargs.
 
-If no criteria set it will return the first row in db.
+If no criteria set it will return the last row in db sorted by pk.
 
 Passing a criteria is actually calling filter(**kwargs) method described below.
 
@@ -85,6 +85,13 @@ assert album == album2
 
 !!!note
     Note that if you want to create a new object you either have to pass pk column value or pk column has to be set as autoincrement
+
+### first
+
+`first(): -> Model` 
+
+Gets the first row from the db ordered by primary key column ascending.
+
 
 ### update
 
@@ -447,9 +454,12 @@ any attribute it will be updated on all parents as they share the same child obj
 
 ### limit
 
-`limit(limit_count: int) -> QuerySet`
+`limit(limit_count: int, limit_raw_sql: bool = None) -> QuerySet`
 
-You can limit the results to desired number of rows.
+You can limit the results to desired number of parent models.
+
+To limit the actual number of database query rows instead of number of main models
+use the `limit_raw_sql` parameter flag, and set it to `True`.
 
 ```python
 tracks = await Track.objects.limit(1).all()
@@ -465,9 +475,12 @@ tracks = await Track.objects.limit(1).all()
 
 ### offset
 
-`offset(offset: int) -> QuerySet`
+`offset(offset: int, limit_raw_sql: bool = None) -> QuerySet`
 
-You can also offset the results by desired number of rows.
+You can also offset the results by desired number of main models.
+
+To offset the actual number of database query rows instead of number of main models
+use the `limit_raw_sql` parameter flag, and set it to `True`.
 
 ```python
 tracks = await Track.objects.offset(1).limit(1).all()
