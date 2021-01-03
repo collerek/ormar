@@ -2,13 +2,54 @@ from typing import Dict
 
 import ormar
 from ormar.exceptions import ModelPersistenceError
+from ormar.models.mixins import AliasMixin
 from ormar.models.mixins.relation_mixin import RelationMixin
 
 
-class SavePrepareMixin(RelationMixin):
+class SavePrepareMixin(RelationMixin, AliasMixin):
     """
     Used to prepare models to be saved in database
     """
+
+    @classmethod
+    def _prepare_model_to_save(cls, new_kwargs: dict) -> dict:
+        """
+        Combines all preparation methods before saving.
+        Removes primary key for if it's nullable or autoincrement pk field,
+        and it's set to None.
+        Substitute related models with their primary key values as fk column.
+        Populates the default values for field with default set and no value.
+        Translate columns into aliases (db names).
+
+        :param new_kwargs: dictionary of model that is about to be saved
+        :type new_kwargs: Dict[str, str]
+        :return: dictionary of model that is about to be saved
+        :rtype: Dict[str, str]
+        """
+        new_kwargs = cls._remove_pk_from_kwargs(new_kwargs)
+        new_kwargs = cls.substitute_models_with_pks(new_kwargs)
+        new_kwargs = cls.populate_default_values(new_kwargs)
+        new_kwargs = cls.translate_columns_to_aliases(new_kwargs)
+        return new_kwargs
+
+    @classmethod
+    def _remove_pk_from_kwargs(cls, new_kwargs: dict) -> dict:
+        """
+        Removes primary key for if it's nullable or autoincrement pk field,
+        and it's set to None.
+
+        :param new_kwargs: dictionary of model that is about to be saved
+        :type new_kwargs: Dict[str, str]
+        :return: dictionary of model that is about to be saved
+        :rtype: Dict[str, str]
+        """
+        pkname = cls.Meta.pkname
+        pk = cls.Meta.model_fields[pkname]
+        if new_kwargs.get(pkname, ormar.Undefined) is None and (
+            pk.nullable or pk.autoincrement
+        ):
+            del new_kwargs[pkname]
+        return new_kwargs
 
     @classmethod
     def substitute_models_with_pks(cls, model_dict: Dict) -> Dict:  # noqa  CCR001

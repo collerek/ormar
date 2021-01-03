@@ -149,6 +149,7 @@ assert len(tracks) == 1
 *  `create(**kwargs): -> Model`
 *  `get(**kwargs): -> Model`
 *  `get_or_create(**kwargs) -> Model`
+*  `first(): -> Model`
 *  `update(each: bool = False, **kwargs) -> int`
 *  `update_or_create(**kwargs) -> Model`
 *  `bulk_create(objects: List[Model]) -> None`

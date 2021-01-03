@@ -1,5 +1,4 @@
 from ormar.models.mixins import (
-    AliasMixin,
     ExcludableMixin,
     MergeModelMixin,
     PrefetchQueryMixin,
@@ -8,7 +7,7 @@ from ormar.models.mixins import (
 
 
 class ModelTableProxy(
-    PrefetchQueryMixin, MergeModelMixin, AliasMixin, SavePrepareMixin, ExcludableMixin
+    PrefetchQueryMixin, MergeModelMixin, SavePrepareMixin, ExcludableMixin
 ):
     """
     Used to combine all mixins with different set of functionalities.

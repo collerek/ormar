@@ -376,7 +376,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         Actual call delegated to QuerySet.
 
         :param related: list of relation field names, can be linked by '__' to nest
-        :type related: str
+        :type related: Union[List, str]
         :return: QuerysetProxy
         :rtype: QuerysetProxy
         """
@@ -399,7 +399,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         Actual call delegated to QuerySet.
 
         :param related: list of relation field names, can be linked by '__' to nest
-        :type related: str
+        :type related: Union[List, str]
         :return: QuerysetProxy
         :rtype: QuerysetProxy
         """

@@ -20,6 +20,10 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 class QuerySet:
+    """
+    Main class to perform database queries, exposed on each model as objects attribute.
+    """
+
     def __init__(  # noqa CFQ002
         self,
         model_cls: Type["Model"] = None,
@@ -57,12 +61,24 @@ class QuerySet:
 
     @property
     def model_meta(self) -> "ModelMeta":
+        """
+        Shortcut to model class Meta set on QuerySet model.
+
+        :return: Meta class of the model
+        :rtype: model Meta class
+        """
         if not self.model_cls:  # pragma nocover
             raise ValueError("Model class of QuerySet is not initialized")
         return self.model_cls.Meta
 
     @property
     def model(self) -> Type["Model"]:
+        """
+        Shortcut to model class set on QuerySet.
+
+        :return: model class
+        :rtype: Type[Model]
+        """
         if not self.model_cls:  # pragma nocover
             raise ValueError("Model class of QuerySet is not initialized")
         return self.model_cls
@@ -70,6 +86,16 @@ class QuerySet:
     async def _prefetch_related_models(
         self, models: Sequence[Optional["Model"]], rows: List
     ) -> Sequence[Optional["Model"]]:
+        """
+        Performs prefetch query for selected models names.
+
+        :param models: list of already parsed main Models from main query
+        :type models: List[Model]
+        :param rows: database rows from main query
+        :type rows: List[sqlalchemy.engine.result.RowProxy]
+        :return: list of models with prefetch models populated
+        :rtype: List[Model]
+        """
         query = PrefetchQuery(
             model_cls=self.model,
             fields=self._columns,
@@ -81,6 +107,14 @@ class QuerySet:
         return await query.prefetch_related(models=models, rows=rows)  # type: ignore
 
     def _process_query_result_rows(self, rows: List) -> Sequence[Optional["Model"]]:
+        """
+        Process database rows and initialize ormar Model from each of the rows.
+
+        :param rows: list of database rows from query result
+        :type rows: List[sqlalchemy.engine.result.RowProxy]
+        :return: list of models
+        :rtype: List[Model]
+        """
         result_rows = [
             self.model.from_row(
                 row=row,
@@ -94,24 +128,14 @@ class QuerySet:
             return self.model.merge_instances_list(result_rows)  # type: ignore
         return result_rows
 
-    def _prepare_model_to_save(self, new_kwargs: dict) -> dict:
-        new_kwargs = self._remove_pk_from_kwargs(new_kwargs)
-        new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
-        new_kwargs = self.model.populate_default_values(new_kwargs)
-        new_kwargs = self.model.translate_columns_to_aliases(new_kwargs)
-        return new_kwargs
-
-    def _remove_pk_from_kwargs(self, new_kwargs: dict) -> dict:
-        pkname = self.model_meta.pkname
-        pk = self.model_meta.model_fields[pkname]
-        if new_kwargs.get(pkname, ormar.Undefined) is None and (
-            pk.nullable or pk.autoincrement
-        ):
-            del new_kwargs[pkname]
-        return new_kwargs
-
     @staticmethod
     def check_single_result_rows_count(rows: Sequence[Optional["Model"]]) -> None:
+        """
+        Verifies if the result has one and only one row.
+
+        :param rows: one element list of Models
+        :type rows: List[Model]
+        """
         if not rows or rows[0] is None:
             raise NoMatch()
         if len(rows) > 1:
@@ -119,15 +143,40 @@ class QuerySet:
 
     @property
     def database(self) -> databases.Database:
+        """
+        Shortcut to models database from Meta class.
+
+        :return: database
+        :rtype: databases.Database
+        """
         return self.model_meta.database
 
     @property
     def table(self) -> sqlalchemy.Table:
+        """
+        Shortcut to models table from Meta class.
+
+        :return: database table
+        :rtype: sqlalchemy.Table
+        """
         return self.model_meta.table
 
     def build_select_expression(
         self, limit: int = None, offset: int = None, order_bys: List = None,
     ) -> sqlalchemy.sql.select:
+        """
+        Constructs the actual database query used in the QuerySet.
+        If any of the params is not passed the QuerySet own value is used.
+
+        :param limit: number to limit the query
+        :type limit: int
+        :param offset: number to offset by
+        :type offset: int
+        :param order_bys: list of order-by fields names
+        :type order_bys: List
+        :return: built sqlalchemy select expression
+        :rtype: sqlalchemy.sql.selectable.Select
+        """
         qry = Query(
             model_cls=self.model,
             select_related=self._select_related,
@@ -145,6 +194,33 @@ class QuerySet:
         return exp
 
     def filter(self, _exclude: bool = False, **kwargs: Any) -> "QuerySet":  # noqa: A003
+        """
+        Allows you to filter by any `Model` attribute/field
+        as well as to fetch instances, with a filter across an FK relationship.
+
+        You can use special filter suffix to change the filter operands:
+
+        *  exact - like `album__name__exact='Malibu'` (exact match)
+        *  iexact - like `album__name__iexact='malibu'` (exact match case insensitive)
+        *  contains - like `album__name__contains='Mal'` (sql like)
+        *  icontains - like `album__name__icontains='mal'` (sql like case insensitive)
+        *  in - like `album__name__in=['Malibu', 'Barclay']` (sql in)
+        *  gt - like `position__gt=3` (sql >)
+        *  gte - like `position__gte=3` (sql >=)
+        *  lt - like `position__lt=3` (sql <)
+        *  lte - like `position__lte=3` (sql <=)
+        *  startswith - like `album__name__startswith='Mal'` (exact start match)
+        *  istartswith - like `album__name__istartswith='mal'` (case insensitive)
+        *  endswith - like `album__name__endswith='ibu'` (exact end match)
+        *  iendswith - like `album__name__iendswith='IBU'` (case insensitive)
+
+        :param _exclude: flag if it should be exclude or filter
+        :type _exclude: bool
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: filtered QuerySet
+        :rtype: QuerySet
+        """
         qryclause = QueryClause(
             model_cls=self.model,
             select_related=self._select_related,
@@ -173,9 +249,43 @@ class QuerySet:
         )
 
     def exclude(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
+        """
+        Works exactly the same as filter and all modifiers (suffixes) are the same,
+        but returns a *not* condition.
+
+        So if you use `filter(name='John')` which is `where name = 'John'` in SQL,
+        the `exclude(name='John')` equals to `where name <> 'John'`
+
+        Note that all conditions are joined so if you pass multiple values it
+        becomes a union of conditions.
+
+        `exclude(name='John', age>=35)` will become
+        `where not (name='John' and age>=35)`
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: filtered QuerySet
+        :rtype: QuerySet
+        """
         return self.filter(_exclude=True, **kwargs)
 
     def select_related(self, related: Union[List, str]) -> "QuerySet":
+        """
+        Allows to prefetch related models during the same query.
+
+        **With `select_related` always only one query is run against the database**,
+        meaning that one (sometimes complicated) join is generated and later nested
+        models are processed in python.
+
+        To fetch related model use `ForeignKey` names.
+
+        To chain related `Models` relation use double underscores between names.
+
+        :param related: list of relation field names, can be linked by '__' to nest
+        :type related: Union[List, str]
+        :return: QuerySet
+        :rtype: QuerySet
+        """
         if not isinstance(related, list):
             related = [related]
 
@@ -195,6 +305,23 @@ class QuerySet:
         )
 
     def prefetch_related(self, related: Union[List, str]) -> "QuerySet":
+        """
+        Allows to prefetch related models during query - but opposite to
+        `select_related` each subsequent model is fetched in a separate database query.
+
+        **With `prefetch_related` always one query per Model is run against the
+        database**, meaning that you will have multiple queries executed one
+        after another.
+
+        To fetch related model use `ForeignKey` names.
+
+        To chain related `Models` relation use double underscores between names.
+
+        :param related: list of relation field names, can be linked by '__' to nest
+        :type related: Union[List, str]
+        :return: QuerySet
+        :rtype: QuerySet
+        """
         if not isinstance(related, list):
             related = [related]
 
@@ -213,31 +340,49 @@ class QuerySet:
             limit_raw_sql=self.limit_sql_raw,
         )
 
-    def exclude_fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet":
-        if isinstance(columns, str):
-            columns = [columns]
-
-        current_excluded = self._exclude_columns
-        if not isinstance(columns, dict):
-            current_excluded = update_dict_from_list(current_excluded, columns)
-        else:
-            current_excluded = update(current_excluded, columns)
-
-        return self.__class__(
-            model_cls=self.model,
-            filter_clauses=self.filter_clauses,
-            exclude_clauses=self.exclude_clauses,
-            select_related=self._select_related,
-            limit_count=self.limit_count,
-            offset=self.query_offset,
-            columns=self._columns,
-            exclude_columns=current_excluded,
-            order_bys=self.order_bys,
-            prefetch_related=self._prefetch_related,
-            limit_raw_sql=self.limit_sql_raw,
-        )
-
     def fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet":
+        """
+        With `fields()` you can select subset of model columns to limit the data load.
+
+        Note that `fields()` and `exclude_fields()` works both for main models
+        (on normal queries like `get`, `all` etc.)
+        as well as `select_related` and `prefetch_related`
+        models (with nested notation).
+
+        You can select specified fields by passing a `str, List[str], Set[str] or
+        dict` with nested definition.
+
+        To include related models use notation
+        `{related_name}__{column}[__{optional_next} etc.]`.
+
+        `fields()` can be called several times, building up the columns to select.
+
+        If you include related models into `select_related()` call but you won't specify
+        columns for those models in fields - implies a list of all fields for
+        those nested models.
+
+        Mandatory fields cannot be excluded as it will raise `ValidationError`,
+        to exclude a field it has to be nullable.
+
+        Pk column cannot be excluded - it's always auto added even if
+        not explicitly included.
+
+        You can also pass fields to include as dictionary or set.
+
+        To mark a field as included in a dictionary use it's name as key
+        and ellipsis as value.
+
+        To traverse nested models use nested dictionaries.
+
+        To include fields at last level instead of nested dictionary a set can be used.
+
+        To include whole nested model specify model related field name and ellipsis.
+
+        :param columns: columns to include
+        :type columns: Union[List, str, Set, Dict]
+        :return: QuerySet
+        :rtype: QuerySet
+        """
         if isinstance(columns, str):
             columns = [columns]
 
@@ -261,7 +406,88 @@ class QuerySet:
             limit_raw_sql=self.limit_sql_raw,
         )
 
+    def exclude_fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet":
+        """
+        With `exclude_fields()` you can select subset of model columns that will
+        be excluded to limit the data load.
+
+        It's the opposite of `fields()` method so check documentation above
+        to see what options are available.
+
+        Especially check above how you can pass also nested dictionaries
+        and sets as a mask to exclude fields from whole hierarchy.
+
+        Note that `fields()` and `exclude_fields()` works both for main models
+        (on normal queries like `get`, `all` etc.)
+        as well as `select_related` and `prefetch_related` models
+        (with nested notation).
+
+        Mandatory fields cannot be excluded as it will raise `ValidationError`,
+        to exclude a field it has to be nullable.
+
+        Pk column cannot be excluded - it's always auto added even
+        if explicitly excluded.
+
+        :param columns: columns to exclude
+        :type columns: Union[List, str, Set, Dict]
+        :return: QuerySet
+        :rtype: QuerySet
+        """
+        if isinstance(columns, str):
+            columns = [columns]
+
+        current_excluded = self._exclude_columns
+        if not isinstance(columns, dict):
+            current_excluded = update_dict_from_list(current_excluded, columns)
+        else:
+            current_excluded = update(current_excluded, columns)
+
+        return self.__class__(
+            model_cls=self.model,
+            filter_clauses=self.filter_clauses,
+            exclude_clauses=self.exclude_clauses,
+            select_related=self._select_related,
+            limit_count=self.limit_count,
+            offset=self.query_offset,
+            columns=self._columns,
+            exclude_columns=current_excluded,
+            order_bys=self.order_bys,
+            prefetch_related=self._prefetch_related,
+            limit_raw_sql=self.limit_sql_raw,
+        )
+
     def order_by(self, columns: Union[List, str]) -> "QuerySet":
+        """
+        With `order_by()` you can order the results from database based on your
+        choice of fields.
+
+        You can provide a string with field name or list of strings with fields names.
+
+        Ordering in sql will be applied in order of names you provide in order_by.
+
+        By default if you do not provide ordering `ormar` explicitly orders by
+        all primary keys
+
+        If you are sorting by nested models that causes that the result rows are
+        unsorted by the main model `ormar` will combine those children rows into
+        one main model.
+
+        The main model will never duplicate in the result
+
+        To order by main model field just provide a field name
+
+        To sort on nested models separate field names with dunder '__'.
+
+        You can sort this way across all relation types -> `ForeignKey`,
+        reverse virtual FK and `ManyToMany` fields.
+
+        To sort in descending order provide a hyphen in front of the field name
+
+        :param columns: columns by which models should be sorted
+        :type columns: Union[List, str]
+        :return: QuerySet
+        :rtype: QuerySet
+        """
         if not isinstance(columns, list):
             columns = [columns]
 
@@ -281,16 +507,43 @@ class QuerySet:
         )
 
     async def exists(self) -> bool:
+        """
+        Returns a bool value to confirm if there are rows matching the given criteria
+        (applied with `filter` and `exclude` if set).
+
+        :return: result of the check
+        :rtype: bool
+        """
         expr = self.build_select_expression()
         expr = sqlalchemy.exists(expr).select()
         return await self.database.fetch_val(expr)
 
     async def count(self) -> int:
+        """
+        Returns number of rows matching the given criteria
+        (applied with `filter` and `exclude` if set before).
+
+        :return: number of rows
+        :rtype: int
+        """
         expr = self.build_select_expression().alias("subquery_for_count")
         expr = sqlalchemy.func.count().select().select_from(expr)
         return await self.database.fetch_val(expr)
 
     async def update(self, each: bool = False, **kwargs: Any) -> int:
+        """
+        Updates the model table after applying the filters from kwargs.
+
+        You have to either pass a filter to narrow down a query or explicitly pass
+        each=True flag to affect whole table.
+
+        :param each: flag if whole table should be affected if no filter is passed
+        :type each: bool
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: number of updated rows
+        :rtype: int
+        """
         self_fields = self.model.extract_db_own_fields().union(
             self.model.extract_related_names()
         )
@@ -307,6 +560,19 @@ class QuerySet:
         return await self.database.execute(expr)
 
     async def delete(self, each: bool = False, **kwargs: Any) -> int:
+        """
+        Deletes from the model table after applying the filters from kwargs.
+
+        You have to either pass a filter to narrow down a query or explicitly pass
+        each=True flag to affect whole table.
+
+        :param each: flag if whole table should be affected if no filter is passed
+        :type each: bool
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: number of deleted rows
+        :rtype:int
+        """
         if kwargs:
             return await self.filter(**kwargs).delete()
         if not each and not self.filter_clauses:
@@ -320,6 +586,19 @@ class QuerySet:
         return await self.database.execute(expr)
 
     def limit(self, limit_count: int, limit_raw_sql: bool = None) -> "QuerySet":
+        """
+        You can limit the results to desired number of parent models.
+
+        To limit the actual number of database query rows instead of number of main
+        models use the `limit_raw_sql` parameter flag, and set it to `True`.
+
+        :param limit_raw_sql: flag if raw sql should be limited
+        :type limit_raw_sql: bool
+        :param limit_count: number of models to limit
+        :type limit_count: int
+        :return: QuerySet
+        :rtype: QuerySet
+        """
         limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
         return self.__class__(
             model_cls=self.model,
@@ -336,6 +615,19 @@ class QuerySet:
         )
 
     def offset(self, offset: int, limit_raw_sql: bool = None) -> "QuerySet":
+        """
+        You can also offset the results by desired number of main models.
+
+        To offset the actual number of database query rows instead of number of main
+        models use the `limit_raw_sql` parameter flag, and set it to `True`.
+
+        :param limit_raw_sql: flag if raw sql should be offset
+        :type limit_raw_sql: bool
+        :param offset: numbers of models to offset
+        :type offset: int
+        :return: QuerySet
+        :rtype: QuerySet
+        """
         limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
         return self.__class__(
             model_cls=self.model,
@@ -352,6 +644,16 @@ class QuerySet:
         )
 
     async def first(self, **kwargs: Any) -> "Model":
+        """
+        Gets the first row from the db ordered by primary key column ascending.
+
+        :raises: NoMatch if no rows are returned
+        :raises: MultipleMatches if more than 1 row is returned.
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: returned model
+        :rtype: Model
+        """
         if kwargs:
             return await self.filter(**kwargs).first()
 
@@ -366,6 +668,20 @@ class QuerySet:
         return processed_rows[0]  # type: ignore
 
     async def get(self, **kwargs: Any) -> "Model":
+        """
+        Get's the first row from the db meeting the criteria set by kwargs.
+
+        If no criteria set it will return the last row in db sorted by pk.
+
+        Passing a criteria is actually calling filter(**kwargs) method described below.
+
+        :raises: NoMatch if no rows are returned
+        :raises: MultipleMatches if more than 1 row is returned.
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: returned model
+        :rtype: Model
+        """
         if kwargs:
             return await self.filter(**kwargs).get()
 
@@ -384,12 +700,32 @@ class QuerySet:
         return processed_rows[0]  # type: ignore
 
     async def get_or_create(self, **kwargs: Any) -> "Model":
+        """
+        Combination of create and get methods.
+
+        Tries to get a row meeting the criteria fro kwargs
+        and if `NoMatch` exception is raised
+        it creates a new one with given kwargs.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: returned or created Model
+        :rtype: Model
+        """
         try:
             return await self.get(**kwargs)
         except NoMatch:
             return await self.create(**kwargs)
 
     async def update_or_create(self, **kwargs: Any) -> "Model":
+        """
+        Updates the model, or in case there is no match in database creates a new one.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: updated or created model
+        :rtype: Model
+        """
         pk_name = self.model_meta.pkname
         if "pk" in kwargs:
             kwargs[pk_name] = kwargs.pop("pk")
@@ -399,6 +735,18 @@ class QuerySet:
         return await model.update(**kwargs)
 
     async def all(self, **kwargs: Any) -> Sequence[Optional["Model"]]:  # noqa: A003
+        """
+        Returns all rows from a database for given model for set filter options.
+
+        Passing kwargs is a shortcut and equals to calling `filter(**kwrags).all()`.
+
+        If there are no rows meeting the criteria an empty list is returned.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: list of returned models
+        :rtype: List[Model]
+        """
         if kwargs:
             return await self.filter(**kwargs).all()
 
@@ -411,9 +759,19 @@ class QuerySet:
         return result_rows
 
     async def create(self, **kwargs: Any) -> "Model":
+        """
+        Creates the model instance, saves it in a database and returns the updates model
+        (with pk populated if not passed and autoincrement is set).
 
+        The allowed kwargs are `Model` fields names and proper value types.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: created model
+        :rtype: Model
+        """
         new_kwargs = dict(**kwargs)
-        new_kwargs = self._prepare_model_to_save(new_kwargs)
+        new_kwargs = self.model._prepare_model_to_save(new_kwargs)
 
         expr = self.table.insert()
         expr = expr.values(**new_kwargs)
@@ -444,10 +802,22 @@ class QuerySet:
         return instance
 
     async def bulk_create(self, objects: List["Model"]) -> None:
+        """
+        Performs a bulk update in one database session to speed up the process.
+
+        Allows you to create multiple objects at once.
+
+        A valid list of `Model` objects needs to be passed.
+
+        Bulk operations do not send signals.
+
+        :param objects: list of ormar models already initialized and ready to save.
+        :type objects: List[Model]
+        """
         ready_objects = []
         for objt in objects:
             new_kwargs = objt.dict()
-            new_kwargs = self._prepare_model_to_save(new_kwargs)
+            new_kwargs = objt._prepare_model_to_save(new_kwargs)
             ready_objects.append(new_kwargs)
 
         expr = self.table.insert()
@@ -459,6 +829,23 @@ class QuerySet:
     async def bulk_update(  # noqa:  CCR001
         self, objects: List["Model"], columns: List[str] = None
     ) -> None:
+        """
+        Performs bulk update in one database session to speed up the process.
+
+        Allows to update multiple instance at once.
+
+        All `Models` passed need to have primary key column populated.
+
+        You can also select which fields to update by passing `columns` list
+        as a list of string names.
+
+        Bulk operations do not send signals.
+
+        :param objects: list of ormar models
+        :type objects: List[Model]
+        :param columns: list of columns to update
+        :type columns: List[str]
+        """
         ready_objects = []
         pk_name = self.model_meta.pkname
         if not columns:
