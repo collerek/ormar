@@ -61,7 +61,7 @@ def validate_related_names_in_relations(
     (populated by default as model.name.lower()+'s').
     Also related_names have to be unique for given related model.
 
-    :raises: ModelDefinitionError if validation of related_names fail
+    :raises ModelDefinitionError: if validation of related_names fail
     :param model_fields: dictionary of declared ormar model fields
     :type model_fields: Dict[str, ormar.Field]
     :param new_model:

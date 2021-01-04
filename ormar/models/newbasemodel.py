@@ -103,7 +103,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         should be explicitly set to None, as otherwise pydantic will try to populate
         them with their default values if default is set.
 
-        :raises: ModelError if abstract model is initialized or unknown field is passed
+        :raises ModelError: if abstract model is initialized or unknown field is passed
         :param args: ignored args
         :type args: Any
         :param kwargs: keyword arguments - all fields values and some special params

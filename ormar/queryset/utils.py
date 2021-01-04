@@ -88,7 +88,7 @@ def convert_set_to_required_dict(set_to_convert: set) -> Dict:
     :param set_to_convert: set to convert to dict
     :type set_to_convert: set
     :return: set converted to dict of ellipsis
-    :rtype: Dict[str, ellipsis]
+    :rtype: Dict
     """
     new_dict = dict()
     for key in set_to_convert:

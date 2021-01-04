@@ -13,7 +13,7 @@ def property_field(func: Callable) -> Union[property, Callable]:
     mypy validation will complain about this.
     Note that "fields" exposed like this do not go through validation.
 
-    :raises: ModelDefinitionError if method has any other argument than self.
+    :raises ModelDefinitionError: if method has any other argument than self.
     :param func: decorated function to be exposed
     :type func: Callable
     :return: decorated function passed in func param, with set __property_field__ = True

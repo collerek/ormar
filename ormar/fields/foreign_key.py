@@ -77,6 +77,11 @@ class UniqueColumns(UniqueConstraint):
 
 @dataclass
 class ForeignKeyConstraint:
+    """
+    Internal container to store ForeignKey definitions used later
+    to produce sqlalchemy.ForeignKeys
+    """
+
     name: str
     ondelete: str
     onupdate: str
@@ -114,10 +119,10 @@ def ForeignKey(  # noqa CFQ002
     It is for reversed FK and auto generated FK on through model in Many2Many relations.
     :type virtual: bool
     :param onupdate: parameter passed to sqlalchemy.ForeignKey.
-    How to treat child rows on update of parent (the one wher FK is defined) model.
+    How to treat child rows on update of parent (the one where FK is defined) model.
     :type onupdate: str
     :param ondelete: parameter passed to sqlalchemy.ForeignKey.
-    How to treat child rows on delete of parent (the one wher FK is defined) model.
+    How to treat child rows on delete of parent (the one where FK is defined) model.
     :type ondelete: str
     :param kwargs: all other args to be populated by BaseField
     :type kwargs: Any

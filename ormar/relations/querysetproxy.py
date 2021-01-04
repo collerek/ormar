@@ -211,8 +211,8 @@ class QuerysetProxy(ormar.QuerySetProtocol):
 
         List of related models is cleared before the call.
 
-        :raises: NoMatch if no rows are returned
-        :raises: MultipleMatches if more than 1 row is returned.
+        :raises NoMatch: if no rows are returned
+        :raises MultipleMatches: if more than 1 row is returned.
         :param kwargs: fields names and proper value types
         :type kwargs: Any
         :return: returned model

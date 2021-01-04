@@ -245,7 +245,7 @@ class QueryClause:
         Escapes the special characters ["%", "_"] if needed.
         Adds `%` for `like` queries.
 
-        :raises: QueryDefinitionError if contains or icontains is used with
+        :raises QueryDefinitionError: if contains or icontains is used with
         ormar model instance
         :param op: operator used in query
         :type op: str

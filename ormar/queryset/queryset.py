@@ -647,8 +647,8 @@ class QuerySet:
         """
         Gets the first row from the db ordered by primary key column ascending.
 
-        :raises: NoMatch if no rows are returned
-        :raises: MultipleMatches if more than 1 row is returned.
+        :raises NoMatch: if no rows are returned
+        :raises MultipleMatches: if more than 1 row is returned.
         :param kwargs: fields names and proper value types
         :type kwargs: Any
         :return: returned model
@@ -675,8 +675,8 @@ class QuerySet:
 
         Passing a criteria is actually calling filter(**kwargs) method described below.
 
-        :raises: NoMatch if no rows are returned
-        :raises: MultipleMatches if more than 1 row is returned.
+        :raises NoMatch: if no rows are returned
+        :raises MultipleMatches: if more than 1 row is returned.
         :param kwargs: fields names and proper value types
         :type kwargs: Any
         :return: returned model
@@ -771,7 +771,7 @@ class QuerySet:
         :rtype: Model
         """
         new_kwargs = dict(**kwargs)
-        new_kwargs = self.model._prepare_model_to_save(new_kwargs)
+        new_kwargs = self.model.prepare_model_to_save(new_kwargs)
 
         expr = self.table.insert()
         expr = expr.values(**new_kwargs)
@@ -817,7 +817,7 @@ class QuerySet:
         ready_objects = []
         for objt in objects:
             new_kwargs = objt.dict()
-            new_kwargs = objt._prepare_model_to_save(new_kwargs)
+            new_kwargs = objt.prepare_model_to_save(new_kwargs)
             ready_objects.append(new_kwargs)
 
         expr = self.table.insert()

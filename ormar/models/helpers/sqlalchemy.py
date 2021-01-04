@@ -84,7 +84,7 @@ def check_pk_column_validity(
     was not already set (only one allowed per model) and if field is not marked
     as pydantic_only as it needs to be a database field.
 
-    :raises: ModelDefintionError if pkname already set or field is pydantic_only
+    :raises ModelDefintionError: if pkname already set or field is pydantic_only
     :param field_name: name of field
     :type field_name: str
     :param field: ormar.Field
@@ -121,7 +121,7 @@ def sqlalchemy_columns_from_model_fields(
     Append fields to columns if it's not pydantic_only,
     virtual ForeignKey or ManyToMany field.
 
-    :raises: ModelDefinitionError if validation of related_names fail,
+    :raises ModelDefinitionError: if validation of related_names fail,
     or pkname validation fails.
     :param model_fields: dictionary of declared ormar model fields
     :type model_fields: Dict[str, ormar.Field]
@@ -162,7 +162,7 @@ def populate_meta_tablename_columns_and_pk(
     If not calls the sqlalchemy_columns_from_model_fields to populate
     columns from ormar.fields definitions.
 
-    :raises: if pkname is not present raises ModelDefinitionError.
+    :raises ModelDefinitionError: if pkname is not present raises ModelDefinitionError.
     Each model has to have pk.
 
     :param name: name of the current Model

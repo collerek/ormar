@@ -48,7 +48,7 @@ CONFIG_KEY = "Config"
 class ModelMeta:
     """
     Class used for type hinting.
-    Users can subclass this one for conveniance but it's not required.
+    Users can subclass this one for convenience but it's not required.
     The only requirement is that ormar.Model has to have inner class with name Meta.
     """
 
@@ -86,7 +86,7 @@ def choices_validator(cls: Type["Model"], values: Dict[str, Any]) -> Dict[str, A
     Validator that is attached to pydantic model pre root validators.
     Validator checks if field value is in field.choices list.
 
-    :raises: ValueError if field value is outside of allowed choices.
+    :raises ValueError: if field value is outside of allowed choices.
     :param cls: constructed class
     :type cls: Model class
     :param values: dictionary of field values (pydantic side)
@@ -321,7 +321,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
     Since relation fields requires different related_name for different children
 
 
-    :raises: ModelDefinitionError if non abstract model is subclassed
+    :raises ModelDefinitionError: if non abstract model is subclassed
     :param base_class: one of the parent classes
     :type base_class: Model or model parent class
     :param curr_class: current constructed class
@@ -500,6 +500,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         Construct parent pydantic Metaclass/ Model.
 
         If class has Meta class declared (so actual ormar Models) it also:
+
         * populate sqlalchemy columns, pkname and tables from model_fields
         * register reverse relationships on related models
         * registers all relations in alias manager that populates table_prefixes

@@ -16,10 +16,11 @@ if TYPE_CHECKING:  # pragma no cover
 
 class RelationType(Enum):
     """
-    Different types of relations supported by ormar.
-    ForeignKey = PRIMARY
-    reverse ForeignKey = REVERSE
-    ManyToMany = MULTIPLE
+    Different types of relations supported by ormar:
+
+    *  ForeignKey = PRIMARY
+    *  reverse ForeignKey = REVERSE
+    *  ManyToMany = MULTIPLE
     """
 
     PRIMARY = 1

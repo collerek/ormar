@@ -24,11 +24,58 @@ nav:
   - PyCharm plugin: plugin.md
   - Contributing: contributing.md
   - Release Notes: releases.md
+  - Api (BETA):
+      - Index: api/index.md
+      - Models:
+        - Helpers:
+            - api/models/helpers/models.md
+            - api/models/helpers/pydantic.md
+            - api/models/helpers/relations.md
+            - api/models/helpers/sqlalchemy.md
+        - Mixins:
+            - Alias Mixin: api/models/mixins/alias-mixin.md
+            - Excludable Mixin: api/models/mixins/excludable-mixin.md
+            - Merge Model Mixin: api/models/mixins/merge-model-mixin.md
+            - Prefetch Query Mixin: api/models/mixins/prefetch-query-mixin.md
+            - Relation Mixin: api/models/mixins/relation-mixin.md
+            - Save Prepare Mixin: api/models/mixins/save-prepare-mixin.md
+        - api/models/model.md
+        - New BaseModel: api/models/new-basemodel.md
+        - Model Table Proxy: api/models/model-table-proxy.md
+        - Model Metaclass: api/models/model-metaclass.md
+      - Fields:
+          - Base Field: api/fields/base-field.md
+          - Model Fields: api/fields/model-fields.md
+          - Foreign Key: api/fields/foreign-key.md
+          - Many To Many: api/fields/many-to-many.md
+          - api/fields/decorators.md
+      - Query Set:
+          - Query Set: api/query-set/query-set.md
+          - api/query-set/query.md
+          - Prefetch Query: api/query-set/prefetch-query.md
+          - api/query-set/join.md
+          - api/query-set/clause.md
+          - Filter Query: api/query-set/filter-query.md
+          - Order Query: api/query-set/order-query.md
+          - Limit Query: api/query-set/limit-query.md
+          - Offset Query: api/query-set/offset-query.md
+          - api/query-set/utils.md
+      - Relations:
+          - Relation Manager: api/relations/relation-manager.md
+          - api/relations/relation.md
+          - Relation Proxy: api/relations/relation-proxy.md
+          - Queryset Proxy: api/relations/queryset-proxy.md
+          - Alias Manager: api/relations/alias-manager.md
+          - api/relations/utils.md
+      - Signals:
+          - api/signals/signal.md
+          - api/signals/decorators.md
+      - Exceptions: api/exceptions.md
 repo_name: collerek/ormar
 repo_url: https://github.com/collerek/ormar
-google_analytics:
-  - UA-72514911-3
-  - auto
+#google_analytics:
+#  - UA-72514911-3
+#  - auto
 theme:
   name: material
   highlightjs: true

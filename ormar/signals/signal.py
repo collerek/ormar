@@ -14,7 +14,7 @@ def callable_accepts_kwargs(func: Callable) -> bool:
 
     :param func: function which signature needs to be checked
     :type func: function
-    :return:
+    :return: result of the check
     :rtype: bool
     """
     return any(
@@ -51,7 +51,7 @@ class Signal:
         """
         Connects given receiver function to the signal.
 
-        :raises: SignalDefinitionError if receiver is not callable
+        :raises SignalDefinitionError: if receiver is not callable
         or not accept **kwargs
         :param receiver: receiver function
         :type receiver: Callable

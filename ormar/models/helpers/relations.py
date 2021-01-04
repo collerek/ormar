@@ -157,7 +157,7 @@ def verify_related_name_dont_duplicate(
     auto generated) is already used on related model, but is connected with other model
     than the one that we connect right now.
 
-    :raises: ModelDefinitionError if name is already used but lead to different related
+    :raises ModelDefinitionError: if name is already used but lead to different related
     model
     :param child: related Model class
     :type child: ormar.models.metaclass.ModelMetaclass
@@ -191,7 +191,7 @@ def reverse_field_not_already_registered(
     """
     Checks if child is already registered in parents pydantic fields.
 
-    :raises: ModelDefinitionError if related name is already used but lead to different
+    :raises ModelDefinitionError: if related name is already used but lead to different
     related model
     :param child: related Model class
     :type child: ormar.models.metaclass.ModelMetaclass

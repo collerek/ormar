@@ -12,7 +12,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
     """
 
     @classmethod
-    def _prepare_model_to_save(cls, new_kwargs: dict) -> dict:
+    def prepare_model_to_save(cls, new_kwargs: dict) -> dict:
         """
         Combines all preparation methods before saving.
         Removes primary key for if it's nullable or autoincrement pk field,

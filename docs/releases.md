@@ -27,6 +27,7 @@ as the same model can be registered multiple times and `ormar` needs to know fro
     *  Divide relations section into subsections
     *  Divide fields section into subsections
 * Add model inheritance section
+* Add API (BETA) documentation
 
 # 0.7.5
 

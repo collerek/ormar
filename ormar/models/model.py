@@ -456,7 +456,7 @@ class Model(NewBaseModel):
 
         Sets model save status to True.
 
-        :raises: If the pk column is not set will throw ModelPersistenceError
+        :raises ModelPersistenceError: If the pk column is not set
 
         :param kwargs: list of fields to update as field=value pairs
         :type kwargs: Any
@@ -512,7 +512,7 @@ class Model(NewBaseModel):
         Be careful as the related models can be overwritten by pk_only models in load.
         Does NOT refresh the related models fields if they were loaded before.
 
-        :raises: If given pk is not found in database the NoMatch exception is raised.
+        :raises NoMatch: If given pk is not found in database.
 
         :return: reloaded Model
         :rtype: Model

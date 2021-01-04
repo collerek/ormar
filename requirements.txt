@@ -36,5 +36,11 @@ flake8-cognitive-complexity
 flake8-functions
 flake8-expression-complexity
 
+# Documantation
+mkdocs
+mkdocs-material
+mkdocs-material-extensions
+pydoc-markdown
+
 # Performance testing
 yappi

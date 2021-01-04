@@ -1,0 +1,145 @@
+<a name="models.helpers.sqlalchemy"></a>
+# models.helpers.sqlalchemy
+
+<a name="models.helpers.sqlalchemy.adjust_through_many_to_many_model"></a>
+#### adjust\_through\_many\_to\_many\_model
+
+```python
+adjust_through_many_to_many_model(model: Type["Model"], child: Type["Model"], model_field: Type[ManyToManyField]) -> None
+```
+
+Registers m2m relation on through model.
+Sets ormar.ForeignKey from through model to both child and parent models.
+Sets sqlalchemy.ForeignKey to both child and parent models.
+Sets pydantic fields with child and parent model types.
+
+**Arguments**:
+
+- `model (Model class)`: model on which relation is declared
+- `child (Model class)`: model to which m2m relation leads
+- `model_field (ManyToManyField)`: relation field defined in parent model
+
+<a name="models.helpers.sqlalchemy.create_and_append_m2m_fk"></a>
+#### create\_and\_append\_m2m\_fk
+
+```python
+create_and_append_m2m_fk(model: Type["Model"], model_field: Type[ManyToManyField]) -> None
+```
+
+Registers sqlalchemy Column with sqlalchemy.ForeignKey leadning to the model.
+
+Newly created field is added to m2m relation through model Meta columns and table.
+
+**Arguments**:
+
+- `model (Model class)`: Model class to which FK should be created
+- `model_field (ManyToManyField field)`: field with ManyToMany relation
+
+<a name="models.helpers.sqlalchemy.check_pk_column_validity"></a>
+#### check\_pk\_column\_validity
+
+```python
+check_pk_column_validity(field_name: str, field: BaseField, pkname: Optional[str]) -> Optional[str]
+```
+
+Receives the field marked as primary key and verifies if the pkname
+was not already set (only one allowed per model) and if field is not marked
+as pydantic_only as it needs to be a database field.
+
+**Raises**:
+
+- `ModelDefintionError`: if pkname already set or field is pydantic_only
+
+**Arguments**:
+
+- `field_name (str)`: name of field
+- `field (BaseField)`: ormar.Field
+- `pkname (Optional[str])`: already set pkname
+
+**Returns**:
+
+`(str)`: name of the field that should be set as pkname
+
+<a name="models.helpers.sqlalchemy.sqlalchemy_columns_from_model_fields"></a>
+#### sqlalchemy\_columns\_from\_model\_fields
+
+```python
+sqlalchemy_columns_from_model_fields(model_fields: Dict, new_model: Type["Model"]) -> Tuple[Optional[str], List[sqlalchemy.Column]]
+```
+
+Iterates over declared on Model model fields and extracts fields that
+should be treated as database fields.
+
+If the model is empty it sets mandatory id field as primary key
+(used in through models in m2m relations).
+
+Triggers a validation of relation_names in relation fields. If multiple fields
+are leading to the same related model only one can have empty related_name param.
+Also related_names have to be unique.
+
+Trigger validation of primary_key - only one and required pk can be set,
+cannot be pydantic_only.
+
+Append fields to columns if it's not pydantic_only,
+virtual ForeignKey or ManyToMany field.
+
+**Raises**:
+
+- `ModelDefinitionError`: if validation of related_names fail,
+or pkname validation fails.
+
+**Arguments**:
+
+- `model_fields (Dict[str, ormar.Field])`: dictionary of declared ormar model fields
+- `new_model (Model class)`: 
+
+**Returns**:
+
+`(Tuple[Optional[str], List[sqlalchemy.Column]])`: pkname, list of sqlalchemy columns
+
+<a name="models.helpers.sqlalchemy.populate_meta_tablename_columns_and_pk"></a>
+#### populate\_meta\_tablename\_columns\_and\_pk
+
+```python
+populate_meta_tablename_columns_and_pk(name: str, new_model: Type["Model"]) -> Type["Model"]
+```
+
+Sets Model tablename if it's not already set in Meta.
+Default tablename if not present is class name lower + s (i.e. Bed becomes -> beds)
+
+Checks if Model's Meta have pkname and columns set.
+If not calls the sqlalchemy_columns_from_model_fields to populate
+columns from ormar.fields definitions.
+
+**Raises**:
+
+- `ModelDefinitionError`: if pkname is not present raises ModelDefinitionError.
+Each model has to have pk.
+
+**Arguments**:
+
+- `name (str)`: name of the current Model
+- `new_model (ormar.models.metaclass.ModelMetaclass)`: currently constructed Model
+
+**Returns**:
+
+`(ormar.models.metaclass.ModelMetaclass)`: Model with populated pkname and columns in Meta
+
+<a name="models.helpers.sqlalchemy.populate_meta_sqlalchemy_table_if_required"></a>
+#### populate\_meta\_sqlalchemy\_table\_if\_required
+
+```python
+populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None
+```
+
+Constructs sqlalchemy table out of columns and parameters set on Meta class.
+It populates name, metadata, columns and constraints.
+
+**Arguments**:
+
+- `meta (Model class Meta)`: Meta class of the Model without sqlalchemy table constructed
+
+**Returns**:
+
+`(Model class)`: class with populated Meta.table
+
