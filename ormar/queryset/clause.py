@@ -29,6 +29,10 @@ ESCAPE_CHARACTERS = ["%", "_"]
 
 
 class QueryClause:
+    """
+    Constructs where clauses from strings passed as arguments
+    """
+
     def __init__(
         self, model_cls: Type["Model"], filter_clauses: List, select_related: List,
     ) -> None:
@@ -42,7 +46,16 @@ class QueryClause:
     def filter(  # noqa: A003
         self, **kwargs: Any
     ) -> Tuple[List[sqlalchemy.sql.expression.TextClause], List[str]]:
+        """
+        Main external access point that processes the clauses into sqlalchemy text
+        clauses and updates select_related list with implicit related tables
+        mentioned in select_related strings but not included in select_related.
 
+        :param kwargs: key, value pair with column names and values
+        :type kwargs: Any
+        :return: Tuple with list of where clauses and updated select_related list
+        :rtype: Tuple[List[sqlalchemy.sql.elements.TextClause], List[str]]
+        """
         if kwargs.get("pk"):
             pk_name = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
             kwargs[pk_name] = kwargs.pop("pk")
@@ -54,6 +67,16 @@ class QueryClause:
     def _populate_filter_clauses(
         self, **kwargs: Any
     ) -> Tuple[List[sqlalchemy.sql.expression.TextClause], List[str]]:
+        """
+        Iterates all clauses and extracts used operator and field from related
+        models if needed. Based on the chain of related names the target table
+        is determined and the final clause is escaped if needed and compiled.
+
+        :param kwargs: key, value pair with column names and values
+        :type kwargs: Any
+        :return: Tuple with list of where clauses and updated select_related list
+        :rtype: Tuple[List[sqlalchemy.sql.elements.TextClause], List[str]]
+        """
         filter_clauses = self.filter_clauses
         select_related = list(self._select_related)
 
@@ -100,6 +123,24 @@ class QueryClause:
         table: sqlalchemy.Table,
         table_prefix: str,
     ) -> sqlalchemy.sql.expression.TextClause:
+        """
+        Escapes characters if it's required.
+        Substitutes values of the models if value is a ormar Model with its pk value.
+        Compiles the clause.
+
+        :param value: value of the filter
+        :type value: Any
+        :param op: filter operator
+        :type op: str
+        :param column: column on which filter should be applied
+        :type column: sqlalchemy.sql.schema.Column
+        :param table: table on which filter should be applied
+        :type table: sqlalchemy.sql.schema.Table
+        :param table_prefix: prefix from AliasManager
+        :type table_prefix: str
+        :return: complied and escaped clause
+        :rtype: sqlalchemy.sql.elements.TextClause
+        """
         value, has_escaped_character = self._escape_characters_in_clause(op, value)
 
         if isinstance(value, ormar.Model):
@@ -119,7 +160,21 @@ class QueryClause:
     def _determine_filter_target_table(
         self, related_parts: List[str], select_related: List[str]
     ) -> Tuple[List[str], str, Type["Model"]]:
+        """
+        Adds related strings to select_related list otherwise the clause would fail as
+        the required columns would not be present. That means that select_related
+        list is filled with missing values present in filters.
 
+        Walks the relation to retrieve the actual model on which the clause should be
+        constructed, extracts alias based on last relation leading to target model.
+
+        :param related_parts: list of split parts of related string
+        :type related_parts: List[str]
+        :param select_related: list of related models
+        :type select_related: List[str]
+        :return: list of related models, table_prefix, final model class
+        :rtype: Tuple[List[str], str, Type[Model]]
+        """
         table_prefix = ""
         model_cls = self.model_cls
         select_related = [relation for relation in select_related]
@@ -152,6 +207,23 @@ class QueryClause:
         table_prefix: str,
         modifiers: Dict,
     ) -> sqlalchemy.sql.expression.TextClause:
+        """
+        Compiles the clause to str using appropriate database dialect, replace columns
+        names with aliased names and converts it back to TextClause.
+
+        :param clause: original not compiled clause
+        :type clause: sqlalchemy.sql.elements.BinaryExpression
+        :param column: column on which filter should be applied
+        :type column: sqlalchemy.sql.schema.Column
+        :param table: table on which filter should be applied
+        :type table: sqlalchemy.sql.schema.Table
+        :param table_prefix: prefix from AliasManager
+        :type table_prefix: str
+        :param modifiers: sqlalchemy modifiers - used only to escape chars here
+        :type modifiers: Dict[str, NoneType]
+        :return: compiled and escaped clause
+        :rtype: sqlalchemy.sql.elements.TextClause
+        """
         for modifier, modifier_value in modifiers.items():
             clause.modifiers[modifier] = modifier_value
 
@@ -169,6 +241,19 @@ class QueryClause:
 
     @staticmethod
     def _escape_characters_in_clause(op: str, value: Any) -> Tuple[Any, bool]:
+        """
+        Escapes the special characters ["%", "_"] if needed.
+        Adds `%` for `like` queries.
+
+        :raises: QueryDefinitionError if contains or icontains is used with
+        ormar model instance
+        :param op: operator used in query
+        :type op: str
+        :param value: value of the filter
+        :type value: Any
+        :return: escaped value and flag if escaping is needed
+        :rtype: Tuple[Any, bool]
+        """
         has_escaped_character = False
 
         if op not in [
@@ -202,6 +287,14 @@ class QueryClause:
     def _extract_operator_field_and_related(
         parts: List[str],
     ) -> Tuple[str, str, Optional[List]]:
+        """
+        Splits filter query key and extracts required parts.
+
+        :param parts: split filter query key
+        :type parts: List[str]
+        :return: operator, field_name, list of related parts
+        :rtype: Tuple[str, str, Optional[List]]
+        """
         if parts[-1] in FILTER_OPERATORS:
             op = parts[-1]
             field_name = parts[-2]

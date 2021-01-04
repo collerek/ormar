@@ -22,6 +22,10 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 class JoinParameters(NamedTuple):
+    """
+    Named tuple that holds set of parameters passed during join construction.
+    """
+
     prev_model: Type["Model"]
     previous_alias: str
     from_table: str
@@ -48,13 +52,36 @@ class SqlJoin:
         self.sorted_orders = sorted_orders
 
     @staticmethod
-    def relation_manager(model_cls: Type["Model"]) -> AliasManager:
+    def alias_manager(model_cls: Type["Model"]) -> AliasManager:
+        """
+        Shortcut for ormars model AliasManager stored on Meta.
+
+        :param model_cls: ormar Model class
+        :type model_cls: Type[Model]
+        :return: alias manager from model's Meta
+        :rtype: AliasManager
+        """
         return model_cls.Meta.alias_manager
 
     @staticmethod
     def on_clause(
         previous_alias: str, alias: str, from_clause: str, to_clause: str,
     ) -> text:
+        """
+        Receives aliases and names of both ends of the join and combines them
+        into one text clause used in joins.
+
+        :param previous_alias: alias of previous table
+        :type previous_alias: str
+        :param alias: alias of current table
+        :type alias: str
+        :param from_clause: from table name
+        :type from_clause: str
+        :param to_clause: to table name
+        :type to_clause: str
+        :return: clause combining all strings
+        :rtype: sqlalchemy.text
+        """
         left_part = f"{alias}_{to_clause}"
         right_part = f"{previous_alias + '_' if previous_alias else ''}{from_clause}"
         return text(f"{left_part}={right_part}")
@@ -66,6 +93,20 @@ class SqlJoin:
         exclude_fields: Optional[Union[Set, Dict]],
         nested_name: str,
     ) -> Tuple[Optional[Union[Dict, Set]], Optional[Union[Dict, Set]]]:
+        """
+        Extract nested fields and exclude_fields if applicable.
+
+        :param model_cls: ormar model class
+        :type model_cls: Type["Model"]
+        :param fields: fields to include
+        :type fields: Optional[Union[Set, Dict]]
+        :param exclude_fields: fields to exclude
+        :type exclude_fields: Optional[Union[Set, Dict]]
+        :param nested_name: name of the nested field
+        :type nested_name: str
+        :return: updated exclude and include fields from nested objects
+        :rtype: Tuple[Optional[Union[Dict, Set]], Optional[Union[Dict, Set]]]
+        """
         fields = model_cls.get_included(fields, nested_name)
         exclude_fields = model_cls.get_excluded(exclude_fields, nested_name)
         return fields, exclude_fields
@@ -73,7 +114,19 @@ class SqlJoin:
     def build_join(  # noqa:  CCR001
         self, item: str, join_parameters: JoinParameters
     ) -> Tuple[List, sqlalchemy.sql.select, List, OrderedDict]:
+        """
+        Main external access point for building a join.
+        Splits the join definition, updates fields and exclude_fields if needed,
+        handles switching to through models for m2m relations, returns updated lists of
+        used_aliases and sort_orders.
 
+        :param item: string with join definition
+        :type item: str
+        :param join_parameters: parameters from previous/ current join
+        :type join_parameters: JoinParameters
+        :return: list of used aliases, select from, list of aliased columns, sort orders
+        :rtype: Tuple[List[str], Join, List[TextClause], collections.OrderedDict]
+        """
         fields = self.fields
         exclude_fields = self.exclude_fields
 
@@ -129,6 +182,23 @@ class SqlJoin:
         exclude_fields: Optional[Union[Set, Dict]],
         is_multi: bool = False,
     ) -> JoinParameters:
+        """
+        Updates used_aliases to not join multiple times to the same table.
+        Updates join parameters with new values.
+
+        :param part: part of the join str definition
+        :type part: str
+        :param join_params: parameters from previous/ current join
+        :type join_params: JoinParameters
+        :param fields: fields to include
+        :type fields: Optional[Union[Set, Dict]]
+        :param exclude_fields: fields to exclude
+        :type exclude_fields: Optional[Union[Set, Dict]]
+        :param is_multi: flag if the relation is m2m
+        :type is_multi: bool
+        :return: updated join parameters
+        :rtype: ormar.queryset.join.JoinParameters
+        """
         if is_multi:
             model_cls = join_params.model_cls.Meta.model_fields[part].through
         else:
@@ -164,6 +234,34 @@ class SqlJoin:
         fields: Optional[Union[Set, Dict]],
         exclude_fields: Optional[Union[Set, Dict]],
     ) -> None:
+        """
+        Resolves to and from column names and table names.
+
+        Produces on_clause.
+
+        Performs actual join updating select_from parameter.
+
+        Adds aliases of required column to list of columns to include in query.
+
+        Updates the used aliases list directly.
+
+        Process order_by causes for non m2m relations.
+
+        :param join_params: parameters from previous/ current join
+        :type join_params: JoinParameters
+        :param is_multi: flag if it's m2m relation
+        :type is_multi: bool
+        :param model_cls:
+        :type model_cls: ormar.models.metaclass.ModelMetaclass
+        :param part: name of the field used in join
+        :type part: str
+        :param alias: alias of the current join
+        :type alias: str
+        :param fields: fields to include
+        :type fields: Optional[Union[Set, Dict]]
+        :param exclude_fields: fields to exclude
+        :type exclude_fields: Optional[Union[Set, Dict]]
+        """
         to_table = model_cls.Meta.table.name
         to_key, from_key = self.get_to_and_from_keys(
             join_params, is_multi, model_cls, part
@@ -175,7 +273,7 @@ class SqlJoin:
             from_clause=f"{join_params.from_table}.{from_key}",
             to_clause=f"{to_table}.{to_key}",
         )
-        target_table = self.relation_manager(model_cls).prefixed_table_name(
+        target_table = self.alias_manager(model_cls).prefixed_table_name(
             alias, to_table
         )
         self.select_from = sqlalchemy.sql.outerjoin(
@@ -199,13 +297,21 @@ class SqlJoin:
             use_alias=True,
         )
         self.columns.extend(
-            self.relation_manager(model_cls).prefixed_columns(
+            self.alias_manager(model_cls).prefixed_columns(
                 alias, model_cls.Meta.table, self_related_fields
             )
         )
         self.used_aliases.append(alias)
 
     def _switch_many_to_many_order_columns(self, part: str, new_part: str) -> None:
+        """
+        Substitutes the name of the relation with actual model name in m2m order bys.
+
+        :param part: name of the field with relation
+        :type part: str
+        :param new_part: name of the target model
+        :type new_part: str
+        """
         if self.order_columns:
             split_order_columns = [
                 x.split("__") for x in self.order_columns if "__" in x
@@ -219,6 +325,16 @@ class SqlJoin:
 
     @staticmethod
     def _check_if_condition_apply(condition: List, part: str) -> bool:
+        """
+        Checks filter conditions to find if they apply to current join.
+
+        :param condition: list of parts of condition split by '__'
+        :type condition: List[str]
+        :param part: name of the current relation join.
+        :type part: str
+        :return: result of the check
+        :rtype: bool
+        """
         return len(condition) >= 2 and (
             condition[-2] == part or condition[-2][1:] == part
         )
@@ -226,6 +342,19 @@ class SqlJoin:
     def set_aliased_order_by(
         self, condition: List[str], alias: str, to_table: str, model_cls: Type["Model"],
     ) -> None:
+        """
+        Substitute hyphens ('-') with descending order.
+        Construct actual sqlalchemy text clause using aliased table and column name.
+
+        :param condition: list of parts of a current condition split by '__'
+        :type condition: List[str]
+        :param alias: alias of the table in current join
+        :type alias: str
+        :param to_table: target table
+        :type to_table: sqlalchemy.sql.elements.quoted_name
+        :param model_cls: ormar model class
+        :type model_cls: ormar.models.metaclass.ModelMetaclass
+        """
         direction = f"{'desc' if condition[0][0] == '-' else ''}"
         column_alias = model_cls.get_column_alias(condition[-1])
         order = text(f"{alias}_{to_table}.{column_alias} {direction}")
@@ -239,6 +368,21 @@ class SqlJoin:
         part: str,
         model_cls: Type["Model"],
     ) -> None:
+        """
+        Triggers construction of order bys if they are given.
+        Otherwise by default each table is sorted by a primary key column asc.
+
+        :param alias: alias of current table in join
+        :type alias: str
+        :param to_table: target table
+        :type to_table: sqlalchemy.sql.elements.quoted_name
+        :param pkname_alias: alias of the primary key column
+        :type pkname_alias: str
+        :param part: name of the current relation join
+        :type part: str
+        :param model_cls: ormar model class
+        :type model_cls: Type[Model]
+        """
         if self.order_columns:
             split_order_columns = [
                 x.split("__") for x in self.order_columns if "__" in x
@@ -262,6 +406,22 @@ class SqlJoin:
         model_cls: Type["Model"],
         part: str,
     ) -> Tuple[str, str]:
+        """
+        Based on the relation type, name of the relation and previous models and parts
+        stored in JoinParameters it resolves the current to and from keys, which are
+        different for ManyToMany relation, ForeignKey and reverse part of relations.
+
+        :param join_params: parameters from previous/ current join
+        :type join_params: JoinParameters
+        :param is_multi: flag if the relation is of m2m type
+        :type is_multi: bool
+        :param model_cls: ormar model class
+        :type model_cls: Type[Model]
+        :param part: name of the current relation join
+        :type part: str
+        :return: to key and from key
+        :rtype: Tuple[str, str]
+        """
         if is_multi:
             to_field = join_params.prev_model.get_name()
             to_key = model_cls.get_column_alias(to_field)
