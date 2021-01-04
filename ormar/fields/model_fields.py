@@ -17,6 +17,20 @@ def is_field_nullable(
     server_default: Any,
     pydantic_only: Optional[bool],
 ) -> bool:
+    """
+    Checks if the given field should be nullable/ optional based on parameters given.
+
+    :param nullable: flag explicit setting a column as nullable
+    :type nullable: Optional[bool]
+    :param default: value or function to be called as default in python
+    :type default: Any
+    :param server_default: function to be called as default by sql server
+    :type server_default: Any
+    :param pydantic_only: flag if fields should not be included in the sql table
+    :type pydantic_only: Optional[bool]
+    :return: result of the check
+    :rtype: bool
+    """
     if nullable is None:
         return (
             default is not None
@@ -27,10 +41,24 @@ def is_field_nullable(
 
 
 def is_auto_primary_key(primary_key: bool, autoincrement: bool) -> bool:
+    """
+    Checks if field is an autoincrement pk -> if yes it's optional.
+
+    :param primary_key: flag if field is a pk field
+    :type primary_key: bool
+    :param autoincrement: flag if field should be autoincrement
+    :type autoincrement: bool
+    :return: result of the check
+    :rtype: bool
+    """
     return primary_key and autoincrement
 
 
 class ModelFieldFactory:
+    """
+    Default field factory that construct Field classes and populated their values.
+    """
+
     _bases: Any = (BaseField,)
     _type: Any = None
 
@@ -66,10 +94,24 @@ class ModelFieldFactory:
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:  # pragma no cover
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
         return None
 
     @classmethod
     def validate(cls, **kwargs: Any) -> None:  # pragma no cover
+        """
+        Used to validate if all required parameters on a given field type are set.
+        :param kwargs: all params passed during construction
+        :type kwargs: Any
+        """
         pass
 
 

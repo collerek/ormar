@@ -122,7 +122,7 @@ def ForeignKey(  # noqa CFQ002
     :param kwargs: all other args to be populated by BaseField
     :type kwargs: Any
     :return: ormar ForeignKeyField with relation to selected model
-    :rtype: returns ForeignKeyField
+    :rtype: ForeignKeyField
     """
     fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
     to_field = to.Meta.model_fields[to.Meta.pkname]

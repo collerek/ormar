@@ -49,19 +49,41 @@ class Query:
         self.limit_raw_sql = limit_raw_sql
 
     def _init_sorted_orders(self) -> None:
+        """
+        Initialize empty order_by dict to be populated later during the query call
+        """
         if self.order_columns:
             for clause in self.order_columns:
                 self.sorted_orders[clause] = None
 
     @property
     def prefixed_pk_name(self) -> str:
+        """
+        Shortcut for extracting prefixed with alias primary key column name from main
+        model
+        :return: alias of pk column prefix with table name.
+        :rtype: str
+        """
         pkname_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
         return f"{self.table.name}.{pkname_alias}"
 
     def alias(self, name: str) -> str:
+        """
+        Shortcut to extracting column alias from given master model.
+
+        :param name: name of column
+        :type name: str
+        :return: alias of given column name
+        :rtype: str
+        """
         return self.model_cls.get_column_alias(name)
 
     def apply_order_bys_for_primary_model(self) -> None:  # noqa: CCR001
+        """
+        Applies order_by queries on main model when it's used as a subquery.
+        That way the subquery with limit and offset only on main model has proper
+        sorting applied and correct models are fetched.
+        """
         if self.order_columns:
             for clause in self.order_columns:
                 if "__" not in clause:
@@ -91,6 +113,18 @@ class Query:
         )
 
     def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
+        """
+        Main entry point from outside (after proper initialization).
+
+        Extracts columns list to fetch,
+        construct all required joins for select related,
+        then applies all conditional and sort clauses.
+
+        Returns ready to run query with all joins and clauses.
+
+        :return: ready to run query with all joins and clauses.
+        :rtype: sqlalchemy.sql.selectable.Select
+        """
         self_related_fields = self.model_cls.own_table_columns(
             model=self.model_cls,
             fields=self.fields,
@@ -184,6 +218,21 @@ class Query:
     def _apply_expression_modifiers(
         self, expr: sqlalchemy.sql.select
     ) -> sqlalchemy.sql.select:
+        """
+        Receives the select query (might be join) and applies:
+        * Filter clauses
+        * Exclude filter clauses
+        * Limit clauses
+        * Offset clauses
+        * Order by clauses
+
+        Returns complete ready to run query.
+
+        :param expr: select expression before clauses
+        :type expr: sqlalchemy.sql.selectable.Select
+        :return: expresion with all present clauses applied
+        :rtype: sqlalchemy.sql.selectable.Select
+        """
         expr = FilterQuery(filter_clauses=self.filter_clauses).apply(expr)
         expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
             expr
@@ -195,6 +244,10 @@ class Query:
         return expr
 
     def _reset_query_parameters(self) -> None:
+        """
+        Although it should be created each time before the call we reset the key params
+        anyway.
+        """
         self.select_from = []
         self.columns = []
         self.used_aliases = []

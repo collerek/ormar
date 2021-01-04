@@ -10,6 +10,8 @@ class UUID(TypeDecorator):  # pragma nocover
     """
     Platform-independent GUID type.
     Uses CHAR(36) if in a string mode, otherwise uses CHAR(32), to store UUID.
+
+    For details for different methods check documentation of parent class.
     """
 
     impl = CHAR
@@ -24,6 +26,14 @@ class UUID(TypeDecorator):  # pragma nocover
         return "CHAR(32)"
 
     def _cast_to_uuid(self, value: Union[str, int, bytes]) -> uuid.UUID:
+        """
+        Parses given value into uuid.UUID field.
+
+        :param value: value to be parsed
+        :type value: Union[str, int, bytes]
+        :return: initialized uuid
+        :rtype: uuid.UUID
+        """
         if not isinstance(value, uuid.UUID):
             if isinstance(value, bytes):
                 ret_value = uuid.UUID(bytes=value)
