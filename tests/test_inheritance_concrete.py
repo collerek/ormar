@@ -4,7 +4,6 @@ from typing import List, Optional
 
 import databases
 import pytest
-import sqlalchemy
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 
@@ -196,8 +195,7 @@ def test_field_redefining_in_concrete_models():
     assert changed_field.alias == "creation_date"
     assert any(x.name == "creation_date" for x in RedefinedField.Meta.table.columns)
     assert isinstance(
-        RedefinedField.Meta.table.columns["creation_date"].type,
-        sqlalchemy.sql.sqltypes.String,
+        RedefinedField.Meta.table.columns["creation_date"].type, sa.sql.sqltypes.String,
     )
 
 

@@ -72,8 +72,6 @@ class UniqueColumns(UniqueConstraint):
     Used to avoid importing anything from sqlalchemy by user.
     """
 
-    pass
-
 
 @dataclass
 class ForeignKeyConstraint:

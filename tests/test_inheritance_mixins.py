@@ -4,12 +4,10 @@ from typing import Optional
 
 import databases
 import pytest
-import sqlalchemy
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 
 import ormar
-from ormar import ModelDefinitionError
 from tests.settings import DATABASE_URL
 
 metadata = sa.MetaData()
@@ -94,7 +92,7 @@ def test_field_redefining_in_second_raises_error():
     assert any(x.name == "creation_date" for x in RedefinedField2.Meta.table.columns)
     assert isinstance(
         RedefinedField2.Meta.table.columns["creation_date"].type,
-        sqlalchemy.sql.sqltypes.String,
+        sa.sql.sqltypes.String,
     )
 
 

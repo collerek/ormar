@@ -112,7 +112,6 @@ class ModelFieldFactory:
         :param kwargs: all params passed during construction
         :type kwargs: Any
         """
-        pass
 
 
 class String(ModelFieldFactory, str):

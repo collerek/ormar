@@ -79,5 +79,4 @@ def validate_related_names_in_relations(
                     f"default/empty name: '{new_model.get_name() + 's'}'"
                     f"\nTip: provide different related_name for FK and/or M2M fields"
                 )
-            else:
-                previous_related_names.append(field.related_name)
+            previous_related_names.append(field.related_name)
