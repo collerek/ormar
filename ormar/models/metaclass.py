@@ -304,6 +304,71 @@ def update_attrs_from_base_meta(  # noqa: CCR001
                 setattr(attrs["Meta"], param, parent_value)
 
 
+def copy_and_replace_m2m_through_model(
+    field: Type[ManyToManyField],
+    field_name: str,
+    table_name: str,
+    parent_fields: Dict,
+    attrs: Dict,
+    meta: ModelMeta,
+) -> None:
+    """
+    Clones class with Through model for m2m relations, appends child name to the name
+    of the cloned class.
+
+    Clones non foreign keys fields from parent model, the same with database columns.
+
+    Modifies related_name with appending child table name after '_'
+
+    For table name, the table name of child is appended after '_'.
+
+    Removes the original sqlalchemy table from metadata if it was not removed.
+
+    :param field: field with relations definition
+    :type field: Type[ManyToManyField]
+    :param field_name: name of the relation field
+    :type field_name: str
+    :param table_name: name of the table
+    :type table_name: str
+    :param parent_fields: dictionary of fields to copy to new models from parent
+    :type parent_fields: Dict
+    :param attrs: new namespace for class being constructed
+    :type attrs: Dict
+    :param meta: metaclass of currently created model
+    :type meta: ModelMeta
+    """
+    copy_field: Type[BaseField] = type(  # type: ignore
+        field.__name__, (ManyToManyField, BaseField), dict(field.__dict__)
+    )
+    related_name = field.related_name + "_" + table_name
+    copy_field.related_name = related_name  # type: ignore
+
+    through_class = field.through
+    new_meta: ormar.ModelMeta = type(  # type: ignore
+        "Meta", (), dict(through_class.Meta.__dict__),
+    )
+    new_meta.tablename += "_" + meta.tablename
+    # create new table with copied columns but remove foreign keys
+    # they will be populated later in expanding reverse relation
+    if hasattr(new_meta, "table"):
+        del new_meta.table
+    new_meta.columns = [col for col in new_meta.columns if not col.foreign_keys]
+    new_meta.model_fields = {
+        name: field
+        for name, field in new_meta.model_fields.items()
+        if not issubclass(field, ForeignKeyField)
+    }
+    populate_meta_sqlalchemy_table_if_required(new_meta)
+    copy_name = through_class.__name__ + attrs.get("__name__", "")
+    copy_through = type(copy_name, (ormar.Model,), {"Meta": new_meta})
+    copy_field.through = copy_through
+
+    parent_fields[field_name] = copy_field
+
+    if through_class.Meta.table in through_class.Meta.metadata:
+        through_class.Meta.metadata.remove(through_class.Meta.table)
+
+
 def copy_data_from_parent_model(  # noqa: CCR001
     base_class: Type["Model"],
     curr_class: type,
@@ -344,7 +409,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
             attrs=attrs,
             model_fields=model_fields,
         )
-        parent_fields = dict()
+        parent_fields: Dict = dict()
         meta = attrs.get("Meta")
         if not meta:  # pragma: no cover
             raise ModelDefinitionError(
@@ -357,41 +422,21 @@ def copy_data_from_parent_model(  # noqa: CCR001
         )
         for field_name, field in base_class.Meta.model_fields.items():
             if issubclass(field, ManyToManyField):
-                copy_field: Type[BaseField] = type(  # type: ignore
-                    field.__name__, (ManyToManyField, BaseField), dict(field.__dict__)
+                copy_and_replace_m2m_through_model(
+                    field=field,
+                    field_name=field_name,
+                    table_name=table_name,
+                    parent_fields=parent_fields,
+                    attrs=attrs,
+                    meta=meta,
                 )
-                related_name = field.related_name + "_" + table_name
-                copy_field.related_name = related_name
-
-                through_class = field.through
-                new_meta: ormar.ModelMeta = type(  # type: ignore
-                    "Meta", (), dict(through_class.Meta.__dict__),
-                )
-                new_meta.tablename += "_" + meta.tablename
-                # create new table with copied columns but remove foreign keys
-                # they will be populated later in expanding reverse relation
-                del new_meta.table
-                new_meta.columns = [
-                    col for col in new_meta.columns if not col.foreign_keys
-                ]
-                new_meta.model_fields = {
-                    name: field
-                    for name, field in new_meta.model_fields.items()
-                    if not issubclass(field, ForeignKeyField)
-                }
-                populate_meta_sqlalchemy_table_if_required(new_meta)
-                copy_name = through_class.__name__ + attrs.get("__name__", "")
-                copy_through = type(copy_name, (ormar.Model,), {"Meta": new_meta})
-                copy_field.through = copy_through
-
-                parent_fields[field_name] = copy_field
 
             elif issubclass(field, ForeignKeyField) and field.related_name:
                 copy_field = type(  # type: ignore
                     field.__name__, (ForeignKeyField, BaseField), dict(field.__dict__)
                 )
                 related_name = field.related_name + "_" + table_name
-                copy_field.related_name = related_name
+                copy_field.related_name = related_name  # type: ignore
                 parent_fields[field_name] = copy_field
             else:
                 parent_fields[field_name] = field
@@ -518,6 +563,9 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         attrs["__name__"] = name
         attrs, model_fields = extract_annotations_and_default_vals(attrs)
         for base in reversed(bases):
+            mod = base.__module__
+            if mod.startswith("ormar.models.") or mod.startswith("pydantic."):
+                continue
             attrs, model_fields = extract_from_parents_definition(
                 base_class=base, curr_class=mcs, attrs=attrs, model_fields=model_fields
             )
