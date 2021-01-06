@@ -400,11 +400,11 @@ class SqlJoin:
                     )
             if not current_table_sorted:
                 order = text(f"{alias}_{to_table}.{pkname_alias}")
-                self.sorted_orders[f"{part}.{pkname_alias}"] = order
+                self.sorted_orders[f"{alias}.{pkname_alias}"] = order
 
         else:
             order = text(f"{alias}_{to_table}.{pkname_alias}")
-            self.sorted_orders[f"{part}.{pkname_alias}"] = order
+            self.sorted_orders[f"{alias}.{pkname_alias}"] = order
 
     @staticmethod
     def get_to_and_from_keys(

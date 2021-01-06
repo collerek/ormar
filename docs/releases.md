@@ -20,6 +20,7 @@ as the same model can be registered multiple times and `ormar` needs to know fro
 * Fix minor bug in `order_by` for primary model order bys
 * Fix in `prefetch_query` for multiple related_names for the same model.
 * Fix using same `related_name` on different models leading to the same related `Model` overwriting each other, now `ModelDefinitionError` is raised and you need to change the name. 
+* Fix `order_by` overwriting conditions when multiple joins to the same table applied.
 
 ## Docs
 * Split and cleanup in docs:
