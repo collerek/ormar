@@ -153,6 +153,7 @@ class SqlJoin:
                     exclude_fields=exclude_fields,
                 )
                 part = new_part
+
             if index > 0:  # nested joins
                 fields, exclude_fields = SqlJoin.update_inclusions(
                     model_cls=join_parameters.model_cls,
@@ -384,20 +385,26 @@ class SqlJoin:
         :type model_cls: Type[Model]
         """
         if self.order_columns:
+            current_table_sorted = False
             split_order_columns = [
                 x.split("__") for x in self.order_columns if "__" in x
             ]
             for condition in split_order_columns:
                 if self._check_if_condition_apply(condition, part):
+                    current_table_sorted = True
                     self.set_aliased_order_by(
                         condition=condition,
                         alias=alias,
                         to_table=to_table,
                         model_cls=model_cls,
                     )
+            if not current_table_sorted:
+                order = text(f"{alias}_{to_table}.{pkname_alias}")
+                self.sorted_orders[f"{part}.{pkname_alias}"] = order
+
         else:
             order = text(f"{alias}_{to_table}.{pkname_alias}")
-            self.sorted_orders[f"{to_table}.{pkname_alias}"] = order
+            self.sorted_orders[f"{part}.{pkname_alias}"] = order
 
     @staticmethod
     def get_to_and_from_keys(
