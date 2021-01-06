@@ -1,12 +1,6 @@
 <a name="queryset.clause"></a>
 # queryset.clause
 
-<a name="queryset.clause.FILTER_OPERATORS"></a>
-#### FILTER\_OPERATORS
-
-<a name="queryset.clause.ESCAPE_CHARACTERS"></a>
-#### ESCAPE\_CHARACTERS
-
 <a name="queryset.clause.QueryClause"></a>
 ## QueryClause Objects
 
@@ -15,13 +9,6 @@ class QueryClause()
 ```
 
 Constructs where clauses from strings passed as arguments
-
-<a name="queryset.clause.QueryClause.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__(model_cls: Type["Model"], filter_clauses: List, select_related: List) -> None
-```
 
 <a name="queryset.clause.QueryClause.filter"></a>
 #### filter

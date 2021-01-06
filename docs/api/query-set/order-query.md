@@ -10,13 +10,6 @@ class OrderQuery()
 
 Modifies the select query with given list of order_by clauses.
 
-<a name="queryset.order_query.OrderQuery.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__(sorted_orders: Dict) -> None
-```
-
 <a name="queryset.order_query.OrderQuery.apply"></a>
 #### apply
 

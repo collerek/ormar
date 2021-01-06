@@ -1,9 +1,6 @@
 <a name="fields.many_to_many"></a>
 # fields.many\_to\_many
 
-<a name="fields.many_to_many.REF_PREFIX"></a>
-#### REF\_PREFIX
-
 <a name="fields.many_to_many.ManyToMany"></a>
 #### ManyToMany
 
@@ -39,9 +36,6 @@ class ManyToManyField(ForeignKeyField,  ormar.QuerySetProtocol,  ormar.RelationP
 ```
 
 Actual class returned from ManyToMany function call and stored in model_fields.
-
-<a name="fields.many_to_many.ManyToManyField.through"></a>
-#### through
 
 <a name="fields.many_to_many.ManyToManyField.default_target_field_name"></a>
 #### default\_target\_field\_name

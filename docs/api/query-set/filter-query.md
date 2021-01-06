@@ -10,13 +10,6 @@ class FilterQuery()
 
 Modifies the select query with given list of where/filter clauses.
 
-<a name="queryset.filter_query.FilterQuery.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__(filter_clauses: List, exclude: bool = False) -> None
-```
-
 <a name="queryset.filter_query.FilterQuery.apply"></a>
 #### apply
 

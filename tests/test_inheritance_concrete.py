@@ -369,6 +369,10 @@ async def test_inheritance_with_multi_relation():
             ).save()
             await truck.co_owners.add(joe)
             await truck.co_owners.add(alex)
+
+            bus3 = await Bus2(name="Unicorn 3", max_persons=30, owner=joe).save()
+            await bus3.co_owners.add(sam)
+
             bus = await Bus2(name="Unicorn 2", max_persons=50, owner=sam).save()
             await bus.co_owners.add(joe)
             await bus.co_owners.add(alex)
@@ -380,12 +384,34 @@ async def test_inheritance_with_multi_relation():
             assert len(shelby.co_owners) == 2
             assert shelby.max_capacity == 1400
 
-            unicorn = await Bus2.objects.select_related(["owner", "co_owners"]).get()
+            unicorn = await Bus2.objects.select_related(["owner", "co_owners"]).get(
+                name="Unicorn 2"
+            )
             assert unicorn.name == "Unicorn 2"
             assert unicorn.owner.name == "Sam"
             assert unicorn.co_owners[0].name == "Joe"
             assert len(unicorn.co_owners) == 2
             assert unicorn.max_persons == 50
+
+            unicorn = (
+                await Bus2.objects.select_related(["owner", "co_owners"])
+                .order_by("-co_owners__name")
+                .get()
+            )
+            assert unicorn.name == "Unicorn 2"
+            assert unicorn.owner.name == "Sam"
+            assert len(unicorn.co_owners) == 2
+            assert unicorn.co_owners[0].name == "Joe"
+
+            unicorn = (
+                await Bus2.objects.select_related(["owner", "co_owners"])
+                .order_by("co_owners__name")
+                .get()
+            )
+            assert unicorn.name == "Unicorn 2"
+            assert unicorn.owner.name == "Sam"
+            assert len(unicorn.co_owners) == 2
+            assert unicorn.co_owners[0].name == "Alex"
 
             joe_check = await Person.objects.select_related(
                 ["coowned_trucks2", "coowned_buses2"]
@@ -411,3 +437,68 @@ async def test_inheritance_with_multi_relation():
             assert joe_check.coowned_trucks2[0].created_date is None
             assert joe_check.coowned_buses2[0] == unicorn
             assert joe_check.coowned_buses2[0].created_date is None
+
+            await shelby.co_owners.remove(joe)
+            await shelby.co_owners.remove(alex)
+            await Truck2.objects.delete(name="Shelby wanna be 2")
+
+            unicorn = (
+                await Bus2.objects.select_related(["owner", "co_owners"])
+                .filter(co_owners__name="Joe")
+                .get()
+            )
+            assert unicorn.name == "Unicorn 2"
+            assert unicorn.owner.name == "Sam"
+            assert unicorn.co_owners[0].name == "Joe"
+            assert len(unicorn.co_owners) == 1
+            assert unicorn.max_persons == 50
+
+            unicorn = (
+                await Bus2.objects.select_related(["owner", "co_owners"])
+                .exclude(co_owners__name="Joe")
+                .get()
+            )
+            assert unicorn.name == "Unicorn 2"
+            assert unicorn.owner.name == "Sam"
+            assert unicorn.co_owners[0].name == "Alex"
+            assert len(unicorn.co_owners) == 1
+            assert unicorn.max_persons == 50
+
+            unicorn = await Bus2.objects.get()
+            assert unicorn.name == "Unicorn 2"
+            assert unicorn.owner.name is None
+            assert len(unicorn.co_owners) == 0
+            await unicorn.co_owners.all()
+
+            assert len(unicorn.co_owners) == 2
+            assert unicorn.co_owners[0].name == "Joe"
+
+            await unicorn.owner.load()
+            assert unicorn.owner.name == "Sam"
+
+            unicorns = (
+                await Bus2.objects.select_related(["owner", "co_owners"])
+                .filter(name__contains="Unicorn")
+                .order_by("-name")
+                .all()
+            )
+            assert unicorns[0].name == "Unicorn 3"
+            assert unicorns[0].owner.name == "Joe"
+            assert len(unicorns[0].co_owners) == 1
+            assert unicorns[0].co_owners[0].name == "Sam"
+
+            assert unicorns[1].name == "Unicorn 2"
+            assert unicorns[1].owner.name == "Sam"
+            assert len(unicorns[1].co_owners) == 2
+            assert unicorns[1].co_owners[0].name == "Joe"
+
+            unicorns = (
+                await Bus2.objects.select_related(["owner", "co_owners"])
+                .filter(name__contains="Unicorn")
+                .order_by("-name")
+                .limit(2, limit_raw_sql=True)
+                .all()
+            )
+            assert len(unicorns) == 2
+            assert unicorns[1].name == "Unicorn 2"
+            assert len(unicorns[1].co_owners) == 1

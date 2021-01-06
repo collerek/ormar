@@ -4,7 +4,7 @@ loaders:
     search_path: [ormar/]
 processors:
   - type: filter
-    documented_only: false
+    documented_only: true
     skip_empty_modules: false
     exclude_private: false
     exclude_special: false

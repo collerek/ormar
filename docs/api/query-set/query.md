@@ -8,13 +8,6 @@
 class Query()
 ```
 
-<a name="queryset.query.Query.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__(model_cls: Type["Model"], filter_clauses: List, exclude_clauses: List, select_related: List, limit_count: Optional[int], offset: Optional[int], fields: Optional[Union[Dict, Set]], exclude_fields: Optional[Union[Dict, Set]], order_bys: Optional[List], limit_raw_sql: bool) -> None
-```
-
 <a name="queryset.query.Query._init_sorted_orders"></a>
 #### \_init\_sorted\_orders
 

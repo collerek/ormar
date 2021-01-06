@@ -10,13 +10,6 @@ class OffsetQuery()
 
 Modifies the select query with offset if set
 
-<a name="queryset.offset_query.OffsetQuery.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__(query_offset: Optional[int]) -> None
-```
-
 <a name="queryset.offset_query.OffsetQuery.apply"></a>
 #### apply
 

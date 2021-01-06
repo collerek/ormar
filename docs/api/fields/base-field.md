@@ -16,60 +16,6 @@ All values are kept as class variables, ormar Fields are never instantiated.
 Subclasses pydantic.FieldInfo to keep the fields related
 to pydantic field types like ConstrainedStr
 
-<a name="fields.base.BaseField.__type__"></a>
-#### \_\_type\_\_
-
-<a name="fields.base.BaseField.related_name"></a>
-#### related\_name
-
-<a name="fields.base.BaseField.column_type"></a>
-#### column\_type
-
-<a name="fields.base.BaseField.constraints"></a>
-#### constraints
-
-<a name="fields.base.BaseField.name"></a>
-#### name
-
-<a name="fields.base.BaseField.alias"></a>
-#### alias
-
-<a name="fields.base.BaseField.primary_key"></a>
-#### primary\_key
-
-<a name="fields.base.BaseField.autoincrement"></a>
-#### autoincrement
-
-<a name="fields.base.BaseField.nullable"></a>
-#### nullable
-
-<a name="fields.base.BaseField.index"></a>
-#### index
-
-<a name="fields.base.BaseField.unique"></a>
-#### unique
-
-<a name="fields.base.BaseField.pydantic_only"></a>
-#### pydantic\_only
-
-<a name="fields.base.BaseField.virtual"></a>
-#### virtual
-
-<a name="fields.base.BaseField.choices"></a>
-#### choices
-
-<a name="fields.base.BaseField.to"></a>
-#### to
-
-<a name="fields.base.BaseField.through"></a>
-#### through
-
-<a name="fields.base.BaseField.default"></a>
-#### default
-
-<a name="fields.base.BaseField.server_default"></a>
-#### server\_default
-
 <a name="fields.base.BaseField.is_valid_uni_relation"></a>
 #### is\_valid\_uni\_relation
 

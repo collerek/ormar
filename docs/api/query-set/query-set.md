@@ -10,20 +10,6 @@ class QuerySet()
 
 Main class to perform database queries, exposed on each model as objects attribute.
 
-<a name="queryset.queryset.QuerySet.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__(model_cls: Type["Model"] = None, filter_clauses: List = None, exclude_clauses: List = None, select_related: List = None, limit_count: int = None, offset: int = None, columns: Dict = None, exclude_columns: Dict = None, order_bys: List = None, prefetch_related: List = None, limit_raw_sql: bool = False) -> None
-```
-
-<a name="queryset.queryset.QuerySet.__get__"></a>
-#### \_\_get\_\_
-
-```python
- | __get__(instance: Optional[Union["QuerySet", "QuerysetProxy"]], owner: Union[Type["Model"], Type["QuerysetProxy"]]) -> "QuerySet"
-```
-
 <a name="queryset.queryset.QuerySet.model_meta"></a>
 #### model\_meta
 

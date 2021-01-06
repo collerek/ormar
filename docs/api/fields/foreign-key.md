@@ -67,15 +67,6 @@ class ForeignKeyConstraint()
 Internal container to store ForeignKey definitions used later
 to produce sqlalchemy.ForeignKeys
 
-<a name="fields.foreign_key.ForeignKeyConstraint.name"></a>
-#### name
-
-<a name="fields.foreign_key.ForeignKeyConstraint.ondelete"></a>
-#### ondelete
-
-<a name="fields.foreign_key.ForeignKeyConstraint.onupdate"></a>
-#### onupdate
-
 <a name="fields.foreign_key.ForeignKey"></a>
 #### ForeignKey
 
@@ -115,18 +106,6 @@ class ForeignKeyField(BaseField)
 ```
 
 Actual class returned from ForeignKey function call and stored in model_fields.
-
-<a name="fields.foreign_key.ForeignKeyField.to"></a>
-#### to
-
-<a name="fields.foreign_key.ForeignKeyField.name"></a>
-#### name
-
-<a name="fields.foreign_key.ForeignKeyField.related_name"></a>
-#### related\_name
-
-<a name="fields.foreign_key.ForeignKeyField.virtual"></a>
-#### virtual
 
 <a name="fields.foreign_key.ForeignKeyField._extract_model_from_sequence"></a>
 #### \_extract\_model\_from\_sequence

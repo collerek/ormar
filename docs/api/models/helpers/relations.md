@@ -1,9 +1,6 @@
 <a name="models.helpers.relations"></a>
 # models.helpers.relations
 
-<a name="models.helpers.relations.alias_manager"></a>
-#### alias\_manager
-
 <a name="models.helpers.relations.register_relation_on_build"></a>
 #### register\_relation\_on\_build
 

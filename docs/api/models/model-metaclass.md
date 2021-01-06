@@ -1,59 +1,6 @@
 <a name="models.metaclass"></a>
 # models.metaclass
 
-<a name="models.metaclass.PARSED_FIELDS_KEY"></a>
-#### PARSED\_FIELDS\_KEY
-
-<a name="models.metaclass.CONFIG_KEY"></a>
-#### CONFIG\_KEY
-
-<a name="models.metaclass.ModelMeta"></a>
-## ModelMeta Objects
-
-```python
-class ModelMeta()
-```
-
-Class used for type hinting.
-Users can subclass this one for convenience but it's not required.
-The only requirement is that ormar.Model has to have inner class with name Meta.
-
-<a name="models.metaclass.ModelMeta.tablename"></a>
-#### tablename
-
-<a name="models.metaclass.ModelMeta.table"></a>
-#### table
-
-<a name="models.metaclass.ModelMeta.metadata"></a>
-#### metadata
-
-<a name="models.metaclass.ModelMeta.database"></a>
-#### database
-
-<a name="models.metaclass.ModelMeta.columns"></a>
-#### columns
-
-<a name="models.metaclass.ModelMeta.constraints"></a>
-#### constraints
-
-<a name="models.metaclass.ModelMeta.pkname"></a>
-#### pkname
-
-<a name="models.metaclass.ModelMeta.model_fields"></a>
-#### model\_fields
-
-<a name="models.metaclass.ModelMeta.alias_manager"></a>
-#### alias\_manager
-
-<a name="models.metaclass.ModelMeta.property_fields"></a>
-#### property\_fields
-
-<a name="models.metaclass.ModelMeta.signals"></a>
-#### signals
-
-<a name="models.metaclass.ModelMeta.abstract"></a>
-#### abstract
-
 <a name="models.metaclass.check_if_field_has_choices"></a>
 #### check\_if\_field\_has\_choices
 
@@ -233,6 +180,33 @@ Updates Meta parameters in child from parent if needed.
 - `attrs (Dict)`: new namespace for class being constructed
 - `model_fields (Dict[str, BaseField])`: ormar fields in defined in current class
 
+<a name="models.metaclass.copy_and_replace_m2m_through_model"></a>
+#### copy\_and\_replace\_m2m\_through\_model
+
+```python
+copy_and_replace_m2m_through_model(field: Type[ManyToManyField], field_name: str, table_name: str, parent_fields: Dict, attrs: Dict, meta: ModelMeta) -> None
+```
+
+Clones class with Through model for m2m relations, appends child name to the name
+of the cloned class.
+
+Clones non foreign keys fields from parent model, the same with database columns.
+
+Modifies related_name with appending child table name after '_'
+
+For table name, the table name of child is appended after '_'.
+
+Removes the original sqlalchemy table from metadata if it was not removed.
+
+**Arguments**:
+
+- `field (Type[ManyToManyField])`: field with relations definition
+- `field_name (str)`: name of the relation field
+- `table_name (str)`: name of the table
+- `parent_fields (Dict)`: dictionary of fields to copy to new models from parent
+- `attrs (Dict)`: new namespace for class being constructed
+- `meta (ModelMeta)`: metaclass of currently created model
+
 <a name="models.metaclass.copy_data_from_parent_model"></a>
 #### copy\_data\_from\_parent\_model
 
@@ -295,6 +269,18 @@ If the class is a ormar.Model it is skipped.
 **Returns**:
 
 `(Tuple[Dict, Dict])`: updated attrs and model_fields
+
+<a name="models.metaclass.ModelMeta"></a>
+## ModelMeta Objects
+
+```python
+class ModelMeta()
+```
+
+Class used for type hinting.
+Users can subclass this one for convenience but it's not required.
+The only requirement is that ormar.Model has to have inner class with name Meta.
+
 
 <a name="models.metaclass.ModelMetaclass"></a>
 ## ModelMetaclass Objects

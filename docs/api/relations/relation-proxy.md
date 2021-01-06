@@ -10,13 +10,6 @@ class RelationProxy(list)
 
 Proxy of the Relation that is a list with special methods.
 
-<a name="relations.relation_proxy.RelationProxy.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__(relation: "Relation", type_: "RelationType", field_name: str, data_: Any = None) -> None
-```
-
 <a name="relations.relation_proxy.RelationProxy.related_field_name"></a>
 #### related\_field\_name
 

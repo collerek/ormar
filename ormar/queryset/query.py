@@ -88,9 +88,9 @@ class Query:
             for clause in self.order_columns:
                 if "__" not in clause:
                     text_clause = (
-                        text(f"{self.alias(clause[1:])} desc")
+                        text(f"{self.table.name}.{self.alias(clause[1:])} desc")
                         if clause.startswith("-")
-                        else text(self.alias(clause))
+                        else text(f"{self.table.name}.{self.alias(clause)}")
                     )
                     self.sorted_orders[clause] = text_clause
         else:
@@ -202,11 +202,7 @@ class Query:
             for filter_clause in self.exclude_clauses
             if filter_clause.text.startswith(f"{self.table.name}.")
         ]
-        sorts_to_use = {
-            k: v
-            for k, v in self.sorted_orders.items()
-            if k.startswith(f"{self.table.name}.")
-        }
+        sorts_to_use = {k: v for k, v in self.sorted_orders.items() if "__" not in k}
         expr = FilterQuery(filter_clauses=filters_to_use).apply(expr)
         expr = FilterQuery(filter_clauses=excludes_to_use, exclude=True).apply(expr)
         expr = OrderQuery(sorted_orders=sorts_to_use).apply(expr)

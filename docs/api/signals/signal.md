@@ -1,12 +1,3 @@
-<a name="signals"></a>
-# signals
-
-Signals and SignalEmitter that gathers the signals on models Meta.
-Used to signal receivers functions about events, i.e. post_save, pre_delete etc.
-
-<a name="signals.__all__"></a>
-#### \_\_all\_\_
-
 <a name="signals.signal"></a>
 # signals.signal
 
@@ -53,13 +44,6 @@ class Signal()
 
 Signal that notifies all receiver functions.
 In ormar used by models to send pre_save, post_save etc. signals.
-
-<a name="signals.signal.Signal.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__() -> None
-```
 
 <a name="signals.signal.Signal.connect"></a>
 #### connect
@@ -119,25 +103,4 @@ class SignalEmitter()
 
 Emitter that registers the signals in internal dictionary.
 If signal with given name does not exist it's auto added on access.
-
-<a name="signals.signal.SignalEmitter.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__() -> None
-```
-
-<a name="signals.signal.SignalEmitter.__getattr__"></a>
-#### \_\_getattr\_\_
-
-```python
- | __getattr__(item: str) -> Signal
-```
-
-<a name="signals.signal.SignalEmitter.__setattr__"></a>
-#### \_\_setattr\_\_
-
-```python
- | __setattr__(key: str, value: Any) -> None
-```
 

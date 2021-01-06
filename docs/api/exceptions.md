@@ -68,13 +68,6 @@ Raised for errors in query definition:
 * using Queryset.update() without filter and setting each flag to True
 * using Queryset.delete() without filter and setting each flag to True
 
-<a name="exceptions.RelationshipInstanceError"></a>
-## RelationshipInstanceError Objects
-
-```python
-class RelationshipInstanceError(AsyncOrmException)
-```
-
 <a name="exceptions.ModelPersistenceError"></a>
 ## ModelPersistenceError Objects
 

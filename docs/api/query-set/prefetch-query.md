@@ -77,13 +77,6 @@ Query used to fetch related models in subsequent queries.
 Each model is fetched only ones by the name of the relation.
 That means that for each prefetch_related entry next query is issued to database.
 
-<a name="queryset.prefetch_query.PrefetchQuery.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__(model_cls: Type["Model"], fields: Optional[Union[Dict, Set]], exclude_fields: Optional[Union[Dict, Set]], prefetch_related: List, select_related: List, orders_by: List) -> None
-```
-
 <a name="queryset.prefetch_query.PrefetchQuery.prefetch_related"></a>
 #### prefetch\_related
 

@@ -10,13 +10,6 @@ class RelationsManager()
 
 Manages relations on a Model, each Model has it's own instance.
 
-<a name="relations.relation_manager.RelationsManager.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__(related_fields: List[Type[ForeignKeyField]] = None, owner: "NewBaseModel" = None) -> None
-```
-
 <a name="relations.relation_manager.RelationsManager._get_relation_type"></a>
 #### \_get\_relation\_type
 

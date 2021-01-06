@@ -658,7 +658,7 @@ class QuerySet:
             return await self.filter(**kwargs).first()
 
         expr = self.build_select_expression(
-            limit=1, order_bys=[f"{self.model.Meta.pkname}"]
+            limit=1, order_bys=[f"{self.model.Meta.pkname}"] + self.order_bys
         )
         rows = await self.database.fetch_all(expr)
         processed_rows = self._process_query_result_rows(rows)
@@ -687,7 +687,7 @@ class QuerySet:
 
         if not self.filter_clauses:
             expr = self.build_select_expression(
-                limit=1, order_bys=[f"-{self.model.Meta.pkname}"]
+                limit=1, order_bys=[f"-{self.model.Meta.pkname}"] + self.order_bys
             )
         else:
             expr = self.build_select_expression()

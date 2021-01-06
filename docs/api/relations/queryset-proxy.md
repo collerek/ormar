@@ -11,13 +11,6 @@ class QuerysetProxy(ormar.QuerySetProtocol)
 Exposes QuerySet methods on relations, but also handles creating and removing
 of through Models for m2m relations.
 
-<a name="relations.querysetproxy.QuerysetProxy.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__(relation: "Relation", type_: "RelationType", qryset: "QuerySet" = None) -> None
-```
-
 <a name="relations.querysetproxy.QuerysetProxy.queryset"></a>
 #### queryset
 

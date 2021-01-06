@@ -24,24 +24,11 @@ will become:
 
 `(Dict[str, List])`: list converted to dictionary to avoid repetition and group nested models
 
-<a name="models.model.T"></a>
-#### T
-
 <a name="models.model.Model"></a>
 ## Model Objects
 
 ```python
 class Model(NewBaseModel)
-```
-
-<a name="models.model.Model.__abstract__"></a>
-#### \_\_abstract\_\_
-
-<a name="models.model.Model.__repr__"></a>
-#### \_\_repr\_\_
-
-```python
- | __repr__() -> str
 ```
 
 <a name="models.model.Model.from_row"></a>
@@ -271,7 +258,7 @@ Sets model save status to True.
 
 **Raises**:
 
-- `ModelPersistenceError`: If the pk column is not set will throw ModelPersistenceError
+- `ModelPersistenceError`: If the pk column is not set
 
 **Arguments**:
 
@@ -315,7 +302,7 @@ Does NOT refresh the related models fields if they were loaded before.
 
 **Raises**:
 
-- `NoMatch`: If given pk is not found in database the NoMatch exception is raised.
+- `NoMatch`: If given pk is not found in database.
 
 **Returns**:
 

@@ -27,13 +27,6 @@ class AliasManager()
 Keep all aliases of relations between different tables.
 One global instance is shared between all models.
 
-<a name="relations.alias_manager.AliasManager.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__() -> None
-```
-
 <a name="relations.alias_manager.AliasManager.prefixed_columns"></a>
 #### prefixed\_columns
 

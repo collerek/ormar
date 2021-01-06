@@ -10,30 +10,11 @@ class JoinParameters(NamedTuple)
 
 Named tuple that holds set of parameters passed during join construction.
 
-<a name="queryset.join.JoinParameters.prev_model"></a>
-#### prev\_model
-
-<a name="queryset.join.JoinParameters.previous_alias"></a>
-#### previous\_alias
-
-<a name="queryset.join.JoinParameters.from_table"></a>
-#### from\_table
-
-<a name="queryset.join.JoinParameters.model_cls"></a>
-#### model\_cls
-
 <a name="queryset.join.SqlJoin"></a>
 ## SqlJoin Objects
 
 ```python
 class SqlJoin()
-```
-
-<a name="queryset.join.SqlJoin.__init__"></a>
-#### \_\_init\_\_
-
-```python
- | __init__(used_aliases: List, select_from: sqlalchemy.sql.select, columns: List[sqlalchemy.Column], fields: Optional[Union[Set, Dict]], exclude_fields: Optional[Union[Set, Dict]], order_columns: Optional[List], sorted_orders: OrderedDict) -> None
 ```
 
 <a name="queryset.join.SqlJoin.alias_manager"></a>

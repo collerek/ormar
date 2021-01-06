@@ -14,15 +14,6 @@ Different types of relations supported by ormar:
 *  reverse ForeignKey = REVERSE
 *  ManyToMany = MULTIPLE
 
-<a name="relations.relation.RelationType.PRIMARY"></a>
-#### PRIMARY
-
-<a name="relations.relation.RelationType.REVERSE"></a>
-#### REVERSE
-
-<a name="relations.relation.RelationType.MULTIPLE"></a>
-#### MULTIPLE
-
 <a name="relations.relation.Relation"></a>
 ## Relation Objects
 
@@ -118,11 +109,4 @@ Return the related model or models from RelationProxy.
 **Returns**:
 
 `(Optional[Union[List[Model], Model]])`: related model/models if set
-
-<a name="relations.relation.Relation.__repr__"></a>
-#### \_\_repr\_\_
-
-```python
- | __repr__() -> str
-```
 

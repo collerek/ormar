@@ -15,9 +15,6 @@ Constructed with ModelMetaclass which in turn also inherits pydantic metaclass.
 Abstracts away all internals and helper functions, so final Model class has only
 the logic concerned with database connection and data persistance.
 
-<a name="models.newbasemodel.NewBaseModel.__slots__"></a>
-#### \_\_slots\_\_
-
 <a name="models.newbasemodel.NewBaseModel.__init__"></a>
 #### \_\_init\_\_
 
