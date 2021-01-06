@@ -60,3 +60,9 @@ mkdocs build
 
 # ... commit, push, and create your pull request
 ```
+
+!!!tip
+    For more information on how and why ormar works the way it works 
+    please see the [API documentation][API documentation]
+
+[API documentation]: ./api/index.md

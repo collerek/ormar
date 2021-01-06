@@ -17,6 +17,20 @@ def is_field_nullable(
     server_default: Any,
     pydantic_only: Optional[bool],
 ) -> bool:
+    """
+    Checks if the given field should be nullable/ optional based on parameters given.
+
+    :param nullable: flag explicit setting a column as nullable
+    :type nullable: Optional[bool]
+    :param default: value or function to be called as default in python
+    :type default: Any
+    :param server_default: function to be called as default by sql server
+    :type server_default: Any
+    :param pydantic_only: flag if fields should not be included in the sql table
+    :type pydantic_only: Optional[bool]
+    :return: result of the check
+    :rtype: bool
+    """
     if nullable is None:
         return (
             default is not None
@@ -27,10 +41,24 @@ def is_field_nullable(
 
 
 def is_auto_primary_key(primary_key: bool, autoincrement: bool) -> bool:
+    """
+    Checks if field is an autoincrement pk -> if yes it's optional.
+
+    :param primary_key: flag if field is a pk field
+    :type primary_key: bool
+    :param autoincrement: flag if field should be autoincrement
+    :type autoincrement: bool
+    :return: result of the check
+    :rtype: bool
+    """
     return primary_key and autoincrement
 
 
 class ModelFieldFactory:
+    """
+    Default field factory that construct Field classes and populated their values.
+    """
+
     _bases: Any = (BaseField,)
     _type: Any = None
 
@@ -66,14 +94,31 @@ class ModelFieldFactory:
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:  # pragma no cover
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
         return None
 
     @classmethod
     def validate(cls, **kwargs: Any) -> None:  # pragma no cover
-        pass
+        """
+        Used to validate if all required parameters on a given field type are set.
+        :param kwargs: all params passed during construction
+        :type kwargs: Any
+        """
 
 
 class String(ModelFieldFactory, str):
+    """
+    String field factory that construct Field classes and populated their values.
+    """
+
     _type = str
 
     def __new__(  # type: ignore # noqa CFQ002
@@ -100,10 +145,24 @@ class String(ModelFieldFactory, str):
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
         return sqlalchemy.String(length=kwargs.get("max_length"))
 
     @classmethod
     def validate(cls, **kwargs: Any) -> None:
+        """
+        Used to validate if all required parameters on a given field type are set.
+        :param kwargs: all params passed during construction
+        :type kwargs: Any
+        """
         max_length = kwargs.get("max_length", None)
         if max_length is None or max_length <= 0:
             raise ModelDefinitionError(
@@ -112,6 +171,10 @@ class String(ModelFieldFactory, str):
 
 
 class Integer(ModelFieldFactory, int):
+    """
+    Integer field factory that construct Field classes and populated their values.
+    """
+
     _type = int
 
     def __new__(  # type: ignore
@@ -142,10 +205,23 @@ class Integer(ModelFieldFactory, int):
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
         return sqlalchemy.Integer()
 
 
 class Text(ModelFieldFactory, str):
+    """
+    Text field factory that construct Field classes and populated their values.
+    """
+
     _type = str
 
     def __new__(  # type: ignore
@@ -164,10 +240,23 @@ class Text(ModelFieldFactory, str):
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
         return sqlalchemy.Text()
 
 
 class Float(ModelFieldFactory, float):
+    """
+    Float field factory that construct Field classes and populated their values.
+    """
+
     _type = float
 
     def __new__(  # type: ignore
@@ -192,6 +281,15 @@ class Float(ModelFieldFactory, float):
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
         return sqlalchemy.Float()
 
 
@@ -204,46 +302,115 @@ if TYPE_CHECKING:  # pragma: nocover
 else:
 
     class Boolean(ModelFieldFactory, int):
+        """
+        Boolean field factory that construct Field classes and populated their values.
+        """
+
         _type = bool
 
         @classmethod
         def get_column_type(cls, **kwargs: Any) -> Any:
+            """
+            Return proper type of db column for given field type.
+            Accepts required and optional parameters that each column type accepts.
+
+            :param kwargs: key, value pairs of sqlalchemy options
+            :type kwargs: Any
+            :return: initialized column with proper options
+            :rtype: sqlalchemy Column
+            """
             return sqlalchemy.Boolean()
 
 
 class DateTime(ModelFieldFactory, datetime.datetime):
+    """
+    DateTime field factory that construct Field classes and populated their values.
+    """
+
     _type = datetime.datetime
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
         return sqlalchemy.DateTime()
 
 
 class Date(ModelFieldFactory, datetime.date):
+    """
+    Date field factory that construct Field classes and populated their values.
+    """
+
     _type = datetime.date
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
         return sqlalchemy.Date()
 
 
 class Time(ModelFieldFactory, datetime.time):
+    """
+    Time field factory that construct Field classes and populated their values.
+    """
+
     _type = datetime.time
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
         return sqlalchemy.Time()
 
 
 class JSON(ModelFieldFactory, pydantic.Json):
+    """
+    JSON field factory that construct Field classes and populated their values.
+    """
+
     _type = pydantic.Json
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
         return sqlalchemy.JSON()
 
 
 class BigInteger(Integer, int):
+    """
+    BigInteger field factory that construct Field classes and populated their values.
+    """
+
     _type = int
 
     def __new__(  # type: ignore
@@ -274,10 +441,23 @@ class BigInteger(Integer, int):
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
         return sqlalchemy.BigInteger()
 
 
 class Decimal(ModelFieldFactory, decimal.Decimal):
+    """
+    Decimal field factory that construct Field classes and populated their values.
+    """
+
     _type = decimal.Decimal
 
     def __new__(  # type: ignore # noqa CFQ002
@@ -317,12 +497,26 @@ class Decimal(ModelFieldFactory, decimal.Decimal):
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
         precision = kwargs.get("precision")
         scale = kwargs.get("scale")
         return sqlalchemy.DECIMAL(precision=precision, scale=scale)
 
     @classmethod
     def validate(cls, **kwargs: Any) -> None:
+        """
+        Used to validate if all required parameters on a given field type are set.
+        :param kwargs: all params passed during construction
+        :type kwargs: Any
+        """
         precision = kwargs.get("precision")
         scale = kwargs.get("scale")
         if precision is None or precision < 0 or scale is None or scale < 0:
@@ -332,6 +526,10 @@ class Decimal(ModelFieldFactory, decimal.Decimal):
 
 
 class UUID(ModelFieldFactory, uuid.UUID):
+    """
+    UUID field factory that construct Field classes and populated their values.
+    """
+
     _type = uuid.UUID
 
     def __new__(  # type: ignore # noqa CFQ002
@@ -350,5 +548,14 @@ class UUID(ModelFieldFactory, uuid.UUID):
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
         uuid_format = kwargs.get("uuid_format", "hex")
         return sqlalchemy_uuid.UUID(uuid_format=uuid_format)

@@ -198,6 +198,23 @@ class BaseField(FieldInfo):
         return False
 
     @classmethod
+    def construct_constraints(cls) -> List:
+        """
+        Converts list of ormar constraints into sqlalchemy ForeignKeys.
+        Has to be done dynamically as sqlalchemy binds ForeignKey to the table.
+        And we need a new ForeignKey for subclasses of current model
+
+        :return: List of sqlalchemy foreign keys - by default one.
+        :rtype: List[sqlalchemy.schema.ForeignKey]
+        """
+        return [
+            sqlalchemy.schema.ForeignKey(
+                con.name, ondelete=con.ondelete, onupdate=con.onupdate
+            )
+            for con in cls.constraints
+        ]
+
+    @classmethod
     def get_column(cls, name: str) -> sqlalchemy.Column:
         """
         Returns definition of sqlalchemy.Column used in creation of sqlalchemy.Table.
@@ -212,7 +229,7 @@ class BaseField(FieldInfo):
         return sqlalchemy.Column(
             cls.alias or name,
             cls.column_type,
-            *cls.constraints,
+            *cls.construct_constraints(),
             primary_key=cls.primary_key,
             nullable=cls.nullable and not cls.primary_key,
             index=cls.index,

@@ -1,3 +1,8 @@
+"""
+Gathers all exceptions thrown by ormar.
+"""
+
+
 class AsyncOrmException(Exception):
     """
         Base ormar Exception
@@ -8,7 +13,8 @@ class AsyncOrmException(Exception):
 
 class ModelDefinitionError(AsyncOrmException):
     """
-        Raised for errors related to the model definition itself.
+        Raised for errors related to the model definition itself:
+
         * setting @property_field on method with arguments other than func(self)
         * defining a Field without required parameters
         * defining a model with more than one primary_key
@@ -46,7 +52,8 @@ class MultipleMatches(AsyncOrmException):
 
 class QueryDefinitionError(AsyncOrmException):
     """
-        Raised for errors in query definition.
+        Raised for errors in query definition:
+
         * using contains or icontains filter with instance of the Model
         * using Queryset.update() without filter and setting each flag to True
         * using Queryset.delete() without filter and setting each flag to True

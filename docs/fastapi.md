@@ -9,20 +9,46 @@ Here you can find a very simple sample application code.
 !!!warning
     This example assumes that you already have a database created. If that is not the case please visit [database initialization][database initialization] section.
 
+!!!tip
+    The following example (all sections) should be put in one file.
+    
+    It's divided into subsections for clarity.
 
 ## Imports and initialization 
 
 First take care of the imports and initialization 
-```python hl_lines="1-12"
---8<-- "../docs_src/fastapi/docs001.py"
+```python
+from typing import List, Optional
+
+import databases
+import sqlalchemy
+from fastapi import FastAPI
+
+import ormar
+
+app = FastAPI()
+metadata = sqlalchemy.MetaData()
+database = databases.Database("sqlite:///test.db")
+app.state.database = database
 ```
 
 ## Database connection 
 
 Next define startup and shutdown events (or use middleware)
 - note that this is `databases` specific setting not the ormar one
-```python hl_lines="15-26"
---8<-- "../docs_src/fastapi/docs001.py"
+```python
+@app.on_event("startup")
+async def startup() -> None:
+    database_ = app.state.database
+    if not database_.is_connected:
+        await database_.connect()
+
+
+@app.on_event("shutdown")
+async def shutdown() -> None:
+    database_ = app.state.database
+    if database_.is_connected:
+        await database_.disconnect()
 ```
 
 !!!info
@@ -33,8 +59,27 @@ Next define startup and shutdown events (or use middleware)
 Define ormar models with appropriate fields. 
 
 Those models will be used insted of pydantic ones.
-```python hl_lines="29-47"
---8<-- "../docs_src/fastapi/docs001.py"
+
+```python
+class Category(ormar.Model):
+    class Meta:
+        tablename = "categories"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
+class Item(ormar.Model):
+    class Meta:
+        tablename = "items"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
 ```
 
 !!!tip
@@ -45,8 +90,38 @@ Those models will be used insted of pydantic ones.
 Define your desired endpoints, note how `ormar` models are used both 
 as `response_model` and as a requests parameters.
 
-```python hl_lines="50-79"
---8<-- "../docs_src/fastapi/docs001.py"
+```python
+@app.get("/items/", response_model=List[Item])
+async def get_items():
+    items = await Item.objects.select_related("category").all()
+    return items
+
+
+@app.post("/items/", response_model=Item)
+async def create_item(item: Item):
+    await item.save()
+    return item
+
+
+@app.post("/categories/", response_model=Category)
+async def create_category(category: Category):
+    await category.save()
+    return category
+
+
+@app.put("/items/{item_id}")
+async def get_item(item_id: int, item: Item):
+    item_db = await Item.objects.get(pk=item_id)
+    return await item_db.update(**item.dict())
+
+
+@app.delete("/items/{item_id}")
+async def delete_item(item_id: int, item: Item = None):
+    if item:
+        return {"deleted_rows": await item.delete()}
+    item_db = await Item.objects.get(pk=item_id)
+    return {"deleted_rows": await item_db.delete()}
+
 ```
 
 !!!note
@@ -133,6 +208,6 @@ def test_all_endpoints():
     You can read more on testing fastapi in [fastapi][fastapi] docs. 
 
 [fastapi]: https://fastapi.tiangolo.com/
-[models]: ./models.md
-[database initialization]:  ../models/#database-initialization-migrations
+[models]: ./models/index.md
+[database initialization]:  ./models/migrations.md
 [tests]: https://github.com/collerek/ormar/tree/master/tests

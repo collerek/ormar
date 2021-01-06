@@ -2,15 +2,15 @@ import databases
 import sqlalchemy
 
 import ormar
-from ormar.models.excludable import Excludable
+from ormar.models.mixins import ExcludableMixin
 from ormar.queryset.prefetch_query import sort_models
 from ormar.queryset.utils import translate_list_to_dict, update_dict_from_list, update
 from tests.settings import DATABASE_URL
 
 
 def test_empty_excludable():
-    assert Excludable.is_included(None, "key")  # all fields included if empty
-    assert not Excludable.is_excluded(None, "key")  # none field excluded if empty
+    assert ExcludableMixin.is_included(None, "key")  # all fields included if empty
+    assert not ExcludableMixin.is_excluded(None, "key")  # none field excluded if empty
 
 
 def test_list_to_dict_translation():

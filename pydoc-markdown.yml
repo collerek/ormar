@@ -1,0 +1,152 @@
+output_directory: docs/api
+loaders:
+  - type: python
+    search_path: [ormar/]
+processors:
+  - type: filter
+    documented_only: true
+    skip_empty_modules: false
+    exclude_private: false
+    exclude_special: false
+  - type: sphinx
+  - type: crossref
+renderer:
+  type: mkdocs
+  pages:
+    - title: Models
+      children:
+        - title: Model Metaclass
+          contents:
+            - models.metaclass.*
+        - title: Model
+          contents:
+            - models.model.*
+        - title: New BaseModel
+          contents:
+            - models.newbasemodel.*
+        - title: Model Table Proxy
+          contents:
+            - models.modelproxy.*
+        - title: Helpers
+          children:
+            - title: models
+              contents:
+                - models.helpers.models.*
+            - title: pydantic
+              contents:
+                - models.helpers.pydantic.*
+            - title: relations
+              contents:
+                - models.helpers.relations.*
+            - title: sqlalchemy
+              contents:
+                - models.helpers.sqlalchemy.*
+        - title: Mixins
+          children:
+            - title: Alias Mixin
+              contents:
+                - models.mixins.alias_mixin.*
+            - title: Excludable Mixin
+              contents:
+                - models.mixins.excludable_mixin.*
+            - title: Merge Model Mixin
+              contents:
+                - models.mixins.merge_mixin.*
+            - title: Prefetch Query Mixin
+              contents:
+                - models.mixins.prefetch_mixin.*
+            - title: Relation Mixin
+              contents:
+                - models.mixins.relation_mixin.*
+            - title: Save Prepare Mixin
+              contents:
+                - models.mixins.save_mixin.*
+    - title: Fields
+      children:
+        - title: Base Field
+          contents:
+            - fields.base.*
+        - title: Model Fields
+          contents:
+            - fields.model_fields.*
+        - title: Foreign Key
+          contents:
+            - fields.foreign_key.*
+        - title: Many To Many
+          contents:
+            - fields.many_to_many.*
+        - title: Decorators
+          contents:
+            - decorators.property_field.*
+    - title: Query Set
+      children:
+        - title: Query Set
+          contents:
+            - queryset.queryset.*
+        - title: Query
+          contents:
+            - queryset.query.*
+        - title: Prefetch Query
+          contents:
+            - queryset.prefetch_query.*
+        - title: Join
+          contents:
+            - queryset.join.*
+        - title: Clause
+          contents:
+            - queryset.clause.*
+        - title: Filter Query
+          contents:
+            - queryset.filter_query.*
+        - title: Order Query
+          contents:
+            - queryset.order_query.*
+        - title: Limit Query
+          contents:
+            - queryset.limit_query.*
+        - title: Offset Query
+          contents:
+            - queryset.offset_query.*
+        - title: Utils
+          contents:
+            - queryset.utils.*
+    - title: Relations
+      children:
+        - title: Relation Manager
+          contents:
+            - relations.relation_manager.*
+        - title: Relation
+          contents:
+            - relations.relation.*
+        - title: Relation Proxy
+          contents:
+            - relations.relation_proxy.*
+        - title: Queryset Proxy
+          contents:
+            - relations.querysetproxy.*
+        - title: Alias Manager
+          contents:
+            - relations.alias_manager.*
+        - title: Utils
+          contents:
+            - relations.utils.*
+    - title: Signals
+      children:
+        - title: Signal
+          contents:
+            - signals.*
+        - title: Decorators
+          contents:
+            - decorators.signals.*
+    - title: Exceptions
+      contents:
+        - exceptions.*
+  mkdocs_config:
+    site_name: Ormar
+    theme:
+      name: material
+      highlightjs: true
+      hljs_languages:
+        - python
+      palette:
+        primary: indigo

@@ -1,3 +1,6 @@
+"""
+Contains QuerySet and different Query classes to allow for constructing of sql queries.
+"""
 from ormar.queryset.filter_query import FilterQuery
 from ormar.queryset.limit_query import LimitQuery
 from ormar.queryset.offset_query import OffsetQuery

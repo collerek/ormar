@@ -2,6 +2,7 @@
 Module with all decorators that are exposed for users.
 
 Currently only:
+
 * property_field - exposing @property like function as field in Model.dict()
 * predefined signals decorators (pre/post + save/update/delete)
 

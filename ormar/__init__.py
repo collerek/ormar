@@ -1,3 +1,24 @@
+"""
+The `ormar` package is an async mini ORM for Python, with support for **Postgres,
+MySQL**, and **SQLite**.
+
+The main benefit of using `ormar` are:
+
+*  getting an **async ORM that can be used with async frameworks**
+(fastapi, starlette etc.)
+*  getting just **one model to maintain** - you don't have to maintain pydantic
+and other orm model (sqlalchemy, peewee, gino etc.)
+
+The goal was to create a simple ORM that can be **used directly
+(as request and response models)
+with `fastapi`** that bases it's data validation on pydantic.
+
+Ormar - apart form obvious ORM in name - get it's name from ormar in swedish which means
+snakes, and ormar(e) in italian which means cabinet.
+
+And what's a better name for python ORM than snakes cabinet :)
+
+"""
 from ormar.decorators import (
     post_delete,
     post_save,
@@ -44,7 +65,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.7.5"
+__version__ = "0.8.0"
 __all__ = [
     "Integer",
     "BigInteger",

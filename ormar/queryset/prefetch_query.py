@@ -24,6 +24,18 @@ if TYPE_CHECKING:  # pragma: no cover
 def add_relation_field_to_fields(
     fields: Union[Set[Any], Dict[Any, Any], None], related_field_name: str
 ) -> Union[Set[Any], Dict[Any, Any], None]:
+    """
+    Adds related field into fields to include as otherwise it would be skipped.
+    Related field is added only if fields are already populated.
+    Empty fields implies all fields.
+
+    :param fields: Union[Set[Any], Dict[Any, Any], None]
+    :type fields: Dict
+    :param related_field_name: name of the field with relation
+    :type related_field_name: str
+    :return: updated fields dict
+    :rtype: Union[Set[Any], Dict[Any, Any], None]
+    """
     if fields and related_field_name not in fields:
         if isinstance(fields, dict):
             fields[related_field_name] = ...
@@ -33,6 +45,18 @@ def add_relation_field_to_fields(
 
 
 def sort_models(models: List["Model"], orders_by: Dict) -> List["Model"]:
+    """
+    Since prefetch query gets all related models by ids the sorting needs to happen in
+    python. Since by default models are already sorted by id here we resort only if
+    order_by parameters was set.
+
+    :param models: list of models already fetched from db
+    :type models: List[tests.test_prefetch_related.Division]
+    :param orders_by: order by dictionary
+    :type orders_by: Dict[str, str]
+    :return: sorted list of models
+    :rtype: List[tests.test_prefetch_related.Division]
+    """
     sort_criteria = [
         (key, value) for key, value in orders_by.items() if isinstance(value, str)
     ]
@@ -54,6 +78,29 @@ def set_children_on_model(  # noqa: CCR001
     models: Dict,
     orders_by: Dict,
 ) -> None:
+    """
+    Extract ids of child models by given relation id key value.
+
+    Based on those ids the actual children model instances are fetched from
+    already fetched data.
+
+    If needed the child models are resorted according to passed orders_by dict.
+
+    Also relation is registered as each child is set as parent related field name value.
+
+    :param model: parent model instance
+    :type model: Model
+    :param related: name of the related field
+    :type related: str
+    :param children: dictionary of children ids/ related field value
+    :type children: Dict[int, set]
+    :param model_id: id of the model on which children should be set
+    :type model_id: int
+    :param models: dictionary of child models instances
+    :type models: Dict
+    :param orders_by: order_by dictionary
+    :type orders_by: Dict
+    """
     for key, child_models in children.items():
         if key == model_id:
             models_to_set = [models[child] for child in sorted(child_models)]
@@ -67,6 +114,12 @@ def set_children_on_model(  # noqa: CCR001
 
 
 class PrefetchQuery:
+    """
+    Query used to fetch related models in subsequent queries.
+    Each model is fetched only ones by the name of the relation.
+    That means that for each prefetch_related entry next query is issued to database.
+    """
+
     def __init__(  # noqa: CFQ002
         self,
         model_cls: Type["Model"],
@@ -92,6 +145,22 @@ class PrefetchQuery:
     async def prefetch_related(
         self, models: Sequence["Model"], rows: List
     ) -> Sequence["Model"]:
+        """
+        Main entry point for prefetch_query.
+
+        Receives list of already initialized parent models with all children from
+        select_related already populated. Receives also list of row sql result rows
+        as it's quicker to extract ids that way instead of calling each model.
+
+        Returns list with related models already prefetched and set.
+
+        :param models: list of already instantiated models from main query
+        :type models: List[Model]
+        :param rows: row sql result of the main query before the prefetch
+        :type rows: List[sqlalchemy.engine.result.RowProxy]
+        :return: list of models with children prefetched
+        :rtype: List[Model]
+        """
         self.models = extract_models_to_dict_of_lists(
             model_type=self.model, models=models, select_dict=self.select_dict
         )
@@ -101,6 +170,17 @@ class PrefetchQuery:
     def _extract_ids_from_raw_data(
         self, parent_model: Type["Model"], column_name: str
     ) -> Set:
+        """
+        Iterates over raw rows and extract id values of relation columns by using
+        prefixed column name.
+
+        :param parent_model: ormar model class
+        :type parent_model: Type[Model]
+        :param column_name: name of the relation column which is a key column
+        :type column_name: str
+        :return: set of ids of related model that should be extracted
+        :rtype: set
+        """
         list_of_ids = set()
         current_data = self.already_extracted.get(parent_model.get_name(), {})
         table_prefix = current_data.get("prefix", "")
@@ -113,6 +193,17 @@ class PrefetchQuery:
     def _extract_ids_from_preloaded_models(
         self, parent_model: Type["Model"], column_name: str
     ) -> Set:
+        """
+        Extracts relation ids from already populated models if they were included
+        in the original query before.
+
+        :param parent_model: model from which related ids should be extracted
+        :type parent_model: Type["Model"]
+        :param column_name: name of the relation column which is a key column
+        :type column_name: str
+        :return: set of ids of related model that should be extracted
+        :rtype: set
+        """
         list_of_ids = set()
         for model in self.models.get(parent_model.get_name(), []):
             child = getattr(model, column_name)
@@ -123,15 +214,27 @@ class PrefetchQuery:
         return list_of_ids
 
     def _extract_required_ids(
-        self, parent_model: Type["Model"], target_model: Type["Model"], reverse: bool,
+        self, parent_model: Type["Model"], reverse: bool, related: str,
     ) -> Set:
+        """
+        Delegates extraction of the fields to either get ids from raw sql response
+        or from already populated models.
 
+        :param parent_model: model from which related ids should be extracted
+        :type parent_model: Type["Model"]
+        :param reverse: flag if the relation is reverse
+        :type reverse: bool
+        :param related: name of the field with relation
+        :type related: str
+        :return: set of ids of related model that should be extracted
+        :rtype: set
+        """
         use_raw = parent_model.get_name() not in self.models
 
         column_name = parent_model.get_column_name_for_id_extraction(
             parent_model=parent_model,
-            target_model=target_model,
             reverse=reverse,
+            related=related,
             use_raw=use_raw,
         )
 
@@ -151,8 +254,25 @@ class PrefetchQuery:
         reverse: bool,
         related: str,
     ) -> List:
+        """
+        Populates where clause with condition to return only models within the
+        set of extracted ids.
+
+        If there are no ids for relation the empty list is returned.
+
+        :param parent_model: model from which related ids should be extracted
+        :type parent_model: Type["Model"]
+        :param target_model: model to which relation leads to
+        :type target_model: Type["Model"]
+        :param reverse: flag if the relation is reverse
+        :type reverse: bool
+        :param related: name of the field with relation
+        :type related: str
+        :return:
+        :rtype: List[sqlalchemy.sql.elements.TextClause]
+        """
         ids = self._extract_required_ids(
-            parent_model=parent_model, target_model=target_model, reverse=reverse,
+            parent_model=parent_model, reverse=reverse, related=related
         )
         if ids:
             (
@@ -175,7 +295,19 @@ class PrefetchQuery:
     def _populate_nested_related(
         self, model: "Model", prefetch_dict: Dict, orders_by: Dict,
     ) -> "Model":
+        """
+        Populates all related models children of parent model that are
+        included in prefetch query.
 
+        :param model: ormar model instance
+        :type model: Model
+        :param prefetch_dict: dictionary of models to prefetch
+        :type prefetch_dict: Dict
+        :param orders_by: dictionary of order bys
+        :type orders_by: Dict
+        :return: model with children populated
+        :rtype: Model
+        """
         related_to_extract = model.get_filtered_names_to_extract(
             prefetch_dict=prefetch_dict
         )
@@ -206,6 +338,24 @@ class PrefetchQuery:
     async def _prefetch_related_models(
         self, models: Sequence["Model"], rows: List
     ) -> Sequence["Model"]:
+        """
+        Main method of the query.
+
+        Translates select nad prefetch list into dictionaries to avoid querying the
+        same related models multiple times.
+
+        Keeps the list of already extracted models.
+
+        Extracts the related models from the database and later populate all children
+        on each of the parent models from list.
+
+        :param models: list of parent models from main query
+        :type models: List[Model]
+        :param rows: raw response from sql query
+        :type rows: List[sqlalchemy.engine.result.RowProxy]
+        :return: list of models with prefetch children populated
+        :rtype: List[Model]
+        """
         self.already_extracted = {self.model.get_name(): {"raw": rows}}
         select_dict = translate_list_to_dict(self._select_related)
         prefetch_dict = translate_list_to_dict(self._prefetch_related)
@@ -242,7 +392,32 @@ class PrefetchQuery:
         exclude_fields: Union[Set[Any], Dict[Any, Any], None],
         orders_by: Dict,
     ) -> None:
+        """
+        Constructs queries with required ids and extracts data with fields that should
+        be included/excluded.
 
+        Runs the queries against the database and populated dictionaries with ids and
+        with actual extracted children models.
+
+        Calls itself recurrently to extract deeper nested relations of related model.
+
+        :param related: name of the relation
+        :type related: str
+        :param target_model: model to which relation leads to
+        :type target_model: Type[Model]
+        :param prefetch_dict: prefetch related list converted into dictionary
+        :type prefetch_dict: Dict
+        :param select_dict: select related list converted into dictionary
+        :type select_dict: Dict
+        :param fields: fields to include
+        :type fields: Union[Set[Any], Dict[Any, Any], None]
+        :param exclude_fields: fields to exclude
+        :type exclude_fields: Union[Set[Any], Dict[Any, Any], None]
+        :param orders_by: dictionary of order bys clauses
+        :type orders_by: Dict
+        :return: None
+        :rtype: None
+        """
         fields = target_model.get_included(fields, related)
         exclude_fields = target_model.get_excluded(exclude_fields, related)
         target_field = target_model.Meta.model_fields[related]
@@ -320,6 +495,24 @@ class PrefetchQuery:
         exclude_fields: Union[Set[Any], Dict[Any, Any], None],
         filter_clauses: List,
     ) -> Tuple[str, List]:
+        """
+        Actually runs the queries against the database and populates the raw response
+        for given related model.
+
+        Returns table prefix as it's later needed to eventually initialize the children
+        models.
+
+        :param target_field: ormar field with relation definition
+        :type target_field: Type["BaseField"]
+        :param fields: fields to include
+        :type fields: Union[Set[Any], Dict[Any, Any], None]
+        :param exclude_fields: fields to exclude
+        :type exclude_fields: Union[Set[Any], Dict[Any, Any], None]
+        :param filter_clauses: list of clauses, actually one clause with ids of relation
+        :type filter_clauses: List[sqlalchemy.sql.elements.TextClause]
+        :return: table prefix and raw rows from sql response
+        :rtype: Tuple[str, List]
+        """
         target_model = target_field.to
         target_name = target_model.get_name()
         select_related = []
@@ -328,7 +521,7 @@ class PrefetchQuery:
         if issubclass(target_field, ManyToManyField):
             query_target = target_field.through
             select_related = [target_name]
-            table_prefix = target_field.to.Meta.alias_manager.resolve_relation_join_new(
+            table_prefix = target_field.to.Meta.alias_manager.resolve_relation_alias(
                 query_target, target_name
             )
             self.already_extracted.setdefault(target_name, {})["prefix"] = table_prefix
@@ -343,6 +536,7 @@ class PrefetchQuery:
             fields=fields,
             exclude_fields=exclude_fields,
             order_bys=None,
+            limit_raw_sql=False,
         )
         expr = qry.build_select_expression()
         # print(expr.compile(compile_kwargs={"literal_binds": True}))
@@ -352,6 +546,17 @@ class PrefetchQuery:
 
     @staticmethod
     def _get_select_related_if_apply(related: str, select_dict: Dict) -> Dict:
+        """
+        Extract nested part of select_related dictionary to extract models nested
+        deeper on related model and already loaded in select related query.
+
+        :param related: name of the relation
+        :type related: str
+        :param select_dict: dictionary of select related models in main query
+        :type select_dict: Dict
+        :return: dictionary with nested part of select related
+        :rtype: Dict
+        """
         return (
             select_dict.get(related, {})
             if (select_dict and select_dict is not Ellipsis and related in select_dict)
@@ -361,6 +566,16 @@ class PrefetchQuery:
     def _update_already_loaded_rows(  # noqa: CFQ002
         self, target_field: Type["BaseField"], prefetch_dict: Dict, orders_by: Dict,
     ) -> None:
+        """
+        Updates models that are already loaded, usually children of children.
+
+        :param target_field: ormar field with relation definition
+        :type target_field: Type["BaseField"]
+        :param prefetch_dict: dictionaries of related models to prefetch
+        :type prefetch_dict: Dict
+        :param orders_by: dictionary of order by clauses by model
+        :type orders_by: Dict
+        """
         target_model = target_field.to
         for instance in self.models.get(target_model.get_name(), []):
             self._populate_nested_related(
@@ -378,6 +593,33 @@ class PrefetchQuery:
         prefetch_dict: Dict,
         orders_by: Dict,
     ) -> None:
+        """
+        Instantiates children models extracted from given relation.
+
+        Populates them with their own nested children if they are included in prefetch
+        query.
+
+        Sets the initialized models and ids of them under corresponding keys in
+        already_extracted dictionary. Later those instances will be fetched by ids
+        and set on the parent model after sorting if needed.
+
+        :param rows: raw sql response from the prefetch query
+        :type rows: List[sqlalchemy.engine.result.RowProxy]
+        :param target_field: field with relation definition from parent model
+        :type target_field: Type["BaseField"]
+        :param parent_model: model with relation definition
+        :type parent_model: Type[Model]
+        :param table_prefix: prefix of the target table from current relation
+        :type table_prefix: str
+        :param fields: fields to include
+        :type fields: Union[Set[Any], Dict[Any, Any], None]
+        :param exclude_fields: fields to exclude
+        :type exclude_fields: Union[Set[Any], Dict[Any, Any], None]
+        :param prefetch_dict: dictionaries of related models to prefetch
+        :type prefetch_dict: Dict
+        :param orders_by: dictionary of order by clauses by model
+        :type orders_by: Dict
+        """
         target_model = target_field.to
         for row in rows:
             field_name = parent_model.get_related_field_name(target_field=target_field)
@@ -387,6 +629,9 @@ class PrefetchQuery:
                 table_prefix=table_prefix,
                 fields=fields,
                 exclude_fields=exclude_fields,
+            )
+            item["__excluded__"] = target_model.get_names_to_exclude(
+                fields=fields, exclude_fields=exclude_fields
             )
             instance = target_model(**item)
             instance = self._populate_nested_related(

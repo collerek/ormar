@@ -58,6 +58,16 @@ class User(ormar.Model):
     name: str = ormar.String(max_length=100, default="")
 
 
+class User2(ormar.Model):
+    class Meta:
+        tablename = "users2"
+        metadata = metadata
+        database = database
+
+    id: str = ormar.String(primary_key=True, max_length=100)
+    name: str = ormar.String(max_length=100, default="")
+
+
 class Product(ormar.Model):
     class Meta:
         tablename = "product"
@@ -215,8 +225,9 @@ async def test_model_get():
             assert lookup == user
 
             user = await User.objects.create(name="Jane")
+            await User.objects.create(name="Jane")
             with pytest.raises(ormar.MultipleMatches):
-                await User.objects.get()
+                await User.objects.get(name="Jane")
 
             same_user = await User.objects.get(pk=user.id)
             assert same_user.id == user.id
@@ -467,3 +478,32 @@ async def test_start_and_end_filters():
 
             users = await User.objects.filter(name__endswith="igo").all()
             assert len(users) == 2
+
+
+@pytest.mark.asyncio
+async def test_get_and_first():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            await User.objects.create(name="Tom")
+            await User.objects.create(name="Jane")
+            await User.objects.create(name="Lucy")
+            await User.objects.create(name="Zack")
+            await User.objects.create(name="Ula")
+
+            user = await User.objects.get()
+            assert user.name == "Ula"
+
+            user = await User.objects.first()
+            assert user.name == "Tom"
+
+            await User2.objects.create(id="Tom", name="Tom")
+            await User2.objects.create(id="Jane", name="Jane")
+            await User2.objects.create(id="Lucy", name="Lucy")
+            await User2.objects.create(id="Zack", name="Zack")
+            await User2.objects.create(id="Ula", name="Ula")
+
+            user = await User2.objects.get()
+            assert user.name == "Zack"
+
+            user = await User2.objects.first()
+            assert user.name == "Jane"
