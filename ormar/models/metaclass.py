@@ -66,6 +66,7 @@ class ModelMeta:
     property_fields: Set
     signals: SignalEmitter
     abstract: bool
+    requires_ref_update: bool
 
 
 def check_if_field_has_choices(field: Type[BaseField]) -> bool:

@@ -31,7 +31,6 @@ class AliasManager:
     """
 
     def __init__(self) -> None:
-        self._aliases: Dict[str, str] = dict()
         self._aliases_new: Dict[str, str] = dict()
 
     @staticmethod

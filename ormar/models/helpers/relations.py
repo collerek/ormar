@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Type
+from typing import ForwardRef, TYPE_CHECKING, Type
 
 import ormar
 from ormar import ForeignKey, ManyToMany
@@ -61,6 +61,28 @@ def register_many_to_many_relation_on_build(
     )
 
 
+def expand_reverse_relationship(
+    model: Type["Model"], model_field: Type["ForeignKeyField"]
+) -> None:
+    """
+    If the reverse relation has not been set before it's set here.
+
+    :param model: model on which relation should be checked and registered
+    :type model: Model class
+    :param model_field:
+    :type model_field:
+    :return: None
+    :rtype: None
+    """
+    child_model_name = model_field.related_name or model.get_name() + "s"
+    parent_model = model_field.to
+    child = model
+    if reverse_field_not_already_registered(child, child_model_name, parent_model):
+        register_reverse_model_fields(
+            parent_model, child, child_model_name, model_field
+        )
+
+
 def expand_reverse_relationships(model: Type["Model"]) -> None:
     """
     Iterates through model_fields of given model and verifies if all reverse
@@ -72,16 +94,12 @@ def expand_reverse_relationships(model: Type["Model"]) -> None:
     :type model: Model class
     """
     for model_field in model.Meta.model_fields.values():
-        if issubclass(model_field, ForeignKeyField):
-            child_model_name = model_field.related_name or model.get_name() + "s"
-            parent_model = model_field.to
-            child = model
-            if reverse_field_not_already_registered(
-                child, child_model_name, parent_model
-            ):
-                register_reverse_model_fields(
-                    parent_model, child, child_model_name, model_field
-                )
+        if (
+            issubclass(model_field, ForeignKeyField)
+            and not isinstance(model_field.to, ForwardRef)
+            and not isinstance(model_field.through, ForwardRef)
+        ):
+            expand_reverse_relationship(model=model, model_field=model_field)
 
 
 def register_reverse_model_fields(
@@ -142,10 +160,14 @@ def register_relation_in_alias_manager(
     :type field_name: str
     """
     if issubclass(field, ManyToManyField):
+        if isinstance(field.to, ForwardRef) or isinstance(field.through, ForwardRef):
+            return
         register_many_to_many_relation_on_build(
             new_model=new_model, field=field, field_name=field_name
         )
     elif issubclass(field, ForeignKeyField):
+        if isinstance(field.to, ForwardRef):
+            return
         register_relation_on_build(new_model=new_model, field_name=field_name)
 
 

@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type
+from typing import Dict, ForwardRef, List, Optional, TYPE_CHECKING, Tuple, Type
 
 import ormar
 from ormar.fields.foreign_key import ForeignKeyField
@@ -6,6 +6,22 @@ from ormar.models.helpers.pydantic import populate_pydantic_default_values
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+    from ormar.fields import BaseField
+
+
+def is_field_an_forward_ref(field: Type["BaseField"]) -> bool:
+    """
+    Checks if field is a relation field and whether any of the referenced models
+    are ForwardRefs that needs to be updated before proceeding.
+
+    :param field: model field to verify
+    :type field: Type[BaseField]
+    :return: result of the check
+    :rtype: bool
+    """
+    return issubclass(field, ForeignKeyField) and (
+        isinstance(field.to, ForwardRef) or isinstance(field.through, ForwardRef)
+    )
 
 
 def populate_default_options_values(
@@ -32,6 +48,13 @@ def populate_default_options_values(
         new_model.Meta.model_fields = model_fields
     if not hasattr(new_model.Meta, "abstract"):
         new_model.Meta.abstract = False
+
+    if any(
+        is_field_an_forward_ref(field) for field in new_model.Meta.model_fields.values()
+    ):
+        new_model.Meta.requires_ref_update = True
+    else:
+        new_model.Meta.requires_ref_update = False
 
 
 def extract_annotations_and_default_vals(attrs: Dict) -> Tuple[Dict, Dict]:

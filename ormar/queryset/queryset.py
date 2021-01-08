@@ -6,7 +6,7 @@ from sqlalchemy import bindparam
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
-from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
+from ormar.exceptions import ModelError, ModelPersistenceError, QueryDefinitionError
 from ormar.queryset import FilterQuery
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.prefetch_query import PrefetchQuery
@@ -55,6 +55,13 @@ class QuerySet:
         instance: Optional[Union["QuerySet", "QuerysetProxy"]],
         owner: Union[Type["Model"], Type["QuerysetProxy"]],
     ) -> "QuerySet":
+        if issubclass(owner, ormar.Model):
+            if owner.Meta.requires_ref_update:
+                raise ModelError(
+                    f"Model {owner.get_name()} has not updated "
+                    f"ForwardRefs. \nBefore using the model you "
+                    f"need to call update_forward_refs()."
+                )
         if issubclass(owner, ormar.Model):
             return self.__class__(model_cls=owner)
         return self.__class__()  # pragma: no cover

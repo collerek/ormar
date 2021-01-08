@@ -1,8 +1,9 @@
 import uuid
 from dataclasses import dataclass
-from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
+from typing import Any, ForwardRef, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 from pydantic import BaseModel, create_model
+from pydantic.typing import evaluate_forwardref
 from sqlalchemy import UniqueConstraint
 
 import ormar  # noqa I101
@@ -66,6 +67,43 @@ def create_dummy_model(
     return dummy_model
 
 
+def populate_fk_params_based_on_to_model(
+    to: Type["Model"], nullable: bool, onupdate: str = None, ondelete: str = None,
+) -> Tuple[Any, List, Any]:
+    """
+    Based on target to model to which relation leads to populates the type of the
+    pydantic field to use, ForeignKey constraint and type of the target column field.
+
+    :param to: target related ormar Model
+    :type to: Model class
+    :param nullable: marks field as optional/ required
+    :type nullable: bool
+    :param onupdate: parameter passed to sqlalchemy.ForeignKey.
+    How to treat child rows on update of parent (the one where FK is defined) model.
+    :type onupdate: str
+    :param ondelete: parameter passed to sqlalchemy.ForeignKey.
+    How to treat child rows on delete of parent (the one where FK is defined) model.
+    :type ondelete: str
+    :return: tuple with target pydantic type, list of fk constraints and target col type
+    :rtype: Tuple[Any, List, Any]
+    """
+    fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
+    to_field = to.Meta.model_fields[to.Meta.pkname]
+    pk_only_model = create_dummy_model(to, to_field)
+    __type__ = (
+        Union[to_field.__type__, to, pk_only_model]
+        if not nullable
+        else Optional[Union[to_field.__type__, to, pk_only_model]]
+    )
+    constraints = [
+        ForeignKeyConstraint(
+            name=fk_string, ondelete=ondelete, onupdate=onupdate  # type: ignore
+        )
+    ]
+    column_type = to_field.column_type
+    return __type__, constraints, column_type
+
+
 class UniqueColumns(UniqueConstraint):
     """
     Subclass of sqlalchemy.UniqueConstraint.
@@ -86,7 +124,7 @@ class ForeignKeyConstraint:
 
 
 def ForeignKey(  # noqa CFQ002
-    to: Type["Model"],
+    to: Union[Type["Model"], ForwardRef],
     *,
     name: str = None,
     unique: bool = False,
@@ -127,27 +165,26 @@ def ForeignKey(  # noqa CFQ002
     :return: ormar ForeignKeyField with relation to selected model
     :rtype: ForeignKeyField
     """
-    fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
-    to_field = to.Meta.model_fields[to.Meta.pkname]
-    pk_only_model = create_dummy_model(to, to_field)
-    __type__ = (
-        Union[to_field.__type__, to, pk_only_model]
-        if not nullable
-        else Optional[Union[to_field.__type__, to, pk_only_model]]
-    )
+
+    if isinstance(to, ForwardRef):
+        __type__ = to if not nullable else Optional[to]
+        constraints: List = []
+        column_type = None
+    else:
+        __type__, constraints, column_type = populate_fk_params_based_on_to_model(
+            to=to, nullable=nullable, ondelete=ondelete, onupdate=onupdate
+        )
+
     namespace = dict(
         __type__=__type__,
         to=to,
+        through=None,
         alias=name,
         name=kwargs.pop("real_name", None),
         nullable=nullable,
-        constraints=[
-            ForeignKeyConstraint(
-                name=fk_string, ondelete=ondelete, onupdate=onupdate  # type: ignore
-            )
-        ],
+        constraints=constraints,
         unique=unique,
-        column_type=to_field.column_type,
+        column_type=column_type,
         related_name=related_name,
         virtual=virtual,
         primary_key=False,
@@ -155,6 +192,8 @@ def ForeignKey(  # noqa CFQ002
         pydantic_only=False,
         default=None,
         server_default=None,
+        onupdate=onupdate,
+        ondelete=ondelete,
     )
 
     return type("ForeignKey", (ForeignKeyField, BaseField), namespace)
@@ -169,6 +208,33 @@ class ForeignKeyField(BaseField):
     name: str
     related_name: str
     virtual: bool
+    ondelete: str
+    onupdate: str
+
+    @classmethod
+    def evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None:
+        """
+        Evaluates the ForwardRef to actual Field based on global and local namespaces
+
+        :param globalns: global namespace
+        :type globalns: Any
+        :param localns: local namespace
+        :type localns: Any
+        :return: None
+        :rtype: None
+        """
+        if isinstance(cls.to, ForwardRef):
+            cls.to = evaluate_forwardref(cls.to, globalns, localns or None)
+            (
+                cls.__type__,
+                cls.constraints,
+                cls.column_type,
+            ) = populate_fk_params_based_on_to_model(
+                to=cls.to,
+                nullable=cls.nullable,
+                ondelete=cls.ondelete,
+                onupdate=cls.onupdate,
+            )
 
     @classmethod
     def _extract_model_from_sequence(

@@ -40,8 +40,10 @@ class BaseField(FieldInfo):
     pydantic_only: bool
     virtual: bool = False
     choices: typing.Sequence
+
     to: Type["Model"]
     through: Type["Model"]
+    self_reference: bool = False
 
     default: Any
     server_default: Any
@@ -263,3 +265,16 @@ class BaseField(FieldInfo):
         :rtype: Any
         """
         return value
+
+    @classmethod
+    def evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None:
+        """
+        Evaluates the ForwardRef to actual Field based on global and local namespaces
+
+        :param globalns: global namespace
+        :type globalns: Any
+        :param localns: local namespace
+        :type localns: Any
+        :return: None
+        :rtype: None
+        """
