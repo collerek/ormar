@@ -41,6 +41,7 @@ class BaseField(FieldInfo):
     virtual: bool = False
     choices: typing.Sequence
 
+    owner: Type["Model"]
     to: Type["Model"]
     through: Type["Model"]
     self_reference: bool = False
@@ -265,6 +266,29 @@ class BaseField(FieldInfo):
         :rtype: Any
         """
         return value
+
+    @classmethod
+    def set_self_reference_flag(cls):
+        """
+        Sets `self_reference` to True if field to and owner are same model.
+        :return: None
+        :rtype: None
+        """
+        if cls.owner is not None and (
+            cls.owner == cls.to or cls.owner.Meta == cls.to.Meta
+        ):
+            cls.self_reference = True
+
+    @classmethod
+    def has_unresolved_forward_refs(cls) -> bool:
+        """
+        Verifies if the filed has any ForwardRefs that require updating before the
+        model can be used.
+
+        :return: result of the check
+        :rtype: bool
+        """
+        return False
 
     @classmethod
     def evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None:

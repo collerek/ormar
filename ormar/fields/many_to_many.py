@@ -43,7 +43,7 @@ def ManyToMany(
     name: str = None,
     unique: bool = False,
     virtual: bool = False,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> Any:
     """
     Despite a name it's a function that returns constructed ManyToManyField.
@@ -70,6 +70,7 @@ def ManyToMany(
     """
     related_name = kwargs.pop("related_name", None)
     nullable = kwargs.pop("nullable", True)
+    owner = kwargs.pop("owner", None)
 
     if isinstance(to, ForwardRef):
         __type__ = to if not nullable else Optional[to]
@@ -94,6 +95,7 @@ def ManyToMany(
         pydantic_only=False,
         default=None,
         server_default=None,
+        owner=owner,
     )
 
     return type("ManyToMany", (ManyToManyField, BaseField), namespace)
@@ -111,7 +113,29 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :return: name of the field
         :rtype: str
         """
-        return cls.to.get_name()
+        prefix = "to_" if cls.self_reference else ""
+        return f"{prefix}{cls.to.get_name()}"
+
+    @classmethod
+    def default_source_field_name(cls) -> str:
+        """
+        Returns default target model name on through model.
+        :return: name of the field
+        :rtype: str
+        """
+        prefix = "from_" if cls.self_reference else ""
+        return f"{prefix}{cls.owner.get_name()}"
+
+    @classmethod
+    def has_unresolved_forward_refs(cls) -> bool:
+        """
+        Verifies if the filed has any ForwardRefs that require updating before the
+        model can be used.
+
+        :return: result of the check
+        :rtype: bool
+        """
+        return isinstance(cls.to, ForwardRef) or isinstance(cls.through, ForwardRef)
 
     @classmethod
     def evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None:

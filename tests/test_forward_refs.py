@@ -41,28 +41,28 @@ class ChildFriends(ormar.Model):
         database = db
 
 
-class Child(ormar.Model):
-    class Meta(ModelMeta):
-        metadata = metadata
-        database = db
+# class Child(ormar.Model):
+#     class Meta(ModelMeta):
+#         metadata = metadata
+#         database = db
+#
+#     id: int = ormar.Integer(primary_key=True)
+#     name: str = ormar.String(max_length=100)
+#     favourite_game: Game = ormar.ForeignKey(Game, related_name="liked_by")
+#     least_favourite_game: Game = ormar.ForeignKey(Game, related_name="not_liked_by")
+#     friends: List[Child] = ormar.ManyToMany(Child, through=ChildFriends)
+#
+#
+# class Game(ormar.Model):
+#     class Meta(ModelMeta):
+#         metadata = metadata
+#         database = db
+#
+#     id: int = ormar.Integer(primary_key=True)
+#     name: str = ormar.String(max_length=100)
 
-    id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=100)
-    favourite_game: Game = ormar.ForeignKey(Game, related_name="liked_by")
-    least_favourite_game: Game = ormar.ForeignKey(Game, related_name="not_liked_by")
-    friends: List[Child] = ormar.ManyToMany(Child, through=ChildFriends)
 
-
-class Game(ormar.Model):
-    class Meta(ModelMeta):
-        metadata = metadata
-        database = db
-
-    id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=100)
-
-
-Child.update_forward_refs()
+# Child.update_forward_refs()
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -125,22 +125,22 @@ async def test_self_relation():
     assert sam_check.employees[0].name == "Joe"
 
 
-@pytest.mark.asyncio
-async def test_other_forwardref_relation():
-    checkers = await Game.objects.create(name="checkers")
-    uno = await Game(name="Uno").save()
-
-    await Child(name="Billy", favourite_game=uno, least_favourite_game=checkers).save()
-    await Child(name="Kate", favourite_game=checkers, least_favourite_game=uno).save()
-
-    billy_check = await Child.objects.select_related(
-        ["favourite_game", "least_favourite_game"]
-    ).get(name="Billy")
-    assert billy_check.favourite_game == uno
-    assert billy_check.least_favourite_game == checkers
-
-    uno_check = await Game.objects.select_related(["liked_by", "not_liked_by"]).get(
-        name="Uno"
-    )
-    assert uno_check.liked_by[0].name == "Billy"
-    assert uno_check.not_liked_by[0].name == "Kate"
+# @pytest.mark.asyncio
+# async def test_other_forwardref_relation():
+#     checkers = await Game.objects.create(name="checkers")
+#     uno = await Game(name="Uno").save()
+#
+#     await Child(name="Billy", favourite_game=uno, least_favourite_game=checkers).save()
+#     await Child(name="Kate", favourite_game=checkers, least_favourite_game=uno).save()
+#
+#     billy_check = await Child.objects.select_related(
+#         ["favourite_game", "least_favourite_game"]
+#     ).get(name="Billy")
+#     assert billy_check.favourite_game == uno
+#     assert billy_check.least_favourite_game == checkers
+#
+#     uno_check = await Game.objects.select_related(["liked_by", "not_liked_by"]).get(
+#         name="Uno"
+#     )
+#     assert uno_check.liked_by[0].name == "Billy"
+#     assert uno_check.not_liked_by[0].name == "Kate"

@@ -15,58 +15,47 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.models import NewBaseModel
 
 
-def adjust_through_many_to_many_model(
-        model: Type["Model"], child: Type["Model"], model_field: Type[ManyToManyField]
-) -> None:
+def adjust_through_many_to_many_model(model_field: Type[ManyToManyField]) -> None:
     """
     Registers m2m relation on through model.
     Sets ormar.ForeignKey from through model to both child and parent models.
     Sets sqlalchemy.ForeignKey to both child and parent models.
     Sets pydantic fields with child and parent model types.
 
-    :param model: model on which relation is declared
-    :type model: Model class
-    :param child: model to which m2m relation leads
-    :type child: Model class
     :param model_field: relation field defined in parent model
     :type model_field: ManyToManyField
     """
-    same_table_ref = False
-    if child == model or child.Meta == model.Meta:
-        same_table_ref = True
-        model_field.self_reference = True
-
-    if same_table_ref:
-        parent_name = f'to_{model.get_name()}'
-        child_name = f'from_{child.get_name()}'
-    else:
-        parent_name = model.get_name()
-        child_name = child.get_name()
+    parent_name = model_field.default_target_field_name()
+    child_name = model_field.default_source_field_name()
 
     model_field.through.Meta.model_fields[parent_name] = ForeignKey(
-        model, real_name=parent_name, ondelete="CASCADE"
+        model_field.to, real_name=parent_name, ondelete="CASCADE"
     )
     model_field.through.Meta.model_fields[child_name] = ForeignKey(
-        child, real_name=child_name, ondelete="CASCADE"
+        model_field.owner, real_name=child_name, ondelete="CASCADE"
     )
 
-    create_and_append_m2m_fk(model=model, model_field=model_field,
-                             field_name=parent_name)
-    create_and_append_m2m_fk(model=child, model_field=model_field,
-                             field_name=child_name)
+    create_and_append_m2m_fk(
+        model=model_field.to, model_field=model_field, field_name=parent_name
+    )
+    create_and_append_m2m_fk(
+        model=model_field.owner, model_field=model_field, field_name=child_name
+    )
 
-    create_pydantic_field(parent_name, model, model_field)
-    create_pydantic_field(child_name, child, model_field)
+    create_pydantic_field(parent_name, model_field.to, model_field)
+    create_pydantic_field(child_name, model_field.owner, model_field)
 
 
 def create_and_append_m2m_fk(
-        model: Type["Model"], model_field: Type[ManyToManyField], field_name: str
+    model: Type["Model"], model_field: Type[ManyToManyField], field_name: str
 ) -> None:
     """
-    Registers sqlalchemy Column with sqlalchemy.ForeignKey leadning to the model.
+    Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.
 
     Newly created field is added to m2m relation through model Meta columns and table.
 
+    :param field_name: name of the column to create
+    :type field_name: str
     :param model: Model class to which FK should be created
     :type model: Model class
     :param model_field: field with ManyToMany relation
@@ -92,7 +81,7 @@ def create_and_append_m2m_fk(
 
 
 def check_pk_column_validity(
-        field_name: str, field: BaseField, pkname: Optional[str]
+    field_name: str, field: BaseField, pkname: Optional[str]
 ) -> Optional[str]:
     """
     Receives the field marked as primary key and verifies if the pkname
@@ -117,7 +106,7 @@ def check_pk_column_validity(
 
 
 def sqlalchemy_columns_from_model_fields(
-        model_fields: Dict, new_model: Type["Model"]
+    model_fields: Dict, new_model: Type["Model"]
 ) -> Tuple[Optional[str], List[sqlalchemy.Column]]:
     """
     Iterates over declared on Model model fields and extracts fields that
@@ -135,6 +124,8 @@ def sqlalchemy_columns_from_model_fields(
 
     Append fields to columns if it's not pydantic_only,
     virtual ForeignKey or ManyToMany field.
+
+    Sets `owner` on each model_field as reference to newly created Model.
 
     :raises ModelDefinitionError: if validation of related_names fail,
     or pkname validation fails.
@@ -155,19 +146,20 @@ def sqlalchemy_columns_from_model_fields(
     columns = []
     pkname = None
     for field_name, field in model_fields.items():
+        field.owner = new_model
         if field.primary_key:
             pkname = check_pk_column_validity(field_name, field, pkname)
         if (
-                not field.pydantic_only
-                and not field.virtual
-                and not issubclass(field, ManyToManyField)
+            not field.pydantic_only
+            and not field.virtual
+            and not issubclass(field, ManyToManyField)
         ):
             columns.append(field.get_column(field.get_alias()))
     return pkname, columns
 
 
 def populate_meta_tablename_columns_and_pk(
-        name: str, new_model: Type["Model"]
+    name: str, new_model: Type["Model"]
 ) -> Type["Model"]:
     """
     Sets Model tablename if it's not already set in Meta.
@@ -234,7 +226,7 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
     :rtype: Model class
     """
     if not hasattr(meta, "table") and check_for_null_type_columns_from_forward_refs(
-            meta
+        meta
     ):
         meta.table = sqlalchemy.Table(
             meta.tablename,
@@ -245,7 +237,7 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
 
 
 def update_column_definition(
-        model: Union[Type["Model"], Type["NewBaseModel"]], field: Type[ForeignKeyField]
+    model: Union[Type["Model"], Type["NewBaseModel"]], field: Type[ForeignKeyField]
 ) -> None:
     """
     Updates a column with a new type column based on updated parameters in FK fields.

@@ -446,12 +446,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         globalns.setdefault(cls.__name__, cls)
         fields_to_check = cls.Meta.model_fields.copy()
         for field_name, field in fields_to_check.items():
-            if issubclass(field, ForeignKeyField):
+            if field.has_unresolved_forward_refs():
                 field.evaluate_forward_ref(globalns=globalns, localns=localns)
-                expand_reverse_relationship(
-                    model=cls,  # type: ignore
-                    model_field=field,
-                )
+                field.set_self_reference_flag()
+                expand_reverse_relationship(model_field=field)
                 register_relation_in_alias_manager(
                     cls,  # type: ignore
                     field,

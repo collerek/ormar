@@ -166,6 +166,7 @@ def ForeignKey(  # noqa CFQ002
     :rtype: ForeignKeyField
     """
 
+    owner = kwargs.pop("owner", None)
     if isinstance(to, ForwardRef):
         __type__ = to if not nullable else Optional[to]
         constraints: List = []
@@ -194,6 +195,7 @@ def ForeignKey(  # noqa CFQ002
         server_default=None,
         onupdate=onupdate,
         ondelete=ondelete,
+        owner=owner,
     )
 
     return type("ForeignKey", (ForeignKeyField, BaseField), namespace)
@@ -210,6 +212,16 @@ class ForeignKeyField(BaseField):
     virtual: bool
     ondelete: str
     onupdate: str
+
+    @classmethod
+    def get_related_name(cls) -> str:
+        """
+        Returns name to use for reverse relation.
+        It's either set as `related_name` or by default it's owner model. get_name + 's'
+        :return:
+        :rtype:
+        """
+        return cls.related_name or cls.owner.get_name() + "s"
 
     @classmethod
     def evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None:
@@ -370,6 +382,17 @@ class ForeignKeyField(BaseField):
             virtual=cls.virtual,
             relation_name=relation_name,
         )
+
+    @classmethod
+    def has_unresolved_forward_refs(cls) -> bool:
+        """
+        Verifies if the filed has any ForwardRefs that require updating before the
+        model can be used.
+
+        :return: result of the check
+        :rtype: bool
+        """
+        return isinstance(cls.to, ForwardRef)
 
     @classmethod
     def expand_relationship(
