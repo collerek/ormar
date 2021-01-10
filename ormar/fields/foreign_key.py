@@ -214,12 +214,23 @@ class ForeignKeyField(BaseField):
     onupdate: str
 
     @classmethod
+    def get_source_related_name(cls) -> str:
+        """
+        Returns name to use for source relation name.
+        For FK it's the same, differs for m2m fields.
+        It's either set as `related_name` or by default it's owner model. get_name + 's'
+        :return: name of the related_name or default related name.
+        :rtype: str
+        """
+        return cls.get_related_name()
+
+    @classmethod
     def get_related_name(cls) -> str:
         """
         Returns name to use for reverse relation.
         It's either set as `related_name` or by default it's owner model. get_name + 's'
-        :return:
-        :rtype:
+        :return: name of the related_name or default related name.
+        :rtype: str
         """
         return cls.related_name or cls.owner.get_name() + "s"
 
@@ -250,7 +261,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _extract_model_from_sequence(
-        cls, value: List, child: "Model", to_register: bool, relation_name: str
+        cls, value: List, child: "Model", to_register: bool,
     ) -> List["Model"]:
         """
         Takes a list of Models and registers them on parent.
@@ -269,17 +280,14 @@ class ForeignKeyField(BaseField):
         """
         return [
             cls.expand_relationship(  # type: ignore
-                value=val,
-                child=child,
-                to_register=to_register,
-                relation_name=relation_name,
+                value=val, child=child, to_register=to_register,
             )
             for val in value
         ]
 
     @classmethod
     def _register_existing_model(
-        cls, value: "Model", child: "Model", to_register: bool, relation_name: str
+        cls, value: "Model", child: "Model", to_register: bool,
     ) -> "Model":
         """
         Takes already created instance and registers it for parent.
@@ -297,12 +305,12 @@ class ForeignKeyField(BaseField):
         :rtype: Model
         """
         if to_register:
-            cls.register_relation(model=value, child=child, relation_name=relation_name)
+            cls.register_relation(model=value, child=child)
         return value
 
     @classmethod
     def _construct_model_from_dict(
-        cls, value: dict, child: "Model", to_register: bool, relation_name: str
+        cls, value: dict, child: "Model", to_register: bool
     ) -> "Model":
         """
         Takes a dictionary, creates a instance and registers it for parent.
@@ -324,12 +332,12 @@ class ForeignKeyField(BaseField):
             value["__pk_only__"] = True
         model = cls.to(**value)
         if to_register:
-            cls.register_relation(model=model, child=child, relation_name=relation_name)
+            cls.register_relation(model=model, child=child)
         return model
 
     @classmethod
     def _construct_model_from_pk(
-        cls, value: Any, child: "Model", to_register: bool, relation_name: str
+        cls, value: Any, child: "Model", to_register: bool
     ) -> "Model":
         """
         Takes a pk value, creates a dummy instance and registers it for parent.
@@ -356,13 +364,11 @@ class ForeignKeyField(BaseField):
             )
         model = create_dummy_instance(fk=cls.to, pk=value)
         if to_register:
-            cls.register_relation(model=model, child=child, relation_name=relation_name)
+            cls.register_relation(model=model, child=child)
         return model
 
     @classmethod
-    def register_relation(
-        cls, model: "Model", child: "Model", relation_name: str
-    ) -> None:
+    def register_relation(cls, model: "Model", child: "Model") -> None:
         """
         Registers relation between parent and child in relation manager.
         Relation manager is kep on each model (different instance).
@@ -376,11 +382,7 @@ class ForeignKeyField(BaseField):
         :type child: Model class
         """
         model._orm.add(
-            parent=model,
-            child=child,
-            child_name=cls.related_name or child.get_name() + "s",
-            virtual=cls.virtual,
-            relation_name=relation_name,
+            parent=model, child=child, field=cls,
         )
 
     @classmethod
@@ -400,7 +402,6 @@ class ForeignKeyField(BaseField):
         value: Any,
         child: Union["Model", "NewBaseModel"],
         to_register: bool = True,
-        relation_name: str = None,
     ) -> Optional[Union["Model", List["Model"]]]:
         """
         For relations the child model is first constructed (if needed),
@@ -429,5 +430,5 @@ class ForeignKeyField(BaseField):
 
         model = constructors.get(  # type: ignore
             value.__class__.__name__, cls._construct_model_from_pk
-        )(value, child, to_register, relation_name)
+        )(value, child, to_register)
         return model

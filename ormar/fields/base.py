@@ -247,7 +247,6 @@ class BaseField(FieldInfo):
         value: Any,
         child: Union["Model", "NewBaseModel"],
         to_register: bool = True,
-        relation_name: str = None,
     ) -> Any:
         """
         Function overwritten for relations, in basic field the value is returned as is.

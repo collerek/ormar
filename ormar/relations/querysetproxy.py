@@ -12,6 +12,7 @@ from typing import (
 )
 
 import ormar
+from ormar.exceptions import ModelPersistenceError
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
@@ -106,11 +107,19 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         :param child: child model instance
         :type child: Model
         """
-        queryset = ormar.QuerySet(model_cls=self.relation.through)
+        model_cls = self.relation.through
         owner_column = self._owner.get_name()
         child_column = child.get_name()
-        kwargs = {owner_column: self._owner, child_column: child}
-        await queryset.create(**kwargs)
+        kwargs = {owner_column: self._owner.pk, child_column: child.pk}
+        if child.pk is None:
+            raise ModelPersistenceError(
+                f"You cannot save {child.get_name()} "
+                f"model without primary key set! \n"
+                f"Save the child model first."
+            )
+        expr = model_cls.Meta.table.insert()
+        expr = expr.values(**kwargs)
+        await model_cls.Meta.database.execute(expr)
 
     async def delete_through_instance(self, child: "T") -> None:
         """

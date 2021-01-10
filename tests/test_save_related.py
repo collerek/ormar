@@ -21,7 +21,7 @@ class CringeLevel(ormar.Model):
     name: str = ormar.String(max_length=100)
 
 
-class NickNames(ormar.Model):
+class NickName(ormar.Model):
     class Meta:
         tablename = "nicks"
         metadata = metadata
@@ -48,7 +48,7 @@ class HQ(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
-    nicks: List[NickNames] = ormar.ManyToMany(NickNames, through=NicksHq)
+    nicks: List[NickName] = ormar.ManyToMany(NickName, through=NicksHq)
 
 
 class Company(ormar.Model):
@@ -96,8 +96,8 @@ async def test_saving_related_fk_rel():
 async def test_saving_many_to_many():
     async with database:
         async with database.transaction(force_rollback=True):
-            nick1 = await NickNames.objects.create(name="BazingaO", is_lame=False)
-            nick2 = await NickNames.objects.create(name="Bazinga20", is_lame=True)
+            nick1 = await NickName.objects.create(name="BazingaO", is_lame=False)
+            nick2 = await NickName.objects.create(name="Bazinga20", is_lame=True)
 
             hq = await HQ.objects.create(name="Main")
             assert hq.saved
@@ -168,10 +168,10 @@ async def test_saving_nested():
         async with database.transaction(force_rollback=True):
             level = await CringeLevel.objects.create(name="High")
             level2 = await CringeLevel.objects.create(name="Low")
-            nick1 = await NickNames.objects.create(
+            nick1 = await NickName.objects.create(
                 name="BazingaO", is_lame=False, level=level
             )
-            nick2 = await NickNames.objects.create(
+            nick2 = await NickName.objects.create(
                 name="Bazinga20", is_lame=True, level=level2
             )
 

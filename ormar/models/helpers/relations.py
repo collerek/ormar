@@ -13,7 +13,7 @@ if TYPE_CHECKING:  # pragma no cover
 alias_manager = AliasManager()
 
 
-def register_relation_on_build(new_model: Type["Model"], field_name: str) -> None:
+def register_relation_on_build(field: Type["ForeignKeyField"]) -> None:
     """
     Registers ForeignKey relation in alias_manager to set a table_prefix.
     Registration include also reverse relation side to be able to join both sides.
@@ -22,17 +22,17 @@ def register_relation_on_build(new_model: Type["Model"], field_name: str) -> Non
     relations between two Models that needs to have different
     aliases for proper sql joins.
 
-    :param new_model: constructed model
-    :type new_model: Model class
-    :param field_name: name of the related field
-    :type field_name: str
+    :param field: relation field
+    :type field: ForeignKey class
     """
-    alias_manager.add_relation_type(new_model, field_name)
+    alias_manager.add_relation_type(
+        source_model=field.owner,
+        relation_name=field.name,
+        reverse_name=field.get_source_related_name(),
+    )
 
 
-def register_many_to_many_relation_on_build(
-    new_model: Type["Model"], field: Type[ManyToManyField], field_name: str
-) -> None:
+def register_many_to_many_relation_on_build(field: Type[ManyToManyField]) -> None:
     """
     Registers connection between through model and both sides of the m2m relation.
     Registration include also reverse relation side to be able to join both sides.
@@ -43,21 +43,18 @@ def register_many_to_many_relation_on_build(
 
     By default relation name is a model.name.lower().
 
-    :param field_name: name of the relation key
-    :type field_name: str
-    :param new_model: model on which m2m field is declared
-    :type new_model: Model class
     :param field: relation field
     :type field: ManyToManyField class
     """
     alias_manager.add_relation_type(
-        field.through, new_model.get_name(), is_multi=True, reverse_name=field_name
+        source_model=field.through,
+        relation_name=field.default_source_field_name(),
+        reverse_name=field.get_source_related_name(),
     )
     alias_manager.add_relation_type(
-        field.through,
-        field.to.get_name(),
-        is_multi=True,
-        reverse_name=field.related_name or new_model.get_name() + "s",
+        source_model=field.through,
+        relation_name=field.default_target_field_name(),
+        reverse_name=field.get_related_name(),
     )
 
 
@@ -126,7 +123,7 @@ def register_reverse_model_fields(model_field: Type["ForeignKeyField"]) -> None:
 
 
 def register_relation_in_alias_manager(
-    new_model: Type["Model"], field: Type[ForeignKeyField], field_name: str
+    field: Type[ForeignKeyField], field_name: str
 ) -> None:
     """
     Registers the relation (and reverse relation) in alias manager.
@@ -137,8 +134,6 @@ def register_relation_in_alias_manager(
     m2m - register_many_to_many_relation_on_build
     fk - register_relation_on_build
 
-    :param new_model: model on which relation field is declared
-    :type new_model: Model class
     :param field: relation field
     :type field: ForeignKey or ManyToManyField class
     :param field_name: name of the relation key
@@ -147,13 +142,11 @@ def register_relation_in_alias_manager(
     if issubclass(field, ManyToManyField):
         if field.has_unresolved_forward_refs():
             return
-        register_many_to_many_relation_on_build(
-            new_model=new_model, field=field, field_name=field_name
-        )
+        register_many_to_many_relation_on_build(field=field)
     elif issubclass(field, ForeignKeyField):
         if field.has_unresolved_forward_refs():
             return
-        register_relation_on_build(new_model=new_model, field_name=field_name)
+        register_relation_on_build(field=field)
 
 
 def verify_related_name_dont_duplicate(

@@ -14,7 +14,7 @@ REF_PREFIX = "#/components/schemas/"
 
 def populate_m2m_params_based_on_to_model(
     to: Type["Model"], nullable: bool
-) -> Tuple[List, Any]:
+) -> Tuple[Any, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
     pydantic field to use and type of the target column field.
@@ -105,6 +105,20 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
     """
     Actual class returned from ManyToMany function call and stored in model_fields.
     """
+
+    @classmethod
+    def get_source_related_name(cls) -> str:
+        """
+        Returns name to use for source relation name.
+        For FK it's the same, differs for m2m fields.
+        It's either set as `related_name` or by default it's field name.
+        :return: name of the related_name or default related name.
+        :rtype: str
+        """
+        return (
+            cls.through.Meta.model_fields[cls.default_source_field_name()].related_name
+            or cls.name
+        )
 
     @classmethod
     def default_target_field_name(cls) -> str:

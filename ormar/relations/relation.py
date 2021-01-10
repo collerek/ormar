@@ -63,13 +63,19 @@ class Relation:
         self._type: RelationType = type_
         self._to_remove: Set = set()
         self.to: Type["T"] = to
-        self.through: Optional[Type["T"]] = through
+        self._through: Optional[Type["T"]] = through
         self.field_name = field_name
         self.related_models: Optional[Union[RelationProxy, "T"]] = (
             RelationProxy(relation=self, type_=type_, field_name=field_name)
             if type_ in (RelationType.REVERSE, RelationType.MULTIPLE)
             else None
         )
+
+    @property
+    def through(self) -> Type["T"]:
+        if not self._through:  # pragma: no cover
+            raise RelationshipInstanceError("Relation does not have through model!")
+        return self._through
 
     def _clean_related(self) -> None:
         """

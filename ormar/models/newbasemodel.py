@@ -15,6 +15,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 
 try:
@@ -143,7 +144,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 k: self._convert_json(
                     k,
                     self.Meta.model_fields[k].expand_relationship(
-                        v, self, to_register=False, relation_name=k
+                        v, self, to_register=False,
                     ),
                     "dumps",
                 )
@@ -172,7 +173,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         # register the columns models after initialization
         for related in self.extract_related_names():
             self.Meta.model_fields[related].expand_relationship(
-                new_kwargs.get(related), self, to_register=True, relation_name=related
+                new_kwargs.get(related), self, to_register=True,
             )
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
@@ -209,7 +210,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             self.set_save_status(False)
         elif name in self._orm:
             model = self.Meta.model_fields[name].expand_relationship(
-                value=value, child=self, relation_name=name
+                value=value, child=self
             )
             if isinstance(self.__dict__.get(name), list):
                 # virtual foreign key or many to many
@@ -447,13 +448,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         fields_to_check = cls.Meta.model_fields.copy()
         for field_name, field in fields_to_check.items():
             if field.has_unresolved_forward_refs():
+                field = cast(Type[ForeignKeyField], field)
                 field.evaluate_forward_ref(globalns=globalns, localns=localns)
                 field.set_self_reference_flag()
                 expand_reverse_relationship(model_field=field)
                 register_relation_in_alias_manager(
-                    cls,  # type: ignore
-                    field,
-                    field_name,
+                    field=field, field_name=field_name,
                 )
                 update_column_definition(model=cls, field=field)
         populate_meta_sqlalchemy_table_if_required(meta=cls.Meta)

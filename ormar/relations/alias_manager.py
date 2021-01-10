@@ -79,11 +79,7 @@ class AliasManager:
         return text(f"{name} {alias}_{name}")
 
     def add_relation_type(
-        self,
-        source_model: Type["Model"],
-        relation_name: str,
-        reverse_name: str = None,
-        is_multi: bool = False,
+        self, source_model: Type["Model"], relation_name: str, reverse_name: str = None,
     ) -> None:
         """
         Registers the relations defined in ormar models.
@@ -104,21 +100,16 @@ class AliasManager:
         :type relation_name: str
         :param reverse_name: name of related_name fo given relation for m2m relations
         :type reverse_name: Optional[str]
-        :param is_multi: flag if relation being registered is a through m2m model
-        :type is_multi: bool
         :return: none
         :rtype: None
         """
         parent_key = f"{source_model.get_name()}_{relation_name}"
         if parent_key not in self._aliases_new:
             self._aliases_new[parent_key] = get_table_alias()
+
         to_field = source_model.Meta.model_fields[relation_name]
         child_model = to_field.to
-        related_name = to_field.related_name
-        if not related_name:
-            related_name = reverse_name if is_multi else source_model.get_name() + "s"
-
-        child_key = f"{child_model.get_name()}_{related_name}"
+        child_key = f"{child_model.get_name()}_{reverse_name}"
         if child_key not in self._aliases_new:
             self._aliases_new[child_key] = get_table_alias()
 
