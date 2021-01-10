@@ -39,10 +39,9 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         self._queryset: Optional["QuerySet"] = qryset
         self.type_: "RelationType" = type_
         self._owner: "Model" = self.relation.manager.owner
-        self.related_field_name = (
-            self._owner.Meta.model_fields[self.relation.field_name].related_name
-            or self._owner.get_name() + "s"
-        )
+        self.related_field_name = self._owner.Meta.model_fields[
+            self.relation.field_name
+        ].get_related_name()
         self.related_field = self.relation.to.Meta.model_fields[self.related_field_name]
         self.owner_pk_value = self._owner.pk
 
@@ -108,8 +107,8 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         :type child: Model
         """
         model_cls = self.relation.through
-        owner_column = self._owner.get_name()
-        child_column = child.get_name()
+        owner_column = self.related_field.default_target_field_name()
+        child_column = self.related_field.default_source_field_name()
         kwargs = {owner_column: self._owner.pk, child_column: child.pk}
         if child.pk is None:
             raise ModelPersistenceError(
@@ -129,8 +128,8 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         :type child: Model
         """
         queryset = ormar.QuerySet(model_cls=self.relation.through)
-        owner_column = self._owner.get_name()
-        child_column = child.get_name()
+        owner_column = self.related_field.default_target_field_name()
+        child_column = self.related_field.default_source_field_name()
         kwargs = {owner_column: self._owner, child_column: child}
         link_instance = await queryset.filter(**kwargs).get()  # type: ignore
         await link_instance.delete()

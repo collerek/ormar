@@ -109,6 +109,7 @@ def register_reverse_model_fields(model_field: Type["ForeignKeyField"]) -> None:
             virtual=True,
             related_name=model_field.name,
             owner=model_field.to,
+            self_reference=model_field.self_reference,
         )
         # register foreign keys on through model
         adjust_through_many_to_many_model(model_field=model_field)
@@ -119,12 +120,11 @@ def register_reverse_model_fields(model_field: Type["ForeignKeyField"]) -> None:
             virtual=True,
             related_name=model_field.name,
             owner=model_field.to,
+            self_reference=model_field.self_reference,
         )
 
 
-def register_relation_in_alias_manager(
-    field: Type[ForeignKeyField], field_name: str
-) -> None:
+def register_relation_in_alias_manager(field: Type[ForeignKeyField]) -> None:
     """
     Registers the relation (and reverse relation) in alias manager.
     The m2m relations require registration of through model between
@@ -136,8 +136,6 @@ def register_relation_in_alias_manager(
 
     :param field: relation field
     :type field: ForeignKey or ManyToManyField class
-    :param field_name: name of the relation key
-    :type field_name: str
     """
     if issubclass(field, ManyToManyField):
         if field.has_unresolved_forward_refs():

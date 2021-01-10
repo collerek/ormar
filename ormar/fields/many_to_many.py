@@ -1,8 +1,7 @@
 from typing import Any, ForwardRef, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 from pydantic.typing import evaluate_forwardref
-
-import ormar
+import ormar  # noqa: I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 
@@ -71,6 +70,7 @@ def ManyToMany(
     related_name = kwargs.pop("related_name", None)
     nullable = kwargs.pop("nullable", True)
     owner = kwargs.pop("owner", None)
+    self_reference = kwargs.pop("self_reference", False)
 
     if isinstance(to, ForwardRef):
         __type__ = to if not nullable else Optional[to]
@@ -96,6 +96,7 @@ def ManyToMany(
         default=None,
         server_default=None,
         owner=owner,
+        self_reference=self_reference,
     )
 
     return type("ManyToMany", (ManyToManyField, BaseField), namespace)

@@ -164,8 +164,6 @@ class RelationsManager:
         :param name: name of the relation
         :type name: str
         """
-        relation_name = (
-            item.Meta.model_fields[name].related_name or item.get_name() + "s"
-        )
+        relation_name = item.Meta.model_fields[name].get_related_name()
         item._orm.remove(name, parent)
         parent._orm.remove(relation_name, item)

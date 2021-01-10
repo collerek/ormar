@@ -167,6 +167,8 @@ def ForeignKey(  # noqa CFQ002
     """
 
     owner = kwargs.pop("owner", None)
+    self_reference = kwargs.pop("self_reference", False)
+
     if isinstance(to, ForwardRef):
         __type__ = to if not nullable else Optional[to]
         constraints: List = []
@@ -196,6 +198,7 @@ def ForeignKey(  # noqa CFQ002
         onupdate=onupdate,
         ondelete=ondelete,
         owner=owner,
+        self_reference=self_reference,
     )
 
     return type("ForeignKey", (ForeignKeyField, BaseField), namespace)

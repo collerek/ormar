@@ -30,7 +30,7 @@ import sqlalchemy
 from pydantic import BaseModel
 
 import ormar  # noqa I100
-from ormar.exceptions import ModelError
+from ormar.exceptions import ModelError, ModelPersistenceError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.helpers import register_relation_in_alias_manager
@@ -452,9 +452,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 field.evaluate_forward_ref(globalns=globalns, localns=localns)
                 field.set_self_reference_flag()
                 expand_reverse_relationship(model_field=field)
-                register_relation_in_alias_manager(
-                    field=field, field_name=field_name,
-                )
+                register_relation_in_alias_manager(field=field)
                 update_column_definition(model=cls, field=field)
         populate_meta_sqlalchemy_table_if_required(meta=cls.Meta)
         super().update_forward_refs(**localns)
@@ -731,9 +729,15 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             if self.get_column_alias(k) in self.Meta.table.columns
         }
         for field in self._extract_db_related_names():
-            target_pk_name = self.Meta.model_fields[field].to.Meta.pkname
+            relation_field = self.Meta.model_fields[field]
+            target_pk_name = relation_field.to.Meta.pkname
             target_field = getattr(self, field)
             self_fields[field] = getattr(target_field, target_pk_name, None)
+            if not relation_field.nullable and not self_fields[field]:
+                raise ModelPersistenceError(
+                    f"You cannot save {relation_field.to.get_name()} "
+                    f"model without pk set!"
+                )
         return self_fields
 
     def get_relation_model_id(self, target_field: Type["BaseField"]) -> Optional[int]:

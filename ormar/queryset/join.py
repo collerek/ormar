@@ -135,7 +135,7 @@ class SqlJoin:
                 join_parameters.model_cls.Meta.model_fields[part], ManyToManyField
             ):
                 _fields = join_parameters.model_cls.Meta.model_fields
-                new_part = _fields[part].to.get_name()
+                new_part = _fields[part].default_target_field_name()
                 self._switch_many_to_many_order_columns(part, new_part)
                 if index > 0:  # nested joins
                     fields, exclude_fields = SqlJoin.update_inclusions(
@@ -435,11 +435,9 @@ class SqlJoin:
             from_key = join_params.prev_model.get_column_alias(
                 join_params.prev_model.Meta.pkname
             )
+            breakpoint()
         elif join_params.prev_model.Meta.model_fields[part].virtual:
-            to_field = (
-                join_params.prev_model.Meta.model_fields[part].related_name
-                or join_params.prev_model.get_name() + "s"
-            )
+            to_field = join_params.prev_model.Meta.model_fields[part].get_related_name()
             to_key = model_cls.get_column_alias(to_field)
             from_key = join_params.prev_model.get_column_alias(
                 join_params.prev_model.Meta.pkname

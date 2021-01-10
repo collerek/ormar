@@ -267,7 +267,7 @@ class BaseField(FieldInfo):
         return value
 
     @classmethod
-    def set_self_reference_flag(cls):
+    def set_self_reference_flag(cls) -> None:
         """
         Sets `self_reference` to True if field to and owner are same model.
         :return: None
@@ -301,3 +301,13 @@ class BaseField(FieldInfo):
         :return: None
         :rtype: None
         """
+
+    @classmethod
+    def get_related_name(cls) -> str:
+        """
+        Returns name to use for reverse relation.
+        It's either set as `related_name` or by default it's owner model. get_name + 's'
+        :return: name of the related_name or default related name.
+        :rtype: str
+        """
+        return ""  # pragma: no cover

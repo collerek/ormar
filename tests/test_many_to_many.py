@@ -81,6 +81,17 @@ async def cleanup():
 
 
 @pytest.mark.asyncio
+async def test_not_saved_raises_error(cleanup):
+    async with database:
+        guido = await Author(first_name="Guido", last_name="Van Rossum").save()
+        post = await Post.objects.create(title="Hello, M2M", author=guido)
+        news = Category(name="News")
+
+        with pytest.raises(ModelPersistenceError):
+            await post.categories.add(news)
+
+
+@pytest.mark.asyncio
 async def test_assigning_related_objects(cleanup):
     async with database:
         guido = await Author.objects.create(first_name="Guido", last_name="Van Rossum")

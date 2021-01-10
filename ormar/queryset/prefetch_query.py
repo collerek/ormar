@@ -9,10 +9,12 @@ from typing import (
     Tuple,
     Type,
     Union,
+    cast,
 )
 
 import ormar
 from ormar.fields import BaseField, ManyToManyField
+from ormar.fields.foreign_key import ForeignKeyField
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.query import Query
 from ormar.queryset.utils import extract_models_to_dict_of_lists, translate_list_to_dict
@@ -314,6 +316,7 @@ class PrefetchQuery:
 
         for related in related_to_extract:
             target_field = model.Meta.model_fields[related]
+            target_field = cast(Type[ForeignKeyField], target_field)
             target_model = target_field.to.get_name()
             model_id = model.get_relation_model_id(target_field=target_field)
 
@@ -421,6 +424,7 @@ class PrefetchQuery:
         fields = target_model.get_included(fields, related)
         exclude_fields = target_model.get_excluded(exclude_fields, related)
         target_field = target_model.Meta.model_fields[related]
+        target_field = cast(Type[ForeignKeyField], target_field)
         reverse = False
         if target_field.virtual or issubclass(target_field, ManyToManyField):
             reverse = True
@@ -585,7 +589,7 @@ class PrefetchQuery:
     def _populate_rows(  # noqa: CFQ002
         self,
         rows: List,
-        target_field: Type["BaseField"],
+        target_field: Type["ForeignKeyField"],
         parent_model: Type["Model"],
         table_prefix: str,
         fields: Union[Set[Any], Dict[Any, Any], None],
