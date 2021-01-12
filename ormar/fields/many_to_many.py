@@ -1,6 +1,6 @@
-from typing import Any, ForwardRef, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
-from pydantic.typing import evaluate_forwardref
+from pydantic.typing import ForwardRef, evaluate_forwardref
 import ormar  # noqa: I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField

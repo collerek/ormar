@@ -1,6 +1,7 @@
-from typing import Dict, ForwardRef, List, Optional, TYPE_CHECKING, Tuple, Type
+from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type
 
-import ormar
+from pydantic.typing import ForwardRef
+import ormar  # noqa: I100
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.helpers.pydantic import populate_pydantic_default_values
 

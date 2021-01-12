@@ -1,10 +1,9 @@
 # type: ignore
-from typing import ForwardRef, List
-
 import databases
 import pytest
 import sqlalchemy
 import sqlalchemy as sa
+from pydantic.typing import ForwardRef
 from sqlalchemy import create_engine
 
 import ormar

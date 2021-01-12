@@ -1,9 +1,9 @@
 import uuid
 from dataclasses import dataclass
-from typing import Any, ForwardRef, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 from pydantic import BaseModel, create_model
-from pydantic.typing import evaluate_forwardref
+from pydantic.typing import ForwardRef, evaluate_forwardref
 from sqlalchemy import UniqueConstraint
 
 import ormar  # noqa I101
