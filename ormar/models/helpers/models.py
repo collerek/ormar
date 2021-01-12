@@ -1,6 +1,5 @@
 from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type
 
-
 import ormar  # noqa: I100
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.helpers.pydantic import populate_pydantic_default_values
@@ -76,7 +75,7 @@ def extract_annotations_and_default_vals(attrs: Dict) -> Tuple[Dict, Dict]:
 
 
 # cannot be in relations helpers due to cyclical import
-def validate_related_names_in_relations(
+def validate_related_names_in_relations(  # noqa CCR001
     model_fields: Dict, new_model: Type["Model"]
 ) -> None:
     """
@@ -95,7 +94,12 @@ def validate_related_names_in_relations(
     already_registered: Dict[str, List[Optional[str]]] = dict()
     for field in model_fields.values():
         if issubclass(field, ForeignKeyField):
-            previous_related_names = already_registered.setdefault(field.to, [])
+            to_name = (
+                field.to.get_name()
+                if not field.to.__class__ == ForwardRef
+                else str(field.to)
+            )
+            previous_related_names = already_registered.setdefault(to_name, [])
             if field.related_name in previous_related_names:
                 raise ormar.ModelDefinitionError(
                     f"Multiple fields declared on {new_model.get_name(lower=False)} "
