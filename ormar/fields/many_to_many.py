@@ -1,9 +1,10 @@
 from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
-from pydantic.typing import ForwardRef, evaluate_forwardref
+from pydantic.typing import evaluate_forwardref
 import ormar  # noqa: I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
+from ormar.protocols.forward_ref import ForwardRef
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model

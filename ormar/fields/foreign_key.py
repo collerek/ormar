@@ -3,12 +3,13 @@ from dataclasses import dataclass
 from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 from pydantic import BaseModel, create_model
-from pydantic.typing import ForwardRef, evaluate_forwardref
+from pydantic.typing import evaluate_forwardref
 from sqlalchemy import UniqueConstraint
 
 import ormar  # noqa I101
 from ormar.exceptions import RelationshipInstanceError
 from ormar.fields.base import BaseField
+from ormar.protocols.forward_ref import ForwardRef
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, NewBaseModel
