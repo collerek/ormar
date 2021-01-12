@@ -124,7 +124,7 @@ class ForeignKeyConstraint:
 
 
 def ForeignKey(  # noqa CFQ002
-    to: Union[Type["Model"], ForwardRef],
+    to: Union[Type["Model"]],
     *,
     name: str = None,
     unique: bool = False,
