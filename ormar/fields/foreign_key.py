@@ -3,13 +3,12 @@ from dataclasses import dataclass
 from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 from pydantic import BaseModel, create_model
-from pydantic.typing import evaluate_forwardref
+from pydantic.typing import ForwardRef, evaluate_forwardref
 from sqlalchemy import UniqueConstraint
 
 import ormar  # noqa I101
 from ormar.exceptions import RelationshipInstanceError
 from ormar.fields.base import BaseField
-from ormar.protocols.forward_ref import ForwardRef
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, NewBaseModel
@@ -170,13 +169,16 @@ def ForeignKey(  # noqa CFQ002
     owner = kwargs.pop("owner", None)
     self_reference = kwargs.pop("self_reference", False)
 
-    if isinstance(to, ForwardRef):
+    if to.__class__ == ForwardRef:
         __type__ = to if not nullable else Optional[to]
         constraints: List = []
         column_type = None
     else:
         __type__, constraints, column_type = populate_fk_params_based_on_to_model(
-            to=to, nullable=nullable, ondelete=ondelete, onupdate=onupdate
+            to=to,  # type: ignore
+            nullable=nullable,
+            ondelete=ondelete,
+            onupdate=onupdate,
         )
 
     namespace = dict(
@@ -250,8 +252,12 @@ class ForeignKeyField(BaseField):
         :return: None
         :rtype: None
         """
-        if isinstance(cls.to, ForwardRef):
-            cls.to = evaluate_forwardref(cls.to, globalns, localns or None)
+        if cls.to.__class__ == ForwardRef:
+            cls.to = evaluate_forwardref(
+                cls.to,  # type: ignore
+                globalns,
+                localns or None,
+            )
             (
                 cls.__type__,
                 cls.constraints,
@@ -398,7 +404,7 @@ class ForeignKeyField(BaseField):
         :return: result of the check
         :rtype: bool
         """
-        return isinstance(cls.to, ForwardRef)
+        return cls.to.__class__ == ForwardRef
 
     @classmethod
     def expand_relationship(

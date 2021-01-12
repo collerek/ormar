@@ -1,10 +1,9 @@
 from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
-from pydantic.typing import evaluate_forwardref
+from pydantic.typing import ForwardRef, evaluate_forwardref
 import ormar  # noqa: I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
-from ormar.protocols.forward_ref import ForwardRef
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
@@ -73,7 +72,7 @@ def ManyToMany(
     owner = kwargs.pop("owner", None)
     self_reference = kwargs.pop("self_reference", False)
 
-    if isinstance(to, ForwardRef):
+    if to.__class__ == ForwardRef:
         __type__ = to if not nullable else Optional[to]
         column_type = None
     else:
@@ -151,7 +150,7 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :return: result of the check
         :rtype: bool
         """
-        return isinstance(cls.to, ForwardRef) or isinstance(cls.through, ForwardRef)
+        return cls.to.__class__ == ForwardRef or cls.through.__class__ == ForwardRef
 
     @classmethod
     def evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None:
@@ -165,8 +164,12 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :return: None
         :rtype: None
         """
-        if isinstance(cls.to, ForwardRef) or isinstance(cls.through, ForwardRef):
-            cls.to = evaluate_forwardref(cls.to, globalns, localns or None)
+        if cls.to.__class__ == ForwardRef or cls.through.__class__ == ForwardRef:
+            cls.to = evaluate_forwardref(
+                cls.to,  # type: ignore
+                globalns,
+                localns or None,
+            )
             (cls.__type__, cls.column_type,) = populate_m2m_params_based_on_to_model(
                 to=cls.to, nullable=cls.nullable,
             )

@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type
 import ormar  # noqa: I100
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.helpers.pydantic import populate_pydantic_default_values
-from ormar.protocols.forward_ref import ForwardRef
+from pydantic.typing import ForwardRef
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -22,7 +22,7 @@ def is_field_an_forward_ref(field: Type["BaseField"]) -> bool:
     :rtype: bool
     """
     return issubclass(field, ForeignKeyField) and (
-        isinstance(field.to, ForwardRef) or isinstance(field.through, ForwardRef)
+        field.to.__class__ == ForwardRef or field.through.__class__ == ForwardRef
     )
 
 
