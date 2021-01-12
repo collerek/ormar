@@ -123,69 +123,83 @@ def test_proper_field_init():
 
 @pytest.mark.asyncio
 async def test_self_relation():
-    sam = await Person.objects.create(name="Sam")
-    joe = await Person(name="Joe", supervisor=sam).save()
-    assert joe.supervisor.name == "Sam"
+    async with db:
+        async with db.transaction(force_rollback=True):
+            sam = await Person.objects.create(name="Sam")
+            joe = await Person(name="Joe", supervisor=sam).save()
+            assert joe.supervisor.name == "Sam"
 
-    joe_check = await Person.objects.select_related("supervisor").get(name="Joe")
-    assert joe_check.supervisor.name == "Sam"
+            joe_check = await Person.objects.select_related("supervisor").get(
+                name="Joe"
+            )
+            assert joe_check.supervisor.name == "Sam"
 
-    sam_check = await Person.objects.select_related("employees").get(name="Sam")
-    assert sam_check.name == "Sam"
-    assert sam_check.employees[0].name == "Joe"
+            sam_check = await Person.objects.select_related("employees").get(name="Sam")
+            assert sam_check.name == "Sam"
+            assert sam_check.employees[0].name == "Joe"
 
 
 @pytest.mark.asyncio
 async def test_other_forwardref_relation(cleanup):
-    checkers = await Game.objects.create(name="checkers")
-    uno = await Game(name="Uno").save()
+    async with db:
+        async with db.transaction(force_rollback=True):
+            checkers = await Game.objects.create(name="checkers")
+            uno = await Game(name="Uno").save()
 
-    await Child(name="Billy", favourite_game=uno, least_favourite_game=checkers).save()
-    await Child(name="Kate", favourite_game=checkers, least_favourite_game=uno).save()
+            await Child(
+                name="Billy", favourite_game=uno, least_favourite_game=checkers
+            ).save()
+            await Child(
+                name="Kate", favourite_game=checkers, least_favourite_game=uno
+            ).save()
 
-    billy_check = await Child.objects.select_related(
-        ["favourite_game", "least_favourite_game"]
-    ).get(name="Billy")
-    assert billy_check.favourite_game == uno
-    assert billy_check.least_favourite_game == checkers
+            billy_check = await Child.objects.select_related(
+                ["favourite_game", "least_favourite_game"]
+            ).get(name="Billy")
+            assert billy_check.favourite_game == uno
+            assert billy_check.least_favourite_game == checkers
 
-    uno_check = await Game.objects.select_related(["liked_by", "not_liked_by"]).get(
-        name="Uno"
-    )
-    assert uno_check.liked_by[0].name == "Billy"
-    assert uno_check.not_liked_by[0].name == "Kate"
+            uno_check = await Game.objects.select_related(
+                ["liked_by", "not_liked_by"]
+            ).get(name="Uno")
+            assert uno_check.liked_by[0].name == "Billy"
+            assert uno_check.not_liked_by[0].name == "Kate"
 
 
 @pytest.mark.asyncio
 async def test_m2m_self_forwardref_relation(cleanup):
-    checkers = await Game.objects.create(name="checkers")
-    uno = await Game(name="Uno").save()
-    jenga = await Game(name="Jenga").save()
+    async with db:
+        async with db.transaction(force_rollback=True):
+            checkers = await Game.objects.create(name="checkers")
+            uno = await Game(name="Uno").save()
+            jenga = await Game(name="Jenga").save()
 
-    billy = await Child(
-        name="Billy", favourite_game=uno, least_favourite_game=checkers
-    ).save()
-    kate = await Child(
-        name="Kate", favourite_game=checkers, least_favourite_game=uno
-    ).save()
-    steve = await Child(
-        name="Steve", favourite_game=jenga, least_favourite_game=uno
-    ).save()
+            billy = await Child(
+                name="Billy", favourite_game=uno, least_favourite_game=checkers
+            ).save()
+            kate = await Child(
+                name="Kate", favourite_game=checkers, least_favourite_game=uno
+            ).save()
+            steve = await Child(
+                name="Steve", favourite_game=jenga, least_favourite_game=uno
+            ).save()
 
-    await billy.friends.add(kate)
-    await billy.friends.add(steve)
+            await billy.friends.add(kate)
+            await billy.friends.add(steve)
 
-    # await steve.friends.add(kate)
-    # await steve.friends.add(billy)
+            # await steve.friends.add(kate)
+            # await steve.friends.add(billy)
 
-    billy_check = await Child.objects.select_related(
-        ["friends", "favourite_game", "least_favourite_game",]
-    ).get(name="Billy")
-    assert len(billy_check.friends) == 2
-    assert billy_check.friends[0].name == "Kate"
-    assert billy_check.friends[1].name == "Steve"
-    assert billy_check.favourite_game.name == "Uno"
+            billy_check = await Child.objects.select_related(
+                ["friends", "favourite_game", "least_favourite_game",]
+            ).get(name="Billy")
+            assert len(billy_check.friends) == 2
+            assert billy_check.friends[0].name == "Kate"
+            assert billy_check.friends[1].name == "Steve"
+            assert billy_check.favourite_game.name == "Uno"
 
-    kate_check = await Child.objects.select_related(["also_friends",]).get(name="Kate")
-    assert len(kate_check.also_friends) == 1
-    assert kate_check.also_friends[0].name == "Billy"
+            kate_check = await Child.objects.select_related(["also_friends",]).get(
+                name="Kate"
+            )
+            assert len(kate_check.also_friends) == 1
+            assert kate_check.also_friends[0].name == "Billy"
