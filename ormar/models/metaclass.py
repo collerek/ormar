@@ -586,7 +586,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 new_model = populate_meta_tablename_columns_and_pk(name, new_model)
                 populate_meta_sqlalchemy_table_if_required(new_model.Meta)
                 expand_reverse_relationships(new_model)
-                for field_name, field in new_model.Meta.model_fields.items():
+                for field in new_model.Meta.model_fields.values():
                     register_relation_in_alias_manager(field=field)
 
                 if new_model.Meta.pkname not in attrs["__annotations__"]:

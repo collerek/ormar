@@ -107,8 +107,8 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         :type child: Model
         """
         model_cls = self.relation.through
-        owner_column = self.related_field.default_target_field_name()
-        child_column = self.related_field.default_source_field_name()
+        owner_column = self.related_field.default_target_field_name()  # type: ignore
+        child_column = self.related_field.default_source_field_name()  # type: ignore
         kwargs = {owner_column: self._owner.pk, child_column: child.pk}
         if child.pk is None:
             raise ModelPersistenceError(
@@ -118,6 +118,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
             )
         expr = model_cls.Meta.table.insert()
         expr = expr.values(**kwargs)
+        # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
         await model_cls.Meta.database.execute(expr)
 
     async def delete_through_instance(self, child: "T") -> None:
@@ -128,8 +129,8 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         :type child: Model
         """
         queryset = ormar.QuerySet(model_cls=self.relation.through)
-        owner_column = self.related_field.default_target_field_name()
-        child_column = self.related_field.default_source_field_name()
+        owner_column = self.related_field.default_target_field_name()  # type: ignore
+        child_column = self.related_field.default_source_field_name()  # type: ignore
         kwargs = {owner_column: self._owner, child_column: child}
         link_instance = await queryset.filter(**kwargs).get()  # type: ignore
         await link_instance.delete()

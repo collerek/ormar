@@ -72,6 +72,16 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
+@pytest.fixture(scope="function")
+async def cleanup():
+    yield
+    async with db:
+        await ChildFriend.objects.delete(each=True)
+        await Child.objects.delete(each=True)
+        await Game.objects.delete(each=True)
+        await Person.objects.delete(each=True)
+
+
 @pytest.mark.asyncio
 async def test_not_uprated_model_raises_errors():
     Person2 = ForwardRef("Person2")
@@ -126,7 +136,7 @@ async def test_self_relation():
 
 
 @pytest.mark.asyncio
-async def test_other_forwardref_relation():
+async def test_other_forwardref_relation(cleanup):
     checkers = await Game.objects.create(name="checkers")
     uno = await Game(name="Uno").save()
 
@@ -147,7 +157,7 @@ async def test_other_forwardref_relation():
 
 
 @pytest.mark.asyncio
-async def test_m2m_self_forwardref_relation():
+async def test_m2m_self_forwardref_relation(cleanup):
     checkers = await Game.objects.create(name="checkers")
     uno = await Game(name="Uno").save()
     jenga = await Game(name="Jenga").save()
@@ -165,16 +175,17 @@ async def test_m2m_self_forwardref_relation():
     await billy.friends.add(kate)
     await billy.friends.add(steve)
 
-    await steve.friends.add(kate)
-    await steve.friends.add(billy)
+    # await steve.friends.add(kate)
+    # await steve.friends.add(billy)
 
     billy_check = await Child.objects.select_related(
-        [
-            "friends",
-            "favourite_game",
-            "least_favourite_game",
-            "friends__favourite_game",
-            "friends__least_favourite_game",
-        ]
+        ["friends", "favourite_game", "least_favourite_game",]
     ).get(name="Billy")
     assert len(billy_check.friends) == 2
+    assert billy_check.friends[0].name == "Kate"
+    assert billy_check.friends[1].name == "Steve"
+    assert billy_check.favourite_game.name == "Uno"
+
+    kate_check = await Child.objects.select_related(["also_friends",]).get(name="Kate")
+    assert len(kate_check.also_friends) == 1
+    assert kate_check.also_friends[0].name == "Billy"

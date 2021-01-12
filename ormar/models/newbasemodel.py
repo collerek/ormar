@@ -436,6 +436,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         Populates Meta table of the Model which is left empty before.
 
+        Sets self_reference flag on models that links to themselves.
+
         Calls the pydantic method to evaluate pydantic fields.
 
         :param localns: local namespace
@@ -446,7 +448,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         globalns = sys.modules[cls.__module__].__dict__.copy()
         globalns.setdefault(cls.__name__, cls)
         fields_to_check = cls.Meta.model_fields.copy()
-        for field_name, field in fields_to_check.items():
+        for field in fields_to_check.values():
             if field.has_unresolved_forward_refs():
                 field = cast(Type[ForeignKeyField], field)
                 field.evaluate_forward_ref(globalns=globalns, localns=localns)

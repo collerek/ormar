@@ -135,7 +135,14 @@ class SqlJoin:
                 join_parameters.model_cls.Meta.model_fields[part], ManyToManyField
             ):
                 _fields = join_parameters.model_cls.Meta.model_fields
-                new_part = _fields[part].default_target_field_name()
+                target_field = _fields[part]
+                if (
+                    target_field.self_reference
+                    and part == target_field.self_reference_primary
+                ):
+                    new_part = target_field.default_source_field_name()  # type: ignore
+                else:
+                    new_part = target_field.default_target_field_name()  # type: ignore
                 self._switch_many_to_many_order_columns(part, new_part)
                 if index > 0:  # nested joins
                     fields, exclude_fields = SqlJoin.update_inclusions(
@@ -430,18 +437,25 @@ class SqlJoin:
         :rtype: Tuple[str, str]
         """
         if is_multi:
-            to_field = join_params.prev_model.get_name()
-            to_key = model_cls.get_column_alias(to_field)
+            target_field = join_params.model_cls.Meta.model_fields[part]
+            if (
+                target_field.self_reference
+                and part == target_field.self_reference_primary
+            ):
+                to_key = target_field.default_target_field_name()  # type: ignore
+            else:
+                to_key = target_field.default_source_field_name()  # type: ignore
             from_key = join_params.prev_model.get_column_alias(
                 join_params.prev_model.Meta.pkname
             )
-            breakpoint()
+
         elif join_params.prev_model.Meta.model_fields[part].virtual:
             to_field = join_params.prev_model.Meta.model_fields[part].get_related_name()
             to_key = model_cls.get_column_alias(to_field)
             from_key = join_params.prev_model.get_column_alias(
                 join_params.prev_model.Meta.pkname
             )
+
         else:
             to_key = model_cls.get_column_alias(model_cls.Meta.pkname)
             from_key = join_params.prev_model.get_column_alias(part)

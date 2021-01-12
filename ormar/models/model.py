@@ -125,7 +125,13 @@ class Model(NewBaseModel):
             )
         ):
             through_field = previous_model.Meta.model_fields[related_name]
-            rel_name2 = through_field.default_target_field_name()  # type: ignore
+            if (
+                through_field.self_reference
+                and related_name == through_field.self_reference_primary
+            ):
+                rel_name2 = through_field.default_source_field_name()  # type: ignore
+            else:
+                rel_name2 = through_field.default_target_field_name()  # type: ignore
             previous_model = through_field.through  # type: ignore
 
         if previous_model and rel_name2:

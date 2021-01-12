@@ -110,6 +110,7 @@ def register_reverse_model_fields(model_field: Type["ForeignKeyField"]) -> None:
             related_name=model_field.name,
             owner=model_field.to,
             self_reference=model_field.self_reference,
+            self_reference_primary=model_field.self_reference_primary,
         )
         # register foreign keys on through model
         adjust_through_many_to_many_model(model_field=model_field)

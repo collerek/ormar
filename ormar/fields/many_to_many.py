@@ -128,7 +128,7 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :return: name of the field
         :rtype: str
         """
-        prefix = "to_" if cls.self_reference else ""
+        prefix = "from_" if cls.self_reference else ""
         return f"{prefix}{cls.to.get_name()}"
 
     @classmethod
@@ -138,7 +138,7 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :return: name of the field
         :rtype: str
         """
-        prefix = "from_" if cls.self_reference else ""
+        prefix = "to_" if cls.self_reference else ""
         return f"{prefix}{cls.owner.get_name()}"
 
     @classmethod

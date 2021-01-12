@@ -45,6 +45,7 @@ class BaseField(FieldInfo):
     to: Type["Model"]
     through: Type["Model"]
     self_reference: bool = False
+    self_reference_primary: Optional[str] = None
 
     default: Any
     server_default: Any
@@ -277,6 +278,7 @@ class BaseField(FieldInfo):
             cls.owner == cls.to or cls.owner.Meta == cls.to.Meta
         ):
             cls.self_reference = True
+            cls.self_reference_primary = cls.name
 
     @classmethod
     def has_unresolved_forward_refs(cls) -> bool:
