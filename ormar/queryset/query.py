@@ -6,8 +6,9 @@ import sqlalchemy
 from sqlalchemy import text
 
 import ormar  # noqa I100
+from ormar.models.helpers.models import group_related_list
 from ormar.queryset import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
-from ormar.queryset.join import JoinParameters, SqlJoin
+from ormar.queryset.join import SqlJoin
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -140,14 +141,16 @@ class Query:
         else:
             self.select_from = self.table
 
+        # TODO: Refactor to convert to nested dict like in from_row in model
         self._select_related.sort(key=lambda item: (item, -len(item)))
+        related_models = group_related_list(self._select_related)
 
-        for item in self._select_related:
-            join_parameters = JoinParameters(
-                self.model_cls, "", self.table.name, self.model_cls
-            )
-            fields = self.model_cls.get_included(self.fields, item)
-            exclude_fields = self.model_cls.get_excluded(self.exclude_fields, item)
+        for related in related_models:
+            fields = self.model_cls.get_included(self.fields, related)
+            exclude_fields = self.model_cls.get_excluded(self.exclude_fields, related)
+            remainder = None
+            if isinstance(related_models, dict) and related_models[related]:
+                remainder = related_models[related]
             sql_join = SqlJoin(
                 used_aliases=self.used_aliases,
                 select_from=self.select_from,
@@ -156,6 +159,8 @@ class Query:
                 exclude_fields=exclude_fields,
                 order_columns=self.order_columns,
                 sorted_orders=self.sorted_orders,
+                main_model=self.model_cls,
+                related_models=remainder,
             )
 
             (
@@ -163,14 +168,14 @@ class Query:
                 self.select_from,
                 self.columns,
                 self.sorted_orders,
-            ) = sql_join.build_join(item, join_parameters)
+            ) = sql_join.build_join(related)
 
         expr = sqlalchemy.sql.select(self.columns)
         expr = expr.select_from(self.select_from)
 
         expr = self._apply_expression_modifiers(expr)
 
-        # print(expr.compile(compile_kwargs={"literal_binds": True}))
+        # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
         self._reset_query_parameters()
 
         return expr

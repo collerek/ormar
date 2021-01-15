@@ -150,11 +150,11 @@ Process order_by causes for non m2m relations.
 - `fields (Optional[Union[Set, Dict]])`: fields to include
 - `exclude_fields (Optional[Union[Set, Dict]])`: fields to exclude
 
-<a name="queryset.join.SqlJoin._switch_many_to_many_order_columns"></a>
+<a name="queryset.join.SqlJoin._replace_many_to_many_order_by_columns"></a>
 #### \_switch\_many\_to\_many\_order\_columns
 
 ```python
- | _switch_many_to_many_order_columns(part: str, new_part: str) -> None
+ | _replace_many_to_many_order_by_columns(part: str, new_part: str) -> None
 ```
 
 Substitutes the name of the relation with actual model name in m2m order bys.

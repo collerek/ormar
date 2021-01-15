@@ -113,6 +113,19 @@ class AliasManager:
         if child_key not in self._aliases_new:
             self._aliases_new[child_key] = get_table_alias()
 
+    def add_alias(self, alias_key: str) -> str:
+        """
+        Adds alias to the dictionary of aliases under given key.
+
+        :param alias_key: key of relation to generate alias for
+        :type alias_key: str
+        :return: generated alias
+        :rtype: str
+        """
+        alias = get_table_alias()
+        self._aliases_new[alias_key] = alias
+        return alias
+
     def resolve_relation_alias(
         self, from_model: Type["Model"], relation_name: str
     ) -> str:

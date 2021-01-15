@@ -1,4 +1,5 @@
-from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type
+import itertools
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type
 
 import ormar  # noqa: I100
 from ormar.fields.foreign_key import ForeignKeyField
@@ -109,3 +110,32 @@ def validate_related_names_in_relations(  # noqa CCR001
                     f"\nTip: provide different related_name for FK and/or M2M fields"
                 )
             previous_related_names.append(field.related_name)
+
+
+def group_related_list(list_: List) -> Dict:
+    """
+    Translates the list of related strings into a dictionary.
+    That way nested models are grouped to traverse them in a right order
+    and to avoid repetition.
+
+    Sample: ["people__houses", "people__cars__models", "people__cars__colors"]
+    will become:
+    {'people': {'houses': [], 'cars': ['models', 'colors']}}
+
+    :param list_: list of related models used in select related
+    :type list_: List[str]
+    :return: list converted to dictionary to avoid repetition and group nested models
+    :rtype: Dict[str, List]
+    """
+    test_dict: Dict[str, Any] = dict()
+    grouped = itertools.groupby(list_, key=lambda x: x.split("__")[0])
+    for key, group in grouped:
+        group_list = list(group)
+        new = [
+            "__".join(x.split("__")[1:]) for x in group_list if len(x.split("__")) > 1
+        ]
+        if any("__" in x for x in new):
+            test_dict[key] = group_related_list(new)
+        else:
+            test_dict[key] = new
+    return test_dict

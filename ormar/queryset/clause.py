@@ -194,7 +194,9 @@ class QueryClause:
                 previous_model = through_field.through
                 part2 = through_field.default_target_field_name()  # type: ignore
             manager = model_cls.Meta.alias_manager
-            table_prefix = manager.resolve_relation_alias(previous_model, part2)
+            table_prefix = manager.resolve_relation_alias(
+                from_model=previous_model, relation_name=part2
+            )
             model_cls = model_cls.Meta.model_fields[part].to
             previous_model = model_cls
         return select_related, table_prefix, model_cls

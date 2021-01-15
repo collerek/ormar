@@ -221,7 +221,7 @@ def update_attrs_and_fields(
 
     :param attrs: new namespace for class being constructed
     :type attrs: Dict
-    :param new_attrs: part of the namespace extracted from parent class
+    :param new_attrs: related of the namespace extracted from parent class
     :type new_attrs: Dict
     :param model_fields: ormar fields in defined in current class
     :type model_fields: Dict[str, BaseField]

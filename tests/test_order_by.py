@@ -280,7 +280,7 @@ async def test_sort_order_on_many_to_many():
         assert users[1].cars[3].name == "Buggy"
 
         users = (
-            await User.objects.select_related(["cars", "cars__factory"])
+            await User.objects.select_related(["cars__factory"])
             .order_by(["-cars__factory__name", "cars__name"])
             .all()
         )

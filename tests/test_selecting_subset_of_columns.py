@@ -116,9 +116,7 @@ async def test_selecting_subset():
             )
 
             all_cars = (
-                await Car.objects.select_related(
-                    ["manufacturer", "manufacturer__hq", "manufacturer__hq__nicks"]
-                )
+                await Car.objects.select_related(["manufacturer__hq__nicks"])
                 .fields(
                     [
                         "id",
@@ -132,9 +130,7 @@ async def test_selecting_subset():
             )
 
             all_cars2 = (
-                await Car.objects.select_related(
-                    ["manufacturer", "manufacturer__hq", "manufacturer__hq__nicks"]
-                )
+                await Car.objects.select_related(["manufacturer__hq__nicks"])
                 .fields(
                     {
                         "id": ...,
@@ -149,9 +145,7 @@ async def test_selecting_subset():
             )
 
             all_cars3 = (
-                await Car.objects.select_related(
-                    ["manufacturer", "manufacturer__hq", "manufacturer__hq__nicks"]
-                )
+                await Car.objects.select_related(["manufacturer__hq__nicks"])
                 .fields(
                     {
                         "id": ...,

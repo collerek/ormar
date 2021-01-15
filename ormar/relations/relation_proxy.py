@@ -127,7 +127,7 @@ class RelationProxy(list):
         self, item: "Model", keep_reversed: bool = True
     ) -> None:
         """
-        Removes the item from relation with parent.
+        Removes the related from relation with parent.
 
         Through models are automatically deleted for m2m relations.
 

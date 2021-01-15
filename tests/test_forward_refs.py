@@ -190,7 +190,7 @@ async def test_m2m_self_forwardref_relation(cleanup):
             # await steve.friends.add(billy)
 
             billy_check = await Child.objects.select_related(
-                ["friends", "favourite_game", "least_favourite_game",]
+                ["friends", "favourite_game", "least_favourite_game"]
             ).get(name="Billy")
             assert len(billy_check.friends) == 2
             assert billy_check.friends[0].name == "Kate"
@@ -200,5 +200,6 @@ async def test_m2m_self_forwardref_relation(cleanup):
             kate_check = await Child.objects.select_related(["also_friends",]).get(
                 name="Kate"
             )
+
             assert len(kate_check.also_friends) == 1
             assert kate_check.also_friends[0].name == "Billy"

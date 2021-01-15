@@ -526,7 +526,7 @@ class PrefetchQuery:
             query_target = target_field.through
             select_related = [target_name]
             table_prefix = target_field.to.Meta.alias_manager.resolve_relation_alias(
-                query_target, target_name
+                from_model=query_target, relation_name=target_name
             )
             self.already_extracted.setdefault(target_name, {})["prefix"] = table_prefix
 
@@ -551,14 +551,14 @@ class PrefetchQuery:
     @staticmethod
     def _get_select_related_if_apply(related: str, select_dict: Dict) -> Dict:
         """
-        Extract nested part of select_related dictionary to extract models nested
+        Extract nested related of select_related dictionary to extract models nested
         deeper on related model and already loaded in select related query.
 
         :param related: name of the relation
         :type related: str
         :param select_dict: dictionary of select related models in main query
         :type select_dict: Dict
-        :return: dictionary with nested part of select related
+        :return: dictionary with nested related of select related
         :rtype: Dict
         """
         return (
