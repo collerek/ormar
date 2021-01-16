@@ -141,8 +141,6 @@ class Query:
         else:
             self.select_from = self.table
 
-        # TODO: Refactor to convert to nested dict like in from_row in model
-        self._select_related.sort(key=lambda item: (item, -len(item)))
         related_models = group_related_list(self._select_related)
 
         for related in related_models:
@@ -160,6 +158,7 @@ class Query:
                 order_columns=self.order_columns,
                 sorted_orders=self.sorted_orders,
                 main_model=self.model_cls,
+                relation_name=related,
                 related_models=remainder,
             )
 
@@ -168,7 +167,7 @@ class Query:
                 self.select_from,
                 self.columns,
                 self.sorted_orders,
-            ) = sql_join.build_join(related)
+            ) = sql_join.build_join()
 
         expr = sqlalchemy.sql.select(self.columns)
         expr = expr.select_from(self.select_from)

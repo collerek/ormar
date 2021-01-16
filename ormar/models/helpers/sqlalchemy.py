@@ -32,13 +32,13 @@ def adjust_through_many_to_many_model(model_field: Type[ManyToManyField]) -> Non
         model_field.to,
         real_name=parent_name,
         ondelete="CASCADE",
-        owner=model_field.owner,
+        owner=model_field.through,
     )
     model_field.through.Meta.model_fields[child_name] = ForeignKey(
         model_field.owner,
         real_name=child_name,
         ondelete="CASCADE",
-        owner=model_field.owner,
+        owner=model_field.through,
     )
 
     create_and_append_m2m_fk(

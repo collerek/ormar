@@ -105,13 +105,13 @@ class AliasManager:
         """
         parent_key = f"{source_model.get_name()}_{relation_name}"
         if parent_key not in self._aliases_new:
-            self._aliases_new[parent_key] = get_table_alias()
+            self.add_alias(parent_key)
 
         to_field = source_model.Meta.model_fields[relation_name]
         child_model = to_field.to
         child_key = f"{child_model.get_name()}_{reverse_name}"
         if child_key not in self._aliases_new:
-            self._aliases_new[child_key] = get_table_alias()
+            self.add_alias(child_key)
 
     def add_alias(self, alias_key: str) -> str:
         """
