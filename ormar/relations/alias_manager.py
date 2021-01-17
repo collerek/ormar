@@ -33,6 +33,12 @@ class AliasManager:
     def __init__(self) -> None:
         self._aliases_new: Dict[str, str] = dict()
 
+    def __contains__(self, item):
+        return self._aliases_new.__contains__(item)
+
+    def __getitem__(self, key):
+        return self._aliases_new.__getitem__(key)
+
     @staticmethod
     def prefixed_columns(
         alias: str, table: sqlalchemy.Table, fields: List = None

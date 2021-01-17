@@ -34,7 +34,7 @@ class QueryClause:
     """
 
     def __init__(
-        self, model_cls: Type["Model"], filter_clauses: List, select_related: List,
+            self, model_cls: Type["Model"], filter_clauses: List, select_related: List,
     ) -> None:
 
         self._select_related = select_related[:]
@@ -44,7 +44,7 @@ class QueryClause:
         self.table = self.model_cls.Meta.table
 
     def filter(  # noqa: A003
-        self, **kwargs: Any
+            self, **kwargs: Any
     ) -> Tuple[List[sqlalchemy.sql.expression.TextClause], List[str]]:
         """
         Main external access point that processes the clauses into sqlalchemy text
@@ -65,7 +65,7 @@ class QueryClause:
         return filter_clauses, select_related
 
     def _populate_filter_clauses(
-        self, **kwargs: Any
+            self, **kwargs: Any
     ) -> Tuple[List[sqlalchemy.sql.expression.TextClause], List[str]]:
         """
         Iterates all clauses and extracts used operator and field from related
@@ -98,7 +98,9 @@ class QueryClause:
                         table_prefix,
                         model_cls,
                     ) = self._determine_filter_target_table(
-                        related_parts, select_related
+                        related_parts=related_parts,
+                        select_related=select_related,
+                        field_name=field_name
                     )
 
                 table = model_cls.Meta.table
@@ -116,12 +118,12 @@ class QueryClause:
         return filter_clauses, select_related
 
     def _process_column_clause_for_operator_and_value(
-        self,
-        value: Any,
-        op: str,
-        column: sqlalchemy.Column,
-        table: sqlalchemy.Table,
-        table_prefix: str,
+            self,
+            value: Any,
+            op: str,
+            column: sqlalchemy.Column,
+            table: sqlalchemy.Table,
+            table_prefix: str,
     ) -> sqlalchemy.sql.expression.TextClause:
         """
         Escapes characters if it's required.
@@ -158,7 +160,7 @@ class QueryClause:
         return clause
 
     def _determine_filter_target_table(
-        self, related_parts: List[str], select_related: List[str]
+            self, related_parts: List[str], select_related: List[str], field_name: str
     ) -> Tuple[List[str], str, Type["Model"]]:
         """
         Adds related strings to select_related list otherwise the clause would fail as
@@ -187,27 +189,34 @@ class QueryClause:
         # Walk the relationships to the actual model class
         # against which the comparison is being made.
         previous_model = model_cls
-        for part in related_parts:
-            part2 = part
-            if issubclass(model_cls.Meta.model_fields[part], ManyToManyField):
-                through_field = model_cls.Meta.model_fields[part]
-                previous_model = through_field.through
-                part2 = through_field.default_target_field_name()  # type: ignore
-            manager = model_cls.Meta.alias_manager
+        manager = model_cls.Meta.alias_manager
+        for relation in related_parts:
+            related_field = model_cls.Meta.model_fields[relation]
+            if issubclass(related_field, ManyToManyField):
+                previous_model = related_field.through
+                relation = related_field.default_target_field_name()  # type: ignore
             table_prefix = manager.resolve_relation_alias(
-                from_model=previous_model, relation_name=part2
+                from_model=previous_model, relation_name=relation
             )
-            model_cls = model_cls.Meta.model_fields[part].to
+            model_cls = related_field.to
             previous_model = model_cls
+        # handle duplicated aliases in nested relations
+        # TODO: check later and remove nocover
+        complex_prefix = manager.resolve_relation_alias(
+            from_model=self.model_cls,
+            relation_name='__'.join([related_str, field_name])
+        )
+        if complex_prefix:  # pragma: nocover
+            table_prefix = complex_prefix
         return select_related, table_prefix, model_cls
 
     def _compile_clause(
-        self,
-        clause: sqlalchemy.sql.expression.BinaryExpression,
-        column: sqlalchemy.Column,
-        table: sqlalchemy.Table,
-        table_prefix: str,
-        modifiers: Dict,
+            self,
+            clause: sqlalchemy.sql.expression.BinaryExpression,
+            column: sqlalchemy.Column,
+            table: sqlalchemy.Table,
+            table_prefix: str,
+            modifiers: Dict,
     ) -> sqlalchemy.sql.expression.TextClause:
         """
         Compiles the clause to str using appropriate database dialect, replace columns
@@ -287,7 +296,7 @@ class QueryClause:
 
     @staticmethod
     def _extract_operator_field_and_related(
-        parts: List[str],
+            parts: List[str],
     ) -> Tuple[str, str, Optional[List]]:
         """
         Splits filter query key and extracts required parts.

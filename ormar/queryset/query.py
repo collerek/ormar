@@ -159,6 +159,7 @@ class Query:
                 sorted_orders=self.sorted_orders,
                 main_model=self.model_cls,
                 relation_name=related,
+                relation_str=related,
                 related_models=remainder,
             )
 
