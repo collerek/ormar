@@ -7,9 +7,12 @@ from typing import (
     Sequence,
     Set,
     TYPE_CHECKING,
+    Tuple,
     Type,
     Union,
 )
+
+from ormar.fields import ManyToManyField
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -212,3 +215,35 @@ def extract_models_to_dict_of_lists(
     for model in models:
         extract_nested_models(model, model_type, select_dict, extracted)
     return extracted
+
+
+def get_relationship_alias_model_and_str(
+    source_model: Type["Model"], related_parts: List
+) -> Tuple[str, Type["Model"], str]:
+    """
+    Walks the relation to retrieve the actual model on which the clause should be
+    constructed, extracts alias based on last relation leading to target model.
+    :param related_parts: list of related names extracted from string
+    :type related_parts: Union[List, List[str]]
+    :param source_model: model from which relation starts
+    :type source_model: Type[Model]
+    :return: table prefix, target model and relation string
+    :rtype: Tuple[str, Type["Model"], str]
+    """
+    table_prefix = ""
+    model_cls = source_model
+    previous_model = model_cls
+    manager = model_cls.Meta.alias_manager
+    for relation in related_parts:
+        related_field = model_cls.Meta.model_fields[relation]
+        if issubclass(related_field, ManyToManyField):
+            previous_model = related_field.through
+            relation = related_field.default_target_field_name()  # type: ignore
+        table_prefix = manager.resolve_relation_alias(
+            from_model=previous_model, relation_name=relation
+        )
+        model_cls = related_field.to
+        previous_model = model_cls
+    relation_str = "__".join(related_parts)
+
+    return table_prefix, model_cls, relation_str

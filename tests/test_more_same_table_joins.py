@@ -101,15 +101,10 @@ async def test_model_multiple_instances_of_same_table_in_schema():
     async with database:
         await create_data()
         classes = await SchoolClass.objects.select_related(
-            ["teachers__category__department", "students"]
+            ["teachers__category__department", "students__category__department"]
         ).all()
         assert classes[0].name == "Math"
         assert classes[0].students[0].name == "Jane"
         assert len(classes[0].dict().get("students")) == 2
         assert classes[0].teachers[0].category.department.name == "Law Department"
-
-        assert classes[0].students[0].category.pk is not None
-        assert classes[0].students[0].category.name is None
-        await classes[0].students[0].category.load()
-        await classes[0].students[0].category.department.load()
         assert classes[0].students[0].category.department.name == "Math Department"

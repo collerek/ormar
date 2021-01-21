@@ -8,6 +8,7 @@ from sqlalchemy import text
 import ormar  # noqa I100
 from ormar.models.helpers.models import group_related_list
 from ormar.queryset import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
+from ormar.queryset.filter_action import FilterAction
 from ormar.queryset.join import SqlJoin
 
 if TYPE_CHECKING:  # pragma no cover
@@ -18,8 +19,8 @@ class Query:
     def __init__(  # noqa CFQ002
         self,
         model_cls: Type["Model"],
-        filter_clauses: List,
-        exclude_clauses: List,
+        filter_clauses: List[FilterAction],
+        exclude_clauses: List[FilterAction],
         select_related: List,
         limit_count: Optional[int],
         offset: Optional[int],
@@ -200,12 +201,12 @@ class Query:
         filters_to_use = [
             filter_clause
             for filter_clause in self.filter_clauses
-            if filter_clause.text.startswith(f"{self.table.name}.")
+            if filter_clause.table_prefix == ""
         ]
         excludes_to_use = [
             filter_clause
             for filter_clause in self.exclude_clauses
-            if filter_clause.text.startswith(f"{self.table.name}.")
+            if filter_clause.table_prefix == ""
         ]
         sorts_to_use = {k: v for k, v in self.sorted_orders.items() if "__" not in k}
         expr = FilterQuery(filter_clauses=filters_to_use).apply(expr)

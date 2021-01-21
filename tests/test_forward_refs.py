@@ -187,31 +187,44 @@ async def test_m2m_self_forwardref_relation(cleanup):
             await billy.friends.add(steve)
 
             billy_check = await Child.objects.select_related(
-                ["friends", "favourite_game", "least_favourite_game",
-                 "friends__favourite_game", "friends__least_favourite_game"]
+                [
+                    "friends",
+                    "favourite_game",
+                    "least_favourite_game",
+                    "friends__favourite_game",
+                    "friends__least_favourite_game",
+                ]
             ).get(name="Billy")
             assert len(billy_check.friends) == 2
             assert billy_check.friends[0].name == "Kate"
-            assert billy_check.friends[0].favourite_game.name == 'Checkers'
-            assert billy_check.friends[0].least_favourite_game.name == 'Uno'
+            assert billy_check.friends[0].favourite_game.name == "Checkers"
+            assert billy_check.friends[0].least_favourite_game.name == "Uno"
             assert billy_check.friends[1].name == "Steve"
-            assert billy_check.friends[1].favourite_game.name == 'Jenga'
-            assert billy_check.friends[1].least_favourite_game.name == 'Uno'
+            assert billy_check.friends[1].favourite_game.name == "Jenga"
+            assert billy_check.friends[1].least_favourite_game.name == "Uno"
             assert billy_check.favourite_game.name == "Uno"
 
-            kate_check = await Child.objects.select_related(["also_friends",]).get(
+            kate_check = await Child.objects.select_related(["also_friends"]).get(
                 name="Kate"
             )
 
             assert len(kate_check.also_friends) == 1
             assert kate_check.also_friends[0].name == "Billy"
 
-            # TODO: Fix filters with complex prefixes
-            # billy_check = await Child.objects.select_related(
-            #     ["friends", "favourite_game", "least_favourite_game",
-            #      "friends__favourite_game", "friends__least_favourite_game"]
-            # ).filter(friends__favourite_game__name="Checkers").get(name="Billy")
-            # assert len(billy_check.friends) == 1
-            # assert billy_check.friends[0].name == "Kate"
-            # assert billy_check.friends[0].favourite_game.name == 'Checkers'
-            # assert billy_check.friends[0].least_favourite_game.name == 'Uno'
+            billy_check = (
+                await Child.objects.select_related(
+                    [
+                        "friends",
+                        "favourite_game",
+                        "least_favourite_game",
+                        "friends__favourite_game",
+                        "friends__least_favourite_game",
+                    ]
+                )
+                .filter(friends__favourite_game__name="Checkers")
+                .get(name="Billy")
+            )
+            assert len(billy_check.friends) == 1
+            assert billy_check.friends[0].name == "Kate"
+            assert billy_check.friends[0].favourite_game.name == "Checkers"
+            assert billy_check.friends[0].least_favourite_game.name == "Uno"

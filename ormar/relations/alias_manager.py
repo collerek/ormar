@@ -1,7 +1,7 @@
 import string
 import uuid
 from random import choices
-from typing import Dict, List, TYPE_CHECKING, Type
+from typing import Any, Dict, List, TYPE_CHECKING, Type
 
 import sqlalchemy
 from sqlalchemy import text
@@ -33,10 +33,10 @@ class AliasManager:
     def __init__(self) -> None:
         self._aliases_new: Dict[str, str] = dict()
 
-    def __contains__(self, item):
+    def __contains__(self, item: str) -> bool:
         return self._aliases_new.__contains__(item)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         return self._aliases_new.__getitem__(key)
 
     @staticmethod

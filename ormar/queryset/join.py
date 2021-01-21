@@ -24,20 +24,20 @@ if TYPE_CHECKING:  # pragma no cover
 
 class SqlJoin:
     def __init__(  # noqa:  CFQ002
-            self,
-            used_aliases: List,
-            select_from: sqlalchemy.sql.select,
-            columns: List[sqlalchemy.Column],
-            fields: Optional[Union[Set, Dict]],
-            exclude_fields: Optional[Union[Set, Dict]],
-            order_columns: Optional[List],
-            sorted_orders: OrderedDict,
-            main_model: Type["Model"],
-            relation_name: str,
-            relation_str: str,
-            related_models: Any = None,
-            own_alias: str = "",
-            source_model: Type["Model"] = None,
+        self,
+        used_aliases: List,
+        select_from: sqlalchemy.sql.select,
+        columns: List[sqlalchemy.Column],
+        fields: Optional[Union[Set, Dict]],
+        exclude_fields: Optional[Union[Set, Dict]],
+        order_columns: Optional[List],
+        sorted_orders: OrderedDict,
+        main_model: Type["Model"],
+        relation_name: str,
+        relation_str: str,
+        related_models: Any = None,
+        own_alias: str = "",
+        source_model: Type["Model"] = None,
     ) -> None:
         self.relation_name = relation_name
         self.related_models = related_models or []
@@ -62,7 +62,7 @@ class SqlJoin:
     def next_model(self) -> Type["Model"]:
         if not self._next_model:  # pragma: nocover
             raise RelationshipInstanceError(
-                "Cannot link to related table if " "relation to model is not set."
+                "Cannot link to related table if relation.to model is not set."
             )
         return self._next_model
 
@@ -90,8 +90,7 @@ class SqlJoin:
         """
         return self.main_model.Meta.alias_manager
 
-    def on_clause(self, previous_alias: str, from_clause: str,
-                  to_clause: str, ) -> text:
+    def on_clause(self, previous_alias: str, from_clause: str, to_clause: str,) -> text:
         """
         Receives aliases and names of both ends of the join and combines them
         into one text clause used in joins.
@@ -134,19 +133,23 @@ class SqlJoin:
             self.sorted_orders,
         )
 
-    def _forward_join(self):
+    def _forward_join(self) -> None:
+        """
+        Process actual join.
+        Registers complex relation join on encountering of the duplicated alias.
+        """
         self.next_alias = self.alias_manager.resolve_relation_alias(
             from_model=self.target_field.owner, relation_name=self.relation_name
         )
         if self.next_alias not in self.used_aliases:
             self._process_join()
         else:
-            if '__' in self.relation_str:
-                relation_key = f'{self.source_model.get_name()}_{self.relation_str}'
+            if "__" in self.relation_str and self.source_model:
+                relation_key = f"{self.source_model.get_name()}_{self.relation_str}"
                 if relation_key not in self.alias_manager:
-                    print(f'registering {relation_key}')
                     self.next_alias = self.alias_manager.add_alias(
-                        alias_key=relation_key)
+                        alias_key=relation_key
+                    )
                 else:
                     self.next_alias = self.alias_manager[relation_key]
                 self._process_join()
@@ -158,8 +161,8 @@ class SqlJoin:
         for related_name in self.related_models:
             remainder = None
             if (
-                    isinstance(self.related_models, dict)
-                    and self.related_models[related_name]
+                isinstance(self.related_models, dict)
+                and self.related_models[related_name]
             ):
                 remainder = self.related_models[related_name]
             self._process_deeper_join(related_name=related_name, remainder=remainder)
@@ -194,9 +197,9 @@ class SqlJoin:
             main_model=self.next_model,
             relation_name=related_name,
             related_models=remainder,
-            relation_str='__'.join([self.relation_str, related_name]),
+            relation_str="__".join([self.relation_str, related_name]),
             own_alias=self.next_alias,
-            source_model=self.source_model or self.main_model
+            source_model=self.source_model or self.main_model,
         )
         (
             self.used_aliases,
@@ -244,18 +247,18 @@ class SqlJoin:
         """
         target_field = self.target_field
         is_primary_self_ref = (
-                target_field.self_reference
-                and self.relation_name == target_field.self_reference_primary
+            target_field.self_reference
+            and self.relation_name == target_field.self_reference_primary
         )
         if (is_primary_self_ref and not reverse) or (
-                not is_primary_self_ref and reverse
+            not is_primary_self_ref and reverse
         ):
             new_part = target_field.default_source_field_name()  # type: ignore
         else:
             new_part = target_field.default_target_field_name()  # type: ignore
         return new_part
 
-    def _process_join(self, ) -> None:  # noqa: CFQ002
+    def _process_join(self,) -> None:  # noqa: CFQ002
         """
         Resolves to and from column names and table names.
 
@@ -335,10 +338,10 @@ class SqlJoin:
         :rtype: bool
         """
         return len(condition) >= 2 and (
-                condition[-2] == part or condition[-2][1:] == part
+            condition[-2] == part or condition[-2][1:] == part
         )
 
-    def set_aliased_order_by(self, condition: List[str], to_table: str, ) -> None:
+    def set_aliased_order_by(self, condition: List[str], to_table: str,) -> None:
         """
         Substitute hyphens ('-') with descending order.
         Construct actual sqlalchemy text clause using aliased table and column name.
@@ -353,7 +356,7 @@ class SqlJoin:
         order = text(f"{self.next_alias}_{to_table}.{column_alias} {direction}")
         self.sorted_orders["__".join(condition)] = order
 
-    def get_order_bys(self, to_table: str, pkname_alias: str, ) -> None:  # noqa: CCR001
+    def get_order_bys(self, to_table: str, pkname_alias: str,) -> None:  # noqa: CCR001
         """
         Triggers construction of order bys if they are given.
         Otherwise by default each table is sorted by a primary key column asc.

@@ -22,12 +22,12 @@ def is_field_an_forward_ref(field: Type["BaseField"]) -> bool:
     :rtype: bool
     """
     return issubclass(field, ForeignKeyField) and (
-            field.to.__class__ == ForwardRef or field.through.__class__ == ForwardRef
+        field.to.__class__ == ForwardRef or field.through.__class__ == ForwardRef
     )
 
 
 def populate_default_options_values(
-        new_model: Type["Model"], model_fields: Dict
+    new_model: Type["Model"], model_fields: Dict
 ) -> None:
     """
     Sets all optional Meta values to it's defaults
@@ -52,8 +52,7 @@ def populate_default_options_values(
         new_model.Meta.abstract = False
 
     if any(
-            is_field_an_forward_ref(field) for field in
-            new_model.Meta.model_fields.values()
+        is_field_an_forward_ref(field) for field in new_model.Meta.model_fields.values()
     ):
         new_model.Meta.requires_ref_update = True
     else:
@@ -78,7 +77,7 @@ def extract_annotations_and_default_vals(attrs: Dict) -> Tuple[Dict, Dict]:
 
 # cannot be in relations helpers due to cyclical import
 def validate_related_names_in_relations(  # noqa CCR001
-        model_fields: Dict, new_model: Type["Model"]
+    model_fields: Dict, new_model: Type["Model"]
 ) -> None:
     """
     Performs a validation of relation_names in relation fields.
@@ -135,12 +134,11 @@ def group_related_list(list_: List) -> Dict:
     grouped = itertools.groupby(list_, key=lambda x: x.split("__")[0])
     for key, group in grouped:
         group_list = list(group)
-        new = sorted([
-            "__".join(x.split("__")[1:]) for x in group_list if len(x.split("__")) > 1
-        ])
+        new = sorted(
+            ["__".join(x.split("__")[1:]) for x in group_list if len(x.split("__")) > 1]
+        )
         if any("__" in x for x in new):
             result_dict[key] = group_related_list(new)
         else:
             result_dict.setdefault(key, []).extend(new)
-    return {k: v for k, v in
-            sorted(result_dict.items(), key=lambda item: len(item[1]))}
+    return {k: v for k, v in sorted(result_dict.items(), key=lambda item: len(item[1]))}

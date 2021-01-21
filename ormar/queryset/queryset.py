@@ -236,7 +236,7 @@ class QuerySet:
             select_related=self._select_related,
             filter_clauses=self.filter_clauses,
         )
-        filter_clauses, select_related = qryclause.filter(**kwargs)
+        filter_clauses, select_related = qryclause.prepare_filter(**kwargs)
         if _exclude:
             exclude_clauses = filter_clauses
             filter_clauses = self.filter_clauses
