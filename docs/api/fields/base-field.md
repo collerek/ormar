@@ -217,7 +217,7 @@ primary_key, index, unique, nullable, default and server_default.
 
 ```python
  | @classmethod
- | expand_relationship(cls, value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True, relation_name: str = None) -> Any
+ | expand_relationship(cls, value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True) -> Any
 ```
 
 Function overwritten for relations, in basic field the value is returned as is.
@@ -235,4 +235,67 @@ dict (from Model) or actual instance/list of a "Model".
 **Returns**:
 
 `(Any)`: returns untouched value for normal fields, expands only for relations
+
+<a name="fields.base.BaseField.set_self_reference_flag"></a>
+#### set\_self\_reference\_flag
+
+```python
+ | @classmethod
+ | set_self_reference_flag(cls) -> None
+```
+
+Sets `self_reference` to True if field to and owner are same model.
+
+**Returns**:
+
+`(None)`: None
+
+<a name="fields.base.BaseField.has_unresolved_forward_refs"></a>
+#### has\_unresolved\_forward\_refs
+
+```python
+ | @classmethod
+ | has_unresolved_forward_refs(cls) -> bool
+```
+
+Verifies if the filed has any ForwardRefs that require updating before the
+model can be used.
+
+**Returns**:
+
+`(bool)`: result of the check
+
+<a name="fields.base.BaseField.evaluate_forward_ref"></a>
+#### evaluate\_forward\_ref
+
+```python
+ | @classmethod
+ | evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None
+```
+
+Evaluates the ForwardRef to actual Field based on global and local namespaces
+
+**Arguments**:
+
+- `globalns (Any)`: global namespace
+- `localns (Any)`: local namespace
+
+**Returns**:
+
+`(None)`: None
+
+<a name="fields.base.BaseField.get_related_name"></a>
+#### get\_related\_name
+
+```python
+ | @classmethod
+ | get_related_name(cls) -> str
+```
+
+Returns name to use for reverse relation.
+It's either set as `related_name` or by default it's owner model. get_name + 's'
+
+**Returns**:
+
+`(str)`: name of the related_name or default related name.
 

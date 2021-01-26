@@ -59,7 +59,7 @@ or field name specified by related parameter.
 
 ```python
  | @classmethod
- | get_related_field_name(cls, target_field: Type["BaseField"]) -> str
+ | get_related_field_name(cls, target_field: Type["ForeignKeyField"]) -> str
 ```
 
 Returns name of the relation field that should be used in prefetch query.

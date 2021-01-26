@@ -1,3 +1,21 @@
+# 0.8.1
+
+* Introduce processing of `ForwardRef` in relations. 
+  Now you can create self-referencing models - both `ForeignKey` and `ManyToMany` relations. 
+  `ForwardRef` can be used both for `to` and `through` `Models`.
+* Introduce the possibility to perform two **same relation** joins in one query, so to process complex relations like:
+  ```
+      B = X = Y
+    //
+   A 
+    \
+      C = X = Y <= before you could link from X to Y only once in one query
+                   unless two different relation were used 
+                   (two relation fields with different names)
+  ```
+* Refactoring and performance optimization in queries and joins.
+* Update API docs and docs.
+
 # 0.8.0
 
 ## Breaking

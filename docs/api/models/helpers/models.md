@@ -1,6 +1,24 @@
 <a name="models.helpers.models"></a>
 # models.helpers.models
 
+<a name="models.helpers.models.is_field_an_forward_ref"></a>
+#### is\_field\_an\_forward\_ref
+
+```python
+is_field_an_forward_ref(field: Type["BaseField"]) -> bool
+```
+
+Checks if field is a relation field and whether any of the referenced models
+are ForwardRefs that needs to be updated before proceeding.
+
+**Arguments**:
+
+- `field (Type[BaseField])`: model field to verify
+
+**Returns**:
+
+`(bool)`: result of the check
+
 <a name="models.helpers.models.populate_default_options_values"></a>
 #### populate\_default\_options\_values
 
@@ -61,4 +79,29 @@ Also related_names have to be unique for given related model.
 
 - `model_fields (Dict[str, ormar.Field])`: dictionary of declared ormar model fields
 - `new_model (Model class)`: 
+
+<a name="models.helpers.models.group_related_list"></a>
+#### group\_related\_list
+
+```python
+group_related_list(list_: List) -> Dict
+```
+
+Translates the list of related strings into a dictionary.
+That way nested models are grouped to traverse them in a right order
+and to avoid repetition.
+
+Sample: ["people__houses", "people__cars__models", "people__cars__colors"]
+will become:
+{'people': {'houses': [], 'cars': ['models', 'colors']}}
+
+Result dictionary is sorted by length of the values and by key
+
+**Arguments**:
+
+- `list_ (List[str])`: list of related models used in select related
+
+**Returns**:
+
+`(Dict[str, List])`: list converted to dictionary to avoid repetition and group nested models
 

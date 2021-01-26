@@ -228,9 +228,6 @@ class QuerySet:
         :return: filtered QuerySet
         :rtype: QuerySet
         """
-        # TODO: delay processing of filter clauses or switch to group one
-        #  that keeps all aliases even if duplicated - now initialized too late
-        #  in the join
         qryclause = QueryClause(
             model_cls=self.model,
             select_related=self._select_related,

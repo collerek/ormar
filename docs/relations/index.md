@@ -92,7 +92,34 @@ class Post(ormar.Model):
 
     It allows you to use `await post.categories.all()` but also `await category.posts.all()` to fetch data related only to specific post, category etc.
 
+##Self-reference and postponed references
+
+In order to create auto-relation or create two models that reference each other in at least two
+different relations (remember the reverse side is auto-registered for you), you need to use
+`ForwardRef` from `typing` module.
+
+```python hl_lines="1 11 14"
+PersonRef = ForwardRef("Person")
+
+
+class Person(ormar.Model):
+    class Meta(ModelMeta):
+        metadata = metadata
+        database = db
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    supervisor: PersonRef = ormar.ForeignKey(PersonRef, related_name="employees")
+
+
+Person.update_forward_refs()
+```
+
+!!!tip
+    To read more about self-reference and postponed relations visit [postponed-annotations][postponed-annotations] section
+
 
 [foreign-keys]: ./foreign-key.md
 [many-to-many]: ./many-to-many.md
 [queryset-proxy]: ./queryset-proxy.md
+[postponed-annotations]: ./postponed-annotations.md

@@ -46,6 +46,29 @@ Populates only pk field and set it to desired type.
 
 `(pydantic.BaseModel)`: constructed dummy model
 
+<a name="fields.foreign_key.populate_fk_params_based_on_to_model"></a>
+#### populate\_fk\_params\_based\_on\_to\_model
+
+```python
+populate_fk_params_based_on_to_model(to: Type["Model"], nullable: bool, onupdate: str = None, ondelete: str = None) -> Tuple[Any, List, Any]
+```
+
+Based on target to model to which relation leads to populates the type of the
+pydantic field to use, ForeignKey constraint and type of the target column field.
+
+**Arguments**:
+
+- `to (Model class)`: target related ormar Model
+- `nullable (bool)`: marks field as optional/ required
+- `onupdate (str)`: parameter passed to sqlalchemy.ForeignKey.
+How to treat child rows on update of parent (the one where FK is defined) model.
+- `ondelete (str)`: parameter passed to sqlalchemy.ForeignKey.
+How to treat child rows on delete of parent (the one where FK is defined) model.
+
+**Returns**:
+
+`(Tuple[Any, List, Any])`: tuple with target pydantic type, list of fk constraints and target col type
+
 <a name="fields.foreign_key.UniqueColumns"></a>
 ## UniqueColumns Objects
 
@@ -71,7 +94,7 @@ to produce sqlalchemy.ForeignKeys
 #### ForeignKey
 
 ```python
-ForeignKey(to: Type["Model"], *, name: str = None, unique: bool = False, nullable: bool = True, related_name: str = None, virtual: bool = False, onupdate: str = None, ondelete: str = None, **kwargs: Any, ,) -> Any
+ForeignKey(to: Union[Type["Model"], "ForwardRef"], *, name: str = None, unique: bool = False, nullable: bool = True, related_name: str = None, virtual: bool = False, onupdate: str = None, ondelete: str = None, **kwargs: Any, ,) -> Any
 ```
 
 Despite a name it's a function that returns constructed ForeignKeyField.
@@ -107,12 +130,62 @@ class ForeignKeyField(BaseField)
 
 Actual class returned from ForeignKey function call and stored in model_fields.
 
+<a name="fields.foreign_key.ForeignKeyField.get_source_related_name"></a>
+#### get\_source\_related\_name
+
+```python
+ | @classmethod
+ | get_source_related_name(cls) -> str
+```
+
+Returns name to use for source relation name.
+For FK it's the same, differs for m2m fields.
+It's either set as `related_name` or by default it's owner model. get_name + 's'
+
+**Returns**:
+
+`(str)`: name of the related_name or default related name.
+
+<a name="fields.foreign_key.ForeignKeyField.get_related_name"></a>
+#### get\_related\_name
+
+```python
+ | @classmethod
+ | get_related_name(cls) -> str
+```
+
+Returns name to use for reverse relation.
+It's either set as `related_name` or by default it's owner model. get_name + 's'
+
+**Returns**:
+
+`(str)`: name of the related_name or default related name.
+
+<a name="fields.foreign_key.ForeignKeyField.evaluate_forward_ref"></a>
+#### evaluate\_forward\_ref
+
+```python
+ | @classmethod
+ | evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None
+```
+
+Evaluates the ForwardRef to actual Field based on global and local namespaces
+
+**Arguments**:
+
+- `globalns (Any)`: global namespace
+- `localns (Any)`: local namespace
+
+**Returns**:
+
+`(None)`: None
+
 <a name="fields.foreign_key.ForeignKeyField._extract_model_from_sequence"></a>
 #### \_extract\_model\_from\_sequence
 
 ```python
  | @classmethod
- | _extract_model_from_sequence(cls, value: List, child: "Model", to_register: bool, relation_name: str) -> List["Model"]
+ | _extract_model_from_sequence(cls, value: List, child: "Model", to_register: bool) -> List["Model"]
 ```
 
 Takes a list of Models and registers them on parent.
@@ -135,7 +208,7 @@ Used in reverse FK relations.
 
 ```python
  | @classmethod
- | _register_existing_model(cls, value: "Model", child: "Model", to_register: bool, relation_name: str) -> "Model"
+ | _register_existing_model(cls, value: "Model", child: "Model", to_register: bool) -> "Model"
 ```
 
 Takes already created instance and registers it for parent.
@@ -158,7 +231,7 @@ Used in reverse FK relations and normal FK for single models.
 
 ```python
  | @classmethod
- | _construct_model_from_dict(cls, value: dict, child: "Model", to_register: bool, relation_name: str) -> "Model"
+ | _construct_model_from_dict(cls, value: dict, child: "Model", to_register: bool) -> "Model"
 ```
 
 Takes a dictionary, creates a instance and registers it for parent.
@@ -182,7 +255,7 @@ Used in normal FK for dictionaries.
 
 ```python
  | @classmethod
- | _construct_model_from_pk(cls, value: Any, child: "Model", to_register: bool, relation_name: str) -> "Model"
+ | _construct_model_from_pk(cls, value: Any, child: "Model", to_register: bool) -> "Model"
 ```
 
 Takes a pk value, creates a dummy instance and registers it for parent.
@@ -205,7 +278,7 @@ Used in normal FK for dictionaries.
 
 ```python
  | @classmethod
- | register_relation(cls, model: "Model", child: "Model", relation_name: str) -> None
+ | register_relation(cls, model: "Model", child: "Model") -> None
 ```
 
 Registers relation between parent and child in relation manager.
@@ -219,12 +292,27 @@ Used in Metaclass and sometimes some relations are missing
 - `model (Model class)`: parent model (with relation definition)
 - `child (Model class)`: child model
 
+<a name="fields.foreign_key.ForeignKeyField.has_unresolved_forward_refs"></a>
+#### has\_unresolved\_forward\_refs
+
+```python
+ | @classmethod
+ | has_unresolved_forward_refs(cls) -> bool
+```
+
+Verifies if the filed has any ForwardRefs that require updating before the
+model can be used.
+
+**Returns**:
+
+`(bool)`: result of the check
+
 <a name="fields.foreign_key.ForeignKeyField.expand_relationship"></a>
 #### expand\_relationship
 
 ```python
  | @classmethod
- | expand_relationship(cls, value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True, relation_name: str = None) -> Optional[Union["Model", List["Model"]]]
+ | expand_relationship(cls, value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True) -> Optional[Union["Model", List["Model"]]]
 ```
 
 For relations the child model is first constructed (if needed),

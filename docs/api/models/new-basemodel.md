@@ -48,7 +48,8 @@ them with their default values if default is set.
 
 **Raises**:
 
-- `ModelError`: if abstract model is initialized or unknown field is passed
+- `ModelError`: if abstract model is initialized, model has ForwardRefs
+that has not been updated or unknown field is passed
 
 **Arguments**:
 
@@ -127,6 +128,19 @@ Json fields are converted if needed.
 **Returns**:
 
 `(Any)`: value of the attribute
+
+<a name="models.newbasemodel.NewBaseModel._verify_model_can_be_initialized"></a>
+#### \_verify\_model\_can\_be\_initialized
+
+```python
+ | _verify_model_can_be_initialized() -> None
+```
+
+Raises exception if model is abstract or has ForwardRefs in relation fields.
+
+**Returns**:
+
+`(None)`: None
 
 <a name="models.newbasemodel.NewBaseModel._extract_related_model_instead_of_field"></a>
 #### \_extract\_related\_model\_instead\_of\_field
@@ -298,6 +312,34 @@ present in fastapi responses.
 **Returns**:
 
 `(Set[str])`: set of property fields names
+
+<a name="models.newbasemodel.NewBaseModel.update_forward_refs"></a>
+#### update\_forward\_refs
+
+```python
+ | @classmethod
+ | update_forward_refs(cls, **localns: Any) -> None
+```
+
+Processes fields that are ForwardRef and need to be evaluated into actual
+models.
+
+Expands relationships, register relation in alias manager and substitutes
+sqlalchemy columns with new ones with proper column type (null before).
+
+Populates Meta table of the Model which is left empty before.
+
+Sets self_reference flag on models that links to themselves.
+
+Calls the pydantic method to evaluate pydantic fields.
+
+**Arguments**:
+
+- `localns (Any)`: local namespace
+
+**Returns**:
+
+`(None)`: None
 
 <a name="models.newbasemodel.NewBaseModel._get_related_not_excluded_fields"></a>
 #### \_get\_related\_not\_excluded\_fields

@@ -1,4 +1,6 @@
 # type: ignore
+from typing import List
+
 import databases
 import pytest
 import sqlalchemy
@@ -15,7 +17,7 @@ metadata = sa.MetaData()
 db = databases.Database(DATABASE_URL)
 engine = create_engine(DATABASE_URL)
 
-Person = ForwardRef("Person")
+PersonRef = ForwardRef("Person")
 
 
 class Person(ormar.Model):
@@ -25,19 +27,14 @@ class Person(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    supervisor: Person = ormar.ForeignKey(Person, related_name="employees")
+    supervisor: PersonRef = ormar.ForeignKey(PersonRef, related_name="employees")
 
 
 Person.update_forward_refs()
 
-Game = ForwardRef("Game")
-Child = ForwardRef("Child")
-
-
-class ChildFriend(ormar.Model):
-    class Meta(ModelMeta):
-        metadata = metadata
-        database = db
+GameRef = ForwardRef("Game")
+ChildRef = ForwardRef("Child")
+ChildFriendRef = ForwardRef("ChildFriend")
 
 
 class Child(ormar.Model):
@@ -47,9 +44,19 @@ class Child(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    favourite_game: Game = ormar.ForeignKey(Game, related_name="liked_by")
-    least_favourite_game: Game = ormar.ForeignKey(Game, related_name="not_liked_by")
-    friends = ormar.ManyToMany(Child, through=ChildFriend, related_name="also_friends")
+    favourite_game: GameRef = ormar.ForeignKey(GameRef, related_name="liked_by")
+    least_favourite_game: GameRef = ormar.ForeignKey(
+        GameRef, related_name="not_liked_by"
+    )
+    friends = ormar.ManyToMany(
+        ChildRef, through=ChildFriendRef, related_name="also_friends"
+    )
+
+
+class ChildFriend(ormar.Model):
+    class Meta(ModelMeta):
+        metadata = metadata
+        database = db
 
 
 class Game(ormar.Model):
@@ -82,8 +89,8 @@ async def cleanup():
 
 
 @pytest.mark.asyncio
-async def test_not_uprated_model_raises_errors():
-    Person2 = ForwardRef("Person2")
+async def test_not_updated_model_raises_errors():
+    Person2Ref = ForwardRef("Person2")
 
     class Person2(ormar.Model):
         class Meta(ModelMeta):
@@ -92,7 +99,7 @@ async def test_not_uprated_model_raises_errors():
 
         id: int = ormar.Integer(primary_key=True)
         name: str = ormar.String(max_length=100)
-        supervisor: Person2 = ormar.ForeignKey(Person2, related_name="employees")
+        supervisor: Person2Ref = ormar.ForeignKey(Person2Ref, related_name="employees")
 
     with pytest.raises(ModelError):
         await Person2.objects.create(name="Test")
@@ -102,6 +109,74 @@ async def test_not_uprated_model_raises_errors():
 
     with pytest.raises(ModelError):
         await Person2.objects.get()
+
+
+@pytest.mark.asyncio
+async def test_not_updated_model_m2m_raises_errors():
+    Person3Ref = ForwardRef("Person3")
+
+    class PersonFriend(ormar.Model):
+        class Meta(ModelMeta):
+            metadata = metadata
+            database = db
+
+    class Person3(ormar.Model):
+        class Meta(ModelMeta):
+            metadata = metadata
+            database = db
+
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        supervisors: Person3Ref = ormar.ManyToMany(
+            Person3Ref, through=PersonFriend, related_name="employees"
+        )
+
+    with pytest.raises(ModelError):
+        await Person3.objects.create(name="Test")
+
+    with pytest.raises(ModelError):
+        Person3(name="Test")
+
+    with pytest.raises(ModelError):
+        await Person3.objects.get()
+
+
+@pytest.mark.asyncio
+async def test_not_updated_model_m2m_through_raises_errors():
+    PersonPetRef = ForwardRef("PersonPet")
+
+    class Pet(ormar.Model):
+        class Meta(ModelMeta):
+            metadata = metadata
+            database = db
+
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+
+    class Person4(ormar.Model):
+        class Meta(ModelMeta):
+            metadata = metadata
+            database = db
+
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        pets: List[Pet] = ormar.ManyToMany(
+            Pet, through=PersonPetRef, related_name="owners"
+        )
+
+    class PersonPet(ormar.Model):
+        class Meta(ModelMeta):
+            metadata = metadata
+            database = db
+
+    with pytest.raises(ModelError):
+        await Person4.objects.create(name="Test")
+
+    with pytest.raises(ModelError):
+        Person4(name="Test")
+
+    with pytest.raises(ModelError):
+        await Person4.objects.get()
 
 
 def test_proper_field_init():

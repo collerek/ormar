@@ -36,8 +36,8 @@ def populate_m2m_params_based_on_to_model(
 
 
 def ManyToMany(
-    to: Type["Model"],
-    through: Type["Model"],
+    to: Union[Type["Model"], ForwardRef],
+    through: Union[Type["Model"], ForwardRef],
     *,
     name: str = None,
     unique: bool = False,
@@ -77,7 +77,7 @@ def ManyToMany(
         column_type = None
     else:
         __type__, column_type = populate_m2m_params_based_on_to_model(
-            to=to, nullable=nullable
+            to=to, nullable=nullable  # type: ignore
         )
     namespace = dict(
         __type__=__type__,
@@ -164,12 +164,20 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :return: None
         :rtype: None
         """
-        if cls.to.__class__ == ForwardRef or cls.through.__class__ == ForwardRef:
+        if cls.to.__class__ == ForwardRef:
             cls.to = evaluate_forwardref(
                 cls.to,  # type: ignore
                 globalns,
                 localns or None,
             )
+
             (cls.__type__, cls.column_type,) = populate_m2m_params_based_on_to_model(
                 to=cls.to, nullable=cls.nullable,
+            )
+
+        if cls.through.__class__ == ForwardRef:
+            cls.through = evaluate_forwardref(
+                cls.through,  # type: ignore
+                globalns,
+                localns or None,
             )

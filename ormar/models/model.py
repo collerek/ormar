@@ -110,7 +110,6 @@ class Model(NewBaseModel):
             previous_model = through_field.through  # type: ignore
 
         if previous_model and rel_name2:
-            # TODO finish duplicated nested relation or remove this
             if current_relation_str and "__" in current_relation_str and source_model:
                 table_prefix = cls.Meta.alias_manager.resolve_relation_alias(
                     from_model=source_model, relation_name=current_relation_str
@@ -167,6 +166,10 @@ class Model(NewBaseModel):
         Recurrently calls from_row method on nested instances and create nested
         instances. In the end those instances are added to the final model dictionary.
 
+        :param source_model: source model from which relation started
+        :type source_model: Type[Model]
+        :param current_relation_str: joined related parts into one string
+        :type current_relation_str: str
         :param item: dictionary of already populated nested models, otherwise empty dict
         :type item: Dict
         :param row: raw result row from the database
