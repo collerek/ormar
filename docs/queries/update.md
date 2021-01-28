@@ -1,11 +1,20 @@
-# Update
+# Update data in database
 
-*  `update(each: bool = False, **kwargs) -> int`
-*  `update_or_create(**kwargs) -> Model`
-*  `bulk_update(objects: List[Model], columns: List[str] = None) -> None`
-*  `Model.update() method`
-*  `Model.upsert() method`
-*  `Model.save_related() method`
+Following methods and functions allow updating existing data in the database.
+
+* `update(each: bool = False, **kwargs) -> int`
+* `update_or_create(**kwargs) -> Model`
+* `bulk_update(objects: List[Model], columns: List[str] = None) -> None`
+
+
+* `Model`
+    * `Model.update()` method
+    * `Model.upsert()` method
+    * `Model.save_related()` method
+
+
+* `QuerysetProxy`
+    * `QuerysetProxy.update_or_create(**kwargs)` method
 
 ## update
 
@@ -24,8 +33,8 @@ Return number of rows updated.
 --8<-- "../docs_src/queries/docs002.py"
 ```
 
-!!!warning Queryset needs to be filtered before updating to prevent accidental
-overwrite.
+!!!warning 
+    Queryset needs to be filtered before updating to prevent accidental overwrite.
 
     To update whole database table `each=True` needs to be provided as a safety switch
 
@@ -39,8 +48,9 @@ Updates the model, or in case there is no match in database creates a new one.
 --8<-- "../docs_src/queries/docs003.py"
 ```
 
-!!!note Note that if you want to create a new object you either have to pass pk column
-value or pk column has to be set as autoincrement
+!!!note 
+    Note that if you want to create a new object you either have to pass pk column
+    value or pk column has to be set as autoincrement
 
 ## bulk_update
 
@@ -67,5 +77,50 @@ completed = await ToDo.objects.filter(completed=False).all()
 assert len(completed) == 3
 ```
 
-## Model method
+## Model methods
 
+Each model instance have a set of methods to `save`, `update` or `load` itself.
+
+###update
+
+You can update models by updating your model attributes (fields) and calling `update()` method.
+
+If you try to update a model without a primary key set a `ModelPersistenceError` exception will be thrown.
+
+
+!!!tip
+    Read more about `update()` method in [models-update](../models/methods.md#update)
+
+###upsert
+
+It's a proxy to either `save()` or `update(**kwargs)` methods of a Model.
+If the pk is set the `update()` method will be called.
+
+!!!tip
+    Read more about `upsert()` method in [models-upsert][models-upsert]
+
+###save_related
+
+Method goes through all relations of the `Model` on which the method is called, 
+and calls `upsert()` method on each model that is **not** saved. 
+
+!!!tip
+    Read more about `save_related()` method in [models-save-related][models-save-related]
+
+## QuerysetProxy methods
+
+When access directly the related `ManyToMany` field as well as `ReverseForeignKey` returns the list of related models.
+
+But at the same time it exposes subset of QuerySet API, so you can filter, create, select related etc related models directly from parent model.
+
+### update_or_create
+
+Works exactly the same as [update_or_create](./#update_or_create) function above but allows you to update or create related objects
+from other side of the relation.
+
+!!!tip
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+[querysetproxy]: ../relations/queryset-proxy.md
+[models-upsert]: ../models/methods.md#upsert
+[models-save-related]: ../models/methods.md#save_related

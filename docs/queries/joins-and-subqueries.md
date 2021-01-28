@@ -1,6 +1,18 @@
 # Joins and subqueries
 
+To join one table to another, so load also related models you can use following methods.
 
+* `select_related(related: Union[List, str]) -> QuerySet`
+* `prefetch_related(related: Union[List, str]) -> QuerySet`
+
+
+* `Model`
+    * `Model.load()` method
+
+
+* `QuerysetProxy`
+    * `QuerysetProxy.select_related(related: Union[List, str])` method
+    * `QuerysetProxy.prefetch_related(related: Union[List, str])` method
 
 ## select_related
 
@@ -31,11 +43,81 @@ To chain related `Models` relation use double underscores between names.
     To control order of models (both main or nested) use `order_by()` method.
 
 ```python
+class Album(ormar.Model):
+    class Meta:
+        tablename = "albums"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    is_best_seller: bool = ormar.Boolean(default=False)
+
+class Track(ormar.Model):
+    class Meta:
+        tablename = "tracks"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    album: Optional[Album] = ormar.ForeignKey(Album)
+    title: str = ormar.String(max_length=100)
+    position: int = ormar.Integer()
+    play_count: int = ormar.Integer(nullable=True)
+```
+
+```python
 album = await Album.objects.select_related("tracks").all()
 # will return album will all columns tracks
 ```
 
 You can provide a string or a list of strings
+
+```python
+class SchoolClass(ormar.Model):
+    class Meta:
+        tablename = "schoolclasses"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    department: Optional[Department] = ormar.ForeignKey(Department, nullable=False)
+
+
+class Category(ormar.Model):
+    class Meta:
+        tablename = "categories"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
+class Student(ormar.Model):
+    class Meta:
+        tablename = "students"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    schoolclass: Optional[SchoolClass] = ormar.ForeignKey(SchoolClass)
+    category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
+
+
+class Teacher(ormar.Model):
+    class Meta:
+        tablename = "teachers"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    schoolclass: Optional[SchoolClass] = ormar.ForeignKey(SchoolClass)
+    category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
+```
 
 ```python
 classes = await SchoolClass.objects.select_related(
@@ -82,11 +164,81 @@ To chain related `Models` relation use double underscores between names.
     To control order of models (both main or nested) use `order_by()` method.
 
 ```python
+class Album(ormar.Model):
+    class Meta:
+        tablename = "albums"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    is_best_seller: bool = ormar.Boolean(default=False)
+
+class Track(ormar.Model):
+    class Meta:
+        tablename = "tracks"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    album: Optional[Album] = ormar.ForeignKey(Album)
+    title: str = ormar.String(max_length=100)
+    position: int = ormar.Integer()
+    play_count: int = ormar.Integer(nullable=True)
+```
+
+```python
 album = await Album.objects.prefetch_related("tracks").all()
 # will return album will all columns tracks
 ```
 
-You can provide a string or a list of strings
+You can provide a string, or a list of strings
+
+```python
+class SchoolClass(ormar.Model):
+    class Meta:
+        tablename = "schoolclasses"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    department: Optional[Department] = ormar.ForeignKey(Department, nullable=False)
+
+
+class Category(ormar.Model):
+    class Meta:
+        tablename = "categories"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
+class Student(ormar.Model):
+    class Meta:
+        tablename = "students"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    schoolclass: Optional[SchoolClass] = ormar.ForeignKey(SchoolClass)
+    category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
+
+
+class Teacher(ormar.Model):
+    class Meta:
+        tablename = "teachers"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    schoolclass: Optional[SchoolClass] = ormar.ForeignKey(SchoolClass)
+    category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
+```
 
 ```python
 classes = await SchoolClass.objects.prefetch_related(
@@ -221,3 +373,44 @@ That means that in `prefetch_related` example above if there are 3 distinct mode
 table B and 2 in table C, there will be only 5 children nested models shared between all
 model A instances. That also means that if you update any attribute it will be updated
 on all parents as they share the same child object.
+
+
+## Model methods
+
+Each model instance have a set of methods to `save`, `update` or `load` itself.
+
+### load
+
+You can load the `ForeignKey` related model by calling `load()` method.
+
+`load()` can be used to refresh the model from the database (if it was changed by some other process).
+
+!!!tip
+    Read more about `load()` method in [models methods](../models/methods.md#load)
+
+## QuerysetProxy methods
+
+When access directly the related `ManyToMany` field as well as `ReverseForeignKey`
+returns the list of related models.
+
+But at the same time it exposes subset of QuerySet API, so you can filter, create,
+select related etc related models directly from parent model.
+
+### select_related
+
+Works exactly the same as [select_related](./#select_related) function above but allows you to fetch related
+objects from other side of the relation.
+
+!!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+### prefetch_related
+
+Works exactly the same as [prefetch_related](./#prefetch_related) function above but allows you to fetch related
+objects from other side of the relation.
+
+!!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+
+[querysetproxy]: ../relations/queryset-proxy.md

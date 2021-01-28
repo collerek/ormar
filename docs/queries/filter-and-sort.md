@@ -1,8 +1,26 @@
 # Filtering and sorting data
 
-*  `filter(**kwargs) -> QuerySet`
-*  `exclude(**kwargs) -> QuerySet`
-*  `order_by(columns:Union[List, str]) -> QuerySet`
+You can use following methods to filter the data (sql where clause).
+
+* `filter(**kwargs) -> QuerySet`
+* `exclude(**kwargs) -> QuerySet`
+* `get(**kwargs) -> Model`
+* `get_or_create(**kwargs) -> Model`
+* `all(**kwargs) -> List[Optional[Model]]`
+
+
+* `QuerysetProxy`
+    * `QuerysetProxy.filter(**kwargs)` method
+    * `QuerysetProxy.exclude(**kwargs)` method
+    * `QuerysetProxy.get(**kwargs)` method
+    * `QuerysetProxy.get_or_create(**kwargs)` method
+    * `QuerysetProxy.all(**kwargs)` method
+
+And following methods to sort the data (sql order by clause).
+
+* `order_by(columns:Union[List, str]) -> QuerySet`
+* `QuerysetProxy`
+    * `QuerysetProxy.order_by(columns:Union[List, str])` method
 
 ## filter
 
@@ -36,18 +54,20 @@ You can use special filter suffix to change the filter operands:
 * endswith - like `album__name__endswith='ibu'` (exact end match)
 * iendswith - like `album__name__iendswith='IBU'` (exact end match case insensitive)
 
-!!!note All methods that do not return the rows explicitly returns a QueySet instance so
-you can chain them together
+!!!note 
+    All methods that do not return the rows explicitly returns a QueySet instance so
+    you can chain them together
 
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
 
-!!!warning Note that you do not have to specify the `%` wildcard in contains and other
-filters, it's added for you. If you include `%` in your search value it will be escaped
-and treated as literal percentage sign inside the text.
+!!!warning 
+    Note that you do not have to specify the `%` wildcard in contains and other
+    filters, it's added for you. If you include `%` in your search value it will be escaped
+    and treated as literal percentage sign inside the text.
 
-### exclude
+## exclude
 
 `exclude(**kwargs) -> QuerySet`
 
@@ -67,7 +87,41 @@ notes = await Track.objects.exclude(position_gt=3).all()
 # returns all tracks with position < 3
 ```
 
-### order_by
+## QuerysetProxy methods
+
+When access directly the related `ManyToMany` field as well as `ReverseForeignKey`
+returns the list of related models.
+
+But at the same time it exposes subset of QuerySet API, so you can filter, create,
+select related etc related models directly from parent model.
+
+### get
+
+Works exactly the same as [get](./#get) function above but allows you to fetch related
+objects from other side of the relation.
+
+!!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+### get_or_create
+
+Works exactly the same as [get_or_create](./#get_or_create) function above but allows
+you to query or create related objects from other side of the relation.
+
+!!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+### all
+
+Works exactly the same as [all](./#all) function above but allows you to query related
+objects from other side of the relation.
+
+!!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+
+
+## order_by
 
 `order_by(columns: Union[List, str]) -> QuerySet`
 
@@ -78,12 +132,14 @@ You can provide a string with field name or list of strings with different field
 
 Ordering in sql will be applied in order of names you provide in order_by.
 
-!!!tip By default if you do not provide ordering `ormar` explicitly orders by all
-primary keys
+!!!tip 
+    By default if you do not provide ordering `ormar` explicitly orders by all
+    primary keys
 
-!!!warning If you are sorting by nested models that causes that the result rows are
-unsorted by the main model
-`ormar` will combine those children rows into one main model.
+!!!warning 
+    If you are sorting by nested models that causes that the result rows are
+    unsorted by the main model
+    `ormar` will combine those children rows into one main model.
 
     Sample raw database rows result (sort by child model desc):
     ```
@@ -103,7 +159,7 @@ unsorted by the main model
 Given sample Models like following:
 
 ```python
---8 < -- "../docs_src/queries/docs007.py"
+--8 < -- "../../docs_src/queries/docs007.py"
 ```
 
 To order by main model field just provide a field name
@@ -142,10 +198,12 @@ assert owner.toys[0].name == "Toy 4"
 assert owner.toys[1].name == "Toy 1"
 ```
 
-!!!note All methods that do not return the rows explicitly returns a QueySet instance so
-you can chain them together
+!!!note 
+    All methods that do not return the rows explicitly returns a QueySet instance so
+    you can chain them together
 
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
 
+[querysetproxy]: ../relations/queryset-proxy.md

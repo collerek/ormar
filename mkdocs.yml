@@ -84,9 +84,9 @@ nav:
       - Exceptions: api/exceptions.md
 repo_name: collerek/ormar
 repo_url: https://github.com/collerek/ormar
-google_analytics:
-  - UA-72514911-3
-  - auto
+#google_analytics:
+#  - UA-72514911-3
+#  - auto
 theme:
   name: material
   highlightjs: true

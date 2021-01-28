@@ -8,8 +8,9 @@ and it's options.
 Most of the methods are also available through many to many relations and on reverse
 foreign key relations through `QuerysetProxy` interface.
 
-!!!info To see which one are supported and how to construct relations
-visit [relations][relations].
+!!!info 
+    To see which relations are supported and how to construct relations
+    visit [relations][relations].
 
 For simplicity available methods to fetch and save the data into the database are
 divided into categories according to the function they fulfill.
@@ -20,7 +21,7 @@ For complicity also Models and relations methods are listed.
 
 To read more about any specific section or function please refer to the details subpage.
 
-### Create
+###[Insert data into database](./create.md)
 
 * `create(**kwargs) -> Model`
 * `get_or_create(**kwargs) -> Model`
@@ -29,17 +30,17 @@ To read more about any specific section or function please refer to the details 
 
 
 * `Model`
-  * `Model.save()` method
-  * `Model.upsert()` method
-  * `Model.save_related()` method
+    * `Model.save()` method
+    * `Model.upsert()` method
+    * `Model.save_related()` method
 
-
+  
 * `QuerysetProxy`
-  * `QuerysetProxy.create(**kwargs)` method
-  * `QuerysetProxy.get_or_create(**kwargs)` method
-  * `QuerysetProxy.update_or_create(**kwargs)` method
+    * `QuerysetProxy.create(**kwargs)` method
+    * `QuerysetProxy.get_or_create(**kwargs)` method
+    * `QuerysetProxy.update_or_create(**kwargs)` method
 
-### Read
+### [Read data from database](./read.md)
 
 * `get(**kwargs) -> Model`
 * `get_or_create(**kwargs) -> Model`
@@ -57,7 +58,7 @@ To read more about any specific section or function please refer to the details 
     * `QuerysetProxy.first()` method
     * `QuerysetProxy.all(**kwargs)` method
 
-### Update
+### [Update data in database](./update.md)
 
 * `update(each: bool = False, **kwargs) -> int`
 * `update_or_create(**kwargs) -> Model`
@@ -73,7 +74,7 @@ To read more about any specific section or function please refer to the details 
 * `QuerysetProxy`
     * `QuerysetProxy.update_or_create(**kwargs)` method
 
-### Delete
+### [Delete data from database](./delete.md)
 
 * `delete(each: bool = False, **kwargs) -> int`
 
@@ -86,7 +87,7 @@ To read more about any specific section or function please refer to the details 
     * `QuerysetProxy.remove()` method
     * `QuerysetProxy.clear()` method
 
-### Joins and subqueries
+### [Joins and subqueries](./joins-and-subqueries.md)
 
 * `select_related(related: Union[List, str]) -> QuerySet`
 * `prefetch_related(related: Union[List, str]) -> QuerySet`
@@ -100,7 +101,7 @@ To read more about any specific section or function please refer to the details 
     * `QuerysetProxy.select_related(related: Union[List, str])` method
     * `QuerysetProxy.prefetch_related(related: Union[List, str])` method
 
-### Filtering and sorting
+### [Filtering and sorting](./filter-and-sort.md)
 
 * `filter(**kwargs) -> QuerySet`
 * `exclude(**kwargs) -> QuerySet`
@@ -118,7 +119,7 @@ To read more about any specific section or function please refer to the details 
     * `QuerysetProxy.get_or_create(**kwargs)` method
     * `QuerysetProxy.all(**kwargs)` method
 
-### Selecting columns
+### [Selecting columns](./select-columns.md)
 
 * `fields(columns: Union[List, str, set, dict]) -> QuerySet`
 * `exclude_fields(columns: Union[List, str, set, dict]) -> QuerySet`
@@ -128,7 +129,7 @@ To read more about any specific section or function please refer to the details 
     * `QuerysetProxy.fields(columns: Union[List, str, set, dict])` method
     * `QuerysetProxy.exclude_fields(columns: Union[List, str, set, dict])` method
 
-### Pagination and rows number
+### [Pagination and rows number](./pagination-and-rows-number.md)
 
 * `paginate(page: int) -> QuerySet`
 * `limit(limit_count: int) -> QuerySet`
@@ -142,7 +143,7 @@ To read more about any specific section or function please refer to the details 
     * `QuerysetProxy.limit(limit_count: int)` method
     * `QuerysetProxy.offset(offset: int)` method
 
-### Aggregated functions
+### [Aggregated functions](./aggregations.md)
 
 * `count() -> int`
 * `exists() -> bool`
@@ -153,4 +154,4 @@ To read more about any specific section or function please refer to the details 
     * `QuerysetProxy.exists()` method
   
 
-[relations]: ./relations/index.md
+[relations]: ../relations/index.md

@@ -65,7 +65,7 @@ await track.update(name='The Bird Strikes Again')
 
 `upsert(**kwargs) -> self`
 
-It's an proxy to either `save()` or `update(**kwargs)` methods described above.
+It's a proxy to either `save()` or `update(**kwargs)` methods described above.
 
 If the primary key is set -> the `update` method will be called.
 
