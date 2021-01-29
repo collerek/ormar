@@ -1,15 +1,6 @@
 <a name="queryset.join"></a>
 # queryset.join
 
-<a name="queryset.join.JoinParameters"></a>
-## JoinParameters Objects
-
-```python
-class JoinParameters(NamedTuple)
-```
-
-Named tuple that holds set of parameters passed during join construction.
-
 <a name="queryset.join.SqlJoin"></a>
 ## SqlJoin Objects
 
@@ -21,15 +12,11 @@ class SqlJoin()
 #### alias\_manager
 
 ```python
- | @staticmethod
- | alias_manager(model_cls: Type["Model"]) -> AliasManager
+ | @property
+ | alias_manager() -> AliasManager
 ```
 
-Shortcut for ormars model AliasManager stored on Meta.
-
-**Arguments**:
-
-- `model_cls (Type[Model])`: ormar Model class
+Shortcut for ormar's model AliasManager stored on Meta.
 
 **Returns**:
 
@@ -39,8 +26,7 @@ Shortcut for ormars model AliasManager stored on Meta.
 #### on\_clause
 
 ```python
- | @staticmethod
- | on_clause(previous_alias: str, alias: str, from_clause: str, to_clause: str) -> text
+ | on_clause(previous_alias: str, from_clause: str, to_clause: str) -> text
 ```
 
 Receives aliases and names of both ends of the join and combines them
@@ -49,7 +35,6 @@ into one text clause used in joins.
 **Arguments**:
 
 - `previous_alias (str)`: alias of previous table
-- `alias (str)`: alias of current table
 - `from_clause (str)`: from table name
 - `to_clause (str)`: to table name
 
@@ -57,32 +42,11 @@ into one text clause used in joins.
 
 `(sqlalchemy.text)`: clause combining all strings
 
-<a name="queryset.join.SqlJoin.update_inclusions"></a>
-#### update\_inclusions
-
-```python
- | @staticmethod
- | update_inclusions(model_cls: Type["Model"], fields: Optional[Union[Set, Dict]], exclude_fields: Optional[Union[Set, Dict]], nested_name: str) -> Tuple[Optional[Union[Dict, Set]], Optional[Union[Dict, Set]]]
-```
-
-Extract nested fields and exclude_fields if applicable.
-
-**Arguments**:
-
-- `model_cls (Type["Model"])`: ormar model class
-- `fields (Optional[Union[Set, Dict]])`: fields to include
-- `exclude_fields (Optional[Union[Set, Dict]])`: fields to exclude
-- `nested_name (str)`: name of the nested field
-
-**Returns**:
-
-`(Tuple[Optional[Union[Dict, Set]], Optional[Union[Dict, Set]]])`: updated exclude and include fields from nested objects
-
 <a name="queryset.join.SqlJoin.build_join"></a>
 #### build\_join
 
 ```python
- | build_join(item: str, join_parameters: JoinParameters) -> Tuple[List, sqlalchemy.sql.select, List, OrderedDict]
+ | build_join() -> Tuple[List, sqlalchemy.sql.select, List, OrderedDict]
 ```
 
 Main external access point for building a join.
@@ -90,42 +54,96 @@ Splits the join definition, updates fields and exclude_fields if needed,
 handles switching to through models for m2m relations, returns updated lists of
 used_aliases and sort_orders.
 
-**Arguments**:
-
-- `item (str)`: string with join definition
-- `join_parameters (JoinParameters)`: parameters from previous/ current join
-
 **Returns**:
 
 `(Tuple[List[str], Join, List[TextClause], collections.OrderedDict])`: list of used aliases, select from, list of aliased columns, sort orders
 
-<a name="queryset.join.SqlJoin._build_join_parameters"></a>
-#### \_build\_join\_parameters
+<a name="queryset.join.SqlJoin._forward_join"></a>
+#### \_forward\_join
 
 ```python
- | _build_join_parameters(part: str, join_params: JoinParameters, fields: Optional[Union[Set, Dict]], exclude_fields: Optional[Union[Set, Dict]], is_multi: bool = False) -> JoinParameters
+ | _forward_join() -> None
 ```
 
-Updates used_aliases to not join multiple times to the same table.
-Updates join parameters with new values.
+Process actual join.
+Registers complex relation join on encountering of the duplicated alias.
+
+<a name="queryset.join.SqlJoin._process_following_joins"></a>
+#### \_process\_following\_joins
+
+```python
+ | _process_following_joins() -> None
+```
+
+Iterates through nested models to create subsequent joins.
+
+<a name="queryset.join.SqlJoin._process_deeper_join"></a>
+#### \_process\_deeper\_join
+
+```python
+ | _process_deeper_join(related_name: str, remainder: Any) -> None
+```
+
+Creates nested recurrent instance of SqlJoin for each nested join table,
+updating needed return params here as a side effect.
+
+Updated are:
+
+* self.used_aliases,
+* self.select_from,
+* self.columns,
+* self.sorted_orders,
 
 **Arguments**:
 
-- `part (str)`: part of the join str definition
-- `join_params (JoinParameters)`: parameters from previous/ current join
-- `fields (Optional[Union[Set, Dict]])`: fields to include
-- `exclude_fields (Optional[Union[Set, Dict]])`: fields to exclude
-- `is_multi (bool)`: flag if the relation is m2m
+- `related_name (str)`: name of the relation to follow
+- `remainder (Any)`: deeper tables if there are more nested joins
+
+<a name="queryset.join.SqlJoin.process_m2m_through_table"></a>
+#### process\_m2m\_through\_table
+
+```python
+ | process_m2m_through_table() -> None
+```
+
+Process Through table of the ManyToMany relation so that source table is
+linked to the through table (one additional join)
+
+Replaces needed parameters like:
+
+* self.next_model,
+* self.next_alias,
+* self.relation_name,
+* self.own_alias,
+* self.target_field
+
+To point to through model
+
+<a name="queryset.join.SqlJoin.process_m2m_related_name_change"></a>
+#### process\_m2m\_related\_name\_change
+
+```python
+ | process_m2m_related_name_change(reverse: bool = False) -> str
+```
+
+Extracts relation name to link join through the Through model declared on
+relation field.
+
+Changes the same names in order_by queries if they are present.
+
+**Arguments**:
+
+- `reverse (bool)`: flag if it's on_clause lookup - use reverse fields
 
 **Returns**:
 
-`(ormar.queryset.join.JoinParameters)`: updated join parameters
+`(str)`: new relation name switched to through model field
 
 <a name="queryset.join.SqlJoin._process_join"></a>
 #### \_process\_join
 
 ```python
- | _process_join(join_params: JoinParameters, is_multi: bool, model_cls: Type["Model"], part: str, alias: str, fields: Optional[Union[Set, Dict]], exclude_fields: Optional[Union[Set, Dict]]) -> None
+ | _process_join() -> None
 ```
 
 Resolves to and from column names and table names.
@@ -140,21 +158,11 @@ Updates the used aliases list directly.
 
 Process order_by causes for non m2m relations.
 
-**Arguments**:
-
-- `join_params (JoinParameters)`: parameters from previous/ current join
-- `is_multi (bool)`: flag if it's m2m relation
-- `model_cls (ormar.models.metaclass.ModelMetaclass)`: 
-- `part (str)`: name of the field used in join
-- `alias (str)`: alias of the current join
-- `fields (Optional[Union[Set, Dict]])`: fields to include
-- `exclude_fields (Optional[Union[Set, Dict]])`: fields to exclude
-
-<a name="queryset.join.SqlJoin._switch_many_to_many_order_columns"></a>
-#### \_switch\_many\_to\_many\_order\_columns
+<a name="queryset.join.SqlJoin._replace_many_to_many_order_by_columns"></a>
+#### \_replace\_many\_to\_many\_order\_by\_columns
 
 ```python
- | _switch_many_to_many_order_columns(part: str, new_part: str) -> None
+ | _replace_many_to_many_order_by_columns(part: str, new_part: str) -> None
 ```
 
 Substitutes the name of the relation with actual model name in m2m order bys.
@@ -187,7 +195,7 @@ Checks filter conditions to find if they apply to current join.
 #### set\_aliased\_order\_by
 
 ```python
- | set_aliased_order_by(condition: List[str], alias: str, to_table: str, model_cls: Type["Model"]) -> None
+ | set_aliased_order_by(condition: List[str], to_table: str) -> None
 ```
 
 Substitute hyphens ('-') with descending order.
@@ -196,15 +204,13 @@ Construct actual sqlalchemy text clause using aliased table and column name.
 **Arguments**:
 
 - `condition (List[str])`: list of parts of a current condition split by '__'
-- `alias (str)`: alias of the table in current join
 - `to_table (sqlalchemy.sql.elements.quoted_name)`: target table
-- `model_cls (ormar.models.metaclass.ModelMetaclass)`: ormar model class
 
 <a name="queryset.join.SqlJoin.get_order_bys"></a>
 #### get\_order\_bys
 
 ```python
- | get_order_bys(alias: str, to_table: str, pkname_alias: str, part: str, model_cls: Type["Model"]) -> None
+ | get_order_bys(to_table: str, pkname_alias: str) -> None
 ```
 
 Triggers construction of order bys if they are given.
@@ -212,30 +218,19 @@ Otherwise by default each table is sorted by a primary key column asc.
 
 **Arguments**:
 
-- `alias (str)`: alias of current table in join
 - `to_table (sqlalchemy.sql.elements.quoted_name)`: target table
 - `pkname_alias (str)`: alias of the primary key column
-- `part (str)`: name of the current relation join
-- `model_cls (Type[Model])`: ormar model class
 
 <a name="queryset.join.SqlJoin.get_to_and_from_keys"></a>
 #### get\_to\_and\_from\_keys
 
 ```python
- | @staticmethod
- | get_to_and_from_keys(join_params: JoinParameters, is_multi: bool, model_cls: Type["Model"], part: str) -> Tuple[str, str]
+ | get_to_and_from_keys() -> Tuple[str, str]
 ```
 
 Based on the relation type, name of the relation and previous models and parts
 stored in JoinParameters it resolves the current to and from keys, which are
-different for ManyToMany relation, ForeignKey and reverse part of relations.
-
-**Arguments**:
-
-- `join_params (JoinParameters)`: parameters from previous/ current join
-- `is_multi (bool)`: flag if the relation is of m2m type
-- `model_cls (Type[Model])`: ormar model class
-- `part (str)`: name of the current relation join
+different for ManyToMany relation, ForeignKey and reverse related of relations.
 
 **Returns**:
 

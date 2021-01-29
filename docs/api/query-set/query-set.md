@@ -444,6 +444,25 @@ each=True flag to affect whole table.
 
 `(int)`: number of deleted rows
 
+<a name="queryset.queryset.QuerySet.paginate"></a>
+#### paginate
+
+```python
+ | paginate(page: int, page_size: int = 20) -> "QuerySet"
+```
+
+You can paginate the result which is a combination of offset and limit clauses.
+Limit is set to page size and offset is set to (page-1) * page_size.
+
+**Arguments**:
+
+- `page_size (int)`: numbers of items per page
+- `page (int)`: page number
+
+**Returns**:
+
+`(QuerySet)`: QuerySet
+
 <a name="queryset.queryset.QuerySet.limit"></a>
 #### limit
 

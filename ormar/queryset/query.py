@@ -6,8 +6,10 @@ import sqlalchemy
 from sqlalchemy import text
 
 import ormar  # noqa I100
+from ormar.models.helpers.models import group_related_list
 from ormar.queryset import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
-from ormar.queryset.join import JoinParameters, SqlJoin
+from ormar.queryset.filter_action import FilterAction
+from ormar.queryset.join import SqlJoin
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -17,8 +19,8 @@ class Query:
     def __init__(  # noqa CFQ002
         self,
         model_cls: Type["Model"],
-        filter_clauses: List,
-        exclude_clauses: List,
+        filter_clauses: List[FilterAction],
+        exclude_clauses: List[FilterAction],
         select_related: List,
         limit_count: Optional[int],
         offset: Optional[int],
@@ -140,14 +142,14 @@ class Query:
         else:
             self.select_from = self.table
 
-        self._select_related.sort(key=lambda item: (item, -len(item)))
+        related_models = group_related_list(self._select_related)
 
-        for item in self._select_related:
-            join_parameters = JoinParameters(
-                self.model_cls, "", self.table.name, self.model_cls
-            )
-            fields = self.model_cls.get_included(self.fields, item)
-            exclude_fields = self.model_cls.get_excluded(self.exclude_fields, item)
+        for related in related_models:
+            fields = self.model_cls.get_included(self.fields, related)
+            exclude_fields = self.model_cls.get_excluded(self.exclude_fields, related)
+            remainder = None
+            if isinstance(related_models, dict) and related_models[related]:
+                remainder = related_models[related]
             sql_join = SqlJoin(
                 used_aliases=self.used_aliases,
                 select_from=self.select_from,
@@ -156,6 +158,10 @@ class Query:
                 exclude_fields=exclude_fields,
                 order_columns=self.order_columns,
                 sorted_orders=self.sorted_orders,
+                main_model=self.model_cls,
+                relation_name=related,
+                relation_str=related,
+                related_models=remainder,
             )
 
             (
@@ -163,14 +169,14 @@ class Query:
                 self.select_from,
                 self.columns,
                 self.sorted_orders,
-            ) = sql_join.build_join(item, join_parameters)
+            ) = sql_join.build_join()
 
         expr = sqlalchemy.sql.select(self.columns)
         expr = expr.select_from(self.select_from)
 
         expr = self._apply_expression_modifiers(expr)
 
-        # print(expr.compile(compile_kwargs={"literal_binds": True}))
+        # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
         self._reset_query_parameters()
 
         return expr
@@ -195,12 +201,12 @@ class Query:
         filters_to_use = [
             filter_clause
             for filter_clause in self.filter_clauses
-            if filter_clause.text.startswith(f"{self.table.name}.")
+            if filter_clause.table_prefix == ""
         ]
         excludes_to_use = [
             filter_clause
             for filter_clause in self.exclude_clauses
-            if filter_clause.text.startswith(f"{self.table.name}.")
+            if filter_clause.table_prefix == ""
         ]
         sorts_to_use = {k: v for k, v in self.sorted_orders.items() if "__" not in k}
         expr = FilterQuery(filter_clauses=filters_to_use).apply(expr)

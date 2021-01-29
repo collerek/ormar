@@ -150,3 +150,22 @@ with all children models under their relation keys.
 
 `(Dict)`: dictionary of lists f related models
 
+<a name="queryset.utils.get_relationship_alias_model_and_str"></a>
+#### get\_relationship\_alias\_model\_and\_str
+
+```python
+get_relationship_alias_model_and_str(source_model: Type["Model"], related_parts: List) -> Tuple[str, Type["Model"], str]
+```
+
+Walks the relation to retrieve the actual model on which the clause should be
+constructed, extracts alias based on last relation leading to target model.
+
+**Arguments**:
+
+- `related_parts (Union[List, List[str]])`: list of related names extracted from string
+- `source_model (Type[Model])`: model from which relation starts
+
+**Returns**:
+
+`(Tuple[str, Type["Model"], str])`: table prefix, target model and relation string
+

@@ -40,8 +40,12 @@ class BaseField(FieldInfo):
     pydantic_only: bool
     virtual: bool = False
     choices: typing.Sequence
+
+    owner: Type["Model"]
     to: Type["Model"]
     through: Type["Model"]
+    self_reference: bool = False
+    self_reference_primary: Optional[str] = None
 
     default: Any
     server_default: Any
@@ -244,7 +248,6 @@ class BaseField(FieldInfo):
         value: Any,
         child: Union["Model", "NewBaseModel"],
         to_register: bool = True,
-        relation_name: str = None,
     ) -> Any:
         """
         Function overwritten for relations, in basic field the value is returned as is.
@@ -263,3 +266,50 @@ class BaseField(FieldInfo):
         :rtype: Any
         """
         return value
+
+    @classmethod
+    def set_self_reference_flag(cls) -> None:
+        """
+        Sets `self_reference` to True if field to and owner are same model.
+        :return: None
+        :rtype: None
+        """
+        if cls.owner is not None and (
+            cls.owner == cls.to or cls.owner.Meta == cls.to.Meta
+        ):
+            cls.self_reference = True
+            cls.self_reference_primary = cls.name
+
+    @classmethod
+    def has_unresolved_forward_refs(cls) -> bool:
+        """
+        Verifies if the filed has any ForwardRefs that require updating before the
+        model can be used.
+
+        :return: result of the check
+        :rtype: bool
+        """
+        return False
+
+    @classmethod
+    def evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None:
+        """
+        Evaluates the ForwardRef to actual Field based on global and local namespaces
+
+        :param globalns: global namespace
+        :type globalns: Any
+        :param localns: local namespace
+        :type localns: Any
+        :return: None
+        :rtype: None
+        """
+
+    @classmethod
+    def get_related_name(cls) -> str:
+        """
+        Returns name to use for reverse relation.
+        It's either set as `related_name` or by default it's owner model. get_name + 's'
+        :return: name of the related_name or default related name.
+        :rtype: str
+        """
+        return ""  # pragma: no cover

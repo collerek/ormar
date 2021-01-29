@@ -101,13 +101,7 @@ class RelationsManager:
         return None
 
     @staticmethod
-    def add(
-        parent: "Model",
-        child: "Model",
-        child_name: str,
-        virtual: bool,
-        relation_name: str,
-    ) -> None:
+    def add(parent: "Model", child: "Model", field: Type["ForeignKeyField"],) -> None:
         """
         Adds relation on both sides -> meaning on both child and parent models.
         One side of the relation is always weakref proxy to avoid circular refs.
@@ -120,25 +114,19 @@ class RelationsManager:
         :type parent: Model
         :param child: child model to register
         :type child: Model
-        :param child_name: potential child name used if related name is not set
-        :type child_name: str
-        :param virtual:
-        :type virtual: bool
-        :param relation_name: name of the relation
-        :type relation_name: str
+        :param field: field with relation definition
+        :type field: ForeignKeyField
         """
-        to_field: Type[BaseField] = child.Meta.model_fields[relation_name]
-        # print('comming', child_name, relation_name)
         (parent, child, child_name, to_name,) = get_relations_sides_and_names(
-            to_field, parent, child, child_name, virtual, relation_name
+            field, parent, child
         )
 
-        # print('adding', parent.get_name(), child.get_name(), child_name)
+        # print('adding parent', parent.get_name(), child.get_name(), child_name)
         parent_relation = parent._orm._get(child_name)
         if parent_relation:
             parent_relation.add(child)  # type: ignore
 
-        # print('adding', child.get_name(), parent.get_name(), child_name)
+        # print('adding child', child.get_name(), parent.get_name(), to_name)
         child_relation = child._orm._get(to_name)
         if child_relation:
             child_relation.add(parent)
@@ -176,8 +164,6 @@ class RelationsManager:
         :param name: name of the relation
         :type name: str
         """
-        relation_name = (
-            item.Meta.model_fields[name].related_name or item.get_name() + "s"
-        )
+        relation_name = item.Meta.model_fields[name].get_related_name()
         item._orm.remove(name, parent)
         parent._orm.remove(relation_name, item)

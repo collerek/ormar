@@ -1,6 +1,17 @@
 <a name="models.metaclass"></a>
 # models.metaclass
 
+<a name="models.metaclass.ModelMeta"></a>
+## ModelMeta Objects
+
+```python
+class ModelMeta()
+```
+
+Class used for type hinting.
+Users can subclass this one for convenience but it's not required.
+The only requirement is that ormar.Model has to have inner class with name Meta.
+
 <a name="models.metaclass.check_if_field_has_choices"></a>
 #### check\_if\_field\_has\_choices
 
@@ -143,7 +154,7 @@ as well as model.Meta.model_fields definitions from parents.
 **Arguments**:
 
 - `attrs (Dict)`: new namespace for class being constructed
-- `new_attrs (Dict)`: part of the namespace extracted from parent class
+- `new_attrs (Dict)`: related of the namespace extracted from parent class
 - `model_fields (Dict[str, BaseField])`: ormar fields in defined in current class
 - `new_model_fields (Dict[str, BaseField])`: ormar fields defined in parent classes
 - `new_fields (Set[str])`: set of new fields names
@@ -269,18 +280,6 @@ If the class is a ormar.Model it is skipped.
 **Returns**:
 
 `(Tuple[Dict, Dict])`: updated attrs and model_fields
-
-<a name="models.metaclass.ModelMeta"></a>
-## ModelMeta Objects
-
-```python
-class ModelMeta()
-```
-
-Class used for type hinting.
-Users can subclass this one for convenience but it's not required.
-The only requirement is that ormar.Model has to have inner class with name Meta.
-
 
 <a name="models.metaclass.ModelMetaclass"></a>
 ## ModelMetaclass Objects

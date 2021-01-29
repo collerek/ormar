@@ -1,56 +1,67 @@
 import copy
 import logging
-from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type
+from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import sqlalchemy
 
 from ormar import ForeignKey, Integer, ModelDefinitionError  # noqa: I202
 from ormar.fields import BaseField, ManyToManyField
+from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.helpers.models import validate_related_names_in_relations
 from ormar.models.helpers.pydantic import create_pydantic_field
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model, ModelMeta
+    from ormar.models import NewBaseModel
 
 
-def adjust_through_many_to_many_model(
-    model: Type["Model"], child: Type["Model"], model_field: Type[ManyToManyField]
-) -> None:
+def adjust_through_many_to_many_model(model_field: Type[ManyToManyField]) -> None:
     """
     Registers m2m relation on through model.
     Sets ormar.ForeignKey from through model to both child and parent models.
     Sets sqlalchemy.ForeignKey to both child and parent models.
     Sets pydantic fields with child and parent model types.
 
-    :param model: model on which relation is declared
-    :type model: Model class
-    :param child: model to which m2m relation leads
-    :type child: Model class
     :param model_field: relation field defined in parent model
     :type model_field: ManyToManyField
     """
-    model_field.through.Meta.model_fields[model.get_name()] = ForeignKey(
-        model, real_name=model.get_name(), ondelete="CASCADE"
+    parent_name = model_field.default_target_field_name()
+    child_name = model_field.default_source_field_name()
+
+    model_field.through.Meta.model_fields[parent_name] = ForeignKey(
+        model_field.to,
+        real_name=parent_name,
+        ondelete="CASCADE",
+        owner=model_field.through,
     )
-    model_field.through.Meta.model_fields[child.get_name()] = ForeignKey(
-        child, real_name=child.get_name(), ondelete="CASCADE"
+    model_field.through.Meta.model_fields[child_name] = ForeignKey(
+        model_field.owner,
+        real_name=child_name,
+        ondelete="CASCADE",
+        owner=model_field.through,
     )
 
-    create_and_append_m2m_fk(model, model_field)
-    create_and_append_m2m_fk(child, model_field)
+    create_and_append_m2m_fk(
+        model=model_field.to, model_field=model_field, field_name=parent_name
+    )
+    create_and_append_m2m_fk(
+        model=model_field.owner, model_field=model_field, field_name=child_name
+    )
 
-    create_pydantic_field(model.get_name(), model, model_field)
-    create_pydantic_field(child.get_name(), child, model_field)
+    create_pydantic_field(parent_name, model_field.to, model_field)
+    create_pydantic_field(child_name, model_field.owner, model_field)
 
 
 def create_and_append_m2m_fk(
-    model: Type["Model"], model_field: Type[ManyToManyField]
+    model: Type["Model"], model_field: Type[ManyToManyField], field_name: str
 ) -> None:
     """
-    Registers sqlalchemy Column with sqlalchemy.ForeignKey leadning to the model.
+    Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.
 
     Newly created field is added to m2m relation through model Meta columns and table.
 
+    :param field_name: name of the column to create
+    :type field_name: str
     :param model: Model class to which FK should be created
     :type model: Model class
     :param model_field: field with ManyToMany relation
@@ -63,7 +74,7 @@ def create_and_append_m2m_fk(
             "ManyToMany relation cannot lead to field without pk"
         )
     column = sqlalchemy.Column(
-        model.get_name(),
+        field_name,
         pk_column.type,
         sqlalchemy.schema.ForeignKey(
             model.Meta.tablename + "." + pk_alias,
@@ -72,7 +83,6 @@ def create_and_append_m2m_fk(
         ),
     )
     model_field.through.Meta.columns.append(column)
-    # breakpoint()
     model_field.through.Meta.table.append_column(copy.deepcopy(column))
 
 
@@ -121,6 +131,8 @@ def sqlalchemy_columns_from_model_fields(
     Append fields to columns if it's not pydantic_only,
     virtual ForeignKey or ManyToMany field.
 
+    Sets `owner` on each model_field as reference to newly created Model.
+
     :raises ModelDefinitionError: if validation of related_names fail,
     or pkname validation fails.
     :param model_fields: dictionary of declared ormar model fields
@@ -140,6 +152,7 @@ def sqlalchemy_columns_from_model_fields(
     columns = []
     pkname = None
     for field_name, field in model_fields.items():
+        field.owner = new_model
         if field.primary_key:
             pkname = check_pk_column_validity(field_name, field, pkname)
         if (
@@ -194,6 +207,20 @@ def populate_meta_tablename_columns_and_pk(
     return new_model
 
 
+def check_for_null_type_columns_from_forward_refs(meta: "ModelMeta") -> bool:
+    """
+    Check is any column is of NUllType() meaning it's empty column from ForwardRef
+
+    :param meta: Meta class of the Model without sqlalchemy table constructed
+    :type meta: Model class Meta
+    :return: result of the check
+    :rtype: bool
+    """
+    return not any(
+        isinstance(col.type, sqlalchemy.sql.sqltypes.NullType) for col in meta.columns
+    )
+
+
 def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
     """
     Constructs sqlalchemy table out of columns and parameters set on Meta class.
@@ -204,10 +231,33 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
     :return: class with populated Meta.table
     :rtype: Model class
     """
-    if not hasattr(meta, "table"):
+    if not hasattr(meta, "table") and check_for_null_type_columns_from_forward_refs(
+        meta
+    ):
         meta.table = sqlalchemy.Table(
             meta.tablename,
             meta.metadata,
             *[copy.deepcopy(col) for col in meta.columns],
             *meta.constraints,
         )
+
+
+def update_column_definition(
+    model: Union[Type["Model"], Type["NewBaseModel"]], field: Type[ForeignKeyField]
+) -> None:
+    """
+    Updates a column with a new type column based on updated parameters in FK fields.
+
+    :param model: model on which columns needs to be updated
+    :type model: Type["Model"]
+    :param field: field with column definition that requires update
+    :type field: Type[ForeignKeyField]
+    :return: None
+    :rtype: None
+    """
+    columns = model.Meta.columns
+    for ind, column in enumerate(columns):
+        if column.name == field.get_alias():
+            new_column = field.get_column(field.get_alias())
+            columns[ind] = new_column
+            break

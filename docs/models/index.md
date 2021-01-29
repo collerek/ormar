@@ -76,7 +76,7 @@ Since it can be a function you can set `default=datetime.datetime.now` and get c
     response with `include`/`exclude` and `response_model_include`/`response_model_exclude` accordingly.
 
 ```python
-# <==part of code removed for clarity==>
+# <==related of code removed for clarity==>
 class User(ormar.Model):
     class Meta:
         tablename: str = "users2"
@@ -93,14 +93,14 @@ class User(ormar.Model):
         pydantic_only=True, default=datetime.datetime.now
     )
 
-# <==part of code removed for clarity==>
+# <==related of code removed for clarity==>
 app =FastAPI()
 
 @app.post("/users/")
 async def create_user(user: User):
     return await user.save()
 
-# <==part of code removed for clarity==>
+# <==related of code removed for clarity==>
 
 def test_excluding_fields_in_endpoints():
     client = TestClient(app)
@@ -127,7 +127,7 @@ def test_excluding_fields_in_endpoints():
         assert response.json().get("timestamp") == str(timestamp).replace(" ", "T")
 
 
-# <==part of code removed for clarity==>
+# <==related of code removed for clarity==>
 ```
 
 #### Property fields
@@ -190,7 +190,7 @@ in the response from `fastapi` and `dict()` and `json()` methods. You cannot pas
     ```
     
 ```python
-# <==part of code removed for clarity==>
+# <==related of code removed for clarity==>
 def gen_pass():  # note: NOT production ready 
     choices = string.ascii_letters + string.digits + "!@#$%^&*()"
     return "".join(random.choice(choices) for _ in range(20))
@@ -215,7 +215,7 @@ class RandomModel(ormar.Model):
     def full_name(self) -> str:
         return " ".join([self.first_name, self.last_name])
 
-# <==part of code removed for clarity==>
+# <==related of code removed for clarity==>
 app =FastAPI()
 
 # explicitly exclude property_field in this endpoint
@@ -223,7 +223,7 @@ app =FastAPI()
 async def create_user(user: RandomModel):
     return await user.save()
 
-# <==part of code removed for clarity==>
+# <==related of code removed for clarity==>
 
 def test_excluding_property_field_in_endpoints2():
     client = TestClient(app)
@@ -241,7 +241,7 @@ def test_excluding_property_field_in_endpoints2():
         # despite being decorated with property_field if you explictly exclude it it will be gone
         assert response.json().get("full_name") is None
 
-# <==part of code removed for clarity==>
+# <==related of code removed for clarity==>
 ```
 
 #### Fields names vs Column names
@@ -423,7 +423,7 @@ You can check if model is saved with `ModelInstance.saved` property
 
 [fields]: ../fields/field-types.md
 [relations]: ../relations/index.md
-[queries]: ../queries.md
+[queries]: ../queries/index.md
 [pydantic]: https://pydantic-docs.helpmanual.io/
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [sqlalchemy-metadata]: https://docs.sqlalchemy.org/en/13/core/metadata.html

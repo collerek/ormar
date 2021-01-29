@@ -1,7 +1,7 @@
 import string
 import uuid
 from random import choices
-from typing import Dict, List, TYPE_CHECKING, Type
+from typing import Any, Dict, List, TYPE_CHECKING, Type
 
 import sqlalchemy
 from sqlalchemy import text
@@ -31,8 +31,13 @@ class AliasManager:
     """
 
     def __init__(self) -> None:
-        self._aliases: Dict[str, str] = dict()
         self._aliases_new: Dict[str, str] = dict()
+
+    def __contains__(self, item: str) -> bool:
+        return self._aliases_new.__contains__(item)
+
+    def __getitem__(self, key: str) -> Any:
+        return self._aliases_new.__getitem__(key)
 
     @staticmethod
     def prefixed_columns(
@@ -80,11 +85,7 @@ class AliasManager:
         return text(f"{name} {alias}_{name}")
 
     def add_relation_type(
-        self,
-        source_model: Type["Model"],
-        relation_name: str,
-        reverse_name: str = None,
-        is_multi: bool = False,
+        self, source_model: Type["Model"], relation_name: str, reverse_name: str = None,
     ) -> None:
         """
         Registers the relations defined in ormar models.
@@ -105,23 +106,31 @@ class AliasManager:
         :type relation_name: str
         :param reverse_name: name of related_name fo given relation for m2m relations
         :type reverse_name: Optional[str]
-        :param is_multi: flag if relation being registered is a through m2m model
-        :type is_multi: bool
         :return: none
         :rtype: None
         """
         parent_key = f"{source_model.get_name()}_{relation_name}"
         if parent_key not in self._aliases_new:
-            self._aliases_new[parent_key] = get_table_alias()
+            self.add_alias(parent_key)
+
         to_field = source_model.Meta.model_fields[relation_name]
         child_model = to_field.to
-        related_name = to_field.related_name
-        if not related_name:
-            related_name = reverse_name if is_multi else source_model.get_name() + "s"
-
-        child_key = f"{child_model.get_name()}_{related_name}"
+        child_key = f"{child_model.get_name()}_{reverse_name}"
         if child_key not in self._aliases_new:
-            self._aliases_new[child_key] = get_table_alias()
+            self.add_alias(child_key)
+
+    def add_alias(self, alias_key: str) -> str:
+        """
+        Adds alias to the dictionary of aliases under given key.
+
+        :param alias_key: key of relation to generate alias for
+        :type alias_key: str
+        :return: generated alias
+        :rtype: str
+        """
+        alias = get_table_alias()
+        self._aliases_new[alias_key] = alias
+        return alias
 
     def resolve_relation_alias(
         self, from_model: Type["Model"], relation_name: str

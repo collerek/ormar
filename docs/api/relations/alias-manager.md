@@ -74,7 +74,7 @@ Creates text clause with table name with aliased name.
 #### add\_relation\_type
 
 ```python
- | add_relation_type(source_model: Type["Model"], relation_name: str, reverse_name: str = None, is_multi: bool = False) -> None
+ | add_relation_type(source_model: Type["Model"], relation_name: str, reverse_name: str = None) -> None
 ```
 
 Registers the relations defined in ormar models.
@@ -94,11 +94,27 @@ on one model as well as from multiple different models in one join.
 - `source_model (source Model)`: model with relation defined
 - `relation_name (str)`: name of the relation to define
 - `reverse_name (Optional[str])`: name of related_name fo given relation for m2m relations
-- `is_multi (bool)`: flag if relation being registered is a through m2m model
 
 **Returns**:
 
 `(None)`: none
+
+<a name="relations.alias_manager.AliasManager.add_alias"></a>
+#### add\_alias
+
+```python
+ | add_alias(alias_key: str) -> str
+```
+
+Adds alias to the dictionary of aliases under given key.
+
+**Arguments**:
+
+- `alias_key (str)`: key of relation to generate alias for
+
+**Returns**:
+
+`(str)`: generated alias
 
 <a name="relations.alias_manager.AliasManager.resolve_relation_alias"></a>
 #### resolve\_relation\_alias

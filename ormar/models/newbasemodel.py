@@ -1,7 +1,4 @@
-try:
-    import orjson as json
-except ImportError:  # pragma: no cover
-    import json  # type: ignore
+import sys
 import uuid
 from typing import (
     AbstractSet,
@@ -18,7 +15,14 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
+
+try:
+    import orjson as json
+except ImportError:  # pragma: no cover
+    import json  # type: ignore
+
 
 import databases
 import pydantic
@@ -26,8 +30,15 @@ import sqlalchemy
 from pydantic import BaseModel
 
 import ormar  # noqa I100
-from ormar.exceptions import ModelError
+from ormar.exceptions import ModelError, ModelPersistenceError
 from ormar.fields import BaseField
+from ormar.fields.foreign_key import ForeignKeyField
+from ormar.models.helpers import register_relation_in_alias_manager
+from ormar.models.helpers.relations import expand_reverse_relationship
+from ormar.models.helpers.sqlalchemy import (
+    populate_meta_sqlalchemy_table_if_required,
+    update_column_definition,
+)
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
 from ormar.queryset.utils import translate_list_to_dict
@@ -103,14 +114,14 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         should be explicitly set to None, as otherwise pydantic will try to populate
         them with their default values if default is set.
 
-        :raises ModelError: if abstract model is initialized or unknown field is passed
+        :raises ModelError: if abstract model is initialized, model has ForwardRefs
+         that has not been updated or unknown field is passed
         :param args: ignored args
         :type args: Any
         :param kwargs: keyword arguments - all fields values and some special params
         :type kwargs: Any
         """
-        if self.Meta.abstract:
-            raise ModelError(f"You cannot initialize abstract model {self.get_name()}")
+        self._verify_model_can_be_initialized()
         object.__setattr__(self, "_orm_id", uuid.uuid4().hex)
         object.__setattr__(self, "_orm_saved", False)
         object.__setattr__(self, "_pk_column", None)
@@ -133,7 +144,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 k: self._convert_json(
                     k,
                     self.Meta.model_fields[k].expand_relationship(
-                        v, self, to_register=False, relation_name=k
+                        v, self, to_register=False,
                     ),
                     "dumps",
                 )
@@ -162,7 +173,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         # register the columns models after initialization
         for related in self.extract_related_names():
             self.Meta.model_fields[related].expand_relationship(
-                new_kwargs.get(related), self, to_register=True, relation_name=related
+                new_kwargs.get(related), self, to_register=True,
             )
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
@@ -199,7 +210,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             self.set_save_status(False)
         elif name in self._orm:
             model = self.Meta.model_fields[name].expand_relationship(
-                value=value, child=self, relation_name=name
+                value=value, child=self
             )
             if isinstance(self.__dict__.get(name), list):
                 # virtual foreign key or many to many
@@ -264,6 +275,22 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             value = object.__getattribute__(self, "_convert_json")(item, value, "loads")
             return value
         return object.__getattribute__(self, item)  # pragma: no cover
+
+    def _verify_model_can_be_initialized(self) -> None:
+        """
+        Raises exception if model is abstract or has ForwardRefs in relation fields.
+
+        :return: None
+        :rtype: None
+        """
+        if self.Meta.abstract:
+            raise ModelError(f"You cannot initialize abstract model {self.get_name()}")
+        if self.Meta.requires_ref_update:
+            raise ModelError(
+                f"Model {self.get_name()} has not updated "
+                f"ForwardRefs. \nBefore using the model you "
+                f"need to call update_forward_refs()."
+            )
 
     def _extract_related_model_instead_of_field(
         self, item: str
@@ -397,6 +424,41 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if exclude:
             props = {prop for prop in props if prop not in exclude}
         return props
+
+    @classmethod
+    def update_forward_refs(cls, **localns: Any) -> None:
+        """
+        Processes fields that are ForwardRef and need to be evaluated into actual
+        models.
+
+        Expands relationships, register relation in alias manager and substitutes
+        sqlalchemy columns with new ones with proper column type (null before).
+
+        Populates Meta table of the Model which is left empty before.
+
+        Sets self_reference flag on models that links to themselves.
+
+        Calls the pydantic method to evaluate pydantic fields.
+
+        :param localns: local namespace
+        :type localns: Any
+        :return: None
+        :rtype: None
+        """
+        globalns = sys.modules[cls.__module__].__dict__.copy()
+        globalns.setdefault(cls.__name__, cls)
+        fields_to_check = cls.Meta.model_fields.copy()
+        for field in fields_to_check.values():
+            if field.has_unresolved_forward_refs():
+                field = cast(Type[ForeignKeyField], field)
+                field.evaluate_forward_ref(globalns=globalns, localns=localns)
+                field.set_self_reference_flag()
+                expand_reverse_relationship(model_field=field)
+                register_relation_in_alias_manager(field=field)
+                update_column_definition(model=cls, field=field)
+        populate_meta_sqlalchemy_table_if_required(meta=cls.Meta)
+        super().update_forward_refs(**localns)
+        cls.Meta.requires_ref_update = False
 
     def _get_related_not_excluded_fields(
         self, include: Optional[Dict], exclude: Optional[Dict],
@@ -669,9 +731,15 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             if self.get_column_alias(k) in self.Meta.table.columns
         }
         for field in self._extract_db_related_names():
-            target_pk_name = self.Meta.model_fields[field].to.Meta.pkname
+            relation_field = self.Meta.model_fields[field]
+            target_pk_name = relation_field.to.Meta.pkname
             target_field = getattr(self, field)
             self_fields[field] = getattr(target_field, target_pk_name, None)
+            if not relation_field.nullable and not self_fields[field]:
+                raise ModelPersistenceError(
+                    f"You cannot save {relation_field.to.get_name()} "
+                    f"model without pk set!"
+                )
         return self_fields
 
     def get_relation_model_id(self, target_field: Type["BaseField"]) -> Optional[int]:

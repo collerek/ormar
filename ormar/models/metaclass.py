@@ -66,6 +66,7 @@ class ModelMeta:
     property_fields: Set
     signals: SignalEmitter
     abstract: bool
+    requires_ref_update: bool
 
 
 def check_if_field_has_choices(field: Type[BaseField]) -> bool:
@@ -220,7 +221,7 @@ def update_attrs_and_fields(
 
     :param attrs: new namespace for class being constructed
     :type attrs: Dict
-    :param new_attrs: part of the namespace extracted from parent class
+    :param new_attrs: related of the namespace extracted from parent class
     :type new_attrs: Dict
     :param model_fields: ormar fields in defined in current class
     :type model_fields: Dict[str, BaseField]
@@ -585,8 +586,8 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 new_model = populate_meta_tablename_columns_and_pk(name, new_model)
                 populate_meta_sqlalchemy_table_if_required(new_model.Meta)
                 expand_reverse_relationships(new_model)
-                for field_name, field in new_model.Meta.model_fields.items():
-                    register_relation_in_alias_manager(new_model, field, field_name)
+                for field in new_model.Meta.model_fields.values():
+                    register_relation_in_alias_manager(field=field)
 
                 if new_model.Meta.pkname not in attrs["__annotations__"]:
                     field_name = new_model.Meta.pkname

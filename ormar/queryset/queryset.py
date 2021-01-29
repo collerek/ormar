@@ -6,7 +6,7 @@ from sqlalchemy import bindparam
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
-from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
+from ormar.exceptions import ModelError, ModelPersistenceError, QueryDefinitionError
 from ormar.queryset import FilterQuery
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.prefetch_query import PrefetchQuery
@@ -55,6 +55,13 @@ class QuerySet:
         instance: Optional[Union["QuerySet", "QuerysetProxy"]],
         owner: Union[Type["Model"], Type["QuerysetProxy"]],
     ) -> "QuerySet":
+        if issubclass(owner, ormar.Model):
+            if owner.Meta.requires_ref_update:
+                raise ModelError(
+                    f"Model {owner.get_name()} has not updated "
+                    f"ForwardRefs. \nBefore using the model you "
+                    f"need to call update_forward_refs()."
+                )
         if issubclass(owner, ormar.Model):
             return self.__class__(model_cls=owner)
         return self.__class__()  # pragma: no cover
@@ -226,7 +233,7 @@ class QuerySet:
             select_related=self._select_related,
             filter_clauses=self.filter_clauses,
         )
-        filter_clauses, select_related = qryclause.filter(**kwargs)
+        filter_clauses, select_related = qryclause.prepare_filter(**kwargs)
         if _exclude:
             exclude_clauses = filter_clauses
             filter_clauses = self.filter_clauses
@@ -584,6 +591,37 @@ class QuerySet:
             self.table.delete()
         )
         return await self.database.execute(expr)
+
+    def paginate(self, page: int, page_size: int = 20) -> "QuerySet":
+        """
+        You can paginate the result which is a combination of offset and limit clauses.
+        Limit is set to page size and offset is set to (page-1) * page_size.
+
+        :param page_size: numbers of items per page
+        :type page_size: int
+        :param page: page number
+        :type page: int
+        :return: QuerySet
+        :rtype: QuerySet
+        """
+        if page < 1 or page_size < 1:
+            raise QueryDefinitionError("Page size and page have to be greater than 0.")
+
+        limit_count = page_size
+        query_offset = (page - 1) * page_size
+        return self.__class__(
+            model_cls=self.model,
+            filter_clauses=self.filter_clauses,
+            exclude_clauses=self.exclude_clauses,
+            select_related=self._select_related,
+            limit_count=limit_count,
+            offset=query_offset,
+            columns=self._columns,
+            exclude_columns=self._exclude_columns,
+            order_bys=self.order_bys,
+            prefetch_related=self._prefetch_related,
+            limit_raw_sql=self.limit_sql_raw,
+        )
 
     def limit(self, limit_count: int, limit_raw_sql: bool = None) -> "QuerySet":
         """

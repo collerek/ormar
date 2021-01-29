@@ -14,10 +14,21 @@ nav:
     - Fields types: fields/field-types.md
   - Relations:
     - relations/index.md
+    - relations/postponed-annotations.md
     - relations/foreign-key.md
     - relations/many-to-many.md
     - relations/queryset-proxy.md
-  - Queries: queries.md
+  - Queries:
+    - queries/index.md
+    - queries/create.md
+    - queries/read.md
+    - queries/update.md
+    - queries/delete.md
+    - queries/joins-and-subqueries.md
+    - queries/filter-and-sort.md
+    - queries/select-columns.md
+    - queries/pagination-and-rows-number.md
+    - queries/aggregations.md
   - Signals: signals.md
   - Use with Fastapi: fastapi.md
   - Use with mypy: mypy.md

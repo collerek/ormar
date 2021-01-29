@@ -1,7 +1,7 @@
 from typing import Callable, Dict, List, TYPE_CHECKING, Tuple, Type
 
 import ormar
-from ormar.fields import BaseField
+from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.mixins.relation_mixin import RelationMixin
 
 
@@ -37,10 +37,7 @@ class PrefetchQueryMixin(RelationMixin):
         :rtype: Tuple[Type[Model], str]
         """
         if reverse:
-            field_name = (
-                parent_model.Meta.model_fields[related].related_name
-                or parent_model.get_name() + "s"
-            )
+            field_name = parent_model.Meta.model_fields[related].get_related_name()
             field = target_model.Meta.model_fields[field_name]
             if issubclass(field, ormar.fields.ManyToManyField):
                 field_name = field.default_target_field_name()
@@ -79,7 +76,7 @@ class PrefetchQueryMixin(RelationMixin):
         return column.get_alias() if use_raw else column.name
 
     @classmethod
-    def get_related_field_name(cls, target_field: Type["BaseField"]) -> str:
+    def get_related_field_name(cls, target_field: Type["ForeignKeyField"]) -> str:
         """
         Returns name of the relation field that should be used in prefetch query.
         This field is later used to register relation in prefetch query,
@@ -93,7 +90,7 @@ class PrefetchQueryMixin(RelationMixin):
         if issubclass(target_field, ormar.fields.ManyToManyField):
             return cls.get_name()
         if target_field.virtual:
-            return target_field.related_name or cls.get_name() + "s"
+            return target_field.get_related_name()
         return target_field.to.Meta.pkname
 
     @classmethod

@@ -5,7 +5,7 @@
 #### adjust\_through\_many\_to\_many\_model
 
 ```python
-adjust_through_many_to_many_model(model: Type["Model"], child: Type["Model"], model_field: Type[ManyToManyField]) -> None
+adjust_through_many_to_many_model(model_field: Type[ManyToManyField]) -> None
 ```
 
 Registers m2m relation on through model.
@@ -15,23 +15,22 @@ Sets pydantic fields with child and parent model types.
 
 **Arguments**:
 
-- `model (Model class)`: model on which relation is declared
-- `child (Model class)`: model to which m2m relation leads
 - `model_field (ManyToManyField)`: relation field defined in parent model
 
 <a name="models.helpers.sqlalchemy.create_and_append_m2m_fk"></a>
 #### create\_and\_append\_m2m\_fk
 
 ```python
-create_and_append_m2m_fk(model: Type["Model"], model_field: Type[ManyToManyField]) -> None
+create_and_append_m2m_fk(model: Type["Model"], model_field: Type[ManyToManyField], field_name: str) -> None
 ```
 
-Registers sqlalchemy Column with sqlalchemy.ForeignKey leadning to the model.
+Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.
 
 Newly created field is added to m2m relation through model Meta columns and table.
 
 **Arguments**:
 
+- `field_name (str)`: name of the column to create
 - `model (Model class)`: Model class to which FK should be created
 - `model_field (ManyToManyField field)`: field with ManyToMany relation
 
@@ -83,6 +82,8 @@ cannot be pydantic_only.
 Append fields to columns if it's not pydantic_only,
 virtual ForeignKey or ManyToMany field.
 
+Sets `owner` on each model_field as reference to newly created Model.
+
 **Raises**:
 
 - `ModelDefinitionError`: if validation of related_names fail,
@@ -125,6 +126,23 @@ Each model has to have pk.
 
 `(ormar.models.metaclass.ModelMetaclass)`: Model with populated pkname and columns in Meta
 
+<a name="models.helpers.sqlalchemy.check_for_null_type_columns_from_forward_refs"></a>
+#### check\_for\_null\_type\_columns\_from\_forward\_refs
+
+```python
+check_for_null_type_columns_from_forward_refs(meta: "ModelMeta") -> bool
+```
+
+Check is any column is of NUllType() meaning it's empty column from ForwardRef
+
+**Arguments**:
+
+- `meta (Model class Meta)`: Meta class of the Model without sqlalchemy table constructed
+
+**Returns**:
+
+`(bool)`: result of the check
+
 <a name="models.helpers.sqlalchemy.populate_meta_sqlalchemy_table_if_required"></a>
 #### populate\_meta\_sqlalchemy\_table\_if\_required
 
@@ -142,4 +160,22 @@ It populates name, metadata, columns and constraints.
 **Returns**:
 
 `(Model class)`: class with populated Meta.table
+
+<a name="models.helpers.sqlalchemy.update_column_definition"></a>
+#### update\_column\_definition
+
+```python
+update_column_definition(model: Union[Type["Model"], Type["NewBaseModel"]], field: Type[ForeignKeyField]) -> None
+```
+
+Updates a column with a new type column based on updated parameters in FK fields.
+
+**Arguments**:
+
+- `model (Type["Model"])`: model on which columns needs to be updated
+- `field (Type[ForeignKeyField])`: field with column definition that requires update
+
+**Returns**:
+
+`(None)`: None
 

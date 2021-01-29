@@ -12,6 +12,7 @@ from typing import (
 )
 
 import ormar
+from ormar.exceptions import ModelPersistenceError
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
@@ -38,10 +39,9 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         self._queryset: Optional["QuerySet"] = qryset
         self.type_: "RelationType" = type_
         self._owner: "Model" = self.relation.manager.owner
-        self.related_field_name = (
-            self._owner.Meta.model_fields[self.relation.field_name].related_name
-            or self._owner.get_name() + "s"
-        )
+        self.related_field_name = self._owner.Meta.model_fields[
+            self.relation.field_name
+        ].get_related_name()
         self.related_field = self.relation.to.Meta.model_fields[self.related_field_name]
         self.owner_pk_value = self._owner.pk
 
@@ -106,11 +106,20 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         :param child: child model instance
         :type child: Model
         """
-        queryset = ormar.QuerySet(model_cls=self.relation.through)
-        owner_column = self._owner.get_name()
-        child_column = child.get_name()
-        kwargs = {owner_column: self._owner, child_column: child}
-        await queryset.create(**kwargs)
+        model_cls = self.relation.through
+        owner_column = self.related_field.default_target_field_name()  # type: ignore
+        child_column = self.related_field.default_source_field_name()  # type: ignore
+        kwargs = {owner_column: self._owner.pk, child_column: child.pk}
+        if child.pk is None:
+            raise ModelPersistenceError(
+                f"You cannot save {child.get_name()} "
+                f"model without primary key set! \n"
+                f"Save the child model first."
+            )
+        expr = model_cls.Meta.table.insert()
+        expr = expr.values(**kwargs)
+        # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
+        await model_cls.Meta.database.execute(expr)
 
     async def delete_through_instance(self, child: "T") -> None:
         """
@@ -120,8 +129,8 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         :type child: Model
         """
         queryset = ormar.QuerySet(model_cls=self.relation.through)
-        owner_column = self._owner.get_name()
-        child_column = child.get_name()
+        owner_column = self.related_field.default_target_field_name()  # type: ignore
+        child_column = self.related_field.default_source_field_name()  # type: ignore
         kwargs = {owner_column: self._owner, child_column: child}
         link_instance = await queryset.filter(**kwargs).get()  # type: ignore
         await link_instance.delete()
@@ -404,6 +413,23 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.prefetch_related(related)
+        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+
+    def paginate(self, page: int, page_size: int = 20) -> "QuerysetProxy":
+        """
+        You can paginate the result which is a combination of offset and limit clauses.
+        Limit is set to page size and offset is set to (page-1) * page_size.
+
+        Actual call delegated to QuerySet.
+
+        :param page_size: numbers of items per page
+        :type page_size: int
+        :param page: page number
+        :type page: int
+        :return: QuerySet
+        :rtype: QuerySet
+        """
+        queryset = self.queryset.paginate(page=page, page_size=page_size)
         return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
 
     def limit(self, limit_count: int) -> "QuerysetProxy":

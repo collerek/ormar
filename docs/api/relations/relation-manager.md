@@ -98,7 +98,7 @@ Returns the actual relation and not the related model(s).
 
 ```python
  | @staticmethod
- | add(parent: "Model", child: "Model", child_name: str, virtual: bool, relation_name: str) -> None
+ | add(parent: "Model", child: "Model", field: Type["ForeignKeyField"]) -> None
 ```
 
 Adds relation on both sides -> meaning on both child and parent models.
@@ -112,9 +112,7 @@ on both ends.
 
 - `parent (Model)`: parent model on which relation should be registered
 - `child (Model)`: child model to register
-- `child_name (str)`: potential child name used if related name is not set
-- `virtual (bool)`: 
-- `relation_name (str)`: name of the relation
+- `field (ForeignKeyField)`: field with relation definition
 
 <a name="relations.relation_manager.RelationsManager.remove"></a>
 #### remove

@@ -1,29 +1,6 @@
 <a name="models.model"></a>
 # models.model
 
-<a name="models.model.group_related_list"></a>
-#### group\_related\_list
-
-```python
-group_related_list(list_: List) -> Dict
-```
-
-Translates the list of related strings into a dictionary.
-That way nested models are grouped to traverse them in a right order
-and to avoid repetition.
-
-Sample: ["people__houses", "people__cars__models", "people__cars__colors"]
-will become:
-{'people': {'houses': [], 'cars': ['models', 'colors']}}
-
-**Arguments**:
-
-- `list_ (List[str])`: list of related models used in select related
-
-**Returns**:
-
-`(Dict[str, List])`: list converted to dictionary to avoid repetition and group nested models
-
 <a name="models.model.Model"></a>
 ## Model Objects
 
@@ -36,7 +13,7 @@ class Model(NewBaseModel)
 
 ```python
  | @classmethod
- | from_row(cls: Type[T], row: sqlalchemy.engine.ResultProxy, select_related: List = None, related_models: Any = None, previous_model: Type[T] = None, related_name: str = None, fields: Optional[Union[Dict, Set]] = None, exclude_fields: Optional[Union[Dict, Set]] = None) -> Optional[T]
+ | from_row(cls: Type[T], row: sqlalchemy.engine.ResultProxy, select_related: List = None, related_models: Any = None, previous_model: Type[T] = None, source_model: Type[T] = None, related_name: str = None, fields: Optional[Union[Dict, Set]] = None, exclude_fields: Optional[Union[Dict, Set]] = None, current_relation_str: str = None) -> Optional[T]
 ```
 
 Model method to convert raw sql row from database into ormar.Model instance.
@@ -72,7 +49,7 @@ excludes the fields even if they are provided in fields
 
 ```python
  | @classmethod
- | populate_nested_models_from_row(cls, item: dict, row: sqlalchemy.engine.ResultProxy, related_models: Any, fields: Optional[Union[Dict, Set]] = None, exclude_fields: Optional[Union[Dict, Set]] = None) -> dict
+ | populate_nested_models_from_row(cls, item: dict, row: sqlalchemy.engine.ResultProxy, related_models: Any, fields: Optional[Union[Dict, Set]] = None, exclude_fields: Optional[Union[Dict, Set]] = None, current_relation_str: str = None, source_model: Type[T] = None) -> dict
 ```
 
 Traverses structure of related models and populates the nested models
@@ -86,6 +63,8 @@ instances. In the end those instances are added to the final model dictionary.
 
 **Arguments**:
 
+- `source_model (Type[Model])`: source model from which relation started
+- `current_relation_str (str)`: joined related parts into one string
 - `item (Dict)`: dictionary of already populated nested models, otherwise empty dict
 - `row (sqlalchemy.engine.result.ResultProxy)`: raw result row from the database
 - `related_models (Union[Dict, List])`: list or dict of related models
@@ -114,7 +93,7 @@ If the table is a main table, there is no prefix.
 All joined tables have prefixes to allow duplicate column names,
 as well as duplicated joins to the same table from multiple different tables.
 
-Extracted fields populates the item dict later used to construct a Model.
+Extracted fields populates the related dict later used to construct a Model.
 
 Used in Model.from_row and PrefetchQuery._populate_rows methods.
 

@@ -289,7 +289,7 @@ models.
  | _get_select_related_if_apply(related: str, select_dict: Dict) -> Dict
 ```
 
-Extract nested part of select_related dictionary to extract models nested
+Extract nested related of select_related dictionary to extract models nested
 deeper on related model and already loaded in select related query.
 
 **Arguments**:
@@ -299,7 +299,7 @@ deeper on related model and already loaded in select related query.
 
 **Returns**:
 
-`(Dict)`: dictionary with nested part of select related
+`(Dict)`: dictionary with nested related of select related
 
 <a name="queryset.prefetch_query.PrefetchQuery._update_already_loaded_rows"></a>
 #### \_update\_already\_loaded\_rows
@@ -320,7 +320,7 @@ Updates models that are already loaded, usually children of children.
 #### \_populate\_rows
 
 ```python
- | _populate_rows(rows: List, target_field: Type["BaseField"], parent_model: Type["Model"], table_prefix: str, fields: Union[Set[Any], Dict[Any, Any], None], exclude_fields: Union[Set[Any], Dict[Any, Any], None], prefetch_dict: Dict, orders_by: Dict) -> None
+ | _populate_rows(rows: List, target_field: Type["ForeignKeyField"], parent_model: Type["Model"], table_prefix: str, fields: Union[Set[Any], Dict[Any, Any], None], exclude_fields: Union[Set[Any], Dict[Any, Any], None], prefetch_dict: Dict, orders_by: Dict) -> None
 ```
 
 Instantiates children models extracted from given relation.

@@ -1,8 +1,10 @@
+import sys
 import uuid
 from dataclasses import dataclass
-from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 from pydantic import BaseModel, create_model
+from pydantic.typing import ForwardRef, evaluate_forwardref
 from sqlalchemy import UniqueConstraint
 
 import ormar  # noqa I101
@@ -12,6 +14,11 @@ from ormar.fields.base import BaseField
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, NewBaseModel
     from ormar.fields import ManyToManyField
+
+    if sys.version_info < (3, 7):
+        ToType = Type["Model"]
+    else:
+        ToType = Union[Type["Model"], "ForwardRef"]
 
 
 def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
@@ -66,6 +73,43 @@ def create_dummy_model(
     return dummy_model
 
 
+def populate_fk_params_based_on_to_model(
+    to: Type["Model"], nullable: bool, onupdate: str = None, ondelete: str = None,
+) -> Tuple[Any, List, Any]:
+    """
+    Based on target to model to which relation leads to populates the type of the
+    pydantic field to use, ForeignKey constraint and type of the target column field.
+
+    :param to: target related ormar Model
+    :type to: Model class
+    :param nullable: marks field as optional/ required
+    :type nullable: bool
+    :param onupdate: parameter passed to sqlalchemy.ForeignKey.
+    How to treat child rows on update of parent (the one where FK is defined) model.
+    :type onupdate: str
+    :param ondelete: parameter passed to sqlalchemy.ForeignKey.
+    How to treat child rows on delete of parent (the one where FK is defined) model.
+    :type ondelete: str
+    :return: tuple with target pydantic type, list of fk constraints and target col type
+    :rtype: Tuple[Any, List, Any]
+    """
+    fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
+    to_field = to.Meta.model_fields[to.Meta.pkname]
+    pk_only_model = create_dummy_model(to, to_field)
+    __type__ = (
+        Union[to_field.__type__, to, pk_only_model]
+        if not nullable
+        else Optional[Union[to_field.__type__, to, pk_only_model]]
+    )
+    constraints = [
+        ForeignKeyConstraint(
+            name=fk_string, ondelete=ondelete, onupdate=onupdate  # type: ignore
+        )
+    ]
+    column_type = to_field.column_type
+    return __type__, constraints, column_type
+
+
 class UniqueColumns(UniqueConstraint):
     """
     Subclass of sqlalchemy.UniqueConstraint.
@@ -86,7 +130,7 @@ class ForeignKeyConstraint:
 
 
 def ForeignKey(  # noqa CFQ002
-    to: Type["Model"],
+    to: "ToType",
     *,
     name: str = None,
     unique: bool = False,
@@ -127,27 +171,32 @@ def ForeignKey(  # noqa CFQ002
     :return: ormar ForeignKeyField with relation to selected model
     :rtype: ForeignKeyField
     """
-    fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
-    to_field = to.Meta.model_fields[to.Meta.pkname]
-    pk_only_model = create_dummy_model(to, to_field)
-    __type__ = (
-        Union[to_field.__type__, to, pk_only_model]
-        if not nullable
-        else Optional[Union[to_field.__type__, to, pk_only_model]]
-    )
+
+    owner = kwargs.pop("owner", None)
+    self_reference = kwargs.pop("self_reference", False)
+
+    if to.__class__ == ForwardRef:
+        __type__ = to if not nullable else Optional[to]
+        constraints: List = []
+        column_type = None
+    else:
+        __type__, constraints, column_type = populate_fk_params_based_on_to_model(
+            to=to,  # type: ignore
+            nullable=nullable,
+            ondelete=ondelete,
+            onupdate=onupdate,
+        )
+
     namespace = dict(
         __type__=__type__,
         to=to,
+        through=None,
         alias=name,
         name=kwargs.pop("real_name", None),
         nullable=nullable,
-        constraints=[
-            ForeignKeyConstraint(
-                name=fk_string, ondelete=ondelete, onupdate=onupdate  # type: ignore
-            )
-        ],
+        constraints=constraints,
         unique=unique,
-        column_type=to_field.column_type,
+        column_type=column_type,
         related_name=related_name,
         virtual=virtual,
         primary_key=False,
@@ -155,6 +204,10 @@ def ForeignKey(  # noqa CFQ002
         pydantic_only=False,
         default=None,
         server_default=None,
+        onupdate=onupdate,
+        ondelete=ondelete,
+        owner=owner,
+        self_reference=self_reference,
     )
 
     return type("ForeignKey", (ForeignKeyField, BaseField), namespace)
@@ -169,10 +222,62 @@ class ForeignKeyField(BaseField):
     name: str
     related_name: str
     virtual: bool
+    ondelete: str
+    onupdate: str
+
+    @classmethod
+    def get_source_related_name(cls) -> str:
+        """
+        Returns name to use for source relation name.
+        For FK it's the same, differs for m2m fields.
+        It's either set as `related_name` or by default it's owner model. get_name + 's'
+        :return: name of the related_name or default related name.
+        :rtype: str
+        """
+        return cls.get_related_name()
+
+    @classmethod
+    def get_related_name(cls) -> str:
+        """
+        Returns name to use for reverse relation.
+        It's either set as `related_name` or by default it's owner model. get_name + 's'
+        :return: name of the related_name or default related name.
+        :rtype: str
+        """
+        return cls.related_name or cls.owner.get_name() + "s"
+
+    @classmethod
+    def evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None:
+        """
+        Evaluates the ForwardRef to actual Field based on global and local namespaces
+
+        :param globalns: global namespace
+        :type globalns: Any
+        :param localns: local namespace
+        :type localns: Any
+        :return: None
+        :rtype: None
+        """
+        if cls.to.__class__ == ForwardRef:
+            cls.to = evaluate_forwardref(
+                cls.to,  # type: ignore
+                globalns,
+                localns or None,
+            )
+            (
+                cls.__type__,
+                cls.constraints,
+                cls.column_type,
+            ) = populate_fk_params_based_on_to_model(
+                to=cls.to,
+                nullable=cls.nullable,
+                ondelete=cls.ondelete,
+                onupdate=cls.onupdate,
+            )
 
     @classmethod
     def _extract_model_from_sequence(
-        cls, value: List, child: "Model", to_register: bool, relation_name: str
+        cls, value: List, child: "Model", to_register: bool,
     ) -> List["Model"]:
         """
         Takes a list of Models and registers them on parent.
@@ -191,17 +296,14 @@ class ForeignKeyField(BaseField):
         """
         return [
             cls.expand_relationship(  # type: ignore
-                value=val,
-                child=child,
-                to_register=to_register,
-                relation_name=relation_name,
+                value=val, child=child, to_register=to_register,
             )
             for val in value
         ]
 
     @classmethod
     def _register_existing_model(
-        cls, value: "Model", child: "Model", to_register: bool, relation_name: str
+        cls, value: "Model", child: "Model", to_register: bool,
     ) -> "Model":
         """
         Takes already created instance and registers it for parent.
@@ -219,12 +321,12 @@ class ForeignKeyField(BaseField):
         :rtype: Model
         """
         if to_register:
-            cls.register_relation(model=value, child=child, relation_name=relation_name)
+            cls.register_relation(model=value, child=child)
         return value
 
     @classmethod
     def _construct_model_from_dict(
-        cls, value: dict, child: "Model", to_register: bool, relation_name: str
+        cls, value: dict, child: "Model", to_register: bool
     ) -> "Model":
         """
         Takes a dictionary, creates a instance and registers it for parent.
@@ -246,12 +348,12 @@ class ForeignKeyField(BaseField):
             value["__pk_only__"] = True
         model = cls.to(**value)
         if to_register:
-            cls.register_relation(model=model, child=child, relation_name=relation_name)
+            cls.register_relation(model=model, child=child)
         return model
 
     @classmethod
     def _construct_model_from_pk(
-        cls, value: Any, child: "Model", to_register: bool, relation_name: str
+        cls, value: Any, child: "Model", to_register: bool
     ) -> "Model":
         """
         Takes a pk value, creates a dummy instance and registers it for parent.
@@ -278,13 +380,11 @@ class ForeignKeyField(BaseField):
             )
         model = create_dummy_instance(fk=cls.to, pk=value)
         if to_register:
-            cls.register_relation(model=model, child=child, relation_name=relation_name)
+            cls.register_relation(model=model, child=child)
         return model
 
     @classmethod
-    def register_relation(
-        cls, model: "Model", child: "Model", relation_name: str
-    ) -> None:
+    def register_relation(cls, model: "Model", child: "Model") -> None:
         """
         Registers relation between parent and child in relation manager.
         Relation manager is kep on each model (different instance).
@@ -298,12 +398,19 @@ class ForeignKeyField(BaseField):
         :type child: Model class
         """
         model._orm.add(
-            parent=model,
-            child=child,
-            child_name=cls.related_name or child.get_name() + "s",
-            virtual=cls.virtual,
-            relation_name=relation_name,
+            parent=model, child=child, field=cls,
         )
+
+    @classmethod
+    def has_unresolved_forward_refs(cls) -> bool:
+        """
+        Verifies if the filed has any ForwardRefs that require updating before the
+        model can be used.
+
+        :return: result of the check
+        :rtype: bool
+        """
+        return cls.to.__class__ == ForwardRef
 
     @classmethod
     def expand_relationship(
@@ -311,7 +418,6 @@ class ForeignKeyField(BaseField):
         value: Any,
         child: Union["Model", "NewBaseModel"],
         to_register: bool = True,
-        relation_name: str = None,
     ) -> Optional[Union["Model", List["Model"]]]:
         """
         For relations the child model is first constructed (if needed),
@@ -340,5 +446,5 @@ class ForeignKeyField(BaseField):
 
         model = constructors.get(  # type: ignore
             value.__class__.__name__, cls._construct_model_from_pk
-        )(value, child, to_register, relation_name)
+        )(value, child, to_register)
         return model

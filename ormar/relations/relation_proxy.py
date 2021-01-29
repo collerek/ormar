@@ -42,9 +42,8 @@ class RelationProxy(list):
         if self._related_field_name:
             return self._related_field_name
         owner_field = self._owner.Meta.model_fields[self.field_name]
-        self._related_field_name = (
-            owner_field.related_name or self._owner.get_name() + "s"
-        )
+        self._related_field_name = owner_field.get_related_name()
+
         return self._related_field_name
 
     def __getattribute__(self, item: str) -> Any:
@@ -128,7 +127,7 @@ class RelationProxy(list):
         self, item: "Model", keep_reversed: bool = True
     ) -> None:
         """
-        Removes the item from relation with parent.
+        Removes the related from relation with parent.
 
         Through models are automatically deleted for m2m relations.
 

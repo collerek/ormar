@@ -6,6 +6,7 @@ import sqlalchemy as sa
 from sqlalchemy import create_engine
 
 import ormar
+from ormar.exceptions import ModelPersistenceError
 from tests.settings import DATABASE_URL
 
 metadata = sa.MetaData()
@@ -61,3 +62,15 @@ async def test_model_relationship():
             assert ws.id == 1
             assert ws.topic == "Topic 2"
             assert ws.category.name == "Foo"
+
+
+@pytest.mark.asyncio
+async def test_model_relationship_with_not_saved():
+    async with db:
+        async with db.transaction(force_rollback=True):
+            cat = Category(name="Foo", code=123)
+            with pytest.raises(ModelPersistenceError):
+                await Workshop(topic="Topic 1", category=cat).save()
+
+            with pytest.raises(ModelPersistenceError):
+                await Workshop.objects.create(topic="Topic 1", category=cat)

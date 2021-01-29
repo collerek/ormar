@@ -9,10 +9,12 @@ from typing import (
     Tuple,
     Type,
     Union,
+    cast,
 )
 
 import ormar
 from ormar.fields import BaseField, ManyToManyField
+from ormar.fields.foreign_key import ForeignKeyField
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.query import Query
 from ormar.queryset.utils import extract_models_to_dict_of_lists, translate_list_to_dict
@@ -288,7 +290,7 @@ class PrefetchQuery:
                 model_cls=clause_target, select_related=[], filter_clauses=[],
             )
             kwargs = {f"{filter_column}__in": ids}
-            filter_clauses, _ = qryclause.filter(**kwargs)
+            filter_clauses, _ = qryclause.prepare_filter(**kwargs)
             return filter_clauses
         return []
 
@@ -314,6 +316,7 @@ class PrefetchQuery:
 
         for related in related_to_extract:
             target_field = model.Meta.model_fields[related]
+            target_field = cast(Type[ForeignKeyField], target_field)
             target_model = target_field.to.get_name()
             model_id = model.get_relation_model_id(target_field=target_field)
 
@@ -421,6 +424,7 @@ class PrefetchQuery:
         fields = target_model.get_included(fields, related)
         exclude_fields = target_model.get_excluded(exclude_fields, related)
         target_field = target_model.Meta.model_fields[related]
+        target_field = cast(Type[ForeignKeyField], target_field)
         reverse = False
         if target_field.virtual or issubclass(target_field, ManyToManyField):
             reverse = True
@@ -522,7 +526,7 @@ class PrefetchQuery:
             query_target = target_field.through
             select_related = [target_name]
             table_prefix = target_field.to.Meta.alias_manager.resolve_relation_alias(
-                query_target, target_name
+                from_model=query_target, relation_name=target_name
             )
             self.already_extracted.setdefault(target_name, {})["prefix"] = table_prefix
 
@@ -547,14 +551,14 @@ class PrefetchQuery:
     @staticmethod
     def _get_select_related_if_apply(related: str, select_dict: Dict) -> Dict:
         """
-        Extract nested part of select_related dictionary to extract models nested
+        Extract nested related of select_related dictionary to extract models nested
         deeper on related model and already loaded in select related query.
 
         :param related: name of the relation
         :type related: str
         :param select_dict: dictionary of select related models in main query
         :type select_dict: Dict
-        :return: dictionary with nested part of select related
+        :return: dictionary with nested related of select related
         :rtype: Dict
         """
         return (
@@ -585,7 +589,7 @@ class PrefetchQuery:
     def _populate_rows(  # noqa: CFQ002
         self,
         rows: List,
-        target_field: Type["BaseField"],
+        target_field: Type["ForeignKeyField"],
         parent_model: Type["Model"],
         table_prefix: str,
         fields: Union[Set[Any], Dict[Any, Any], None],

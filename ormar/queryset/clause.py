@@ -1,36 +1,31 @@
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type
-
-import sqlalchemy
-from sqlalchemy import text
+import itertools
+from dataclasses import dataclass
+from typing import Any, List, TYPE_CHECKING, Tuple, Type
 
 import ormar  # noqa I100
-from ormar.exceptions import QueryDefinitionError
-from ormar.fields.many_to_many import ManyToManyField
+from ormar.queryset.filter_action import FilterAction
+from ormar.queryset.utils import get_relationship_alias_model_and_str
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
-FILTER_OPERATORS = {
-    "exact": "__eq__",
-    "iexact": "ilike",
-    "contains": "like",
-    "icontains": "ilike",
-    "startswith": "like",
-    "istartswith": "ilike",
-    "endswith": "like",
-    "iendswith": "ilike",
-    "in": "in_",
-    "gt": "__gt__",
-    "gte": "__ge__",
-    "lt": "__lt__",
-    "lte": "__le__",
-}
-ESCAPE_CHARACTERS = ["%", "_"]
+
+@dataclass
+class Prefix:
+    source_model: Type["Model"]
+    table_prefix: str
+    model_cls: Type["Model"]
+    relation_str: str
+
+    @property
+    def alias_key(self) -> str:
+        source_model_name = self.source_model.get_name()
+        return f"{source_model_name}_" f"{self.relation_str}"
 
 
 class QueryClause:
     """
-    Constructs where clauses from strings passed as arguments
+    Constructs FilterActions from strings passed as arguments
     """
 
     def __init__(
@@ -43,9 +38,9 @@ class QueryClause:
         self.model_cls = model_cls
         self.table = self.model_cls.Meta.table
 
-    def filter(  # noqa: A003
+    def prepare_filter(  # noqa: A003
         self, **kwargs: Any
-    ) -> Tuple[List[sqlalchemy.sql.expression.TextClause], List[str]]:
+    ) -> Tuple[List[FilterAction], List[str]]:
         """
         Main external access point that processes the clauses into sqlalchemy text
         clauses and updates select_related list with implicit related tables
@@ -66,7 +61,7 @@ class QueryClause:
 
     def _populate_filter_clauses(
         self, **kwargs: Any
-    ) -> Tuple[List[sqlalchemy.sql.expression.TextClause], List[str]]:
+    ) -> Tuple[List[FilterAction], List[str]]:
         """
         Iterates all clauses and extracts used operator and field from related
         models if needed. Based on the chain of related names the target table
@@ -81,227 +76,84 @@ class QueryClause:
         select_related = list(self._select_related)
 
         for key, value in kwargs.items():
-            table_prefix = ""
-            if "__" in key:
-                parts = key.split("__")
-
-                (
-                    op,
-                    field_name,
-                    related_parts,
-                ) = self._extract_operator_field_and_related(parts)
-
-                model_cls = self.model_cls
-                if related_parts:
-                    (
-                        select_related,
-                        table_prefix,
-                        model_cls,
-                    ) = self._determine_filter_target_table(
-                        related_parts, select_related
-                    )
-
-                table = model_cls.Meta.table
-                column = model_cls.Meta.table.columns[field_name]
-
-            else:
-                op = "exact"
-                column = self.table.columns[self.model_cls.get_column_alias(key)]
-                table = self.table
-
-            clause = self._process_column_clause_for_operator_and_value(
-                value, op, column, table, table_prefix
+            filter_action = FilterAction(
+                filter_str=key, value=value, model_cls=self.model_cls
             )
-            filter_clauses.append(clause)
+            select_related = filter_action.update_select_related(
+                select_related=select_related
+            )
+
+            filter_clauses.append(filter_action)
+
+        self._register_complex_duplicates(select_related)
+        filter_clauses = self._switch_filter_action_prefixes(
+            filter_clauses=filter_clauses
+        )
         return filter_clauses, select_related
 
-    def _process_column_clause_for_operator_and_value(
-        self,
-        value: Any,
-        op: str,
-        column: sqlalchemy.Column,
-        table: sqlalchemy.Table,
-        table_prefix: str,
-    ) -> sqlalchemy.sql.expression.TextClause:
+    def _register_complex_duplicates(self, select_related: List[str]) -> None:
         """
-        Escapes characters if it's required.
-        Substitutes values of the models if value is a ormar Model with its pk value.
-        Compiles the clause.
+        Checks if duplicate aliases are presented which can happen in self relation
+        or when two joins end with the same pair of models.
 
-        :param value: value of the filter
-        :type value: Any
-        :param op: filter operator
-        :type op: str
-        :param column: column on which filter should be applied
-        :type column: sqlalchemy.sql.schema.Column
-        :param table: table on which filter should be applied
-        :type table: sqlalchemy.sql.schema.Table
-        :param table_prefix: prefix from AliasManager
-        :type table_prefix: str
-        :return: complied and escaped clause
-        :rtype: sqlalchemy.sql.elements.TextClause
-        """
-        value, has_escaped_character = self._escape_characters_in_clause(op, value)
+        If there are duplicates, the all duplicated joins are registered as source
+        model and whole relation key (not just last relation name).
 
-        if isinstance(value, ormar.Model):
-            value = value.pk
-
-        op_attr = FILTER_OPERATORS[op]
-        clause = getattr(column, op_attr)(value)
-        clause = self._compile_clause(
-            clause,
-            column,
-            table,
-            table_prefix,
-            modifiers={"escape": "\\" if has_escaped_character else None},
-        )
-        return clause
-
-    def _determine_filter_target_table(
-        self, related_parts: List[str], select_related: List[str]
-    ) -> Tuple[List[str], str, Type["Model"]]:
-        """
-        Adds related strings to select_related list otherwise the clause would fail as
-        the required columns would not be present. That means that select_related
-        list is filled with missing values present in filters.
-
-        Walks the relation to retrieve the actual model on which the clause should be
-        constructed, extracts alias based on last relation leading to target model.
-
-        :param related_parts: list of split parts of related string
-        :type related_parts: List[str]
-        :param select_related: list of related models
+        :param select_related: list of relation strings
         :type select_related: List[str]
-        :return: list of related models, table_prefix, final model class
-        :rtype: Tuple[List[str], str, Type[Model]]
+        :return: None
+        :rtype: None
         """
-        table_prefix = ""
-        model_cls = self.model_cls
-        select_related = [relation for relation in select_related]
+        prefixes = self._parse_related_prefixes(select_related=select_related)
 
-        # Add any implied select_related
-        related_str = "__".join(related_parts)
-        if related_str not in select_related:
-            select_related.append(related_str)
-
-        # Walk the relationships to the actual model class
-        # against which the comparison is being made.
-        previous_model = model_cls
-        for part in related_parts:
-            part2 = part
-            if issubclass(model_cls.Meta.model_fields[part], ManyToManyField):
-                through_field = model_cls.Meta.model_fields[part]
-                previous_model = through_field.through
-                part2 = through_field.default_target_field_name()  # type: ignore
-            manager = model_cls.Meta.alias_manager
-            table_prefix = manager.resolve_relation_alias(previous_model, part2)
-            model_cls = model_cls.Meta.model_fields[part].to
-            previous_model = model_cls
-        return select_related, table_prefix, model_cls
-
-    def _compile_clause(
-        self,
-        clause: sqlalchemy.sql.expression.BinaryExpression,
-        column: sqlalchemy.Column,
-        table: sqlalchemy.Table,
-        table_prefix: str,
-        modifiers: Dict,
-    ) -> sqlalchemy.sql.expression.TextClause:
-        """
-        Compiles the clause to str using appropriate database dialect, replace columns
-        names with aliased names and converts it back to TextClause.
-
-        :param clause: original not compiled clause
-        :type clause: sqlalchemy.sql.elements.BinaryExpression
-        :param column: column on which filter should be applied
-        :type column: sqlalchemy.sql.schema.Column
-        :param table: table on which filter should be applied
-        :type table: sqlalchemy.sql.schema.Table
-        :param table_prefix: prefix from AliasManager
-        :type table_prefix: str
-        :param modifiers: sqlalchemy modifiers - used only to escape chars here
-        :type modifiers: Dict[str, NoneType]
-        :return: compiled and escaped clause
-        :rtype: sqlalchemy.sql.elements.TextClause
-        """
-        for modifier, modifier_value in modifiers.items():
-            clause.modifiers[modifier] = modifier_value
-
-        clause_text = str(
-            clause.compile(
-                dialect=self.model_cls.Meta.database._backend._dialect,
-                compile_kwargs={"literal_binds": True},
+        manager = self.model_cls.Meta.alias_manager
+        filtered_prefixes = sorted(prefixes, key=lambda x: x.table_prefix)
+        grouped = itertools.groupby(filtered_prefixes, key=lambda x: x.table_prefix)
+        for _, group in grouped:
+            sorted_group = sorted(
+                group, key=lambda x: len(x.relation_str), reverse=True
             )
-        )
-        alias = f"{table_prefix}_" if table_prefix else ""
-        aliased_name = f"{alias}{table.name}.{column.name}"
-        clause_text = clause_text.replace(f"{table.name}.{column.name}", aliased_name)
-        clause = text(clause_text)
-        return clause
+            for prefix in sorted_group[:-1]:
+                if prefix.alias_key not in manager:
+                    manager.add_alias(alias_key=prefix.alias_key)
 
-    @staticmethod
-    def _escape_characters_in_clause(op: str, value: Any) -> Tuple[Any, bool]:
+    def _parse_related_prefixes(self, select_related: List[str]) -> List[Prefix]:
         """
-        Escapes the special characters ["%", "_"] if needed.
-        Adds `%` for `like` queries.
+        Walks all relation strings and parses the target models and prefixes.
 
-        :raises QueryDefinitionError: if contains or icontains is used with
-        ormar model instance
-        :param op: operator used in query
-        :type op: str
-        :param value: value of the filter
-        :type value: Any
-        :return: escaped value and flag if escaping is needed
-        :rtype: Tuple[Any, bool]
+        :param select_related: list of relation strings
+        :type select_related: List[str]
+        :return: list of parsed prefixes
+        :rtype: List[Prefix]
         """
-        has_escaped_character = False
-
-        if op not in [
-            "contains",
-            "icontains",
-            "startswith",
-            "istartswith",
-            "endswith",
-            "iendswith",
-        ]:
-            return value, has_escaped_character
-
-        if isinstance(value, ormar.Model):
-            raise QueryDefinitionError(
-                "You cannot use contains and icontains with instance of the Model"
+        prefixes: List[Prefix] = []
+        for related in select_related:
+            prefix = Prefix(
+                self.model_cls,
+                *get_relationship_alias_model_and_str(
+                    self.model_cls, related.split("__")
+                ),
             )
+            prefixes.append(prefix)
+        return prefixes
 
-        has_escaped_character = any(c for c in ESCAPE_CHARACTERS if c in value)
-
-        if has_escaped_character:
-            # enable escape modifier
-            for char in ESCAPE_CHARACTERS:
-                value = value.replace(char, f"\\{char}")
-        prefix = "%" if "start" not in op else ""
-        sufix = "%" if "end" not in op else ""
-        value = f"{prefix}{value}{sufix}"
-
-        return value, has_escaped_character
-
-    @staticmethod
-    def _extract_operator_field_and_related(
-        parts: List[str],
-    ) -> Tuple[str, str, Optional[List]]:
+    def _switch_filter_action_prefixes(
+        self, filter_clauses: List[FilterAction]
+    ) -> List[FilterAction]:
         """
-        Splits filter query key and extracts required parts.
+        Substitutes aliases for filter action if the complex key (whole relation str) is
+        present in alias_manager.
 
-        :param parts: split filter query key
-        :type parts: List[str]
-        :return: operator, field_name, list of related parts
-        :rtype: Tuple[str, str, Optional[List]]
+        :param filter_clauses: raw list of actions
+        :type filter_clauses: List[FilterAction]
+        :return: list of actions with aliases changed if needed
+        :rtype: List[FilterAction]
         """
-        if parts[-1] in FILTER_OPERATORS:
-            op = parts[-1]
-            field_name = parts[-2]
-            related_parts = parts[:-2]
-        else:
-            op = "exact"
-            field_name = parts[-1]
-            related_parts = parts[:-1]
-
-        return op, field_name, related_parts
+        manager = self.model_cls.Meta.alias_manager
+        for action in filter_clauses:
+            new_alias = manager.resolve_relation_alias(
+                self.model_cls, action.related_str
+            )
+            if "__" in action.related_str and new_alias:
+                action.table_prefix = new_alias
+        return filter_clauses
