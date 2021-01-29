@@ -13,9 +13,6 @@
 <a href="https://www.codefactor.io/repository/github/collerek/ormar">
 <img src="https://www.codefactor.io/repository/github/collerek/ormar/badge" alt="CodeFactor" />
 </a>
-<a href="https://app.codacy.com/manual/collerek/ormar?utm_source=github.com&utm_medium=referral&utm_content=collerek/oramr&utm_campaign=Badge_Grade_Dashboard">
-<img src="https://api.codacy.com/project/badge/Grade/62568734f70f49cd8ea7a1a0b2d0c107" alt="Codacy" />
-</a>
 </p>
 
 ### Overview
