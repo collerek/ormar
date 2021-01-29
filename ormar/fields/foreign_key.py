@@ -1,3 +1,4 @@
+import sys
 import uuid
 from dataclasses import dataclass
 from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
@@ -13,6 +14,11 @@ from ormar.fields.base import BaseField
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, NewBaseModel
     from ormar.fields import ManyToManyField
+
+    if sys.version_info < (3, 7):
+        ToType = Type["Model"]
+    else:
+        ToType = Union[Type["Model"], "ForwardRef"]
 
 
 def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
@@ -124,7 +130,7 @@ class ForeignKeyConstraint:
 
 
 def ForeignKey(  # noqa CFQ002
-    to: Union[Type["Model"], "ForwardRef"],
+    to: "ToType",
     *,
     name: str = None,
     unique: bool = False,

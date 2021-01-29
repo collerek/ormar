@@ -118,7 +118,7 @@ But you can specify the `follow=True` parameter to traverse through nested model
 
 [fields]: ../fields.md
 [relations]: ../relations/index.md
-[queries]: ../queries.md
+[queries]: ../queries/index.md
 [pydantic]: https://pydantic-docs.helpmanual.io/
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [sqlalchemy-metadata]: https://docs.sqlalchemy.org/en/13/core/metadata.html

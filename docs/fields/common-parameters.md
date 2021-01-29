@@ -121,6 +121,6 @@ Prevents insertion of value not present in the choices list.
 Used in pydantic only.
 
 [relations]: ../relations/index.md
-[queries]: ../queries.md
+[queries]: ../queries/index.md
 [pydantic]: https://pydantic-docs.helpmanual.io/usage/types/#constrained-types
 [server default]: https://docs.sqlalchemy.org/en/13/core/defaults.html#server-invoked-ddl-explicit-default-expressions

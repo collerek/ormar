@@ -423,7 +423,7 @@ You can check if model is saved with `ModelInstance.saved` property
 
 [fields]: ../fields/field-types.md
 [relations]: ../relations/index.md
-[queries]: ../queries.md
+[queries]: ../queries/index.md
 [pydantic]: https://pydantic-docs.helpmanual.io/
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [sqlalchemy-metadata]: https://docs.sqlalchemy.org/en/13/core/metadata.html

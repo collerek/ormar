@@ -30,7 +30,9 @@ But at the same time it exposes subset of QuerySet API, so you can filter, creat
     Note that value returned by `create` or created in `get_or_create` and `update_or_create` 
     if model does not exist will be added to relation list (not clearing it).
 
-## get
+## Read data from database
+
+### get
 
 `get(**kwargs): -> Model` 
 
@@ -52,7 +54,16 @@ assert post.categories[0] == news
 !!!tip
     Read more in queries documentation [get][get]
 
-## all
+### get_or_create
+
+`get_or_create(**kwargs) -> Model`
+
+Tries to get a row meeting the criteria and if NoMatch exception is raised it creates a new one with given kwargs.
+
+!!!tip
+    Read more in queries documentation [get_or_create][get_or_create]
+
+### all
 
 `all(**kwargs) -> List[Optional["Model"]]`
 
@@ -73,7 +84,9 @@ assert news_posts[0].author == guido
 !!!tip
     Read more in queries documentation [all][all]
 
-## create
+## Insert/ update data into database
+
+### create
 
 `create(**kwargs): -> Model` 
 
@@ -91,113 +104,162 @@ assert len(await post.categories.all()) == 2
 !!!tip
     Read more in queries documentation [create][create]
 
-
-## get_or_create
+### get_or_create
 
 `get_or_create(**kwargs) -> Model`
+
+Tries to get a row meeting the criteria and if NoMatch exception is raised it creates a new one with given kwargs.
 
 !!!tip
     Read more in queries documentation [get_or_create][get_or_create]
 
-## update_or_create
+### update_or_create
 
 `update_or_create(**kwargs) -> Model`
+
+Updates the model, or in case there is no match in database creates a new one.
 
 !!!tip
     Read more in queries documentation [update_or_create][update_or_create]
 
-## filter
+## Filtering and sorting
+
+### filter
 
 `filter(**kwargs) -> QuerySet`
+
+Allows you to filter by any Model attribute/field as well as to fetch instances, with a filter across an FK relationship.
 
 !!!tip
     Read more in queries documentation [filter][filter]
 
-## exclude
+### exclude
 
 `exclude(**kwargs) -> QuerySet`
+
+Works exactly the same as filter and all modifiers (suffixes) are the same, but returns a not condition.
 
 !!!tip
     Read more in queries documentation [exclude][exclude]
 
-## select_related
-
-`select_related(related: Union[List, str]) -> QuerySet`
-
-!!!tip
-    Read more in queries documentation [select_related][select_related]
-
-## prefetch_related
-
-`prefetch_related(related: Union[List, str]) -> QuerySet`
-
-!!!tip
-    Read more in queries documentation [prefetch_related][prefetch_related]
-
-## limit
-
-`limit(limit_count: int) -> QuerySet`
-
-!!!tip
-    Read more in queries documentation [limit][limit]
-
-## offset
-
-`offset(offset: int) -> QuerySet`
-
-!!!tip
-    Read more in queries documentation [offset][offset]
-
-## count
-
-`count() -> int`
-
-!!!tip
-    Read more in queries documentation [count][count]
-
-## exists
-
-`exists() -> bool`
-
-!!!tip
-    Read more in queries documentation [exists][exists]
-
-## fields
-
-`fields(columns: Union[List, str, set, dict]) -> QuerySet`
-
-!!!tip
-    Read more in queries documentation [fields][fields]
-
-## exclude_fields
-
-`exclude_fields(columns: Union[List, str, set, dict]) -> QuerySet`
-
-!!!tip
-    Read more in queries documentation [exclude_fields][exclude_fields]
-
-## order_by
+### order_by
 
 `order_by(columns:Union[List, str]) -> QuerySet`
+
+With order_by() you can order the results from database based on your choice of fields.
 
 !!!tip
     Read more in queries documentation [order_by][order_by]
 
+## Joins and subqueries
 
-[queries]: ../queries.md
-[get]: ../queries.md#get
-[all]: ../queries.md#all
-[create]: ../queries.md#create
-[get_or_create]: ../queries.md#get_or_create
-[update_or_create]: ../queries.md#update_or_create
-[filter]: ../queries.md#filter
-[exclude]: ../queries.md#exclude
-[select_related]: ../queries.md#select_related
-[prefetch_related]: ../queries.md#prefetch_related
-[limit]: ../queries.md#limit
-[offset]: ../queries.md#offset
-[count]: ../queries.md#count
-[exists]: ../queries.md#exists
-[fields]: ../queries.md#fields
-[exclude_fields]: ../queries.md#exclude_fields
-[order_by]: ../queries.md#order_by
+### select_related
+
+`select_related(related: Union[List, str]) -> QuerySet`
+
+Allows to prefetch related models during the same query.
+
+With select_related always only one query is run against the database, meaning that one (sometimes complicated) join is generated and later nested models are processed in python.
+
+!!!tip
+    Read more in queries documentation [select_related][select_related]
+
+### prefetch_related
+
+`prefetch_related(related: Union[List, str]) -> QuerySet`
+
+Allows to prefetch related models during query - but opposite to select_related each subsequent model is fetched in a separate database query.
+
+With prefetch_related always one query per Model is run against the database, meaning that you will have multiple queries executed one after another.
+
+!!!tip
+    Read more in queries documentation [prefetch_related][prefetch_related]
+
+## Pagination and rows number
+
+### paginate
+
+`paginate(page: int, page_size: int = 20) -> QuerySet`
+
+Combines the offset and limit methods based on page number and size.
+
+!!!tip
+    Read more in queries documentation [paginate][paginate]
+
+### limit
+
+`limit(limit_count: int) -> QuerySet`
+
+You can limit the results to desired number of parent models.
+
+!!!tip
+    Read more in queries documentation [limit][limit]
+
+### offset
+
+`offset(offset: int) -> QuerySet`
+
+You can offset the results by desired number of main models.
+
+!!!tip
+    Read more in queries documentation [offset][offset]
+
+## Selecting subset of columns
+
+### fields
+
+`fields(columns: Union[List, str, set, dict]) -> QuerySet`
+
+With fields() you can select subset of model columns to limit the data load.
+
+!!!tip
+    Read more in queries documentation [fields][fields]
+
+### exclude_fields
+
+`exclude_fields(columns: Union[List, str, set, dict]) -> QuerySet`
+
+With exclude_fields() you can select subset of model columns that will be excluded to limit the data load.
+
+!!!tip
+    Read more in queries documentation [exclude_fields][exclude_fields]
+
+## Aggregated functions
+
+### count
+
+`count() -> int`
+
+Returns number of rows matching the given criteria (i.e. applied with filter and exclude)
+
+!!!tip
+    Read more in queries documentation [count][count]
+
+### exists
+
+`exists() -> bool`
+
+Returns a bool value to confirm if there are rows matching the given criteria (applied with filter and exclude)
+
+!!!tip
+    Read more in queries documentation [exists][exists]
+
+
+[queries]: ../queries/index.md
+[get]: ../queries/read.md#get
+[all]: ../queries/read.md#all
+[create]: ../queries/create.md#create
+[get_or_create]: ../queries/read.md#get_or_create
+[update_or_create]: ../queries/update.md#update_or_create
+[filter]: ../queries/filter-and-sort.md#filter
+[exclude]: ../queries/filter-and-sort.md#exclude
+[select_related]: ../queries/joins-and-subqueries.md#select_related
+[prefetch_related]: ../queries/joins-and-subqueries.md#prefetch_related
+[limit]: ../queries/pagination-and-rows-number.md#limit
+[offset]: ../queries/pagination-and-rows-number.md#offset
+[paginate]: ../queries/pagination-and-rows-number.md#paginate
+[count]: ../queries/aggregations.md#count
+[exists]: ../queries/aggregations.md#exists
+[fields]: ../queries/select-columns.md#fields
+[exclude_fields]: ../queries/select-columns.md#exclude_fields
+[order_by]: ../queries/filter-and-sort.md#order_by

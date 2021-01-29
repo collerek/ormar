@@ -22,12 +22,38 @@ And following methods to sort the data (sql order by clause).
 * `QuerysetProxy`
     * `QuerysetProxy.order_by(columns:Union[List, str])` method
 
-## filter
+## Filtering
+
+### filter
 
 `filter(**kwargs) -> QuerySet`
 
 Allows you to filter by any `Model` attribute/field as well as to fetch instances, with
 a filter across an FK relationship.
+
+```python
+class Album(ormar.Model):
+    class Meta:
+        tablename = "albums"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    is_best_seller: bool = ormar.Boolean(default=False)
+
+class Track(ormar.Model):
+    class Meta:
+        tablename = "tracks"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    album: Optional[Album] = ormar.ForeignKey(Album)
+    name: str = ormar.String(max_length=100)
+    position: int = ormar.Integer()
+    play_count: int = ormar.Integer(nullable=True)
+```
 
 ```python
 track = Track.objects.filter(name="The Bird").get()
@@ -67,7 +93,7 @@ You can use special filter suffix to change the filter operands:
     filters, it's added for you. If you include `%` in your search value it will be escaped
     and treated as literal percentage sign inside the text.
 
-## exclude
+### exclude
 
 `exclude(**kwargs) -> QuerySet`
 
@@ -83,11 +109,78 @@ conditions.
 `exclude(name='John', age>=35)` will become `where not (name='John' and age>=35)`
 
 ```python
+class Album(ormar.Model):
+    class Meta:
+        tablename = "albums"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    is_best_seller: bool = ormar.Boolean(default=False)
+
+class Track(ormar.Model):
+    class Meta:
+        tablename = "tracks"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    album: Optional[Album] = ormar.ForeignKey(Album)
+    name: str = ormar.String(max_length=100)
+    position: int = ormar.Integer()
+    play_count: int = ormar.Integer(nullable=True)
+```
+
+```python
 notes = await Track.objects.exclude(position_gt=3).all()
 # returns all tracks with position < 3
 ```
 
-## QuerysetProxy methods
+## get
+
+`get(**kwargs) -> Model`
+
+Get's the first row from the db meeting the criteria set by kwargs.
+
+When any kwargs are passed it's a shortcut equivalent to calling `filter(**kwargs).get()`
+
+!!!tip
+    To read more about `filter` go to [filter](./#filter).
+    
+    To read more about `get` go to [read/get](../read/#get)
+
+## get_or_create
+
+`get_or_create(**kwargs) -> Model`
+
+Combination of create and get methods.
+
+When any kwargs are passed it's a shortcut equivalent to calling `filter(**kwargs).get_or_create()`
+
+!!!tip
+    To read more about `filter` go to [filter](./#filter).
+    
+    To read more about `get_or_create` go to [read/get_or_create](../read/#get_or_create)
+
+!!!warning
+    When given item does not exist you need to pass kwargs for all required fields of the
+    model, including but not limited to primary_key column (unless it's autoincrement).
+
+## all
+
+`all(**kwargs) -> List[Optional["Model"]]`
+
+Returns all rows from a database for given model for set filter options.
+
+When any kwargs are passed it's a shortcut equivalent to calling `filter(**kwargs).all()`
+
+!!!tip
+    To read more about `filter` go to [filter](./#filter).
+    
+    To read more about `all` go to [read/all](../read/#all)
+
+### QuerysetProxy methods
 
 When access directly the related `ManyToMany` field as well as `ReverseForeignKey`
 returns the list of related models.
@@ -95,33 +188,51 @@ returns the list of related models.
 But at the same time it exposes subset of QuerySet API, so you can filter, create,
 select related etc related models directly from parent model.
 
-### get
+#### filter
 
-Works exactly the same as [get](./#get) function above but allows you to fetch related
+Works exactly the same as [filter](./#filter) function above but allows you to filter related
 objects from other side of the relation.
 
 !!!tip 
     To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
 
-### get_or_create
+
+#### exclude
+
+Works exactly the same as [exclude](./#exclude) function above but allows you to filter related
+objects from other side of the relation.
+
+!!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+
+#### get
+
+Works exactly the same as [get](./#get) function above but allows you to filter related
+objects from other side of the relation.
+
+!!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+#### get_or_create
 
 Works exactly the same as [get_or_create](./#get_or_create) function above but allows
-you to query or create related objects from other side of the relation.
+you to filter related objects from other side of the relation.
 
 !!!tip 
     To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
 
-### all
+#### all
 
-Works exactly the same as [all](./#all) function above but allows you to query related
+Works exactly the same as [all](./#all) function above but allows you to filter related
 objects from other side of the relation.
 
 !!!tip 
     To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
 
+## Sorting
 
-
-## order_by
+### order_by
 
 `order_by(columns: Union[List, str]) -> QuerySet`
 
@@ -205,5 +316,22 @@ assert owner.toys[1].name == "Toy 1"
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
+
+### QuerysetProxy methods
+
+When access directly the related `ManyToMany` field as well as `ReverseForeignKey`
+returns the list of related models.
+
+But at the same time it exposes subset of QuerySet API, so you can filter, create,
+select related etc related models directly from parent model.
+
+#### order_by
+
+Works exactly the same as [order_by](./#order_by) function above but allows you to sort related
+objects from other side of the relation.
+
+!!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
 
 [querysetproxy]: ../relations/queryset-proxy.md

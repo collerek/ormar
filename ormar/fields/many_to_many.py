@@ -1,3 +1,4 @@
+import sys
 from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 from pydantic.typing import ForwardRef, evaluate_forwardref
@@ -7,6 +8,11 @@ from ormar.fields.foreign_key import ForeignKeyField
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
+
+    if sys.version_info < (3, 7):
+        ToType = Type["Model"]
+    else:
+        ToType = Union[Type["Model"], "ForwardRef"]
 
 REF_PREFIX = "#/components/schemas/"
 
@@ -36,8 +42,8 @@ def populate_m2m_params_based_on_to_model(
 
 
 def ManyToMany(
-    to: Union[Type["Model"], ForwardRef],
-    through: Union[Type["Model"], ForwardRef],
+    to: "ToType",
+    through: "ToType",
     *,
     name: str = None,
     unique: bool = False,

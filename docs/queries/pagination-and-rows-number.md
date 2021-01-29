@@ -1,17 +1,37 @@
 #Pagination and rows number
 
-*  `paginate(page: int) -> QuerySet`
-*  `limit(limit_count: int) -> QuerySet`
-*  `offset(offset: int) -> QuerySet`
-*  `get(**kwargs): -> Model`
-*  `first(): -> Model`
+Following methods allow you to paginate and limit number of rows in queries. 
 
+* `paginate(page: int) -> QuerySet`
+* `limit(limit_count: int) -> QuerySet`
+* `offset(offset: int) -> QuerySet`
+* `get() -> Model`
+* `first() -> Model`
+
+
+* `QuerysetProxy`
+    * `QuerysetProxy.paginate(page: int)` method
+    * `QuerysetProxy.limit(limit_count: int)` method
+    * `QuerysetProxy.offset(offset: int)` method
 
 ## paginate
 
 `paginate(page: int, page_size: int = 20) -> QuerySet`
 
 Combines the `offset` and `limit` methods based on page number and size
+
+```python
+class Track(ormar.Model):
+    class Meta:
+        tablename = "track"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    album: Optional[Album] = ormar.ForeignKey(Album)
+    name: str = ormar.String(max_length=100)
+    position: int = ormar.Integer()
+```
 
 ```python
 tracks = await Track.objects.paginate(3).all()
@@ -29,6 +49,19 @@ You can limit the results to desired number of parent models.
 
 To limit the actual number of database query rows instead of number of main models
 use the `limit_raw_sql` parameter flag, and set it to `True`.
+
+```python
+class Track(ormar.Model):
+    class Meta:
+        tablename = "track"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    album: Optional[Album] = ormar.ForeignKey(Album)
+    name: str = ormar.String(max_length=100)
+    position: int = ormar.Integer()
+```
 
 ```python
 tracks = await Track.objects.limit(1).all()
@@ -52,6 +85,19 @@ To offset the actual number of database query rows instead of number of main mod
 use the `limit_raw_sql` parameter flag, and set it to `True`.
 
 ```python
+class Track(ormar.Model):
+    class Meta:
+        tablename = "track"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    album: Optional[Album] = ormar.ForeignKey(Album)
+    name: str = ormar.String(max_length=100)
+    position: int = ormar.Integer()
+```
+
+```python
 tracks = await Track.objects.offset(1).limit(1).all()
 # will return just one Track, but this time the second one
 ```
@@ -67,28 +113,57 @@ tracks = await Track.objects.offset(1).limit(1).all()
 
 ## get
 
-`get(**kwargs): -> Model` 
+`get(**kwargs) -> Model` 
 
 Get's the first row from the db meeting the criteria set by kwargs.
 
-If no criteria set it will return the last row in db sorted by pk.
+If no criteria is set it will return the last row in db sorted by pk.
+(The criteria cannot be set also with filter/exclude).
 
-Passing a criteria is actually calling filter(**kwargs) method described below.
+!!!tip
+    To read more about `get` visit [read/get](./read/#get)
 
-```python
-track = await Track.objects.get(name='The Bird')
-# note that above is equivalent to await Track.objects.filter(name='The Bird').get()
-track2 = track = await Track.objects.get()
-track == track2 # True since it's the only row in db in our example
-```
-
-!!!warning
-    If no row meets the criteria `NoMatch` exception is raised.
-    
-    If there are multiple rows meeting the criteria the `MultipleMatches` exception is raised.
 
 ## first
 
-`first(): -> Model` 
+`first() -> Model` 
 
 Gets the first row from the db ordered by primary key column ascending.
+
+!!!tip
+    To read more about `first` visit [read/first](./read/#first)
+
+
+## QuerysetProxy methods
+
+When access directly the related `ManyToMany` field as well as `ReverseForeignKey`
+returns the list of related models.
+
+But at the same time it exposes subset of QuerySet API, so you can filter, create,
+select related etc related models directly from parent model.
+
+### paginate
+
+Works exactly the same as [paginate](./#paginate) function above but allows you to paginate related
+objects from other side of the relation.
+
+!!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+### limit
+
+Works exactly the same as [limit](./#limit) function above but allows you to paginate related
+objects from other side of the relation.
+
+!!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+### offset
+
+Works exactly the same as [offset](./#offset) function above but allows you to paginate related
+objects from other side of the relation.
+
+!!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+[querysetproxy]: ../relations/queryset-proxy.md
