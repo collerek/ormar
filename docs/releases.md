@@ -21,6 +21,7 @@
 ## Other
 
 * Refactoring and performance optimization in queries and joins.
+* Add python 3.9 to tests and pypi setup.
 * Update API docs and docs -> i.e. split of queries documentation.
 
 # 0.8.0
