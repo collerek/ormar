@@ -3,7 +3,6 @@ from typing import List
 
 import databases
 import pytest
-import sqlalchemy
 import sqlalchemy as sa
 from pydantic.typing import ForwardRef
 from sqlalchemy import create_engine
@@ -188,7 +187,7 @@ def test_proper_field_init():
 
     assert "supervisor" in Person.Meta.table.columns
     assert isinstance(
-        Person.Meta.table.columns["supervisor"].type, sqlalchemy.sql.sqltypes.Integer
+        Person.Meta.table.columns["supervisor"].type, sa.sql.sqltypes.Integer
     )
     assert len(Person.Meta.table.columns["supervisor"].foreign_keys) > 0
 
