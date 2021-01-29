@@ -415,6 +415,23 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         queryset = self.queryset.prefetch_related(related)
         return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
 
+    def paginate(self, page: int, page_size: int = 20) -> "QuerysetProxy":
+        """
+        You can paginate the result which is a combination of offset and limit clauses.
+        Limit is set to page size and offset is set to (page-1) * page_size.
+
+        Actual call delegated to QuerySet.
+
+        :param page_size: numbers of items per page
+        :type page_size: int
+        :param page: page number
+        :type page: int
+        :return: QuerySet
+        :rtype: QuerySet
+        """
+        queryset = self.queryset.paginate(page=page, page_size=page_size)
+        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+
     def limit(self, limit_count: int) -> "QuerysetProxy":
         """
         You can limit the results to desired number of parent models.

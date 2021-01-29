@@ -94,7 +94,7 @@ to produce sqlalchemy.ForeignKeys
 #### ForeignKey
 
 ```python
-ForeignKey(to: Union[Type["Model"], "ForwardRef"], *, name: str = None, unique: bool = False, nullable: bool = True, related_name: str = None, virtual: bool = False, onupdate: str = None, ondelete: str = None, **kwargs: Any, ,) -> Any
+ForeignKey(to: "ToType", *, name: str = None, unique: bool = False, nullable: bool = True, related_name: str = None, virtual: bool = False, onupdate: str = None, ondelete: str = None, **kwargs: Any, ,) -> Any
 ```
 
 Despite a name it's a function that returns constructed ForeignKeyField.

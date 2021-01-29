@@ -1,5 +1,7 @@
 # 0.8.1
 
+## Features
+
 * Introduce processing of `ForwardRef` in relations. 
   Now you can create self-referencing models - both `ForeignKey` and `ManyToMany` relations. 
   `ForwardRef` can be used both for `to` and `through` `Models`.
@@ -13,8 +15,13 @@
                    unless two different relation were used 
                    (two relation fields with different names)
   ```
+* Introduce the `paginate` method that allows to limit/offset by `page` and `page_size`. 
+  Available for `QuerySet` and `QuerysetProxy`.
+
+## Other
+
 * Refactoring and performance optimization in queries and joins.
-* Update API docs and docs.
+* Update API docs and docs -> i.e. split of queries documentation.
 
 # 0.8.0
 

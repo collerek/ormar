@@ -24,7 +24,7 @@ pydantic field to use and type of the target column field.
 #### ManyToMany
 
 ```python
-ManyToMany(to: Union[Type["Model"], ForwardRef], through: Union[Type["Model"], ForwardRef], *, name: str = None, unique: bool = False, virtual: bool = False, **kwargs: Any, ,) -> Any
+ManyToMany(to: "ToType", through: "ToType", *, name: str = None, unique: bool = False, virtual: bool = False, **kwargs: Any, ,) -> Any
 ```
 
 Despite a name it's a function that returns constructed ManyToManyField.
