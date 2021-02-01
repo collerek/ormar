@@ -29,7 +29,7 @@ class Album(ormar.Model):
         tablename = "albums"
         metadata = metadata
         database = database
-        constraint = [ForeignKeyConstraint(['albums'],['albums.id'])]
+        constraint = []
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -55,20 +55,18 @@ def create_test_database():
     metadata.drop_all(engine)
     metadata.create_all(engine)
     yield
-    metadata.drop_all(engine)
+    # metadata.drop_all(engine)
 
-
-def test_table_structures():
-    col = Album.Meta.table.columns.get('artist')
-    inspector = inspect(engine)
-    col2 = inspector.get_columns('albums')
 
 @pytest.mark.asyncio
 async def test_simple_cascade():
     async with database:
-        async with database.transaction(force_rollback=True):
-            artist = await Artist(name='Dr Alban').save()
-            await Album(name="Jamaica", artist=artist).save()
-            await Artist.objects.delete(id=artist.id)
-            albums = await Album.objects.all()
-            assert len(albums) == 0
+        # async with database.transaction(force_rollback=True):
+        artist = await Artist(name='Dr Alban').save()
+        await Album(name="Jamaica", artist=artist).save()
+        await Artist.objects.delete(id=artist.id)
+        artists = await Artist.objects.all()
+        assert len(artists) == 0
+        # breakpoint()
+        albums = await Album.objects.all()
+        assert len(albums) == 0

@@ -3,6 +3,7 @@ import logging
 from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import sqlalchemy
+from sqlalchemy import ForeignKeyConstraint
 
 from ormar import ForeignKey, Integer, ModelDefinitionError  # noqa: I202
 from ormar.fields import BaseField, ManyToManyField
@@ -234,12 +235,18 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
     if not hasattr(meta, "table") and check_for_null_type_columns_from_forward_refs(
         meta
     ):
+        if meta.tablename == 'albums':
+            meta.constraints.append(ForeignKeyConstraint(['artist'],['artists.id'],
+                                                         ondelete='CASCADE',
+                                                         onupdate='CASCADE'))
         table = sqlalchemy.Table(
             meta.tablename,
             meta.metadata,
             *[copy.deepcopy(col) for col in meta.columns],
             *meta.constraints,
         )
+        if meta.tablename == 'albums':
+            pass
         meta.table = table
 
 
