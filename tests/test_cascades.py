@@ -3,7 +3,7 @@ from typing import Optional
 import databases
 import pytest
 import sqlalchemy
-from sqlalchemy import create_engine
+from sqlalchemy import ForeignKeyConstraint, create_engine, inspect
 from sqlalchemy.dialects import postgresql
 
 import ormar
@@ -11,6 +11,7 @@ from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
+engine = sqlalchemy.create_engine(DATABASE_URL, echo=True)
 
 
 class Artist(ormar.Model):
@@ -28,6 +29,7 @@ class Album(ormar.Model):
         tablename = "albums"
         metadata = metadata
         database = database
+        constraint = [ForeignKeyConstraint(['albums'],['albums.id'])]
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -47,20 +49,19 @@ class Track(ormar.Model):
 
 @pytest.fixture(autouse=True, scope="module")
 def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
     if "sqlite" in DATABASE_URL:
         with engine.connect() as connection:
             connection.execute("PRAGMA foreign_keys = ON;")
     metadata.drop_all(engine)
     metadata.create_all(engine)
     yield
-    # metadata.drop_all(engine)
+    metadata.drop_all(engine)
 
 
-# def test_table_structures():
-#     col = Album.Meta.table.columns.get('artist')
-#     breakpoint()
-
+def test_table_structures():
+    col = Album.Meta.table.columns.get('artist')
+    inspector = inspect(engine)
+    col2 = inspector.get_columns('albums')
 
 @pytest.mark.asyncio
 async def test_simple_cascade():

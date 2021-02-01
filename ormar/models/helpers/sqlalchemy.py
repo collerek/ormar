@@ -234,12 +234,13 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
     if not hasattr(meta, "table") and check_for_null_type_columns_from_forward_refs(
         meta
     ):
-        meta.table = sqlalchemy.Table(
+        table = sqlalchemy.Table(
             meta.tablename,
             meta.metadata,
             *[copy.deepcopy(col) for col in meta.columns],
             *meta.constraints,
         )
+        meta.table = table
 
 
 def update_column_definition(
