@@ -33,6 +33,7 @@ from ormar.models.helpers import (
     populate_meta_tablename_columns_and_pk,
     register_relation_in_alias_manager,
 )
+from ormar.models.helpers.models import check_required_meta_parameters
 from ormar.models.helpers.sqlalchemy import sqlalchemy_columns_from_model_fields
 from ormar.models.quick_access_views import quick_access_set
 from ormar.queryset import QuerySet
@@ -582,6 +583,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
 
         if hasattr(new_model, "Meta"):
             populate_default_options_values(new_model, model_fields)
+            check_required_meta_parameters(new_model)
             add_property_fields(new_model, attrs)
             register_signals(new_model=new_model)
             populate_choices_validators(new_model)

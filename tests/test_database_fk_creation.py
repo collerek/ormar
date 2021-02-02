@@ -9,6 +9,7 @@ from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
+engine = sqlalchemy.create_engine(DATABASE_URL)
 
 
 class Artist(ormar.Model):
@@ -32,34 +33,23 @@ class Album(ormar.Model):
     artist: Optional[Artist] = ormar.ForeignKey(Artist, ondelete="CASCADE")
 
 
-class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
-
-    id: int = ormar.Integer(primary_key=True)
-    album: Optional[Album] = ormar.ForeignKey(Album, ondelete="CASCADE")
-    title: str = ormar.String(max_length=100)
-
-
 @pytest.fixture(autouse=True, scope="module")
 def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
     metadata.drop_all(engine)
     metadata.create_all(engine)
     yield
     metadata.drop_all(engine)
 
 
-@pytest.mark.asyncio
-async def test_simple_cascade():
-    async with database:
-        artist = await Artist(name="Dr Alban").save()
-        await Album(name="Jamaica", artist=artist).save()
-        await Artist.objects.delete(id=artist.id)
-        artists = await Artist.objects.all()
-        assert len(artists) == 0
-
-        albums = await Album.objects.all()
-        assert len(albums) == 0
+def test_simple_cascade():
+    inspector = sqlalchemy.inspect(engine)
+    columns = inspector.get_columns("albums")
+    assert len(columns) == 3
+    col_names = [col.get("name") for col in columns]
+    assert sorted(["id", "name", "artist"]) == sorted(col_names)
+    fks = inspector.get_foreign_keys("albums")
+    assert len(fks) == 1
+    assert fks[0]["name"] == "fk_albums_artists_id_artist"
+    assert fks[0]["constrained_columns"][0] == "artist"
+    assert fks[0]["referred_columns"][0] == "id"
+    assert fks[0]["options"].get("ondelete") == "CASCADE"

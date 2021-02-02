@@ -3,6 +3,7 @@ import asyncio
 import datetime
 import decimal
 
+import databases
 import pydantic
 import pytest
 import sqlalchemy
@@ -14,12 +15,16 @@ from ormar.models import Model
 from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()
+from tests.settings import DATABASE_URL
+
+database = databases.Database(DATABASE_URL, force_rollback=True)
 
 
 class ExampleModel(Model):
     class Meta:
         tablename = "example"
         metadata = metadata
+        database = database
 
     test: int = ormar.Integer(primary_key=True)
     test_string: str = ormar.String(max_length=250)
@@ -52,6 +57,7 @@ class ExampleModel2(Model):
     class Meta:
         tablename = "examples"
         metadata = metadata
+        database = database
 
     test: int = ormar.Integer(primary_key=True)
     test_string: str = ormar.String(max_length=250)

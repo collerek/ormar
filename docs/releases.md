@@ -1,3 +1,27 @@
+# 0.9.0
+
+## Important
+* **Braking Fix:** Version 0.8.0 introduced a bug that prevents generation of foreign_keys constraint in the database,
+both in alembic and during creation through sqlalchemy.engine, this is fixed now.
+* **THEREFORE IF YOU USE VERSION >=0.8.0 YOU ARE STRONGLY ADVISED TO UPDATE** cause despite
+that most of the `ormar` functions are working your database **CREATED with ormar (or ormar + alembic)** 
+  does not have relations and suffer from perspective of performance and data integrity.
+* If you were using `ormar` to connect to existing database your performance and integrity 
+  should be fine nevertheless you should update to reflect all future schema updates in your models.
+
+
+## Breaking
+* **Breaking:** All foreign_keys and unique constraints now have a name so `alembic` 
+  can identify them in db and not depend on db
+* **Breaking:** During model construction if `Meta` class of the `Model` does not 
+  include `metadata` or `database` now `ModelDefinitionError` will be raised instead of generic `AttributeError`.
+* **Breaking:** `encode/databases` used for running the queries does not have a connection pool
+for sqlite backend, meaning that each querry is run with a new connection and there is no way to 
+  enable enforcing ForeignKeys constraints as those are by default turned off on every connection.
+  This is changed in `ormar` since >=0.9.0 and by default each sqlite3 query has `"PRAGMA foreign_keys=1;"`
+  run so now each sqlite3 connection by default enforces ForeignKey constraints including cascades.
+
+
 # 0.8.1
 
 ## Features

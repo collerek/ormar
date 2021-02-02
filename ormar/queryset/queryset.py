@@ -590,7 +590,6 @@ class QuerySet:
         expr = FilterQuery(filter_clauses=self.filter_clauses).apply(
             self.table.delete()
         )
-        print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
         return await self.database.execute(expr)
 
     def paginate(self, page: int, page_size: int = 20) -> "QuerySet":
