@@ -211,12 +211,17 @@ class BaseField(FieldInfo):
         :return: List of sqlalchemy foreign keys - by default one.
         :rtype: List[sqlalchemy.schema.ForeignKey]
         """
-        return [
-            sqlalchemy.schema.ForeignKey(
-                con.name, ondelete=con.ondelete, onupdate=con.onupdate
+        constraints = [
+            sqlalchemy.ForeignKey(
+                con.reference,
+                ondelete=con.ondelete,
+                onupdate=con.onupdate,
+                name=f"fk_{cls.owner.Meta.tablename}_{cls.to.Meta.tablename}"
+                f"_{cls.to.get_column_alias(cls.to.Meta.pkname)}_{cls.name}",
             )
             for con in cls.constraints
         ]
+        return constraints
 
     @classmethod
     def get_column(cls, name: str) -> sqlalchemy.Column:
@@ -230,7 +235,7 @@ class BaseField(FieldInfo):
         :return: actual definition of the database column as sqlalchemy requires.
         :rtype: sqlalchemy.Column
         """
-        return sqlalchemy.Column(
+        column = sqlalchemy.Column(
             cls.alias or name,
             cls.column_type,
             *cls.construct_constraints(),
@@ -241,6 +246,7 @@ class BaseField(FieldInfo):
             default=cls.default,
             server_default=cls.server_default,
         )
+        return column
 
     @classmethod
     def expand_relationship(

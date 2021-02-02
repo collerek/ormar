@@ -214,7 +214,7 @@ class Integer(ModelFieldFactory, int):
         :return: initialized column with proper options
         :rtype: sqlalchemy Column
         """
-        return sqlalchemy.Integer()
+        return sqlalchemy.Integer
 
 
 class Text(ModelFieldFactory, str):

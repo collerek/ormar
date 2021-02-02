@@ -1,9 +1,7 @@
-import copy
 import logging
 from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import sqlalchemy
-from sqlalchemy import ForeignKeyConstraint
 
 from ormar import ForeignKey, Integer, ModelDefinitionError  # noqa: I202
 from ormar.fields import BaseField, ManyToManyField
@@ -81,10 +79,12 @@ def create_and_append_m2m_fk(
             model.Meta.tablename + "." + pk_alias,
             ondelete="CASCADE",
             onupdate="CASCADE",
+            name=f"fk_{model_field.through.Meta.tablename}_{model.Meta.tablename}"
+            f"_{field_name}_{pk_alias}",
         ),
     )
     model_field.through.Meta.columns.append(column)
-    model_field.through.Meta.table.append_column(copy.deepcopy(column))
+    model_field.through.Meta.table.append_column(column)
 
 
 def check_pk_column_validity(
@@ -235,18 +235,15 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
     if not hasattr(meta, "table") and check_for_null_type_columns_from_forward_refs(
         meta
     ):
-        if meta.tablename == 'albums':
-            meta.constraints.append(ForeignKeyConstraint(['artist'],['artists.id'],
-                                                         ondelete='CASCADE',
-                                                         onupdate='CASCADE'))
+        for constraint in meta.constraints:
+            if isinstance(constraint, sqlalchemy.UniqueConstraint):
+                constraint.name = (
+                    f"uc_{meta.tablename}_"
+                    f'{"_".join([str(col) for col in constraint._pending_colargs])}'
+                )
         table = sqlalchemy.Table(
-            meta.tablename,
-            meta.metadata,
-            *[copy.deepcopy(col) for col in meta.columns],
-            *meta.constraints,
+            meta.tablename, meta.metadata, *meta.columns, *meta.constraints,
         )
-        if meta.tablename == 'albums':
-            pass
         meta.table = table
 
 

@@ -3,6 +3,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
+import sqlalchemy
 from pydantic import BaseModel, create_model
 from pydantic.typing import ForwardRef, evaluate_forwardref
 from sqlalchemy import UniqueConstraint
@@ -94,6 +95,7 @@ def populate_fk_params_based_on_to_model(
     :rtype: Tuple[Any, List, Any]
     """
     fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
+    to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
     to_field = to.Meta.model_fields[to.Meta.pkname]
     pk_only_model = create_dummy_model(to, to_field)
     __type__ = (
@@ -103,7 +105,7 @@ def populate_fk_params_based_on_to_model(
     )
     constraints = [
         ForeignKeyConstraint(
-            name=fk_string, ondelete=ondelete, onupdate=onupdate  # type: ignore
+            reference=fk_string, ondelete=ondelete, onupdate=onupdate, name=None
         )
     ]
     column_type = to_field.column_type
@@ -124,9 +126,10 @@ class ForeignKeyConstraint:
     to produce sqlalchemy.ForeignKeys
     """
 
-    name: str
-    ondelete: str
-    onupdate: str
+    reference: Union[str, sqlalchemy.Column]
+    name: Optional[str]
+    ondelete: Optional[str]
+    onupdate: Optional[str]
 
 
 def ForeignKey(  # noqa CFQ002
