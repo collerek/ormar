@@ -38,7 +38,36 @@ Current options are:
 **Arguments**:
 
 - `new_model (Model class)`: newly constructed Model
-- `model_fields (Union[Dict[str, type], Dict])`: 
+- `model_fields (Union[Dict[str, type], Dict])`: dict of model fields
+
+<a name="models.helpers.models.substitue_backend_pool_for_sqlite"></a>
+#### substitue\_backend\_pool\_for\_sqlite
+
+```python
+substitue_backend_pool_for_sqlite(new_model: Type["Model"]) -> None
+```
+
+Recreates Connection pool for sqlite3 with new factory that
+executes "PRAGMA foreign_keys=1; on initialization to enable foreign keys.
+
+**Arguments**:
+
+- `new_model (Model class)`: newly declared ormar Model
+
+<a name="models.helpers.models.check_required_meta_parameters"></a>
+#### check\_required\_meta\_parameters
+
+```python
+check_required_meta_parameters(new_model: Type["Model"]) -> None
+```
+
+Verifies if ormar.Model has database and metadata set.
+
+Recreates Connection pool for sqlite3
+
+**Arguments**:
+
+- `new_model (Model class)`: newly declared ormar Model
 
 <a name="models.helpers.models.extract_annotations_and_default_vals"></a>
 #### extract\_annotations\_and\_default\_vals

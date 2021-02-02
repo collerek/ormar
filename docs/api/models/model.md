@@ -30,6 +30,8 @@ nested models in result.
 
 **Arguments**:
 
+- `current_relation_str (str)`: name of the relation field
+- `source_model (Type[Model])`: model on which relation was defined
 - `row (sqlalchemy.engine.result.ResultProxy)`: raw result row from the database
 - `select_related (List)`: list of names of related models fetched from database
 - `related_models (Union[List, Dict])`: list or dict of related models

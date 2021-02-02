@@ -21,6 +21,10 @@ for sqlite backend, meaning that each querry is run with a new connection and th
   This is changed in `ormar` since >=0.9.0 and by default each sqlite3 query has `"PRAGMA foreign_keys=1;"`
   run so now each sqlite3 connection by default enforces ForeignKey constraints including cascades.
 
+## Other
+
+* Update api docs.
+* Add tests for fk creation in db and for cascades in db
 
 # 0.8.1
 
