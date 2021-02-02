@@ -15,7 +15,6 @@ from ormar.models import Model
 from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()
-from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
 
