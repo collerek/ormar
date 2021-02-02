@@ -361,8 +361,6 @@ def copy_and_replace_m2m_through_model(
         for name, field in new_meta.model_fields.items()
         if not issubclass(field, ForeignKeyField)
     }
-    if hasattr(new_meta, "column"):
-        del new_meta.columns
     _, columns = sqlalchemy_columns_from_model_fields(
         new_meta.model_fields, copy_through
     )  # type: ignore
