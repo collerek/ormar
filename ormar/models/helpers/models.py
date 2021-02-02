@@ -61,7 +61,7 @@ def populate_default_options_values(
 
 
 class Connection(sqlite3.Connection):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover
         super().__init__(*args, **kwargs)
         self.execute("PRAGMA foreign_keys=1;")
 
