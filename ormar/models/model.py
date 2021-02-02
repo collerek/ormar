@@ -62,6 +62,10 @@ class Model(NewBaseModel):
         where rows are populated in a different way as they do not have
         nested models in result.
 
+        :param current_relation_str: name of the relation field
+        :type current_relation_str: str
+        :param source_model: model on which relation was defined
+        :type source_model: Type[Model]
         :param row: raw result row from the database
         :type row: sqlalchemy.engine.result.ResultProxy
         :param select_related: list of names of related models fetched from database

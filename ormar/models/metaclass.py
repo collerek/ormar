@@ -33,6 +33,8 @@ from ormar.models.helpers import (
     populate_meta_tablename_columns_and_pk,
     register_relation_in_alias_manager,
 )
+from ormar.models.helpers.models import check_required_meta_parameters
+from ormar.models.helpers.sqlalchemy import sqlalchemy_columns_from_model_fields
 from ormar.models.quick_access_views import quick_access_set
 from ormar.queryset import QuerySet
 from ormar.relations.alias_manager import AliasManager
@@ -348,20 +350,23 @@ def copy_and_replace_m2m_through_model(
     new_meta: ormar.ModelMeta = type(  # type: ignore
         "Meta", (), dict(through_class.Meta.__dict__),
     )
+    copy_name = through_class.__name__ + attrs.get("__name__", "")
+    copy_through = type(copy_name, (ormar.Model,), {"Meta": new_meta})
     new_meta.tablename += "_" + meta.tablename
     # create new table with copied columns but remove foreign keys
     # they will be populated later in expanding reverse relation
     if hasattr(new_meta, "table"):
         del new_meta.table
-    new_meta.columns = [col for col in new_meta.columns if not col.foreign_keys]
     new_meta.model_fields = {
         name: field
         for name, field in new_meta.model_fields.items()
         if not issubclass(field, ForeignKeyField)
     }
+    _, columns = sqlalchemy_columns_from_model_fields(
+        new_meta.model_fields, copy_through
+    )  # type: ignore
+    new_meta.columns = columns
     populate_meta_sqlalchemy_table_if_required(new_meta)
-    copy_name = through_class.__name__ + attrs.get("__name__", "")
-    copy_through = type(copy_name, (ormar.Model,), {"Meta": new_meta})
     copy_field.through = copy_through
 
     parent_fields[field_name] = copy_field
@@ -578,6 +583,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
 
         if hasattr(new_model, "Meta"):
             populate_default_options_values(new_model, model_fields)
+            check_required_meta_parameters(new_model)
             add_property_fields(new_model, attrs)
             register_signals(new_model=new_model)
             populate_choices_validators(new_model)

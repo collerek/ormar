@@ -3,6 +3,7 @@ import asyncio
 import datetime
 import decimal
 
+import databases
 import pydantic
 import pytest
 import sqlalchemy
@@ -15,11 +16,14 @@ from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()
 
+database = databases.Database(DATABASE_URL, force_rollback=True)
+
 
 class ExampleModel(Model):
     class Meta:
         tablename = "example"
         metadata = metadata
+        database = database
 
     test: int = ormar.Integer(primary_key=True)
     test_string: str = ormar.String(max_length=250)
@@ -52,6 +56,7 @@ class ExampleModel2(Model):
     class Meta:
         tablename = "examples"
         metadata = metadata
+        database = database
 
     test: int = ormar.Integer(primary_key=True)
     test_string: str = ormar.String(max_length=250)
@@ -112,6 +117,29 @@ def test_model_attribute_json_access(example):
     assert example.test_json == dict(aa=12)
 
 
+def test_missing_metadata():
+    with pytest.raises(ModelDefinitionError):
+
+        class JsonSample2(ormar.Model):
+            class Meta:
+                tablename = "jsons2"
+                database = database
+
+            id: int = ormar.Integer(primary_key=True)
+            test_json = ormar.JSON(nullable=True)
+
+
+def test_missing_database():
+    with pytest.raises(ModelDefinitionError):
+
+        class JsonSample3(ormar.Model):
+            class Meta:
+                tablename = "jsons3"
+
+            id: int = ormar.Integer(primary_key=True)
+            test_json = ormar.JSON(nullable=True)
+
+
 def test_non_existing_attr(example):
     with pytest.raises(ValueError):
         example.new_attr = 12
@@ -137,12 +165,13 @@ def test_sqlalchemy_table_is_created(example):
 
 
 @typing.no_type_check
-def test_no_pk_in_model_definition():  # type: ignore
+def test_no_pk_in_model_definition():
     with pytest.raises(ModelDefinitionError):  # type: ignore
 
         class ExampleModel2(Model):  # type: ignore
             class Meta:
                 tablename = "example2"
+                database = database
                 metadata = metadata
 
             test_string: str = ormar.String(max_length=250)  # type: ignore
@@ -156,6 +185,7 @@ def test_two_pks_in_model_definition():
         class ExampleModel2(Model):
             class Meta:
                 tablename = "example3"
+                database = database
                 metadata = metadata
 
             id: int = ormar.Integer(primary_key=True)
@@ -169,6 +199,7 @@ def test_setting_pk_column_as_pydantic_only_in_model_definition():
         class ExampleModel2(Model):
             class Meta:
                 tablename = "example4"
+                database = database
                 metadata = metadata
 
             test: int = ormar.Integer(primary_key=True, pydantic_only=True)
@@ -181,6 +212,7 @@ def test_decimal_error_in_model_definition():
         class ExampleModel2(Model):
             class Meta:
                 tablename = "example5"
+                database = database
                 metadata = metadata
 
             test: decimal.Decimal = ormar.Decimal(primary_key=True)
@@ -193,6 +225,7 @@ def test_string_error_in_model_definition():
         class ExampleModel2(Model):
             class Meta:
                 tablename = "example6"
+                database = database
                 metadata = metadata
 
             test: str = ormar.String(primary_key=True)

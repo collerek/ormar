@@ -1,10 +1,11 @@
 import itertools
+import sqlite3
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type
 
+from pydantic.typing import ForwardRef
 import ormar  # noqa: I100
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.helpers.pydantic import populate_pydantic_default_values
-from pydantic.typing import ForwardRef
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -41,7 +42,7 @@ def populate_default_options_values(
 
     :param new_model: newly constructed Model
     :type new_model: Model class
-    :param model_fields:
+    :param model_fields: dict of model fields
     :type model_fields: Union[Dict[str, type], Dict]
     """
     if not hasattr(new_model.Meta, "constraints"):
@@ -57,6 +58,54 @@ def populate_default_options_values(
         new_model.Meta.requires_ref_update = True
     else:
         new_model.Meta.requires_ref_update = False
+
+
+class Connection(sqlite3.Connection):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover
+        super().__init__(*args, **kwargs)
+        self.execute("PRAGMA foreign_keys=1;")
+
+
+def substitue_backend_pool_for_sqlite(new_model: Type["Model"]) -> None:
+    """
+    Recreates Connection pool for sqlite3 with new factory that
+    executes "PRAGMA foreign_keys=1; on initialization to enable foreign keys.
+
+    :param new_model: newly declared ormar Model
+    :type new_model: Model class
+    """
+    backend = new_model.Meta.database._backend
+    if (
+        backend._dialect.name == "sqlite" and "factory" not in backend._options
+    ):  # pragma: no cover
+        backend._options["factory"] = Connection
+        old_pool = backend._pool
+        backend._pool = old_pool.__class__(backend._database_url, **backend._options)
+
+
+def check_required_meta_parameters(new_model: Type["Model"]) -> None:
+    """
+    Verifies if ormar.Model has database and metadata set.
+
+    Recreates Connection pool for sqlite3
+
+    :param new_model: newly declared ormar Model
+    :type new_model: Model class
+    """
+    if not hasattr(new_model.Meta, "database"):
+        if not getattr(new_model.Meta, "abstract", False):
+            raise ormar.ModelDefinitionError(
+                f"{new_model.__name__} does not have database defined."
+            )
+
+    else:
+        substitue_backend_pool_for_sqlite(new_model=new_model)
+
+    if not hasattr(new_model.Meta, "metadata"):
+        if not getattr(new_model.Meta, "abstract", False):
+            raise ormar.ModelDefinitionError(
+                f"{new_model.__name__} does not have metadata defined."
+            )
 
 
 def extract_annotations_and_default_vals(attrs: Dict) -> Tuple[Dict, Dict]:
