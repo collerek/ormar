@@ -1,3 +1,11 @@
+# 0.9.1
+
+## Features
+* Add choices values to `OpenAPI` specs, so it looks like native `Enum` field in the result schema.
+
+## Fixes
+* Fix `choices` behavior with `fastapi` usage when special fields can be not initialized yet but passed as strings etc.
+
 # 0.9.0
 
 ## Important

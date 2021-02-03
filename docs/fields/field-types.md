@@ -145,6 +145,49 @@ Sample:
 
 When loaded it's always python UUID so you can compare it and compare two formats values between each other.
 
+### Enum
+
+Although there is no dedicated field type for Enums in `ormar` you can change any
+field into `Enum` like field by passing a `choices` list that is accepted by all Field types.
+
+It will add both: validation in `pydantic` model and will display available options in schema,
+therefore it will be available in docs of `fastapi`.
+
+If you still want to use `Enum` in your application you can do this by passing a `Enum` into choices
+and later pass value of given option to a given field (note tha Enum is not JsonSerializable).
+
+```python
+# not that imports and endpoints declaration 
+# is skipped here for brevity
+from enum import Enum
+class TestEnum(Enum):
+    val1 = 'Val1'
+    val2 = 'Val2'
+
+class TestModel(ormar.Model):
+    class Meta:
+        tablename = "org"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    # pass list(Enum) to choices
+    enum_string: str = ormar.String(max_length=100, choices=list(TestEnum))
+
+# sample payload coming to fastapi
+response = client.post(
+    "/test_models/",
+    json={
+        "id": 1,
+        # you need to refer to the value of the `Enum` option
+        # if called like this, alternatively just use value
+        # string "Val1" in this case
+        "enum_string": TestEnum.val1.value
+    },
+)
+
+```
+
 [relations]: ../relations/index.md
 [queries]: ../queries.md
 [pydantic]: https://pydantic-docs.helpmanual.io/usage/types/#constrained-types

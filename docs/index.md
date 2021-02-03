@@ -187,6 +187,7 @@ Available Model Fields (with required args - optional ones in docs):
 * `BigInteger()`
 * `Decimal(scale, precision)`
 * `UUID()`
+* `EnumField` - by passing `choices` to any other Field type
 * `ForeignKey(to)`
 * `ManyToMany(to, through)`
 

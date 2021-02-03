@@ -1,3 +1,7 @@
+import datetime
+import decimal
+import uuid
+from enum import Enum
 from typing import (
     Any,
     Dict,
@@ -14,6 +18,7 @@ from typing import (
 import databases
 import pydantic
 import sqlalchemy
+from pydantic.main import SchemaExtraCallable
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
@@ -84,6 +89,47 @@ def check_if_field_has_choices(field: Type[BaseField]) -> bool:
     return hasattr(field, "choices") and bool(field.choices)
 
 
+def convert_choices_if_needed(  # noqa: CCR001
+    field: Type["BaseField"], values: Dict
+) -> Tuple[Any, List]:
+    """
+    Converts dates to isoformat as fastapi can check this condition in routes
+    and the fields are not yet parsed.
+
+    Converts enums to list of it's values.
+
+    Converts uuids to strings.
+
+    Converts decimal to float with given scale.
+
+    :param field: ormar field to check with choices
+    :type field: Type[BaseField]
+    :param values: current values of the model to verify
+    :type values: Dict
+    :return: value, choices list
+    :rtype: Tuple[Any, List]
+    """
+    value = values.get(field.name, ormar.Undefined)
+    choices = [o.value if isinstance(o, Enum) else o for o in field.choices]
+
+    if field.__type__ in [datetime.datetime, datetime.date, datetime.time]:
+        value = value.isoformat() if not isinstance(value, str) else value
+        choices = [o.isoformat() for o in field.choices]
+    elif field.__type__ == uuid.UUID:
+        value = str(value) if not isinstance(value, str) else value
+        choices = [str(o) for o in field.choices]
+    elif field.__type__ == decimal.Decimal:
+        precision = field.scale  # type: ignore
+        value = (
+            round(float(value), precision)
+            if isinstance(value, decimal.Decimal)
+            else value
+        )
+        choices = [round(float(o), precision) for o in choices]
+
+    return value, choices
+
+
 def choices_validator(cls: Type["Model"], values: Dict[str, Any]) -> Dict[str, Any]:
     """
     Validator that is attached to pydantic model pre root validators.
@@ -99,14 +145,24 @@ def choices_validator(cls: Type["Model"], values: Dict[str, Any]) -> Dict[str, A
     """
     for field_name, field in cls.Meta.model_fields.items():
         if check_if_field_has_choices(field):
-            value = values.get(field_name, ormar.Undefined)
-            if value is not ormar.Undefined and value not in field.choices:
+            value, choices = convert_choices_if_needed(field=field, values=values)
+            if value is not ormar.Undefined and value not in choices:
                 raise ValueError(
                     f"{field_name}: '{values.get(field_name)}' "
                     f"not in allowed choices set:"
-                    f" {field.choices}"
+                    f" {choices}"
                 )
     return values
+
+
+def construct_modify_schema_function(fields_with_choices: List) -> SchemaExtraCallable:
+    def schema_extra(schema: Dict[str, Any], model: Type["Model"]) -> None:
+        for field_id, prop in schema.get("properties", {}).items():
+            if field_id in fields_with_choices:
+                prop["enum"] = list(model.Meta.model_fields[field_id].choices)
+                prop["description"] = prop.get("description", "") + "An enumeration."
+
+    return staticmethod(schema_extra)  # type: ignore
 
 
 def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
@@ -117,13 +173,20 @@ def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
     :param model: newly constructed Model
     :type model: Model class
     """
+    fields_with_choices = []
     if not meta_field_not_set(model=model, field_name="model_fields"):
-        for _, field in model.Meta.model_fields.items():
+        for name, field in model.Meta.model_fields.items():
             if check_if_field_has_choices(field):
+                fields_with_choices.append(name)
                 validators = getattr(model, "__pre_root_validators__", [])
                 if choices_validator not in validators:
                     validators.append(choices_validator)
                     model.__pre_root_validators__ = validators
+
+        if fields_with_choices:
+            model.Config.schema_extra = construct_modify_schema_function(
+                fields_with_choices=fields_with_choices
+            )
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:
