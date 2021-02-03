@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import uuid
+from enum import Enum
 
 import databases
 import pydantic
@@ -21,6 +22,11 @@ uuid1 = uuid.uuid4()
 uuid2 = uuid.uuid4()
 
 
+class TestEnum(Enum):
+    val1 = "Val1"
+    val2 = "Val2"
+
+
 class Organisation(ormar.Model):
     class Meta:
         tablename = "org"
@@ -39,18 +45,18 @@ class Organisation(ormar.Model):
     )
 
     expire_datetime: datetime.datetime = ormar.DateTime(
-        choices=[datetime.datetime(2021, 1, 1, 10, 0, 0),
-                 datetime.datetime(2022, 5, 1, 12, 30)]
+        choices=[
+            datetime.datetime(2021, 1, 1, 10, 0, 0),
+            datetime.datetime(2022, 5, 1, 12, 30),
+        ]
     )
     random_val: float = ormar.Float(choices=[2.0, 3.5])
-    random_decimal: decimal.Decimal = ormar.Decimal(scale=4, precision=2,
-        choices=[decimal.Decimal(12.4), decimal.Decimal(58.2)]
+    random_decimal: decimal.Decimal = ormar.Decimal(
+        scale=2, precision=4, choices=[decimal.Decimal(12.4), decimal.Decimal(58.2)]
     )
-    random_json: pydantic.Json = ormar.JSON(
-        choices=["aa", "{\"aa\":\"bb\"}"]
-    )
-    random_uuid: uuid.UUID = ormar.UUID(
-        choices=[uuid1, uuid2])
+    random_json: pydantic.Json = ormar.JSON(choices=["aa", '{"aa":"bb"}'])
+    random_uuid: uuid.UUID = ormar.UUID(choices=[uuid1, uuid2])
+    enum_string: str = ormar.String(max_length=100, choices=list(TestEnum))
 
 
 @app.on_event("startup")
@@ -86,10 +92,7 @@ def test_all_endpoints():
     with client as client:
         response = client.post(
             "/items/",
-            json={"id": 1,
-                  "ident": "",
-                  "priority": 4,
-                  "expire_date": "2022-05-01"},
+            json={"id": 1, "ident": "", "priority": 4, "expire_date": "2022-05-01"},
         )
 
         assert response.status_code == 422
@@ -105,8 +108,9 @@ def test_all_endpoints():
                 "expire_datetime": "2022-05-01T12:30:00",
                 "random_val": 3.5,
                 "random_decimal": 12.4,
-                "random_json": "{\"aa\":\"bb\"}",
-                "random_uuid": str(uuid1)
+                "random_json": '{"aa":"bb"}',
+                "random_uuid": str(uuid1),
+                "enum_string": TestEnum.val1.value,
             },
         )
 
@@ -132,11 +136,7 @@ def test_schema_gen():
     schema = app.openapi()
     assert "Organisation" in schema["components"]["schemas"]
     props = schema["components"]["schemas"]["Organisation"]["properties"]
-    for field in ["ident", "priority", "expire_date"]:
+    for field in [k for k in Organisation.Meta.model_fields.keys() if k != "id"]:
         assert "enum" in props.get(field)
-        choices = Organisation.Meta.model_fields.get(field).choices
-        assert props.get(field).get("enum") == [
-            str(x) if isinstance(x, datetime.date) else x for x in choices
-        ]
         assert "description" in props.get(field)
         assert "An enumeration." in props.get(field).get("description")

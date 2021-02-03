@@ -16,7 +16,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mkdocs-material
+          pip install mkdocs-material pydoc-markdown
+      - name: Build Api docs
+        run: pydoc-markdown -- build --site-dir=api
+      - name: Copy APi docs
+        run: cp -Tavr ./build/docs/content/ ./docs/api/
       - name: Deploy
         run: |
           mkdocs gh-deploy --force

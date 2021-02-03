@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import uuid
+from enum import Enum
 from typing import (
     Any,
     Dict,
@@ -88,12 +89,18 @@ def check_if_field_has_choices(field: Type[BaseField]) -> bool:
     return hasattr(field, "choices") and bool(field.choices)
 
 
-def convert_choices_if_needed(
+def convert_choices_if_needed(  # noqa: CCR001
     field: Type["BaseField"], values: Dict
 ) -> Tuple[Any, List]:
     """
     Converts dates to isoformat as fastapi can check this condition in routes
     and the fields are not yet parsed.
+
+    Converts enums to list of it's values.
+
+    Converts uuids to strings.
+
+    Converts decimal to float with given scale.
 
     :param field: ormar field to check with choices
     :type field: Type[BaseField]
@@ -103,7 +110,8 @@ def convert_choices_if_needed(
     :rtype: Tuple[Any, List]
     """
     value = values.get(field.name, ormar.Undefined)
-    choices = list(field.choices)
+    choices = [o.value if isinstance(o, Enum) else o for o in field.choices]
+
     if field.__type__ in [datetime.datetime, datetime.date, datetime.time]:
         value = value.isoformat() if not isinstance(value, str) else value
         choices = [o.isoformat() for o in field.choices]
@@ -111,7 +119,7 @@ def convert_choices_if_needed(
         value = str(value) if not isinstance(value, str) else value
         choices = [str(o) for o in field.choices]
     elif field.__type__ == decimal.Decimal:
-        precision = field.precision  # type: ignore
+        precision = field.scale  # type: ignore
         value = (
             round(float(value), precision)
             if isinstance(value, decimal.Decimal)
