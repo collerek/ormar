@@ -12,3 +12,4 @@ dist
 /ormar.egg-info/
 site
 profile.py
+*.db

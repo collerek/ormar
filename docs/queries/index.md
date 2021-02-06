@@ -39,6 +39,9 @@ To read more about any specific section or function please refer to the details 
     * `QuerysetProxy.create(**kwargs)` method
     * `QuerysetProxy.get_or_create(**kwargs)` method
     * `QuerysetProxy.update_or_create(**kwargs)` method
+  
+!!!tip
+    To read more about any or all of those functions visit [create](./create.md) section.
 
 ### [Read data from database](./read.md)
 
@@ -57,6 +60,9 @@ To read more about any specific section or function please refer to the details 
     * `QuerysetProxy.get_or_create(**kwargs)` method
     * `QuerysetProxy.first()` method
     * `QuerysetProxy.all(**kwargs)` method
+  
+!!!tip
+    To read more about any or all of those functions visit [read](./read.md) section.
 
 ### [Update data in database](./update.md)
 
@@ -73,6 +79,9 @@ To read more about any specific section or function please refer to the details 
 
 * `QuerysetProxy`
     * `QuerysetProxy.update_or_create(**kwargs)` method
+  
+!!!tip
+    To read more about any or all of those functions visit [update](./update.md) section.
 
 ### [Delete data from database](./delete.md)
 
@@ -86,6 +95,9 @@ To read more about any specific section or function please refer to the details 
 * `QuerysetProxy`
     * `QuerysetProxy.remove()` method
     * `QuerysetProxy.clear()` method
+  
+!!!tip
+    To read more about any or all of those functions visit [delete](./delete.md) section.
 
 ### [Joins and subqueries](./joins-and-subqueries.md)
 
@@ -100,6 +112,9 @@ To read more about any specific section or function please refer to the details 
 * `QuerysetProxy`
     * `QuerysetProxy.select_related(related: Union[List, str])` method
     * `QuerysetProxy.prefetch_related(related: Union[List, str])` method
+  
+!!!tip
+    To read more about any or all of those functions visit [joins and subqueries](./joins-and-subqueries.md) section.
 
 ### [Filtering and sorting](./filter-and-sort.md)
 
@@ -118,6 +133,9 @@ To read more about any specific section or function please refer to the details 
     * `QuerysetProxy.get(**kwargs)` method
     * `QuerysetProxy.get_or_create(**kwargs)` method
     * `QuerysetProxy.all(**kwargs)` method
+  
+!!!tip
+    To read more about any or all of those functions visit [filtering and sorting](./filter-and-sort.md) section.
 
 ### [Selecting columns](./select-columns.md)
 
@@ -128,6 +146,9 @@ To read more about any specific section or function please refer to the details 
 * `QuerysetProxy`
     * `QuerysetProxy.fields(columns: Union[List, str, set, dict])` method
     * `QuerysetProxy.exclude_fields(columns: Union[List, str, set, dict])` method
+  
+!!!tip
+    To read more about any or all of those functions visit [selecting columns](./select-columns.md) section.
 
 ### [Pagination and rows number](./pagination-and-rows-number.md)
 
@@ -142,6 +163,9 @@ To read more about any specific section or function please refer to the details 
     * `QuerysetProxy.paginate(page: int)` method
     * `QuerysetProxy.limit(limit_count: int)` method
     * `QuerysetProxy.offset(offset: int)` method
+  
+!!!tip
+    To read more about any or all of those functions visit [pagination](./pagination-and-rows-number.md) section.
 
 ### [Aggregated functions](./aggregations.md)
 
@@ -152,6 +176,9 @@ To read more about any specific section or function please refer to the details 
 * `QuerysetProxy`
     * `QuerysetProxy.count()` method
     * `QuerysetProxy.exists()` method
+  
+!!!tip
+    To read more about any or all of those functions visit [aggregations](./aggregations.md) section.
   
 
 [relations]: ../relations/index.md

@@ -13,6 +13,10 @@
 <a href="https://www.codefactor.io/repository/github/collerek/ormar">
 <img src="https://www.codefactor.io/repository/github/collerek/ormar/badge" alt="CodeFactor" />
 </a>
+<a href="https://codeclimate.com/github/collerek/ormar/maintainability">
+<img src="https://api.codeclimate.com/v1/badges/186bc79245724864a7aa/maintainability" /></a>
+<a href="https://pepy.tech/project/ormar">
+<img src="https://pepy.tech/badge/ormar"></a>
 </p>
 
 ### Overview
@@ -35,6 +39,14 @@ And what's a better name for python ORM than snakes cabinet :)
 
 Check out the [documentation][documentation] for details.
 
+**Note that for brevity most of the documentation snippets omit the creation of the database
+and scheduling the execution of functions for asynchronous run.**
+
+If you want more real life examples than in the documentation you can see [tests][tests] folder,
+since they actually have to create and connect to database in most of the tests.
+
+Yet remember that those are - well - tests and not all solutions are suitable to be used in real life applications.
+
 ### Dependencies
 
 Ormar is built with:
@@ -44,99 +56,371 @@ Ormar is built with:
   * [`pydantic`][pydantic] for data validation.
   * `typing_extensions` for python 3.6 - 3.7
 
-### Migrations
+### Migrations & Database creation
 
 Because ormar is built on SQLAlchemy core, you can use [`alembic`][alembic] to provide
-database migrations.
+database migrations (and you really should for production code).
 
+For tests and basic applications the `sqlalchemy` is more than enough:
+```python
+# note this is just a partial snippet full working example below
+# 1. Imports
+import sqlalchemy
+import databases
 
-**ormar is still under development:** 
-We recommend pinning any dependencies (with i.e. `ormar~=0.5.2`)
+# 2. Initialization
+DATABASE_URL = "sqlite:///db.sqlite"
+database = databases.Database(DATABASE_URL)
+metadata = sqlalchemy.MetaData()
+
+# Define models here
+
+# 3. Database creation and tables creation
+engine = sqlalchemy.create_engine(DATABASE_URL)
+metadata.create_all(engine)
+```
+
+For a sample configuration of alembic and more information regarding migrations and 
+database creation visit [migrations][migrations] documentation section.
+
+### Package versions
+**ormar is still under development:**
+We recommend pinning any dependencies (with i.e. `ormar~=0.9.1`)
+
+`ormar` also follows the release numeration that breaking changes bump the major number, 
+while other changes and fixes bump minor number, so with the latter you should be safe to
+update, yet always read the [releases][releases] docs before.
+`example: (0.5.2 -> 0.6.0 - breaking, 0.5.2 -> 0.5.3 - non breaking)`.
+
+### Asynchronous Python
+
+Note that `ormar` is an asynchronous ORM, which means that you have to `await` the calls to 
+the methods, that are scheduled for execution in an event loop. Python has a builtin module
+[`asyncio`][asyncio] that allows you to do just that.
+
+Note that most of "normal" python interpreters do not allow execution of `await` 
+outside of a function (cause you actually schedule this function for delayed execution 
+and don't get the result immediately).
+
+In a modern web frameworks (like `fastapi`), the framework will handle this for you, but if
+you plan to do this on your own you need to perform this manually like described in a 
+quick start below.
 
 ### Quick Start
 
-**Note**: Use `ipython` to try this from the console, since it supports `await`.
+Note that you can find the same script in examples folder on github.
 
 ```python
+from typing import Optional
+
 import databases
+import pydantic
+
 import ormar
 import sqlalchemy
 
-database = databases.Database("sqlite:///db.sqlite")
+DATABASE_URL = "sqlite:///db.sqlite"
+database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-class Album(ormar.Model):
-    class Meta:
-        tablename = "album"
-        metadata = metadata
-        database = database
-    
-    # note that type hints are optional so 
-    # id = ormar.Integer(primary_key=True) 
-    # is also valid
+# note that this step is optional -> all ormar cares is a internal
+# class with name Meta and proper parameters, but this way you do not
+# have to repeat the same parameters if you use only one database
+class BaseMeta(ormar.ModelMeta):
+    metadata = metadata
+    database = database
+
+
+# Note that all type hints are optional
+# below is a perfectly valid model declaration
+# class Author(ormar.Model):
+#     class Meta(BaseMeta):
+#         tablename = "authors"
+#
+#     id = ormar.Integer(primary_key=True) # <= notice no field types
+#     name = ormar.String(max_length=100)
+
+class Author(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "authors"
+
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
-class Track(ormar.Model):
-    class Meta:
-        tablename = "track"
-        metadata = metadata
-        database = database
+class Book(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "books"
 
     id: int = ormar.Integer(primary_key=True)
-    album: Optional[Album] = ormar.ForeignKey(Album)
+    author: Optional[Author] = ormar.ForeignKey(Author)
     title: str = ormar.String(max_length=100)
-    position: int = ormar.Integer()
+    year: int = ormar.Integer(nullable=True)
 
 
-# Create some records to work with.
-malibu = await Album.objects.create(name="Malibu")
-await Track.objects.create(album=malibu, title="The Bird", position=1)
-await Track.objects.create(album=malibu, title="Heart don't stand a chance", position=2)
-await Track.objects.create(album=malibu, title="The Waters", position=3)
-
-# alternative creation of object divided into 2 steps
-fantasies = Album(name="Fantasies")
-await fantasies.save()
-await Track.objects.create(album=fantasies, title="Help I'm Alive", position=1)
-await Track.objects.create(album=fantasies, title="Sick Muse", position=2)
+# create the database
+# note that in production you should use migrations
+# note that this is not required if you connect to existing database
+engine = sqlalchemy.create_engine(DATABASE_URL)
+# just to be sure we clear the db before
+metadata.drop_all(engine)
+metadata.create_all(engine)
 
 
-# Fetch an instance, without loading a foreign key relationship on it.
-track = await Track.objects.get(title="The Bird")
+# all functions below are divided into functionality categories
+# note how all functions are defined with async - hence can use await AND needs to
+# be awaited on their own
+async def create():
+    # Create some records to work with through QuerySet.create method.
+    # Note that queryset is exposed on each Model's class as objects
+    tolkien = await Author.objects.create(name="J.R.R. Tolkien")
+    await Book.objects.create(author=tolkien,
+                              title="The Hobbit",
+                              year=1937)
+    await Book.objects.create(author=tolkien,
+                              title="The Lord of the Rings",
+                              year=1955)
+    await Book.objects.create(author=tolkien,
+                              title="The Silmarillion",
+                              year=1977)
 
-# We have an album instance, but it only has the primary key populated
-print(track.album)       # Album(id=1) [sparse]
-print(track.album.pk)    # 1
-print(track.album.name)  # None
+    # alternative creation of object divided into 2 steps
+    sapkowski = Author(name="Andrzej Sapkowski")
+    # do some stuff
+    await sapkowski.save()
 
-# Load the relationship from the database
-await track.album.load()
-assert track.album.name == "Malibu"
+    # or save() after initialization
+    await Book(author=sapkowski, title="The Witcher", year=1990).save()
+    await Book(author=sapkowski, title="The Tower of Fools", year=2002).save()
 
-# This time, fetch an instance, loading the foreign key relationship.
-track = await Track.objects.select_related("album").get(title="The Bird")
-assert track.album.name == "Malibu"
+    # to read more about inserting data into the database
+    # visit: https://collerek.github.io/ormar/queries/create/
 
-# By default you also get a second side of the relation 
-# constructed as lowercase source model name +'s' (tracks in this case)
-# you can also provide custom name with parameter related_name
-album = await Album.objects.select_related("tracks").all()
-assert len(album.tracks) == 3
 
-# Fetch instances, with a filter across an FK relationship.
-tracks = await Track.objects.filter(album__name="Fantasies").all()
-assert len(tracks) == 2
+async def read():
+    # Fetch an instance, without loading a foreign key relationship on it.
+    book = await Book.objects.get(title="The Hobbit")
+    book2 = await Book.objects.first()
 
-# Fetch instances, with a filter and operator across an FK relationship.
-tracks = await Track.objects.filter(album__name__iexact="fantasies").all()
-assert len(tracks) == 2
+    # first() fetch the instance with lower primary key value
+    assert book == book2
 
-# Limit a query
-tracks = await Track.objects.limit(1).all()
-assert len(tracks) == 1
+    # you can access all fields on loaded model
+    assert book.title == "The Hobbit"
+    assert book.year == 1937
+
+    # when no condition is passed to get()
+    # it behaves as last() based on primary key column
+    book3 = await Book.objects.get()
+    assert book3.title == "The Tower of Fools"
+
+    # When you have a relation, ormar always defines a related model for you
+    # even when all you loaded is a foreign key value like in this example
+    assert isinstance(book.author, Author)
+    # primary key is populated from foreign key stored in books table
+    assert book.author.pk == 1
+    # since the related model was not loaded all other fields are None
+    assert book.author.name is None
+
+    # Load the relationship from the database when you already have the related model
+    # alternatively see joins section below
+    await book.author.load()
+    assert book.author.name == "J.R.R. Tolkien"
+
+    # get all rows for given model
+    authors = await Author.objects.all()
+    assert len(authors) == 2
+
+    # to read more about reading data from the database
+    # visit: https://collerek.github.io/ormar/queries/read/
+
+
+async def update():
+    # read existing row from db
+    tolkien = await Author.objects.get(name="J.R.R. Tolkien")
+    assert tolkien.name == "J.R.R. Tolkien"
+    tolkien_id = tolkien.id
+
+    # change the selected property
+    tolkien.name = "John Ronald Reuel Tolkien"
+    # call update on a model instance
+    await tolkien.update()
+
+    # confirm that object was updated
+    tolkien = await Author.objects.get(name="John Ronald Reuel Tolkien")
+    assert tolkien.name == "John Ronald Reuel Tolkien"
+    assert tolkien.id == tolkien_id
+
+    # alternatively update data without loading
+    await Author.objects.filter(name__contains="Tolkien").update(name="J.R.R. Tolkien")
+
+    # to read more about updating data in the database
+    # visit: https://collerek.github.io/ormar/queries/update/
+
+
+async def delete():
+    silmarillion = await Book.objects.get(year=1977)
+    # call delete() on instance
+    await silmarillion.delete()
+
+    # alternatively delete without loading
+    await Book.objects.delete(title="The Tower of Fools")
+
+    # note that when there is no record ormar raises NoMatch exception
+    try:
+        await Book.objects.get(year=1977)
+    except ormar.NoMatch:
+        print("No book from 1977!")
+
+    # to read more about deleting data from the database
+    # visit: https://collerek.github.io/ormar/queries/delete/
+
+    # note that despite the fact that record no longer exists in database
+    # the object above is still accessible and you can use it (and i.e. save()) again.
+    tolkien = silmarillion.author
+    await Book.objects.create(author=tolkien,
+                              title="The Silmarillion",
+                              year=1977)
+
+
+async def joins():
+    # Tho join two models use select_related
+    book = await Book.objects.select_related("author").get(title="The Hobbit")
+    # now the author is already prefetched
+    assert book.author.name == "J.R.R. Tolkien"
+
+    # By default you also get a second side of the relation
+    # constructed as lowercase source model name +'s' (books in this case)
+    # you can also provide custom name with parameter related_name
+    author = await Author.objects.select_related("books").all(name="J.R.R. Tolkien")
+    assert len(author[0].books) == 3
+
+    # for reverse and many to many relations you can also prefetch_related
+    # that executes a separate query for each of related models
+
+    author = await Author.objects.prefetch_related("books").get(name="J.R.R. Tolkien")
+    assert len(author.books) == 3
+
+    # to read more about relations
+    # visit: https://collerek.github.io/ormar/relations/
+
+    # to read more about joins and subqueries
+    # visit: https://collerek.github.io/ormar/queries/delete/
+
+
+async def filter_and_sort():
+    # to filter the query you can use filter() or pass key-value pars to
+    # get(), all() etc.
+    # to use special methods or access related model fields use double
+    # underscore like to filter by the name of the author use author__name
+    books = await Book.objects.all(author__name="J.R.R. Tolkien")
+    assert len(books) == 3
+
+    # filter can accept special methods also separated with double underscore
+    # to issue sql query ` where authors.name like "%tolkien%"` that is not
+    # case sensitive (hence small t in Tolkien)
+    books = await Book.objects.filter(author__name__icontains="tolkien").all()
+    assert len(books) == 3
+
+    # to sort use order_by() function of queryset
+    # to sort decreasing use hyphen before the field name
+    # same as with filter you can use double underscores to access related fields
+    books = await Book.objects.filter(author__name__icontains="tolkien").order_by(
+        "-year").all()
+    assert len(books) == 3
+    assert books[0].title == "The Silmarillion"
+    assert books[2].title == "The Hobbit"
+
+    # to read more about filtering and ordering
+    # visit: https://collerek.github.io/ormar/queries/filter-and-sort/
+
+
+async def subset_of_columns():
+    # to exclude some columns from loading when querying the database
+    # you can use fileds() method
+    hobbit = await Book.objects.fields(["title"]).get(title="The Hobbit")
+    # note that fields not included in fields are empty (set to None)
+    assert hobbit.year is None
+    assert hobbit.author is None
+
+    # selected field is there
+    assert hobbit.title == "The Hobbit"
+
+    # alternatively you can provide columns you want to exclude
+    hobbit = await Book.objects.exclude_fields(["year"]).get(title="The Hobbit")
+    # year is still not set
+    assert hobbit.year is None
+    # but author is back
+    assert hobbit.author is not None
+
+    # also you cannot exclude primary key column - it's always there
+    # even if you EXPLICITLY exclude it it will be there
+
+    # note that each model have a shortcut for primary_key column which is pk
+    # and you can filter/access/set the values by this alias like below
+    assert hobbit.pk is not None
+
+    # note that you cannot exclude fields that are not nullable
+    # (required) in model definition
+    try:
+        await Book.objects.exclude_fields(["title"]).get(title="The Hobbit")
+    except pydantic.ValidationError:
+        print("Cannot exclude non nullable field title")
+
+    # to read more about selecting subset of columns
+    # visit: https://collerek.github.io/ormar/queries/select-columns/
+
+
+async def pagination():
+    # to limit number of returned rows use limit()
+    books = await Book.objects.limit(1).all()
+    assert len(books) == 1
+    assert books[0].title == "The Hobbit"
+
+    # to offset number of returned rows use offset()
+    books = await Book.objects.limit(1).offset(1).all()
+    assert len(books) == 1
+    assert books[0].title == "The Lord of the Rings"
+
+    # alternatively use paginate that combines both
+    books = await Book.objects.paginate(page=2, page_size=2).all()
+    assert len(books) == 2
+    # note that we removed one book of Sapkowski in delete()
+    # and recreated The Silmarillion - by default when no order_by is set
+    # ordering sorts by primary_key column
+    assert books[0].title == "The Witcher"
+    assert books[1].title == "The Silmarillion"
+
+    # to read more about pagination and number of rows
+    # visit: https://collerek.github.io/ormar/queries/pagination-and-rows-number/
+
+
+async def aggregations():
+    # ormar currently supports count:
+    assert 2 == await Author.objects.count()
+
+    # and exists
+    assert await Book.objects.filter(title="The Hobbit").exists()
+
+    # to read more about aggregated functions
+    # visit: https://collerek.github.io/ormar/queries/aggregations/
+
+
+# gather and execute all functions
+# note - normally import should be at the beginning of the file
+import asyncio
+
+# note that normally you use gather() function to run several functions
+# concurrently but we actually modify the data and we rely on the order of functions
+for func in [create, read, update, delete, joins,
+             filter_and_sort, subset_of_columns,
+             pagination, aggregations]:
+    print(f"Executing: {func.__name__}")
+    asyncio.run(func())
+
+# drop the database tables
+metadata.drop_all(engine)
 ```
 
 ## Ormar Specification
@@ -232,3 +516,7 @@ Signals allow to trigger your function for a given event on a given Model.
 [alembic]: https://alembic.sqlalchemy.org/en/latest/
 [fastapi]: https://fastapi.tiangolo.com/
 [documentation]: https://collerek.github.io/ormar/
+[migrations]: https://collerek.github.io/ormar/models/migrations/
+[asyncio]: https://docs.python.org/3/library/asyncio.html
+[releases]: https://collerek.github.io/ormar/releases/
+[tests]: https://github.com/collerek/ormar/tree/master/tests

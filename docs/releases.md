@@ -1,3 +1,11 @@
+# 0.9.2
+
+## Other
+* Updated the Quick Start in docs/readme
+* Updated docs with links to queries subpage
+* Added badges for code climate and pepy downloads
+
+
 # 0.9.1
 
 ## Features
