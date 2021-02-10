@@ -52,19 +52,26 @@ async def read_things():
 
 
 @app.get("/things_with_sample", response_model=List[Thing])
-async def read_things():
+async def read_things_sample():
     await Thing(name="b", js=["asdf", "asdf", "bobby", "nigel"]).save()
     await Thing(name="a", js="[\"lemon\", \"raspberry\", \"lime\", \"pumice\"]").save()
     return await Thing.objects.order_by("name").all()
 
 
 @app.get("/things_with_sample_after_init", response_model=Thing)
-async def read_things():
+async def read_things_init():
     thing1 = Thing()
     thing1.name = "d"
     thing1.js = ["js", "set", "after", "constructor"]
     await thing1.save()
     return thing1
+
+
+@app.put("/update_thing", response_model=Thing)
+async def update_things(thing: Thing):
+    thing.js = ["js", "set", "after", "update"]  # type: ignore
+    await thing.update()
+    return thing
 
 
 @app.post("/things", response_model=Thing)
@@ -120,3 +127,16 @@ def test_read_main():
         assert resp[1].get("js") == ["asdf", "asdf", "bobby", "nigel"]
         assert resp[2].get("js") == ["test", "test2"]
         assert resp[3].get("js") == ["js", "set", "after", "constructor"]
+
+        response = client.put("/update_thing", json=resp[3])
+        assert response.status_code == 200
+        resp = response.json()
+        assert resp.get("js") == ["js", "set", "after", "update"]
+
+        # test new with after constructor
+        response = client.get("/things")
+        resp = response.json()
+        assert resp[0].get("js") == ["lemon", "raspberry", "lime", "pumice"]
+        assert resp[1].get("js") == ["asdf", "asdf", "bobby", "nigel"]
+        assert resp[2].get("js") == ["test", "test2"]
+        assert resp[3].get("js") == ["js", "set", "after", "update"]
