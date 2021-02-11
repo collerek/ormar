@@ -1,12 +1,10 @@
 from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
-import pydantic
 import sqlalchemy
-from pydantic import Field, typing
-from pydantic.fields import FieldInfo
+from pydantic import Field, Json, typing
+from pydantic.fields import FieldInfo, Required, Undefined
 
 import ormar  # noqa I101
-from ormar import ModelDefinitionError  # noqa I101
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
@@ -97,6 +95,30 @@ class BaseField(FieldInfo):
         )
 
     @classmethod
+    def get_base_pydantic_field_info(cls, allow_null: bool) -> FieldInfo:
+        """
+        Generates base pydantic.FieldInfo with only default and optionally
+        required to fix pydantic Json field being set to required=False.
+        Used in an ormar Model Metaclass.
+
+        :param allow_null: flag if the default value can be None
+        or if it should be populated by pydantic Undefined
+        :type allow_null: bool
+        :return: instance of base pydantic.FieldInfo
+        :rtype: pydantic.FieldInfo
+        """
+        base = cls.default_value()
+        if base is None:
+            base = (
+                FieldInfo(default=None)
+                if (cls.nullable or allow_null)
+                else FieldInfo(default=Undefined)
+            )
+        if cls.__type__ == Json and base.default is Undefined:
+            base.default = Required
+        return base
+
+    @classmethod
     def convert_to_pydantic_field_info(cls, allow_null: bool = False) -> FieldInfo:
         """
         Converts a BaseField into pydantic.FieldInfo
@@ -109,13 +131,7 @@ class BaseField(FieldInfo):
         :return: actual instance of pydantic.FieldInfo with all needed fields populated
         :rtype: pydantic.FieldInfo
         """
-        base = cls.default_value()
-        if base is None:
-            base = (
-                FieldInfo(default=None)
-                if (cls.nullable or allow_null)
-                else FieldInfo(default=pydantic.fields.Undefined)
-            )
+        base = cls.get_base_pydantic_field_info(allow_null=allow_null)
         for attr_name in FieldInfo.__dict__.keys():
             if cls.is_valid_field_info_field(attr_name):
                 setattr(base, attr_name, cls.__dict__.get(attr_name))

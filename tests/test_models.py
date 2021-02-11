@@ -81,7 +81,7 @@ class Product(ormar.Model):
     last_delivery: datetime.date = ormar.Date(default=datetime.datetime.now)
 
 
-country_name_choices = ("Canada", "Algeria", "United States")
+country_name_choices = ("Canada", "Algeria", "United States", "Belize")
 country_taxed_choices = (True,)
 country_country_code_choices = (-10, 1, 213, 1200)
 
@@ -448,6 +448,32 @@ async def test_model_choices():
             await Country.objects.create(
                 name=name, taxed=taxed, country_code=country_code
             )
+
+        # test setting after init also triggers validation
+        with pytest.raises(ValueError):
+            name, taxed, country_code = "Algeria", True, 967
+            check_choices((name, taxed, country_code), ["in", "in", "out"])
+            country = Country()
+            country.country_code = country_code
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = "Saudi Arabia", True, 1
+            check_choices((name, taxed, country_code), ["out", "in", "in"])
+            country = Country()
+            country.name = name
+
+        with pytest.raises(ValueError):
+            name, taxed, country_code = "Algeria", False, 1
+            check_choices((name, taxed, country_code), ["in", "out", "in"])
+            country = Country()
+            country.taxed = taxed
+
+        # check also update from queryset
+        with pytest.raises(ValueError):
+            name, taxed, country_code = "Algeria", False, 1
+            check_choices((name, taxed, country_code), ["in", "out", "in"])
+            await Country(name="Belize").save()
+            await Country.objects.filter(name="Belize").update(name="Vietnam")
 
 
 @pytest.mark.asyncio

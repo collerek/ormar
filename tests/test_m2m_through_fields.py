@@ -38,6 +38,7 @@ class Post(ormar.Model):
     title: str = ormar.String(max_length=200)
     categories = ormar.ManyToMany(Category, through=PostCategory)
 
+
 #
 # @pytest.fixture(autouse=True, scope="module")
 # async def create_test_database():

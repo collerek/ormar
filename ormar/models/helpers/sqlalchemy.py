@@ -3,18 +3,18 @@ from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import sqlalchemy
 
-from ormar import ForeignKey, Integer, ModelDefinitionError  # noqa: I202
-from ormar.fields import BaseField, ManyToManyField
-from ormar.fields.foreign_key import ForeignKeyField
-from ormar.models.helpers.models import validate_related_names_in_relations
+import ormar  # noqa: I100, I202
 from ormar.models.helpers.pydantic import create_pydantic_field
+from ormar.models.helpers.related_names_validation import (
+    validate_related_names_in_relations,
+)
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model, ModelMeta
+    from ormar import Model, ModelMeta, ManyToManyField, BaseField, ForeignKeyField
     from ormar.models import NewBaseModel
 
 
-def adjust_through_many_to_many_model(model_field: Type[ManyToManyField]) -> None:
+def adjust_through_many_to_many_model(model_field: Type["ManyToManyField"]) -> None:
     """
     Registers m2m relation on through model.
     Sets ormar.ForeignKey from through model to both child and parent models.
@@ -27,13 +27,13 @@ def adjust_through_many_to_many_model(model_field: Type[ManyToManyField]) -> Non
     parent_name = model_field.default_target_field_name()
     child_name = model_field.default_source_field_name()
 
-    model_field.through.Meta.model_fields[parent_name] = ForeignKey(
+    model_field.through.Meta.model_fields[parent_name] = ormar.ForeignKey(
         model_field.to,
         real_name=parent_name,
         ondelete="CASCADE",
         owner=model_field.through,
     )
-    model_field.through.Meta.model_fields[child_name] = ForeignKey(
+    model_field.through.Meta.model_fields[child_name] = ormar.ForeignKey(
         model_field.owner,
         real_name=child_name,
         ondelete="CASCADE",
@@ -52,7 +52,7 @@ def adjust_through_many_to_many_model(model_field: Type[ManyToManyField]) -> Non
 
 
 def create_and_append_m2m_fk(
-    model: Type["Model"], model_field: Type[ManyToManyField], field_name: str
+    model: Type["Model"], model_field: Type["ManyToManyField"], field_name: str
 ) -> None:
     """
     Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.
@@ -69,7 +69,7 @@ def create_and_append_m2m_fk(
     pk_alias = model.get_column_alias(model.Meta.pkname)
     pk_column = next((col for col in model.Meta.columns if col.name == pk_alias), None)
     if pk_column is None:  # pragma: no cover
-        raise ModelDefinitionError(
+        raise ormar.ModelDefinitionError(
             "ManyToMany relation cannot lead to field without pk"
         )
     column = sqlalchemy.Column(
@@ -88,7 +88,7 @@ def create_and_append_m2m_fk(
 
 
 def check_pk_column_validity(
-    field_name: str, field: BaseField, pkname: Optional[str]
+    field_name: str, field: "BaseField", pkname: Optional[str]
 ) -> Optional[str]:
     """
     Receives the field marked as primary key and verifies if the pkname
@@ -106,9 +106,9 @@ def check_pk_column_validity(
     :rtype: str
     """
     if pkname is not None:
-        raise ModelDefinitionError("Only one primary key column is allowed.")
+        raise ormar.ModelDefinitionError("Only one primary key column is allowed.")
     if field.pydantic_only:
-        raise ModelDefinitionError("Primary key column cannot be pydantic only")
+        raise ormar.ModelDefinitionError("Primary key column cannot be pydantic only")
     return field_name
 
 
@@ -144,7 +144,7 @@ def sqlalchemy_columns_from_model_fields(
     :rtype: Tuple[Optional[str], List[sqlalchemy.Column]]
     """
     if len(model_fields.keys()) == 0:
-        model_fields["id"] = Integer(name="id", primary_key=True)
+        model_fields["id"] = ormar.Integer(name="id", primary_key=True)
         logging.warning(
             "Table {table_name} had no fields so auto "
             "Integer primary key named `id` created."
@@ -159,7 +159,7 @@ def sqlalchemy_columns_from_model_fields(
         if (
             not field.pydantic_only
             and not field.virtual
-            and not issubclass(field, ManyToManyField)
+            and not issubclass(field, ormar.ManyToManyField)
         ):
             columns.append(field.get_column(field.get_alias()))
     return pkname, columns
@@ -201,7 +201,7 @@ def populate_meta_tablename_columns_and_pk(
         )
 
     if pkname is None:
-        raise ModelDefinitionError("Table has to have a primary key.")
+        raise ormar.ModelDefinitionError("Table has to have a primary key.")
 
     new_model.Meta.columns = columns
     new_model.Meta.pkname = pkname
@@ -248,7 +248,7 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
 
 
 def update_column_definition(
-    model: Union[Type["Model"], Type["NewBaseModel"]], field: Type[ForeignKeyField]
+    model: Union[Type["Model"], Type["NewBaseModel"]], field: Type["ForeignKeyField"]
 ) -> None:
     """
     Updates a column with a new type column based on updated parameters in FK fields.

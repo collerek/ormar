@@ -1,3 +1,4 @@
+# type: ignore
 import uuid
 from typing import List
 
@@ -54,13 +55,13 @@ async def read_things():
 @app.get("/things_with_sample", response_model=List[Thing])
 async def read_things_sample():
     await Thing(name="b", js=["asdf", "asdf", "bobby", "nigel"]).save()
-    await Thing(name="a", js="[\"lemon\", \"raspberry\", \"lime\", \"pumice\"]").save()
+    await Thing(name="a", js='["lemon", "raspberry", "lime", "pumice"]').save()
     return await Thing.objects.order_by("name").all()
 
 
 @app.get("/things_with_sample_after_init", response_model=Thing)
 async def read_things_init():
-    thing1 = Thing()
+    thing1 = Thing(js="{}")
     thing1.name = "d"
     thing1.js = ["js", "set", "after", "constructor"]
     await thing1.save()
@@ -80,12 +81,49 @@ async def create_things(thing: Thing):
     return thing
 
 
+@app.get("/things_untyped")
+async def read_things_untyped():
+    return await Thing.objects.order_by("name").all()
+
+
 @pytest.fixture(autouse=True, scope="module")
 def create_test_database():
     engine = sqlalchemy.create_engine(DATABASE_URL)
     metadata.create_all(engine)
     yield
     metadata.drop_all(engine)
+
+
+@pytest.mark.asyncio
+async def test_json_is_required_if_not_nullable():
+    with pytest.raises(pydantic.ValidationError):
+        Thing()
+
+
+@pytest.mark.asyncio
+async def test_json_is_not_required_if_nullable():
+    class Thing2(ormar.Model):
+        class Meta(BaseMeta):
+            tablename = "things2"
+
+        id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
+        name: str = ormar.Text(default="")
+        js: pydantic.Json = ormar.JSON(nullable=True)
+
+    Thing2()
+
+
+@pytest.mark.asyncio
+async def test_setting_values_after_init():
+    t1 = Thing(id="67a82813-d90c-45ff-b546-b4e38d7030d7", name="t1", js=["thing1"])
+    assert '["thing1"]' in t1.json()
+    await t1.save()
+    t1.json()
+    assert '["thing1"]' in t1.json()
+
+    assert '["thing1"]' in (await Thing.objects.get(id=t1.id)).json()
+    await t1.update()
+    assert '["thing1"]' in (await Thing.objects.get(id=t1.id)).json()
 
 
 def test_read_main():
@@ -134,7 +172,7 @@ def test_read_main():
         assert resp.get("js") == ["js", "set", "after", "update"]
 
         # test new with after constructor
-        response = client.get("/things")
+        response = client.get("/things_untyped")
         resp = response.json()
         assert resp[0].get("js") == ["lemon", "raspberry", "lime", "pumice"]
         assert resp[1].get("js") == ["asdf", "asdf", "bobby", "nigel"]

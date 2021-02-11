@@ -1,7 +1,3 @@
-import datetime
-import decimal
-import uuid
-from enum import Enum
 from typing import (
     Any,
     Dict,
@@ -18,28 +14,29 @@ from typing import (
 import databases
 import pydantic
 import sqlalchemy
-from pydantic.main import SchemaExtraCallable
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
-from ormar import ForeignKey, Integer, ModelDefinitionError  # noqa I100
+from ormar import ModelDefinitionError  # noqa I100
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.models.helpers import (
     alias_manager,
+    check_required_meta_parameters,
     expand_reverse_relationships,
     extract_annotations_and_default_vals,
     get_potential_fields,
     get_pydantic_base_orm_config,
     get_pydantic_field,
+    meta_field_not_set,
+    populate_choices_validators,
     populate_default_options_values,
     populate_meta_sqlalchemy_table_if_required,
     populate_meta_tablename_columns_and_pk,
     register_relation_in_alias_manager,
+    sqlalchemy_columns_from_model_fields,
 )
-from ormar.models.helpers.models import check_required_meta_parameters
-from ormar.models.helpers.sqlalchemy import sqlalchemy_columns_from_model_fields
 from ormar.models.quick_access_views import quick_access_set
 from ormar.queryset import QuerySet
 from ormar.relations.alias_manager import AliasManager
@@ -48,7 +45,6 @@ from ormar.signals import Signal, SignalEmitter
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
-PARSED_FIELDS_KEY = "__parsed_fields__"
 CONFIG_KEY = "Config"
 
 
@@ -76,119 +72,6 @@ class ModelMeta:
     requires_ref_update: bool
 
 
-def check_if_field_has_choices(field: Type[BaseField]) -> bool:
-    """
-    Checks if given field has choices populated.
-    A if it has one, a validator for this field needs to be attached.
-
-    :param field: ormar field to check
-    :type field: BaseField
-    :return: result of the check
-    :rtype: bool
-    """
-    return hasattr(field, "choices") and bool(field.choices)
-
-
-def convert_choices_if_needed(  # noqa: CCR001
-    field: Type["BaseField"], values: Dict
-) -> Tuple[Any, List]:
-    """
-    Converts dates to isoformat as fastapi can check this condition in routes
-    and the fields are not yet parsed.
-
-    Converts enums to list of it's values.
-
-    Converts uuids to strings.
-
-    Converts decimal to float with given scale.
-
-    :param field: ormar field to check with choices
-    :type field: Type[BaseField]
-    :param values: current values of the model to verify
-    :type values: Dict
-    :return: value, choices list
-    :rtype: Tuple[Any, List]
-    """
-    value = values.get(field.name, ormar.Undefined)
-    choices = [o.value if isinstance(o, Enum) else o for o in field.choices]
-
-    if field.__type__ in [datetime.datetime, datetime.date, datetime.time]:
-        value = value.isoformat() if not isinstance(value, str) else value
-        choices = [o.isoformat() for o in field.choices]
-    elif field.__type__ == uuid.UUID:
-        value = str(value) if not isinstance(value, str) else value
-        choices = [str(o) for o in field.choices]
-    elif field.__type__ == decimal.Decimal:
-        precision = field.scale  # type: ignore
-        value = (
-            round(float(value), precision)
-            if isinstance(value, decimal.Decimal)
-            else value
-        )
-        choices = [round(float(o), precision) for o in choices]
-
-    return value, choices
-
-
-def choices_validator(cls: Type["Model"], values: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Validator that is attached to pydantic model pre root validators.
-    Validator checks if field value is in field.choices list.
-
-    :raises ValueError: if field value is outside of allowed choices.
-    :param cls: constructed class
-    :type cls: Model class
-    :param values: dictionary of field values (pydantic side)
-    :type values: Dict[str, Any]
-    :return: values if pass validation, otherwise exception is raised
-    :rtype: Dict[str, Any]
-    """
-    for field_name, field in cls.Meta.model_fields.items():
-        if check_if_field_has_choices(field):
-            value, choices = convert_choices_if_needed(field=field, values=values)
-            if value is not ormar.Undefined and value not in choices:
-                raise ValueError(
-                    f"{field_name}: '{values.get(field_name)}' "
-                    f"not in allowed choices set:"
-                    f" {choices}"
-                )
-    return values
-
-
-def construct_modify_schema_function(fields_with_choices: List) -> SchemaExtraCallable:
-    def schema_extra(schema: Dict[str, Any], model: Type["Model"]) -> None:
-        for field_id, prop in schema.get("properties", {}).items():
-            if field_id in fields_with_choices:
-                prop["enum"] = list(model.Meta.model_fields[field_id].choices)
-                prop["description"] = prop.get("description", "") + "An enumeration."
-
-    return staticmethod(schema_extra)  # type: ignore
-
-
-def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
-    """
-    Checks if Model has any fields with choices set.
-    If yes it adds choices validation into pre root validators.
-
-    :param model: newly constructed Model
-    :type model: Model class
-    """
-    fields_with_choices = []
-    if not meta_field_not_set(model=model, field_name="model_fields"):
-        for name, field in model.Meta.model_fields.items():
-            if check_if_field_has_choices(field):
-                fields_with_choices.append(name)
-                validators = getattr(model, "__pre_root_validators__", [])
-                if choices_validator not in validators:
-                    validators.append(choices_validator)
-                    model.__pre_root_validators__ = validators
-
-        if fields_with_choices:
-            model.Config.schema_extra = construct_modify_schema_function(
-                fields_with_choices=fields_with_choices
-            )
-
-
 def add_cached_properties(new_model: Type["Model"]) -> None:
     """
     Sets cached properties for both pydantic and ormar models.
@@ -207,22 +90,7 @@ def add_cached_properties(new_model: Type["Model"]) -> None:
     new_model._related_names = None
     new_model._related_fields = None
     new_model._pydantic_fields = {name for name in new_model.__fields__}
-
-
-def meta_field_not_set(model: Type["Model"], field_name: str) -> bool:
-    """
-    Checks if field with given name is already present in model.Meta.
-    Then check if it's set to something truthful
-    (in practice meaning not None, as it's non or ormar Field only).
-
-    :param model: newly constructed model
-    :type model: Model class
-    :param field_name: name of the ormar field
-    :type field_name: str
-    :return: result of the check
-    :rtype: bool
-    """
-    return not hasattr(model.Meta, field_name) or not getattr(model.Meta, field_name)
+    new_model._choices_fields = set()
 
 
 def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa: CCR001
@@ -273,34 +141,81 @@ def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
         new_model.Meta.signals = signals
 
 
-def update_attrs_and_fields(
-    attrs: Dict,
-    new_attrs: Dict,
-    model_fields: Dict,
-    new_model_fields: Dict,
-    new_fields: Set,
-) -> Dict:
-    """
-    Updates __annotations__, values of model fields (so pydantic FieldInfos)
-    as well as model.Meta.model_fields definitions from parents.
+class ModelMetaclass(pydantic.main.ModelMetaclass):
+    def __new__(  # type: ignore # noqa: CCR001
+        mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
+    ) -> "ModelMetaclass":
+        """
+        Metaclass used by ormar Models that performs configuration
+        and build of ormar Models.
 
-    :param attrs: new namespace for class being constructed
-    :type attrs: Dict
-    :param new_attrs: related of the namespace extracted from parent class
-    :type new_attrs: Dict
-    :param model_fields: ormar fields in defined in current class
-    :type model_fields: Dict[str, BaseField]
-    :param new_model_fields: ormar fields defined in parent classes
-    :type new_model_fields: Dict[str, BaseField]
-    :param new_fields: set of new fields names
-    :type new_fields: Set[str]
-    """
-    key = "__annotations__"
-    attrs[key].update(new_attrs[key])
-    attrs.update({name: new_attrs[name] for name in new_fields})
-    updated_model_fields = {k: v for k, v in new_model_fields.items()}
-    updated_model_fields.update(model_fields)
-    return updated_model_fields
+
+        Sets pydantic configuration.
+        Extract model_fields and convert them to pydantic FieldInfo,
+        updates class namespace.
+
+        Extracts settings and fields from parent classes.
+        Fetches methods decorated with @property_field decorator
+        to expose them later in dict().
+
+        Construct parent pydantic Metaclass/ Model.
+
+        If class has Meta class declared (so actual ormar Models) it also:
+
+        * populate sqlalchemy columns, pkname and tables from model_fields
+        * register reverse relationships on related models
+        * registers all relations in alias manager that populates table_prefixes
+        * exposes alias manager on each Model
+        * creates QuerySet for each model and exposes it on a class
+
+        :param name: name of current class
+        :type name: str
+        :param bases: base classes
+        :type bases: Tuple
+        :param attrs: class namespace
+        :type attrs: Dict
+        """
+        attrs["Config"] = get_pydantic_base_orm_config()
+        attrs["__name__"] = name
+        attrs, model_fields = extract_annotations_and_default_vals(attrs)
+        for base in reversed(bases):
+            mod = base.__module__
+            if mod.startswith("ormar.models.") or mod.startswith("pydantic."):
+                continue
+            attrs, model_fields = extract_from_parents_definition(
+                base_class=base, curr_class=mcs, attrs=attrs, model_fields=model_fields
+            )
+        new_model = super().__new__(  # type: ignore
+            mcs, name, bases, attrs
+        )
+
+        add_cached_properties(new_model)
+
+        if hasattr(new_model, "Meta"):
+            populate_default_options_values(new_model, model_fields)
+            check_required_meta_parameters(new_model)
+            add_property_fields(new_model, attrs)
+            register_signals(new_model=new_model)
+            populate_choices_validators(new_model)
+
+            if not new_model.Meta.abstract:
+                new_model = populate_meta_tablename_columns_and_pk(name, new_model)
+                populate_meta_sqlalchemy_table_if_required(new_model.Meta)
+                expand_reverse_relationships(new_model)
+                for field in new_model.Meta.model_fields.values():
+                    register_relation_in_alias_manager(field=field)
+
+                if new_model.Meta.pkname not in attrs["__annotations__"]:
+                    field_name = new_model.Meta.pkname
+                    attrs["__annotations__"][field_name] = Optional[int]  # type: ignore
+                    attrs[field_name] = None
+                    new_model.__fields__[field_name] = get_pydantic_field(
+                        field_name=field_name, model=new_model
+                    )
+                new_model.Meta.alias_manager = alias_manager
+                new_model.objects = QuerySet(new_model)
+
+        return new_model
 
 
 def verify_constraint_names(
@@ -594,78 +509,34 @@ def extract_from_parents_definition(  # noqa: CCR001
     return attrs, model_fields
 
 
-class ModelMetaclass(pydantic.main.ModelMetaclass):
-    def __new__(  # type: ignore # noqa: CCR001
-        mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
-    ) -> "ModelMetaclass":
-        """
-        Metaclass used by ormar Models that performs configuration
-        and build of ormar Models.
+def update_attrs_and_fields(
+    attrs: Dict,
+    new_attrs: Dict,
+    model_fields: Dict,
+    new_model_fields: Dict,
+    new_fields: Set,
+) -> Dict:
+    """
+    Updates __annotations__, values of model fields (so pydantic FieldInfos)
+    as well as model.Meta.model_fields definitions from parents.
+
+    :param attrs: new namespace for class being constructed
+    :type attrs: Dict
+    :param new_attrs: related of the namespace extracted from parent class
+    :type new_attrs: Dict
+    :param model_fields: ormar fields in defined in current class
+    :type model_fields: Dict[str, BaseField]
+    :param new_model_fields: ormar fields defined in parent classes
+    :type new_model_fields: Dict[str, BaseField]
+    :param new_fields: set of new fields names
+    :type new_fields: Set[str]
+    """
+    key = "__annotations__"
+    attrs[key].update(new_attrs[key])
+    attrs.update({name: new_attrs[name] for name in new_fields})
+    updated_model_fields = {k: v for k, v in new_model_fields.items()}
+    updated_model_fields.update(model_fields)
+    return updated_model_fields
 
 
-        Sets pydantic configuration.
-        Extract model_fields and convert them to pydantic FieldInfo,
-        updates class namespace.
-
-        Extracts settings and fields from parent classes.
-        Fetches methods decorated with @property_field decorator
-        to expose them later in dict().
-
-        Construct parent pydantic Metaclass/ Model.
-
-        If class has Meta class declared (so actual ormar Models) it also:
-
-        * populate sqlalchemy columns, pkname and tables from model_fields
-        * register reverse relationships on related models
-        * registers all relations in alias manager that populates table_prefixes
-        * exposes alias manager on each Model
-        * creates QuerySet for each model and exposes it on a class
-
-        :param name: name of current class
-        :type name: str
-        :param bases: base classes
-        :type bases: Tuple
-        :param attrs: class namespace
-        :type attrs: Dict
-        """
-        attrs["Config"] = get_pydantic_base_orm_config()
-        attrs["__name__"] = name
-        attrs, model_fields = extract_annotations_and_default_vals(attrs)
-        for base in reversed(bases):
-            mod = base.__module__
-            if mod.startswith("ormar.models.") or mod.startswith("pydantic."):
-                continue
-            attrs, model_fields = extract_from_parents_definition(
-                base_class=base, curr_class=mcs, attrs=attrs, model_fields=model_fields
-            )
-        new_model = super().__new__(  # type: ignore
-            mcs, name, bases, attrs
-        )
-
-        add_cached_properties(new_model)
-
-        if hasattr(new_model, "Meta"):
-            populate_default_options_values(new_model, model_fields)
-            check_required_meta_parameters(new_model)
-            add_property_fields(new_model, attrs)
-            register_signals(new_model=new_model)
-            populate_choices_validators(new_model)
-
-            if not new_model.Meta.abstract:
-                new_model = populate_meta_tablename_columns_and_pk(name, new_model)
-                populate_meta_sqlalchemy_table_if_required(new_model.Meta)
-                expand_reverse_relationships(new_model)
-                for field in new_model.Meta.model_fields.values():
-                    register_relation_in_alias_manager(field=field)
-
-                if new_model.Meta.pkname not in attrs["__annotations__"]:
-                    field_name = new_model.Meta.pkname
-                    attrs["__annotations__"][field_name] = Optional[int]  # type: ignore
-                    attrs[field_name] = None
-                    new_model.__fields__[field_name] = get_pydantic_field(
-                        field_name=field_name, model=new_model
-                    )
-                new_model.Meta.alias_manager = alias_manager
-                new_model.objects = QuerySet(new_model)
-
-        return new_model
+PARSED_FIELDS_KEY = "__parsed_fields__"

@@ -43,6 +43,8 @@ nav:
             - api/models/helpers/pydantic.md
             - api/models/helpers/relations.md
             - api/models/helpers/sqlalchemy.md
+            - api/models/helpers/validation.md
+            - api/models/helpers/related-names-validation.md
         - Mixins:
             - Alias Mixin: api/models/mixins/alias-mixin.md
             - Excludable Mixin: api/models/mixins/excludable-mixin.md
