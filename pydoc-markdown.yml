@@ -41,6 +41,12 @@ renderer:
             - title: sqlalchemy
               contents:
                 - models.helpers.sqlalchemy.*
+            - title: validation
+              contents:
+                - models.helpers.validation.*
+            - title: related names validation
+              contents:
+                - models.helpers.related_names_validation.*
         - title: Mixins
           children:
             - title: Alias Mixin
