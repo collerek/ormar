@@ -64,7 +64,7 @@ class Relation:
         self._to_remove: Set = set()
         self.to: Type["T"] = to
         self._through: Optional[Type["T"]] = through
-        self.field_name = field_name
+        self.field_name: str = field_name
         self.related_models: Optional[Union[RelationProxy, "T"]] = (
             RelationProxy(relation=self, type_=type_, field_name=field_name)
             if type_ in (RelationType.REVERSE, RelationType.MULTIPLE)

@@ -1,7 +1,7 @@
 import warnings
 from typing import Dict, Optional, TYPE_CHECKING, Tuple, Type
 
-from pydantic import BaseConfig
+import pydantic
 from pydantic.fields import ModelField
 from pydantic.utils import lenient_issubclass
 
@@ -132,7 +132,7 @@ def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
     return attrs, model_fields
 
 
-def get_pydantic_base_orm_config() -> Type[BaseConfig]:
+def get_pydantic_base_orm_config() -> Type[pydantic.BaseConfig]:
     """
     Returns empty pydantic Config with orm_mode set to True.
 
@@ -140,7 +140,7 @@ def get_pydantic_base_orm_config() -> Type[BaseConfig]:
     :rtype: pydantic Config
     """
 
-    class Config(BaseConfig):
+    class Config(pydantic.BaseConfig):
         orm_mode = True
 
     return Config

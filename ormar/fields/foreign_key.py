@@ -222,7 +222,7 @@ class ForeignKeyField(BaseField):
 
     to: Type["Model"]
     name: str
-    related_name: str
+    related_name: str  # type: ignore
     virtual: bool
     ondelete: str
     onupdate: str

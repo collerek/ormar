@@ -16,6 +16,7 @@ quick_access_set = {
     "__pre_root_validators__",
     "__same__",
     "_calculate_keys",
+    "_choices_fields",
     "_convert_json",
     "_extract_db_related_names",
     "_extract_model_db_fields",

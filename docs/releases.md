@@ -1,3 +1,13 @@
+# 0.9.3
+
+## Fixes
+* Fix `JSON` field being double escaped when setting value after initialization
+* Fix `JSON` field not respecting `nullable` field setting due to `pydantic` internals 
+* Fix `choices` verification for `JSON` field
+* Fix `choices` not being verified when setting the attribute after initialization
+* Fix `choices` not being verified during `update` call from `QuerySet`
+
+
 # 0.9.2
 
 ## Other

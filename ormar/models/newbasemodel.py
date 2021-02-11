@@ -23,7 +23,6 @@ try:
 except ImportError:  # pragma: no cover
     import json  # type: ignore
 
-
 import databases
 import pydantic
 import sqlalchemy
@@ -39,6 +38,7 @@ from ormar.models.helpers.sqlalchemy import (
     populate_meta_sqlalchemy_table_if_required,
     update_column_definition,
 )
+from ormar.models.helpers.validation import validate_choices
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
 from ormar.queryset.utils import translate_list_to_dict
@@ -83,6 +83,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         _orm_saved: bool
         _related_names: Optional[Set]
         _related_names_hash: str
+        _choices_fields: Optional[Set]
         _pydantic_fields: Set
         _quick_access_fields: Set
         Meta: ModelMeta
@@ -208,23 +209,22 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         elif name == "pk":
             object.__setattr__(self, self.Meta.pkname, value)
             self.set_save_status(False)
-        elif name in self._orm:
-            model = self.Meta.model_fields[name].expand_relationship(
-                value=value, child=self
+        elif name in object.__getattribute__(self, "_orm"):
+            model = (
+                object.__getattribute__(self, "Meta")
+                .model_fields[name]
+                .expand_relationship(value=value, child=self)
             )
-            if isinstance(self.__dict__.get(name), list):
+            if isinstance(object.__getattribute__(self, "__dict__").get(name), list):
                 # virtual foreign key or many to many
-                self.__dict__[name].append(model)
+                object.__getattribute__(self, "__dict__")[name].append(model)
             else:
                 # foreign key relation
-                self.__dict__[name] = model
+                object.__getattribute__(self, "__dict__")[name] = model
                 self.set_save_status(False)
         else:
-            value = (
-                self._convert_json(name, value, "dumps")
-                if name in self.__fields__
-                else value
-            )
+            if name in object.__getattribute__(self, "_choices_fields"):
+                validate_choices(field=self.Meta.model_fields[name], value=value)
             super().__setattr__(name, value)
             self.set_save_status(False)
 

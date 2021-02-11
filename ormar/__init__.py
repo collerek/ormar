@@ -19,7 +19,8 @@ snakes, and ormar(e) in italian which means cabinet.
 And what's a better name for python ORM than snakes cabinet :)
 
 """
-from ormar.decorators import (
+from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
+from ormar.decorators import (  # noqa: I100
     post_delete,
     post_save,
     post_update,
@@ -28,13 +29,13 @@ from ormar.decorators import (
     pre_update,
     property_field,
 )
-from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
 from ormar.exceptions import (  # noqa: I100
     ModelDefinitionError,
     MultipleMatches,
     NoMatch,
 )
-from ormar.fields import (  # noqa: I100
+from ormar.fields import (
+    BaseField,
     BigInteger,
     Boolean,
     Date,
@@ -42,15 +43,17 @@ from ormar.fields import (  # noqa: I100
     Decimal,
     Float,
     ForeignKey,
+    ForeignKeyField,
     Integer,
     JSON,
     ManyToMany,
+    ManyToManyField,
     String,
     Text,
     Time,
     UUID,
     UniqueColumns,
-)
+)  # noqa: I100
 from ormar.models import Model
 from ormar.models.metaclass import ModelMeta
 from ormar.queryset import QuerySet
@@ -65,7 +68,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.9.2"
+__version__ = "0.9.3"
 __all__ = [
     "Integer",
     "BigInteger",
@@ -100,4 +103,7 @@ __all__ = [
     "pre_save",
     "pre_update",
     "Signal",
+    "BaseField",
+    "ManyToManyField",
+    "ForeignKeyField",
 ]

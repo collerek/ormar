@@ -1,7 +1,8 @@
-from typing import Dict
+from typing import Dict, Optional, Set, TYPE_CHECKING
 
 import ormar
 from ormar.exceptions import ModelPersistenceError
+from ormar.models.helpers.validation import validate_choices
 from ormar.models.mixins import AliasMixin
 from ormar.models.mixins.relation_mixin import RelationMixin
 
@@ -10,6 +11,9 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
     """
     Used to prepare models to be saved in database
     """
+
+    if TYPE_CHECKING:  # pragma: nocover
+        _choices_fields: Optional[Set]
 
     @classmethod
     def prepare_model_to_save(cls, new_kwargs: dict) -> dict:
@@ -108,4 +112,23 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
             # clear fields with server_default set as None
             if field.server_default is not None and not new_kwargs.get(field_name):
                 new_kwargs.pop(field_name, None)
+        return new_kwargs
+
+    @classmethod
+    def validate_choices(cls, new_kwargs: Dict) -> Dict:
+        """
+        Receives dictionary of model that is about to be saved and validates the
+        fields with choices set to see if the value is allowed.
+
+        :param new_kwargs: dictionary of model that is about to be saved
+        :type new_kwargs: Dict
+        :return: dictionary of model that is about to be saved
+        :rtype: Dict
+        """
+        if not cls._choices_fields:
+            return new_kwargs
+
+        for field_name, field in cls.Meta.model_fields.items():
+            if field_name in new_kwargs and field_name in cls._choices_fields:
+                validate_choices(field=field, value=new_kwargs.get(field_name))
         return new_kwargs
