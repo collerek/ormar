@@ -1,6 +1,8 @@
 import inspect
 from typing import List, Optional, Set, TYPE_CHECKING
 
+from ormar import ManyToManyField
+from ormar.fields import ThroughField
 from ormar.fields.foreign_key import ForeignKeyField
 
 
@@ -43,10 +45,25 @@ class RelationMixin:
             return cls._related_fields
 
         related_fields = []
-        for name in cls.extract_related_names():
+        for name in cls.extract_related_names().union(cls.extract_through_names()):
             related_fields.append(cls.Meta.model_fields[name])
         cls._related_fields = related_fields
 
+        return related_fields
+
+    @classmethod
+    def extract_through_names(cls) -> Set:
+        """
+        Extracts related fields through names which are shortcuts to through models.
+
+        :return: set of related through fields names
+        :rtype: Set
+        """
+        related_fields = set()
+        for name in cls.extract_related_names():
+            field = cls.Meta.model_fields[name]
+            if issubclass(field, ManyToManyField):
+                related_fields.add(field.through.get_name(lower=True))
         return related_fields
 
     @classmethod
@@ -55,15 +72,19 @@ class RelationMixin:
         Returns List of fields names for all relations declared on a model.
         List is cached in cls._related_names for quicker access.
 
-        :return: list of related fields names
-        :rtype: List
+        :return: set of related fields names
+        :rtype: Set
         """
         if isinstance(cls._related_names, Set):
             return cls._related_names
 
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
-            if inspect.isclass(field) and issubclass(field, ForeignKeyField):
+            if (
+                inspect.isclass(field)
+                and issubclass(field, ForeignKeyField)
+                and not issubclass(field, ThroughField)
+            ):
                 related_names.add(name)
         cls._related_names = related_names
 

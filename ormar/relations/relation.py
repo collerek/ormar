@@ -26,6 +26,7 @@ class RelationType(Enum):
     PRIMARY = 1
     REVERSE = 2
     MULTIPLE = 3
+    THROUGH = 4
 
 
 class Relation:
@@ -128,7 +129,7 @@ class Relation:
         :type child: Model
         """
         relation_name = self.field_name
-        if self._type == RelationType.PRIMARY:
+        if self._type in (RelationType.PRIMARY, RelationType.THROUGH):
             self.related_models = child
             self._owner.__dict__[relation_name] = child
         else:

@@ -163,19 +163,21 @@ class RelationProxy(list):
             else:
                 await item.delete()
 
-    async def add(self, item: "Model") -> None:
+    async def add(self, item: "Model", **kwargs: Any) -> None:
         """
         Adds child model to relation.
 
         For ManyToMany relations through instance is automatically created.
 
+        :param kwargs: dict of additional keyword arguments for through instance
+        :type kwargs: Any
         :param item: child to add to relation
         :type item: Model
         """
         relation_name = self.related_field_name
         self._check_if_model_saved()
         if self.type_ == ormar.RelationType.MULTIPLE:
-            await self.queryset_proxy.create_through_instance(item)
+            await self.queryset_proxy.create_through_instance(item, **kwargs)
             setattr(item, relation_name, self._owner)
         else:
             setattr(item, relation_name, self._owner)

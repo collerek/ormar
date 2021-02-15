@@ -1,13 +1,14 @@
 import string
 import uuid
 from random import choices
-from typing import Any, Dict, List, TYPE_CHECKING, Type
+from typing import Any, Dict, List, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
 from sqlalchemy import text
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
+    from ormar.models import ModelRow
 
 
 def get_table_alias() -> str:
@@ -133,7 +134,7 @@ class AliasManager:
         return alias
 
     def resolve_relation_alias(
-        self, from_model: Type["Model"], relation_name: str
+        self, from_model: Union[Type["Model"], Type["ModelRow"]], relation_name: str
     ) -> str:
         """
         Given model and relation name returns the alias for this relation.

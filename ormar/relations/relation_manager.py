@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Sequence, TYPE_CHECKING, Type, TypeVar, Union
 from weakref import proxy
 
-from ormar.fields import BaseField
+from ormar.fields import BaseField, ThroughField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.relations.relation import Relation, RelationType
@@ -42,6 +42,8 @@ class RelationsManager:
         """
         if issubclass(field, ManyToManyField):
             return RelationType.MULTIPLE
+        if issubclass(field, ThroughField):
+            return RelationType.THROUGH
         return RelationType.PRIMARY if not field.virtual else RelationType.REVERSE
 
     def _add_relation(self, field: Type[BaseField]) -> None:

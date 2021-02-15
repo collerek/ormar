@@ -291,6 +291,8 @@ class SqlJoin:
             self.get_order_bys(
                 to_table=to_table, pkname_alias=pkname_alias,
             )
+        else:
+            self.select_through_model_fields()
 
         self_related_fields = self.next_model.own_table_columns(
             model=self.next_model,
@@ -304,6 +306,24 @@ class SqlJoin:
             )
         )
         self.used_aliases.append(self.next_alias)
+
+    def select_through_model_fields(self) -> None:
+        # TODO: add docstring
+        next_alias = self.alias_manager.resolve_relation_alias(
+            from_model=self.target_field.owner, relation_name=self.relation_name
+        )
+        # TODO: fix fields and exclusions
+        self_related_fields = self.target_field.through.own_table_columns(
+            model=self.target_field.through,
+            fields=None,
+            exclude_fields=self.target_field.through.extract_related_names(),
+            use_alias=True,
+        )
+        self.columns.extend(
+            self.alias_manager.prefixed_columns(
+                next_alias, self.target_field.through.Meta.table, self_related_fields
+            )
+        )
 
     def _replace_many_to_many_order_by_columns(self, part: str, new_part: str) -> None:
         """

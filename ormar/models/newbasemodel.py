@@ -172,7 +172,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         object.__setattr__(self, "__fields_set__", fields_set)
 
         # register the columns models after initialization
-        for related in self.extract_related_names():
+        for related in self.extract_related_names().union(self.extract_through_names()):
             self.Meta.model_fields[related].expand_relationship(
                 new_kwargs.get(related), self, to_register=True,
             )
@@ -264,6 +264,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if item == "pk":
             return object.__getattribute__(self, "__dict__").get(self.Meta.pkname, None)
         if item in object.__getattribute__(self, "extract_related_names")():
+            return object.__getattribute__(
+                self, "_extract_related_model_instead_of_field"
+            )(item)
+        if item in object.__getattribute__(self, "extract_through_names")():
             return object.__getattribute__(
                 self, "_extract_related_model_instead_of_field"
             )(item)

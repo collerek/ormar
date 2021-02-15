@@ -5,6 +5,7 @@ ass well as vast number of helper functions for pydantic, sqlalchemy and relatio
 """
 
 from ormar.models.newbasemodel import NewBaseModel  # noqa I100
+from ormar.models.model_row import ModelRow  # noqa I100
 from ormar.models.model import Model  # noqa I100
 
-__all__ = ["NewBaseModel", "Model"]
+__all__ = ["NewBaseModel", "Model", "ModelRow"]

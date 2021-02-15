@@ -31,6 +31,7 @@ class ExcludableMixin(RelationMixin):
 
     if TYPE_CHECKING:  # pragma: no cover
         from ormar import Model
+        from ormar.models import ModelRow
 
     @staticmethod
     def get_child(
@@ -157,7 +158,7 @@ class ExcludableMixin(RelationMixin):
     @classmethod
     def own_table_columns(
         cls,
-        model: Type["Model"],
+        model: Union[Type["Model"], Type["ModelRow"]],
         fields: Optional[Union[Set, Dict]],
         exclude_fields: Optional[Union[Set, Dict]],
         use_alias: bool = False,

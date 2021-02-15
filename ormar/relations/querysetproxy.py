@@ -44,6 +44,11 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         ].get_related_name()
         self.related_field = self.relation.to.Meta.model_fields[self.related_field_name]
         self.owner_pk_value = self._owner.pk
+        self.through_model_name = (
+            self.related_field.through.get_name()
+            if self.type_ == ormar.RelationType.MULTIPLE
+            else None
+        )
 
     @property
     def queryset(self) -> "QuerySet":
@@ -99,17 +104,20 @@ class QuerysetProxy(ormar.QuerySetProtocol):
             for item in self.relation.related_models[:]:
                 self.relation.remove(item)
 
-    async def create_through_instance(self, child: "T") -> None:
+    async def create_through_instance(self, child: "T", **kwargs: Any) -> None:
         """
         Crete a through model instance in the database for m2m relations.
 
+        :param kwargs: dict of additional keyword arguments for through instance
+        :type kwargs: Any
         :param child: child model instance
         :type child: Model
         """
         model_cls = self.relation.through
         owner_column = self.related_field.default_target_field_name()  # type: ignore
         child_column = self.related_field.default_source_field_name()  # type: ignore
-        kwargs = {owner_column: self._owner.pk, child_column: child.pk}
+        rel_kwargs = {owner_column: self._owner.pk, child_column: child.pk}
+        final_kwargs = {**rel_kwargs, **kwargs}
         if child.pk is None:
             raise ModelPersistenceError(
                 f"You cannot save {child.get_name()} "
@@ -117,7 +125,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
                 f"Save the child model first."
             )
         expr = model_cls.Meta.table.insert()
-        expr = expr.values(**kwargs)
+        expr = expr.values(**final_kwargs)
         # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
         await model_cls.Meta.database.execute(expr)
 
@@ -270,12 +278,13 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         :return: created model
         :rtype: Model
         """
+        through_kwargs = kwargs.pop(self.through_model_name, {})
         if self.type_ == ormar.RelationType.REVERSE:
             kwargs[self.related_field.name] = self._owner
         created = await self.queryset.create(**kwargs)
         self._register_related(created)
         if self.type_ == ormar.RelationType.MULTIPLE:
-            await self.create_through_instance(created)
+            await self.create_through_instance(created, **through_kwargs)
         return created
 
     async def get_or_create(self, **kwargs: Any) -> "Model":
