@@ -46,6 +46,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
 CONFIG_KEY = "Config"
+PARSED_FIELDS_KEY = "__parsed_fields__"
 
 
 class ModelMeta:
@@ -139,83 +140,6 @@ def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
         signals.post_update = Signal()
         signals.post_delete = Signal()
         new_model.Meta.signals = signals
-
-
-class ModelMetaclass(pydantic.main.ModelMetaclass):
-    def __new__(  # type: ignore # noqa: CCR001
-        mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
-    ) -> "ModelMetaclass":
-        """
-        Metaclass used by ormar Models that performs configuration
-        and build of ormar Models.
-
-
-        Sets pydantic configuration.
-        Extract model_fields and convert them to pydantic FieldInfo,
-        updates class namespace.
-
-        Extracts settings and fields from parent classes.
-        Fetches methods decorated with @property_field decorator
-        to expose them later in dict().
-
-        Construct parent pydantic Metaclass/ Model.
-
-        If class has Meta class declared (so actual ormar Models) it also:
-
-        * populate sqlalchemy columns, pkname and tables from model_fields
-        * register reverse relationships on related models
-        * registers all relations in alias manager that populates table_prefixes
-        * exposes alias manager on each Model
-        * creates QuerySet for each model and exposes it on a class
-
-        :param name: name of current class
-        :type name: str
-        :param bases: base classes
-        :type bases: Tuple
-        :param attrs: class namespace
-        :type attrs: Dict
-        """
-        attrs["Config"] = get_pydantic_base_orm_config()
-        attrs["__name__"] = name
-        attrs, model_fields = extract_annotations_and_default_vals(attrs)
-        for base in reversed(bases):
-            mod = base.__module__
-            if mod.startswith("ormar.models.") or mod.startswith("pydantic."):
-                continue
-            attrs, model_fields = extract_from_parents_definition(
-                base_class=base, curr_class=mcs, attrs=attrs, model_fields=model_fields
-            )
-        new_model = super().__new__(  # type: ignore
-            mcs, name, bases, attrs
-        )
-
-        add_cached_properties(new_model)
-
-        if hasattr(new_model, "Meta"):
-            populate_default_options_values(new_model, model_fields)
-            check_required_meta_parameters(new_model)
-            add_property_fields(new_model, attrs)
-            register_signals(new_model=new_model)
-            populate_choices_validators(new_model)
-
-            if not new_model.Meta.abstract:
-                new_model = populate_meta_tablename_columns_and_pk(name, new_model)
-                populate_meta_sqlalchemy_table_if_required(new_model.Meta)
-                expand_reverse_relationships(new_model)
-                for field in new_model.Meta.model_fields.values():
-                    register_relation_in_alias_manager(field=field)
-
-                if new_model.Meta.pkname not in attrs["__annotations__"]:
-                    field_name = new_model.Meta.pkname
-                    attrs["__annotations__"][field_name] = Optional[int]  # type: ignore
-                    attrs[field_name] = None
-                    new_model.__fields__[field_name] = get_pydantic_field(
-                        field_name=field_name, model=new_model
-                    )
-                new_model.Meta.alias_manager = alias_manager
-                new_model.objects = QuerySet(new_model)
-
-        return new_model
 
 
 def verify_constraint_names(
@@ -539,4 +463,78 @@ def update_attrs_and_fields(
     return updated_model_fields
 
 
-PARSED_FIELDS_KEY = "__parsed_fields__"
+class ModelMetaclass(pydantic.main.ModelMetaclass):
+    def __new__(  # type: ignore # noqa: CCR001
+        mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
+    ) -> "ModelMetaclass":
+        """
+        Metaclass used by ormar Models that performs configuration
+        and build of ormar Models.
+
+
+        Sets pydantic configuration.
+        Extract model_fields and convert them to pydantic FieldInfo,
+        updates class namespace.
+
+        Extracts settings and fields from parent classes.
+        Fetches methods decorated with @property_field decorator
+        to expose them later in dict().
+
+        Construct parent pydantic Metaclass/ Model.
+
+        If class has Meta class declared (so actual ormar Models) it also:
+
+        * populate sqlalchemy columns, pkname and tables from model_fields
+        * register reverse relationships on related models
+        * registers all relations in alias manager that populates table_prefixes
+        * exposes alias manager on each Model
+        * creates QuerySet for each model and exposes it on a class
+
+        :param name: name of current class
+        :type name: str
+        :param bases: base classes
+        :type bases: Tuple
+        :param attrs: class namespace
+        :type attrs: Dict
+        """
+        attrs["Config"] = get_pydantic_base_orm_config()
+        attrs["__name__"] = name
+        attrs, model_fields = extract_annotations_and_default_vals(attrs)
+        for base in reversed(bases):
+            mod = base.__module__
+            if mod.startswith("ormar.models.") or mod.startswith("pydantic."):
+                continue
+            attrs, model_fields = extract_from_parents_definition(
+                base_class=base, curr_class=mcs, attrs=attrs, model_fields=model_fields
+            )
+        new_model = super().__new__(  # type: ignore
+            mcs, name, bases, attrs
+        )
+
+        add_cached_properties(new_model)
+
+        if hasattr(new_model, "Meta"):
+            populate_default_options_values(new_model, model_fields)
+            check_required_meta_parameters(new_model)
+            add_property_fields(new_model, attrs)
+            register_signals(new_model=new_model)
+            populate_choices_validators(new_model)
+
+            if not new_model.Meta.abstract:
+                new_model = populate_meta_tablename_columns_and_pk(name, new_model)
+                populate_meta_sqlalchemy_table_if_required(new_model.Meta)
+                expand_reverse_relationships(new_model)
+                for field in new_model.Meta.model_fields.values():
+                    register_relation_in_alias_manager(field=field)
+
+                if new_model.Meta.pkname not in attrs["__annotations__"]:
+                    field_name = new_model.Meta.pkname
+                    attrs["__annotations__"][field_name] = Optional[int]  # type: ignore
+                    attrs[field_name] = None
+                    new_model.__fields__[field_name] = get_pydantic_field(
+                        field_name=field_name, model=new_model
+                    )
+                new_model.Meta.alias_manager = alias_manager
+                new_model.objects = QuerySet(new_model)
+
+        return new_model
