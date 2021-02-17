@@ -187,3 +187,26 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
                 globalns,
                 localns or None,
             )
+
+    @classmethod
+    def get_relation_name(cls) -> str:
+        """
+        Returns name of the relation, which can be a own name or through model
+        names for m2m models
+
+        :return: result of the check
+        :rtype: bool
+        """
+        if cls.self_reference and cls.name == cls.self_reference_primary:
+            return cls.default_source_field_name()
+        return cls.default_target_field_name()
+
+    @classmethod
+    def get_source_model(cls) -> Type["Model"]:
+        """
+        Returns model from which the relation comes -> either owner or through model
+
+        :return: source model
+        :rtype: Type["Model"]
+        """
+        return cls.through

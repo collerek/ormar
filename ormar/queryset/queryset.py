@@ -128,6 +128,7 @@ class QuerySet:
                 select_related=self._select_related,
                 fields=self._columns,
                 exclude_fields=self._exclude_columns,
+                source_model=self.model,
             )
             for row in rows
         ]

@@ -131,7 +131,9 @@ class ExcludableMixin(RelationMixin):
 
     @staticmethod
     def _populate_pk_column(
-        model: Type["Model"], columns: List[str], use_alias: bool = False,
+        model: Union[Type["Model"], Type["ModelRow"]],
+        columns: List[str],
+        use_alias: bool = False,
     ) -> List[str]:
         """
         Adds primary key column/alias (depends on use_alias flag) to list of

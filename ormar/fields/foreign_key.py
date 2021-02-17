@@ -450,3 +450,24 @@ class ForeignKeyField(BaseField):
             value.__class__.__name__, cls._construct_model_from_pk
         )(value, child, to_register)
         return model
+
+    @classmethod
+    def get_relation_name(cls) -> str:
+        """
+        Returns name of the relation, which can be a own name or through model
+        names for m2m models
+
+        :return: result of the check
+        :rtype: bool
+        """
+        return cls.name
+
+    @classmethod
+    def get_source_model(cls) -> Type["Model"]:
+        """
+        Returns model from which the relation comes -> either owner or through model
+
+        :return: source model
+        :rtype: Type["Model"]
+        """
+        return cls.owner

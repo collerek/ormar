@@ -57,18 +57,18 @@ class PostCategory2(ormar.Model):
     sort_order: int = ormar.Integer(nullable=True)
 
 
+class Post2(ormar.Model):
+    class Meta(BaseMeta):
+        pass
+
+    id: int = ormar.Integer(primary_key=True)
+    title: str = ormar.String(max_length=200)
+    categories = ormar.ManyToMany(Category, through=ForwardRef("PostCategory2"))
+
+
 @pytest.mark.asyncio
 async def test_forward_ref_is_updated():
     async with database:
-
-        class Post2(ormar.Model):
-            class Meta(BaseMeta):
-                pass
-
-            id: int = ormar.Integer(primary_key=True)
-            title: str = ormar.String(max_length=200)
-            categories = ormar.ManyToMany(Category, through=ForwardRef("PostCategory2"))
-
         assert Post2.Meta.requires_ref_update
         Post2.update_forward_refs()
 

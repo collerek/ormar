@@ -4,6 +4,7 @@ from typing import (
     List,
     Optional,
     Set,
+    TYPE_CHECKING,
     Type,
     TypeVar,
     Union,
@@ -17,20 +18,22 @@ from ormar.models.helpers.models import group_related_list
 
 T = TypeVar("T", bound="ModelRow")
 
+if TYPE_CHECKING:
+    from ormar.fields import ForeignKeyField
+
 
 class ModelRow(NewBaseModel):
     @classmethod
-    def from_row(  # noqa CCR001
+    def from_row(
         cls: Type[T],
         row: sqlalchemy.engine.ResultProxy,
+        source_model: Type[T],
         select_related: List = None,
         related_models: Any = None,
-        previous_model: Type[T] = None,
-        source_model: Type[T] = None,
-        related_name: str = None,
+        related_field: Type["ForeignKeyField"] = None,
         fields: Optional[Union[Dict, Set]] = None,
         exclude_fields: Optional[Union[Dict, Set]] = None,
-        current_relation_str: str = None,
+        current_relation_str: str = "",
     ) -> Optional[T]:
         """
         Model method to convert raw sql row from database into ormar.Model instance.
@@ -55,10 +58,8 @@ class ModelRow(NewBaseModel):
         :type select_related: List
         :param related_models: list or dict of related models
         :type related_models: Union[List, Dict]
-        :param previous_model: internal param for nested models to specify table_prefix
-        :type previous_model: Model class
-        :param related_name: internal parameter - name of current nested model
-        :type related_name: str
+        :param related_field: field with relation declaration
+        :type related_field: Type[ForeignKeyField]
         :param fields: fields and related model fields to include
         if provided only those are included
         :type fields: Optional[Union[Dict, Set]]
@@ -77,35 +78,12 @@ class ModelRow(NewBaseModel):
             source_model = cls
             related_models = group_related_list(select_related)
 
-        rel_name2 = related_name
-
-        # TODO: refactor this into field classes?
-        if (
-            previous_model
-            and related_name
-            and issubclass(
-                previous_model.Meta.model_fields[related_name], ManyToManyField
+        if related_field:
+            table_prefix = cls.Meta.alias_manager.resolve_relation_alias_after_complex(
+                source_model=source_model,
+                relation_str=current_relation_str,
+                relation_field=related_field,
             )
-        ):
-            through_field = previous_model.Meta.model_fields[related_name]
-            if (
-                through_field.self_reference
-                and related_name == through_field.self_reference_primary
-            ):
-                rel_name2 = through_field.default_source_field_name()  # type: ignore
-            else:
-                rel_name2 = through_field.default_target_field_name()  # type: ignore
-            previous_model = through_field.through  # type: ignore
-
-        if previous_model and rel_name2:
-            if current_relation_str and "__" in current_relation_str and source_model:
-                table_prefix = cls.Meta.alias_manager.resolve_relation_alias(
-                    from_model=source_model, relation_name=current_relation_str
-                )
-            if not table_prefix:
-                table_prefix = cls.Meta.alias_manager.resolve_relation_alias(
-                    from_model=previous_model, relation_name=rel_name2
-                )
 
         item = cls.populate_nested_models_from_row(
             item=item,
@@ -138,11 +116,11 @@ class ModelRow(NewBaseModel):
         cls,
         item: dict,
         row: sqlalchemy.engine.ResultProxy,
+        source_model: Type[T],
         related_models: Any,
         fields: Optional[Union[Dict, Set]] = None,
         exclude_fields: Optional[Union[Dict, Set]] = None,
         current_relation_str: str = None,
-        source_model: Type[T] = None,
     ) -> dict:
         """
         Traverses structure of related models and populates the nested models
@@ -192,8 +170,7 @@ class ModelRow(NewBaseModel):
             child = model_cls.from_row(
                 row,
                 related_models=remainder,
-                previous_model=cls,
-                related_name=related,
+                related_field=field,
                 fields=fields,
                 exclude_fields=exclude_fields,
                 current_relation_str=relation_str,

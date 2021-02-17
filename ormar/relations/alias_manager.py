@@ -9,6 +9,7 @@ from sqlalchemy import text
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
     from ormar.models import ModelRow
+    from ormar.fields import ForeignKeyField
 
 
 def get_table_alias() -> str:
@@ -147,4 +148,36 @@ class AliasManager:
         :rtype: str
         """
         alias = self._aliases_new.get(f"{from_model.get_name()}_{relation_name}", "")
+        return alias
+
+    def resolve_relation_alias_after_complex(
+        self,
+        source_model: Union[Type["Model"], Type["ModelRow"]],
+        relation_str: str,
+        relation_field: Type["ForeignKeyField"],
+    ) -> str:
+        """
+        Given source model and relation string returns the alias for this complex
+        relation if it exists, otherwise fallback to normal relation from a relation
+        field definition.
+
+        :param relation_field: field with direct relation definition
+        :type relation_field: Type["ForeignKeyField"]
+        :param source_model: model with query starts
+        :type source_model: source Model
+        :param relation_str: string with relation joins defined
+        :type relation_str: str
+        :return: alias of the relation
+        :rtype: str
+        """
+        alias = ""
+        if relation_str and "__" in relation_str:
+            alias = self.resolve_relation_alias(
+                from_model=source_model, relation_name=relation_str
+            )
+        if not alias:
+            alias = self.resolve_relation_alias(
+                from_model=relation_field.get_source_model(),
+                relation_name=relation_field.get_relation_name(),
+            )
         return alias
