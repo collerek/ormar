@@ -46,17 +46,17 @@ class CB2(ormar.Model):
 
 
 @app.get("/ca", response_model=CA)
-async def get_ca():
+async def get_ca():  # pragma: no cover
     return None
 
 
 @app.get("/cb1", response_model=CB1)
-async def get_cb1():
+async def get_cb1():  # pragma: no cover
     return None
 
 
 @app.get("/cb2", response_model=CB2)
-async def get_cb2():
+async def get_cb2():  # pragma: no cover
     return None
 
 
