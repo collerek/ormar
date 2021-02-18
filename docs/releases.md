@@ -1,3 +1,9 @@
+# 0.9.4
+
+## Fixes
+* Fix `fastapi` OpenAPI schema generation for automatic docs when multiple models refer to the same related one
+
+
 # 0.9.3
 
 ## Fixes

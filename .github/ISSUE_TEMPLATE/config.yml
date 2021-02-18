@@ -1,0 +1,7 @@
+contact_links:
+  - name: I have a question ❓
+    url: https://github.com/collerek/ormar/discussions
+    about: If you have any question about the usage of ormar, please open a discussion first.
+  - name: I want a new feature 🆕
+    url: https://github.com/collerek/ormar/discussions
+    about: If you would like to request or make a change/enhancement that is not trivial, please open a discussion first.

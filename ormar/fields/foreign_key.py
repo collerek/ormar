@@ -1,6 +1,8 @@
+import string
 import sys
 import uuid
 from dataclasses import dataclass
+from random import choices
 from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import sqlalchemy
@@ -67,9 +69,14 @@ def create_dummy_model(
     :return: constructed dummy model
     :rtype: pydantic.BaseModel
     """
+    alias = (
+        "".join(choices(string.ascii_uppercase, k=2)) + uuid.uuid4().hex[:4]
+    ).lower()
     fields = {f"{pk_field.name}": (pk_field.__type__, None)}
     dummy_model = create_model(
-        f"PkOnly{base_model.get_name(lower=False)}", **fields  # type: ignore
+        f"PkOnly{base_model.get_name(lower=False)}{alias}",
+        __module__=base_model.__module__,
+        **fields,  # type: ignore
     )
     return dummy_model
 
