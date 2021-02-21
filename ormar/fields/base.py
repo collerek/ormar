@@ -36,8 +36,12 @@ class BaseField(FieldInfo):
     index: bool
     unique: bool
     pydantic_only: bool
-    virtual: bool = False
     choices: typing.Sequence
+
+    virtual: bool = False  # ManyToManyFields and reverse ForeignKeyFields
+    is_multi: bool = False  # ManyToManyField
+    is_relation: bool = False  # ForeignKeyField + subclasses
+    is_through: bool = False  # ThroughFields
 
     owner: Type["Model"]
     to: Type["Model"]
@@ -62,7 +66,7 @@ class BaseField(FieldInfo):
         :return: result of the check
         :rtype: bool
         """
-        return not issubclass(cls, ormar.fields.ManyToManyField) and not cls.virtual
+        return not cls.is_multi and not cls.virtual
 
     @classmethod
     def get_alias(cls) -> str:

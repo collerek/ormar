@@ -27,7 +27,9 @@ class RelationProxy(list):
         self.type_: "RelationType" = type_
         self.field_name = field_name
         self._owner: "Model" = self.relation.manager.owner
-        self.queryset_proxy = QuerysetProxy(relation=self.relation, type_=type_)
+        self.queryset_proxy: QuerysetProxy = QuerysetProxy(
+            relation=self.relation, type_=type_
+        )
         self._related_field_name: Optional[str] = None
 
     @property

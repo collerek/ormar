@@ -1,8 +1,9 @@
-from typing import Callable, Dict, List, TYPE_CHECKING, Tuple, Type
+from typing import Callable, Dict, List, TYPE_CHECKING, Tuple, Type, cast
 
-import ormar
-from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.mixins.relation_mixin import RelationMixin
+
+if TYPE_CHECKING:
+    from ormar.fields import ForeignKeyField, ManyToManyField
 
 
 class PrefetchQueryMixin(RelationMixin):
@@ -39,7 +40,8 @@ class PrefetchQueryMixin(RelationMixin):
         if reverse:
             field_name = parent_model.Meta.model_fields[related].get_related_name()
             field = target_model.Meta.model_fields[field_name]
-            if issubclass(field, ormar.fields.ManyToManyField):
+            if field.is_multi:
+                field = cast(Type["ManyToManyField"], field)
                 field_name = field.default_target_field_name()
                 sub_field = field.through.Meta.model_fields[field_name]
                 return field.through, sub_field.get_alias()
@@ -87,7 +89,7 @@ class PrefetchQueryMixin(RelationMixin):
         :return: name of the field
         :rtype: str
         """
-        if issubclass(target_field, ormar.fields.ManyToManyField):
+        if target_field.is_multi:
             return cls.get_name()
         if target_field.virtual:
             return target_field.get_related_name()

@@ -103,6 +103,8 @@ def ManyToMany(
         server_default=None,
         owner=owner,
         self_reference=self_reference,
+        is_relation=True,
+        is_multi=True,
     )
 
     return type("ManyToMany", (ManyToManyField, BaseField), namespace)

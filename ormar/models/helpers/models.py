@@ -21,7 +21,7 @@ def is_field_an_forward_ref(field: Type["BaseField"]) -> bool:
     :return: result of the check
     :rtype: bool
     """
-    return issubclass(field, ormar.ForeignKeyField) and (
+    return field.is_relation and (
         field.to.__class__ == ForwardRef or field.through.__class__ == ForwardRef
     )
 

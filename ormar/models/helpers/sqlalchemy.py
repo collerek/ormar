@@ -156,11 +156,7 @@ def sqlalchemy_columns_from_model_fields(
         field.owner = new_model
         if field.primary_key:
             pkname = check_pk_column_validity(field_name, field, pkname)
-        if (
-            not field.pydantic_only
-            and not field.virtual
-            and not issubclass(field, ormar.ManyToManyField)
-        ):
+        if not field.pydantic_only and not field.virtual and not field.is_multi:
             columns.append(field.get_column(field.get_alias()))
     return pkname, columns
 

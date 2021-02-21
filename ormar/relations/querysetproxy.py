@@ -1,6 +1,7 @@
 from typing import (
     Any,
     Dict,
+    Generic,
     List,
     MutableSequence,
     Optional,
@@ -9,6 +10,7 @@ from typing import (
     TYPE_CHECKING,
     TypeVar,
     Union,
+    cast,
 )
 
 import ormar
@@ -16,14 +18,14 @@ from ormar.exceptions import ModelPersistenceError
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
-    from ormar.models import Model
+    from ormar.models import Model, T
     from ormar.queryset import QuerySet
     from ormar import RelationType
+else:
+    T = TypeVar("T")
 
-    T = TypeVar("T", bound=Model)
 
-
-class QuerysetProxy(ormar.QuerySetProtocol):
+class QuerysetProxy(Generic[T]):
     """
     Exposes QuerySet methods on relations, but also handles creating and removing
     of through Models for m2m relations.
@@ -47,7 +49,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         self.through_model_name = (
             self.related_field.through.get_name()
             if self.type_ == ormar.RelationType.MULTIPLE
-            else None
+            else ""
         )
 
     @property
@@ -94,6 +96,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
                 self._assign_child_to_parent(subchild)
         else:
             assert isinstance(child, ormar.Model)
+            child = cast(T, child)
             self._assign_child_to_parent(child)
 
     def _clean_items_on_load(self) -> None:
@@ -198,7 +201,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
             )
         return await queryset.delete(**kwargs)  # type: ignore
 
-    async def first(self, **kwargs: Any) -> "Model":
+    async def first(self, **kwargs: Any) -> T:
         """
         Gets the first row from the db ordered by primary key column ascending.
 
@@ -216,7 +219,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         self._register_related(first)
         return first
 
-    async def get(self, **kwargs: Any) -> "Model":
+    async def get(self, **kwargs: Any) -> "T":
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -240,7 +243,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         self._register_related(get)
         return get
 
-    async def all(self, **kwargs: Any) -> Sequence[Optional["Model"]]:  # noqa: A003
+    async def all(self, **kwargs: Any) -> Sequence[Optional["T"]]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 
@@ -262,7 +265,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         self._register_related(all_items)
         return all_items
 
-    async def create(self, **kwargs: Any) -> "Model":
+    async def create(self, **kwargs: Any) -> "T":
         """
         Creates the model instance, saves it in a database and returns the updates model
         (with pk populated if not passed and autoincrement is set).
@@ -287,7 +290,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
             await self.create_through_instance(created, **through_kwargs)
         return created
 
-    async def get_or_create(self, **kwargs: Any) -> "Model":
+    async def get_or_create(self, **kwargs: Any) -> "T":
         """
         Combination of create and get methods.
 
@@ -305,7 +308,7 @@ class QuerysetProxy(ormar.QuerySetProtocol):
         except ormar.NoMatch:
             return await self.create(**kwargs)
 
-    async def update_or_create(self, **kwargs: Any) -> "Model":
+    async def update_or_create(self, **kwargs: Any) -> "T":
         """
         Updates the model, or in case there is no match in database creates a new one.
 

@@ -48,7 +48,7 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
         **{
             k: create_dummy_instance(v.to)
             for k, v in fk.Meta.model_fields.items()
-            if isinstance(v, ForeignKeyField) and not v.nullable and not v.virtual
+            if v.is_relation and not v.nullable and not v.virtual
         },
     }
     return fk(**init_dict)
@@ -217,6 +217,7 @@ def ForeignKey(  # noqa CFQ002
         ondelete=ondelete,
         owner=owner,
         self_reference=self_reference,
+        is_relation=True,
     )
 
     return type("ForeignKey", (ForeignKeyField, BaseField), namespace)

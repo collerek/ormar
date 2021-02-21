@@ -46,15 +46,15 @@ from ormar.relations.alias_manager import AliasManager
 from ormar.relations.relation_manager import RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
+    from ormar.models import Model, T
     from ormar.signals import SignalEmitter
-
-    T = TypeVar("T", bound=Model)
 
     IntStr = Union[int, str]
     DictStrAny = Dict[str, Any]
     AbstractSetIntStr = AbstractSet[IntStr]
     MappingIntStrAny = Mapping[IntStr, Any]
+else:
+    T = TypeVar("T")
 
 
 class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass):
@@ -89,7 +89,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         Meta: ModelMeta
 
     # noinspection PyMissingConstructor
-    def __init__(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
+    def __init__(self: T, *args: Any, **kwargs: Any) -> None:  # type: ignore
         """
         Initializer that creates a new ormar Model that is also pydantic Model at the
         same time.
@@ -129,7 +129,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         object.__setattr__(
             self,
             "_orm",
-            RelationsManager(related_fields=self.extract_related_fields(), owner=self,),
+            RelationsManager(
+                related_fields=self.extract_related_fields(), owner=cast(T, self),
+            ),
         )
 
         pk_only = kwargs.pop("__pk_only__", False)
@@ -298,7 +300,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     def _extract_related_model_instead_of_field(
         self, item: str
-    ) -> Optional[Union["T", Sequence["T"]]]:
+    ) -> Optional[Union["Model", Sequence["Model"]]]:
         """
         Retrieves the related model/models from RelationshipManager.
 
@@ -755,9 +757,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: value of pk if set
         :rtype: Optional[int]
         """
-        if target_field.virtual or issubclass(
-            target_field, ormar.fields.ManyToManyField
-        ):
+        if target_field.virtual or target_field.is_multi:
             return self.pk
         related_name = target_field.name
         related_model = getattr(self, related_name)

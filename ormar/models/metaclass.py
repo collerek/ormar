@@ -262,7 +262,7 @@ def copy_and_replace_m2m_through_model(
     new_meta.model_fields = {
         name: field
         for name, field in new_meta.model_fields.items()
-        if not issubclass(field, ForeignKeyField)
+        if not field.is_relation
     }
     _, columns = sqlalchemy_columns_from_model_fields(
         new_meta.model_fields, copy_through
@@ -329,7 +329,8 @@ def copy_data_from_parent_model(  # noqa: CCR001
             else attrs.get("__name__", "").lower() + "s"
         )
         for field_name, field in base_class.Meta.model_fields.items():
-            if issubclass(field, ManyToManyField):
+            if field.is_multi:
+                field = cast(Type["ManyToManyField"], field)
                 copy_and_replace_m2m_through_model(
                     field=field,
                     field_name=field_name,
@@ -339,7 +340,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
                     meta=meta,
                 )
 
-            elif issubclass(field, ForeignKeyField) and field.related_name:
+            elif field.is_relation and field.related_name:
                 copy_field = type(  # type: ignore
                     field.__name__, (ForeignKeyField, BaseField), dict(field.__dict__)
                 )

@@ -1,3 +1,5 @@
+from typing import Any
+
 import databases
 import pytest
 import sqlalchemy
@@ -19,8 +21,8 @@ class Category(ormar.Model):
     class Meta(BaseMeta):
         tablename = "categories"
 
-    id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=40)
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(max_length=40)
 
 
 class PostCategory(ormar.Model):
@@ -107,8 +109,12 @@ async def test_setting_additional_fields_on_through_model_in_create():
         assert postcat.sort_order == 2
 
 
+def process_post(post: Post):
+    pass
+
+
 @pytest.mark.asyncio
-async def test_getting_additional_fields_from_queryset():
+async def test_getting_additional_fields_from_queryset() -> Any:
     async with database:
         post = await Post(title="Test post").save()
         await post.categories.create(
@@ -122,10 +128,11 @@ async def test_getting_additional_fields_from_queryset():
         assert post.categories[0].postcategory.sort_order == 1
         assert post.categories[1].postcategory.sort_order == 2
 
-        post = await Post.objects.select_related("categories").get(
+        post2 = await Post.objects.select_related("categories").get(
             categories__name="Test category2"
         )
-        assert post.categories[0].postcategory.sort_order == 2
+        assert post2.categories[0].postcategory.sort_order == 2
+        process_post(post2)
 
 
 # TODO: check/ modify following

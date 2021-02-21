@@ -1,10 +1,6 @@
 import inspect
 from typing import List, Optional, Set, TYPE_CHECKING
 
-from ormar import ManyToManyField
-from ormar.fields import ThroughField
-from ormar.fields.foreign_key import ForeignKeyField
-
 
 class RelationMixin:
     """
@@ -62,7 +58,7 @@ class RelationMixin:
         related_fields = set()
         for name in cls.extract_related_names():
             field = cls.Meta.model_fields[name]
-            if issubclass(field, ManyToManyField):
+            if field.is_multi:
                 related_fields.add(field.through.get_name(lower=True))
         return related_fields
 
@@ -80,11 +76,7 @@ class RelationMixin:
 
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
-            if (
-                inspect.isclass(field)
-                and issubclass(field, ForeignKeyField)
-                and not issubclass(field, ThroughField)
-            ):
+            if inspect.isclass(field) and field.is_relation and not field.is_through:
                 related_names.add(name)
         cls._related_names = related_names
 

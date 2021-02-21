@@ -8,24 +8,26 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 
 import sqlalchemy
 
-from ormar import ManyToManyField  # noqa: I202
-from ormar.models import NewBaseModel
+from ormar.models import NewBaseModel  # noqa: I202
 from ormar.models.helpers.models import group_related_list
 
-T = TypeVar("T", bound="ModelRow")
 
 if TYPE_CHECKING:
     from ormar.fields import ForeignKeyField
+    from ormar.models import T
+else:
+    T = TypeVar("T", bound="ModelRow")
 
 
 class ModelRow(NewBaseModel):
     @classmethod
-    def from_row(
-        cls: Type[T],
+    def from_row(  # noqa: CFQ002
+        cls: Type["ModelRow"],
         row: sqlalchemy.engine.ResultProxy,
         source_model: Type[T],
         select_related: List = None,
@@ -75,7 +77,7 @@ class ModelRow(NewBaseModel):
         table_prefix = ""
 
         if select_related:
-            source_model = cls
+            source_model = cast(Type[T], cls)
             related_models = group_related_list(select_related)
 
         if related_field:
@@ -107,7 +109,7 @@ class ModelRow(NewBaseModel):
             item["__excluded__"] = cls.get_names_to_exclude(
                 fields=fields, exclude_fields=exclude_fields
             )
-            instance = cls(**item)
+            instance = cast(T, cls(**item))
             instance.set_save_status(True)
         return instance
 
@@ -160,6 +162,7 @@ class ModelRow(NewBaseModel):
                 else related
             )
             field = cls.Meta.model_fields[related]
+            field = cast(Type["ForeignKeyField"], field)
             fields = cls.get_included(fields, related)
             exclude_fields = cls.get_excluded(exclude_fields, related)
             model_cls = field.to
@@ -177,7 +180,7 @@ class ModelRow(NewBaseModel):
                 source_model=source_model,
             )
             item[model_cls.get_column_name_from_alias(related)] = child
-            if issubclass(field, ManyToManyField) and child:
+            if field.is_multi and child:
                 # TODO: way to figure out which side should be populated?
                 through_name = cls.Meta.model_fields[related].through.get_name()
                 # for now it's nested dict, should be instance?

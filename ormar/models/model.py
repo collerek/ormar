@@ -8,7 +8,6 @@ from typing import (
 
 import ormar.queryset  # noqa I100
 from ormar.exceptions import ModelPersistenceError, NoMatch
-from ormar.fields.many_to_many import ManyToManyField
 from ormar.models import NewBaseModel  # noqa I100
 from ormar.models.metaclass import ModelMeta
 from ormar.models.model_row import ModelRow
@@ -139,8 +138,9 @@ class Model(ModelRow):
             visited.add(self.__class__)
 
         for related in self.extract_related_names():
-            if self.Meta.model_fields[related].virtual or issubclass(
-                self.Meta.model_fields[related], ManyToManyField
+            if (
+                self.Meta.model_fields[related].virtual
+                or self.Meta.model_fields[related].is_multi
             ):
                 for rel in getattr(self, related):
                     update_count, visited = await self._update_and_follow(

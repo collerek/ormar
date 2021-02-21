@@ -15,7 +15,6 @@ import sqlalchemy
 from sqlalchemy import text
 
 from ormar.exceptions import RelationshipInstanceError  # noqa I100
-from ormar.fields import BaseField, ManyToManyField  # noqa I100
 from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
@@ -118,7 +117,7 @@ class SqlJoin:
         :return: list of used aliases, select from, list of aliased columns, sort orders
         :rtype: Tuple[List[str], Join, List[TextClause], collections.OrderedDict]
         """
-        if issubclass(self.target_field, ManyToManyField):
+        if self.target_field.is_multi:
             self.process_m2m_through_table()
 
         self.next_model = self.target_field.to
@@ -287,7 +286,7 @@ class SqlJoin:
         )
 
         pkname_alias = self.next_model.get_column_alias(self.next_model.Meta.pkname)
-        if not issubclass(self.target_field, ManyToManyField):
+        if not self.target_field.is_multi:
             self.get_order_bys(
                 to_table=to_table, pkname_alias=pkname_alias,
             )
@@ -415,7 +414,7 @@ class SqlJoin:
         :return: to key and from key
         :rtype: Tuple[str, str]
         """
-        if issubclass(self.target_field, ManyToManyField):
+        if self.target_field.is_multi:
             to_key = self.process_m2m_related_name_change(reverse=True)
             from_key = self.main_model.get_column_alias(self.main_model.Meta.pkname)
 

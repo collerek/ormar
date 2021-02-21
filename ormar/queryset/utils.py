@@ -12,7 +12,6 @@ from typing import (
     Union,
 )
 
-from ormar.fields import ManyToManyField
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -236,7 +235,7 @@ def get_relationship_alias_model_and_str(
     manager = model_cls.Meta.alias_manager
     for relation in related_parts:
         related_field = model_cls.Meta.model_fields[relation]
-        if issubclass(related_field, ManyToManyField):
+        if related_field.is_multi:
             previous_model = related_field.through
             relation = related_field.default_target_field_name()  # type: ignore
         table_prefix = manager.resolve_relation_alias(

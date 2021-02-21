@@ -13,14 +13,13 @@ from typing import (
 )
 
 import ormar
-from ormar.fields import BaseField, ManyToManyField
-from ormar.fields.foreign_key import ForeignKeyField
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.query import Query
 from ormar.queryset.utils import extract_models_to_dict_of_lists, translate_list_to_dict
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
+    from ormar.fields import ForeignKeyField, BaseField
 
 
 def add_relation_field_to_fields(
@@ -316,7 +315,7 @@ class PrefetchQuery:
 
         for related in related_to_extract:
             target_field = model.Meta.model_fields[related]
-            target_field = cast(Type[ForeignKeyField], target_field)
+            target_field = cast(Type["ForeignKeyField"], target_field)
             target_model = target_field.to.get_name()
             model_id = model.get_relation_model_id(target_field=target_field)
 
@@ -424,9 +423,9 @@ class PrefetchQuery:
         fields = target_model.get_included(fields, related)
         exclude_fields = target_model.get_excluded(exclude_fields, related)
         target_field = target_model.Meta.model_fields[related]
-        target_field = cast(Type[ForeignKeyField], target_field)
+        target_field = cast(Type["ForeignKeyField"], target_field)
         reverse = False
-        if target_field.virtual or issubclass(target_field, ManyToManyField):
+        if target_field.virtual or target_field.is_multi:
             reverse = True
 
         parent_model = target_model
@@ -522,7 +521,7 @@ class PrefetchQuery:
         select_related = []
         query_target = target_model
         table_prefix = ""
-        if issubclass(target_field, ManyToManyField):
+        if target_field.is_multi:
             query_target = target_field.through
             select_related = [target_name]
             table_prefix = target_field.to.Meta.alias_manager.resolve_relation_alias(

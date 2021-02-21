@@ -1,14 +1,14 @@
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Type, cast
 
 import ormar
 from ormar import ForeignKey, ManyToMany
-from ormar.fields import ManyToManyField, Through, ThroughField
-from ormar.fields.foreign_key import ForeignKeyField
+from ormar.fields import Through
 from ormar.models.helpers.sqlalchemy import adjust_through_many_to_many_model
 from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+    from ormar.fields import ManyToManyField, ForeignKeyField
 
 alias_manager = AliasManager()
 
@@ -32,7 +32,7 @@ def register_relation_on_build(field: Type["ForeignKeyField"]) -> None:
     )
 
 
-def register_many_to_many_relation_on_build(field: Type[ManyToManyField]) -> None:
+def register_many_to_many_relation_on_build(field: Type["ManyToManyField"]) -> None:
     """
     Registers connection between through model and both sides of the m2m relation.
     Registration include also reverse relation side to be able to join both sides.
@@ -83,10 +83,8 @@ def expand_reverse_relationships(model: Type["Model"]) -> None:
     """
     model_fields = list(model.Meta.model_fields.values())
     for model_field in model_fields:
-        if (
-            issubclass(model_field, ForeignKeyField)
-            and not model_field.has_unresolved_forward_refs()
-        ):
+        if model_field.is_relation and not model_field.has_unresolved_forward_refs():
+            model_field = cast(Type["ForeignKeyField"], model_field)
             expand_reverse_relationship(model_field=model_field)
 
 
@@ -102,7 +100,7 @@ def register_reverse_model_fields(model_field: Type["ForeignKeyField"]) -> None:
     :type model_field: relation Field
     """
     related_name = model_field.get_related_name()
-    if issubclass(model_field, ManyToManyField):
+    if model_field.is_multi:
         model_field.to.Meta.model_fields[related_name] = ManyToMany(
             model_field.owner,
             through=model_field.through,
@@ -114,6 +112,7 @@ def register_reverse_model_fields(model_field: Type["ForeignKeyField"]) -> None:
             self_reference_primary=model_field.self_reference_primary,
         )
         # register foreign keys on through model
+        model_field = cast(Type["ManyToManyField"], model_field)
         register_through_shortcut_fields(model_field=model_field)
         adjust_through_many_to_many_model(model_field=model_field)
     else:
@@ -155,7 +154,7 @@ def register_through_shortcut_fields(model_field: Type["ManyToManyField"]) -> No
     )
 
 
-def register_relation_in_alias_manager(field: Type[ForeignKeyField]) -> None:
+def register_relation_in_alias_manager(field: Type["ForeignKeyField"]) -> None:
     """
     Registers the relation (and reverse relation) in alias manager.
     The m2m relations require registration of through model between
@@ -168,11 +167,12 @@ def register_relation_in_alias_manager(field: Type[ForeignKeyField]) -> None:
     :param field: relation field
     :type field: ForeignKey or ManyToManyField class
     """
-    if issubclass(field, ManyToManyField):
+    if field.is_multi:
         if field.has_unresolved_forward_refs():
             return
+        field = cast(Type["ManyToManyField"], field)
         register_many_to_many_relation_on_build(field=field)
-    elif issubclass(field, ForeignKeyField) and not issubclass(field, ThroughField):
+    elif field.is_relation and not field.is_through:
         if field.has_unresolved_forward_refs():
             return
         register_relation_on_build(field=field)

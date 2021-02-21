@@ -25,7 +25,7 @@ def validate_related_names_in_relations(  # noqa CCR001
     """
     already_registered: Dict[str, List[Optional[str]]] = dict()
     for field in model_fields.values():
-        if issubclass(field, ormar.ForeignKeyField):
+        if field.is_relation:
             to_name = (
                 field.to.get_name()
                 if not field.to.__class__ == ForwardRef

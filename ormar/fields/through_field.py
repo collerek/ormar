@@ -15,12 +15,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def Through(  # noqa CFQ002
-    to: "ToType",
-    *,
-    name: str = None,
-    related_name: str = None,
-    virtual: bool = True,
-    **kwargs: Any,
+    to: "ToType", *, name: str = None, related_name: str = None, **kwargs: Any,
 ) -> Any:
     # TODO: clean docstring
     """
@@ -52,7 +47,7 @@ def Through(  # noqa CFQ002
         alias=name,
         name=kwargs.pop("real_name", None),
         related_name=related_name,
-        virtual=virtual,
+        virtual=True,
         owner=owner,
         nullable=False,
         unique=False,
@@ -62,6 +57,8 @@ def Through(  # noqa CFQ002
         pydantic_only=False,
         default=None,
         server_default=None,
+        is_relation=True,
+        is_through=True,
     )
 
     return type("Through", (ThroughField, BaseField), namespace)

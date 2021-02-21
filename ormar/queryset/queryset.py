@@ -1,4 +1,17 @@
-from typing import Any, Dict, List, Optional, Sequence, Set, TYPE_CHECKING, Type, Union
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    TYPE_CHECKING,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import databases
 import sqlalchemy
@@ -14,19 +27,21 @@ from ormar.queryset.query import Query
 from ormar.queryset.utils import update, update_dict_from_list
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
+    from ormar.models import T
     from ormar.models.metaclass import ModelMeta
     from ormar.relations.querysetproxy import QuerysetProxy
+else:
+    T = TypeVar("T")
 
 
-class QuerySet:
+class QuerySet(Generic[T]):
     """
     Main class to perform database queries, exposed on each model as objects attribute.
     """
 
     def __init__(  # noqa CFQ002
         self,
-        model_cls: Type["Model"] = None,
+        model_cls: Optional[Type[T]] = None,
         filter_clauses: List = None,
         exclude_clauses: List = None,
         select_related: List = None,
@@ -53,7 +68,7 @@ class QuerySet:
     def __get__(
         self,
         instance: Optional[Union["QuerySet", "QuerysetProxy"]],
-        owner: Union[Type["Model"], Type["QuerysetProxy"]],
+        owner: Union[Type[T], Type["QuerysetProxy"]],
     ) -> "QuerySet":
         if issubclass(owner, ormar.Model):
             if owner.Meta.requires_ref_update:
@@ -62,7 +77,7 @@ class QuerySet:
                     f"ForwardRefs. \nBefore using the model you "
                     f"need to call update_forward_refs()."
                 )
-        if issubclass(owner, ormar.Model):
+            owner = cast(Type[T], owner)
             return self.__class__(model_cls=owner)
         return self.__class__()  # pragma: no cover
 
@@ -79,7 +94,7 @@ class QuerySet:
         return self.model_cls.Meta
 
     @property
-    def model(self) -> Type["Model"]:
+    def model(self) -> Type[T]:
         """
         Shortcut to model class set on QuerySet.
 
@@ -91,8 +106,8 @@ class QuerySet:
         return self.model_cls
 
     async def _prefetch_related_models(
-        self, models: Sequence[Optional["Model"]], rows: List
-    ) -> Sequence[Optional["Model"]]:
+        self, models: Sequence[Optional["T"]], rows: List
+    ) -> Sequence[Optional["T"]]:
         """
         Performs prefetch query for selected models names.
 
@@ -113,7 +128,7 @@ class QuerySet:
         )
         return await query.prefetch_related(models=models, rows=rows)  # type: ignore
 
-    def _process_query_result_rows(self, rows: List) -> Sequence[Optional["Model"]]:
+    def _process_query_result_rows(self, rows: List) -> Sequence[Optional[T]]:
         """
         Process database rows and initialize ormar Model from each of the rows.
 
@@ -137,7 +152,7 @@ class QuerySet:
         return result_rows
 
     @staticmethod
-    def check_single_result_rows_count(rows: Sequence[Optional["Model"]]) -> None:
+    def check_single_result_rows_count(rows: Sequence[Optional[T]]) -> None:
         """
         Verifies if the result has one and only one row.
 
@@ -198,7 +213,7 @@ class QuerySet:
             limit_raw_sql=self.limit_sql_raw,
         )
         exp = qry.build_select_expression()
-        print("\n", exp.compile(compile_kwargs={"literal_binds": True}))
+        # print("\n", exp.compile(compile_kwargs={"literal_binds": True}))
         return exp
 
     def filter(self, _exclude: bool = False, **kwargs: Any) -> "QuerySet":  # noqa: A003
@@ -683,7 +698,7 @@ class QuerySet:
             limit_raw_sql=limit_raw_sql,
         )
 
-    async def first(self, **kwargs: Any) -> "Model":
+    async def first(self, **kwargs: Any) -> T:
         """
         Gets the first row from the db ordered by primary key column ascending.
 
@@ -707,7 +722,7 @@ class QuerySet:
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
-    async def get(self, **kwargs: Any) -> "Model":
+    async def get(self, **kwargs: Any) -> T:
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -739,7 +754,7 @@ class QuerySet:
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
-    async def get_or_create(self, **kwargs: Any) -> "Model":
+    async def get_or_create(self, **kwargs: Any) -> T:
         """
         Combination of create and get methods.
 
@@ -757,7 +772,7 @@ class QuerySet:
         except NoMatch:
             return await self.create(**kwargs)
 
-    async def update_or_create(self, **kwargs: Any) -> "Model":
+    async def update_or_create(self, **kwargs: Any) -> T:
         """
         Updates the model, or in case there is no match in database creates a new one.
 
@@ -774,7 +789,7 @@ class QuerySet:
         model = await self.get(pk=kwargs[pk_name])
         return await model.update(**kwargs)
 
-    async def all(self, **kwargs: Any) -> Sequence[Optional["Model"]]:  # noqa: A003
+    async def all(self, **kwargs: Any) -> Sequence[Optional[T]]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 
@@ -798,7 +813,7 @@ class QuerySet:
 
         return result_rows
 
-    async def create(self, **kwargs: Any) -> "Model":
+    async def create(self, **kwargs: Any) -> T:
         """
         Creates the model instance, saves it in a database and returns the updates model
         (with pk populated if not passed and autoincrement is set).
@@ -841,7 +856,7 @@ class QuerySet:
         )
         return instance
 
-    async def bulk_create(self, objects: List["Model"]) -> None:
+    async def bulk_create(self, objects: List[T]) -> None:
         """
         Performs a bulk update in one database session to speed up the process.
 
@@ -867,7 +882,7 @@ class QuerySet:
             objt.set_save_status(True)
 
     async def bulk_update(  # noqa:  CCR001
-        self, objects: List["Model"], columns: List[str] = None
+        self, objects: List[T], columns: List[str] = None
     ) -> None:
         """
         Performs bulk update in one database session to speed up the process.
