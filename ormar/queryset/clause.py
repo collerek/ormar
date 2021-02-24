@@ -16,6 +16,7 @@ class Prefix:
     table_prefix: str
     model_cls: Type["Model"]
     relation_str: str
+    is_through: bool
 
     @property
     def alias_key(self) -> str:

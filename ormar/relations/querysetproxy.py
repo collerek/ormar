@@ -139,7 +139,7 @@ class QuerysetProxy(Generic[T]):
         :param child: child model instance
         :type child: Model
         """
-        queryset = ormar.QuerySet(model_cls=self.relation.through)
+        queryset = ormar.QuerySet(model_cls=self.relation.through)  # type: ignore
         owner_column = self.related_field.default_target_field_name()  # type: ignore
         child_column = self.related_field.default_source_field_name()  # type: ignore
         kwargs = {owner_column: self._owner, child_column: child}
@@ -187,10 +187,10 @@ class QuerysetProxy(Generic[T]):
         :rtype: int
         """
         if self.type_ == ormar.RelationType.MULTIPLE:
-            queryset = ormar.QuerySet(model_cls=self.relation.through)
+            queryset = ormar.QuerySet(model_cls=self.relation.through)  # type: ignore
             owner_column = self._owner.get_name()
         else:
-            queryset = ormar.QuerySet(model_cls=self.relation.to)
+            queryset = ormar.QuerySet(model_cls=self.relation.to)  # type: ignore
             owner_column = self.related_field.name
         kwargs = {owner_column: self._owner}
         self._clean_items_on_load()

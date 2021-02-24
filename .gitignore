@@ -13,3 +13,4 @@ dist
 site
 profile.py
 *.db
+*.db-journal

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import databases
 import pytest
@@ -31,6 +31,7 @@ class PostCategory(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     sort_order: int = ormar.Integer(nullable=True)
+    param_name: str = ormar.String(default="Name", max_length=200)
 
 
 class Post(ormar.Model):
@@ -109,10 +110,6 @@ async def test_setting_additional_fields_on_through_model_in_create():
         assert postcat.sort_order == 2
 
 
-def process_post(post: Post):
-    pass
-
-
 @pytest.mark.asyncio
 async def test_getting_additional_fields_from_queryset() -> Any:
     async with database:
@@ -132,8 +129,34 @@ async def test_getting_additional_fields_from_queryset() -> Any:
             categories__name="Test category2"
         )
         assert post2.categories[0].postcategory.sort_order == 2
-        process_post(post2)
+        # if TYPE_CHECKING:
+        #     reveal_type(post2)
 
+
+@pytest.mark.asyncio
+async def test_filtering_by_through_model() -> Any:
+    async with database:
+        post = await Post(title="Test post").save()
+        await post.categories.create(
+            name="Test category1",
+            postcategory={"sort_order": 1, "param_name": "volume"},
+        )
+        await post.categories.create(
+            name="Test category2", postcategory={"sort_order": 2, "param_name": "area"}
+        )
+
+        post2 = (
+            await Post.objects.filter(postcategory__sort_order__gt=1)
+                .select_related("categories")
+                .get()
+        )
+        assert len(post2.categories) == 1
+        assert post2.categories[0].postcategory.sort_order == 2
+
+        post3 = await Post.objects.filter(
+            categories__postcategory__param_name="volume").get()
+        assert len(post3.categories) == 1
+        assert post3.categories[0].postcategory.param_name == "volume"
 
 # TODO: check/ modify following
 
@@ -143,9 +166,9 @@ async def test_getting_additional_fields_from_queryset() -> Any:
 # creating in queryset proxy (dict with through name and kwargs) (V)
 # loading the data into model instance of though model (V) <- fix fields ane exclude
 # accessing from instance (V) <- no both sides only nested one is relevant, fix one side
+# filtering in filter (through name normally) (V) < - table prefix from normal relation, check if is_through needed
 
 # updating in query
-# sorting in filter (special __through__<field_name> notation?)
 # ordering by in order_by
 # modifying from instance (both sides?)
 # including/excluding in fields?

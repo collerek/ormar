@@ -12,7 +12,6 @@ from typing import (
     Union,
 )
 
-
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
@@ -218,7 +217,7 @@ def extract_models_to_dict_of_lists(
 
 def get_relationship_alias_model_and_str(
     source_model: Type["Model"], related_parts: List
-) -> Tuple[str, Type["Model"], str]:
+) -> Tuple[str, Type["Model"], str, bool]:
     """
     Walks the relation to retrieve the actual model on which the clause should be
     constructed, extracts alias based on last relation leading to target model.
@@ -230,11 +229,19 @@ def get_relationship_alias_model_and_str(
     :rtype: Tuple[str, Type["Model"], str]
     """
     table_prefix = ""
+    is_through = False
     model_cls = source_model
     previous_model = model_cls
     manager = model_cls.Meta.alias_manager
-    for relation in related_parts:
+    for relation in related_parts[:]:
         related_field = model_cls.Meta.model_fields[relation]
+        if related_field.is_through:
+            is_through = True
+            related_parts = [
+                x.replace(relation, related_field.related_name) if x == relation else x
+                for x in related_parts
+            ]
+            relation = related_field.related_name
         if related_field.is_multi:
             previous_model = related_field.through
             relation = related_field.default_target_field_name()  # type: ignore
@@ -245,4 +252,4 @@ def get_relationship_alias_model_and_str(
         previous_model = model_cls
     relation_str = "__".join(related_parts)
 
-    return table_prefix, model_cls, relation_str
+    return table_prefix, model_cls, relation_str, is_through

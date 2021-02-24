@@ -53,6 +53,7 @@ class FilterAction:
         self.table_prefix = ""
         self.source_model = model_cls
         self.target_model = model_cls
+        self.is_through = False
         self._determine_filter_target_table()
         self._escape_characters_in_clause()
 
@@ -100,6 +101,7 @@ class FilterAction:
             self.table_prefix,
             self.target_model,
             self.related_str,
+            self.is_through,
         ) = get_relationship_alias_model_and_str(self.source_model, self.related_parts)
 
     def _escape_characters_in_clause(self) -> None:

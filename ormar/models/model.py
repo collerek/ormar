@@ -22,7 +22,7 @@ class Model(ModelRow):
     __abstract__ = False
     if TYPE_CHECKING:  # pragma nocover
         Meta: ModelMeta
-        objects: "QuerySet"
+        objects: "QuerySet[Model]"
 
     def __repr__(self) -> str:  # pragma nocover
         _repr = {k: getattr(self, k) for k, v in self.Meta.model_fields.items()}
