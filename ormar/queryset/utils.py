@@ -232,16 +232,24 @@ def get_relationship_alias_model_and_str(
     is_through = False
     model_cls = source_model
     previous_model = model_cls
+    previous_models = [model_cls]
     manager = model_cls.Meta.alias_manager
     for relation in related_parts[:]:
         related_field = model_cls.Meta.model_fields[relation]
+
         if related_field.is_through:
+            # through is always last - cannot go further
             is_through = True
-            related_parts = [
-                x.replace(relation, related_field.related_name) if x == relation else x
-                for x in related_parts
+            related_parts.remove(relation)
+            through_field = related_field.owner.Meta.model_fields[
+                related_field.related_name or ""
             ]
-            relation = related_field.related_name
+            if len(previous_models) > 1 and previous_models[-2] == through_field.to:
+                previous_model = through_field.to
+                relation = through_field.related_name
+            else:
+                relation = related_field.related_name
+
         if related_field.is_multi:
             previous_model = related_field.through
             relation = related_field.default_target_field_name()  # type: ignore
@@ -250,6 +258,8 @@ def get_relationship_alias_model_and_str(
         )
         model_cls = related_field.to
         previous_model = model_cls
+        if not is_through:
+            previous_models.append(previous_model)
     relation_str = "__".join(related_parts)
 
     return table_prefix, model_cls, relation_str, is_through

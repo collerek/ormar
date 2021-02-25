@@ -8,11 +8,12 @@ from sqlalchemy import text
 import ormar  # noqa I100
 from ormar.models.helpers.models import group_related_list
 from ormar.queryset import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
-from ormar.queryset.filter_action import FilterAction
+from ormar.queryset.actions.filter_action import FilterAction
 from ormar.queryset.join import SqlJoin
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+    from ormar.queryset import OrderAction
 
 
 class Query:
@@ -26,7 +27,7 @@ class Query:
         offset: Optional[int],
         fields: Optional[Union[Dict, Set]],
         exclude_fields: Optional[Union[Dict, Set]],
-        order_bys: Optional[List],
+        order_bys: Optional[List["OrderAction"]],
         limit_raw_sql: bool,
     ) -> None:
         self.query_offset = offset
@@ -45,7 +46,7 @@ class Query:
         self.select_from: List[str] = []
         self.columns = [sqlalchemy.Column]
         self.order_columns = order_bys
-        self.sorted_orders: OrderedDict = OrderedDict()
+        self.sorted_orders: OrderedDict[OrderAction, text] = OrderedDict()
         self._init_sorted_orders()
 
         self.limit_raw_sql = limit_raw_sql
@@ -58,28 +59,6 @@ class Query:
             for clause in self.order_columns:
                 self.sorted_orders[clause] = None
 
-    @property
-    def prefixed_pk_name(self) -> str:
-        """
-        Shortcut for extracting prefixed with alias primary key column name from main
-        model
-        :return: alias of pk column prefix with table name.
-        :rtype: str
-        """
-        pkname_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
-        return f"{self.table.name}.{pkname_alias}"
-
-    def alias(self, name: str) -> str:
-        """
-        Shortcut to extracting column alias from given master model.
-
-        :param name: name of column
-        :type name: str
-        :return: alias of given column name
-        :rtype: str
-        """
-        return self.model_cls.get_column_alias(name)
-
     def apply_order_bys_for_primary_model(self) -> None:  # noqa: CCR001
         """
         Applies order_by queries on main model when it's used as a subquery.
@@ -88,16 +67,13 @@ class Query:
         """
         if self.order_columns:
             for clause in self.order_columns:
-                if "__" not in clause:
-                    text_clause = (
-                        text(f"{self.table.name}.{self.alias(clause[1:])} desc")
-                        if clause.startswith("-")
-                        else text(f"{self.table.name}.{self.alias(clause)}")
-                    )
-                    self.sorted_orders[clause] = text_clause
+                if clause.is_source_model_order:
+                    self.sorted_orders[clause] = clause.get_text_clause()
         else:
-            order = text(self.prefixed_pk_name)
-            self.sorted_orders[self.prefixed_pk_name] = order
+            clause = ormar.OrderAction(
+                order_str=self.model_cls.Meta.pkname, model_cls=self.model_cls
+            )
+            self.sorted_orders[clause] = clause.get_text_clause()
 
     def _pagination_query_required(self) -> bool:
         """
@@ -208,7 +184,9 @@ class Query:
             for filter_clause in self.exclude_clauses
             if filter_clause.table_prefix == ""
         ]
-        sorts_to_use = {k: v for k, v in self.sorted_orders.items() if "__" not in k}
+        sorts_to_use = {
+            k: v for k, v in self.sorted_orders.items() if k.is_source_model_order
+        }
         expr = FilterQuery(filter_clauses=filters_to_use).apply(expr)
         expr = FilterQuery(filter_clauses=excludes_to_use, exclude=True).apply(expr)
         expr = OrderQuery(sorted_orders=sorts_to_use).apply(expr)

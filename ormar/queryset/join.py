@@ -14,11 +14,13 @@ from typing import (
 import sqlalchemy
 from sqlalchemy import text
 
-from ormar.exceptions import RelationshipInstanceError  # noqa I100
+import ormar  # noqa I100
+from ormar.exceptions import RelationshipInstanceError
 from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+    from ormar.queryset import OrderAction
 
 
 class SqlJoin:
@@ -29,7 +31,7 @@ class SqlJoin:
         columns: List[sqlalchemy.Column],
         fields: Optional[Union[Set, Dict]],
         exclude_fields: Optional[Union[Set, Dict]],
-        order_columns: Optional[List],
+        order_columns: Optional[List["OrderAction"]],
         sorted_orders: OrderedDict,
         main_model: Type["Model"],
         relation_name: str,
@@ -89,7 +91,18 @@ class SqlJoin:
         """
         return self.main_model.Meta.alias_manager
 
-    def on_clause(self, previous_alias: str, from_clause: str, to_clause: str,) -> text:
+    @property
+    def to_table(self) -> str:
+        """
+        Shortcut to table name of the next model
+        :return: name of the target table
+        :rtype: str
+        """
+        return self.next_model.Meta.table.name
+
+    def _on_clause(
+        self, previous_alias: str, from_clause: str, to_clause: str,
+    ) -> text:
         """
         Receives aliases and names of both ends of the join and combines them
         into one text clause used in joins.
@@ -118,7 +131,7 @@ class SqlJoin:
         :rtype: Tuple[List[str], Join, List[TextClause], collections.OrderedDict]
         """
         if self.target_field.is_multi:
-            self.process_m2m_through_table()
+            self._process_m2m_through_table()
 
         self.next_model = self.target_field.to
         self._forward_join()
@@ -207,7 +220,7 @@ class SqlJoin:
             self.sorted_orders,
         ) = sql_join.build_join()
 
-    def process_m2m_through_table(self) -> None:
+    def _process_m2m_through_table(self) -> None:
         """
         Process Through table of the ManyToMany relation so that source table is
         linked to the through table (one additional join)
@@ -222,8 +235,7 @@ class SqlJoin:
 
         To point to through model
         """
-        new_part = self.process_m2m_related_name_change()
-        self._replace_many_to_many_order_by_columns(self.relation_name, new_part)
+        new_part = self._process_m2m_related_name_change()
 
         self.next_model = self.target_field.through
         self._forward_join()
@@ -232,7 +244,7 @@ class SqlJoin:
         self.own_alias = self.next_alias
         self.target_field = self.next_model.Meta.model_fields[self.relation_name]
 
-    def process_m2m_related_name_change(self, reverse: bool = False) -> str:
+    def _process_m2m_related_name_change(self, reverse: bool = False) -> str:
         """
         Extracts relation name to link join through the Through model declared on
         relation field.
@@ -272,24 +284,21 @@ class SqlJoin:
         Process order_by causes for non m2m relations.
 
         """
-        to_table = self.next_model.Meta.table.name
-        to_key, from_key = self.get_to_and_from_keys()
+        to_key, from_key = self._get_to_and_from_keys()
 
-        on_clause = self.on_clause(
+        on_clause = self._on_clause(
             previous_alias=self.own_alias,
             from_clause=f"{self.target_field.owner.Meta.tablename}.{from_key}",
-            to_clause=f"{to_table}.{to_key}",
+            to_clause=f"{self.to_table}.{to_key}",
         )
-        target_table = self.alias_manager.prefixed_table_name(self.next_alias, to_table)
+        target_table = self.alias_manager.prefixed_table_name(
+            self.next_alias, self.to_table
+        )
         self.select_from = sqlalchemy.sql.outerjoin(
             self.select_from, target_table, on_clause
         )
 
-        pkname_alias = self.next_model.get_column_alias(self.next_model.Meta.pkname)
-        if not self.target_field.is_multi:
-            self.get_order_bys(
-                to_table=to_table, pkname_alias=pkname_alias,
-            )
+        self._get_order_bys()
 
         # TODO: fix fields and exclusions for through model?
         self_related_fields = self.next_model.own_table_columns(
@@ -305,88 +314,35 @@ class SqlJoin:
         )
         self.used_aliases.append(self.next_alias)
 
-    def _replace_many_to_many_order_by_columns(self, part: str, new_part: str) -> None:
-        """
-        Substitutes the name of the relation with actual model name in m2m order bys.
-
-        :param part: name of the field with relation
-        :type part: str
-        :param new_part: name of the target model
-        :type new_part: str
-        """
-        if self.order_columns:
-            split_order_columns = [
-                x.split("__") for x in self.order_columns if "__" in x
-            ]
-            for condition in split_order_columns:
-                if self._check_if_condition_apply(condition, part):
-                    condition[-2] = condition[-2].replace(part, new_part)
-            self.order_columns = [x for x in self.order_columns if "__" not in x] + [
-                "__".join(x) for x in split_order_columns
-            ]
-
-    @staticmethod
-    def _check_if_condition_apply(condition: List, part: str) -> bool:
-        """
-        Checks filter conditions to find if they apply to current join.
-
-        :param condition: list of parts of condition split by '__'
-        :type condition: List[str]
-        :param part: name of the current relation join.
-        :type part: str
-        :return: result of the check
-        :rtype: bool
-        """
-        return len(condition) >= 2 and (
-            condition[-2] == part or condition[-2][1:] == part
+    def _set_default_primary_key_order_by(self) -> None:
+        clause = ormar.OrderAction(
+            order_str=self.next_model.Meta.pkname,
+            model_cls=self.next_model,
+            alias=self.next_alias,
         )
+        self.sorted_orders[clause] = clause.get_text_clause()
 
-    def set_aliased_order_by(self, condition: List[str], to_table: str,) -> None:
-        """
-        Substitute hyphens ('-') with descending order.
-        Construct actual sqlalchemy text clause using aliased table and column name.
-
-        :param condition: list of parts of a current condition split by '__'
-        :type condition: List[str]
-        :param to_table: target table
-        :type to_table: sqlalchemy.sql.elements.quoted_name
-        """
-        direction = f"{'desc' if condition[0][0] == '-' else ''}"
-        column_alias = self.next_model.get_column_alias(condition[-1])
-        order = text(f"{self.next_alias}_{to_table}.{column_alias} {direction}")
-        self.sorted_orders["__".join(condition)] = order
-
-    def get_order_bys(self, to_table: str, pkname_alias: str,) -> None:  # noqa: CCR001
+    def _get_order_bys(self) -> None:  # noqa: CCR001
         """
         Triggers construction of order bys if they are given.
         Otherwise by default each table is sorted by a primary key column asc.
-
-        :param to_table: target table
-        :type to_table: sqlalchemy.sql.elements.quoted_name
-        :param pkname_alias: alias of the primary key column
-        :type pkname_alias: str
         """
         alias = self.next_alias
         if self.order_columns:
             current_table_sorted = False
-            split_order_columns = [
-                x.split("__") for x in self.order_columns if "__" in x
-            ]
-            for condition in split_order_columns:
-                if self._check_if_condition_apply(condition, self.relation_name):
+            for condition in self.order_columns:
+                if condition.check_if_filter_apply(
+                    target_model=self.next_model, alias=alias
+                ):
                     current_table_sorted = True
-                    self.set_aliased_order_by(
-                        condition=condition, to_table=to_table,
-                    )
-            if not current_table_sorted:
-                order = text(f"{alias}_{to_table}.{pkname_alias}")
-                self.sorted_orders[f"{alias}.{pkname_alias}"] = order
+                    self.sorted_orders[condition] = condition.get_text_clause()
+            if not current_table_sorted and not self.target_field.is_multi:
+                self._set_default_primary_key_order_by()
 
-        else:
-            order = text(f"{alias}_{to_table}.{pkname_alias}")
-            self.sorted_orders[f"{alias}.{pkname_alias}"] = order
+        elif not self.target_field.is_multi:
+            self._set_default_primary_key_order_by()
 
-    def get_to_and_from_keys(self) -> Tuple[str, str]:
+    def _get_to_and_from_keys(self) -> Tuple[str, str]:
         """
         Based on the relation type, name of the relation and previous models and parts
         stored in JoinParameters it resolves the current to and from keys, which are
@@ -396,7 +352,7 @@ class SqlJoin:
         :rtype: Tuple[str, str]
         """
         if self.target_field.is_multi:
-            to_key = self.process_m2m_related_name_change(reverse=True)
+            to_key = self._process_m2m_related_name_change(reverse=True)
             from_key = self.main_model.get_column_alias(self.main_model.Meta.pkname)
 
         elif self.target_field.virtual:

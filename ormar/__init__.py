@@ -56,7 +56,7 @@ from ormar.fields import (
 )  # noqa: I100
 from ormar.models import Model
 from ormar.models.metaclass import ModelMeta
-from ormar.queryset import QuerySet
+from ormar.queryset import OrderAction, QuerySet
 from ormar.relations import RelationType
 from ormar.signals import Signal
 
@@ -106,4 +106,5 @@ __all__ = [
     "BaseField",
     "ManyToManyField",
     "ForeignKeyField",
+    "OrderAction",
 ]

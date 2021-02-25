@@ -17,7 +17,7 @@ from ormar.models import NewBaseModel  # noqa: I202
 from ormar.models.helpers.models import group_related_list
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from ormar.fields import ForeignKeyField
     from ormar.models import T
 else:

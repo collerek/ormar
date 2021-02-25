@@ -21,6 +21,7 @@ import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
 from ormar.exceptions import ModelError, ModelPersistenceError, QueryDefinitionError
 from ormar.queryset import FilterQuery
+from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.prefetch_query import PrefetchQuery
 from ormar.queryset.query import Query
@@ -514,7 +515,12 @@ class QuerySet(Generic[T]):
         if not isinstance(columns, list):
             columns = [columns]
 
-        order_bys = self.order_bys + [x for x in columns if x not in self.order_bys]
+        orders_by = [
+            OrderAction(order_str=x, model_cls=self.model_cls)  # type: ignore
+            for x in columns
+        ]
+
+        order_bys = self.order_bys + [x for x in orders_by if x not in self.order_bys]
         return self.__class__(
             model_cls=self.model,
             filter_clauses=self.filter_clauses,
@@ -713,7 +719,14 @@ class QuerySet(Generic[T]):
             return await self.filter(**kwargs).first()
 
         expr = self.build_select_expression(
-            limit=1, order_bys=[f"{self.model.Meta.pkname}"] + self.order_bys
+            limit=1,
+            order_bys=[
+                OrderAction(
+                    order_str=f"{self.model.Meta.pkname}",
+                    model_cls=self.model_cls,  # type: ignore
+                )
+            ]
+            + self.order_bys,
         )
         rows = await self.database.fetch_all(expr)
         processed_rows = self._process_query_result_rows(rows)
@@ -742,7 +755,14 @@ class QuerySet(Generic[T]):
 
         if not self.filter_clauses:
             expr = self.build_select_expression(
-                limit=1, order_bys=[f"-{self.model.Meta.pkname}"] + self.order_bys
+                limit=1,
+                order_bys=[
+                    OrderAction(
+                        order_str=f"-{self.model.Meta.pkname}",
+                        model_cls=self.model_cls,  # type: ignore
+                    )
+                ]
+                + self.order_bys,
             )
         else:
             expr = self.build_select_expression()

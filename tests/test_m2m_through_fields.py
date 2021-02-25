@@ -34,6 +34,14 @@ class PostCategory(ormar.Model):
     param_name: str = ormar.String(default="Name", max_length=200)
 
 
+class Blog(ormar.Model):
+    class Meta(BaseMeta):
+        pass
+
+    id: int = ormar.Integer(primary_key=True)
+    title: str = ormar.String(max_length=200)
+
+
 class Post(ormar.Model):
     class Meta(BaseMeta):
         pass
@@ -41,6 +49,7 @@ class Post(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
     categories = ormar.ManyToMany(Category, through=PostCategory)
+    blog = ormar.ForeignKey(Blog)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -146,17 +155,85 @@ async def test_filtering_by_through_model() -> Any:
         )
 
         post2 = (
-            await Post.objects.filter(postcategory__sort_order__gt=1)
-                .select_related("categories")
-                .get()
+            await Post.objects.select_related("categories")
+            .filter(postcategory__sort_order__gt=1)
+            .get()
         )
         assert len(post2.categories) == 1
         assert post2.categories[0].postcategory.sort_order == 2
 
         post3 = await Post.objects.filter(
-            categories__postcategory__param_name="volume").get()
+            categories__postcategory__param_name="volume"
+        ).get()
         assert len(post3.categories) == 1
         assert post3.categories[0].postcategory.param_name == "volume"
+
+
+@pytest.mark.asyncio
+async def test_deep_filtering_by_through_model() -> Any:
+    async with database:
+        blog = await Blog(title="My Blog").save()
+        post = await Post(title="Test post", blog=blog).save()
+
+        await post.categories.create(
+            name="Test category1",
+            postcategory={"sort_order": 1, "param_name": "volume"},
+        )
+        await post.categories.create(
+            name="Test category2", postcategory={"sort_order": 2, "param_name": "area"}
+        )
+
+        blog2 = (
+            await Blog.objects.select_related("posts__categories")
+            .filter(posts__postcategory__sort_order__gt=1)
+            .get()
+        )
+        assert len(blog2.posts) == 1
+        assert len(blog2.posts[0].categories) == 1
+        assert blog2.posts[0].categories[0].postcategory.sort_order == 2
+
+        blog3 = await Blog.objects.filter(
+            posts__categories__postcategory__param_name="volume"
+        ).get()
+        assert len(blog3.posts) == 1
+        assert len(blog3.posts[0].categories) == 1
+        assert blog3.posts[0].categories[0].postcategory.param_name == "volume"
+
+
+@pytest.mark.asyncio
+async def test_ordering_by_through_model() -> Any:
+    async with database:
+        post = await Post(title="Test post").save()
+        await post.categories.create(
+            name="Test category1",
+            postcategory={"sort_order": 2, "param_name": "volume"},
+        )
+        await post.categories.create(
+            name="Test category2", postcategory={"sort_order": 1, "param_name": "area"}
+        )
+        await post.categories.create(
+            name="Test category3",
+            postcategory={"sort_order": 3, "param_name": "velocity"},
+        )
+
+        post2 = (
+            await Post.objects.select_related("categories")
+            .order_by("-postcategory__sort_order")
+            .get()
+        )
+        assert len(post2.categories) == 3
+        assert post2.categories[0].name == "Test category3"
+        assert post2.categories[2].name == "Test category2"
+
+        post3 = (
+            await Post.objects.select_related("categories")
+            .order_by("categories__postcategory__param_name")
+            .get()
+        )
+        assert len(post3.categories) == 3
+        assert post3.categories[0].postcategory.param_name == "area"
+        assert post3.categories[2].postcategory.param_name == "volume"
+
 
 # TODO: check/ modify following
 
@@ -166,10 +243,12 @@ async def test_filtering_by_through_model() -> Any:
 # creating in queryset proxy (dict with through name and kwargs) (V)
 # loading the data into model instance of though model (V) <- fix fields ane exclude
 # accessing from instance (V) <- no both sides only nested one is relevant, fix one side
-# filtering in filter (through name normally) (V) < - table prefix from normal relation, check if is_through needed
+# filtering in filter (through name normally) (V) < - table prefix from normal relation,
+#               check if is_through needed, resolved side of relation
+# ordering by in order_by
+
 
 # updating in query
-# ordering by in order_by
 # modifying from instance (both sides?)
 # including/excluding in fields?
 # allowing to change fk fields names in through model?

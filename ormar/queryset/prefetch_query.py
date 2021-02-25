@@ -20,6 +20,7 @@ from ormar.queryset.utils import extract_models_to_dict_of_lists, translate_list
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
     from ormar.fields import ForeignKeyField, BaseField
+    from ormar.queryset import OrderAction
 
 
 def add_relation_field_to_fields(
@@ -128,7 +129,7 @@ class PrefetchQuery:
         exclude_fields: Optional[Union[Dict, Set]],
         prefetch_related: List,
         select_related: List,
-        orders_by: List,
+        orders_by: List["OrderAction"],
     ) -> None:
 
         self.model = model_cls
@@ -141,7 +142,9 @@ class PrefetchQuery:
         self.models: Dict = {}
         self.select_dict = translate_list_to_dict(self._select_related)
         self.orders_by = orders_by or []
-        self.order_dict = translate_list_to_dict(self.orders_by, is_order=True)
+        self.order_dict = translate_list_to_dict(
+            [x.query_str for x in self.orders_by], is_order=True
+        )
 
     async def prefetch_related(
         self, models: Sequence["Model"], rows: List
