@@ -58,7 +58,7 @@ async def shutdown() -> None:
 
 Define ormar models with appropriate fields. 
 
-Those models will be used insted of pydantic ones.
+Those models will be used instead of pydantic ones.
 
 ```python
 class Category(ormar.Model):
