@@ -52,6 +52,9 @@ class QuerySetProtocol(Protocol):  # pragma: nocover
     async def create(self, **kwargs: Any) -> "Model":
         ...
 
+    async def update(self, each: bool = False, **kwargs: Any) -> int:
+        ...
+
     async def get_or_create(self, **kwargs: Any) -> "Model":
         ...
 

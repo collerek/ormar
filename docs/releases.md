@@ -1,3 +1,27 @@
+# 0.9.5
+
+## Features
+* Add `update` method to `QuerysetProxy` so now it's possible to update related models directly from parent model
+  in `ManyToMany` relations and in reverse `ForeignKey` relations. Note that update like in `QuerySet` `update` returns number of
+  updated models and **does not update related models in place** on praent model. To get the refreshed data on parent model you need to refresh
+  the related models (i.e. `await model_instance.related.all()`)
+* Added possibility to add more fields on `Through` model for `ManyToMany` relationships:
+    * name of the through model field is the lowercase name of the Through class
+    * you can pass additional fields when calling `add(child, **kwargs)` on relation (on `QuerysetProxy`)
+    * you can pass additional fields when calling `create(**kwargs)` on relation (on `QuerysetProxy`)
+        when one of the keyword arguments should be the through model name with a dict of values
+    * you can order by on through model fields
+    * you can filter on through model fields
+    * you can include and exclude fields on through models
+    * through models are attached only to related models (i.e. if you query from A to B -> only on B)
+    * check the updated docs for more information
+    
+# Other
+* Updated docs and api docs
+* Refactors and optimisations mainly related to filters and order bys
+
+
+
 # 0.9.4
 
 ## Fixes

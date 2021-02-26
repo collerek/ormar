@@ -6,6 +6,7 @@ import pytest
 import sqlalchemy
 
 import ormar
+from ormar.exceptions import QueryDefinitionError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -180,3 +181,42 @@ async def test_queryset_methods():
             assert len(categories) == 3 == len(post.categories)
             for cat in post.categories:
                 assert cat.subject.name is not None
+
+
+@pytest.mark.asyncio
+async def test_queryset_update():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            guido = await Author.objects.create(
+                first_name="Guido", last_name="Van Rossum"
+            )
+            subject = await Subject(name="Random").save()
+            post = await Post.objects.create(title="Hello, M2M", author=guido)
+            await post.categories.create(name="News", sort_order=1, subject=subject)
+            await post.categories.create(name="Breaking", sort_order=3, subject=subject)
+
+            await post.categories.order_by("sort_order").all()
+            assert len(post.categories) == 2
+            assert post.categories[0].sort_order == 1
+            assert post.categories[0].name == "News"
+            assert post.categories[1].sort_order == 3
+            assert post.categories[1].name == "Breaking"
+
+            updated = await post.categories.update(each=True, name="Test")
+            assert updated == 2
+
+            await post.categories.order_by("sort_order").all()
+            assert len(post.categories) == 2
+            assert post.categories[0].name == "Test"
+            assert post.categories[1].name == "Test"
+
+            updated = await post.categories.filter(sort_order=3).update(name="Test 2")
+            assert updated == 1
+
+            await post.categories.order_by("sort_order").all()
+            assert len(post.categories) == 2
+            assert post.categories[0].name == "Test"
+            assert post.categories[1].name == "Test 2"
+
+            with pytest.raises(QueryDefinitionError):
+                await post.categories.update(name="Test WRONG")

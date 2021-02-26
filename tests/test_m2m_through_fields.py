@@ -235,6 +235,64 @@ async def test_ordering_by_through_model() -> Any:
         assert post3.categories[2].postcategory.param_name == "volume"
 
 
+@pytest.mark.asyncio
+async def test_update_through_models_from_queryset_on_through() -> Any:
+    async with database:
+        post = await Post(title="Test post").save()
+        await post.categories.create(
+            name="Test category1",
+            postcategory={"sort_order": 2, "param_name": "volume"},
+        )
+        await post.categories.create(
+            name="Test category2", postcategory={"sort_order": 1, "param_name": "area"}
+        )
+        await post.categories.create(
+            name="Test category3",
+            postcategory={"sort_order": 3, "param_name": "velocity"},
+        )
+
+        await PostCategory.objects.filter(param_name="volume", post=post.id).update(
+            sort_order=4
+        )
+        post2 = (
+            await Post.objects.select_related("categories")
+            .order_by("-postcategory__sort_order")
+            .get()
+        )
+        assert len(post2.categories) == 3
+        assert post2.categories[0].postcategory.param_name == "volume"
+        assert post2.categories[2].postcategory.param_name == "area"
+
+
+@pytest.mark.asyncio
+async def test_update_through_from_related() -> Any:
+    async with database:
+        post = await Post(title="Test post").save()
+        await post.categories.create(
+            name="Test category1",
+            postcategory={"sort_order": 2, "param_name": "volume"},
+        )
+        await post.categories.create(
+            name="Test category2", postcategory={"sort_order": 1, "param_name": "area"}
+        )
+        await post.categories.create(
+            name="Test category3",
+            postcategory={"sort_order": 3, "param_name": "velocity"},
+        )
+
+        await post.categories.filter(name="Test category3").update(
+            postcategory={"sort_order": 4}
+        )
+
+        post2 = (
+            await Post.objects.select_related("categories")
+            .order_by("postcategory__sort_order")
+            .get()
+        )
+        assert len(post2.categories) == 3
+        assert post2.categories[2].postcategory.sort_order == 4
+
+
 # TODO: check/ modify following
 
 # add to fields with class lower name (V)
@@ -245,11 +303,12 @@ async def test_ordering_by_through_model() -> Any:
 # accessing from instance (V) <- no both sides only nested one is relevant, fix one side
 # filtering in filter (through name normally) (V) < - table prefix from normal relation,
 #               check if is_through needed, resolved side of relation
-# ordering by in order_by
+# ordering by in order_by (V)
+# updating in query (V)
+# updating from querysetproxy (V)
 
+# modifying from instance (both sides?) (X) <= no, the loaded one doesn't have relations
 
-# updating in query
-# modifying from instance (both sides?)
 # including/excluding in fields?
 # allowing to change fk fields names in through model?
 # make through optional? auto-generated for cases other fields are missing?

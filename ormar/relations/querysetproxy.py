@@ -14,7 +14,7 @@ from typing import (
 )
 
 import ormar
-from ormar.exceptions import ModelPersistenceError
+from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
@@ -131,6 +131,22 @@ class QuerysetProxy(Generic[T]):
         expr = expr.values(**final_kwargs)
         # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
         await model_cls.Meta.database.execute(expr)
+
+    async def update_through_instance(self, child: "T", **kwargs: Any) -> None:
+        """
+        Updates a through model instance in the database for m2m relations.
+
+        :param kwargs: dict of additional keyword arguments for through instance
+        :type kwargs: Any
+        :param child: child model instance
+        :type child: Model
+        """
+        model_cls = self.relation.through
+        owner_column = self.related_field.default_target_field_name()  # type: ignore
+        child_column = self.related_field.default_source_field_name()  # type: ignore
+        rel_kwargs = {owner_column: self._owner.pk, child_column: child.pk}
+        through_model = await model_cls.objects.get(**rel_kwargs)
+        await through_model.update(**kwargs)
 
     async def delete_through_instance(self, child: "T") -> None:
         """
@@ -289,6 +305,39 @@ class QuerysetProxy(Generic[T]):
         if self.type_ == ormar.RelationType.MULTIPLE:
             await self.create_through_instance(created, **through_kwargs)
         return created
+
+    async def update(self, each: bool = False, **kwargs: Any) -> int:
+        """
+        Updates the model table after applying the filters from kwargs.
+
+        You have to either pass a filter to narrow down a query or explicitly pass
+        each=True flag to affect whole table.
+
+        :param each: flag if whole table should be affected if no filter is passed
+        :type each: bool
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: number of updated rows
+        :rtype: int
+        """
+        # queryset proxy always have one filter for pk of parent model
+        if not each and len(self.queryset.filter_clauses) == 1:
+            raise QueryDefinitionError(
+                "You cannot update without filtering the queryset first. "
+                "If you want to update all rows use update(each=True, **kwargs)"
+            )
+
+        through_kwargs = kwargs.pop(self.through_model_name, {})
+        children = await self.queryset.all()
+        for child in children:
+            if child:
+                await child.update(**kwargs)
+                if self.type_ == ormar.RelationType.MULTIPLE and through_kwargs:
+                    await self.update_through_instance(
+                        child=child,  # type: ignore
+                        **through_kwargs,
+                    )
+        return len(children)
 
     async def get_or_create(self, **kwargs: Any) -> "T":
         """

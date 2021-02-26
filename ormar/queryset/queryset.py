@@ -573,17 +573,19 @@ class QuerySet(Generic[T]):
         :return: number of updated rows
         :rtype: int
         """
+        if not each and not self.filter_clauses:
+            raise QueryDefinitionError(
+                "You cannot update without filtering the queryset first. "
+                "If you want to update all rows use update(each=True, **kwargs)"
+            )
+
         self_fields = self.model.extract_db_own_fields().union(
             self.model.extract_related_names()
         )
         updates = {k: v for k, v in kwargs.items() if k in self_fields}
         updates = self.model.validate_choices(updates)
         updates = self.model.translate_columns_to_aliases(updates)
-        if not each and not self.filter_clauses:
-            raise QueryDefinitionError(
-                "You cannot update without filtering the queryset first. "
-                "If you want to update all rows use update(each=True, **kwargs)"
-            )
+
         expr = FilterQuery(filter_clauses=self.filter_clauses).apply(
             self.table.update().values(**updates)
         )

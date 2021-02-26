@@ -142,6 +142,7 @@ class PrefetchQuery:
         self.models: Dict = {}
         self.select_dict = translate_list_to_dict(self._select_related)
         self.orders_by = orders_by or []
+        # TODO: refactor OrderActions to use it instead of strings from it
         self.order_dict = translate_list_to_dict(
             [x.query_str for x in self.orders_by], is_order=True
         )

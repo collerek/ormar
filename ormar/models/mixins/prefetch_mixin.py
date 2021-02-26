@@ -18,10 +18,10 @@ class PrefetchQueryMixin(RelationMixin):
 
     @staticmethod
     def get_clause_target_and_filter_column_name(
-            parent_model: Type["Model"],
-            target_model: Type["Model"],
-            reverse: bool,
-            related: str,
+        parent_model: Type["Model"],
+        target_model: Type["Model"],
+        reverse: bool,
+        related: str,
     ) -> Tuple[Type["Model"], str]:
         """
         Returns Model on which query clause should be performed and name of the column.
@@ -51,7 +51,7 @@ class PrefetchQueryMixin(RelationMixin):
 
     @staticmethod
     def get_column_name_for_id_extraction(
-            parent_model: Type["Model"], reverse: bool, related: str, use_raw: bool,
+        parent_model: Type["Model"], reverse: bool, related: str, use_raw: bool,
     ) -> str:
         """
         Returns name of the column that should be used to extract ids from model.
