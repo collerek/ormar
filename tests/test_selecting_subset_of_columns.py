@@ -204,8 +204,8 @@ async def test_selecting_subset():
             all_cars_dummy = (
                 await Car.objects.select_related("manufacturer")
                 .fields(["id", "name", "year", "gearbox_type", "gears", "aircon_type"])
-                .fields({"manufacturer": ...})
-                .exclude_fields({"manufacturer": ...})
+                # .fields({"manufacturer": ...})
+                # .exclude_fields({"manufacturer": ...})
                 .fields({"manufacturer": {"name"}})
                 .exclude_fields({"manufacturer__founded"})
                 .all()

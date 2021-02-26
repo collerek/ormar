@@ -177,12 +177,12 @@ class Query:
         filters_to_use = [
             filter_clause
             for filter_clause in self.filter_clauses
-            if filter_clause.table_prefix == ""
+            if filter_clause.is_source_model_filter
         ]
         excludes_to_use = [
             filter_clause
             for filter_clause in self.exclude_clauses
-            if filter_clause.table_prefix == ""
+            if filter_clause.is_source_model_filter
         ]
         sorts_to_use = {
             k: v for k, v in self.sorted_orders.items() if k.is_source_model_order

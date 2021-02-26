@@ -330,13 +330,12 @@ class QuerysetProxy(Generic[T]):
         through_kwargs = kwargs.pop(self.through_model_name, {})
         children = await self.queryset.all()
         for child in children:
-            if child:
-                await child.update(**kwargs)
-                if self.type_ == ormar.RelationType.MULTIPLE and through_kwargs:
-                    await self.update_through_instance(
-                        child=child,  # type: ignore
-                        **through_kwargs,
-                    )
+            await child.update(**kwargs)  # type: ignore
+            if self.type_ == ormar.RelationType.MULTIPLE and through_kwargs:
+                await self.update_through_instance(
+                    child=child,  # type: ignore
+                    **through_kwargs,
+                )
         return len(children)
 
     async def get_or_create(self, **kwargs: Any) -> "T":

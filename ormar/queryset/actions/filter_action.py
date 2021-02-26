@@ -42,6 +42,9 @@ class FilterAction(QueryAction):
         super().__init__(query_str=filter_str, model_cls=model_cls)
         self.filter_value = value
         self._escape_characters_in_clause()
+        self.is_source_model_filter = False
+        if self.source_model == self.target_model and "__" not in self.related_str:
+            self.is_source_model_filter = True
 
     def has_escaped_characters(self) -> bool:
         """Check if value is a string that contains characters to escape"""

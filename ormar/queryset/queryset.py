@@ -410,6 +410,7 @@ class QuerySet(Generic[T]):
         if isinstance(columns, str):
             columns = [columns]
 
+        # TODO: Flatten all excludes into one dict-like structure with alias + model key
         current_included = self._columns
         if not isinstance(columns, dict):
             current_included = update_dict_from_list(current_included, columns)

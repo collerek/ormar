@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 import databases
 import pytest
@@ -291,6 +291,37 @@ async def test_update_through_from_related() -> Any:
         )
         assert len(post2.categories) == 3
         assert post2.categories[2].postcategory.sort_order == 4
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip  # TODO: Restore after finished exclude refactor
+async def test_excluding_fields_on_through_model() -> Any:
+    async with database:
+        post = await Post(title="Test post").save()
+        await post.categories.create(
+            name="Test category1",
+            postcategory={"sort_order": 2, "param_name": "volume"},
+        )
+        await post.categories.create(
+            name="Test category2", postcategory={"sort_order": 1, "param_name": "area"}
+        )
+        await post.categories.create(
+            name="Test category3",
+            postcategory={"sort_order": 3, "param_name": "velocity"},
+        )
+
+        post2 = (
+            await Post.objects.select_related("categories")
+            .exclude_fields("postcategory__param_name")
+            .order_by("postcategory__sort_order")
+            .get()
+        )
+        assert len(post2.categories) == 3
+        assert post2.categories[0].postcategory.param_name is None
+        assert post2.categories[0].postcategory.sort_order == 1
+
+        assert post2.categories[2].postcategory.param_name is None
+        assert post2.categories[2].postcategory.sort_order == 3
 
 
 # TODO: check/ modify following
