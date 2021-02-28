@@ -6,6 +6,7 @@ import sqlalchemy
 from sqlalchemy import text
 
 import ormar  # noqa I100
+from ormar.models.excludable import ExcludableItems
 from ormar.models.helpers.models import group_related_list
 from ormar.queryset import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
 from ormar.queryset.actions.filter_action import FilterAction
@@ -18,25 +19,23 @@ if TYPE_CHECKING:  # pragma no cover
 
 class Query:
     def __init__(  # noqa CFQ002
-        self,
-        model_cls: Type["Model"],
-        filter_clauses: List[FilterAction],
-        exclude_clauses: List[FilterAction],
-        select_related: List,
-        limit_count: Optional[int],
-        offset: Optional[int],
-        fields: Optional[Union[Dict, Set]],
-        exclude_fields: Optional[Union[Dict, Set]],
-        order_bys: Optional[List["OrderAction"]],
-        limit_raw_sql: bool,
+            self,
+            model_cls: Type["Model"],
+            filter_clauses: List[FilterAction],
+            exclude_clauses: List[FilterAction],
+            select_related: List,
+            limit_count: Optional[int],
+            offset: Optional[int],
+            excludable: ExcludableItems,
+            order_bys: Optional[List["OrderAction"]],
+            limit_raw_sql: bool,
     ) -> None:
         self.query_offset = offset
         self.limit_count = limit_count
         self._select_related = select_related[:]
         self.filter_clauses = filter_clauses[:]
         self.exclude_clauses = exclude_clauses[:]
-        self.fields = copy.deepcopy(fields) if fields else {}
-        self.exclude_fields = copy.deepcopy(exclude_fields) if exclude_fields else {}
+        self.excludable = excludable
 
         self.model_cls = model_cls
         self.table = self.model_cls.Meta.table
@@ -105,8 +104,7 @@ class Query:
         """
         self_related_fields = self.model_cls.own_table_columns(
             model=self.model_cls,
-            fields=self.fields,
-            exclude_fields=self.exclude_fields,
+            excludable=self.excludable,
             use_alias=True,
         )
         self.columns = self.model_cls.Meta.alias_manager.prefixed_columns(
@@ -121,8 +119,6 @@ class Query:
         related_models = group_related_list(self._select_related)
 
         for related in related_models:
-            fields = self.model_cls.get_included(self.fields, related)
-            exclude_fields = self.model_cls.get_excluded(self.exclude_fields, related)
             remainder = None
             if isinstance(related_models, dict) and related_models[related]:
                 remainder = related_models[related]
@@ -130,8 +126,7 @@ class Query:
                 used_aliases=self.used_aliases,
                 select_from=self.select_from,
                 columns=self.columns,
-                fields=fields,
-                exclude_fields=exclude_fields,
+                excludable=self.excludable,
                 order_columns=self.order_columns,
                 sorted_orders=self.sorted_orders,
                 main_model=self.model_cls,
@@ -196,7 +191,7 @@ class Query:
         return expr
 
     def _apply_expression_modifiers(
-        self, expr: sqlalchemy.sql.select
+            self, expr: sqlalchemy.sql.select
     ) -> sqlalchemy.sql.select:
         """
         Receives the select query (might be join) and applies:
@@ -231,5 +226,3 @@ class Query:
         self.select_from = []
         self.columns = []
         self.used_aliases = []
-        self.fields = {}
-        self.exclude_fields = {}

@@ -14,6 +14,7 @@ from typing import (
 import sqlalchemy
 
 from ormar.models import NewBaseModel  # noqa: I202
+from ormar.models.excludable import ExcludableItems
 from ormar.models.helpers.models import group_related_list
 
 
@@ -33,8 +34,7 @@ class ModelRow(NewBaseModel):
         select_related: List = None,
         related_models: Any = None,
         related_field: Type["ForeignKeyField"] = None,
-        fields: Optional[Union[Dict, Set]] = None,
-        exclude_fields: Optional[Union[Dict, Set]] = None,
+        excludable: ExcludableItems = None,
         current_relation_str: str = "",
     ) -> Optional[T]:
         """
@@ -50,6 +50,8 @@ class ModelRow(NewBaseModel):
         where rows are populated in a different way as they do not have
         nested models in result.
 
+        :param excludable: structure of fields to include and exclude
+        :type excludable: ExcludableItems
         :param current_relation_str: name of the relation field
         :type current_relation_str: str
         :param source_model: model on which relation was defined
@@ -62,12 +64,6 @@ class ModelRow(NewBaseModel):
         :type related_models: Union[List, Dict]
         :param related_field: field with relation declaration
         :type related_field: Type[ForeignKeyField]
-        :param fields: fields and related model fields to include
-        if provided only those are included
-        :type fields: Optional[Union[Dict, Set]]
-        :param exclude_fields: fields and related model fields to exclude
-        excludes the fields even if they are provided in fields
-        :type exclude_fields: Optional[Union[Dict, Set]]
         :return: returns model if model is populated from database
         :rtype: Optional[Model]
         """
@@ -75,6 +71,7 @@ class ModelRow(NewBaseModel):
         select_related = select_related or []
         related_models = related_models or []
         table_prefix = ""
+        excludable = excludable or ExcludableItems()
 
         if select_related:
             source_model = cast(Type[T], cls)
@@ -87,12 +84,11 @@ class ModelRow(NewBaseModel):
                 relation_field=related_field,
             )
 
-        item = cls.populate_nested_models_from_row(
+        item = cls._populate_nested_models_from_row(
             item=item,
             row=row,
             related_models=related_models,
-            fields=fields,
-            exclude_fields=exclude_fields,
+            excludable=excludable,
             current_relation_str=current_relation_str,
             source_model=source_model,
         )
@@ -100,28 +96,26 @@ class ModelRow(NewBaseModel):
             item=item,
             row=row,
             table_prefix=table_prefix,
-            fields=fields,
-            exclude_fields=exclude_fields,
+            excludable=excludable
         )
 
         instance: Optional[T] = None
         if item.get(cls.Meta.pkname, None) is not None:
             item["__excluded__"] = cls.get_names_to_exclude(
-                fields=fields, exclude_fields=exclude_fields
+                excludable=excludable, alias=table_prefix
             )
             instance = cast(T, cls(**item))
             instance.set_save_status(True)
         return instance
 
     @classmethod
-    def populate_nested_models_from_row(  # noqa: CFQ002
+    def _populate_nested_models_from_row(  # noqa: CFQ002
         cls,
         item: dict,
         row: sqlalchemy.engine.ResultProxy,
         source_model: Type[T],
         related_models: Any,
-        fields: Optional[Union[Dict, Set]] = None,
-        exclude_fields: Optional[Union[Dict, Set]] = None,
+        excludable: ExcludableItems,
         current_relation_str: str = None,
     ) -> dict:
         """
@@ -134,6 +128,8 @@ class ModelRow(NewBaseModel):
         Recurrently calls from_row method on nested instances and create nested
         instances. In the end those instances are added to the final model dictionary.
 
+        :param excludable: structure of fields to include and exclude
+        :type excludable: ExcludableItems
         :param source_model: source model from which relation started
         :type source_model: Type[Model]
         :param current_relation_str: joined related parts into one string
@@ -144,12 +140,6 @@ class ModelRow(NewBaseModel):
         :type row: sqlalchemy.engine.result.ResultProxy
         :param related_models: list or dict of related models
         :type related_models: Union[Dict, List]
-        :param fields: fields and related model fields to include -
-        if provided only those are included
-        :type fields: Optional[Union[Dict, Set]]
-        :param exclude_fields: fields and related model fields to exclude
-        excludes the fields even if they are provided in fields
-        :type exclude_fields: Optional[Union[Dict, Set]]
         :return: dictionary with keys corresponding to model fields names
         and values are database values
         :rtype: Dict
@@ -163,8 +153,6 @@ class ModelRow(NewBaseModel):
             )
             field = cls.Meta.model_fields[related]
             field = cast(Type["ForeignKeyField"], field)
-            fields = cls.get_included(fields, related)
-            exclude_fields = cls.get_excluded(exclude_fields, related)
             model_cls = field.to
 
             remainder = None
@@ -174,8 +162,7 @@ class ModelRow(NewBaseModel):
                 row,
                 related_models=remainder,
                 related_field=field,
-                fields=fields,
-                exclude_fields=exclude_fields,
+                excludable=excludable,
                 current_relation_str=relation_str,
                 source_model=source_model,
             )
@@ -188,8 +175,7 @@ class ModelRow(NewBaseModel):
                     row=row,
                     related=related,
                     through_name=through_name,
-                    fields=fields,
-                    exclude_fields=exclude_fields,
+                    excludable=excludable
                 )
                 item[through_name] = through_child
                 setattr(child, through_name, through_child)
@@ -203,35 +189,29 @@ class ModelRow(NewBaseModel):
         row: sqlalchemy.engine.ResultProxy,
         through_name: str,
         related: str,
-        fields: Optional[Union[Dict, Set]] = None,
-        exclude_fields: Optional[Union[Dict, Set]] = None,
+        excludable: ExcludableItems
     ) -> Dict:
-        # TODO: fix excludes and includes
-        fields = cls.get_included(fields, through_name)
-        # exclude_fields = cls.get_excluded(exclude_fields, through_name)
+        # TODO: fix excludes and includes and docstring
         model_cls = cls.Meta.model_fields[through_name].to
-        exclude_fields = model_cls.extract_related_names()
         table_prefix = cls.Meta.alias_manager.resolve_relation_alias(
             from_model=cls, relation_name=related
         )
         child = model_cls.extract_prefixed_table_columns(
             item={},
             row=row,
-            table_prefix=table_prefix,
-            fields=fields,
-            exclude_fields=exclude_fields,
+            excludable=excludable,
+            table_prefix=table_prefix
         )
         return child
 
     @classmethod
-    def extract_prefixed_table_columns(  # noqa CCR001
+    def extract_prefixed_table_columns(
         cls,
         item: dict,
         row: sqlalchemy.engine.result.ResultProxy,
         table_prefix: str,
-        fields: Optional[Union[Dict, Set]] = None,
-        exclude_fields: Optional[Union[Dict, Set]] = None,
-    ) -> dict:
+        excludable: ExcludableItems
+    ) -> Dict:
         """
         Extracts own fields from raw sql result, using a given prefix.
         Prefix changes depending on the table's position in a join.
@@ -244,6 +224,8 @@ class ModelRow(NewBaseModel):
 
         Used in Model.from_row and PrefetchQuery._populate_rows methods.
 
+        :param excludable: structure of fields to include and exclude
+        :type excludable: ExcludableItems
         :param item: dictionary of already populated nested models, otherwise empty dict
         :type item: Dict
         :param row: raw result row from the database
@@ -252,12 +234,6 @@ class ModelRow(NewBaseModel):
         each pair of tables have own prefix (two of them depending on direction) -
         used in joins to allow multiple joins to the same table.
         :type table_prefix: str
-        :param fields: fields and related model fields to include -
-        if provided only those are included
-        :type fields: Optional[Union[Dict, Set]]
-        :param exclude_fields: fields and related model fields to exclude
-        excludes the fields even if they are provided in fields
-        :type exclude_fields: Optional[Union[Dict, Set]]
         :return: dictionary with keys corresponding to model fields names
         and values are database values
         :rtype: Dict
@@ -267,8 +243,8 @@ class ModelRow(NewBaseModel):
 
         selected_columns = cls.own_table_columns(
             model=cls,
-            fields=fields or {},
-            exclude_fields=exclude_fields or {},
+            excludable=excludable,
+            alias=table_prefix,
             use_alias=False,
         )
 

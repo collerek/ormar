@@ -16,6 +16,7 @@ from sqlalchemy import text
 
 import ormar  # noqa I100
 from ormar.exceptions import RelationshipInstanceError
+from ormar.models.excludable import ExcludableItems
 from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
@@ -29,8 +30,7 @@ class SqlJoin:
         used_aliases: List,
         select_from: sqlalchemy.sql.select,
         columns: List[sqlalchemy.Column],
-        fields: Optional[Union[Set, Dict]],
-        exclude_fields: Optional[Union[Set, Dict]],
+        excludable: ExcludableItems,
         order_columns: Optional[List["OrderAction"]],
         sorted_orders: OrderedDict,
         main_model: Type["Model"],
@@ -44,8 +44,7 @@ class SqlJoin:
         self.related_models = related_models or []
         self.select_from = select_from
         self.columns = columns
-        self.fields = fields
-        self.exclude_fields = exclude_fields
+        self.excludable=excludable
         self.order_columns = order_columns
         self.sorted_orders = sorted_orders
         self.main_model = main_model
@@ -200,10 +199,7 @@ class SqlJoin:
             used_aliases=self.used_aliases,
             select_from=self.select_from,
             columns=self.columns,
-            fields=self.main_model.get_excluded(self.fields, related_name),
-            exclude_fields=self.main_model.get_excluded(
-                self.exclude_fields, related_name
-            ),
+            excludable=self.excludable,
             order_columns=self.order_columns,
             sorted_orders=self.sorted_orders,
             main_model=self.next_model,
@@ -303,8 +299,8 @@ class SqlJoin:
         # TODO: fix fields and exclusions for through model?
         self_related_fields = self.next_model.own_table_columns(
             model=self.next_model,
-            fields=self.fields,
-            exclude_fields=self.exclude_fields,
+            excludable=self.excludable,
+            alias=self.next_alias,
             use_alias=True,
         )
         self.columns.extend(
