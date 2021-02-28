@@ -1,3 +1,4 @@
+import inspect
 from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
@@ -89,9 +90,10 @@ class BaseField(FieldInfo):
         :rtype: bool
         """
         return (
-            field_name not in ["default", "default_factory", "alias"]
+            field_name not in ["default", "default_factory", "alias", "allow_mutation"]
             and not field_name.startswith("__")
             and hasattr(cls, field_name)
+            and not callable(getattr(cls, field_name))
         )
 
     @classmethod

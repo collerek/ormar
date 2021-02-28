@@ -22,7 +22,7 @@ uuid1 = uuid.uuid4()
 uuid2 = uuid.uuid4()
 
 
-class TestEnum(Enum):
+class EnumTest(Enum):
     val1 = "Val1"
     val2 = "Val2"
 
@@ -56,7 +56,7 @@ class Organisation(ormar.Model):
     )
     random_json: pydantic.Json = ormar.JSON(choices=["aa", '{"aa":"bb"}'])
     random_uuid: uuid.UUID = ormar.UUID(choices=[uuid1, uuid2])
-    enum_string: str = ormar.String(max_length=100, choices=list(TestEnum))
+    enum_string: str = ormar.String(max_length=100, choices=list(EnumTest))
 
 
 @app.on_event("startup")
@@ -110,7 +110,7 @@ def test_all_endpoints():
                 "random_decimal": 12.4,
                 "random_json": '{"aa":"bb"}',
                 "random_uuid": str(uuid1),
-                "enum_string": TestEnum.val1.value,
+                "enum_string": EnumTest.val1.value,
             },
         )
 

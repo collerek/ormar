@@ -1,3 +1,9 @@
+# 0.9.5
+
+## Fixes
+* Fix creation of `pydantic` FieldInfo after update of `pydantic` to version >=1.8
+* Pin required dependency versions to avoid such situations in the future
+
 # 0.9.4
 
 ## Fixes
