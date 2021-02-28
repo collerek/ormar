@@ -52,8 +52,11 @@ setup(
     package_data={PACKAGE: ["py.typed"]},
     include_package_data=True,
     zip_safe=False,
+    python_requires=">=3.6",
     data_files=[("", ["LICENSE.md"])],
-    install_requires=["databases", "pydantic>=1.5", "sqlalchemy", "typing_extensions"],
+    install_requires=["databases>=0.3.2,<=0.4.1", "pydantic>=1.6.1,<=1.8",
+                      "sqlalchemy>=1.3.18,<=1.3.23",
+                      "typing_extensions>=3.7,<=3.7.4.3"],
     extras_require={
         "postgresql": ["asyncpg", "psycopg2"],
         "mysql": ["aiomysql", "pymysql"],
