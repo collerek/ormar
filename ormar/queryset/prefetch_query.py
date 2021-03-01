@@ -1,19 +1,15 @@
 from typing import (
-    Any,
     Dict,
     List,
-    Optional,
     Sequence,
     Set,
     TYPE_CHECKING,
     Tuple,
     Type,
-    Union,
     cast,
 )
 
 import ormar
-from ormar.models.excludable import ExcludableItems
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.query import Query
 from ormar.queryset.utils import extract_models_to_dict_of_lists, translate_list_to_dict
@@ -22,29 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
     from ormar.fields import ForeignKeyField, BaseField
     from ormar.queryset import OrderAction
-
-
-def add_relation_field_to_fields(
-        fields: Union[Set[Any], Dict[Any, Any], None], related_field_name: str
-) -> Union[Set[Any], Dict[Any, Any], None]:
-    """
-    Adds related field into fields to include as otherwise it would be skipped.
-    Related field is added only if fields are already populated.
-    Empty fields implies all fields.
-
-    :param fields: Union[Set[Any], Dict[Any, Any], None]
-    :type fields: Dict
-    :param related_field_name: name of the field with relation
-    :type related_field_name: str
-    :return: updated fields dict
-    :rtype: Union[Set[Any], Dict[Any, Any], None]
-    """
-    if fields and related_field_name not in fields:
-        if isinstance(fields, dict):
-            fields[related_field_name] = ...
-        elif isinstance(fields, set):
-            fields.add(related_field_name)
-    return fields
+    from ormar.models.excludable import ExcludableItems
 
 
 def sort_models(models: List["Model"], orders_by: Dict) -> List["Model"]:
@@ -74,12 +48,12 @@ def sort_models(models: List["Model"], orders_by: Dict) -> List["Model"]:
 
 
 def set_children_on_model(  # noqa: CCR001
-        model: "Model",
-        related: str,
-        children: Dict,
-        model_id: int,
-        models: Dict,
-        orders_by: Dict,
+    model: "Model",
+    related: str,
+    children: Dict,
+    model_id: int,
+    models: Dict,
+    orders_by: Dict,
 ) -> None:
     """
     Extract ids of child models by given relation id key value.
@@ -124,12 +98,12 @@ class PrefetchQuery:
     """
 
     def __init__(  # noqa: CFQ002
-            self,
-            model_cls: Type["Model"],
-            excludable: ExcludableItems,
-            prefetch_related: List,
-            select_related: List,
-            orders_by: List["OrderAction"],
+        self,
+        model_cls: Type["Model"],
+        excludable: "ExcludableItems",
+        prefetch_related: List,
+        select_related: List,
+        orders_by: List["OrderAction"],
     ) -> None:
 
         self.model = model_cls
@@ -147,7 +121,7 @@ class PrefetchQuery:
         )
 
     async def prefetch_related(
-            self, models: Sequence["Model"], rows: List
+        self, models: Sequence["Model"], rows: List
     ) -> Sequence["Model"]:
         """
         Main entry point for prefetch_query.
@@ -172,7 +146,7 @@ class PrefetchQuery:
         return await self._prefetch_related_models(models=models, rows=rows)
 
     def _extract_ids_from_raw_data(
-            self, parent_model: Type["Model"], column_name: str
+        self, parent_model: Type["Model"], column_name: str
     ) -> Set:
         """
         Iterates over raw rows and extract id values of relation columns by using
@@ -195,7 +169,7 @@ class PrefetchQuery:
         return list_of_ids
 
     def _extract_ids_from_preloaded_models(
-            self, parent_model: Type["Model"], column_name: str
+        self, parent_model: Type["Model"], column_name: str
     ) -> Set:
         """
         Extracts relation ids from already populated models if they were included
@@ -218,7 +192,7 @@ class PrefetchQuery:
         return list_of_ids
 
     def _extract_required_ids(
-            self, parent_model: Type["Model"], reverse: bool, related: str,
+        self, parent_model: Type["Model"], reverse: bool, related: str,
     ) -> Set:
         """
         Delegates extraction of the fields to either get ids from raw sql response
@@ -252,11 +226,11 @@ class PrefetchQuery:
         )
 
     def _get_filter_for_prefetch(
-            self,
-            parent_model: Type["Model"],
-            target_model: Type["Model"],
-            reverse: bool,
-            related: str,
+        self,
+        parent_model: Type["Model"],
+        target_model: Type["Model"],
+        reverse: bool,
+        related: str,
     ) -> List:
         """
         Populates where clause with condition to return only models within the
@@ -297,7 +271,7 @@ class PrefetchQuery:
         return []
 
     def _populate_nested_related(
-            self, model: "Model", prefetch_dict: Dict, orders_by: Dict,
+        self, model: "Model", prefetch_dict: Dict, orders_by: Dict,
     ) -> "Model":
         """
         Populates all related models children of parent model that are
@@ -341,7 +315,7 @@ class PrefetchQuery:
         return model
 
     async def _prefetch_related_models(
-            self, models: Sequence["Model"], rows: List
+        self, models: Sequence["Model"], rows: List
     ) -> Sequence["Model"]:
         """
         Main method of the query.
@@ -385,13 +359,13 @@ class PrefetchQuery:
         return models
 
     async def _extract_related_models(  # noqa: CFQ002, CCR001
-            self,
-            related: str,
-            target_model: Type["Model"],
-            prefetch_dict: Dict,
-            select_dict: Dict,
-            excludable: ExcludableItems,
-            orders_by: Dict,
+        self,
+        related: str,
+        target_model: Type["Model"],
+        prefetch_dict: Dict,
+        select_dict: Dict,
+        excludable: "ExcludableItems",
+        orders_by: Dict,
     ) -> None:
         """
         Constructs queries with required ids and extracts data with fields that should
@@ -443,15 +417,16 @@ class PrefetchQuery:
             related_field_name = parent_model.get_related_field_name(
                 target_field=target_field
             )
-            table_prefix, rows = await self._run_prefetch_query(
+            table_prefix, exclude_prefix, rows = await self._run_prefetch_query(
                 target_field=target_field,
                 excludable=excludable,
                 filter_clauses=filter_clauses,
-                related_field_name=related_field_name
+                related_field_name=related_field_name,
             )
         else:
             rows = []
             table_prefix = ""
+            exclude_prefix = ""
 
         if prefetch_dict and prefetch_dict is not Ellipsis:
             for subrelated in prefetch_dict.keys():
@@ -472,6 +447,7 @@ class PrefetchQuery:
                 parent_model=parent_model,
                 target_field=target_field,
                 table_prefix=table_prefix,
+                exclude_prefix=exclude_prefix,
                 excludable=excludable,
                 prefetch_dict=prefetch_dict,
                 orders_by=orders_by,
@@ -484,12 +460,12 @@ class PrefetchQuery:
             )
 
     async def _run_prefetch_query(
-            self,
-            target_field: Type["BaseField"],
-            excludable: ExcludableItems,
-            filter_clauses: List,
-            related_field_name: str
-    ) -> Tuple[str, List]:
+        self,
+        target_field: Type["BaseField"],
+        excludable: "ExcludableItems",
+        filter_clauses: List,
+        related_field_name: str,
+    ) -> Tuple[str, str, List]:
         """
         Actually runs the queries against the database and populates the raw response
         for given related model.
@@ -509,17 +485,22 @@ class PrefetchQuery:
         select_related = []
         query_target = target_model
         table_prefix = ""
+        exclude_prefix = target_field.to.Meta.alias_manager.resolve_relation_alias(
+            from_model=target_field.owner, relation_name=target_field.name
+        )
         if target_field.is_multi:
             query_target = target_field.through
             select_related = [target_name]
             table_prefix = target_field.to.Meta.alias_manager.resolve_relation_alias(
                 from_model=query_target, relation_name=target_name
             )
+            exclude_prefix = table_prefix
             self.already_extracted.setdefault(target_name, {})["prefix"] = table_prefix
 
-        model_excludable = excludable.get(model_cls=target_model, alias=table_prefix)
+        model_excludable = excludable.get(model_cls=target_model, alias=exclude_prefix)
         if model_excludable.include and not model_excludable.is_included(
-                related_field_name):
+            related_field_name
+        ):
             model_excludable.set_values({related_field_name}, is_exclude=False)
 
         qry = Query(
@@ -537,7 +518,7 @@ class PrefetchQuery:
         # print(expr.compile(compile_kwargs={"literal_binds": True}))
         rows = await self.database.fetch_all(expr)
         self.already_extracted.setdefault(target_name, {}).update({"raw": rows})
-        return table_prefix, rows
+        return table_prefix, exclude_prefix, rows
 
     @staticmethod
     def _get_select_related_if_apply(related: str, select_dict: Dict) -> Dict:
@@ -559,7 +540,7 @@ class PrefetchQuery:
         )
 
     def _update_already_loaded_rows(  # noqa: CFQ002
-            self, target_field: Type["BaseField"], prefetch_dict: Dict, orders_by: Dict,
+        self, target_field: Type["BaseField"], prefetch_dict: Dict, orders_by: Dict,
     ) -> None:
         """
         Updates models that are already loaded, usually children of children.
@@ -578,14 +559,15 @@ class PrefetchQuery:
             )
 
     def _populate_rows(  # noqa: CFQ002
-            self,
-            rows: List,
-            target_field: Type["ForeignKeyField"],
-            parent_model: Type["Model"],
-            table_prefix: str,
-            excludable: ExcludableItems,
-            prefetch_dict: Dict,
-            orders_by: Dict,
+        self,
+        rows: List,
+        target_field: Type["ForeignKeyField"],
+        parent_model: Type["Model"],
+        table_prefix: str,
+        exclude_prefix: str,
+        excludable: "ExcludableItems",
+        prefetch_dict: Dict,
+        orders_by: Dict,
     ) -> None:
         """
         Instantiates children models extracted from given relation.
@@ -617,13 +599,10 @@ class PrefetchQuery:
             # TODO Fix fields
             field_name = parent_model.get_related_field_name(target_field=target_field)
             item = target_model.extract_prefixed_table_columns(
-                item={},
-                row=row,
-                table_prefix=table_prefix,
-                excludable=excludable,
+                item={}, row=row, table_prefix=table_prefix, excludable=excludable,
             )
             item["__excluded__"] = target_model.get_names_to_exclude(
-                excludable=excludable, alias=table_prefix
+                excludable=excludable, alias=exclude_prefix
             )
             instance = target_model(**item)
             instance = self._populate_nested_related(

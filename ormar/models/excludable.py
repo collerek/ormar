@@ -7,18 +7,11 @@ if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
 
 
+# TODO: Add docstrings
 @dataclass
 class Excludable:
     include: Set = field(default_factory=set)
     exclude: Set = field(default_factory=set)
-
-    @property
-    def include_all(self):
-        return ... in self.include
-
-    @property
-    def exclude_all(self):
-        return ... in self.exclude
 
     def get_copy(self) -> "Excludable":
         _copy = self.__class__()
@@ -28,12 +21,9 @@ class Excludable:
 
     def set_values(self, value: Set, is_exclude: bool) -> None:
         prop = "exclude" if is_exclude else "include"
-        if ... in getattr(self, prop) or ... in value:
-            setattr(self, prop, {...})
-        else:
-            current_value = getattr(self, prop)
-            current_value.update(value)
-            setattr(self, prop, current_value)
+        current_value = getattr(self, prop)
+        current_value.update(value)
+        setattr(self, prop, current_value)
 
     def is_included(self, key: str) -> bool:
         return (... in self.include or key in self.include) if self.include else True
@@ -61,13 +51,17 @@ class ExcludableItems:
 
     def get(self, model_cls: Type["Model"], alias: str = "") -> Excludable:
         key = f"{alias + '_' if alias else ''}{model_cls.get_name(lower=True)}"
-        return self.items.get(key, Excludable())
+        excludable = self.items.get(key)
+        if not excludable:
+            excludable = Excludable()
+            self.items[key] = excludable
+        return excludable
 
     def build(
-            self,
-            items: Union[List[str], str, Tuple[str], Set[str], Dict],
-            model_cls: Type["Model"],
-            is_exclude: bool = False,
+        self,
+        items: Union[List[str], str, Tuple[str], Set[str], Dict],
+        model_cls: Type["Model"],
+        is_exclude: bool = False,
     ) -> None:
 
         if isinstance(items, str):
@@ -96,7 +90,7 @@ class ExcludableItems:
                 )
 
     def _set_excludes(
-            self, items: Set, model_name: str, is_exclude: bool, alias: str = ""
+        self, items: Set, model_name: str, is_exclude: bool, alias: str = ""
     ) -> None:
 
         key = f"{alias + '_' if alias else ''}{model_name}"
@@ -107,13 +101,13 @@ class ExcludableItems:
         self.items[key] = excludable
 
     def _traverse_dict(  # noqa: CFQ002
-            self,
-            values: Dict,
-            source_model: Type["Model"],
-            model_cls: Type["Model"],
-            is_exclude: bool,
-            related_items: List = None,
-            alias: str = "",
+        self,
+        values: Dict,
+        source_model: Type["Model"],
+        model_cls: Type["Model"],
+        is_exclude: bool,
+        related_items: List = None,
+        alias: str = "",
     ) -> None:
 
         self_fields = set()
@@ -122,14 +116,13 @@ class ExcludableItems:
             if value is ...:
                 self_fields.add(key)
             elif isinstance(value, set):
-                related_items.append(key)
                 (
                     table_prefix,
                     target_model,
                     _,
                     _,
                 ) = get_relationship_alias_model_and_str(
-                    source_model=source_model, related_parts=related_items
+                    source_model=source_model, related_parts=related_items + [key]
                 )
                 self._set_excludes(
                     items=value,
@@ -165,7 +158,7 @@ class ExcludableItems:
             )
 
     def _traverse_list(
-            self, values: Set[str], model_cls: Type["Model"], is_exclude: bool
+        self, values: Set[str], model_cls: Type["Model"], is_exclude: bool
     ) -> None:
 
         # here we have only nested related keys

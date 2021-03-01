@@ -93,11 +93,10 @@ class BaseField(FieldInfo):
         :rtype: bool
         """
         return (
-                field_name not in ["default", "default_factory", "alias",
-                                   "allow_mutation"]
-                and not field_name.startswith("__")
-                and hasattr(cls, field_name)
-                and not callable(getattr(cls, field_name))
+            field_name not in ["default", "default_factory", "alias", "allow_mutation"]
+            and not field_name.startswith("__")
+            and hasattr(cls, field_name)
+            and not callable(getattr(cls, field_name))
         )
 
     @classmethod
@@ -206,7 +205,7 @@ class BaseField(FieldInfo):
         :rtype: bool
         """
         return cls.default is not None or (
-                cls.server_default is not None and use_server
+            cls.server_default is not None and use_server
         )
 
     @classmethod
@@ -239,7 +238,7 @@ class BaseField(FieldInfo):
                 ondelete=con.ondelete,
                 onupdate=con.onupdate,
                 name=f"fk_{cls.owner.Meta.tablename}_{cls.to.Meta.tablename}"
-                     f"_{cls.to.get_column_alias(cls.to.Meta.pkname)}_{cls.name}",
+                f"_{cls.to.get_column_alias(cls.to.Meta.pkname)}_{cls.name}",
             )
             for con in cls.constraints
         ]
@@ -272,10 +271,10 @@ class BaseField(FieldInfo):
 
     @classmethod
     def expand_relationship(
-            cls,
-            value: Any,
-            child: Union["Model", "NewBaseModel"],
-            to_register: bool = True,
+        cls,
+        value: Any,
+        child: Union["Model", "NewBaseModel"],
+        to_register: bool = True,
     ) -> Any:
         """
         Function overwritten for relations, in basic field the value is returned as is.
@@ -303,7 +302,7 @@ class BaseField(FieldInfo):
         :rtype: None
         """
         if cls.owner is not None and (
-                cls.owner == cls.to or cls.owner.Meta == cls.to.Meta
+            cls.owner == cls.to or cls.owner.Meta == cls.to.Meta
         ):
             cls.self_reference = True
             cls.self_reference_primary = cls.name

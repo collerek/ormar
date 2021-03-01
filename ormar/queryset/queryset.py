@@ -20,18 +20,17 @@ from sqlalchemy import bindparam
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
 from ormar.exceptions import ModelError, ModelPersistenceError, QueryDefinitionError
-from ormar.models.excludable import ExcludableItems
 from ormar.queryset import FilterQuery
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.prefetch_query import PrefetchQuery
 from ormar.queryset.query import Query
-from ormar.queryset.utils import update, update_dict_from_list
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import T
     from ormar.models.metaclass import ModelMeta
     from ormar.relations.querysetproxy import QuerysetProxy
+    from ormar.models.excludable import ExcludableItems
 else:
     T = TypeVar("T")
 
@@ -42,18 +41,20 @@ class QuerySet(Generic[T]):
     """
 
     def __init__(  # noqa CFQ002
-            self,
-            model_cls: Optional[Type[T]] = None,
-            filter_clauses: List = None,
-            exclude_clauses: List = None,
-            select_related: List = None,
-            limit_count: int = None,
-            offset: int = None,
-            excludable: ExcludableItems = None,
-            order_bys: List = None,
-            prefetch_related: List = None,
-            limit_raw_sql: bool = False,
+        self,
+        model_cls: Optional[Type[T]] = None,
+        filter_clauses: List = None,
+        exclude_clauses: List = None,
+        select_related: List = None,
+        limit_count: int = None,
+        offset: int = None,
+        excludable: "ExcludableItems" = None,
+        order_bys: List = None,
+        prefetch_related: List = None,
+        limit_raw_sql: bool = False,
+        proxy_source_model: Optional[Type[T]] = None,
     ) -> None:
+        self.proxy_source_model = proxy_source_model
         self.model_cls = model_cls
         self.filter_clauses = [] if filter_clauses is None else filter_clauses
         self.exclude_clauses = [] if exclude_clauses is None else exclude_clauses
@@ -61,14 +62,14 @@ class QuerySet(Generic[T]):
         self._prefetch_related = [] if prefetch_related is None else prefetch_related
         self.limit_count = limit_count
         self.query_offset = offset
-        self._excludable = excludable or ExcludableItems()
+        self._excludable = excludable or ormar.ExcludableItems()
         self.order_bys = order_bys or []
         self.limit_sql_raw = limit_raw_sql
 
     def __get__(
-            self,
-            instance: Optional[Union["QuerySet", "QuerysetProxy"]],
-            owner: Union[Type[T], Type["QuerysetProxy"]],
+        self,
+        instance: Optional[Union["QuerySet", "QuerysetProxy"]],
+        owner: Union[Type[T], Type["QuerysetProxy"]],
     ) -> "QuerySet":
         if issubclass(owner, ormar.Model):
             if owner.Meta.requires_ref_update:
@@ -105,8 +106,53 @@ class QuerySet(Generic[T]):
             raise ValueError("Model class of QuerySet is not initialized")
         return self.model_cls
 
+    def rebuild_self(  # noqa: CFQ002
+        self,
+        filter_clauses: List = None,
+        exclude_clauses: List = None,
+        select_related: List = None,
+        limit_count: int = None,
+        offset: int = None,
+        excludable: "ExcludableItems" = None,
+        order_bys: List = None,
+        prefetch_related: List = None,
+        limit_raw_sql: bool = None,
+        proxy_source_model: Optional[Type[T]] = None,
+    ) -> "QuerySet":
+        """
+        Method that returns new instance of queryset based on passed params,
+        all not passed params are taken from current values.
+        """
+        overwrites = {
+            "select_related": "_select_related",
+            "offset": "query_offset",
+            "excludable": "_excludable",
+            "prefetch_related": "_prefetch_related",
+            "limit_raw_sql": "limit_sql_raw",
+        }
+        passed_args = locals()
+
+        def replace_if_none(arg_name: str) -> Any:
+            if passed_args.get(arg_name) is None:
+                return getattr(self, overwrites.get(arg_name, arg_name))
+            return passed_args.get(arg_name)
+
+        return self.__class__(
+            model_cls=self.model_cls,
+            filter_clauses=replace_if_none("filter_clauses"),
+            exclude_clauses=replace_if_none("exclude_clauses"),
+            select_related=replace_if_none("select_related"),
+            limit_count=replace_if_none("limit_count"),
+            offset=replace_if_none("offset"),
+            excludable=replace_if_none("excludable"),
+            order_bys=replace_if_none("order_bys"),
+            prefetch_related=replace_if_none("prefetch_related"),
+            limit_raw_sql=replace_if_none("limit_raw_sql"),
+            proxy_source_model=replace_if_none("proxy_source_model"),
+        )
+
     async def _prefetch_related_models(
-            self, models: Sequence[Optional["T"]], rows: List
+        self, models: Sequence[Optional["T"]], rows: List
     ) -> Sequence[Optional["T"]]:
         """
         Performs prefetch query for selected models names.
@@ -142,6 +188,7 @@ class QuerySet(Generic[T]):
                 select_related=self._select_related,
                 excludable=self._excludable,
                 source_model=self.model,
+                proxy_source_model=self.proxy_source_model,
             )
             for row in rows
         ]
@@ -183,7 +230,7 @@ class QuerySet(Generic[T]):
         return self.model_meta.table
 
     def build_select_expression(
-            self, limit: int = None, offset: int = None, order_bys: List = None,
+        self, limit: int = None, offset: int = None, order_bys: List = None,
     ) -> sqlalchemy.sql.select:
         """
         Constructs the actual database query used in the QuerySet.
@@ -254,17 +301,10 @@ class QuerySet(Generic[T]):
             exclude_clauses = self.exclude_clauses
             filter_clauses = filter_clauses
 
-        return self.__class__(
-            model_cls=self.model,
+        return self.rebuild_self(
             filter_clauses=filter_clauses,
             exclude_clauses=exclude_clauses,
             select_related=select_related,
-            limit_count=self.limit_count,
-            offset=self.query_offset,
-            excludable=self._excludable,
-            order_bys=self.order_bys,
-            prefetch_related=self._prefetch_related,
-            limit_raw_sql=self.limit_sql_raw,
         )
 
     def exclude(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
@@ -309,18 +349,7 @@ class QuerySet(Generic[T]):
             related = [related]
 
         related = list(set(list(self._select_related) + related))
-        return self.__class__(
-            model_cls=self.model,
-            filter_clauses=self.filter_clauses,
-            exclude_clauses=self.exclude_clauses,
-            select_related=related,
-            limit_count=self.limit_count,
-            offset=self.query_offset,
-            excludable=self._excludable,
-            order_bys=self.order_bys,
-            prefetch_related=self._prefetch_related,
-            limit_raw_sql=self.limit_sql_raw,
-        )
+        return self.rebuild_self(select_related=related,)
 
     def prefetch_related(self, related: Union[List, str]) -> "QuerySet":
         """
@@ -344,21 +373,11 @@ class QuerySet(Generic[T]):
             related = [related]
 
         related = list(set(list(self._prefetch_related) + related))
-        return self.__class__(
-            model_cls=self.model,
-            filter_clauses=self.filter_clauses,
-            exclude_clauses=self.exclude_clauses,
-            select_related=self._select_related,
-            limit_count=self.limit_count,
-            offset=self.query_offset,
-            excludable=self._excludable,
-            order_bys=self.order_bys,
-            prefetch_related=related,
-            limit_raw_sql=self.limit_sql_raw,
-        )
+        return self.rebuild_self(prefetch_related=related,)
 
-    def fields(self, columns: Union[List, str, Set, Dict],
-               _is_exclude: bool = False) -> "QuerySet":
+    def fields(
+        self, columns: Union[List, str, Set, Dict], _is_exclude: bool = False
+    ) -> "QuerySet":
         """
         With `fields()` you can select subset of model columns to limit the data load.
 
@@ -396,28 +415,21 @@ class QuerySet(Generic[T]):
 
         To include whole nested model specify model related field name and ellipsis.
 
+        :param _is_exclude: flag if it's exclude or include operation
+        :type _is_exclude: bool
         :param columns: columns to include
         :type columns: Union[List, str, Set, Dict]
         :return: QuerySet
         :rtype: QuerySet
         """
-        excludable = ExcludableItems.from_excludable(self._excludable)
-        excludable.build(items=columns,
-                         model_cls=self.model_cls,
-                         is_exclude=_is_exclude)
-
-        return self.__class__(
-            model_cls=self.model,
-            filter_clauses=self.filter_clauses,
-            exclude_clauses=self.exclude_clauses,
-            select_related=self._select_related,
-            limit_count=self.limit_count,
-            offset=self.query_offset,
-            excludable=excludable,
-            order_bys=self.order_bys,
-            prefetch_related=self._prefetch_related,
-            limit_raw_sql=self.limit_sql_raw,
+        excludable = ormar.ExcludableItems.from_excludable(self._excludable)
+        excludable.build(
+            items=columns,
+            model_cls=self.model_cls,  # type: ignore
+            is_exclude=_is_exclude,
         )
+
+        return self.rebuild_self(excludable=excludable,)
 
     def exclude_fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet":
         """
@@ -489,18 +501,7 @@ class QuerySet(Generic[T]):
         ]
 
         order_bys = self.order_bys + [x for x in orders_by if x not in self.order_bys]
-        return self.__class__(
-            model_cls=self.model,
-            filter_clauses=self.filter_clauses,
-            exclude_clauses=self.exclude_clauses,
-            select_related=self._select_related,
-            limit_count=self.limit_count,
-            offset=self.query_offset,
-            excludable=self._excludable,
-            order_bys=order_bys,
-            prefetch_related=self._prefetch_related,
-            limit_raw_sql=self.limit_sql_raw,
-        )
+        return self.rebuild_self(order_bys=order_bys,)
 
     async def exists(self) -> bool:
         """
@@ -601,18 +602,7 @@ class QuerySet(Generic[T]):
 
         limit_count = page_size
         query_offset = (page - 1) * page_size
-        return self.__class__(
-            model_cls=self.model,
-            filter_clauses=self.filter_clauses,
-            exclude_clauses=self.exclude_clauses,
-            select_related=self._select_related,
-            limit_count=limit_count,
-            offset=query_offset,
-            excludable=self._excludable,
-            order_bys=self.order_bys,
-            prefetch_related=self._prefetch_related,
-            limit_raw_sql=self.limit_sql_raw,
-        )
+        return self.rebuild_self(limit_count=limit_count, offset=query_offset,)
 
     def limit(self, limit_count: int, limit_raw_sql: bool = None) -> "QuerySet":
         """
@@ -629,18 +619,7 @@ class QuerySet(Generic[T]):
         :rtype: QuerySet
         """
         limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
-        return self.__class__(
-            model_cls=self.model,
-            filter_clauses=self.filter_clauses,
-            exclude_clauses=self.exclude_clauses,
-            select_related=self._select_related,
-            limit_count=limit_count,
-            offset=self.query_offset,
-            excludable=self._excludable,
-            order_bys=self.order_bys,
-            prefetch_related=self._prefetch_related,
-            limit_raw_sql=limit_raw_sql,
-        )
+        return self.rebuild_self(limit_count=limit_count, limit_raw_sql=limit_raw_sql,)
 
     def offset(self, offset: int, limit_raw_sql: bool = None) -> "QuerySet":
         """
@@ -657,18 +636,7 @@ class QuerySet(Generic[T]):
         :rtype: QuerySet
         """
         limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
-        return self.__class__(
-            model_cls=self.model,
-            filter_clauses=self.filter_clauses,
-            exclude_clauses=self.exclude_clauses,
-            select_related=self._select_related,
-            limit_count=self.limit_count,
-            offset=offset,
-            excludable=self._excludable,
-            order_bys=self.order_bys,
-            prefetch_related=self._prefetch_related,
-            limit_raw_sql=limit_raw_sql,
-        )
+        return self.rebuild_self(offset=offset, limit_raw_sql=limit_raw_sql,)
 
     async def first(self, **kwargs: Any) -> T:
         """
@@ -687,12 +655,12 @@ class QuerySet(Generic[T]):
         expr = self.build_select_expression(
             limit=1,
             order_bys=[
-                          OrderAction(
-                              order_str=f"{self.model.Meta.pkname}",
-                              model_cls=self.model_cls,  # type: ignore
-                          )
-                      ]
-                      + self.order_bys,
+                OrderAction(
+                    order_str=f"{self.model.Meta.pkname}",
+                    model_cls=self.model_cls,  # type: ignore
+                )
+            ]
+            + self.order_bys,
         )
         rows = await self.database.fetch_all(expr)
         processed_rows = self._process_query_result_rows(rows)
@@ -723,12 +691,12 @@ class QuerySet(Generic[T]):
             expr = self.build_select_expression(
                 limit=1,
                 order_bys=[
-                              OrderAction(
-                                  order_str=f"-{self.model.Meta.pkname}",
-                                  model_cls=self.model_cls,  # type: ignore
-                              )
-                          ]
-                          + self.order_bys,
+                    OrderAction(
+                        order_str=f"-{self.model.Meta.pkname}",
+                        model_cls=self.model_cls,  # type: ignore
+                    )
+                ]
+                + self.order_bys,
             )
         else:
             expr = self.build_select_expression()
@@ -831,9 +799,9 @@ class QuerySet(Generic[T]):
 
         # refresh server side defaults
         if any(
-                field.server_default is not None
-                for name, field in self.model.Meta.model_fields.items()
-                if name not in kwargs
+            field.server_default is not None
+            for name, field in self.model.Meta.model_fields.items()
+            if name not in kwargs
         ):
             instance = await instance.load()
         instance.set_save_status(True)
@@ -868,7 +836,7 @@ class QuerySet(Generic[T]):
             objt.set_save_status(True)
 
     async def bulk_update(  # noqa:  CCR001
-            self, objects: List[T], columns: List[str] = None
+        self, objects: List[T], columns: List[str] = None
     ) -> None:
         """
         Performs bulk update in one database session to speed up the process.

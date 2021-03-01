@@ -3,11 +3,9 @@ from typing import (
     Dict,
     List,
     Optional,
-    Set,
     TYPE_CHECKING,
     Type,
     TypeVar,
-    Union,
     cast,
 )
 
@@ -16,7 +14,6 @@ import sqlalchemy
 from ormar.models import NewBaseModel  # noqa: I202
 from ormar.models.excludable import ExcludableItems
 from ormar.models.helpers.models import group_related_list
-
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar.fields import ForeignKeyField
@@ -36,6 +33,7 @@ class ModelRow(NewBaseModel):
         related_field: Type["ForeignKeyField"] = None,
         excludable: ExcludableItems = None,
         current_relation_str: str = "",
+        proxy_source_model: Optional[Type["ModelRow"]] = None,
     ) -> Optional[T]:
         """
         Model method to convert raw sql row from database into ormar.Model instance.
@@ -91,12 +89,10 @@ class ModelRow(NewBaseModel):
             excludable=excludable,
             current_relation_str=current_relation_str,
             source_model=source_model,
+            proxy_source_model=proxy_source_model,  # type: ignore
         )
         item = cls.extract_prefixed_table_columns(
-            item=item,
-            row=row,
-            table_prefix=table_prefix,
-            excludable=excludable
+            item=item, row=row, table_prefix=table_prefix, excludable=excludable
         )
 
         instance: Optional[T] = None
@@ -117,6 +113,7 @@ class ModelRow(NewBaseModel):
         related_models: Any,
         excludable: ExcludableItems,
         current_relation_str: str = None,
+        proxy_source_model: Type[T] = None,
     ) -> dict:
         """
         Traverses structure of related models and populates the nested models
@@ -165,20 +162,22 @@ class ModelRow(NewBaseModel):
                 excludable=excludable,
                 current_relation_str=relation_str,
                 source_model=source_model,
+                proxy_source_model=proxy_source_model,
             )
             item[model_cls.get_column_name_from_alias(related)] = child
             if field.is_multi and child:
-                # TODO: way to figure out which side should be populated?
                 through_name = cls.Meta.model_fields[related].through.get_name()
-                # for now it's nested dict, should be instance?
                 through_child = cls.populate_through_instance(
                     row=row,
                     related=related,
                     through_name=through_name,
-                    excludable=excludable
+                    excludable=excludable,
                 )
-                item[through_name] = through_child
-                setattr(child, through_name, through_child)
+
+                if child.__class__ != proxy_source_model:
+                    setattr(child, through_name, through_child)
+                else:
+                    item[through_name] = through_child
                 child.set_save_status(True)
 
         return item
@@ -189,19 +188,24 @@ class ModelRow(NewBaseModel):
         row: sqlalchemy.engine.ResultProxy,
         through_name: str,
         related: str,
-        excludable: ExcludableItems
-    ) -> Dict:
-        # TODO: fix excludes and includes and docstring
+        excludable: ExcludableItems,
+    ) -> "ModelRow":
         model_cls = cls.Meta.model_fields[through_name].to
         table_prefix = cls.Meta.alias_manager.resolve_relation_alias(
             from_model=cls, relation_name=related
         )
-        child = model_cls.extract_prefixed_table_columns(
-            item={},
-            row=row,
-            excludable=excludable,
-            table_prefix=table_prefix
+        # remove relations on through field
+        model_excludable = excludable.get(model_cls=model_cls, alias=table_prefix)
+        model_excludable.set_values(
+            value=model_cls.extract_related_names(), is_exclude=True
         )
+        child_dict = model_cls.extract_prefixed_table_columns(
+            item={}, row=row, excludable=excludable, table_prefix=table_prefix
+        )
+        child_dict["__excluded__"] = model_cls.get_names_to_exclude(
+            excludable=excludable, alias=table_prefix
+        )
+        child = model_cls(**child_dict)  # type: ignore
         return child
 
     @classmethod
@@ -210,7 +214,7 @@ class ModelRow(NewBaseModel):
         item: dict,
         row: sqlalchemy.engine.result.ResultProxy,
         table_prefix: str,
-        excludable: ExcludableItems
+        excludable: ExcludableItems,
     ) -> Dict:
         """
         Extracts own fields from raw sql result, using a given prefix.
@@ -242,10 +246,7 @@ class ModelRow(NewBaseModel):
         source = row._row if cls.db_backend_name() == "postgresql" else row
 
         selected_columns = cls.own_table_columns(
-            model=cls,
-            excludable=excludable,
-            alias=table_prefix,
-            use_alias=False,
+            model=cls, excludable=excludable, alias=table_prefix, use_alias=False,
         )
 
         for column in cls.Meta.table.columns:

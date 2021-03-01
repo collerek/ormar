@@ -17,11 +17,9 @@ if TYPE_CHECKING:  # pragma no cover
 def Through(  # noqa CFQ002
     to: "ToType", *, name: str = None, related_name: str = None, **kwargs: Any,
 ) -> Any:
-    # TODO: clean docstring
     """
-    Despite a name it's a function that returns constructed ForeignKeyField.
-    This function is actually used in model declaration (as ormar.ForeignKey(ToModel)).
-
+    Despite a name it's a function that returns constructed ThroughField.
+    It's a special field populated only for m2m relations.
     Accepts number of relation setting parameters as well as all BaseField ones.
 
     :param to: target related ormar Model
@@ -30,15 +28,13 @@ def Through(  # noqa CFQ002
     :type name: str
     :param related_name: name of reversed FK relation populated for you on to model
     :type related_name: str
-    :param virtual: marks if relation is virtual.
     It is for reversed FK and auto generated FK on through model in Many2Many relations.
-    :type virtual: bool
     :param kwargs: all other args to be populated by BaseField
     :type kwargs: Any
     :return: ormar ForeignKeyField with relation to selected model
     :rtype: ForeignKeyField
     """
-
+    nullable = kwargs.pop("nullable", False)
     owner = kwargs.pop("owner", None)
     namespace = dict(
         __type__=to,
@@ -49,7 +45,7 @@ def Through(  # noqa CFQ002
         related_name=related_name,
         virtual=True,
         owner=owner,
-        nullable=False,
+        nullable=nullable,
         unique=False,
         column_type=None,
         primary_key=False,

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List, Sequence, cast
 
 import databases
 import pytest
@@ -131,6 +131,7 @@ async def test_getting_additional_fields_from_queryset() -> Any:
         )
 
         await post.categories.all()
+        assert post.postcategory is None
         assert post.categories[0].postcategory.sort_order == 1
         assert post.categories[1].postcategory.sort_order == 2
 
@@ -138,8 +139,31 @@ async def test_getting_additional_fields_from_queryset() -> Any:
             categories__name="Test category2"
         )
         assert post2.categories[0].postcategory.sort_order == 2
-        # if TYPE_CHECKING:
-        #     reveal_type(post2)
+
+
+@pytest.mark.asyncio
+async def test_only_one_side_has_through() -> Any:
+    async with database:
+        post = await Post(title="Test post").save()
+        await post.categories.create(
+            name="Test category1", postcategory={"sort_order": 1}
+        )
+        await post.categories.create(
+            name="Test category2", postcategory={"sort_order": 2}
+        )
+
+        post2 = await Post.objects.select_related("categories").get()
+        assert post2.postcategory is None
+        assert post2.categories[0].postcategory is not None
+
+        await post2.categories.all()
+        assert post2.postcategory is None
+        assert post2.categories[0].postcategory is not None
+
+        categories = await Category.objects.select_related("posts").all()
+        categories = cast(Sequence[Category], categories)
+        assert categories[0].postcategory is None
+        assert categories[0].posts[0].postcategory is not None
 
 
 @pytest.mark.asyncio
@@ -294,7 +318,6 @@ async def test_update_through_from_related() -> Any:
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip  # TODO: Restore after finished exclude refactor
 async def test_excluding_fields_on_through_model() -> Any:
     async with database:
         post = await Post(title="Test post").save()
@@ -323,6 +346,17 @@ async def test_excluding_fields_on_through_model() -> Any:
         assert post2.categories[2].postcategory.param_name is None
         assert post2.categories[2].postcategory.sort_order == 3
 
+        post3 = (
+            await Post.objects.select_related("categories")
+            .fields({"postcategory": ..., "title": ...})
+            .exclude_fields({"postcategory": {"param_name", "sort_order"}})
+            .get()
+        )
+        assert len(post3.categories) == 3
+        for category in post3.categories:
+            assert category.postcategory.param_name is None
+            assert category.postcategory.sort_order is None
+
 
 # TODO: check/ modify following
 
@@ -337,9 +371,9 @@ async def test_excluding_fields_on_through_model() -> Any:
 # ordering by in order_by (V)
 # updating in query (V)
 # updating from querysetproxy (V)
+# including/excluding in fields?
 
 # modifying from instance (both sides?) (X) <= no, the loaded one doesn't have relations
 
-# including/excluding in fields?
 # allowing to change fk fields names in through model?
 # make through optional? auto-generated for cases other fields are missing?

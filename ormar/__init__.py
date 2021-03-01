@@ -54,7 +54,7 @@ from ormar.fields import (
     UUID,
     UniqueColumns,
 )  # noqa: I100
-from ormar.models import Model
+from ormar.models import ExcludableItems, Model
 from ormar.models.metaclass import ModelMeta
 from ormar.queryset import OrderAction, QuerySet
 from ormar.relations import RelationType
@@ -107,4 +107,5 @@ __all__ = [
     "ManyToManyField",
     "ForeignKeyField",
     "OrderAction",
+    "ExcludableItems",
 ]

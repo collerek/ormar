@@ -1,12 +1,10 @@
-import copy
 from collections import OrderedDict
-from typing import Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Type, Union
+from typing import List, Optional, TYPE_CHECKING, Tuple, Type
 
 import sqlalchemy
 from sqlalchemy import text
 
 import ormar  # noqa I100
-from ormar.models.excludable import ExcludableItems
 from ormar.models.helpers.models import group_related_list
 from ormar.queryset import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
 from ormar.queryset.actions.filter_action import FilterAction
@@ -15,20 +13,21 @@ from ormar.queryset.join import SqlJoin
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.queryset import OrderAction
+    from ormar.models.excludable import ExcludableItems
 
 
 class Query:
     def __init__(  # noqa CFQ002
-            self,
-            model_cls: Type["Model"],
-            filter_clauses: List[FilterAction],
-            exclude_clauses: List[FilterAction],
-            select_related: List,
-            limit_count: Optional[int],
-            offset: Optional[int],
-            excludable: ExcludableItems,
-            order_bys: Optional[List["OrderAction"]],
-            limit_raw_sql: bool,
+        self,
+        model_cls: Type["Model"],
+        filter_clauses: List[FilterAction],
+        exclude_clauses: List[FilterAction],
+        select_related: List,
+        limit_count: Optional[int],
+        offset: Optional[int],
+        excludable: "ExcludableItems",
+        order_bys: Optional[List["OrderAction"]],
+        limit_raw_sql: bool,
     ) -> None:
         self.query_offset = offset
         self.limit_count = limit_count
@@ -103,9 +102,7 @@ class Query:
         :rtype: sqlalchemy.sql.selectable.Select
         """
         self_related_fields = self.model_cls.own_table_columns(
-            model=self.model_cls,
-            excludable=self.excludable,
-            use_alias=True,
+            model=self.model_cls, excludable=self.excludable, use_alias=True,
         )
         self.columns = self.model_cls.Meta.alias_manager.prefixed_columns(
             "", self.table, self_related_fields
@@ -191,7 +188,7 @@ class Query:
         return expr
 
     def _apply_expression_modifiers(
-            self, expr: sqlalchemy.sql.select
+        self, expr: sqlalchemy.sql.select
     ) -> sqlalchemy.sql.select:
         """
         Receives the select query (might be join) and applies:

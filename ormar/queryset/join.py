@@ -1,14 +1,11 @@
 from collections import OrderedDict
 from typing import (
     Any,
-    Dict,
     List,
     Optional,
-    Set,
     TYPE_CHECKING,
     Tuple,
     Type,
-    Union,
 )
 
 import sqlalchemy
@@ -16,12 +13,12 @@ from sqlalchemy import text
 
 import ormar  # noqa I100
 from ormar.exceptions import RelationshipInstanceError
-from ormar.models.excludable import ExcludableItems
 from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.queryset import OrderAction
+    from ormar.models.excludable import ExcludableItems
 
 
 class SqlJoin:
@@ -30,7 +27,7 @@ class SqlJoin:
         used_aliases: List,
         select_from: sqlalchemy.sql.select,
         columns: List[sqlalchemy.Column],
-        excludable: ExcludableItems,
+        excludable: "ExcludableItems",
         order_columns: Optional[List["OrderAction"]],
         sorted_orders: OrderedDict,
         main_model: Type["Model"],
@@ -44,7 +41,7 @@ class SqlJoin:
         self.related_models = related_models or []
         self.select_from = select_from
         self.columns = columns
-        self.excludable=excludable
+        self.excludable = excludable
         self.order_columns = order_columns
         self.sorted_orders = sorted_orders
         self.main_model = main_model
@@ -296,7 +293,6 @@ class SqlJoin:
 
         self._get_order_bys()
 
-        # TODO: fix fields and exclusions for through model?
         self_related_fields = self.next_model.own_table_columns(
             model=self.next_model,
             excludable=self.excludable,
