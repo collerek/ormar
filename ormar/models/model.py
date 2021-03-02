@@ -3,7 +3,6 @@ from typing import (
     Set,
     TYPE_CHECKING,
     Tuple,
-    TypeVar,
 )
 
 import ormar.queryset  # noqa I100
@@ -15,20 +14,18 @@ from ormar.models.model_row import ModelRow
 if TYPE_CHECKING:  # pragma nocover
     from ormar import QuerySet
 
-T = TypeVar("T", bound="Model")
-
 
 class Model(ModelRow):
     __abstract__ = False
     if TYPE_CHECKING:  # pragma nocover
         Meta: ModelMeta
-        objects: "QuerySet[Model]"
+        objects: "QuerySet"
 
     def __repr__(self) -> str:  # pragma nocover
         _repr = {k: getattr(self, k) for k, v in self.Meta.model_fields.items()}
         return f"{self.__class__.__name__}({str(_repr)})"
 
-    async def upsert(self: T, **kwargs: Any) -> T:
+    async def upsert(self, **kwargs: Any) -> "Model":
         """
         Performs either a save or an update depending on the presence of the pk.
         If the pk field is filled it's an update, otherwise the save is performed.
@@ -43,7 +40,7 @@ class Model(ModelRow):
             return await self.save()
         return await self.update(**kwargs)
 
-    async def save(self: T) -> T:
+    async def save(self) -> "Model":
         """
         Performs a save of given Model instance.
         If primary key is already saved, db backend will throw integrity error.
@@ -160,7 +157,7 @@ class Model(ModelRow):
 
     @staticmethod
     async def _update_and_follow(
-        rel: T, follow: bool, visited: Set, update_count: int
+        rel: "Model", follow: bool, visited: Set, update_count: int
     ) -> Tuple[int, Set]:
         """
         Internal method used in save_related to follow related models and update numbers
@@ -189,7 +186,7 @@ class Model(ModelRow):
             update_count += 1
         return update_count, visited
 
-    async def update(self: T, **kwargs: Any) -> T:
+    async def update(self, **kwargs: Any) -> "Model":
         """
         Performs update of Model instance in the database.
         Fields can be updated before or you can pass them as kwargs.
@@ -225,7 +222,7 @@ class Model(ModelRow):
         await self.signals.post_update.send(sender=self.__class__, instance=self)
         return self
 
-    async def delete(self: T) -> int:
+    async def delete(self) -> int:
         """
         Removes the Model instance from the database.
 
@@ -248,7 +245,7 @@ class Model(ModelRow):
         await self.signals.post_delete.send(sender=self.__class__, instance=self)
         return result
 
-    async def load(self: T) -> T:
+    async def load(self) -> "Model":
         """
         Allow to refresh existing Models fields from database.
         Be careful as the related models can be overwritten by pk_only models in load.

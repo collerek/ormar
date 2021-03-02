@@ -5,7 +5,7 @@ from ormar.relations.relation import Relation, RelationType
 from ormar.relations.utils import get_relations_sides_and_names
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import NewBaseModel, T, Model
+    from ormar.models import NewBaseModel, Model
     from ormar.fields import ForeignKeyField, BaseField
 
 
@@ -17,7 +17,7 @@ class RelationsManager:
     def __init__(
         self,
         related_fields: List[Type["ForeignKeyField"]] = None,
-        owner: Optional["T"] = None,
+        owner: Optional["Model"] = None,
     ) -> None:
         self.owner = proxy(owner)
         self._related_fields = related_fields or []

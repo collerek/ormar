@@ -73,7 +73,7 @@ def create_dummy_model(
         "".join(choices(string.ascii_uppercase, k=2)) + uuid.uuid4().hex[:4]
     ).lower()
     fields = {f"{pk_field.name}": (pk_field.__type__, None)}
-    dummy_model = create_model(
+    dummy_model = create_model(  # type: ignore
         f"PkOnly{base_model.get_name(lower=False)}{alias}",
         __module__=base_model.__module__,
         **fields,  # type: ignore

@@ -5,7 +5,6 @@ from typing import (
     Optional,
     TYPE_CHECKING,
     Type,
-    TypeVar,
     cast,
 )
 
@@ -17,24 +16,22 @@ from ormar.models.helpers.models import group_related_list
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar.fields import ForeignKeyField
-    from ormar.models import T
-else:
-    T = TypeVar("T", bound="ModelRow")
+    from ormar.models import Model
 
 
 class ModelRow(NewBaseModel):
     @classmethod
     def from_row(  # noqa: CFQ002
-        cls: Type["ModelRow"],
+        cls,
         row: sqlalchemy.engine.ResultProxy,
-        source_model: Type[T],
+        source_model: Type["Model"],
         select_related: List = None,
         related_models: Any = None,
         related_field: Type["ForeignKeyField"] = None,
         excludable: ExcludableItems = None,
         current_relation_str: str = "",
-        proxy_source_model: Optional[Type["ModelRow"]] = None,
-    ) -> Optional[T]:
+        proxy_source_model: Optional[Type["Model"]] = None,
+    ) -> Optional["Model"]:
         """
         Model method to convert raw sql row from database into ormar.Model instance.
         Traverses nested models if they were specified in select_related for query.
@@ -48,6 +45,8 @@ class ModelRow(NewBaseModel):
         where rows are populated in a different way as they do not have
         nested models in result.
 
+        :param proxy_source_model: source model from which querysetproxy is constructed
+        :type proxy_source_model: Optional[Type["ModelRow"]]
         :param excludable: structure of fields to include and exclude
         :type excludable: ExcludableItems
         :param current_relation_str: name of the relation field
@@ -72,7 +71,6 @@ class ModelRow(NewBaseModel):
         excludable = excludable or ExcludableItems()
 
         if select_related:
-            source_model = cast(Type[T], cls)
             related_models = group_related_list(select_related)
 
         if related_field:
@@ -88,19 +86,19 @@ class ModelRow(NewBaseModel):
             related_models=related_models,
             excludable=excludable,
             current_relation_str=current_relation_str,
-            source_model=source_model,
+            source_model=source_model,  # type: ignore
             proxy_source_model=proxy_source_model,  # type: ignore
         )
         item = cls.extract_prefixed_table_columns(
             item=item, row=row, table_prefix=table_prefix, excludable=excludable
         )
 
-        instance: Optional[T] = None
+        instance: Optional["Model"] = None
         if item.get(cls.Meta.pkname, None) is not None:
             item["__excluded__"] = cls.get_names_to_exclude(
                 excludable=excludable, alias=table_prefix
             )
-            instance = cast(T, cls(**item))
+            instance = cast("Model", cls(**item))
             instance.set_save_status(True)
         return instance
 
@@ -109,11 +107,11 @@ class ModelRow(NewBaseModel):
         cls,
         item: dict,
         row: sqlalchemy.engine.ResultProxy,
-        source_model: Type[T],
+        source_model: Type["Model"],
         related_models: Any,
         excludable: ExcludableItems,
         current_relation_str: str = None,
-        proxy_source_model: Type[T] = None,
+        proxy_source_model: Type["Model"] = None,
     ) -> dict:
         """
         Traverses structure of related models and populates the nested models
@@ -125,6 +123,8 @@ class ModelRow(NewBaseModel):
         Recurrently calls from_row method on nested instances and create nested
         instances. In the end those instances are added to the final model dictionary.
 
+        :param proxy_source_model: source model from which querysetproxy is constructed
+        :type proxy_source_model: Optional[Type["ModelRow"]]
         :param excludable: structure of fields to include and exclude
         :type excludable: ExcludableItems
         :param source_model: source model from which relation started
@@ -190,6 +190,21 @@ class ModelRow(NewBaseModel):
         related: str,
         excludable: ExcludableItems,
     ) -> "ModelRow":
+        """
+        Initialize the through model from db row.
+        Excluded all relation fields and other exclude/include set in excludable.
+
+        :param row: loaded row from database
+        :type row: sqlalchemy.engine.ResultProxy
+        :param through_name: name of the through field
+        :type through_name: str
+        :param related: name of the relation
+        :type related: str
+        :param excludable: structure of fields to include and exclude
+        :type excludable: ExcludableItems
+        :return: initialized through model without relation
+        :rtype: "ModelRow"
+        """
         model_cls = cls.Meta.model_fields[through_name].to
         table_prefix = cls.Meta.alias_manager.resolve_relation_alias(
             from_model=cls, relation_name=related

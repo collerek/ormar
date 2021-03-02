@@ -13,7 +13,6 @@ from typing import (
     Set,
     TYPE_CHECKING,
     Type,
-    TypeVar,
     Union,
     cast,
 )
@@ -46,15 +45,13 @@ from ormar.relations.alias_manager import AliasManager
 from ormar.relations.relation_manager import RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model, T
+    from ormar.models import Model
     from ormar.signals import SignalEmitter
 
     IntStr = Union[int, str]
     DictStrAny = Dict[str, Any]
     AbstractSetIntStr = AbstractSet[IntStr]
     MappingIntStrAny = Mapping[IntStr, Any]
-else:
-    T = TypeVar("T")
 
 
 class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass):
@@ -89,7 +86,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         Meta: ModelMeta
 
     # noinspection PyMissingConstructor
-    def __init__(self: T, *args: Any, **kwargs: Any) -> None:  # type: ignore
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
         """
         Initializer that creates a new ormar Model that is also pydantic Model at the
         same time.
@@ -130,7 +127,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             self,
             "_orm",
             RelationsManager(
-                related_fields=self.extract_related_fields(), owner=cast(T, self),
+                related_fields=self.extract_related_fields(), owner=cast("Model", self),
             ),
         )
 
@@ -397,7 +394,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         cause some dialect require different treatment"""
         return cls.Meta.database._backend._dialect.name
 
-    def remove(self, parent: "T", name: str) -> None:
+    def remove(self, parent: "Model", name: str) -> None:
         """Removes child from relation with given name in RelationshipManager"""
         self._orm.remove_parent(self, parent, name)
 

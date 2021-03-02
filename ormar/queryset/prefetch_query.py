@@ -596,7 +596,6 @@ class PrefetchQuery:
         """
         target_model = target_field.to
         for row in rows:
-            # TODO Fix fields
             field_name = parent_model.get_related_field_name(target_field=target_field)
             item = target_model.extract_prefixed_table_columns(
                 item={}, row=row, table_prefix=table_prefix, excludable=excludable,

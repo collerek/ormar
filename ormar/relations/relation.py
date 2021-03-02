@@ -7,7 +7,7 @@ from ormar.relations.relation_proxy import RelationProxy
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import RelationsManager
-    from ormar.models import Model, NewBaseModel, T
+    from ormar.models import Model, NewBaseModel
 
 
 class RelationType(Enum):
@@ -36,7 +36,7 @@ class Relation:
         type_: RelationType,
         field_name: str,
         to: Type["Model"],
-        through: Type["T"] = None,
+        through: Type["Model"] = None,
     ) -> None:
         """
         Initialize the Relation and keep the related models either as instances of
@@ -69,7 +69,7 @@ class Relation:
         )
 
     @property
-    def through(self) -> Type["T"]:
+    def through(self) -> Type["Model"]:
         if not self._through:  # pragma: no cover
             raise RelationshipInstanceError("Relation does not have through model!")
         return self._through
@@ -116,7 +116,7 @@ class Relation:
                 self._to_remove.add(ind)
         return None
 
-    def add(self, child: "T") -> None:
+    def add(self, child: "Model") -> None:
         """
         Adds child Model to relation, either sets child as related model or adds
         it to the list in RelationProxy depending on relation type.

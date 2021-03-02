@@ -1,14 +1,13 @@
-from typing import (
+from _weakref import CallableProxyType
+from typing import (  # noqa: I100, I201
     Any,
     Dict,
-    Generic,
     List,
     MutableSequence,
     Optional,
     Sequence,
     Set,
     TYPE_CHECKING,
-    TypeVar,
     Union,
     cast,
 )
@@ -18,14 +17,12 @@ from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
-    from ormar.models import Model, T
+    from ormar.models import Model
     from ormar.queryset import QuerySet
     from ormar import RelationType
-else:
-    T = TypeVar("T")
 
 
-class QuerysetProxy(Generic[T]):
+class QuerysetProxy:
     """
     Exposes QuerySet methods on relations, but also handles creating and removing
     of through Models for m2m relations.
@@ -40,7 +37,7 @@ class QuerysetProxy(Generic[T]):
         self.relation: Relation = relation
         self._queryset: Optional["QuerySet"] = qryset
         self.type_: "RelationType" = type_
-        self._owner: "Model" = self.relation.manager.owner
+        self._owner: Union[CallableProxyType, "Model"] = self.relation.manager.owner
         self.related_field_name = self._owner.Meta.model_fields[
             self.relation.field_name
         ].get_related_name()
@@ -72,7 +69,7 @@ class QuerysetProxy(Generic[T]):
         """
         self._queryset = value
 
-    def _assign_child_to_parent(self, child: Optional["T"]) -> None:
+    def _assign_child_to_parent(self, child: Optional["Model"]) -> None:
         """
         Registers child in parents RelationManager.
 
@@ -84,7 +81,9 @@ class QuerysetProxy(Generic[T]):
             rel_name = self.relation.field_name
             setattr(owner, rel_name, child)
 
-    def _register_related(self, child: Union["T", Sequence[Optional["T"]]]) -> None:
+    def _register_related(
+        self, child: Union["Model", Sequence[Optional["Model"]]]
+    ) -> None:
         """
         Registers child/ children in parents RelationManager.
 
@@ -96,7 +95,7 @@ class QuerysetProxy(Generic[T]):
                 self._assign_child_to_parent(subchild)
         else:
             assert isinstance(child, ormar.Model)
-            child = cast(T, child)
+            child = cast("Model", child)
             self._assign_child_to_parent(child)
 
     def _clean_items_on_load(self) -> None:
@@ -107,7 +106,7 @@ class QuerysetProxy(Generic[T]):
             for item in self.relation.related_models[:]:
                 self.relation.remove(item)
 
-    async def create_through_instance(self, child: "T", **kwargs: Any) -> None:
+    async def create_through_instance(self, child: "Model", **kwargs: Any) -> None:
         """
         Crete a through model instance in the database for m2m relations.
 
@@ -132,7 +131,7 @@ class QuerysetProxy(Generic[T]):
         # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
         await model_cls.Meta.database.execute(expr)
 
-    async def update_through_instance(self, child: "T", **kwargs: Any) -> None:
+    async def update_through_instance(self, child: "Model", **kwargs: Any) -> None:
         """
         Updates a through model instance in the database for m2m relations.
 
@@ -148,7 +147,7 @@ class QuerysetProxy(Generic[T]):
         through_model = await model_cls.objects.get(**rel_kwargs)
         await through_model.update(**kwargs)
 
-    async def delete_through_instance(self, child: "T") -> None:
+    async def delete_through_instance(self, child: "Model") -> None:
         """
         Removes through model instance from the database for m2m relations.
 
@@ -217,7 +216,7 @@ class QuerysetProxy(Generic[T]):
             )
         return await queryset.delete(**kwargs)  # type: ignore
 
-    async def first(self, **kwargs: Any) -> T:
+    async def first(self, **kwargs: Any) -> "Model":
         """
         Gets the first row from the db ordered by primary key column ascending.
 
@@ -235,7 +234,7 @@ class QuerysetProxy(Generic[T]):
         self._register_related(first)
         return first
 
-    async def get(self, **kwargs: Any) -> "T":
+    async def get(self, **kwargs: Any) -> "Model":
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -259,7 +258,7 @@ class QuerysetProxy(Generic[T]):
         self._register_related(get)
         return get
 
-    async def all(self, **kwargs: Any) -> Sequence[Optional["T"]]:  # noqa: A003
+    async def all(self, **kwargs: Any) -> Sequence[Optional["Model"]]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 
@@ -281,7 +280,7 @@ class QuerysetProxy(Generic[T]):
         self._register_related(all_items)
         return all_items
 
-    async def create(self, **kwargs: Any) -> "T":
+    async def create(self, **kwargs: Any) -> "Model":
         """
         Creates the model instance, saves it in a database and returns the updates model
         (with pk populated if not passed and autoincrement is set).
@@ -338,7 +337,7 @@ class QuerysetProxy(Generic[T]):
                 )
         return len(children)
 
-    async def get_or_create(self, **kwargs: Any) -> "T":
+    async def get_or_create(self, **kwargs: Any) -> "Model":
         """
         Combination of create and get methods.
 
@@ -356,7 +355,7 @@ class QuerysetProxy(Generic[T]):
         except ormar.NoMatch:
             return await self.create(**kwargs)
 
-    async def update_or_create(self, **kwargs: Any) -> "T":
+    async def update_or_create(self, **kwargs: Any) -> "Model":
         """
         Updates the model, or in case there is no match in database creates a new one.
 
