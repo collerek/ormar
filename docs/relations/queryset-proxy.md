@@ -104,6 +104,29 @@ assert len(await post.categories.all()) == 2
 !!!tip
     Read more in queries documentation [create][create]
 
+For `ManyToMany` relations there is an additional functionality of passing parameters
+that will be used to create a through model if you declared additional fields on explicitly 
+provided Through model.
+
+Given sample like this:
+
+```Python hl_lines="14-20, 29"
+--8<-- "../docs_src/relations/docs004.py"
+```
+
+You can populate fields on through model in the `create()` call in a following way:
+
+```python
+
+post = await Post(title="Test post").save()
+await post.categories.create(
+    name="Test category1",
+    # in arguments pass a dictionary with name of the through field and keys
+    # corresponding to through model fields
+    postcategory={"sort_order": 1, "param_name": "volume"},
+)
+```
+
 ### get_or_create
 
 `get_or_create(**kwargs) -> Model`
@@ -121,6 +144,29 @@ Updates the model, or in case there is no match in database creates a new one.
 
 !!!tip
     Read more in queries documentation [update_or_create][update_or_create]
+
+### update
+
+`update(**kwargs, each:bool = False) -> int`
+
+Updates the related model with provided keyword arguments, return number of updated rows.
+
+!!!tip
+    Read more in queries documentation [update][update]
+
+Note that for `ManyToMany` relations update can also accept an argument with through field
+name and a dictionary of fields.
+
+```Python hl_lines="14-20 29"
+--8<-- "../docs_src/relations/docs004.py"
+```
+
+In example above you can update attributes of `postcategory` in a following call:
+```python
+await post.categories.filter(name="Test category3").update(
+            postcategory={"sort_order": 4}
+        )
+```
 
 ## Filtering and sorting
 
@@ -251,6 +297,7 @@ Returns a bool value to confirm if there are rows matching the given criteria (a
 [create]: ../queries/create.md#create
 [get_or_create]: ../queries/read.md#get_or_create
 [update_or_create]: ../queries/update.md#update_or_create
+[update]: ../queries/update.md#update
 [filter]: ../queries/filter-and-sort.md#filter
 [exclude]: ../queries/filter-and-sort.md#exclude
 [select_related]: ../queries/joins-and-subqueries.md#select_related

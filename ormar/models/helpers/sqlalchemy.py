@@ -154,6 +154,8 @@ def sqlalchemy_columns_from_model_fields(
     pkname = None
     for field_name, field in model_fields.items():
         field.owner = new_model
+        if field.is_multi and not field.through:
+            field.create_default_through_model()
         if field.primary_key:
             pkname = check_pk_column_validity(field_name, field, pkname)
         if not field.pydantic_only and not field.virtual and not field.is_multi:

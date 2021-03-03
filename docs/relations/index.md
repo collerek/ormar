@@ -52,7 +52,7 @@ class Department(ormar.Model):
 
 To define many-to-many relation use `ManyToMany` field.
 
-```python hl_lines="25-26"
+```python hl_lines="18"
 class Category(ormar.Model):
     class Meta:
         tablename = "categories"
@@ -62,13 +62,6 @@ class Category(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
 
-# note: you need to specify through model
-class PostCategory(ormar.Model):
-    class Meta:
-        tablename = "posts_categories"
-        database = database
-        metadata = metadata
-
 class Post(ormar.Model):
     class Meta:
         tablename = "posts"
@@ -77,9 +70,7 @@ class Post(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
-    categories: Optional[Union[Category, List[Category]]] = ormar.ManyToMany(
-        Category, through=PostCategory
-    )
+    categories: Optional[List[Category]] = ormar.ManyToMany(Category)
 ```
 
 
@@ -92,7 +83,52 @@ class Post(ormar.Model):
 
     It allows you to use `await post.categories.all()` but also `await category.posts.all()` to fetch data related only to specific post, category etc.
 
-##Self-reference and postponed references
+## Through fields
+
+As part of the `ManyToMany` relation you can define a through model, that can contain additional 
+fields that you can use to filter, order etc. Fields defined like this are exposed on the reverse
+side of the current query for m2m models. 
+
+So if you query from model `A` to model `B`, only model `B` has through field exposed.
+Which kind of make sense, since it's a one through model/field for each of related models.
+
+```python hl_lines="10-15"
+class Category(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "categories"
+
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(max_length=40)
+
+# you can specify additional fields on through model
+class PostCategory(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "posts_x_categories"
+
+    id: int = ormar.Integer(primary_key=True)
+    sort_order: int = ormar.Integer(nullable=True)
+    param_name: str = ormar.String(default="Name", max_length=200)
+
+
+class Post(ormar.Model):
+    class Meta(BaseMeta):
+        pass
+
+    id: int = ormar.Integer(primary_key=True)
+    title: str = ormar.String(max_length=200)
+    categories = ormar.ManyToMany(Category, through=PostCategory)
+```
+
+!!!tip
+    To read more about many-to-many relations and through fields visit [many-to-many][many-to-many] section
+
+
+!!!tip
+    ManyToMany allows you to query the related models with [queryset-proxy][queryset-proxy].
+    
+    It allows you to use `await post.categories.all()` but also `await category.posts.all()` to fetch data related only to specific post, category etc.
+
+## Self-reference and postponed references
 
 In order to create auto-relation or create two models that reference each other in at least two
 different relations (remember the reverse side is auto-registered for you), you need to use

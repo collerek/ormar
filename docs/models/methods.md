@@ -27,6 +27,39 @@ await track.album.load()
 track.album.name # will return 'Malibu'
 ```
 
+## load_all
+
+`load_all(follow: bool = False, exclude: Union[List, str, Set, Dict] = None) -> Model`
+
+Method works like `load()` but also goes through all relations of the `Model` on which the method is called, 
+and reloads them from database.
+
+By default the `load_all` method loads only models that are directly related (one step away) to the model on which the method is called.
+
+But you can specify the `follow=True` parameter to traverse through nested models and load all of them in the relation tree.
+
+!!!warning
+    To avoid circular updates with `follow=True` set, `load_all` keeps a set of already visited Models, 
+    and won't perform nested `loads` on Models that were already visited.
+    
+    So if you have a diamond or circular relations types you need to perform the loads in a manual way.
+    
+    ```python
+    # in example like this the second Street (coming from City) won't be load_all, so ZipCode won't be reloaded
+    Street -> District -> City -> Street -> ZipCode
+    ```
+
+Method accepts also optional exclude parameter that works exactly the same as exclude_fields method in `QuerySet`.
+That way you can remove fields from related models being refreshed or skip whole related models.
+
+Method performs one database query so it's more efficient than nested calls to `load()` and `all()` on related models.
+
+!!!tip
+    To read more about `exclude` read [exclude_fields][exclude_fields]
+
+!!!warning
+    All relations are cleared on `load_all()`, so if you exclude some nested models they will be empty after call.
+
 ## save
 
 `save() -> self`
@@ -128,3 +161,4 @@ But you can specify the `follow=True` parameter to traverse through nested model
 [alembic]: https://alembic.sqlalchemy.org/en/latest/tutorial.html
 [save status]:  ../models/index/#model-save-status
 [Internals]:  #internals
+[exclude_fields]: ../queries/select-columns.md#exclude_fields

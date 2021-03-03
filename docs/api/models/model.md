@@ -5,122 +5,14 @@
 ## Model Objects
 
 ```python
-class Model(NewBaseModel)
+class Model(ModelRow)
 ```
-
-<a name="models.model.Model.from_row"></a>
-#### from\_row
-
-```python
- | @classmethod
- | from_row(cls: Type[T], row: sqlalchemy.engine.ResultProxy, select_related: List = None, related_models: Any = None, previous_model: Type[T] = None, source_model: Type[T] = None, related_name: str = None, fields: Optional[Union[Dict, Set]] = None, exclude_fields: Optional[Union[Dict, Set]] = None, current_relation_str: str = None) -> Optional[T]
-```
-
-Model method to convert raw sql row from database into ormar.Model instance.
-Traverses nested models if they were specified in select_related for query.
-
-Called recurrently and returns model instance if it's present in the row.
-Note that it's processing one row at a time, so if there are duplicates of
-parent row that needs to be joined/combined
-(like parent row in sql join with 2+ child rows)
-instances populated in this method are later combined in the QuerySet.
-Other method working directly on raw database results is in prefetch_query,
-where rows are populated in a different way as they do not have
-nested models in result.
-
-**Arguments**:
-
-- `current_relation_str (str)`: name of the relation field
-- `source_model (Type[Model])`: model on which relation was defined
-- `row (sqlalchemy.engine.result.ResultProxy)`: raw result row from the database
-- `select_related (List)`: list of names of related models fetched from database
-- `related_models (Union[List, Dict])`: list or dict of related models
-- `previous_model (Model class)`: internal param for nested models to specify table_prefix
-- `related_name (str)`: internal parameter - name of current nested model
-- `fields (Optional[Union[Dict, Set]])`: fields and related model fields to include
-if provided only those are included
-- `exclude_fields (Optional[Union[Dict, Set]])`: fields and related model fields to exclude
-excludes the fields even if they are provided in fields
-
-**Returns**:
-
-`(Optional[Model])`: returns model if model is populated from database
-
-<a name="models.model.Model.populate_nested_models_from_row"></a>
-#### populate\_nested\_models\_from\_row
-
-```python
- | @classmethod
- | populate_nested_models_from_row(cls, item: dict, row: sqlalchemy.engine.ResultProxy, related_models: Any, fields: Optional[Union[Dict, Set]] = None, exclude_fields: Optional[Union[Dict, Set]] = None, current_relation_str: str = None, source_model: Type[T] = None) -> dict
-```
-
-Traverses structure of related models and populates the nested models
-from the database row.
-Related models can be a list if only directly related models are to be
-populated, converted to dict if related models also have their own related
-models to be populated.
-
-Recurrently calls from_row method on nested instances and create nested
-instances. In the end those instances are added to the final model dictionary.
-
-**Arguments**:
-
-- `source_model (Type[Model])`: source model from which relation started
-- `current_relation_str (str)`: joined related parts into one string
-- `item (Dict)`: dictionary of already populated nested models, otherwise empty dict
-- `row (sqlalchemy.engine.result.ResultProxy)`: raw result row from the database
-- `related_models (Union[Dict, List])`: list or dict of related models
-- `fields (Optional[Union[Dict, Set]])`: fields and related model fields to include -
-if provided only those are included
-- `exclude_fields (Optional[Union[Dict, Set]])`: fields and related model fields to exclude
-excludes the fields even if they are provided in fields
-
-**Returns**:
-
-`(Dict)`: dictionary with keys corresponding to model fields names
-and values are database values
-
-<a name="models.model.Model.extract_prefixed_table_columns"></a>
-#### extract\_prefixed\_table\_columns
-
-```python
- | @classmethod
- | extract_prefixed_table_columns(cls, item: dict, row: sqlalchemy.engine.result.ResultProxy, table_prefix: str, fields: Optional[Union[Dict, Set]] = None, exclude_fields: Optional[Union[Dict, Set]] = None) -> dict
-```
-
-Extracts own fields from raw sql result, using a given prefix.
-Prefix changes depending on the table's position in a join.
-
-If the table is a main table, there is no prefix.
-All joined tables have prefixes to allow duplicate column names,
-as well as duplicated joins to the same table from multiple different tables.
-
-Extracted fields populates the related dict later used to construct a Model.
-
-Used in Model.from_row and PrefetchQuery._populate_rows methods.
-
-**Arguments**:
-
-- `item (Dict)`: dictionary of already populated nested models, otherwise empty dict
-- `row (sqlalchemy.engine.result.ResultProxy)`: raw result row from the database
-- `table_prefix (str)`: prefix of the table from AliasManager
-each pair of tables have own prefix (two of them depending on direction) -
-used in joins to allow multiple joins to the same table.
-- `fields (Optional[Union[Dict, Set]])`: fields and related model fields to include -
-if provided only those are included
-- `exclude_fields (Optional[Union[Dict, Set]])`: fields and related model fields to exclude
-excludes the fields even if they are provided in fields
-
-**Returns**:
-
-`(Dict)`: dictionary with keys corresponding to model fields names
-and values are database values
 
 <a name="models.model.Model.upsert"></a>
 #### upsert
 
 ```python
- | async upsert(**kwargs: Any) -> T
+ | async upsert(**kwargs: Any) -> "Model"
 ```
 
 Performs either a save or an update depending on the presence of the pk.
@@ -139,7 +31,7 @@ For save kwargs are ignored, used only in update if provided.
 #### save
 
 ```python
- | async save() -> T
+ | async save() -> "Model"
 ```
 
 Performs a save of given Model instance.
@@ -203,7 +95,7 @@ number of updated instances
 
 ```python
  | @staticmethod
- | async _update_and_follow(rel: T, follow: bool, visited: Set, update_count: int) -> Tuple[int, Set]
+ | async _update_and_follow(rel: "Model", follow: bool, visited: Set, update_count: int) -> Tuple[int, Set]
 ```
 
 Internal method used in save_related to follow related models and update numbers
@@ -227,7 +119,7 @@ number of updated instances
 #### update
 
 ```python
- | async update(**kwargs: Any) -> T
+ | async update(**kwargs: Any) -> "Model"
 ```
 
 Performs update of Model instance in the database.
@@ -274,7 +166,7 @@ or update and the Model will be saved in database again.
 #### load
 
 ```python
- | async load() -> T
+ | async load() -> "Model"
 ```
 
 Allow to refresh existing Models fields from database.
@@ -284,6 +176,43 @@ Does NOT refresh the related models fields if they were loaded before.
 **Raises**:
 
 - `NoMatch`: If given pk is not found in database.
+
+**Returns**:
+
+`(Model)`: reloaded Model
+
+<a name="models.model.Model.load_all"></a>
+#### load\_all
+
+```python
+ | async load_all(follow: bool = False, exclude: Union[List, str, Set, Dict] = None) -> "Model"
+```
+
+Allow to refresh existing Models fields from database.
+Performs refresh of the related models fields.
+
+By default loads only self and the directly related ones.
+
+If follow=True is set it loads also related models of related models.
+
+To not get stuck in an infinite loop as related models also keep a relation
+to parent model visited models set is kept.
+
+That way already visited models that are nested are loaded, but the load do not
+follow them inside. So Model A -> Model B -> Model C -> Model A -> Model X
+will load second Model A but will never follow into Model X.
+Nested relations of those kind need to be loaded manually.
+
+**Raises**:
+
+- `NoMatch`: If given pk is not found in database.
+
+**Arguments**:
+
+- `exclude ()`: 
+- `follow (bool)`: flag to trigger deep save -
+by default only directly related models are saved
+with follow=True also related models of related models are saved
 
 **Returns**:
 

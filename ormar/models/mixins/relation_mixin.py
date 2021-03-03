@@ -1,5 +1,5 @@
 import inspect
-from typing import List, Optional, Set, TYPE_CHECKING
+from typing import List, Optional, Set, TYPE_CHECKING, Type, Union
 
 
 class RelationMixin:
@@ -8,7 +8,7 @@ class RelationMixin:
     """
 
     if TYPE_CHECKING:  # pragma no cover
-        from ormar import ModelMeta
+        from ormar import ModelMeta, Model
 
         Meta: ModelMeta
         _related_names: Optional[Set]
@@ -63,7 +63,7 @@ class RelationMixin:
         return related_fields
 
     @classmethod
-    def extract_related_names(cls) -> Set:
+    def extract_related_names(cls) -> Set[str]:
         """
         Returns List of fields names for all relations declared on a model.
         List is cached in cls._related_names for quicker access.
@@ -118,3 +118,50 @@ class RelationMixin:
             name for name in related_names if cls.Meta.model_fields[name].nullable
         }
         return related_names
+
+    @classmethod
+    def _iterate_related_models(
+        cls,
+        visited: Set[Union[Type["Model"], Type["RelationMixin"]]] = None,
+        source_relation: str = None,
+        source_model: Union[Type["Model"], Type["RelationMixin"]] = None,
+    ) -> List[str]:
+        """
+        Iterates related models recursively to extract relation strings of
+        nested not visited models.
+
+        :param visited: set of already visited models
+        :type visited: Set[str]
+        :param source_relation: name of the current relation
+        :type source_relation: str
+        :param source_model: model from which relation comes in nested relations
+        :type source_model: Type["Model"]
+        :return: list of relation strings to be passed to select_related
+        :rtype: List[str]
+        """
+        visited = visited or set()
+        visited.add(cls)
+        relations = cls.extract_related_names()
+        processed_relations = []
+        for relation in relations:
+            target_model = cls.Meta.model_fields[relation].to
+            if source_model and target_model == source_model:
+                continue
+            if target_model not in visited:
+                visited.add(target_model)
+                deep_relations = target_model._iterate_related_models(
+                    visited=visited, source_relation=relation, source_model=cls
+                )
+                processed_relations.extend(deep_relations)
+            # TODO add test for circular deps
+            else:  # pragma: no cover
+                processed_relations.append(relation)
+        if processed_relations:
+            final_relations = [
+                f"{source_relation + '__' if source_relation else ''}{relation}"
+                for relation in processed_relations
+            ]
+        else:
+            final_relations = [source_relation] if source_relation else []
+
+        return final_relations

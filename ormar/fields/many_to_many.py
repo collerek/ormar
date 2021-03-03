@@ -1,5 +1,5 @@
 import sys
-from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union, cast
 
 from pydantic.typing import ForwardRef, evaluate_forwardref
 import ormar  # noqa: I100
@@ -43,7 +43,7 @@ def populate_m2m_params_based_on_to_model(
 
 def ManyToMany(
     to: "ToType",
-    through: "ToType",
+    through: Optional["ToType"] = None,
     *,
     name: str = None,
     unique: bool = False,
@@ -212,3 +212,21 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :rtype: Type["Model"]
         """
         return cls.through
+
+    @classmethod
+    def create_default_through_model(cls) -> None:
+        """
+        Creates default empty through model if no additional fields are required.
+        """
+        owner_name = cls.owner.get_name(lower=False)
+        to_name = cls.to.get_name(lower=False)
+        class_name = f"{owner_name}{to_name}"
+        table_name = f"{owner_name.lower()}s_{to_name.lower()}s"
+        new_meta_namespace = {
+            "tablename": table_name,
+            "database": cls.owner.Meta.database,
+            "metadata": cls.owner.Meta.metadata,
+        }
+        new_meta = type("Meta", (), new_meta_namespace)
+        through_model = type(class_name, (ormar.Model,), {"Meta": new_meta})
+        cls.through = cast(Type["Model"], through_model)

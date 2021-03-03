@@ -146,7 +146,7 @@ Raises exception if model is abstract or has ForwardRefs in relation fields.
 #### \_extract\_related\_model\_instead\_of\_field
 
 ```python
- | _extract_related_model_instead_of_field(item: str) -> Optional[Union["T", Sequence["T"]]]
+ | _extract_related_model_instead_of_field(item: str) -> Optional[Union["Model", Sequence["Model"]]]
 ```
 
 Retrieves the related model/models from RelationshipManager.
@@ -276,7 +276,7 @@ cause some dialect require different treatment
 #### remove
 
 ```python
- | remove(parent: "T", name: str) -> None
+ | remove(parent: "Model", name: str) -> None
 ```
 
 Removes child from relation with given name in RelationshipManager

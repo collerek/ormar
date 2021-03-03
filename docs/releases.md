@@ -1,9 +1,19 @@
-# 0.9.5
+# 0.9.6
+
+##Important
+* `Through` model for `ManyToMany` relations now **becomes optional**. It's not a breaking change
+  since if you provide it everything works just fine as it used to. So if you don't want or need any additional 
+  fields on `Through` model you can skip it. Note that it's going to be created for you automatically and 
+  still has to be included in example in `alembic` migrations. 
+  If you want to delete existing one check the default naming convention to adjust your existing database structure.
+
+  Note that you still need to provide it if you want to 
+  customize the `Through` model name or the database table name.
 
 ## Features
 * Add `update` method to `QuerysetProxy` so now it's possible to update related models directly from parent model
   in `ManyToMany` relations and in reverse `ForeignKey` relations. Note that update like in `QuerySet` `update` returns number of
-  updated models and **does not update related models in place** on praent model. To get the refreshed data on parent model you need to refresh
+  updated models and **does not update related models in place** on parent model. To get the refreshed data on parent model you need to refresh
   the related models (i.e. `await model_instance.related.all()`)
 * Added possibility to add more fields on `Through` model for `ManyToMany` relationships:
     * name of the through model field is the lowercase name of the Through class
@@ -14,12 +24,20 @@
     * you can filter on through model fields
     * you can include and exclude fields on through models
     * through models are attached only to related models (i.e. if you query from A to B -> only on B)
-    * check the updated docs for more information
+    * note that through models are explicitly loaded without relations -> relation is already populated in ManyToMany field. 
+    * note that just like before you cannot declare the relation fields on through model, they will be populated for you by `ormar`
+    * check the updated ManyToMany relation docs for more information
     
 # Other
 * Updated docs and api docs
-* Refactors and optimisations mainly related to filters and order bys
+* Refactors and optimisations mainly related to filters, exclusions and order bys
 
+
+# 0.9.5
+
+## Fixes
+* Fix creation of `pydantic` FieldInfo after update of `pydantic` to version >=1.8
+* Pin required dependency versions to avoid such situations in the future
 
 
 # 0.9.4

@@ -5,7 +5,7 @@
 ## QuerysetProxy Objects
 
 ```python
-class QuerysetProxy(ormar.QuerySetProtocol)
+class QuerysetProxy()
 ```
 
 Exposes QuerySet methods on relations, but also handles creating and removing
@@ -43,7 +43,7 @@ Set's the queryset. Initialized in RelationProxy.
 #### \_assign\_child\_to\_parent
 
 ```python
- | _assign_child_to_parent(child: Optional["T"]) -> None
+ | _assign_child_to_parent(child: Optional["Model"]) -> None
 ```
 
 Registers child in parents RelationManager.
@@ -56,7 +56,7 @@ Registers child in parents RelationManager.
 #### \_register\_related
 
 ```python
- | _register_related(child: Union["T", Sequence[Optional["T"]]]) -> None
+ | _register_related(child: Union["Model", Sequence[Optional["Model"]]]) -> None
 ```
 
 Registers child/ children in parents RelationManager.
@@ -78,20 +78,35 @@ Cleans the current list of the related models.
 #### create\_through\_instance
 
 ```python
- | async create_through_instance(child: "T") -> None
+ | async create_through_instance(child: "Model", **kwargs: Any) -> None
 ```
 
 Crete a through model instance in the database for m2m relations.
 
 **Arguments**:
 
+- `kwargs (Any)`: dict of additional keyword arguments for through instance
+- `child (Model)`: child model instance
+
+<a name="relations.querysetproxy.QuerysetProxy.update_through_instance"></a>
+#### update\_through\_instance
+
+```python
+ | async update_through_instance(child: "Model", **kwargs: Any) -> None
+```
+
+Updates a through model instance in the database for m2m relations.
+
+**Arguments**:
+
+- `kwargs (Any)`: dict of additional keyword arguments for through instance
 - `child (Model)`: child model instance
 
 <a name="relations.querysetproxy.QuerysetProxy.delete_through_instance"></a>
 #### delete\_through\_instance
 
 ```python
- | async delete_through_instance(child: "T") -> None
+ | async delete_through_instance(child: "Model") -> None
 ```
 
 Removes through model instance from the database for m2m relations.
@@ -255,6 +270,27 @@ Actual call delegated to QuerySet.
 **Returns**:
 
 `(Model)`: created model
+
+<a name="relations.querysetproxy.QuerysetProxy.update"></a>
+#### update
+
+```python
+ | async update(each: bool = False, **kwargs: Any) -> int
+```
+
+Updates the model table after applying the filters from kwargs.
+
+You have to either pass a filter to narrow down a query or explicitly pass
+each=True flag to affect whole table.
+
+**Arguments**:
+
+- `each (bool)`: flag if whole table should be affected if no filter is passed
+- `kwargs (Any)`: fields names and proper value types
+
+**Returns**:
+
+`(int)`: number of updated rows
 
 <a name="relations.querysetproxy.QuerysetProxy.get_or_create"></a>
 #### get\_or\_create

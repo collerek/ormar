@@ -68,6 +68,14 @@ class Relation:
             else None
         )
 
+    def clear(self) -> None:
+        if self._type in (RelationType.PRIMARY, RelationType.THROUGH):
+            self.related_models = None
+            self._owner.__dict__[self.field_name] = None
+        elif self.related_models is not None:
+            self.related_models._clear()
+            self._owner.__dict__[self.field_name] = []
+
     @property
     def through(self) -> Type["Model"]:
         if not self._through:  # pragma: no cover

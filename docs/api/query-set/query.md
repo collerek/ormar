@@ -17,38 +17,6 @@ class Query()
 
 Initialize empty order_by dict to be populated later during the query call
 
-<a name="queryset.query.Query.prefixed_pk_name"></a>
-#### prefixed\_pk\_name
-
-```python
- | @property
- | prefixed_pk_name() -> str
-```
-
-Shortcut for extracting prefixed with alias primary key column name from main
-model
-
-**Returns**:
-
-`(str)`: alias of pk column prefix with table name.
-
-<a name="queryset.query.Query.alias"></a>
-#### alias
-
-```python
- | alias(name: str) -> str
-```
-
-Shortcut to extracting column alias from given master model.
-
-**Arguments**:
-
-- `name (str)`: name of column
-
-**Returns**:
-
-`(str)`: alias of given column name
-
 <a name="queryset.query.Query.apply_order_bys_for_primary_model"></a>
 #### apply\_order\_bys\_for\_primary\_model
 

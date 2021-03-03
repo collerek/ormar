@@ -88,6 +88,7 @@ class ModelRow(NewBaseModel):
             current_relation_str=current_relation_str,
             source_model=source_model,  # type: ignore
             proxy_source_model=proxy_source_model,  # type: ignore
+            table_prefix=table_prefix,
         )
         item = cls.extract_prefixed_table_columns(
             item=item, row=row, table_prefix=table_prefix, excludable=excludable
@@ -110,6 +111,7 @@ class ModelRow(NewBaseModel):
         source_model: Type["Model"],
         related_models: Any,
         excludable: ExcludableItems,
+        table_prefix: str,
         current_relation_str: str = None,
         proxy_source_model: Type["Model"] = None,
     ) -> dict:
@@ -143,15 +145,20 @@ class ModelRow(NewBaseModel):
         """
 
         for related in related_models:
+            field = cls.Meta.model_fields[related]
+            field = cast(Type["ForeignKeyField"], field)
+            model_cls = field.to
+            model_excludable = excludable.get(
+                model_cls=cast(Type["Model"], cls), alias=table_prefix
+            )
+            if model_excludable.is_excluded(related):
+                return item
+
             relation_str = (
                 "__".join([current_relation_str, related])
                 if current_relation_str
                 else related
             )
-            field = cls.Meta.model_fields[related]
-            field = cast(Type["ForeignKeyField"], field)
-            model_cls = field.to
-
             remainder = None
             if isinstance(related_models, dict) and related_models[related]:
                 remainder = related_models[related]

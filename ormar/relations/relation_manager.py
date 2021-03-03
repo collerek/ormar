@@ -26,37 +26,6 @@ class RelationsManager:
         for field in self._related_fields:
             self._add_relation(field)
 
-    def _get_relation_type(self, field: Type["BaseField"]) -> RelationType:
-        """
-        Returns type of the relation declared on a field.
-
-        :param field: field with relation declaration
-        :type field: Type[BaseField]
-        :return: type of the relation defined on field
-        :rtype: RelationType
-        """
-        if field.is_multi:
-            return RelationType.MULTIPLE
-        if field.is_through:
-            return RelationType.THROUGH
-        return RelationType.PRIMARY if not field.virtual else RelationType.REVERSE
-
-    def _add_relation(self, field: Type["BaseField"]) -> None:
-        """
-        Registers relation in the manager.
-        Adds Relation instance under field.name.
-
-        :param field: field with relation declaration
-        :type field: Type[BaseField]
-        """
-        self._relations[field.name] = Relation(
-            manager=self,
-            type_=self._get_relation_type(field),
-            field_name=field.name,
-            to=field.to,
-            through=getattr(field, "through", None),
-        )
-
     def __contains__(self, item: str) -> bool:
         """
         Checks if relation with given name is already registered.
@@ -67,6 +36,10 @@ class RelationsManager:
         :rtype: bool
         """
         return item in self._related_names
+
+    def clear(self) -> None:
+        for relation in self._relations.values():
+            relation.clear()
 
     def get(self, name: str) -> Optional[Union["Model", Sequence["Model"]]]:
         """
@@ -82,20 +55,6 @@ class RelationsManager:
         if relation is not None:
             return relation.get()
         return None  # pragma nocover
-
-    def _get(self, name: str) -> Optional[Relation]:
-        """
-        Returns the actual relation and not the related model(s).
-
-        :param name: name of the relation
-        :type name: str
-        :return: Relation instance
-        :rtype: ormar.relations.relation.Relation
-        """
-        relation = self._relations.get(name, None)
-        if relation is not None:
-            return relation
-        return None
 
     @staticmethod
     def add(parent: "Model", child: "Model", field: Type["ForeignKeyField"],) -> None:
@@ -164,3 +123,48 @@ class RelationsManager:
         relation_name = item.Meta.model_fields[name].get_related_name()
         item._orm.remove(name, parent)
         parent._orm.remove(relation_name, item)
+
+    def _get(self, name: str) -> Optional[Relation]:
+        """
+        Returns the actual relation and not the related model(s).
+
+        :param name: name of the relation
+        :type name: str
+        :return: Relation instance
+        :rtype: ormar.relations.relation.Relation
+        """
+        relation = self._relations.get(name, None)
+        if relation is not None:
+            return relation
+        return None
+
+    def _get_relation_type(self, field: Type["BaseField"]) -> RelationType:
+        """
+        Returns type of the relation declared on a field.
+
+        :param field: field with relation declaration
+        :type field: Type[BaseField]
+        :return: type of the relation defined on field
+        :rtype: RelationType
+        """
+        if field.is_multi:
+            return RelationType.MULTIPLE
+        if field.is_through:
+            return RelationType.THROUGH
+        return RelationType.PRIMARY if not field.virtual else RelationType.REVERSE
+
+    def _add_relation(self, field: Type["BaseField"]) -> None:
+        """
+        Registers relation in the manager.
+        Adds Relation instance under field.name.
+
+        :param field: field with relation declaration
+        :type field: Type[BaseField]
+        """
+        self._relations[field.name] = Relation(
+            manager=self,
+            type_=self._get_relation_type(field),
+            field_name=field.name,
+            to=field.to,
+            through=getattr(field, "through", None),
+        )

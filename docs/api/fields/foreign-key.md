@@ -332,3 +332,32 @@ Selects the appropriate constructor based on a passed value.
 
 `(Optional[Union["Model", List["Model"]]])`: returns a Model or a list of Models
 
+<a name="fields.foreign_key.ForeignKeyField.get_relation_name"></a>
+#### get\_relation\_name
+
+```python
+ | @classmethod
+ | get_relation_name(cls) -> str
+```
+
+Returns name of the relation, which can be a own name or through model
+names for m2m models
+
+**Returns**:
+
+`(bool)`: result of the check
+
+<a name="fields.foreign_key.ForeignKeyField.get_source_model"></a>
+#### get\_source\_model
+
+```python
+ | @classmethod
+ | get_source_model(cls) -> Type["Model"]
+```
+
+Returns model from which the relation comes -> either owner or through model
+
+**Returns**:
+
+`(Type["Model"])`: source model
+

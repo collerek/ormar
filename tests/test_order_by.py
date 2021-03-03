@@ -85,13 +85,6 @@ class Car(ormar.Model):
     factory: Optional[Factory] = ormar.ForeignKey(Factory)
 
 
-class UsersCar(ormar.Model):
-    class Meta:
-        tablename = "cars_x_users"
-        metadata = metadata
-        database = database
-
-
 class User(ormar.Model):
     class Meta:
         tablename = "users"
@@ -100,7 +93,7 @@ class User(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    cars: List[Car] = ormar.ManyToMany(Car, through=UsersCar)
+    cars: List[Car] = ormar.ManyToMany(Car)
 
 
 @pytest.fixture(autouse=True, scope="module")

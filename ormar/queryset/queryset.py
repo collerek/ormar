@@ -148,8 +148,8 @@ class QuerySet:
         )
 
     async def _prefetch_related_models(
-        self, models: Sequence[Optional["Model"]], rows: List
-    ) -> Sequence[Optional["Model"]]:
+        self, models: List[Optional["Model"]], rows: List
+    ) -> List[Optional["Model"]]:
         """
         Performs prefetch query for selected models names.
 
@@ -169,7 +169,7 @@ class QuerySet:
         )
         return await query.prefetch_related(models=models, rows=rows)  # type: ignore
 
-    def _process_query_result_rows(self, rows: List) -> Sequence[Optional["Model"]]:
+    def _process_query_result_rows(self, rows: List) -> List[Optional["Model"]]:
         """
         Process database rows and initialize ormar Model from each of the rows.
 

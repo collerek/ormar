@@ -72,6 +72,27 @@ Excludes defaults and alias as they are populated separately
 
 `(bool)`: True if field is present on pydantic.FieldInfo
 
+<a name="fields.base.BaseField.get_base_pydantic_field_info"></a>
+#### get\_base\_pydantic\_field\_info
+
+```python
+ | @classmethod
+ | get_base_pydantic_field_info(cls, allow_null: bool) -> FieldInfo
+```
+
+Generates base pydantic.FieldInfo with only default and optionally
+required to fix pydantic Json field being set to required=False.
+Used in an ormar Model Metaclass.
+
+**Arguments**:
+
+- `allow_null (bool)`: flag if the default value can be None
+or if it should be populated by pydantic Undefined
+
+**Returns**:
+
+`(pydantic.FieldInfo)`: instance of base pydantic.FieldInfo
+
 <a name="fields.base.BaseField.convert_to_pydantic_field_info"></a>
 #### convert\_to\_pydantic\_field\_info
 

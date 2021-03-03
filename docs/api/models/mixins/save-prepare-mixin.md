@@ -91,3 +91,22 @@ passed by the user.
 
 `(Dict)`: dictionary of model that is about to be saved
 
+<a name="models.mixins.save_mixin.SavePrepareMixin.validate_choices"></a>
+#### validate\_choices
+
+```python
+ | @classmethod
+ | validate_choices(cls, new_kwargs: Dict) -> Dict
+```
+
+Receives dictionary of model that is about to be saved and validates the
+fields with choices set to see if the value is allowed.
+
+**Arguments**:
+
+- `new_kwargs (Dict)`: dictionary of model that is about to be saved
+
+**Returns**:
+
+`(Dict)`: dictionary of model that is about to be saved
+

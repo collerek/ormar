@@ -289,6 +289,25 @@ async def test_update_through_models_from_queryset_on_through() -> Any:
 
 
 @pytest.mark.asyncio
+async def test_update_through_model_after_load() -> Any:
+    async with database:
+        post = await Post(title="Test post").save()
+        await post.categories.create(
+            name="Test category1",
+            postcategory={"sort_order": 2, "param_name": "volume"},
+        )
+        post2 = await Post.objects.select_related("categories").get()
+        assert len(post2.categories) == 1
+
+        await post2.categories[0].postcategory.load()
+        await post2.categories[0].postcategory.update(sort_order=3)
+
+        post3 = await Post.objects.select_related("categories").get()
+        assert len(post3.categories) == 1
+        assert post3.categories[0].postcategory.sort_order == 3
+
+
+@pytest.mark.asyncio
 async def test_update_through_from_related() -> Any:
     async with database:
         post = await Post(title="Test post").save()
@@ -371,9 +390,10 @@ async def test_excluding_fields_on_through_model() -> Any:
 # ordering by in order_by (V)
 # updating in query (V)
 # updating from querysetproxy (V)
-# including/excluding in fields?
+# including/excluding in fields? (V)
+# make through optional? auto-generated for cases other fields are missing? (V)
 
 # modifying from instance (both sides?) (X) <= no, the loaded one doesn't have relations
+# allowing to change fk fields names in through model? (X) <= separate issue
 
-# allowing to change fk fields names in through model?
-# make through optional? auto-generated for cases other fields are missing?
+# prevent adding relation on through field definition

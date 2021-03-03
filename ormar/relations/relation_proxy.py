@@ -75,6 +75,9 @@ class RelationProxy(list):
         self._initialize_queryset()
         return getattr(self.queryset_proxy, item)
 
+    def _clear(self) -> None:
+        super().clear()
+
     def _initialize_queryset(self) -> None:
         """
         Initializes the QuerySetProxy if not yet initialized.

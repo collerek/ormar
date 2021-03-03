@@ -1,8 +1,11 @@
 from typing import (
     Any,
+    Dict,
+    List,
     Set,
     TYPE_CHECKING,
     Tuple,
+    Union,
 )
 
 import ormar.queryset  # noqa I100
@@ -264,4 +267,46 @@ class Model(ModelRow):
         kwargs = self.translate_aliases_to_columns(kwargs)
         self.update_from_dict(kwargs)
         self.set_save_status(True)
+        return self
+
+    async def load_all(
+        self, follow: bool = False, exclude: Union[List, str, Set, Dict] = None
+    ) -> "Model":
+        """
+        Allow to refresh existing Models fields from database.
+        Performs refresh of the related models fields.
+
+        By default loads only self and the directly related ones.
+
+        If follow=True is set it loads also related models of related models.
+
+        To not get stuck in an infinite loop as related models also keep a relation
+        to parent model visited models set is kept.
+
+        That way already visited models that are nested are loaded, but the load do not
+        follow them inside. So Model A -> Model B -> Model C -> Model A -> Model X
+        will load second Model A but will never follow into Model X.
+        Nested relations of those kind need to be loaded manually.
+
+        :raises NoMatch: If given pk is not found in database.
+
+        :param exclude: related models to exclude
+        :type exclude: Union[List, str, Set, Dict]
+        :param follow: flag to trigger deep save -
+        by default only directly related models are saved
+        with follow=True also related models of related models are saved
+        :type follow: bool
+        :return: reloaded Model
+        :rtype: Model
+        """
+        relations = list(self.extract_related_names())
+        if follow:
+            relations = self._iterate_related_models()
+        queryset = self.__class__.objects
+        print(relations)
+        if exclude:
+            queryset = queryset.exclude_fields(exclude)
+        instance = await queryset.select_related(relations).get(pk=self.pk)
+        self._orm.clear()
+        self.update_from_dict(instance.dict())
         return self

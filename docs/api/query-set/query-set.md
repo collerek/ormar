@@ -38,6 +38,16 @@ Shortcut to model class set on QuerySet.
 
 `(Type[Model])`: model class
 
+<a name="queryset.queryset.QuerySet.rebuild_self"></a>
+#### rebuild\_self
+
+```python
+ | rebuild_self(filter_clauses: List = None, exclude_clauses: List = None, select_related: List = None, limit_count: int = None, offset: int = None, excludable: "ExcludableItems" = None, order_bys: List = None, prefetch_related: List = None, limit_raw_sql: bool = None, proxy_source_model: Optional[Type["Model"]] = None) -> "QuerySet"
+```
+
+Method that returns new instance of queryset based on passed params,
+all not passed params are taken from current values.
+
 <a name="queryset.queryset.QuerySet._prefetch_related_models"></a>
 #### \_prefetch\_related\_models
 
@@ -252,7 +262,7 @@ To chain related `Models` relation use double underscores between names.
 #### fields
 
 ```python
- | fields(columns: Union[List, str, Set, Dict]) -> "QuerySet"
+ | fields(columns: Union[List, str, Set, Dict], _is_exclude: bool = False) -> "QuerySet"
 ```
 
 With `fields()` you can select subset of model columns to limit the data load.
@@ -293,6 +303,7 @@ To include whole nested model specify model related field name and ellipsis.
 
 **Arguments**:
 
+- `_is_exclude (bool)`: flag if it's exclude or include operation
 - `columns (Union[List, str, Set, Dict])`: columns to include
 
 **Returns**:
