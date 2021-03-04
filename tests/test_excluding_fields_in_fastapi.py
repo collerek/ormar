@@ -124,7 +124,8 @@ async def create_user(user: User):
 
 @app.post("/users2/", response_model=User)
 async def create_user2(user: User):
-    return (await user.save()).dict(exclude={"password"})
+    user = await user.save()
+    return user.dict(exclude={"password"})
 
 
 @app.post("/users3/", response_model=UserBase)

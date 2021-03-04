@@ -108,3 +108,17 @@ async def test_model_multiple_instances_of_same_table_in_schema():
         assert len(classes[0].dict().get("students")) == 2
         assert classes[0].teachers[0].category.department.name == "Law Department"
         assert classes[0].students[0].category.department.name == "Math Department"
+
+
+@pytest.mark.asyncio
+async def test_load_all_multiple_instances_of_same_table_in_schema():
+    async with database:
+        await create_data()
+        math_class = await SchoolClass.objects.get(name="Math")
+        assert math_class.name == "Math"
+
+        await math_class.load_all(follow=True)
+        assert math_class.students[0].name == "Jane"
+        assert len(math_class.dict().get("students")) == 2
+        assert math_class.teachers[0].category.department.name == "Law Department"
+        assert math_class.students[0].category.department.name == "Math Department"

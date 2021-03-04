@@ -74,7 +74,7 @@ class Relation:
             self._owner.__dict__[self.field_name] = None
         elif self.related_models is not None:
             self.related_models._clear()
-            self._owner.__dict__[self.field_name] = []
+            self._owner.__dict__[self.field_name] = None
 
     @property
     def through(self) -> Type["Model"]:
