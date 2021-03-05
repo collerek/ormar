@@ -7,6 +7,8 @@ from typing import (
     Tuple,
     Type,
     cast,
+    Generic,
+    TypeVar
 )
 
 import ormar
@@ -21,7 +23,11 @@ if TYPE_CHECKING:  # pragma: no cover
     from ormar.models.excludable import ExcludableItems
 
 
-def sort_models(models: List["Model"], orders_by: Dict) -> List["Model"]:
+TM = TypeVar('TM')  # Generic Represent a type of Model
+TypeTM = Type[TM]
+
+
+def sort_models(models: List[TM], orders_by: Dict) -> List[TM]:
     """
     Since prefetch query gets all related models by ids the sorting needs to happen in
     python. Since by default models are already sorted by id here we resort only if
@@ -48,7 +54,7 @@ def sort_models(models: List["Model"], orders_by: Dict) -> List["Model"]:
 
 
 def set_children_on_model(  # noqa: CCR001
-    model: "Model",
+    model: TM,
     related: str,
     children: Dict,
     model_id: int,
@@ -90,7 +96,7 @@ def set_children_on_model(  # noqa: CCR001
                     setattr(model, related, child)
 
 
-class PrefetchQuery:
+class PrefetchQuery(Generic[TM]):
     """
     Query used to fetch related models in subsequent queries.
     Each model is fetched only ones by the name of the relation.
@@ -99,7 +105,7 @@ class PrefetchQuery:
 
     def __init__(  # noqa: CFQ002
         self,
-        model_cls: Type["Model"],
+        model_cls: TypeTM,
         excludable: "ExcludableItems",
         prefetch_related: List,
         select_related: List,
@@ -121,8 +127,8 @@ class PrefetchQuery:
         )
 
     async def prefetch_related(
-        self, models: Sequence["Model"], rows: List
-    ) -> Sequence["Model"]:
+        self, models: Sequence[TM], rows: List
+    ) -> Sequence[TM]:
         """
         Main entry point for prefetch_query.
 
@@ -146,7 +152,7 @@ class PrefetchQuery:
         return await self._prefetch_related_models(models=models, rows=rows)
 
     def _extract_ids_from_raw_data(
-        self, parent_model: Type["Model"], column_name: str
+        self, parent_model: TypeTM, column_name: str
     ) -> Set:
         """
         Iterates over raw rows and extract id values of relation columns by using
@@ -169,14 +175,14 @@ class PrefetchQuery:
         return list_of_ids
 
     def _extract_ids_from_preloaded_models(
-        self, parent_model: Type["Model"], column_name: str
+        self, parent_model: TypeTM, column_name: str
     ) -> Set:
         """
         Extracts relation ids from already populated models if they were included
         in the original query before.
 
         :param parent_model: model from which related ids should be extracted
-        :type parent_model: Type["Model"]
+        :type parent_model: TypeTM
         :param column_name: name of the relation column which is a key column
         :type column_name: str
         :return: set of ids of related model that should be extracted
@@ -192,14 +198,14 @@ class PrefetchQuery:
         return list_of_ids
 
     def _extract_required_ids(
-        self, parent_model: Type["Model"], reverse: bool, related: str,
+        self, parent_model: TypeTM, reverse: bool, related: str,
     ) -> Set:
         """
         Delegates extraction of the fields to either get ids from raw sql response
         or from already populated models.
 
         :param parent_model: model from which related ids should be extracted
-        :type parent_model: Type["Model"]
+        :type parent_model: TypeTM
         :param reverse: flag if the relation is reverse
         :type reverse: bool
         :param related: name of the field with relation
@@ -227,8 +233,8 @@ class PrefetchQuery:
 
     def _get_filter_for_prefetch(
         self,
-        parent_model: Type["Model"],
-        target_model: Type["Model"],
+        parent_model: TypeTM,
+        target_model: TypeTM,
         reverse: bool,
         related: str,
     ) -> List:
@@ -239,9 +245,9 @@ class PrefetchQuery:
         If there are no ids for relation the empty list is returned.
 
         :param parent_model: model from which related ids should be extracted
-        :type parent_model: Type["Model"]
+        :type parent_model: TypeTM
         :param target_model: model to which relation leads to
-        :type target_model: Type["Model"]
+        :type target_model: TypeTM
         :param reverse: flag if the relation is reverse
         :type reverse: bool
         :param related: name of the field with relation
@@ -271,8 +277,8 @@ class PrefetchQuery:
         return []
 
     def _populate_nested_related(
-        self, model: "Model", prefetch_dict: Dict, orders_by: Dict,
-    ) -> "Model":
+        self, model: TM, prefetch_dict: Dict, orders_by: Dict,
+    ) -> TM:
         """
         Populates all related models children of parent model that are
         included in prefetch query.
@@ -315,8 +321,8 @@ class PrefetchQuery:
         return model
 
     async def _prefetch_related_models(
-        self, models: Sequence["Model"], rows: List
-    ) -> Sequence["Model"]:
+        self, models: Sequence[TM], rows: List
+    ) -> Sequence[TM]:
         """
         Main method of the query.
 
@@ -361,7 +367,7 @@ class PrefetchQuery:
     async def _extract_related_models(  # noqa: CFQ002, CCR001
         self,
         related: str,
-        target_model: Type["Model"],
+        target_model: TypeTM,
         prefetch_dict: Dict,
         select_dict: Dict,
         excludable: "ExcludableItems",
@@ -562,7 +568,7 @@ class PrefetchQuery:
         self,
         rows: List,
         target_field: Type["ForeignKeyField"],
-        parent_model: Type["Model"],
+        parent_model: TypeTM,
         table_prefix: str,
         exclude_prefix: str,
         excludable: "ExcludableItems",
