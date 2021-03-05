@@ -40,12 +40,26 @@ List is cached in cls._related_fields for quicker access.
 
 `(List)`: list of related fields
 
+<a name="models.mixins.relation_mixin.RelationMixin.extract_through_names"></a>
+#### extract\_through\_names
+
+```python
+ | @classmethod
+ | extract_through_names(cls) -> Set
+```
+
+Extracts related fields through names which are shortcuts to through models.
+
+**Returns**:
+
+`(Set)`: set of related through fields names
+
 <a name="models.mixins.relation_mixin.RelationMixin.extract_related_names"></a>
 #### extract\_related\_names
 
 ```python
  | @classmethod
- | extract_related_names(cls) -> Set
+ | extract_related_names(cls) -> Set[str]
 ```
 
 Returns List of fields names for all relations declared on a model.
@@ -53,7 +67,7 @@ List is cached in cls._related_names for quicker access.
 
 **Returns**:
 
-`(List)`: list of related fields names
+`(Set)`: set of related fields names
 
 <a name="models.mixins.relation_mixin.RelationMixin._extract_db_related_names"></a>
 #### \_extract\_db\_related\_names
@@ -90,4 +104,25 @@ for nested models all related models are returned.
 **Returns**:
 
 `(Set)`: set of non mandatory related fields
+
+<a name="models.mixins.relation_mixin.RelationMixin._iterate_related_models"></a>
+#### \_iterate\_related\_models
+
+```python
+ | @classmethod
+ | _iterate_related_models(cls, visited: Set[Union[Type["Model"], Type["RelationMixin"]]] = None, source_relation: str = None, source_model: Union[Type["Model"], Type["RelationMixin"]] = None) -> List[str]
+```
+
+Iterates related models recursively to extract relation strings of
+nested not visited models.
+
+**Arguments**:
+
+- `visited (Set[str])`: set of already visited models
+- `source_relation (str)`: name of the current relation
+- `source_model (Type["Model"])`: model from which relation comes in nested relations
+
+**Returns**:
+
+`(List[str])`: list of relation strings to be passed to select_related
 

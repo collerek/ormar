@@ -1,17 +1,12 @@
-from typing import Dict, List, Optional, Sequence, TYPE_CHECKING, Type, TypeVar, Union
+from typing import Dict, List, Optional, Sequence, TYPE_CHECKING, Type, Union
 from weakref import proxy
 
-from ormar.fields import BaseField
-from ormar.fields.foreign_key import ForeignKeyField
-from ormar.fields.many_to_many import ManyToManyField
 from ormar.relations.relation import Relation, RelationType
 from ormar.relations.utils import get_relations_sides_and_names
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
-    from ormar.models import NewBaseModel
-
-    T = TypeVar("T", bound=Model)
+    from ormar.models import NewBaseModel, Model
+    from ormar.fields import ForeignKeyField, BaseField
 
 
 class RelationsManager:
@@ -21,8 +16,8 @@ class RelationsManager:
 
     def __init__(
         self,
-        related_fields: List[Type[ForeignKeyField]] = None,
-        owner: "NewBaseModel" = None,
+        related_fields: List[Type["ForeignKeyField"]] = None,
+        owner: Optional["Model"] = None,
     ) -> None:
         self.owner = proxy(owner)
         self._related_fields = related_fields or []
@@ -30,35 +25,6 @@ class RelationsManager:
         self._relations: Dict[str, Relation] = dict()
         for field in self._related_fields:
             self._add_relation(field)
-
-    def _get_relation_type(self, field: Type[BaseField]) -> RelationType:
-        """
-        Returns type of the relation declared on a field.
-
-        :param field: field with relation declaration
-        :type field: Type[BaseField]
-        :return: type of the relation defined on field
-        :rtype: RelationType
-        """
-        if issubclass(field, ManyToManyField):
-            return RelationType.MULTIPLE
-        return RelationType.PRIMARY if not field.virtual else RelationType.REVERSE
-
-    def _add_relation(self, field: Type[BaseField]) -> None:
-        """
-        Registers relation in the manager.
-        Adds Relation instance under field.name.
-
-        :param field: field with relation declaration
-        :type field: Type[BaseField]
-        """
-        self._relations[field.name] = Relation(
-            manager=self,
-            type_=self._get_relation_type(field),
-            field_name=field.name,
-            to=field.to,
-            through=getattr(field, "through", None),
-        )
 
     def __contains__(self, item: str) -> bool:
         """
@@ -71,7 +37,11 @@ class RelationsManager:
         """
         return item in self._related_names
 
-    def get(self, name: str) -> Optional[Union["T", Sequence["T"]]]:
+    def clear(self) -> None:
+        for relation in self._relations.values():
+            relation.clear()
+
+    def get(self, name: str) -> Optional[Union["Model", Sequence["Model"]]]:
         """
         Returns the related model/models if relation is set.
         Actual call is delegated to Relation instance registered under relation name.
@@ -85,20 +55,6 @@ class RelationsManager:
         if relation is not None:
             return relation.get()
         return None  # pragma nocover
-
-    def _get(self, name: str) -> Optional[Relation]:
-        """
-        Returns the actual relation and not the related model(s).
-
-        :param name: name of the relation
-        :type name: str
-        :return: Relation instance
-        :rtype: ormar.relations.relation.Relation
-        """
-        relation = self._relations.get(name, None)
-        if relation is not None:
-            return relation
-        return None
 
     @staticmethod
     def add(parent: "Model", child: "Model", field: Type["ForeignKeyField"],) -> None:
@@ -167,3 +123,48 @@ class RelationsManager:
         relation_name = item.Meta.model_fields[name].get_related_name()
         item._orm.remove(name, parent)
         parent._orm.remove(relation_name, item)
+
+    def _get(self, name: str) -> Optional[Relation]:
+        """
+        Returns the actual relation and not the related model(s).
+
+        :param name: name of the relation
+        :type name: str
+        :return: Relation instance
+        :rtype: ormar.relations.relation.Relation
+        """
+        relation = self._relations.get(name, None)
+        if relation is not None:
+            return relation
+        return None
+
+    def _get_relation_type(self, field: Type["BaseField"]) -> RelationType:
+        """
+        Returns type of the relation declared on a field.
+
+        :param field: field with relation declaration
+        :type field: Type[BaseField]
+        :return: type of the relation defined on field
+        :rtype: RelationType
+        """
+        if field.is_multi:
+            return RelationType.MULTIPLE
+        if field.is_through:
+            return RelationType.THROUGH
+        return RelationType.PRIMARY if not field.virtual else RelationType.REVERSE
+
+    def _add_relation(self, field: Type["BaseField"]) -> None:
+        """
+        Registers relation in the manager.
+        Adds Relation instance under field.name.
+
+        :param field: field with relation declaration
+        :type field: Type[BaseField]
+        """
+        self._relations[field.name] = Relation(
+            manager=self,
+            type_=self._get_relation_type(field),
+            field_name=field.name,
+            to=field.to,
+            through=getattr(field, "through", None),
+        )

@@ -209,13 +209,14 @@ def update_attrs_from_base_meta(  # noqa: CCR001
                 setattr(attrs["Meta"], param, parent_value)
 
 
-def copy_and_replace_m2m_through_model(
+def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     field: Type[ManyToManyField],
     field_name: str,
     table_name: str,
     parent_fields: Dict,
     attrs: Dict,
     meta: ModelMeta,
+    base_class: Type["Model"],
 ) -> None:
     """
     Clones class with Through model for m2m relations, appends child name to the name
@@ -229,6 +230,8 @@ def copy_and_replace_m2m_through_model(
 
     Removes the original sqlalchemy table from metadata if it was not removed.
 
+    :param base_class: base class model
+    :type base_class: Type["Model"]
     :param field: field with relations definition
     :type field: Type[ManyToManyField]
     :param field_name: name of the relation field
@@ -249,6 +252,10 @@ def copy_and_replace_m2m_through_model(
     copy_field.related_name = related_name  # type: ignore
 
     through_class = field.through
+    if not through_class:
+        field.owner = base_class
+        field.create_default_through_model()
+        through_class = field.through
     new_meta: ormar.ModelMeta = type(  # type: ignore
         "Meta", (), dict(through_class.Meta.__dict__),
     )
@@ -262,7 +269,7 @@ def copy_and_replace_m2m_through_model(
     new_meta.model_fields = {
         name: field
         for name, field in new_meta.model_fields.items()
-        if not issubclass(field, ForeignKeyField)
+        if not field.is_relation
     }
     _, columns = sqlalchemy_columns_from_model_fields(
         new_meta.model_fields, copy_through
@@ -329,7 +336,8 @@ def copy_data_from_parent_model(  # noqa: CCR001
             else attrs.get("__name__", "").lower() + "s"
         )
         for field_name, field in base_class.Meta.model_fields.items():
-            if issubclass(field, ManyToManyField):
+            if field.is_multi:
+                field = cast(Type["ManyToManyField"], field)
                 copy_and_replace_m2m_through_model(
                     field=field,
                     field_name=field_name,
@@ -337,9 +345,10 @@ def copy_data_from_parent_model(  # noqa: CCR001
                     parent_fields=parent_fields,
                     attrs=attrs,
                     meta=meta,
+                    base_class=base_class,  # type: ignore
                 )
 
-            elif issubclass(field, ForeignKeyField) and field.related_name:
+            elif field.is_relation and field.related_name:
                 copy_field = type(  # type: ignore
                     field.__name__, (ForeignKeyField, BaseField), dict(field.__dict__)
                 )

@@ -13,7 +13,6 @@ from typing import (
     Set,
     TYPE_CHECKING,
     Type,
-    TypeVar,
     Union,
     cast,
 )
@@ -46,10 +45,8 @@ from ormar.relations.alias_manager import AliasManager
 from ormar.relations.relation_manager import RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
+    from ormar.models import Model
     from ormar.signals import SignalEmitter
-
-    T = TypeVar("T", bound=Model)
 
     IntStr = Union[int, str]
     DictStrAny = Dict[str, Any]
@@ -129,7 +126,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         object.__setattr__(
             self,
             "_orm",
-            RelationsManager(related_fields=self.extract_related_fields(), owner=self,),
+            RelationsManager(
+                related_fields=self.extract_related_fields(), owner=cast("Model", self),
+            ),
         )
 
         pk_only = kwargs.pop("__pk_only__", False)
@@ -172,7 +171,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         object.__setattr__(self, "__fields_set__", fields_set)
 
         # register the columns models after initialization
-        for related in self.extract_related_names():
+        for related in self.extract_related_names().union(self.extract_through_names()):
             self.Meta.model_fields[related].expand_relationship(
                 new_kwargs.get(related), self, to_register=True,
             )
@@ -267,6 +266,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             return object.__getattribute__(
                 self, "_extract_related_model_instead_of_field"
             )(item)
+        if item in object.__getattribute__(self, "extract_through_names")():
+            return object.__getattribute__(
+                self, "_extract_related_model_instead_of_field"
+            )(item)
         if item in object.__getattribute__(self, "Meta").property_fields:
             value = object.__getattribute__(self, item)
             return value() if callable(value) else value
@@ -294,7 +297,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     def _extract_related_model_instead_of_field(
         self, item: str
-    ) -> Optional[Union["T", Sequence["T"]]]:
+    ) -> Optional[Union["Model", Sequence["Model"]]]:
         """
         Retrieves the related model/models from RelationshipManager.
 
@@ -304,7 +307,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :rtype: Optional[Union[Model, List[Model]]]
         """
         if item in self._orm:
-            return self._orm.get(item)
+            return self._orm.get(item)  # type: ignore
         return None  # pragma no cover
 
     def __eq__(self, other: object) -> bool:
@@ -391,7 +394,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         cause some dialect require different treatment"""
         return cls.Meta.database._backend._dialect.name
 
-    def remove(self, parent: "T", name: str) -> None:
+    def remove(self, parent: "Model", name: str) -> None:
         """Removes child from relation with given name in RelationshipManager"""
         self._orm.remove_parent(self, parent, name)
 
@@ -751,9 +754,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: value of pk if set
         :rtype: Optional[int]
         """
-        if target_field.virtual or issubclass(
-            target_field, ormar.fields.ManyToManyField
-        ):
+        if target_field.virtual or target_field.is_multi:
             return self.pk
         related_name = target_field.name
         related_model = getattr(self, related_name)

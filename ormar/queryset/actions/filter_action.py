@@ -1,11 +1,11 @@
-from typing import Any, Dict, List, TYPE_CHECKING, Type
+from typing import Any, Dict, TYPE_CHECKING, Type
 
 import sqlalchemy
 from sqlalchemy import text
 
 import ormar  # noqa: I100, I202
 from ormar.exceptions import QueryDefinitionError
-from ormar.queryset.utils import get_relationship_alias_model_and_str
+from ormar.queryset.actions.query_action import QueryAction
 
 if TYPE_CHECKING:  # pragma: nocover
     from ormar import Model
@@ -28,7 +28,7 @@ FILTER_OPERATORS = {
 ESCAPE_CHARACTERS = ["%", "_"]
 
 
-class FilterAction:
+class FilterAction(QueryAction):
     """
     Filter Actions is populated by queryset when filter() is called.
 
@@ -39,7 +39,21 @@ class FilterAction:
     """
 
     def __init__(self, filter_str: str, value: Any, model_cls: Type["Model"]) -> None:
-        parts = filter_str.split("__")
+        super().__init__(query_str=filter_str, model_cls=model_cls)
+        self.filter_value = value
+        self._escape_characters_in_clause()
+        self.is_source_model_filter = False
+        if self.source_model == self.target_model and "__" not in self.related_str:
+            self.is_source_model_filter = True
+
+    def has_escaped_characters(self) -> bool:
+        """Check if value is a string that contains characters to escape"""
+        return isinstance(self.filter_value, str) and any(
+            c for c in ESCAPE_CHARACTERS if c in self.filter_value
+        )
+
+    def _split_value_into_parts(self, query_str: str) -> None:
+        parts = query_str.split("__")
         if parts[-1] in FILTER_OPERATORS:
             self.operator = parts[-1]
             self.field_name = parts[-2]
@@ -48,59 +62,6 @@ class FilterAction:
             self.operator = "exact"
             self.field_name = parts[-1]
             self.related_parts = parts[:-1]
-
-        self.filter_value = value
-        self.table_prefix = ""
-        self.source_model = model_cls
-        self.target_model = model_cls
-        self._determine_filter_target_table()
-        self._escape_characters_in_clause()
-
-    @property
-    def table(self) -> sqlalchemy.Table:
-        """Shortcut to sqlalchemy Table of filtered target model"""
-        return self.target_model.Meta.table
-
-    @property
-    def column(self) -> sqlalchemy.Column:
-        """Shortcut to sqlalchemy column of filtered target model"""
-        aliased_name = self.target_model.get_column_alias(self.field_name)
-        return self.target_model.Meta.table.columns[aliased_name]
-
-    def has_escaped_characters(self) -> bool:
-        """Check if value is a string that contains characters to escape"""
-        return isinstance(self.filter_value, str) and any(
-            c for c in ESCAPE_CHARACTERS if c in self.filter_value
-        )
-
-    def update_select_related(self, select_related: List[str]) -> List[str]:
-        """
-        Updates list of select related with related part included in the filter key.
-        That way If you want to just filter by relation you do not have to provide
-        select_related separately.
-
-        :param select_related: list of relation join strings
-        :type select_related: List[str]
-        :return: list of relation joins with implied joins from filter added
-        :rtype: List[str]
-        """
-        select_related = select_related[:]
-        if self.related_str and not any(
-            rel.startswith(self.related_str) for rel in select_related
-        ):
-            select_related.append(self.related_str)
-        return select_related
-
-    def _determine_filter_target_table(self) -> None:
-        """
-        Walks the relation to retrieve the actual model on which the clause should be
-        constructed, extracts alias based on last relation leading to target model.
-        """
-        (
-            self.table_prefix,
-            self.target_model,
-            self.related_str,
-        ) = get_relationship_alias_model_and_str(self.source_model, self.related_parts)
 
     def _escape_characters_in_clause(self) -> None:
         """
@@ -149,7 +110,7 @@ class FilterAction:
         sufix = "%" if "end" not in self.operator else ""
         self.filter_value = f"{prefix}{self.filter_value}{sufix}"
 
-    def get_text_clause(self,) -> sqlalchemy.sql.expression.TextClause:
+    def get_text_clause(self) -> sqlalchemy.sql.expression.TextClause:
         """
         Escapes characters if it's required.
         Substitutes values of the models if value is a ormar Model with its pk value.

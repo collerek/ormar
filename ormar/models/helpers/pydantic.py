@@ -6,14 +6,15 @@ from pydantic.fields import ModelField
 from pydantic.utils import lenient_issubclass
 
 import ormar  # noqa: I100, I202
-from ormar.fields import BaseField, ManyToManyField
+from ormar.fields import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+    from ormar.fields import ManyToManyField
 
 
 def create_pydantic_field(
-    field_name: str, model: Type["Model"], model_field: Type[ManyToManyField]
+    field_name: str, model: Type["Model"], model_field: Type["ManyToManyField"]
 ) -> None:
     """
     Registers pydantic field on through model that leads to passed model
@@ -59,7 +60,7 @@ def get_pydantic_field(field_name: str, model: Type["Model"]) -> "ModelField":
 
 
 def populate_default_pydantic_field_value(
-    ormar_field: Type[BaseField], field_name: str, attrs: dict
+    ormar_field: Type["BaseField"], field_name: str, attrs: dict
 ) -> dict:
     """
     Grabs current value of the ormar Field in class namespace

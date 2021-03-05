@@ -22,11 +22,25 @@ Shortcut for ormar's model AliasManager stored on Meta.
 
 `(AliasManager)`: alias manager from model's Meta
 
-<a name="queryset.join.SqlJoin.on_clause"></a>
-#### on\_clause
+<a name="queryset.join.SqlJoin.to_table"></a>
+#### to\_table
 
 ```python
- | on_clause(previous_alias: str, from_clause: str, to_clause: str) -> text
+ | @property
+ | to_table() -> str
+```
+
+Shortcut to table name of the next model
+
+**Returns**:
+
+`(str)`: name of the target table
+
+<a name="queryset.join.SqlJoin._on_clause"></a>
+#### \_on\_clause
+
+```python
+ | _on_clause(previous_alias: str, from_clause: str, to_clause: str) -> text
 ```
 
 Receives aliases and names of both ends of the join and combines them
@@ -99,11 +113,11 @@ Updated are:
 - `related_name (str)`: name of the relation to follow
 - `remainder (Any)`: deeper tables if there are more nested joins
 
-<a name="queryset.join.SqlJoin.process_m2m_through_table"></a>
-#### process\_m2m\_through\_table
+<a name="queryset.join.SqlJoin._process_m2m_through_table"></a>
+#### \_process\_m2m\_through\_table
 
 ```python
- | process_m2m_through_table() -> None
+ | _process_m2m_through_table() -> None
 ```
 
 Process Through table of the ManyToMany relation so that source table is
@@ -119,11 +133,11 @@ Replaces needed parameters like:
 
 To point to through model
 
-<a name="queryset.join.SqlJoin.process_m2m_related_name_change"></a>
-#### process\_m2m\_related\_name\_change
+<a name="queryset.join.SqlJoin._process_m2m_related_name_change"></a>
+#### \_process\_m2m\_related\_name\_change
 
 ```python
- | process_m2m_related_name_change(reverse: bool = False) -> str
+ | _process_m2m_related_name_change(reverse: bool = False) -> str
 ```
 
 Extracts relation name to link join through the Through model declared on
@@ -158,74 +172,21 @@ Updates the used aliases list directly.
 
 Process order_by causes for non m2m relations.
 
-<a name="queryset.join.SqlJoin._replace_many_to_many_order_by_columns"></a>
-#### \_replace\_many\_to\_many\_order\_by\_columns
+<a name="queryset.join.SqlJoin._get_order_bys"></a>
+#### \_get\_order\_bys
 
 ```python
- | _replace_many_to_many_order_by_columns(part: str, new_part: str) -> None
-```
-
-Substitutes the name of the relation with actual model name in m2m order bys.
-
-**Arguments**:
-
-- `part (str)`: name of the field with relation
-- `new_part (str)`: name of the target model
-
-<a name="queryset.join.SqlJoin._check_if_condition_apply"></a>
-#### \_check\_if\_condition\_apply
-
-```python
- | @staticmethod
- | _check_if_condition_apply(condition: List, part: str) -> bool
-```
-
-Checks filter conditions to find if they apply to current join.
-
-**Arguments**:
-
-- `condition (List[str])`: list of parts of condition split by '__'
-- `part (str)`: name of the current relation join.
-
-**Returns**:
-
-`(bool)`: result of the check
-
-<a name="queryset.join.SqlJoin.set_aliased_order_by"></a>
-#### set\_aliased\_order\_by
-
-```python
- | set_aliased_order_by(condition: List[str], to_table: str) -> None
-```
-
-Substitute hyphens ('-') with descending order.
-Construct actual sqlalchemy text clause using aliased table and column name.
-
-**Arguments**:
-
-- `condition (List[str])`: list of parts of a current condition split by '__'
-- `to_table (sqlalchemy.sql.elements.quoted_name)`: target table
-
-<a name="queryset.join.SqlJoin.get_order_bys"></a>
-#### get\_order\_bys
-
-```python
- | get_order_bys(to_table: str, pkname_alias: str) -> None
+ | _get_order_bys() -> None
 ```
 
 Triggers construction of order bys if they are given.
 Otherwise by default each table is sorted by a primary key column asc.
 
-**Arguments**:
-
-- `to_table (sqlalchemy.sql.elements.quoted_name)`: target table
-- `pkname_alias (str)`: alias of the primary key column
-
-<a name="queryset.join.SqlJoin.get_to_and_from_keys"></a>
-#### get\_to\_and\_from\_keys
+<a name="queryset.join.SqlJoin._get_to_and_from_keys"></a>
+#### \_get\_to\_and\_from\_keys
 
 ```python
- | get_to_and_from_keys() -> Tuple[str, str]
+ | _get_to_and_from_keys() -> Tuple[str, str]
 ```
 
 Based on the relation type, name of the relation and previous models and parts

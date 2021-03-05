@@ -1,4 +1,4 @@
-from typing import Optional, Union, List
+from typing import List, Optional
 
 import databases
 import pytest
@@ -23,13 +23,6 @@ class Child(ormar.Model):
     born_year: int = ormar.Integer(name="year_born", nullable=True)
 
 
-class ArtistChildren(ormar.Model):
-    class Meta:
-        tablename = "children_x_artists"
-        metadata = metadata
-        database = database
-
-
 class Artist(ormar.Model):
     class Meta:
         tablename = "artists"
@@ -40,9 +33,7 @@ class Artist(ormar.Model):
     first_name: str = ormar.String(name="fname", max_length=100)
     last_name: str = ormar.String(name="lname", max_length=100)
     born_year: int = ormar.Integer(name="year")
-    children: Optional[Union[Child, List[Child]]] = ormar.ManyToMany(
-        Child, through=ArtistChildren
-    )
+    children: Optional[List[Child]] = ormar.ManyToMany(Child)
 
 
 class Album(ormar.Model):

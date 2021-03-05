@@ -8,11 +8,6 @@ from ormar.queryset.utils import translate_list_to_dict, update_dict_from_list, 
 from tests.settings import DATABASE_URL
 
 
-def test_empty_excludable():
-    assert ExcludableMixin.is_included(None, "key")  # all fields included if empty
-    assert not ExcludableMixin.is_excluded(None, "key")  # none field excluded if empty
-
-
 def test_list_to_dict_translation():
     tet_list = ["aa", "bb", "cc__aa", "cc__bb", "cc__aa__xx", "cc__aa__yy"]
     test = translate_list_to_dict(tet_list)

@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Union, Optional
+from typing import List, Optional
 
 import databases
 import pytest
@@ -34,13 +34,6 @@ class Category(ormar.Model):
     name: str = ormar.String(max_length=40)
 
 
-class PostCategory(ormar.Model):
-    class Meta:
-        tablename = "posts_categories"
-        database = database
-        metadata = metadata
-
-
 class Post(ormar.Model):
     class Meta:
         tablename = "posts"
@@ -49,9 +42,7 @@ class Post(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
-    categories: Optional[Union[Category, List[Category]]] = ormar.ManyToMany(
-        Category, through=PostCategory
-    )
+    categories: Optional[List[Category]] = ormar.ManyToMany(Category)
     author: Optional[Author] = ormar.ForeignKey(Author)
 
 
@@ -74,6 +65,7 @@ async def create_test_database():
 async def cleanup():
     yield
     async with database:
+        PostCategory = Post.Meta.model_fields["categories"].through
         await PostCategory.objects.delete(each=True)
         await Post.objects.delete(each=True)
         await Category.objects.delete(each=True)

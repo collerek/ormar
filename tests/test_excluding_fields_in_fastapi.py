@@ -135,26 +135,22 @@ async def create_user3(user: User2):
 
 @app.post("/users4/")
 async def create_user4(user: User2):
-    user = await user.save()
-    return user.dict(exclude={"password"})
+    return (await user.save()).dict(exclude={"password"})
 
 
 @app.post("/random/", response_model=RandomModel)
 async def create_user5(user: RandomModel):
-    user = await user.save()
-    return user
+    return await user.save()
 
 
 @app.post("/random2/", response_model=RandomModel)
 async def create_user6(user: RandomModel):
-    user = await user.save()
-    return user.dict()
+    return await user.save()
 
 
 @app.post("/random3/", response_model=RandomModel, response_model_exclude={"full_name"})
 async def create_user7(user: RandomModel):
-    user = await user.save()
-    return user.dict()
+    return await user.save()
 
 
 def test_excluding_fields_in_endpoints():

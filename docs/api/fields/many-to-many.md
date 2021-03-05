@@ -24,7 +24,7 @@ pydantic field to use and type of the target column field.
 #### ManyToMany
 
 ```python
-ManyToMany(to: "ToType", through: "ToType", *, name: str = None, unique: bool = False, virtual: bool = False, **kwargs: Any, ,) -> Any
+ManyToMany(to: "ToType", through: Optional["ToType"] = None, *, name: str = None, unique: bool = False, virtual: bool = False, **kwargs: Any, ,) -> Any
 ```
 
 Despite a name it's a function that returns constructed ManyToManyField.
@@ -133,4 +133,43 @@ Evaluates the ForwardRef to actual Field based on global and local namespaces
 **Returns**:
 
 `(None)`: None
+
+<a name="fields.many_to_many.ManyToManyField.get_relation_name"></a>
+#### get\_relation\_name
+
+```python
+ | @classmethod
+ | get_relation_name(cls) -> str
+```
+
+Returns name of the relation, which can be a own name or through model
+names for m2m models
+
+**Returns**:
+
+`(bool)`: result of the check
+
+<a name="fields.many_to_many.ManyToManyField.get_source_model"></a>
+#### get\_source\_model
+
+```python
+ | @classmethod
+ | get_source_model(cls) -> Type["Model"]
+```
+
+Returns model from which the relation comes -> either owner or through model
+
+**Returns**:
+
+`(Type["Model"])`: source model
+
+<a name="fields.many_to_many.ManyToManyField.create_default_through_model"></a>
+#### create\_default\_through\_model
+
+```python
+ | @classmethod
+ | create_default_through_model(cls) -> None
+```
+
+Creates default empty through model if no additional fields are required.
 

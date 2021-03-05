@@ -21,9 +21,15 @@ renderer:
         - title: Model
           contents:
             - models.model.*
+        - title: Model Row
+          contents:
+              - models.model_row.*
         - title: New BaseModel
           contents:
             - models.newbasemodel.*
+        - title: Excludable Items
+          contents:
+              - models.excludable.*
         - title: Model Table Proxy
           contents:
             - models.modelproxy.*

@@ -1,3 +1,4 @@
+import collections
 import itertools
 import sqlite3
 from typing import Any, Dict, List, TYPE_CHECKING, Tuple, Type
@@ -21,7 +22,7 @@ def is_field_an_forward_ref(field: Type["BaseField"]) -> bool:
     :return: result of the check
     :rtype: bool
     """
-    return issubclass(field, ormar.ForeignKeyField) and (
+    return field.is_relation and (
         field.to.__class__ == ForwardRef or field.through.__class__ == ForwardRef
     )
 
@@ -123,7 +124,7 @@ def extract_annotations_and_default_vals(attrs: Dict) -> Tuple[Dict, Dict]:
     return attrs, model_fields
 
 
-def group_related_list(list_: List) -> Dict:
+def group_related_list(list_: List) -> collections.OrderedDict:
     """
     Translates the list of related strings into a dictionary.
     That way nested models are grouped to traverse them in a right order
@@ -152,7 +153,9 @@ def group_related_list(list_: List) -> Dict:
             result_dict[key] = group_related_list(new)
         else:
             result_dict.setdefault(key, []).extend(new)
-    return {k: v for k, v in sorted(result_dict.items(), key=lambda item: len(item[1]))}
+    return collections.OrderedDict(
+        sorted(result_dict.items(), key=lambda item: len(item[1]))
+    )
 
 
 def meta_field_not_set(model: Type["Model"], field_name: str) -> bool:

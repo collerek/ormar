@@ -42,18 +42,13 @@ class Category(ormar.Model):
     name: str = ormar.String(max_length=100)
 
 
-class ItemsXCategories(ormar.Model):
-    class Meta(LocalMeta):
-        tablename = "items_x_categories"
-
-
 class Item(ormar.Model):
     class Meta(LocalMeta):
         pass
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    categories = ormar.ManyToMany(Category, through=ItemsXCategories)
+    categories = ormar.ManyToMany(Category)
 
 
 @pytest.fixture(autouse=True, scope="module")

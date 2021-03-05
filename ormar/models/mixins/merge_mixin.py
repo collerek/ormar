@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import List, Sequence, TYPE_CHECKING
+from typing import List, TYPE_CHECKING
 
 import ormar
 
@@ -17,7 +17,7 @@ class MergeModelMixin:
     """
 
     @classmethod
-    def merge_instances_list(cls, result_rows: Sequence["Model"]) -> Sequence["Model"]:
+    def merge_instances_list(cls, result_rows: List["Model"]) -> List["Model"]:
         """
         Merges a list of models into list of unique models.
 

@@ -5,7 +5,7 @@
 #### create\_pydantic\_field
 
 ```python
-create_pydantic_field(field_name: str, model: Type["Model"], model_field: Type[ManyToManyField]) -> None
+create_pydantic_field(field_name: str, model: Type["Model"], model_field: Type["ManyToManyField"]) -> None
 ```
 
 Registers pydantic field on through model that leads to passed model
@@ -42,7 +42,7 @@ field_name. Returns a pydantic field with type of field_name field type.
 #### populate\_default\_pydantic\_field\_value
 
 ```python
-populate_default_pydantic_field_value(ormar_field: Type[BaseField], field_name: str, attrs: dict) -> dict
+populate_default_pydantic_field_value(ormar_field: Type["BaseField"], field_name: str, attrs: dict) -> dict
 ```
 
 Grabs current value of the ormar Field in class namespace
@@ -94,7 +94,7 @@ Those annotations are later used by pydantic to construct it's own fields.
 #### get\_pydantic\_base\_orm\_config
 
 ```python
-get_pydantic_base_orm_config() -> Type[BaseConfig]
+get_pydantic_base_orm_config() -> Type[pydantic.BaseConfig]
 ```
 
 Returns empty pydantic Config with orm_mode set to True.

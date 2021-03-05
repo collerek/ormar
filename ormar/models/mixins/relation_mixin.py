@@ -1,7 +1,13 @@
 import inspect
-from typing import List, Optional, Set, TYPE_CHECKING
-
-from ormar.fields.foreign_key import ForeignKeyField
+from typing import (
+    Callable,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Type,
+    Union,
+)
 
 
 class RelationMixin:
@@ -10,11 +16,12 @@ class RelationMixin:
     """
 
     if TYPE_CHECKING:  # pragma no cover
-        from ormar import ModelMeta
+        from ormar import ModelMeta, Model
 
         Meta: ModelMeta
         _related_names: Optional[Set]
         _related_fields: Optional[List]
+        get_name: Callable
 
     @classmethod
     def extract_db_own_fields(cls) -> Set:
@@ -43,27 +50,42 @@ class RelationMixin:
             return cls._related_fields
 
         related_fields = []
-        for name in cls.extract_related_names():
+        for name in cls.extract_related_names().union(cls.extract_through_names()):
             related_fields.append(cls.Meta.model_fields[name])
         cls._related_fields = related_fields
 
         return related_fields
 
     @classmethod
-    def extract_related_names(cls) -> Set:
+    def extract_through_names(cls) -> Set:
+        """
+        Extracts related fields through names which are shortcuts to through models.
+
+        :return: set of related through fields names
+        :rtype: Set
+        """
+        related_fields = set()
+        for name in cls.extract_related_names():
+            field = cls.Meta.model_fields[name]
+            if field.is_multi:
+                related_fields.add(field.through.get_name(lower=True))
+        return related_fields
+
+    @classmethod
+    def extract_related_names(cls) -> Set[str]:
         """
         Returns List of fields names for all relations declared on a model.
         List is cached in cls._related_names for quicker access.
 
-        :return: list of related fields names
-        :rtype: List
+        :return: set of related fields names
+        :rtype: Set
         """
         if isinstance(cls._related_names, Set):
             return cls._related_names
 
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
-            if inspect.isclass(field) and issubclass(field, ForeignKeyField):
+            if inspect.isclass(field) and field.is_relation and not field.is_through:
                 related_names.add(name)
         cls._related_names = related_names
 
@@ -105,3 +127,61 @@ class RelationMixin:
             name for name in related_names if cls.Meta.model_fields[name].nullable
         }
         return related_names
+
+    @classmethod
+    def _iterate_related_models(
+        cls,
+        visited: Set[str] = None,
+        source_visited: Set[str] = None,
+        source_relation: str = None,
+        source_model: Union[Type["Model"], Type["RelationMixin"]] = None,
+    ) -> List[str]:
+        """
+        Iterates related models recursively to extract relation strings of
+        nested not visited models.
+
+        :param visited: set of already visited models
+        :type visited: Set[str]
+        :param source_relation: name of the current relation
+        :type source_relation: str
+        :param source_model: model from which relation comes in nested relations
+        :type source_model: Type["Model"]
+        :return: list of relation strings to be passed to select_related
+        :rtype: List[str]
+        """
+        source_visited = source_visited or set()
+        if not source_model:
+            source_visited = cls._populate_source_model_prefixes()
+        relations = cls.extract_related_names()
+        processed_relations = []
+        for relation in relations:
+            target_model = cls.Meta.model_fields[relation].to
+            if source_model and target_model == source_model:
+                continue
+            if target_model not in source_visited or not source_model:
+                deep_relations = target_model._iterate_related_models(
+                    visited=visited,
+                    source_visited=source_visited,
+                    source_relation=relation,
+                    source_model=cls,
+                )
+                processed_relations.extend(deep_relations)
+            else:
+                processed_relations.append(relation)
+        if processed_relations:
+            final_relations = [
+                f"{source_relation + '__' if source_relation else ''}{relation}"
+                for relation in processed_relations
+            ]
+        else:
+            final_relations = [source_relation] if source_relation else []
+        return final_relations
+
+    @classmethod
+    def _populate_source_model_prefixes(cls) -> Set:
+        relations = cls.extract_related_names()
+        visited = {cls}
+        for relation in relations:
+            target_model = cls.Meta.model_fields[relation].to
+            visited.add(target_model)
+        return visited

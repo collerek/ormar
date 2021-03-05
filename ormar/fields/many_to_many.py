@@ -1,8 +1,9 @@
 import sys
-from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union, cast
 
 from pydantic.typing import ForwardRef, evaluate_forwardref
 import ormar  # noqa: I100
+from ormar import ModelDefinitionError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 
@@ -15,6 +16,21 @@ if TYPE_CHECKING:  # pragma no cover
         ToType = Union[Type["Model"], "ForwardRef"]
 
 REF_PREFIX = "#/components/schemas/"
+
+
+def forbid_through_relations(through: Type["Model"]) -> None:
+    """
+    Verifies if the through model does not have relations.
+
+    :param through: through Model to be checked
+    :type through: Type['Model]
+    """
+    if any(field.is_relation for field in through.Meta.model_fields.values()):
+        raise ModelDefinitionError(
+            f"Through Models cannot have explicit relations "
+            f"defined. Remove the relations from Model "
+            f"{through.get_name(lower=False)}"
+        )
 
 
 def populate_m2m_params_based_on_to_model(
@@ -43,7 +59,7 @@ def populate_m2m_params_based_on_to_model(
 
 def ManyToMany(
     to: "ToType",
-    through: "ToType",
+    through: Optional["ToType"] = None,
     *,
     name: str = None,
     unique: bool = False,
@@ -77,6 +93,8 @@ def ManyToMany(
     nullable = kwargs.pop("nullable", True)
     owner = kwargs.pop("owner", None)
     self_reference = kwargs.pop("self_reference", False)
+    if through is not None and through.__class__ != ForwardRef:
+        forbid_through_relations(cast(Type["Model"], through))
 
     if to.__class__ == ForwardRef:
         __type__ = to if not nullable else Optional[to]
@@ -103,6 +121,8 @@ def ManyToMany(
         server_default=None,
         owner=owner,
         self_reference=self_reference,
+        is_relation=True,
+        is_multi=True,
     )
 
     return type("ManyToMany", (ManyToManyField, BaseField), namespace)
@@ -187,3 +207,45 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
                 globalns,
                 localns or None,
             )
+            forbid_through_relations(cls.through)
+
+    @classmethod
+    def get_relation_name(cls) -> str:
+        """
+        Returns name of the relation, which can be a own name or through model
+        names for m2m models
+
+        :return: result of the check
+        :rtype: bool
+        """
+        if cls.self_reference and cls.name == cls.self_reference_primary:
+            return cls.default_source_field_name()
+        return cls.default_target_field_name()
+
+    @classmethod
+    def get_source_model(cls) -> Type["Model"]:
+        """
+        Returns model from which the relation comes -> either owner or through model
+
+        :return: source model
+        :rtype: Type["Model"]
+        """
+        return cls.through
+
+    @classmethod
+    def create_default_through_model(cls) -> None:
+        """
+        Creates default empty through model if no additional fields are required.
+        """
+        owner_name = cls.owner.get_name(lower=False)
+        to_name = cls.to.get_name(lower=False)
+        class_name = f"{owner_name}{to_name}"
+        table_name = f"{owner_name.lower()}s_{to_name.lower()}s"
+        new_meta_namespace = {
+            "tablename": table_name,
+            "database": cls.owner.Meta.database,
+            "metadata": cls.owner.Meta.metadata,
+        }
+        new_meta = type("Meta", (), new_meta_namespace)
+        through_model = type(class_name, (ormar.Model,), {"Meta": new_meta})
+        cls.through = cast(Type["Model"], through_model)

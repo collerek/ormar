@@ -1,6 +1,5 @@
-import copy
 from collections import OrderedDict
-from typing import Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Type, Union
+from typing import List, Optional, TYPE_CHECKING, Tuple, Type
 
 import sqlalchemy
 from sqlalchemy import text
@@ -8,11 +7,13 @@ from sqlalchemy import text
 import ormar  # noqa I100
 from ormar.models.helpers.models import group_related_list
 from ormar.queryset import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
-from ormar.queryset.filter_action import FilterAction
+from ormar.queryset.actions.filter_action import FilterAction
 from ormar.queryset.join import SqlJoin
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+    from ormar.queryset import OrderAction
+    from ormar.models.excludable import ExcludableItems
 
 
 class Query:
@@ -24,9 +25,8 @@ class Query:
         select_related: List,
         limit_count: Optional[int],
         offset: Optional[int],
-        fields: Optional[Union[Dict, Set]],
-        exclude_fields: Optional[Union[Dict, Set]],
-        order_bys: Optional[List],
+        excludable: "ExcludableItems",
+        order_bys: Optional[List["OrderAction"]],
         limit_raw_sql: bool,
     ) -> None:
         self.query_offset = offset
@@ -34,8 +34,7 @@ class Query:
         self._select_related = select_related[:]
         self.filter_clauses = filter_clauses[:]
         self.exclude_clauses = exclude_clauses[:]
-        self.fields = copy.deepcopy(fields) if fields else {}
-        self.exclude_fields = copy.deepcopy(exclude_fields) if exclude_fields else {}
+        self.excludable = excludable
 
         self.model_cls = model_cls
         self.table = self.model_cls.Meta.table
@@ -45,7 +44,7 @@ class Query:
         self.select_from: List[str] = []
         self.columns = [sqlalchemy.Column]
         self.order_columns = order_bys
-        self.sorted_orders: OrderedDict = OrderedDict()
+        self.sorted_orders: OrderedDict[OrderAction, text] = OrderedDict()
         self._init_sorted_orders()
 
         self.limit_raw_sql = limit_raw_sql
@@ -58,28 +57,6 @@ class Query:
             for clause in self.order_columns:
                 self.sorted_orders[clause] = None
 
-    @property
-    def prefixed_pk_name(self) -> str:
-        """
-        Shortcut for extracting prefixed with alias primary key column name from main
-        model
-        :return: alias of pk column prefix with table name.
-        :rtype: str
-        """
-        pkname_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
-        return f"{self.table.name}.{pkname_alias}"
-
-    def alias(self, name: str) -> str:
-        """
-        Shortcut to extracting column alias from given master model.
-
-        :param name: name of column
-        :type name: str
-        :return: alias of given column name
-        :rtype: str
-        """
-        return self.model_cls.get_column_alias(name)
-
     def apply_order_bys_for_primary_model(self) -> None:  # noqa: CCR001
         """
         Applies order_by queries on main model when it's used as a subquery.
@@ -88,16 +65,13 @@ class Query:
         """
         if self.order_columns:
             for clause in self.order_columns:
-                if "__" not in clause:
-                    text_clause = (
-                        text(f"{self.table.name}.{self.alias(clause[1:])} desc")
-                        if clause.startswith("-")
-                        else text(f"{self.table.name}.{self.alias(clause)}")
-                    )
-                    self.sorted_orders[clause] = text_clause
+                if clause.is_source_model_order:
+                    self.sorted_orders[clause] = clause.get_text_clause()
         else:
-            order = text(self.prefixed_pk_name)
-            self.sorted_orders[self.prefixed_pk_name] = order
+            clause = ormar.OrderAction(
+                order_str=self.model_cls.Meta.pkname, model_cls=self.model_cls
+            )
+            self.sorted_orders[clause] = clause.get_text_clause()
 
     def _pagination_query_required(self) -> bool:
         """
@@ -128,10 +102,7 @@ class Query:
         :rtype: sqlalchemy.sql.selectable.Select
         """
         self_related_fields = self.model_cls.own_table_columns(
-            model=self.model_cls,
-            fields=self.fields,
-            exclude_fields=self.exclude_fields,
-            use_alias=True,
+            model=self.model_cls, excludable=self.excludable, use_alias=True,
         )
         self.columns = self.model_cls.Meta.alias_manager.prefixed_columns(
             "", self.table, self_related_fields
@@ -145,8 +116,6 @@ class Query:
         related_models = group_related_list(self._select_related)
 
         for related in related_models:
-            fields = self.model_cls.get_included(self.fields, related)
-            exclude_fields = self.model_cls.get_excluded(self.exclude_fields, related)
             remainder = None
             if isinstance(related_models, dict) and related_models[related]:
                 remainder = related_models[related]
@@ -154,8 +123,7 @@ class Query:
                 used_aliases=self.used_aliases,
                 select_from=self.select_from,
                 columns=self.columns,
-                fields=fields,
-                exclude_fields=exclude_fields,
+                excludable=self.excludable,
                 order_columns=self.order_columns,
                 sorted_orders=self.sorted_orders,
                 main_model=self.model_cls,
@@ -201,14 +169,16 @@ class Query:
         filters_to_use = [
             filter_clause
             for filter_clause in self.filter_clauses
-            if filter_clause.table_prefix == ""
+            if filter_clause.is_source_model_filter
         ]
         excludes_to_use = [
             filter_clause
             for filter_clause in self.exclude_clauses
-            if filter_clause.table_prefix == ""
+            if filter_clause.is_source_model_filter
         ]
-        sorts_to_use = {k: v for k, v in self.sorted_orders.items() if "__" not in k}
+        sorts_to_use = {
+            k: v for k, v in self.sorted_orders.items() if k.is_source_model_order
+        }
         expr = FilterQuery(filter_clauses=filters_to_use).apply(expr)
         expr = FilterQuery(filter_clauses=excludes_to_use, exclude=True).apply(expr)
         expr = OrderQuery(sorted_orders=sorts_to_use).apply(expr)
@@ -253,5 +223,3 @@ class Query:
         self.select_from = []
         self.columns = []
         self.used_aliases = []
-        self.fields = {}
-        self.exclude_fields = {}

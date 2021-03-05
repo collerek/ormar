@@ -87,28 +87,6 @@ extraction of ormar model_fields.
 
 `(Tuple[Dict, Dict])`: namespace of the class updated, dict of extracted model_fields
 
-<a name="models.helpers.models.validate_related_names_in_relations"></a>
-#### validate\_related\_names\_in\_relations
-
-```python
-validate_related_names_in_relations(model_fields: Dict, new_model: Type["Model"]) -> None
-```
-
-Performs a validation of relation_names in relation fields.
-If multiple fields are leading to the same related model
-only one can have empty related_name param
-(populated by default as model.name.lower()+'s').
-Also related_names have to be unique for given related model.
-
-**Raises**:
-
-- `ModelDefinitionError`: if validation of related_names fail
-
-**Arguments**:
-
-- `model_fields (Dict[str, ormar.Field])`: dictionary of declared ormar model fields
-- `new_model (Model class)`: 
-
 <a name="models.helpers.models.group_related_list"></a>
 #### group\_related\_list
 
@@ -133,4 +111,24 @@ Result dictionary is sorted by length of the values and by key
 **Returns**:
 
 `(Dict[str, List])`: list converted to dictionary to avoid repetition and group nested models
+
+<a name="models.helpers.models.meta_field_not_set"></a>
+#### meta\_field\_not\_set
+
+```python
+meta_field_not_set(model: Type["Model"], field_name: str) -> bool
+```
+
+Checks if field with given name is already present in model.Meta.
+Then check if it's set to something truthful
+(in practice meaning not None, as it's non or ormar Field only).
+
+**Arguments**:
+
+- `model (Model class)`: newly constructed model
+- `field_name (str)`: name of the ormar field
+
+**Returns**:
+
+`(bool)`: result of the check
 

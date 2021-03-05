@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any, List, TYPE_CHECKING, Tuple, Type
 
 import ormar  # noqa I100
-from ormar.queryset.filter_action import FilterAction
+from ormar.queryset.actions.filter_action import FilterAction
 from ormar.queryset.utils import get_relationship_alias_model_and_str
 
 if TYPE_CHECKING:  # pragma no cover
@@ -16,6 +16,7 @@ class Prefix:
     table_prefix: str
     model_cls: Type["Model"]
     relation_str: str
+    is_through: bool
 
     @property
     def alias_key(self) -> str:

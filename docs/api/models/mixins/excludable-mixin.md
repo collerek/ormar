@@ -30,88 +30,12 @@ passed items.
 
 `(Union[Set, Dict, None])`: child extracted from items if exists
 
-<a name="models.mixins.excludable_mixin.ExcludableMixin.get_excluded"></a>
-#### get\_excluded
-
-```python
- | @staticmethod
- | get_excluded(exclude: Union[Set, Dict, None], key: str = None) -> Union[Set, Dict, None]
-```
-
-Proxy to ExcludableMixin.get_child for exclusions.
-
-**Arguments**:
-
-- `exclude (Union[Set, Dict, None])`: bag of items to exclude
-- `key (str)`: name of the child to extract
-
-**Returns**:
-
-`(Union[Set, Dict, None])`: child extracted from items if exists
-
-<a name="models.mixins.excludable_mixin.ExcludableMixin.get_included"></a>
-#### get\_included
-
-```python
- | @staticmethod
- | get_included(include: Union[Set, Dict, None], key: str = None) -> Union[Set, Dict, None]
-```
-
-Proxy to ExcludableMixin.get_child for inclusions.
-
-**Arguments**:
-
-- `include (Union[Set, Dict, None])`: bag of items to include
-- `key (str)`: name of the child to extract
-
-**Returns**:
-
-`(Union[Set, Dict, None])`: child extracted from items if exists
-
-<a name="models.mixins.excludable_mixin.ExcludableMixin.is_excluded"></a>
-#### is\_excluded
-
-```python
- | @staticmethod
- | is_excluded(exclude: Union[Set, Dict, None], key: str = None) -> bool
-```
-
-Checks if given key should be excluded on model/ dict.
-
-**Arguments**:
-
-- `exclude (Union[Set, Dict, None])`: bag of items to exclude
-- `key (str)`: name of the child to extract
-
-**Returns**:
-
-`(Union[Set, Dict, None])`: child extracted from items if exists
-
-<a name="models.mixins.excludable_mixin.ExcludableMixin.is_included"></a>
-#### is\_included
-
-```python
- | @staticmethod
- | is_included(include: Union[Set, Dict, None], key: str = None) -> bool
-```
-
-Checks if given key should be included on model/ dict.
-
-**Arguments**:
-
-- `include (Union[Set, Dict, None])`: bag of items to include
-- `key (str)`: name of the child to extract
-
-**Returns**:
-
-`(Union[Set, Dict, None])`: child extracted from items if exists
-
 <a name="models.mixins.excludable_mixin.ExcludableMixin._populate_pk_column"></a>
 #### \_populate\_pk\_column
 
 ```python
  | @staticmethod
- | _populate_pk_column(model: Type["Model"], columns: List[str], use_alias: bool = False) -> List[str]
+ | _populate_pk_column(model: Union[Type["Model"], Type["ModelRow"]], columns: List[str], use_alias: bool = False) -> List[str]
 ```
 
 Adds primary key column/alias (depends on use_alias flag) to list of
@@ -132,7 +56,7 @@ column names that are selected.
 
 ```python
  | @classmethod
- | own_table_columns(cls, model: Type["Model"], fields: Optional[Union[Set, Dict]], exclude_fields: Optional[Union[Set, Dict]], use_alias: bool = False) -> List[str]
+ | own_table_columns(cls, model: Union[Type["Model"], Type["ModelRow"]], excludable: ExcludableItems, alias: str = "", use_alias: bool = False) -> List[str]
 ```
 
 Returns list of aliases or field names for given model.
@@ -145,9 +69,9 @@ Primary key field is always added and cannot be excluded (will be added anyway).
 
 **Arguments**:
 
+- `alias (str)`: relation prefix
+- `excludable (ExcludableItems)`: structure of fields to include and exclude
 - `model (Type["Model"])`: model on columns are selected
-- `fields (Optional[Union[Set, Dict]])`: set/dict of fields to include
-- `exclude_fields (Optional[Union[Set, Dict]])`: set/dict of fields to exclude
 - `use_alias (bool)`: flag if aliases or field names should be used
 
 **Returns**:
@@ -183,7 +107,7 @@ exclusion, for nested models all related models are excluded.
 
 ```python
  | @classmethod
- | get_names_to_exclude(cls, fields: Optional[Union[Dict, Set]] = None, exclude_fields: Optional[Union[Dict, Set]] = None) -> Set
+ | get_names_to_exclude(cls, excludable: ExcludableItems, alias: str) -> Set
 ```
 
 Returns a set of models field names that should be explicitly excluded
@@ -197,8 +121,8 @@ them with dicts constructed from those db rows.
 
 **Arguments**:
 
-- `fields (Optional[Union[Set, Dict]])`: set/dict of fields to include
-- `exclude_fields (Optional[Union[Set, Dict]])`: set/dict of fields to exclude
+- `alias (str)`: alias of current relation
+- `excludable (ExcludableItems)`: structure of fields to include and exclude
 
 **Returns**:
 

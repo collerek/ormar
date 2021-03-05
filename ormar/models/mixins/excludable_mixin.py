@@ -4,14 +4,15 @@ from typing import (
     Dict,
     List,
     Mapping,
-    Optional,
     Set,
     TYPE_CHECKING,
     Type,
     TypeVar,
     Union,
+    cast,
 )
 
+from ormar.models.excludable import ExcludableItems
 from ormar.models.mixins.relation_mixin import RelationMixin
 from ormar.queryset.utils import translate_list_to_dict, update
 
@@ -31,6 +32,7 @@ class ExcludableMixin(RelationMixin):
 
     if TYPE_CHECKING:  # pragma: no cover
         from ormar import Model
+        from ormar.models import ModelRow
 
     @staticmethod
     def get_child(
@@ -51,86 +53,10 @@ class ExcludableMixin(RelationMixin):
         return items
 
     @staticmethod
-    def get_excluded(
-        exclude: Union[Set, Dict, None], key: str = None
-    ) -> Union[Set, Dict, None]:
-        """
-        Proxy to ExcludableMixin.get_child for exclusions.
-
-        :param exclude:  bag of items to exclude
-        :type exclude: Union[Set, Dict, None]
-        :param key: name of the child to extract
-        :type key: str
-        :return: child extracted from items if exists
-        :rtype: Union[Set, Dict, None]
-        """
-        return ExcludableMixin.get_child(items=exclude, key=key)
-
-    @staticmethod
-    def get_included(
-        include: Union[Set, Dict, None], key: str = None
-    ) -> Union[Set, Dict, None]:
-        """
-        Proxy to ExcludableMixin.get_child for inclusions.
-
-        :param include:  bag of items to include
-        :type include: Union[Set, Dict, None]
-        :param key: name of the child to extract
-        :type key: str
-        :return: child extracted from items if exists
-        :rtype: Union[Set, Dict, None]
-        """
-        return ExcludableMixin.get_child(items=include, key=key)
-
-    @staticmethod
-    def is_excluded(exclude: Union[Set, Dict, None], key: str = None) -> bool:
-        """
-        Checks if given key should be excluded on model/ dict.
-
-        :param exclude:  bag of items to exclude
-        :type exclude: Union[Set, Dict, None]
-        :param key: name of the child to extract
-        :type key: str
-        :return: child extracted from items if exists
-        :rtype: Union[Set, Dict, None]
-        """
-        if exclude is None:
-            return False
-        if exclude is Ellipsis:  # pragma: nocover
-            return True
-        to_exclude = ExcludableMixin.get_excluded(exclude=exclude, key=key)
-        if isinstance(to_exclude, Set):
-            return key in to_exclude
-        if to_exclude is ...:
-            return True
-        return False
-
-    @staticmethod
-    def is_included(include: Union[Set, Dict, None], key: str = None) -> bool:
-        """
-        Checks if given key should be included on model/ dict.
-
-        :param include:  bag of items to include
-        :type include: Union[Set, Dict, None]
-        :param key: name of the child to extract
-        :type key: str
-        :return: child extracted from items if exists
-        :rtype: Union[Set, Dict, None]
-        """
-        if include is None:
-            return True
-        if include is Ellipsis:
-            return True
-        to_include = ExcludableMixin.get_included(include=include, key=key)
-        if isinstance(to_include, Set):
-            return key in to_include
-        if to_include is ...:
-            return True
-        return False
-
-    @staticmethod
     def _populate_pk_column(
-        model: Type["Model"], columns: List[str], use_alias: bool = False,
+        model: Union[Type["Model"], Type["ModelRow"]],
+        columns: List[str],
+        use_alias: bool = False,
     ) -> List[str]:
         """
         Adds primary key column/alias (depends on use_alias flag) to list of
@@ -157,9 +83,9 @@ class ExcludableMixin(RelationMixin):
     @classmethod
     def own_table_columns(
         cls,
-        model: Type["Model"],
-        fields: Optional[Union[Set, Dict]],
-        exclude_fields: Optional[Union[Set, Dict]],
+        model: Union[Type["Model"], Type["ModelRow"]],
+        excludable: ExcludableItems,
+        alias: str = "",
         use_alias: bool = False,
     ) -> List[str]:
         """
@@ -171,17 +97,18 @@ class ExcludableMixin(RelationMixin):
 
         Primary key field is always added and cannot be excluded (will be added anyway).
 
+        :param alias: relation prefix
+        :type alias: str
+        :param excludable: structure of fields to include and exclude
+        :type excludable: ExcludableItems
         :param model: model on columns are selected
         :type model: Type["Model"]
-        :param fields: set/dict of fields to include
-        :type fields: Optional[Union[Set, Dict]]
-        :param exclude_fields: set/dict of fields to exclude
-        :type exclude_fields: Optional[Union[Set, Dict]]
         :param use_alias: flag if aliases or field names should be used
         :type use_alias: bool
         :return: list of column field names or aliases
         :rtype: List[str]
         """
+        model_excludable = excludable.get(model_cls=model, alias=alias)  # type: ignore
         columns = [
             model.get_column_name_from_alias(col.name) if not use_alias else col.name
             for col in model.Meta.table.columns
@@ -190,17 +117,17 @@ class ExcludableMixin(RelationMixin):
             model.get_column_name_from_alias(col.name)
             for col in model.Meta.table.columns
         ]
-        if fields:
+        if model_excludable.include:
             columns = [
                 col
                 for col, name in zip(columns, field_names)
-                if model.is_included(fields, name)
+                if model_excludable.is_included(name)
             ]
-        if exclude_fields:
+        if model_excludable.exclude:
             columns = [
                 col
                 for col, name in zip(columns, field_names)
-                if not model.is_excluded(exclude_fields, name)
+                if not model_excludable.is_excluded(name)
             ]
 
         # always has to return pk column for ormar to work
@@ -241,11 +168,7 @@ class ExcludableMixin(RelationMixin):
         return exclude
 
     @classmethod
-    def get_names_to_exclude(
-        cls,
-        fields: Optional[Union[Dict, Set]] = None,
-        exclude_fields: Optional[Union[Dict, Set]] = None,
-    ) -> Set:
+    def get_names_to_exclude(cls, excludable: ExcludableItems, alias: str) -> Set:
         """
         Returns a set of models field names that should be explicitly excluded
         during model initialization.
@@ -256,33 +179,27 @@ class ExcludableMixin(RelationMixin):
         Used in parsing data from database rows that construct Models by initializing
         them with dicts constructed from those db rows.
 
-        :param fields: set/dict of fields to include
-        :type fields: Optional[Union[Set, Dict]]
-        :param exclude_fields: set/dict of fields to exclude
-        :type exclude_fields: Optional[Union[Set, Dict]]
+        :param alias: alias of current relation
+        :type alias: str
+        :param excludable: structure of fields to include and exclude
+        :type excludable: ExcludableItems
         :return: set of field names that should be excluded
         :rtype: Set
         """
+        model = cast(Type["Model"], cls)
+        model_excludable = excludable.get(model_cls=model, alias=alias)
         fields_names = cls.extract_db_own_fields()
-        if fields and fields is not Ellipsis:
-            fields_to_keep = {name for name in fields if name in fields_names}
+        if model_excludable.include:
+            fields_to_keep = model_excludable.include.intersection(fields_names)
         else:
             fields_to_keep = fields_names
 
         fields_to_exclude = fields_names - fields_to_keep
 
-        if isinstance(exclude_fields, Set):
+        if model_excludable.exclude:
             fields_to_exclude = fields_to_exclude.union(
-                {name for name in exclude_fields if name in fields_names}
+                model_excludable.exclude.intersection(fields_names)
             )
-        elif isinstance(exclude_fields, Dict):
-            new_to_exclude = {
-                name
-                for name in exclude_fields
-                if name in fields_names and exclude_fields[name] is Ellipsis
-            }
-            fields_to_exclude = fields_to_exclude.union(new_to_exclude)
-
         fields_to_exclude = fields_to_exclude - {cls.Meta.pkname}
 
         return fields_to_exclude

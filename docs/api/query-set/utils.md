@@ -154,7 +154,7 @@ with all children models under their relation keys.
 #### get\_relationship\_alias\_model\_and\_str
 
 ```python
-get_relationship_alias_model_and_str(source_model: Type["Model"], related_parts: List) -> Tuple[str, Type["Model"], str]
+get_relationship_alias_model_and_str(source_model: Type["Model"], related_parts: List) -> Tuple[str, Type["Model"], str, bool]
 ```
 
 Walks the relation to retrieve the actual model on which the clause should be

@@ -1,26 +1,6 @@
 <a name="queryset.prefetch_query"></a>
 # queryset.prefetch\_query
 
-<a name="queryset.prefetch_query.add_relation_field_to_fields"></a>
-#### add\_relation\_field\_to\_fields
-
-```python
-add_relation_field_to_fields(fields: Union[Set[Any], Dict[Any, Any], None], related_field_name: str) -> Union[Set[Any], Dict[Any, Any], None]
-```
-
-Adds related field into fields to include as otherwise it would be skipped.
-Related field is added only if fields are already populated.
-Empty fields implies all fields.
-
-**Arguments**:
-
-- `fields (Dict)`: Union[Set[Any], Dict[Any, Any], None]
-- `related_field_name (str)`: name of the field with relation
-
-**Returns**:
-
-`(Union[Set[Any], Dict[Any, Any], None])`: updated fields dict
-
 <a name="queryset.prefetch_query.sort_models"></a>
 #### sort\_models
 
@@ -232,7 +212,7 @@ on each of the parent models from list.
 #### \_extract\_related\_models
 
 ```python
- | async _extract_related_models(related: str, target_model: Type["Model"], prefetch_dict: Dict, select_dict: Dict, fields: Union[Set[Any], Dict[Any, Any], None], exclude_fields: Union[Set[Any], Dict[Any, Any], None], orders_by: Dict) -> None
+ | async _extract_related_models(related: str, target_model: Type["Model"], prefetch_dict: Dict, select_dict: Dict, excludable: "ExcludableItems", orders_by: Dict) -> None
 ```
 
 Constructs queries with required ids and extracts data with fields that should
@@ -261,7 +241,7 @@ Calls itself recurrently to extract deeper nested relations of related model.
 #### \_run\_prefetch\_query
 
 ```python
- | async _run_prefetch_query(target_field: Type["BaseField"], fields: Union[Set[Any], Dict[Any, Any], None], exclude_fields: Union[Set[Any], Dict[Any, Any], None], filter_clauses: List) -> Tuple[str, List]
+ | async _run_prefetch_query(target_field: Type["BaseField"], excludable: "ExcludableItems", filter_clauses: List, related_field_name: str) -> Tuple[str, str, List]
 ```
 
 Actually runs the queries against the database and populates the raw response
@@ -273,8 +253,6 @@ models.
 **Arguments**:
 
 - `target_field (Type["BaseField"])`: ormar field with relation definition
-- `fields (Union[Set[Any], Dict[Any, Any], None])`: fields to include
-- `exclude_fields (Union[Set[Any], Dict[Any, Any], None])`: fields to exclude
 - `filter_clauses (List[sqlalchemy.sql.elements.TextClause])`: list of clauses, actually one clause with ids of relation
 
 **Returns**:
@@ -320,7 +298,7 @@ Updates models that are already loaded, usually children of children.
 #### \_populate\_rows
 
 ```python
- | _populate_rows(rows: List, target_field: Type["ForeignKeyField"], parent_model: Type["Model"], table_prefix: str, fields: Union[Set[Any], Dict[Any, Any], None], exclude_fields: Union[Set[Any], Dict[Any, Any], None], prefetch_dict: Dict, orders_by: Dict) -> None
+ | _populate_rows(rows: List, target_field: Type["ForeignKeyField"], parent_model: Type["Model"], table_prefix: str, exclude_prefix: str, excludable: "ExcludableItems", prefetch_dict: Dict, orders_by: Dict) -> None
 ```
 
 Instantiates children models extracted from given relation.
@@ -334,12 +312,11 @@ and set on the parent model after sorting if needed.
 
 **Arguments**:
 
+- `excludable (ExcludableItems)`: structure of fields to include and exclude
 - `rows (List[sqlalchemy.engine.result.RowProxy])`: raw sql response from the prefetch query
 - `target_field (Type["BaseField"])`: field with relation definition from parent model
 - `parent_model (Type[Model])`: model with relation definition
 - `table_prefix (str)`: prefix of the target table from current relation
-- `fields (Union[Set[Any], Dict[Any, Any], None])`: fields to include
-- `exclude_fields (Union[Set[Any], Dict[Any, Any], None])`: fields to exclude
 - `prefetch_dict (Dict)`: dictionaries of related models to prefetch
 - `orders_by (Dict)`: dictionary of order by clauses by model
 

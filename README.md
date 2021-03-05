@@ -306,7 +306,7 @@ async def joins():
     # visit: https://collerek.github.io/ormar/relations/
 
     # to read more about joins and subqueries
-    # visit: https://collerek.github.io/ormar/queries/delete/
+    # visit: https://collerek.github.io/ormar/queries/joins-and-subqueries/
 
 
 async def filter_and_sort():

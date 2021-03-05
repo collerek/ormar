@@ -27,7 +27,9 @@ class RelationProxy(list):
         self.type_: "RelationType" = type_
         self.field_name = field_name
         self._owner: "Model" = self.relation.manager.owner
-        self.queryset_proxy = QuerysetProxy(relation=self.relation, type_=type_)
+        self.queryset_proxy: QuerysetProxy = QuerysetProxy(
+            relation=self.relation, type_=type_
+        )
         self._related_field_name: Optional[str] = None
 
     @property
@@ -73,6 +75,9 @@ class RelationProxy(list):
         self._initialize_queryset()
         return getattr(self.queryset_proxy, item)
 
+    def _clear(self) -> None:
+        super().clear()
+
     def _initialize_queryset(self) -> None:
         """
         Initializes the QuerySetProxy if not yet initialized.
@@ -117,7 +122,9 @@ class RelationProxy(list):
         self._check_if_model_saved()
         kwargs = {f"{related_field.get_alias()}__{pkname}": self._owner.pk}
         queryset = (
-            ormar.QuerySet(model_cls=self.relation.to)
+            ormar.QuerySet(
+                model_cls=self.relation.to, proxy_source_model=self._owner.__class__
+            )
             .select_related(related_field.name)
             .filter(**kwargs)
         )
@@ -163,19 +170,21 @@ class RelationProxy(list):
             else:
                 await item.delete()
 
-    async def add(self, item: "Model") -> None:
+    async def add(self, item: "Model", **kwargs: Any) -> None:
         """
         Adds child model to relation.
 
         For ManyToMany relations through instance is automatically created.
 
+        :param kwargs: dict of additional keyword arguments for through instance
+        :type kwargs: Any
         :param item: child to add to relation
         :type item: Model
         """
         relation_name = self.related_field_name
         self._check_if_model_saved()
         if self.type_ == ormar.RelationType.MULTIPLE:
-            await self.queryset_proxy.create_through_instance(item)
+            await self.queryset_proxy.create_through_instance(item, **kwargs)
             setattr(item, relation_name, self._owner)
         else:
             setattr(item, relation_name, self._owner)

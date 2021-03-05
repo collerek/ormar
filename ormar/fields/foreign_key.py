@@ -48,7 +48,7 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
         **{
             k: create_dummy_instance(v.to)
             for k, v in fk.Meta.model_fields.items()
-            if isinstance(v, ForeignKeyField) and not v.nullable and not v.virtual
+            if v.is_relation and not v.nullable and not v.virtual
         },
     }
     return fk(**init_dict)
@@ -73,7 +73,9 @@ def create_dummy_model(
         "".join(choices(string.ascii_uppercase, k=2)) + uuid.uuid4().hex[:4]
     ).lower()
     fields = {f"{pk_field.name}": (pk_field.__type__, None)}
-    dummy_model = create_model(   # type: ignore
+
+    dummy_model = create_model(  # type: ignore
+
         f"PkOnly{base_model.get_name(lower=False)}{alias}",
         __module__=base_model.__module__,
         **fields,  # type: ignore
@@ -217,6 +219,7 @@ def ForeignKey(  # noqa CFQ002
         ondelete=ondelete,
         owner=owner,
         self_reference=self_reference,
+        is_relation=True,
     )
 
     return type("ForeignKey", (ForeignKeyField, BaseField), namespace)
@@ -457,3 +460,24 @@ class ForeignKeyField(BaseField):
             value.__class__.__name__, cls._construct_model_from_pk
         )(value, child, to_register)
         return model
+
+    @classmethod
+    def get_relation_name(cls) -> str:  # pragma: no cover
+        """
+        Returns name of the relation, which can be a own name or through model
+        names for m2m models
+
+        :return: result of the check
+        :rtype: bool
+        """
+        return cls.name
+
+    @classmethod
+    def get_source_model(cls) -> Type["Model"]:  # pragma: no cover
+        """
+        Returns model from which the relation comes -> either owner or through model
+
+        :return: source model
+        :rtype: Type["Model"]
+        """
+        return cls.owner

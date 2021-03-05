@@ -120,7 +120,7 @@ Adds alias to the dictionary of aliases under given key.
 #### resolve\_relation\_alias
 
 ```python
- | resolve_relation_alias(from_model: Type["Model"], relation_name: str) -> str
+ | resolve_relation_alias(from_model: Union[Type["Model"], Type["ModelRow"]], relation_name: str) -> str
 ```
 
 Given model and relation name returns the alias for this relation.
@@ -129,6 +129,27 @@ Given model and relation name returns the alias for this relation.
 
 - `from_model (source Model)`: model with relation defined
 - `relation_name (str)`: name of the relation field
+
+**Returns**:
+
+`(str)`: alias of the relation
+
+<a name="relations.alias_manager.AliasManager.resolve_relation_alias_after_complex"></a>
+#### resolve\_relation\_alias\_after\_complex
+
+```python
+ | resolve_relation_alias_after_complex(source_model: Union[Type["Model"], Type["ModelRow"]], relation_str: str, relation_field: Type["ForeignKeyField"]) -> str
+```
+
+Given source model and relation string returns the alias for this complex
+relation if it exists, otherwise fallback to normal relation from a relation
+field definition.
+
+**Arguments**:
+
+- `relation_field (Type["ForeignKeyField"])`: field with direct relation definition
+- `source_model (source Model)`: model with query starts
+- `relation_str (str)`: string with relation joins defined
 
 **Returns**:
 

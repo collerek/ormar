@@ -12,8 +12,6 @@ from typing import (
     Union,
 )
 
-from ormar.fields import ManyToManyField
-
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
@@ -219,7 +217,7 @@ def extract_models_to_dict_of_lists(
 
 def get_relationship_alias_model_and_str(
     source_model: Type["Model"], related_parts: List
-) -> Tuple[str, Type["Model"], str]:
+) -> Tuple[str, Type["Model"], str, bool]:
     """
     Walks the relation to retrieve the actual model on which the clause should be
     constructed, extracts alias based on last relation leading to target model.
@@ -231,19 +229,37 @@ def get_relationship_alias_model_and_str(
     :rtype: Tuple[str, Type["Model"], str]
     """
     table_prefix = ""
-    model_cls = source_model
-    previous_model = model_cls
-    manager = model_cls.Meta.alias_manager
-    for relation in related_parts:
-        related_field = model_cls.Meta.model_fields[relation]
-        if issubclass(related_field, ManyToManyField):
+    is_through = False
+    target_model = source_model
+    previous_model = target_model
+    previous_models = [target_model]
+    manager = target_model.Meta.alias_manager
+    for relation in related_parts[:]:
+        related_field = target_model.Meta.model_fields[relation]
+
+        if related_field.is_through:
+            # through is always last - cannot go further
+            is_through = True
+            related_parts.remove(relation)
+            through_field = related_field.owner.Meta.model_fields[
+                related_field.related_name or ""
+            ]
+            if len(previous_models) > 1 and previous_models[-2] == through_field.to:
+                previous_model = through_field.to
+                relation = through_field.related_name
+            else:
+                relation = related_field.related_name
+
+        if related_field.is_multi:
             previous_model = related_field.through
             relation = related_field.default_target_field_name()  # type: ignore
         table_prefix = manager.resolve_relation_alias(
             from_model=previous_model, relation_name=relation
         )
-        model_cls = related_field.to
-        previous_model = model_cls
+        target_model = related_field.to
+        previous_model = target_model
+        if not is_through:
+            previous_models.append(previous_model)
     relation_str = "__".join(related_parts)
 
-    return table_prefix, model_cls, relation_str
+    return table_prefix, target_model, relation_str, is_through

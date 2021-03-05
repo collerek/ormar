@@ -27,7 +27,7 @@ Keeps related Models and handles adding/removing of the children.
 #### \_\_init\_\_
 
 ```python
- | __init__(manager: "RelationsManager", type_: RelationType, field_name: str, to: Type["T"], through: Type["T"] = None) -> None
+ | __init__(manager: "RelationsManager", type_: RelationType, field_name: str, to: Type["Model"], through: Type["Model"] = None) -> None
 ```
 
 Initialize the Relation and keep the related models either as instances of
@@ -73,7 +73,7 @@ Find child model in RelationProxy if exists.
 #### add
 
 ```python
- | add(child: "T") -> None
+ | add(child: "Model") -> None
 ```
 
 Adds child Model to relation, either sets child as related model or adds
@@ -101,7 +101,7 @@ it from the list in RelationProxy depending on relation type.
 #### get
 
 ```python
- | get() -> Optional[Union[List["T"], "T"]]
+ | get() -> Optional[Union[List["Model"], "Model"]]
 ```
 
 Return the related model or models from RelationProxy.

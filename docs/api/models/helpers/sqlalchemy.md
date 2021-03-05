@@ -5,7 +5,7 @@
 #### adjust\_through\_many\_to\_many\_model
 
 ```python
-adjust_through_many_to_many_model(model_field: Type[ManyToManyField]) -> None
+adjust_through_many_to_many_model(model_field: Type["ManyToManyField"]) -> None
 ```
 
 Registers m2m relation on through model.
@@ -21,7 +21,7 @@ Sets pydantic fields with child and parent model types.
 #### create\_and\_append\_m2m\_fk
 
 ```python
-create_and_append_m2m_fk(model: Type["Model"], model_field: Type[ManyToManyField], field_name: str) -> None
+create_and_append_m2m_fk(model: Type["Model"], model_field: Type["ManyToManyField"], field_name: str) -> None
 ```
 
 Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.
@@ -38,7 +38,7 @@ Newly created field is added to m2m relation through model Meta columns and tabl
 #### check\_pk\_column\_validity
 
 ```python
-check_pk_column_validity(field_name: str, field: BaseField, pkname: Optional[str]) -> Optional[str]
+check_pk_column_validity(field_name: str, field: "BaseField", pkname: Optional[str]) -> Optional[str]
 ```
 
 Receives the field marked as primary key and verifies if the pkname
@@ -165,7 +165,7 @@ It populates name, metadata, columns and constraints.
 #### update\_column\_definition
 
 ```python
-update_column_definition(model: Union[Type["Model"], Type["NewBaseModel"]], field: Type[ForeignKeyField]) -> None
+update_column_definition(model: Union[Type["Model"], Type["NewBaseModel"]], field: Type["ForeignKeyField"]) -> None
 ```
 
 Updates a column with a new type column based on updated parameters in FK fields.

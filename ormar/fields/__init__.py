@@ -21,6 +21,7 @@ from ormar.fields.model_fields import (
     Time,
     UUID,
 )
+from ormar.fields.through_field import Through, ThroughField
 
 __all__ = [
     "Decimal",
@@ -41,4 +42,6 @@ __all__ = [
     "BaseField",
     "UniqueColumns",
     "ForeignKeyField",
+    "ThroughField",
+    "Through",
 ]

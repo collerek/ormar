@@ -131,7 +131,7 @@ will be deleted, and not only removed from relation).
 #### add
 
 ```python
- | async add(item: "Model") -> None
+ | async add(item: "Model", **kwargs: Any) -> None
 ```
 
 Adds child model to relation.
@@ -140,5 +140,6 @@ For ManyToMany relations through instance is automatically created.
 
 **Arguments**:
 
+- `kwargs (Any)`: dict of additional keyword arguments for through instance
 - `item (Model)`: child to add to relation
 

@@ -10,37 +10,6 @@ class RelationsManager()
 
 Manages relations on a Model, each Model has it's own instance.
 
-<a name="relations.relation_manager.RelationsManager._get_relation_type"></a>
-#### \_get\_relation\_type
-
-```python
- | _get_relation_type(field: Type[BaseField]) -> RelationType
-```
-
-Returns type of the relation declared on a field.
-
-**Arguments**:
-
-- `field (Type[BaseField])`: field with relation declaration
-
-**Returns**:
-
-`(RelationType)`: type of the relation defined on field
-
-<a name="relations.relation_manager.RelationsManager._add_relation"></a>
-#### \_add\_relation
-
-```python
- | _add_relation(field: Type[BaseField]) -> None
-```
-
-Registers relation in the manager.
-Adds Relation instance under field.name.
-
-**Arguments**:
-
-- `field (Type[BaseField])`: field with relation declaration
-
 <a name="relations.relation_manager.RelationsManager.__contains__"></a>
 #### \_\_contains\_\_
 
@@ -62,7 +31,7 @@ Checks if relation with given name is already registered.
 #### get
 
 ```python
- | get(name: str) -> Optional[Union["T", Sequence["T"]]]
+ | get(name: str) -> Optional[Union["Model", Sequence["Model"]]]
 ```
 
 Returns the related model/models if relation is set.
@@ -75,23 +44,6 @@ Actual call is delegated to Relation instance registered under relation name.
 **Returns**:
 
 `(Optional[Union[Model, List[Model]])`: related model or list of related models if set
-
-<a name="relations.relation_manager.RelationsManager._get"></a>
-#### \_get
-
-```python
- | _get(name: str) -> Optional[Relation]
-```
-
-Returns the actual relation and not the related model(s).
-
-**Arguments**:
-
-- `name (str)`: name of the relation
-
-**Returns**:
-
-`(ormar.relations.relation.Relation)`: Relation instance
 
 <a name="relations.relation_manager.RelationsManager.add"></a>
 #### add
@@ -147,4 +99,52 @@ of relation from which you want to remove the parent.
 - `item (Union[Model, Type[Model]])`: model with parent registered
 - `parent (Model)`: parent Model
 - `name (str)`: name of the relation
+
+<a name="relations.relation_manager.RelationsManager._get"></a>
+#### \_get
+
+```python
+ | _get(name: str) -> Optional[Relation]
+```
+
+Returns the actual relation and not the related model(s).
+
+**Arguments**:
+
+- `name (str)`: name of the relation
+
+**Returns**:
+
+`(ormar.relations.relation.Relation)`: Relation instance
+
+<a name="relations.relation_manager.RelationsManager._get_relation_type"></a>
+#### \_get\_relation\_type
+
+```python
+ | _get_relation_type(field: Type["BaseField"]) -> RelationType
+```
+
+Returns type of the relation declared on a field.
+
+**Arguments**:
+
+- `field (Type[BaseField])`: field with relation declaration
+
+**Returns**:
+
+`(RelationType)`: type of the relation defined on field
+
+<a name="relations.relation_manager.RelationsManager._add_relation"></a>
+#### \_add\_relation
+
+```python
+ | _add_relation(field: Type["BaseField"]) -> None
+```
+
+Registers relation in the manager.
+Adds Relation instance under field.name.
+
+**Arguments**:
+
+- `field (Type[BaseField])`: field with relation declaration
 

@@ -1,6 +1,6 @@
 # ManyToMany
 
-`ManyToMany(to, through)` has required parameters `to` and `through` that takes target and relation `Model` classes.  
+`ManyToMany(to, through)` has required parameters `to` and optional `through` that takes target and relation `Model` classes.  
 
 Sqlalchemy column and Type are automatically taken from target `Model`.
 
@@ -9,7 +9,7 @@ Sqlalchemy column and Type are automatically taken from target `Model`.
 
 ## Defining Models
 
-```Python hl_lines="32 49-50"
+```Python hl_lines="40"
 --8<-- "../docs_src/relations/docs002.py"
 ```
 
@@ -20,7 +20,153 @@ post = await Post.objects.create(title="Hello, M2M", author=guido)
 news = await Category.objects.create(name="News")
 ```
 
+## Through Model
+
+Optionally if you want to add additional fields you can explicitly create and pass
+the through model class.
+
+```Python hl_lines="14-20 29"
+--8<-- "../docs_src/relations/docs004.py"
+```
+
+!!!warning
+    Note that even of you do not provide through model it's going to be created for you automatically and 
+    still has to be included in example in `alembic` migrations. 
+
+!!!tip
+      Note that you need to provide `through` model if you want to 
+      customize the `Through` model name or the database table name of this model.
+
+If you do not provide the Through field it will be generated for you. 
+
+The default naming convention is:
+
+*  for class name it's union of both classes name (parent+other) so in example above 
+   it would be `PostCategory`
+*  for table name it similar but with underscore in between and s in the end of class 
+   lowercase name, in example above would be `posts_categorys`
+   
+## Through Fields
+
+The through field is auto added to the reverse side of the relation. 
+
+The exposed field is named as lowercase `Through` class name.
+
+The exposed field **explicitly has no relations loaded** as the relation is already populated in `ManyToMany` field,
+so it's useful only when additional fields are provided on `Through` model.
+
+In a sample model setup as following:
+
+```Python hl_lines="14-20 29"
+--8<-- "../docs_src/relations/docs004.py"
+```
+
+the through field can be used as a normal model field in most of the QuerySet operations.
+
+Note that through field is attached only to related side of the query so:
+
+```python
+post = await Post.objects.select_related("categories").get()
+# source model has no through field
+assert post.postcategory is None
+# related models have through field
+assert post.categories[0].postcategory is not None
+
+# same is applicable for reversed query
+category = await Category.objects.select_related("posts").get()
+assert category.postcategory is None
+assert category.posts[0].postcategory is not None
+```
+
+Through field can be used for filtering the data.
+```python
+post = (
+        await Post.objects.select_related("categories")
+        .filter(postcategory__sort_order__gt=1)
+        .get()
+        )
+```
+
+!!!tip
+    Note that despite that the actual instance is not populated on source model,
+    in queries, order by statements etc you can access through model from both sides.
+    So below query has exactly the same effect (note access through `categories`)
+    
+    ```python
+    post = (
+        await Post.objects.select_related("categories")
+        .filter(categories__postcategory__sort_order__gt=1)
+        .get()
+        )
+    ```
+
+Through model can be used in order by queries.
+```python
+post = (
+        await Post.objects.select_related("categories")
+        .order_by("-postcategory__sort_order")
+        .get()
+    )
+```
+
+You can also select subset of the columns in a normal `QuerySet` way with `fields` 
+and `exclude_fields`.
+
+```python
+post2 = (
+        await Post.objects.select_related("categories")
+        .exclude_fields("postcategory__param_name")
+        .get()
+        )
+```
+
+!!!warning
+    Note that because through fields explicitly nullifies all relation fields, as relation
+    is populated in ManyToMany field, you should not use the standard model methods like
+    `save()` and `update()` before re-loading the field from database.
+
+If you want to modify the through field in place remember to reload it from database.
+Otherwise you will set relations to None so effectively make the field useless!
+
+```python
+# always reload the field before modification
+await post2.categories[0].postcategory.load()
+# only then update the field
+await post2.categories[0].postcategory.update(sort_order=3)
+```
+Note that reloading the model effectively reloads the relations as `pk_only` models 
+(only primary key is set) so they are not fully populated, but it's enough to preserve 
+the relation on update.
+
+!!!warning
+    If you use i.e. `fastapi` the partially loaded related models on through field might cause
+    `pydantic` validation errors (that's the primary reason why they are not populated by default).
+    So either you need to exclude the related fields in your response, or fully load the related
+    models. In example above it would mean:
+    ```python
+    await post2.categories[0].postcategory.post.load()
+    await post2.categories[0].postcategory.category.load()
+    ```
+    Alternatively you can use `load_all()`:
+    ```python
+    await post2.categories[0].postcategory.load_all()
+    ```
+
+**Preferred way of update is through queryset proxy `update()` method**
+
+```python
+# filter the desired related model with through field and update only through field params
+await post2.categories.filter(name='Test category').update(postcategory={"sort_order": 3})
+```
+
+
+## Relation methods
+
 ### add
+
+`add(item: Model, **kwargs)`
+
+Allows you to add model to ManyToMany relation. 
 
 ```python
 # Add a category to a post.
@@ -30,9 +176,23 @@ await news.posts.add(post)
 ```
 
 !!!warning
-    In all not None cases the primary key value for related model **has to exist in database**.
+    In all not `None` cases the primary key value for related model **has to exist in database**.
     
     Otherwise an IntegrityError will be raised by your database driver library.
+
+If you declare your models with a Through model with additional fields, you can populate them
+during adding child model to relation.
+
+In order to do so, pass keyword arguments with field names and values to `add()` call.
+
+Note that this works only for `ManyToMany` relations.
+
+```python
+post = await Post(title="Test post").save()
+category = await Category(name="Test category").save()
+# apart from model pass arguments referencing through model fields
+await post.categories.add(category, sort_order=1, param_name='test')
+```
 
 ### remove
 
