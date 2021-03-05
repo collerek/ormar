@@ -345,7 +345,7 @@ class QuerySet(Generic[TM]):
         if not isinstance(related, list):
             related = [related]
 
-        related = list(set(list(self._select_related) + related))
+        related = sorted(list(set(list(self._select_related) + related)))
         return self.rebuild_self(select_related=related,)
 
     def prefetch_related(self, related: Union[List, str]) -> "QuerySet":

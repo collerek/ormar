@@ -460,7 +460,7 @@ class ForeignKeyField(BaseField):
         return model
 
     @classmethod
-    def get_relation_name(cls) -> str:
+    def get_relation_name(cls) -> str:  # pragma: no cover
         """
         Returns name of the relation, which can be a own name or through model
         names for m2m models
@@ -471,7 +471,7 @@ class ForeignKeyField(BaseField):
         return cls.name
 
     @classmethod
-    def get_source_model(cls) -> TypeTM:
+    def get_source_model(cls) -> Type["Model"]:
         """
         Returns model from which the relation comes -> either owner or through model
 

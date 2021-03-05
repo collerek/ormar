@@ -1,5 +1,13 @@
 import inspect
-from typing import List, Optional, Set, TYPE_CHECKING, Type, Union
+from typing import (
+    Callable,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Type,
+    Union,
+)
 
 
 class RelationMixin:
@@ -13,6 +21,7 @@ class RelationMixin:
         Meta: ModelMeta
         _related_names: Optional[Set]
         _related_fields: Optional[List]
+        get_name: Callable
 
     @classmethod
     def extract_db_own_fields(cls) -> Set:
@@ -122,7 +131,8 @@ class RelationMixin:
     @classmethod
     def _iterate_related_models(
         cls,
-        visited: Set[Union[Type["Model"], Type["RelationMixin"]]] = None,
+        visited: Set[str] = None,
+        source_visited: Set[str] = None,
         source_relation: str = None,
         source_model: Union[Type["Model"], Type["RelationMixin"]] = None,
     ) -> List[str]:
@@ -139,22 +149,24 @@ class RelationMixin:
         :return: list of relation strings to be passed to select_related
         :rtype: List[str]
         """
-        visited = visited or set()
-        visited.add(cls)
+        source_visited = source_visited or set()
+        if not source_model:
+            source_visited = cls._populate_source_model_prefixes()
         relations = cls.extract_related_names()
         processed_relations: List[str] = []
         for relation in relations:
             target_model = cls.Meta.model_fields[relation].to
             if source_model and target_model == source_model:
                 continue
-            if target_model not in visited:
-                visited.add(target_model)
+            if target_model not in source_visited or not source_model:
                 deep_relations = target_model._iterate_related_models(
-                    visited=visited, source_relation=relation, source_model=cls
+                    visited=visited,
+                    source_visited=source_visited,
+                    source_relation=relation,
+                    source_model=cls,
                 )
                 processed_relations.extend(deep_relations)
-            # TODO add test for circular deps
-            else:  # pragma: no cover
+            else:
                 processed_relations.append(relation)
         if processed_relations:
             final_relations = [
@@ -163,5 +175,13 @@ class RelationMixin:
             ]
         else:
             final_relations = [source_relation] if source_relation else []
-
         return final_relations
+
+    @classmethod
+    def _populate_source_model_prefixes(cls) -> Set:
+        relations = cls.extract_related_names()
+        visited = {cls}
+        for relation in relations:
+            target_model = cls.Meta.model_fields[relation].to
+            visited.add(target_model)
+        return visited

@@ -1,4 +1,4 @@
-from typing import Any, List, Sequence, cast
+from typing import Any, Sequence, cast
 
 import databases
 import pytest

@@ -15,6 +15,10 @@
   in `ManyToMany` relations and in reverse `ForeignKey` relations. Note that update like in `QuerySet` `update` returns number of
   updated models and **does not update related models in place** on parent model. To get the refreshed data on parent model you need to refresh
   the related models (i.e. `await model_instance.related.all()`)
+* Add `load_all(follow=False, exclude=None)` model method that allows to load current instance of the model
+  with all related models in one call. By default it loads only directly related models but setting
+  `follow=True` causes traversing the tree (avoiding loops). You can also pass `exclude` parameter
+  that works the same as `QuerySet.exclude_fields()` method.
 * Added possibility to add more fields on `Through` model for `ManyToMany` relationships:
     * name of the through model field is the lowercase name of the Through class
     * you can pass additional fields when calling `add(child, **kwargs)` on relation (on `QuerysetProxy`)
