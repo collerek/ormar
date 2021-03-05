@@ -3,6 +3,7 @@ from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union, cast
 
 from pydantic.typing import ForwardRef, evaluate_forwardref
 import ormar  # noqa: I100
+from ormar import ModelDefinitionError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 
@@ -15,6 +16,21 @@ if TYPE_CHECKING:  # pragma no cover
         ToType = Union[Type["Model"], "ForwardRef"]
 
 REF_PREFIX = "#/components/schemas/"
+
+
+def forbid_through_relations(through: Type["Model"]) -> None:
+    """
+    Verifies if the through model does not have relations.
+
+    :param through: through Model to be checked
+    :type through: Type['Model]
+    """
+    if any(field.is_relation for field in through.Meta.model_fields.values()):
+        raise ModelDefinitionError(
+            f"Through Models cannot have explicit relations "
+            f"defined. Remove the relations from Model "
+            f"{through.get_name(lower=False)}"
+        )
 
 
 def populate_m2m_params_based_on_to_model(
@@ -77,6 +93,8 @@ def ManyToMany(
     nullable = kwargs.pop("nullable", True)
     owner = kwargs.pop("owner", None)
     self_reference = kwargs.pop("self_reference", False)
+    if through is not None and through.__class__ != ForwardRef:
+        forbid_through_relations(cast(Type["Model"], through))
 
     if to.__class__ == ForwardRef:
         __type__ = to if not nullable else Optional[to]
@@ -189,6 +207,7 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
                 globalns,
                 localns or None,
             )
+            forbid_through_relations(cls.through)
 
     @classmethod
     def get_relation_name(cls) -> str:
