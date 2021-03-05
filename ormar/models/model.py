@@ -6,6 +6,8 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Union,
+    TypeVar,
+    Type,
 )
 
 import ormar.queryset  # noqa I100
@@ -310,3 +312,7 @@ class Model(ModelRow):
         self._orm.clear()
         self.update_from_dict(instance.dict())
         return self
+
+
+TM = TypeVar('TM', bound=Model)  # Generic Represent a type of Model
+TypeTM = Type[TM]

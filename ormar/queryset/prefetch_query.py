@@ -17,14 +17,10 @@ from ormar.queryset.query import Query
 from ormar.queryset.utils import extract_models_to_dict_of_lists, translate_list_to_dict
 
 if TYPE_CHECKING:  # pragma: no cover
-    from ormar import Model
+    from ormar import Model, TM, TypeTM
     from ormar.fields import ForeignKeyField, BaseField
     from ormar.queryset import OrderAction
     from ormar.models.excludable import ExcludableItems
-
-
-TM = TypeVar('TM')  # Generic Represent a type of Model
-TypeTM = Type[TM]
 
 
 def sort_models(models: List[TM], orders_by: Dict) -> List[TM]:

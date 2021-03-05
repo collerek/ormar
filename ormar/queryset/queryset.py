@@ -22,11 +22,11 @@ from ormar.exceptions import ModelError, ModelPersistenceError, QueryDefinitionE
 from ormar.queryset import FilterQuery
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import QueryClause
-from ormar.queryset.prefetch_query import PrefetchQuery, TM, TypeTM
+from ormar.queryset.prefetch_query import PrefetchQuery
 from ormar.queryset.query import Query
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
+    from ormar import Model, TM, TypeTM
     from ormar.models.metaclass import ModelMeta
     from ormar.relations.querysetproxy import QuerysetProxy
     from ormar.models.excludable import ExcludableItems
@@ -161,7 +161,7 @@ class QuerySet(Generic[TM]):
         :return: list of models with prefetch models populated
         :rtype: List[Model]
         """
-        query = PrefetchQuery(
+        query = PrefetchQuery[TM](
             model_cls=self.model,
             excludable=self._excludable,
             prefetch_related=self._prefetch_related,

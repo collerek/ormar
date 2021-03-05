@@ -15,16 +15,16 @@ from ormar.exceptions import RelationshipInstanceError
 from ormar.fields.base import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model, NewBaseModel
+    from ormar.models import Model, NewBaseModel, TM, TypeTM
     from ormar.fields import ManyToManyField
 
     if sys.version_info < (3, 7):
-        ToType = Type["Model"]
+        ToType = TypeTM
     else:
-        ToType = Union[Type["Model"], "ForwardRef"]
+        ToType = Union[TypeTM, "ForwardRef"]
 
 
-def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
+def create_dummy_instance(fk: TypeTM, pk: Any = None) -> TM:
     """
     Ormar never returns you a raw data.
     So if you have a related field that has a value populated
@@ -55,7 +55,7 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
 
 
 def create_dummy_model(
-    base_model: Type["Model"],
+    base_model: TypeTM,
     pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
 ) -> Type["BaseModel"]:
     """
@@ -82,7 +82,7 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-    to: Type["Model"], nullable: bool, onupdate: str = None, ondelete: str = None,
+    to: TypeTM, nullable: bool, onupdate: str = None, ondelete: str = None,
 ) -> Tuple[Any, List, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
@@ -228,7 +228,7 @@ class ForeignKeyField(BaseField):
     Actual class returned from ForeignKey function call and stored in model_fields.
     """
 
-    to: Type["Model"]
+    to: TypeTM
     name: str
     related_name: str  # type: ignore
     virtual: bool
@@ -287,8 +287,8 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _extract_model_from_sequence(
-        cls, value: List, child: "Model", to_register: bool,
-    ) -> List["Model"]:
+        cls, value: List, child: TM, to_register: bool,
+    ) -> List[TM]:
         """
         Takes a list of Models and registers them on parent.
         Registration is mutual, so children have also reference to parent.
@@ -302,7 +302,7 @@ class ForeignKeyField(BaseField):
         :param to_register: flag if the relation should be set in RelationshipManager
         :type to_register: bool
         :return: list (if needed) registered Models
-        :rtype: List["Model"]
+        :rtype: List[TM]
         """
         return [
             cls.expand_relationship(  # type: ignore
@@ -313,8 +313,8 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _register_existing_model(
-        cls, value: "Model", child: "Model", to_register: bool,
-    ) -> "Model":
+        cls, value: TM, child: TM, to_register: bool,
+    ) -> TM:
         """
         Takes already created instance and registers it for parent.
         Registration is mutual, so children have also reference to parent.
@@ -336,8 +336,8 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _construct_model_from_dict(
-        cls, value: dict, child: "Model", to_register: bool
-    ) -> "Model":
+        cls, value: dict, child: TM, to_register: bool
+    ) -> TM:
         """
         Takes a dictionary, creates a instance and registers it for parent.
         If dictionary contains only one field and it's a pk it is a __pk_only__ model.
@@ -363,8 +363,8 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _construct_model_from_pk(
-        cls, value: Any, child: "Model", to_register: bool
-    ) -> "Model":
+        cls, value: Any, child: TM, to_register: bool
+    ) -> TM:
         """
         Takes a pk value, creates a dummy instance and registers it for parent.
         Registration is mutual, so children have also reference to parent.
@@ -388,13 +388,13 @@ class ForeignKeyField(BaseField):
                 f"is of type {cls.to.pk_type()} "
                 f"while {type(value)} passed as a parameter."
             )
-        model = create_dummy_instance(fk=cls.to, pk=value)
+        model: TM = create_dummy_instance(fk=cls.to, pk=value)
         if to_register:
             cls.register_relation(model=model, child=child)
         return model
 
     @classmethod
-    def register_relation(cls, model: "Model", child: "Model") -> None:
+    def register_relation(cls, model: TM, child: TM) -> None:
         """
         Registers relation between parent and child in relation manager.
         Relation manager is kep on each model (different instance).
@@ -426,25 +426,25 @@ class ForeignKeyField(BaseField):
     def expand_relationship(
         cls,
         value: Any,
-        child: Union["Model", "NewBaseModel"],
+        child: Union[TM, "NewBaseModel"],
         to_register: bool = True,
-    ) -> Optional[Union["Model", List["Model"]]]:
+    ) -> Optional[Union[TM, List[TM]]]:
         """
         For relations the child model is first constructed (if needed),
         registered in relation and returned.
         For relation fields the value can be a pk value (Any type of field),
-        dict (from Model) or actual instance/list of a "Model".
+        dict (from Model) or actual instance/list of a TM.
 
         Selects the appropriate constructor based on a passed value.
 
         :param value: a Model field value, returned untouched for non relation fields.
         :type value: Any
         :param child: a child Model to register
-        :type child: Union["Model", "NewBaseModel"]
+        :type child: Union[TM, "NewBaseModel"]
         :param to_register: flag if the relation should be set in RelationshipManager
         :type to_register: bool
         :return: returns a Model or a list of Models
-        :rtype: Optional[Union["Model", List["Model"]]]
+        :rtype: Optional[Union[TM, List[TM]]]
         """
         if value is None:
             return None if not cls.virtual else []
@@ -471,11 +471,11 @@ class ForeignKeyField(BaseField):
         return cls.name
 
     @classmethod
-    def get_source_model(cls) -> Type["Model"]:
+    def get_source_model(cls) -> TypeTM:
         """
         Returns model from which the relation comes -> either owner or through model
 
         :return: source model
-        :rtype: Type["Model"]
+        :rtype: TypeTM
         """
         return cls.owner

@@ -142,7 +142,7 @@ class RelationMixin:
         visited = visited or set()
         visited.add(cls)
         relations = cls.extract_related_names()
-        processed_relations = []
+        processed_relations: List[str] = []
         for relation in relations:
             target_model = cls.Meta.model_fields[relation].to
             if source_model and target_model == source_model:
