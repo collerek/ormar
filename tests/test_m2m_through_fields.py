@@ -375,25 +375,3 @@ async def test_excluding_fields_on_through_model() -> Any:
         for category in post3.categories:
             assert category.postcategory.param_name is None
             assert category.postcategory.sort_order is None
-
-
-# TODO: check/ modify following
-
-# add to fields with class lower name (V)
-# forward refs update (V)
-# creating while adding to relation (kwargs in add) (V)
-# creating in queryset proxy (dict with through name and kwargs) (V)
-# loading the data into model instance of though model (V) <- fix fields ane exclude
-# accessing from instance (V) <- no both sides only nested one is relevant, fix one side
-# filtering in filter (through name normally) (V) < - table prefix from normal relation,
-#               check if is_through needed, resolved side of relation
-# ordering by in order_by (V)
-# updating in query (V)
-# updating from querysetproxy (V)
-# including/excluding in fields? (V)
-# make through optional? auto-generated for cases other fields are missing? (V)
-
-# modifying from instance (both sides?) (X) <= no, the loaded one doesn't have relations
-# allowing to change fk fields names in through model? (X) <= separate issue
-
-# prevent adding relation on through field definition

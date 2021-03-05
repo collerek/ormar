@@ -29,9 +29,10 @@
     * you can include and exclude fields on through models
     * through models are attached only to related models (i.e. if you query from A to B -> only on B)
     * note that through models are explicitly loaded without relations -> relation is already populated in ManyToMany field. 
-    * note that just like before you cannot declare the relation fields on through model, they will be populated for you by `ormar`
+    * note that just like before you cannot declare the relation fields on through model, they will be populated for you by `ormar`,
+      but now if you try to do so `ModelDefinitionError` will be thrown
     * check the updated ManyToMany relation docs for more information
-    
+
 # Other
 * Updated docs and api docs
 * Refactors and optimisations mainly related to filters, exclusions and order bys

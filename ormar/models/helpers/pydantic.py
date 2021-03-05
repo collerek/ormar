@@ -98,7 +98,7 @@ def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
     BaseField class.
 
     Trigger conversion of ormar field into pydantic FieldInfo, which has all needed
-    paramaters saved.
+    parameters saved.
 
     Overwrites the annotations of ormar fields to corresponding types declared on
     ormar fields (constructed dynamically for relations).
