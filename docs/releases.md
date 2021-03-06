@@ -1,3 +1,13 @@
+# 0.9.7
+
+## Features
+* Add `isnull` operator to filter and exclude methods. 
+    ```python
+    album__name__isnull=True #(sql: album.name is null)
+    album__name__isnull=False #(sql: album.name is not null))
+    ```
+
+
 # 0.9.6
 
 ##Important

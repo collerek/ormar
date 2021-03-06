@@ -256,7 +256,9 @@ class QuerySet:
         # print("\n", exp.compile(compile_kwargs={"literal_binds": True}))
         return exp
 
-    def filter(self, _exclude: bool = False, **kwargs: Any) -> "QuerySet":  # noqa: A003
+    def filter(  # noqa: A003
+        self, *args: Any, _exclude: bool = False, **kwargs: Any
+    ) -> "QuerySet":
         """
         Allows you to filter by any `Model` attribute/field
         as well as to fetch instances, with a filter across an FK relationship.
@@ -268,6 +270,8 @@ class QuerySet:
         *  contains - like `album__name__contains='Mal'` (sql like)
         *  icontains - like `album__name__icontains='mal'` (sql like case insensitive)
         *  in - like `album__name__in=['Malibu', 'Barclay']` (sql in)
+        *  isnull - like `album__name__isnull=True` (sql is null)
+           (isnotnull `album__name__isnull=False` (sql is not null))
         *  gt - like `position__gt=3` (sql >)
         *  gte - like `position__gte=3` (sql >=)
         *  lt - like `position__lt=3` (sql <)
@@ -284,12 +288,23 @@ class QuerySet:
         :return: filtered QuerySet
         :rtype: QuerySet
         """
+        filter_groups = []
+        if args:
+            for arg in args:
+                arg.resolve(
+                    model_cls=self.model,
+                    select_related=self._select_related,
+                    filter_clauses=self.filter_clauses,
+                )
+                filter_groups.append(arg)
+
         qryclause = QueryClause(
             model_cls=self.model,
             select_related=self._select_related,
             filter_clauses=self.filter_clauses,
         )
         filter_clauses, select_related = qryclause.prepare_filter(**kwargs)
+        filter_clauses = filter_clauses + filter_groups
         if _exclude:
             exclude_clauses = filter_clauses
             filter_clauses = self.filter_clauses
@@ -303,7 +318,7 @@ class QuerySet:
             select_related=select_related,
         )
 
-    def exclude(self, **kwargs: Any) -> "QuerySet":  # noqa: A003
+    def exclude(self, *args: Any, **kwargs: Any) -> "QuerySet":  # noqa: A003
         """
         Works exactly the same as filter and all modifiers (suffixes) are the same,
         but returns a *not* condition.
@@ -322,7 +337,7 @@ class QuerySet:
         :return: filtered QuerySet
         :rtype: QuerySet
         """
-        return self.filter(_exclude=True, **kwargs)
+        return self.filter(_exclude=True, *args, **kwargs)
 
     def select_related(self, related: Union[List, str]) -> "QuerySet":
         """

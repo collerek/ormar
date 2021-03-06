@@ -386,6 +386,8 @@ class QuerysetProxy:
         *  contains - like `album__name__contains='Mal'` (sql like)
         *  icontains - like `album__name__icontains='mal'` (sql like case insensitive)
         *  in - like `album__name__in=['Malibu', 'Barclay']` (sql in)
+        *  isnull - like `album__name__isnull=True` (sql is null)
+           (isnotnull `album__name__isnull=False` (sql is not null))
         *  gt - like `position__gt=3` (sql >)
         *  gte - like `position__gte=3` (sql >=)
         *  lt - like `position__lt=3` (sql <)

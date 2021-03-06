@@ -19,6 +19,7 @@ FILTER_OPERATORS = {
     "istartswith": "ilike",
     "endswith": "like",
     "iendswith": "ilike",
+    "isnull": "is_",
     "in": "in_",
     "gt": "__gt__",
     "gte": "__ge__",
@@ -38,7 +39,7 @@ class FilterAction(QueryAction):
     Extracted in order to easily change table prefixes on complex relations.
     """
 
-    def __init__(self, filter_str: str, value: Any, model_cls: Type["Model"]) -> None:
+    def __init__(self, filter_str: str, value: Any, model_cls: Type["Model"],) -> None:
         super().__init__(query_str=filter_str, model_cls=model_cls)
         self.filter_value = value
         self._escape_characters_in_clause()
@@ -124,6 +125,9 @@ class FilterAction(QueryAction):
             self.filter_value = self.filter_value.pk
 
         op_attr = FILTER_OPERATORS[self.operator]
+        if self.operator == "isnull":
+            op_attr = "is_" if self.filter_value else "isnot"
+            self.filter_value = None
         clause = getattr(self.column, op_attr)(self.filter_value)
         clause = self._compile_clause(
             clause, modifiers={"escape": "\\" if self.has_escaped_character else None},
