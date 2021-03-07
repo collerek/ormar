@@ -164,10 +164,16 @@ class Query:
         primary key values. Whole query is used to determine the values.
         """
         pk_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
-        qry_text = sqlalchemy.text(f"distinct {self.table.name}.{pk_alias}")
+        qry_text = sqlalchemy.text(f"{self.table.name}.{pk_alias}")
         limit_qry = sqlalchemy.sql.select([qry_text])
         limit_qry = limit_qry.select_from(self.select_from)
         limit_qry = self._apply_expression_modifiers(limit_qry)
+        limit_qry = FilterQuery(filter_clauses=self.filter_clauses).apply(limit_qry)
+        limit_qry = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
+            limit_qry
+        )
+        limit_qry = limit_qry.group_by(qry_text)
+        limit_qry = OrderQuery(sorted_orders=self.sorted_orders).apply(limit_qry)
         limit_qry = LimitQuery(limit_count=self.limit_count).apply(limit_qry)
         limit_qry = OffsetQuery(query_offset=self.query_offset).apply(limit_qry)
         limit_action = FilterAction(
