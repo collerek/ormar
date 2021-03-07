@@ -221,7 +221,8 @@ async def test_sort_order_on_related_model():
         assert owners[1].toys[1].name == "Toy 5"
         assert owners[1].name == "Hermes"
 
-        toys = await Toy.objects.select_related('owner').order_by('owner__name').limit(
+        toys = await Toy.objects.select_related('owner').order_by(
+            ['owner__name', 'name']).limit(
             2).all()
         assert len(toys) == 2
         assert toys[0].name == 'Toy 2'
