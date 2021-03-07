@@ -186,7 +186,6 @@ class Query:
                                 exclude=True).apply(
             limit_qry
         )
-        limit_qry = limit_qry.group_by(sqlalchemy.text(f"{pk_aliased_name}"))
         limit_qry = OrderQuery(sorted_orders=self.sorted_orders).apply(limit_qry)
         limit_qry = limit_qry.alias("inner_limit_query")
         outer_text = sqlalchemy.text(f"distinct limit_column")
