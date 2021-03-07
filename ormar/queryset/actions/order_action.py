@@ -20,7 +20,7 @@ class OrderAction(QueryAction):
     """
 
     def __init__(
-        self, order_str: str, model_cls: Type["Model"], alias: str = None
+            self, order_str: str, model_cls: Type["Model"], alias: str = None
     ) -> None:
         self.direction: str = ""
         super().__init__(query_str=order_str, model_cls=model_cls)
@@ -33,6 +33,18 @@ class OrderAction(QueryAction):
     @property
     def field_alias(self) -> str:
         return self.target_model.get_column_alias(self.field_name)
+
+    def get_field_name_text(self) -> str:
+        """
+        Escapes characters if it's required.
+        Substitutes values of the models if value is a ormar Model with its pk value.
+        Compiles the clause.
+
+        :return: complied and escaped clause
+        :rtype: sqlalchemy.sql.elements.TextClause
+        """
+        prefix = f"{self.table_prefix}_" if self.table_prefix else ""
+        return f"{prefix}{self.table}" f".{self.field_alias}"
 
     def get_text_clause(self) -> sqlalchemy.sql.expression.TextClause:
         """

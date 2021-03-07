@@ -18,16 +18,16 @@ if TYPE_CHECKING:  # pragma no cover
 
 class Query:
     def __init__(  # noqa CFQ002
-        self,
-        model_cls: Type["Model"],
-        filter_clauses: List[FilterAction],
-        exclude_clauses: List[FilterAction],
-        select_related: List,
-        limit_count: Optional[int],
-        offset: Optional[int],
-        excludable: "ExcludableItems",
-        order_bys: Optional[List["OrderAction"]],
-        limit_raw_sql: bool,
+            self,
+            model_cls: Type["Model"],
+            filter_clauses: List[FilterAction],
+            exclude_clauses: List[FilterAction],
+            select_related: List,
+            limit_count: Optional[int],
+            offset: Optional[int],
+            excludable: "ExcludableItems",
+            order_bys: Optional[List["OrderAction"]],
+            limit_raw_sql: bool,
     ) -> None:
         self.query_offset = offset
         self.limit_count = limit_count
@@ -137,7 +137,10 @@ class Query:
             ) = sql_join.build_join()
 
         if self._pagination_query_required():
-            self._build_pagination_condition()
+            limit_qry, on_clause = self._build_pagination_condition()
+            self.select_from = sqlalchemy.sql.join(
+                self.select_from, limit_qry, on_clause
+            )
 
         expr = sqlalchemy.sql.select(self.columns)
         expr = expr.select_from(self.select_from)
@@ -149,7 +152,10 @@ class Query:
 
         return expr
 
-    def _build_pagination_condition(self) -> None:
+    def _build_pagination_condition(
+            self
+    ) -> Tuple[
+        sqlalchemy.sql.expression.TextClause, sqlalchemy.sql.expression.TextClause]:
         """
         In order to apply limit and offset on main table in join only
         (otherwise you can get only partially constructed main model
@@ -164,25 +170,33 @@ class Query:
         primary key values. Whole query is used to determine the values.
         """
         pk_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
-        qry_text = sqlalchemy.text(f"{self.table.name}.{pk_alias}")
-        limit_qry = sqlalchemy.sql.select([qry_text])
+        pk_aliased_name = f"{self.table.name}.{pk_alias}"
+        qry_text = sqlalchemy.text(pk_aliased_name)
+        maxes = dict()
+        for order in list(self.sorted_orders.keys()):
+            if order is not None and order.get_field_name_text() != pk_aliased_name:
+                maxes[order.get_field_name_text()] = sqlalchemy.text(
+                    f"max({order.get_field_name_text()})")
+
+        limit_qry = sqlalchemy.sql.select([qry_text]+list(maxes.values()))
         limit_qry = limit_qry.select_from(self.select_from)
         limit_qry = self._apply_expression_modifiers(limit_qry)
         limit_qry = FilterQuery(filter_clauses=self.filter_clauses).apply(limit_qry)
-        limit_qry = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
+        limit_qry = FilterQuery(filter_clauses=self.exclude_clauses,
+                                exclude=True).apply(
             limit_qry
         )
         limit_qry = limit_qry.group_by(qry_text)
-        # limit_qry = OrderQuery(sorted_orders=self.sorted_orders).apply(limit_qry)
+        limit_qry = OrderQuery(sorted_orders=self.sorted_orders).apply(limit_qry)
         limit_qry = LimitQuery(limit_count=self.limit_count).apply(limit_qry)
         limit_qry = OffsetQuery(query_offset=self.query_offset).apply(limit_qry)
-        limit_action = FilterAction(
-            filter_str=f"{pk_alias}__in", value=limit_qry, model_cls=self.model_cls
-        )
-        self.filter_clauses.append(limit_action)
+        limit_qry = limit_qry.alias("limit_query")
+        on_clause = sqlalchemy.text(
+            f"limit_query.{pk_alias}={self.table.name}.{pk_alias}")
+        return limit_qry, on_clause
 
     def _apply_expression_modifiers(
-        self, expr: sqlalchemy.sql.select
+            self, expr: sqlalchemy.sql.select
     ) -> sqlalchemy.sql.select:
         """
         Receives the select query (might be join) and applies:
