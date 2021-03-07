@@ -183,20 +183,15 @@ class Query:
         limit_qry = self._apply_expression_modifiers(limit_qry)
         limit_qry = FilterQuery(filter_clauses=self.filter_clauses).apply(limit_qry)
         limit_qry = FilterQuery(filter_clauses=self.exclude_clauses,
-                                exclude=True).apply(
-            limit_qry
-        )
+                                exclude=True).apply(limit_qry)
+        limit_qry = limit_qry.group_by(sqlalchemy.text(f"{pk_aliased_name}"))
         limit_qry = OrderQuery(sorted_orders=self.sorted_orders).apply(limit_qry)
-        limit_qry = limit_qry.alias("inner_limit_query")
-        outer_text = sqlalchemy.text(f"distinct limit_column")
-        outer_qry = sqlalchemy.sql.select([outer_text])
-        outer_qry = outer_qry.select_from(limit_qry)
-        outer_qry = LimitQuery(limit_count=self.limit_count).apply(outer_qry)
-        outer_qry = OffsetQuery(query_offset=self.query_offset).apply(outer_qry)
-        outer_qry = outer_qry.alias("limit_query")
+        limit_qry = LimitQuery(limit_count=self.limit_count).apply(limit_qry)
+        limit_qry = OffsetQuery(query_offset=self.query_offset).apply(limit_qry)
+        limit_qry = limit_qry.alias("limit_query")
         on_clause = sqlalchemy.text(
             f"limit_query.limit_column={self.table.name}.{pk_alias}")
-        return outer_qry, on_clause
+        return limit_qry, on_clause
 
     def _apply_expression_modifiers(
             self, expr: sqlalchemy.sql.select
