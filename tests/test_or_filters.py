@@ -153,8 +153,7 @@ async def test_or_filters():
         assert books[0].title == "The Witcher"
 
         with pytest.raises(QueryDefinitionError):
-            await Book.objects.select_related("author").filter('wrong').all()
-
+            await Book.objects.select_related("author").filter("wrong").all()
 
 
 # TODO: Check / modify

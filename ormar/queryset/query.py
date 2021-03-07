@@ -18,16 +18,16 @@ if TYPE_CHECKING:  # pragma no cover
 
 class Query:
     def __init__(  # noqa CFQ002
-            self,
-            model_cls: Type["Model"],
-            filter_clauses: List[FilterAction],
-            exclude_clauses: List[FilterAction],
-            select_related: List,
-            limit_count: Optional[int],
-            offset: Optional[int],
-            excludable: "ExcludableItems",
-            order_bys: Optional[List["OrderAction"]],
-            limit_raw_sql: bool,
+        self,
+        model_cls: Type["Model"],
+        filter_clauses: List[FilterAction],
+        exclude_clauses: List[FilterAction],
+        select_related: List,
+        limit_count: Optional[int],
+        offset: Optional[int],
+        excludable: "ExcludableItems",
+        order_bys: Optional[List["OrderAction"]],
+        limit_raw_sql: bool,
     ) -> None:
         self.query_offset = offset
         self.limit_count = limit_count
@@ -153,9 +153,10 @@ class Query:
         return expr
 
     def _build_pagination_condition(
-            self
+        self,
     ) -> Tuple[
-        sqlalchemy.sql.expression.TextClause, sqlalchemy.sql.expression.TextClause]:
+        sqlalchemy.sql.expression.TextClause, sqlalchemy.sql.expression.TextClause
+    ]:
         """
         In order to apply limit and offset on main table in join only
         (otherwise you can get only partially constructed main model
@@ -183,10 +184,9 @@ class Query:
         limit_qry = sqlalchemy.sql.select([qry_text])
         limit_qry = limit_qry.select_from(self.select_from)
         limit_qry = FilterQuery(filter_clauses=self.filter_clauses).apply(limit_qry)
-        limit_qry = FilterQuery(filter_clauses=self.exclude_clauses,
-                                exclude=True).apply(
-            limit_qry
-        )
+        limit_qry = FilterQuery(
+            filter_clauses=self.exclude_clauses, exclude=True
+        ).apply(limit_qry)
         limit_qry = limit_qry.group_by(qry_text)
         for order_by in maxes.values():
             limit_qry = limit_qry.order_by(order_by)
@@ -194,11 +194,12 @@ class Query:
         limit_qry = OffsetQuery(query_offset=self.query_offset).apply(limit_qry)
         limit_qry = limit_qry.alias("limit_query")
         on_clause = sqlalchemy.text(
-            f"limit_query.{pk_alias}={self.table.name}.{pk_alias}")
+            f"limit_query.{pk_alias}={self.table.name}.{pk_alias}"
+        )
         return limit_qry, on_clause
 
     def _apply_expression_modifiers(
-            self, expr: sqlalchemy.sql.select
+        self, expr: sqlalchemy.sql.select
     ) -> sqlalchemy.sql.select:
         """
         Receives the select query (might be join) and applies:

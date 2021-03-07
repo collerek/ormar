@@ -174,27 +174,27 @@ async def test_sort_order_on_related_model():
 
         owner = (
             await Owner.objects.select_related("toys")
-                .order_by("toys__name")
-                .filter(name="Zeus")
-                .get()
+            .order_by("toys__name")
+            .filter(name="Zeus")
+            .get()
         )
         assert owner.toys[0].name == "Toy 1"
         assert owner.toys[1].name == "Toy 4"
 
         owner = (
             await Owner.objects.select_related("toys")
-                .order_by("-toys__name")
-                .filter(name="Zeus")
-                .get()
+            .order_by("-toys__name")
+            .filter(name="Zeus")
+            .get()
         )
         assert owner.toys[0].name == "Toy 4"
         assert owner.toys[1].name == "Toy 1"
 
         owners = (
             await Owner.objects.select_related("toys")
-                .order_by("-toys__name")
-                .filter(name__in=["Zeus", "Hermes"])
-                .all()
+            .order_by("-toys__name")
+            .filter(name__in=["Zeus", "Hermes"])
+            .all()
         )
         assert owners[0].toys[0].name == "Toy 6"
         assert owners[0].toys[1].name == "Toy 5"
@@ -208,9 +208,9 @@ async def test_sort_order_on_related_model():
 
         owners = (
             await Owner.objects.select_related("toys")
-                .order_by("-toys__name")
-                .filter(name__in=["Zeus", "Hermes"])
-                .all()
+            .order_by("-toys__name")
+            .filter(name__in=["Zeus", "Hermes"])
+            .all()
         )
         assert owners[0].toys[0].name == "Toy 7"
         assert owners[0].toys[1].name == "Toy 4"
@@ -221,12 +221,15 @@ async def test_sort_order_on_related_model():
         assert owners[1].toys[1].name == "Toy 5"
         assert owners[1].name == "Hermes"
 
-        toys = await Toy.objects.select_related('owner').order_by(
-            ['owner__name', 'name']).limit(
-            2).all()
+        toys = (
+            await Toy.objects.select_related("owner")
+            .order_by(["owner__name", "name"])
+            .limit(2)
+            .all()
+        )
         assert len(toys) == 2
-        assert toys[0].name == 'Toy 2'
-        assert toys[1].name == 'Toy 3'
+        assert toys[0].name == "Toy 2"
+        assert toys[1].name == "Toy 3"
 
 
 @pytest.mark.asyncio
@@ -257,9 +260,9 @@ async def test_sort_order_on_many_to_many():
 
         user = (
             await User.objects.select_related("cars")
-                .filter(name="Mark")
-                .order_by("cars__name")
-                .get()
+            .filter(name="Mark")
+            .order_by("cars__name")
+            .get()
         )
         assert user.cars[0].name == "Buggy"
         assert user.cars[1].name == "Ferrari"
@@ -268,9 +271,9 @@ async def test_sort_order_on_many_to_many():
 
         user = (
             await User.objects.select_related("cars")
-                .filter(name="Mark")
-                .order_by("-cars__name")
-                .get()
+            .filter(name="Mark")
+            .order_by("-cars__name")
+            .get()
         )
         assert user.cars[3].name == "Buggy"
         assert user.cars[2].name == "Ferrari"
@@ -286,8 +289,8 @@ async def test_sort_order_on_many_to_many():
 
         users = (
             await User.objects.select_related(["cars__factory"])
-                .order_by(["-cars__factory__name", "cars__name"])
-                .all()
+            .order_by(["-cars__factory__name", "cars__name"])
+            .all()
         )
 
         assert users[0].name == "Julie"
@@ -333,8 +336,8 @@ async def test_sort_order_with_aliases():
 
         aliases = (
             await AliasTest.objects.select_related("nested")
-                .order_by("-nested__name")
-                .all()
+            .order_by("-nested__name")
+            .all()
         )
         assert aliases[0].nested.name == "Try4"
         assert aliases[1].nested.name == "Try3"

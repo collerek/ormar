@@ -20,7 +20,7 @@ class OrderAction(QueryAction):
     """
 
     def __init__(
-            self, order_str: str, model_cls: Type["Model"], alias: str = None
+        self, order_str: str, model_cls: Type["Model"], alias: str = None
     ) -> None:
         self.direction: str = ""
         super().__init__(query_str=order_str, model_cls=model_cls)
@@ -46,9 +46,16 @@ class OrderAction(QueryAction):
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
         return f"{prefix}{self.table}" f".{self.field_alias}"
 
-    def get_min_or_max(self):
+    def get_min_or_max(self) -> sqlalchemy.sql.expression.TextClause:
+        """
+        Used in limit sub queries where you need to use aggregated functions
+        in order to order by columns not included in group by.
+
+        :return: min or max function to order
+        :rtype: sqlalchemy.sql.elements.TextClause
+        """
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
-        if self.direction == '':
+        if self.direction == "":
             return text(f"min({prefix}{self.table}" f".{self.field_alias})")
         else:
             return text(f"max({prefix}{self.table}" f".{self.field_alias}) desc")
