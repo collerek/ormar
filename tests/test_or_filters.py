@@ -83,6 +83,21 @@ async def test_or_filters():
         books = (
             await Book.objects.select_related("author")
             .filter(
+                ormar.and_(
+                    ormar.or_(year__gt=1960, year__lt=1940),
+                    author__name="J.R.R. Tolkien",
+                )
+            )
+            .all()
+        )
+
+        assert len(books) == 2
+        assert books[0].title == "The Hobbit"
+        assert books[1].title == "The Silmarillion"
+
+        books = (
+            await Book.objects.select_related("author")
+            .filter(
                 ormar.or_(
                     ormar.and_(year__gt=1960, author__name="J.R.R. Tolkien"),
                     ormar.and_(year__lt=2000, author__name="Andrzej Sapkowski"),
@@ -108,6 +123,23 @@ async def test_or_filters():
         )
         assert len(books) == 3
         assert not any([x.title in ["The Silmarillion", "The Witcher"] for x in books])
+
+        books = (
+            await Book.objects.select_related("author")
+            .filter(
+                ormar.or_(
+                    ormar.and_(year__gt=1960, author__name="J.R.R. Tolkien"),
+                    ormar.and_(year__lt=2000, author__name="Andrzej Sapkowski"),
+                    title__icontains="hobbit",
+                )
+            )
+            .filter(title__startswith="The")
+            .all()
+        )
+        assert len(books) == 3
+        assert not any(
+            [x.title in ["The Tower of Fools", "The Lord of the Rings"] for x in books]
+        )
 
         books = (
             await Book.objects.select_related("author")
@@ -163,5 +195,6 @@ async def test_or_filters():
 # fix limit -> change to where subquery to extract number of distinct pk values (V)
 # finish docstrings (V)
 # fix types for FilterAction and FilterGroup (X)
+# add docs (V)
 
-# add docs
+# fix querysetproxy

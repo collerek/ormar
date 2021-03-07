@@ -26,7 +26,7 @@ And following methods to sort the data (sql order by clause).
 
 ### filter
 
-`filter(**kwargs) -> QuerySet`
+`filter(*args, **kwargs) -> QuerySet`
 
 Allows you to filter by any `Model` attribute/field as well as to fetch instances, with
 a filter across an FK relationship.
@@ -97,7 +97,7 @@ You can use special filter suffix to change the filter operands:
 
 ### exclude
 
-`exclude(**kwargs) -> QuerySet`
+`exclude(*args, **kwargs) -> QuerySet`
 
 Works exactly the same as filter and all modifiers (suffixes) are the same, but returns
 a not condition.
@@ -138,6 +138,181 @@ class Track(ormar.Model):
 notes = await Track.objects.exclude(position_gt=3).all()
 # returns all tracks with position < 3
 ```
+
+## Complex filters (including OR)
+
+By default both `filter()` and `exclude()` methods combine provided filter options with
+`AND` condition so `filter(name="John", age__gt=30)` translates into `WHERE name = 'John' AND age > 30`.
+
+Sometimes it's useful to query the database with conditions that should not be applied 
+jointly like `WHERE name = 'John' OR age > 30`, or build a complex where query that you would
+like to have bigger control over. After all `WHERE (name = 'John' OR age > 30) and city='New York'` is
+completely different than `WHERE name = 'John' OR (age > 30 and city='New York')`.
+
+In order to build `OR` and nested conditions ormar provides two functions that can be used in 
+`filter()` and `exclude()` in `QuerySet` and `QuerysetProxy`. 
+
+!!!note
+    Note that you cannot provide those methods in any other method like `get()` or `all()` which accepts only keyword arguments. 
+
+Call to `or_` and `and_` can be nested in each other, as well as combined with keyword arguments.
+Since it sounds more complicated than it is, let's look at some examples.
+
+Given a sample models like this:
+```python
+database = databases.Database(DATABASE_URL)
+metadata = sqlalchemy.MetaData()
+
+
+class BaseMeta(ormar.ModelMeta):
+    metadata = metadata
+    database = database
+
+
+class Author(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "authors"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
+class Book(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "books"
+
+    id: int = ormar.Integer(primary_key=True)
+    author: Optional[Author] = ormar.ForeignKey(Author)
+    title: str = ormar.String(max_length=100)
+    year: int = ormar.Integer(nullable=True)
+```
+
+Let's create some sample data:
+
+```python
+tolkien = await Author(name="J.R.R. Tolkien").save()
+await Book(author=tolkien, title="The Hobbit", year=1933).save()
+await Book(author=tolkien, title="The Lord of the Rings", year=1955).save()
+await Book(author=tolkien, title="The Silmarillion", year=1977).save()
+sapkowski = await Author(name="Andrzej Sapkowski").save()
+await Book(author=sapkowski, title="The Witcher", year=1990).save()
+await Book(author=sapkowski, title="The Tower of Fools", year=2002).save()
+```
+
+We can construct some sample complex queries:
+
+Let's select books of Tolkien **OR** books written after 1970
+
+sql:
+`WHERE ( authors.name = 'J.R.R. Tolkien' OR books.year > 1970 )`
+
+```python
+books = (
+    await Book.objects.select_related("author")
+    .filter(ormar.or_(author__name="J.R.R. Tolkien", year__gt=1970))
+    .all()
+)
+assert len(books) == 5
+```
+
+Now let's select books written after 1960 or before 1940 which were written by Tolkien.
+
+sql:
+`WHERE ( books.year > 1960 OR books.year < 1940 ) AND authors.name = 'J.R.R. Tolkien'`
+
+```python
+# OPTION 1 - split and into separate call
+books = (
+    await Book.objects.select_related("author")
+    .filter(ormar.or_(year__gt=1960, year__lt=1940))
+    .filter(author__name="J.R.R. Tolkien")
+    .all()
+)
+assert len(books) == 2
+
+# OPTION 2 - all in one
+books = (
+    await Book.objects.select_related("author")
+    .filter(
+        ormar.and_(
+            ormar.or_(year__gt=1960, year__lt=1940),
+            author__name="J.R.R. Tolkien",
+        )
+    )
+    .all()
+)
+
+assert len(books) == 2
+assert books[0].title == "The Hobbit"
+assert books[1].title == "The Silmarillion"
+```
+
+Books of Sapkowski from before 2000 or books of Tolkien written after 1960
+
+sql:
+`WHERE ( ( books.year > 1960 AND authors.name = 'J.R.R. Tolkien' ) OR ( books.year < 2000 AND authors.name = 'Andrzej Sapkowski' ) ) `
+
+```python
+books = (
+    await Book.objects.select_related("author")
+    .filter(
+        ormar.or_(
+            ormar.and_(year__gt=1960, author__name="J.R.R. Tolkien"),
+            ormar.and_(year__lt=2000, author__name="Andrzej Sapkowski"),
+        )
+    )
+    .all()
+)
+assert len(books) == 2
+```
+
+Of course those functions can have more than 2 conditions, so if we for example want also 
+books that contains 'hobbit':
+
+sql:
+`WHERE ( ( books.year > 1960 AND authors.name = 'J.R.R. Tolkien' ) OR 
+( books.year < 2000 AND os0cec_authors.name = 'Andrzej Sapkowski' ) OR 
+books.title LIKE '%hobbit%' )`
+
+```python
+books = (
+    await Book.objects.select_related("author")
+    .filter(
+        ormar.or_(
+            ormar.and_(year__gt=1960, author__name="J.R.R. Tolkien"),
+            ormar.and_(year__lt=2000, author__name="Andrzej Sapkowski"),
+            title__icontains="hobbit",
+        )
+    )
+    .all()
+)
+```
+
+By now you should already have an idea how `ormar.or_` and `ormar.and_` works.
+Of course, you could chain them in any other methods of queryset, so in example a perfectly
+valid query can look like follows:
+
+```python
+books = (
+    await Book.objects.select_related("author")
+    .filter(ormar.or_(year__gt=1980, author__name="Andrzej Sapkowski"))
+    .filter(title__startswith="The")
+    .limit(1)
+    .offset(1)
+    .order_by("-id")
+    .all()
+)
+assert len(books) == 1
+assert books[0].title == "The Witcher"
+```
+
+
+!!!note
+    Note that you cannot provide the same keyword argument several times so queries like `filter(ormar.or_(name='Jack', name='John'))` are not allowed. If you want to check the same
+    column for several values simply use `in` operator: `filter(name__in=['Jack','John'])`.
+    Note that also that technically you can still do `filter(ormar.or_(name='Jack', name__exact='John'))`
+    but it's not recommended. The different operators can be used as long as they do not
+    repeat so `filter(ormar.or_(year__lt=1560, year__gt=2000))` is fine.
 
 ## get
 

@@ -6,7 +6,22 @@
     album__name__isnull=True #(sql: album.name is null)
     album__name__isnull=False #(sql: album.name is not null))
     ```
-
+* Add `ormar.or_` and `ormar.and_` functions that can be used to compose
+  complex queries with nested conditions. 
+  Sample query:
+  ```python
+  books = (
+      await Book.objects.select_related("author")
+      .filter(
+          ormar.and_(
+              ormar.or_(year__gt=1960, year__lt=1940),
+              author__name="J.R.R. Tolkien",
+          )
+      )
+      .all()
+  )
+  ```
+  Check the updated docs in Queries -> Filtering and sorting -> Complex filters
 
 # 0.9.6
 
