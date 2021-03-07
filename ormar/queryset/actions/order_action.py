@@ -46,6 +46,13 @@ class OrderAction(QueryAction):
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
         return f"{prefix}{self.table}" f".{self.field_alias}"
 
+    def get_min_or_max(self):
+        prefix = f"{self.table_prefix}_" if self.table_prefix else ""
+        if self.direction == '':
+            return text(f"min({prefix}{self.table}" f".{self.field_alias})")
+        else:
+            return text(f"max({prefix}{self.table}" f".{self.field_alias}) desc")
+
     def get_text_clause(self) -> sqlalchemy.sql.expression.TextClause:
         """
         Escapes characters if it's required.
