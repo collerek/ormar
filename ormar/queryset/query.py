@@ -172,13 +172,13 @@ class Query:
         pk_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
         pk_aliased_name = f"{self.table.name}.{pk_alias}"
         qry_text = sqlalchemy.text(f"{pk_aliased_name} as limit_column")
-        maxes = dict()
-        for order in list(self.sorted_orders.keys()):
-            if order is not None and order.get_field_name_text() != pk_aliased_name:
-                aliased_col = order.get_field_name_text()
-                maxes[aliased_col] = sqlalchemy.text(aliased_col)
+        # maxes = dict()
+        # for order in list(self.sorted_orders.keys()):
+        #     if order is not None and order.get_field_name_text() != pk_aliased_name:
+        #         aliased_col = order.get_field_name_text()
+        #         maxes[aliased_col] = sqlalchemy.text(aliased_col)
 
-        limit_qry = sqlalchemy.sql.select([qry_text]+list(maxes.values()))
+        limit_qry = sqlalchemy.sql.select([qry_text])
         limit_qry = limit_qry.select_from(self.select_from)
         limit_qry = self._apply_expression_modifiers(limit_qry)
         limit_qry = FilterQuery(filter_clauses=self.filter_clauses).apply(limit_qry)
