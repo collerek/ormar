@@ -173,7 +173,7 @@ class Query:
             limit_qry
         )
         limit_qry = limit_qry.group_by(qry_text)
-        limit_qry = OrderQuery(sorted_orders=self.sorted_orders).apply(limit_qry)
+        # limit_qry = OrderQuery(sorted_orders=self.sorted_orders).apply(limit_qry)
         limit_qry = LimitQuery(limit_count=self.limit_count).apply(limit_qry)
         limit_qry = OffsetQuery(query_offset=self.query_offset).apply(limit_qry)
         limit_action = FilterAction(
