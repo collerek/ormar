@@ -122,3 +122,45 @@ async def test_load_all_multiple_instances_of_same_table_in_schema():
         assert len(math_class.dict().get("students")) == 2
         assert math_class.teachers[0].category.department.name == "Law Department"
         assert math_class.students[0].category.department.name == "Math Department"
+
+
+@pytest.mark.asyncio
+async def test_filter_groups_with_instances_of_same_table_in_schema():
+    async with database:
+        await create_data()
+        math_class = (
+            await SchoolClass.objects.select_related(
+                ["teachers__category__department", "students__category__department"]
+            )
+            .filter(
+                ormar.or_(
+                    students__name="Jane",
+                    teachers__category__name="Domestic",
+                    students__category__name="Foreign",
+                )
+            )
+            .get(name="Math")
+        )
+        assert math_class.name == "Math"
+        assert math_class.students[0].name == "Jane"
+        assert len(math_class.dict().get("students")) == 2
+        assert math_class.teachers[0].category.department.name == "Law Department"
+        assert math_class.students[0].category.department.name == "Math Department"
+
+        classes = (
+            await SchoolClass.objects.select_related(
+                ["students__category__department", "teachers__category__department"]
+            )
+            .filter(
+                ormar.and_(
+                    ormar.or_(
+                        students__name="Jane", students__category__name="Foreign"
+                    ),
+                    teachers__category__department__name="Law Department",
+                )
+            )
+            .all()
+        )
+        assert len(classes) == 1
+        assert classes[0].teachers[0].category.department.name == "Law Department"
+        assert classes[0].students[0].category.department.name == "Math Department"

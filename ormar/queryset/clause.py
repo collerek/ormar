@@ -19,6 +19,11 @@ class FilterType(Enum):
 
 
 class FilterGroup:
+    """
+    Filter groups are used in complex queries condition to group and and or
+    clauses in where condition
+    """
+
     def __init__(
         self, *args: Any, _filter_type: FilterType = FilterType.AND, **kwargs: Any,
     ) -> None:
@@ -36,6 +41,19 @@ class FilterGroup:
         select_related: List = None,
         filter_clauses: List = None,
     ) -> Tuple[List[FilterAction], List[str]]:
+        """
+        Resolves the FilterGroups actions to use proper target model, replace
+        complex relation prefixes if needed and nested groups also resolved.
+
+        :param model_cls: model from which the query is run
+        :type model_cls: Type["Model"]
+        :param select_related: list of models to join
+        :type select_related: List[str]
+        :param filter_clauses: list of filter conditions
+        :type filter_clauses: List[FilterAction]
+        :return: list of filter conditions and select_related list
+        :rtype: Tuple[List[FilterAction], List[str]]
+        """
         select_related = select_related if select_related is not None else []
         filter_clauses = filter_clauses if filter_clauses is not None else []
         qryclause = QueryClause(
@@ -51,42 +69,44 @@ class FilterGroup:
         self._resolved = True
         if self._nested_groups:
             for group in self._nested_groups:
-                if not group._resolved:
-                    (filter_clauses, select_related) = group.resolve(
-                        model_cls=model_cls,
-                        select_related=select_related,
-                        filter_clauses=filter_clauses,
-                    )
-        self._is_self_model_group()
+                (filter_clauses, select_related) = group.resolve(
+                    model_cls=model_cls,
+                    select_related=select_related,
+                    filter_clauses=filter_clauses,
+                )
         return filter_clauses, select_related
 
     def _iter(self) -> Generator:
-        if not self._nested_groups:
-            yield from self.actions
-            return
+        """
+        Iterates all actions in a tree
+        :return: generator yielding from own actions and nested groups
+        :rtype: Generator
+        """
         for group in self._nested_groups:
             yield from group._iter()
         yield from self.actions
 
-    def _is_self_model_group(self) -> None:
-        if self.actions and self._nested_groups:
-            if all([action.is_source_model_filter for action in self.actions]) and all(
-                group.is_source_model_filter for group in self._nested_groups
-            ):
-                self.is_source_model_filter = True
-        elif self.actions:
-            if all([action.is_source_model_filter for action in self.actions]):
-                self.is_source_model_filter = True
-        else:
-            if all(group.is_source_model_filter for group in self._nested_groups):
-                self.is_source_model_filter = True
-
     def _get_text_clauses(self) -> List[sqlalchemy.sql.expression.TextClause]:
+        """
+        Helper to return list of text queries from actions and nested groups
+        :return: list of text queries from actions and nested groups
+        :rtype: List[sqlalchemy.sql.elements.TextClause]
+        """
         return [x.get_text_clause() for x in self._nested_groups] + [
             x.get_text_clause() for x in self.actions
         ]
 
     def get_text_clause(self) -> sqlalchemy.sql.expression.TextClause:
+        """
+        Returns all own actions and nested groups conditions compiled and joined
+        inside parentheses.
+        Escapes characters if it's required.
+        Substitutes values of the models if value is a ormar Model with its pk value.
+        Compiles the clause.
+
+        :return: complied and escaped clause
+        :rtype: sqlalchemy.sql.elements.TextClause
+        """
         if self.filter_type == FilterType.AND:
             clause = sqlalchemy.text(
                 "( " + str(sqlalchemy.sql.and_(*self._get_text_clauses())) + " )"
@@ -98,11 +118,31 @@ class FilterGroup:
         return clause
 
 
-def or_(*args: Any, **kwargs: Any) -> FilterGroup:
+def or_(*args: FilterGroup, **kwargs: Any) -> FilterGroup:
+    """
+    Construct or filter from nested groups and keyword arguments
+
+    :param args: nested filter groups
+    :type args: Tuple[FilterGroup]
+    :param kwargs: fields names and proper value types
+    :type kwargs: Any
+    :return: FilterGroup ready to be resolved
+    :rtype: ormar.queryset.clause.FilterGroup
+    """
     return FilterGroup(_filter_type=FilterType.OR, *args, **kwargs)
 
 
-def and_(*args: Any, **kwargs: Any) -> FilterGroup:
+def and_(*args: FilterGroup, **kwargs: Any) -> FilterGroup:
+    """
+    Construct and filter from nested groups and keyword arguments
+
+    :param args: nested filter groups
+    :type args: Tuple[FilterGroup]
+    :param kwargs: fields names and proper value types
+    :type kwargs: Any
+    :return: FilterGroup ready to be resolved
+    :rtype: ormar.queryset.clause.FilterGroup
+    """
     return FilterGroup(_filter_type=FilterType.AND, *args, **kwargs)
 
 
@@ -263,6 +303,11 @@ class QueryClause:
         return filter_clauses
 
     def _verify_prefix_and_switch(self, action: "FilterAction") -> None:
+        """
+        Helper to switch prefix to complex relation one if required
+        :param action: action to switch prefix in
+        :type action: ormar.queryset.actions.filter_action.FilterAction
+        """
         manager = self.model_cls.Meta.alias_manager
         new_alias = manager.resolve_relation_alias(self.model_cls, action.related_str)
         if "__" in action.related_str and new_alias:

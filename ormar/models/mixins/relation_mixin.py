@@ -129,7 +129,7 @@ class RelationMixin:
         return related_names
 
     @classmethod
-    def _iterate_related_models(
+    def _iterate_related_models(  # noqa: CCR001
         cls,
         visited: Set[str] = None,
         source_visited: Set[str] = None,
@@ -149,14 +149,12 @@ class RelationMixin:
         :return: list of relation strings to be passed to select_related
         :rtype: List[str]
         """
-        source_visited = source_visited or set()
-        if not source_model:
-            source_visited = cls._populate_source_model_prefixes()
+        source_visited = source_visited or cls._populate_source_model_prefixes()
         relations = cls.extract_related_names()
         processed_relations = []
         for relation in relations:
             target_model = cls.Meta.model_fields[relation].to
-            if source_model and target_model == source_model:
+            if cls._is_reverse_side_of_same_relation(source_model, target_model):
                 continue
             if target_model not in source_visited or not source_model:
                 deep_relations = target_model._iterate_related_models(
@@ -168,6 +166,39 @@ class RelationMixin:
                 processed_relations.extend(deep_relations)
             else:
                 processed_relations.append(relation)
+
+        return cls._get_final_relations(processed_relations, source_relation)
+
+    @staticmethod
+    def _is_reverse_side_of_same_relation(
+        source_model: Optional[Union[Type["Model"], Type["RelationMixin"]]],
+        target_model: Type["Model"],
+    ) -> bool:
+        """
+        Alias to check if source model is the same as target
+        :param source_model: source model - relation comes from it
+        :type source_model: Type["Model"]
+        :param target_model: target model - relation leads to it
+        :type target_model: Type["Model"]
+        :return: result of the check
+        :rtype: bool
+        """
+        return bool(source_model and target_model == source_model)
+
+    @staticmethod
+    def _get_final_relations(
+        processed_relations: List, source_relation: Optional[str]
+    ) -> List[str]:
+        """
+        Helper method to prefix nested relation strings with current source relation
+
+        :param processed_relations: list of already processed relation str
+        :type processed_relations: List[str]
+        :param source_relation: name of the current relation
+        :type source_relation: str
+        :return: list of relation strings to be passed to select_related
+        :rtype: List[str]
+        """
         if processed_relations:
             final_relations = [
                 f"{source_relation + '__' if source_relation else ''}{relation}"

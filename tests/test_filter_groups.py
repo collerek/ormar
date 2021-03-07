@@ -44,7 +44,6 @@ def test_or_group():
         f"{result.actions[1].table_prefix}"
         f"_books.title = 'bb' )"
     )
-    assert not result.is_source_model_filter
 
 
 def test_and_group():
@@ -58,7 +57,6 @@ def test_and_group():
         f"{result.actions[1].table_prefix}"
         f"_books.title = 'bb' )"
     )
-    assert not result.is_source_model_filter
 
 
 def test_nested_and():
@@ -77,7 +75,6 @@ def test_nested_and():
         f"{book_prefix}"
         f"_books.title = 'dd' ) )"
     )
-    assert not result.is_source_model_filter
 
 
 def test_nested_group_and_action():
@@ -93,7 +90,6 @@ def test_nested_group_and_action():
         f"{book_prefix}"
         f"_books.title = 'dd' )"
     )
-    assert not result.is_source_model_filter
 
 
 def test_deeply_nested_or():
@@ -120,7 +116,6 @@ def test_deeply_nested_or():
         f"( {book_prefix}_books.year > 'xx' OR {book_prefix}_books.title = '22' ) ) )"
     )
     assert result_qry.replace("\n", "") == expected_qry.replace("\n", "")
-    assert not result.is_source_model_filter
 
 
 def test_one_model_group():
@@ -128,7 +123,6 @@ def test_one_model_group():
     result.resolve(model_cls=Book)
     assert len(result.actions) == 2
     assert len(result._nested_groups) == 0
-    assert result.is_source_model_filter
 
 
 def test_one_model_nested_group():
@@ -138,7 +132,6 @@ def test_one_model_nested_group():
     result.resolve(model_cls=Book)
     assert len(result.actions) == 0
     assert len(result._nested_groups) == 2
-    assert result.is_source_model_filter
 
 
 def test_one_model_with_group():
@@ -146,4 +139,3 @@ def test_one_model_with_group():
     result.resolve(model_cls=Book)
     assert len(result.actions) == 1
     assert len(result._nested_groups) == 1
-    assert result.is_source_model_filter

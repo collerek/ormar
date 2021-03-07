@@ -108,10 +108,7 @@ class Query:
             "", self.table, self_related_fields
         )
         self.apply_order_bys_for_primary_model()
-        if self._pagination_query_required():
-            self.select_from = self._build_pagination_subquery()
-        else:
-            self.select_from = self.table
+        self.select_from = self.table
 
         related_models = group_related_list(self._select_related)
 
@@ -139,6 +136,9 @@ class Query:
                 self.sorted_orders,
             ) = sql_join.build_join()
 
+        if self._pagination_query_required():
+            self._build_pagination_condition()
+
         expr = sqlalchemy.sql.select(self.columns)
         expr = expr.select_from(self.select_from)
 
@@ -149,7 +149,7 @@ class Query:
 
         return expr
 
-    def _build_pagination_subquery(self) -> sqlalchemy.sql.select:
+    def _build_pagination_condition(self) -> None:
         """
         In order to apply limit and offset on main table in join only
         (otherwise you can get only partially constructed main model
@@ -160,32 +160,20 @@ class Query:
         and query has select_related applied. Otherwise we can limit/offset normally
         at the end of whole query.
 
-        :return: constructed subquery on main table with limit, offset and order applied
-        :rtype: sqlalchemy.sql.select
+        The condition is added to filters to filter out desired number of main model
+        primary key values. Whole query is used to determine the values.
         """
-        expr = sqlalchemy.sql.select(self.model_cls.Meta.table.columns)
-        expr = LimitQuery(limit_count=self.limit_count).apply(expr)
-        expr = OffsetQuery(query_offset=self.query_offset).apply(expr)
-        filters_to_use = [
-            filter_clause
-            for filter_clause in self.filter_clauses
-            if filter_clause.is_source_model_filter
-        ]
-        excludes_to_use = [
-            filter_clause
-            for filter_clause in self.exclude_clauses
-            if filter_clause.is_source_model_filter
-        ]
-        sorts_to_use = {
-            k: v for k, v in self.sorted_orders.items() if k.is_source_model_order
-        }
-        expr = FilterQuery(filter_clauses=filters_to_use).apply(expr)
-        expr = FilterQuery(filter_clauses=excludes_to_use, exclude=True).apply(expr)
-        expr = OrderQuery(sorted_orders=sorts_to_use).apply(expr)
-        expr = expr.alias(f"{self.table}")
-        self.filter_clauses = list(set(self.filter_clauses) - set(filters_to_use))
-        self.exclude_clauses = list(set(self.exclude_clauses) - set(excludes_to_use))
-        return expr
+        pk_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
+        qry_text = sqlalchemy.text(f"distinct {self.table.name}.{pk_alias}")
+        limit_qry = sqlalchemy.sql.select([qry_text])
+        limit_qry = limit_qry.select_from(self.select_from)
+        limit_qry = self._apply_expression_modifiers(limit_qry)
+        limit_qry = LimitQuery(limit_count=self.limit_count).apply(limit_qry)
+        limit_qry = OffsetQuery(query_offset=self.query_offset).apply(limit_qry)
+        limit_action = FilterAction(
+            filter_str=f"{pk_alias}__in", value=limit_qry, model_cls=self.model_cls
+        )
+        self.filter_clauses.append(limit_action)
 
     def _apply_expression_modifiers(
         self, expr: sqlalchemy.sql.select

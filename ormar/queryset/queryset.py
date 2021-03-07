@@ -20,7 +20,7 @@ from ormar import MultipleMatches, NoMatch
 from ormar.exceptions import ModelError, ModelPersistenceError, QueryDefinitionError
 from ormar.queryset import FilterQuery
 from ormar.queryset.actions.order_action import OrderAction
-from ormar.queryset.clause import QueryClause
+from ormar.queryset.clause import FilterGroup, QueryClause
 from ormar.queryset.prefetch_query import PrefetchQuery
 from ormar.queryset.query import Query
 
@@ -192,6 +192,34 @@ class QuerySet:
             return self.model.merge_instances_list(result_rows)  # type: ignore
         return result_rows
 
+    def _resolve_filter_groups(self, groups: Any) -> List[FilterGroup]:
+        """
+        Resolves filter groups to populate FilterAction params in group tree.
+
+        :param groups: tuple of FilterGroups
+        :type groups: Any
+        :return: list of resolver groups
+        :rtype: List[FilterGroup]
+        """
+        filter_groups = []
+        if groups:
+            for group in groups:
+                if not isinstance(group, FilterGroup):
+                    raise QueryDefinitionError(
+                        "Only ormar.and_ and ormar.or_ "
+                        "can be passed as filter positional"
+                        " arguments,"
+                        "other values need to be passed by"
+                        "keyword arguments"
+                    )
+                group.resolve(
+                    model_cls=self.model,
+                    select_related=self._select_related,
+                    filter_clauses=self.filter_clauses,
+                )
+                filter_groups.append(group)
+        return filter_groups
+
     @staticmethod
     def check_single_result_rows_count(rows: Sequence[Optional["Model"]]) -> None:
         """
@@ -288,23 +316,14 @@ class QuerySet:
         :return: filtered QuerySet
         :rtype: QuerySet
         """
-        filter_groups = []
-        if args:
-            for arg in args:
-                arg.resolve(
-                    model_cls=self.model,
-                    select_related=self._select_related,
-                    filter_clauses=self.filter_clauses,
-                )
-                filter_groups.append(arg)
-
+        filter_groups = self._resolve_filter_groups(groups=args)
         qryclause = QueryClause(
             model_cls=self.model,
             select_related=self._select_related,
             filter_clauses=self.filter_clauses,
         )
         filter_clauses, select_related = qryclause.prepare_filter(**kwargs)
-        filter_clauses = filter_clauses + filter_groups
+        filter_clauses = filter_clauses + filter_groups  # type: ignore
         if _exclude:
             exclude_clauses = filter_clauses
             filter_clauses = self.filter_clauses

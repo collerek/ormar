@@ -5,6 +5,7 @@ import pytest
 import sqlalchemy
 
 import ormar
+from ormar.exceptions import QueryDefinitionError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -108,11 +109,60 @@ async def test_or_filters():
         assert len(books) == 3
         assert not any([x.title in ["The Silmarillion", "The Witcher"] for x in books])
 
+        books = (
+            await Book.objects.select_related("author")
+            .filter(ormar.or_(year__gt=1980, year__lt=1910))
+            .filter(title__startswith="The")
+            .limit(1)
+            .all()
+        )
+        assert len(books) == 1
+        assert books[0].title == "The Witcher"
+
+        books = (
+            await Book.objects.select_related("author")
+            .filter(ormar.or_(year__gt=1980, author__name="Andrzej Sapkowski"))
+            .filter(title__startswith="The")
+            .limit(1)
+            .all()
+        )
+        assert len(books) == 1
+        assert books[0].title == "The Witcher"
+
+        books = (
+            await Book.objects.select_related("author")
+            .filter(ormar.or_(year__gt=1980, author__name="Andrzej Sapkowski"))
+            .filter(title__startswith="The")
+            .limit(1)
+            .offset(1)
+            .all()
+        )
+        assert len(books) == 1
+        assert books[0].title == "The Tower of Fools"
+
+        books = (
+            await Book.objects.select_related("author")
+            .filter(ormar.or_(year__gt=1980, author__name="Andrzej Sapkowski"))
+            .filter(title__startswith="The")
+            .limit(1)
+            .offset(1)
+            .order_by("-id")
+            .all()
+        )
+        assert len(books) == 1
+        assert books[0].title == "The Witcher"
+
+        with pytest.raises(QueryDefinitionError):
+            await Book.objects.select_related("author").filter('wrong').all()
+
+
 
 # TODO: Check / modify
 # process and and or into filter groups (V)
 # check exclude queries working (V)
+# check complex prefixes properly resolved (V)
+# fix limit -> change to where subquery to extract number of distinct pk values (V)
+# finish docstrings (V)
+# fix types for FilterAction and FilterGroup (X)
 
-# when limit and no sql do not allow main model and other models
-# check complex prefixes properly resolved
-# fix types for FilterAction and FilterGroup (?)
+# add docs
