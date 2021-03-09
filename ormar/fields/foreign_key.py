@@ -399,6 +399,8 @@ class ForeignKeyField(BaseField):
         :return: (if needed) registered Model
         :rtype: Model
         """
+        if cls.to.pk_type() == uuid.UUID and isinstance(value, str):
+            value = uuid.UUID(value)
         if not isinstance(value, cls.to.pk_type()):
             raise RelationshipInstanceError(
                 f"Relationship error - ForeignKey {cls.to.__name__} "
