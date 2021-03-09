@@ -289,7 +289,7 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
                     f'{"_".join([str(col) for col in constraint._pending_colargs])}'
                 )
         table = sqlalchemy.Table(
-            meta.tablename, meta.metadata, *meta.columns, *meta.constraints,
+            meta.tablename, meta.metadata, *meta.columns, *meta.constraints
         )
         meta.table = table
 

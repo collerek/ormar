@@ -53,6 +53,7 @@ from ormar.fields import (
     Time,
     UUID,
     UniqueColumns,
+    EncryptBackends
 )  # noqa: I100
 from ormar.models import ExcludableItems, Model
 from ormar.models.metaclass import ModelMeta
@@ -68,7 +69,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.9.7"
+__version__ = "0.9.8"
 __all__ = [
     "Integer",
     "BigInteger",
@@ -110,4 +111,5 @@ __all__ = [
     "ExcludableItems",
     "and_",
     "or_",
+    "EncryptBackends"
 ]

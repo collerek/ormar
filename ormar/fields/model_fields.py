@@ -9,6 +9,7 @@ import sqlalchemy
 from ormar import ModelDefinitionError  # noqa I101
 from ormar.fields import sqlalchemy_uuid
 from ormar.fields.base import BaseField  # noqa I101
+from ormar.fields.sqlalchemy_encrypted import EncryptBackends
 
 
 def is_field_nullable(
@@ -73,6 +74,12 @@ class ModelFieldFactory:
         primary_key = kwargs.pop("primary_key", False)
         autoincrement = kwargs.pop("autoincrement", False)
 
+        encrypt_secret = kwargs.pop("encrypt_secret", None)
+        encrypt_backend = kwargs.pop("encrypt_backend", EncryptBackends.NONE)
+        encrypt_custom_backend = kwargs.pop("encrypt_custom_backend",
+                                            None)
+        encrypt_max_length = kwargs.pop("encrypt_max_length", 5000)
+
         namespace = dict(
             __type__=cls._type,
             alias=kwargs.pop("name", None),
@@ -88,6 +95,10 @@ class ModelFieldFactory:
             autoincrement=autoincrement,
             column_type=cls.get_column_type(**kwargs),
             choices=set(kwargs.pop("choices", [])),
+            encrypt_secret=encrypt_secret,
+            encrypt_backend=encrypt_backend,
+            encrypt_custom_backend=encrypt_custom_backend,
+            encrypt_max_length=encrypt_max_length,
             **kwargs
         )
         return type(cls.__name__, cls._bases, namespace)

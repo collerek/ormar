@@ -22,6 +22,7 @@ from ormar.fields.model_fields import (
     UUID,
 )
 from ormar.fields.through_field import Through, ThroughField
+from ormar.fields.sqlalchemy_encrypted import EncryptBackend, EncryptBackends
 
 __all__ = [
     "Decimal",
@@ -44,4 +45,6 @@ __all__ = [
     "ForeignKeyField",
     "ThroughField",
     "Through",
+    "EncryptBackends",
+    "EncryptBackend"
 ]
