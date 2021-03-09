@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Any, Callable, TYPE_CHECKING, Type, Union
 
 import sqlalchemy.types as types
+from sqlalchemy.engine.default import DefaultDialect
 
 from ormar import ModelDefinitionError
 
@@ -115,7 +116,7 @@ class EncryptedString(types.TypeDecorator):  # pragma nocover
     Used to store encrypted values in a database
     """
 
-    impl = types.String
+    impl = types.TypeEngine
 
     def __init__(self,
                  *args: Any,
@@ -140,11 +141,10 @@ class EncryptedString(types.TypeDecorator):  # pragma nocover
         self.max_length = encrypt_max_length
 
     def __repr__(self) -> str:
-        return f"String({self.max_length})"
+        return f"VARCHAR({self.max_length})"
 
-    #
-    # def load_dialect_impl(self, dialect: DefaultDialect) -> Any:
-    #     dialect.type_descriptor(VARCHAR(self.max_length))
+    def load_dialect_impl(self, dialect: DefaultDialect) -> Any:
+        return dialect.type_descriptor(types.VARCHAR(self.max_length))
 
     @property
     def key(self):
