@@ -150,6 +150,8 @@ class EncryptedString(types.TypeDecorator):
         return f"VARCHAR({self.max_length})"
 
     def load_dialect_impl(self, dialect: DefaultDialect) -> Any:
+        if dialect.name == 'mysql':  # pragma: nocover
+            return dialect.type_descriptor(types.TEXT())
         return dialect.type_descriptor(types.VARCHAR(self.max_length))
 
     def _refresh(self) -> None:
