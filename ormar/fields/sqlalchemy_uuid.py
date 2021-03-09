@@ -1,12 +1,12 @@
 import uuid
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from sqlalchemy import CHAR
 from sqlalchemy.engine.default import DefaultDialect
 from sqlalchemy.types import TypeDecorator
 
 
-class UUID(TypeDecorator):  # pragma nocover
+class UUID(TypeDecorator):
     """
     Platform-independent GUID type.
     Uses CHAR(36) if in a string mode, otherwise uses CHAR(32), to store UUID.
@@ -20,30 +20,10 @@ class UUID(TypeDecorator):  # pragma nocover
         super().__init__(*args, **kwargs)
         self.uuid_format = uuid_format
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: nocover
         if self.uuid_format == "string":
             return "CHAR(36)"
         return "CHAR(32)"
-
-    def _cast_to_uuid(self, value: Union[str, int, bytes]) -> uuid.UUID:
-        """
-        Parses given value into uuid.UUID field.
-
-        :param value: value to be parsed
-        :type value: Union[str, int, bytes]
-        :return: initialized uuid
-        :rtype: uuid.UUID
-        """
-        if not isinstance(value, uuid.UUID):
-            if isinstance(value, bytes):
-                ret_value = uuid.UUID(bytes=value)
-            elif isinstance(value, int):
-                ret_value = uuid.UUID(int=value)
-            elif isinstance(value, str):
-                ret_value = uuid.UUID(value)
-        else:
-            ret_value = value
-        return ret_value
 
     def load_dialect_impl(self, dialect: DefaultDialect) -> Any:
         return (
@@ -53,12 +33,10 @@ class UUID(TypeDecorator):  # pragma nocover
         )
 
     def process_bind_param(
-        self, value: Union[str, int, bytes, uuid.UUID, None], dialect: DefaultDialect
+        self, value: uuid.UUID, dialect: DefaultDialect
     ) -> Optional[str]:
         if value is None:
             return value
-        if not isinstance(value, uuid.UUID):
-            value = self._cast_to_uuid(value)
         return str(value) if self.uuid_format == "string" else "%.32x" % value.int
 
     def process_result_value(
@@ -68,4 +46,4 @@ class UUID(TypeDecorator):  # pragma nocover
             return value
         if not isinstance(value, uuid.UUID):
             return uuid.UUID(value)
-        return value
+        return value  # pragma: nocover

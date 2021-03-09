@@ -76,8 +76,7 @@ class ModelFieldFactory:
 
         encrypt_secret = kwargs.pop("encrypt_secret", None)
         encrypt_backend = kwargs.pop("encrypt_backend", EncryptBackends.NONE)
-        encrypt_custom_backend = kwargs.pop("encrypt_custom_backend",
-                                            None)
+        encrypt_custom_backend = kwargs.pop("encrypt_custom_backend", None)
         encrypt_max_length = kwargs.pop("encrypt_max_length", 5000)
 
         namespace = dict(

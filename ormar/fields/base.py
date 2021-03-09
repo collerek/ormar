@@ -6,8 +6,11 @@ from pydantic.fields import FieldInfo, Required, Undefined
 
 import ormar  # noqa I101
 from ormar import ModelDefinitionError
-from ormar.fields.sqlalchemy_encrypted import EncryptBackend, EncryptBackends, \
-    EncryptedString
+from ormar.fields.sqlalchemy_encrypted import (
+    EncryptBackend,
+    EncryptBackends,
+    EncryptedString,
+)
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
@@ -54,7 +57,7 @@ class BaseField(FieldInfo):
 
     encrypt_secret: str
     encrypt_backend: EncryptBackends = EncryptBackends.NONE
-    encrypt_custom_backend: Type[EncryptBackend] = None
+    encrypt_custom_backend: Optional[Type[EncryptBackend]] = None
     encrypt_max_length: int = 5000
 
     default: Any
@@ -101,11 +104,10 @@ class BaseField(FieldInfo):
         :rtype: bool
         """
         return (
-                field_name not in ["default", "default_factory", "alias",
-                                   "allow_mutation"]
-                and not field_name.startswith("__")
-                and hasattr(cls, field_name)
-                and not callable(getattr(cls, field_name))
+            field_name not in ["default", "default_factory", "alias", "allow_mutation"]
+            and not field_name.startswith("__")
+            and hasattr(cls, field_name)
+            and not callable(getattr(cls, field_name))
         )
 
     @classmethod
@@ -214,7 +216,7 @@ class BaseField(FieldInfo):
         :rtype: bool
         """
         return cls.default is not None or (
-                cls.server_default is not None and use_server
+            cls.server_default is not None and use_server
         )
 
     @classmethod
@@ -247,7 +249,7 @@ class BaseField(FieldInfo):
                 ondelete=con.ondelete,
                 onupdate=con.onupdate,
                 name=f"fk_{cls.owner.Meta.tablename}_{cls.to.Meta.tablename}"
-                     f"_{cls.to.get_column_alias(cls.to.Meta.pkname)}_{cls.name}",
+                f"_{cls.to.get_column_alias(cls.to.Meta.pkname)}_{cls.name}",
             )
             for con in cls.constraints
         ]
@@ -278,33 +280,46 @@ class BaseField(FieldInfo):
                 server_default=cls.server_default,
             )
         else:
-            if cls.primary_key or cls.is_relation:
-                raise ModelDefinitionError("Primary key field and relations fields"
-                                           "cannot be encrypted!")
-            column = sqlalchemy.Column(
-                cls.alias or name,
-                EncryptedString(
-                    _field_type=cls,
-                    encrypt_secret=cls.encrypt_secret,
-                    encrypt_backend=cls.encrypt_backend,
-                    encrypt_custom_backend=cls.encrypt_custom_backend,
-                    encrypt_max_length=cls.encrypt_max_length
-                ),
-                nullable=cls.nullable,
-                index=cls.index,
-                unique=cls.unique,
-                default=cls.default,
-                server_default=cls.server_default,
-            )
+            column = cls._get_encrypted_column(name=name)
+        return column
 
+    @classmethod
+    def _get_encrypted_column(cls, name: str) -> sqlalchemy.Column:
+        """
+        Returns EncryptedString column type instead of actual column.
+
+        :param name: column name
+        :type name: str
+        :return: newly defined column
+        :rtype:  sqlalchemy.Column
+        """
+        if cls.primary_key or cls.is_relation:
+            raise ModelDefinitionError(
+                "Primary key field and relations fields" "cannot be encrypted!"
+            )
+        column = sqlalchemy.Column(
+            cls.alias or name,
+            EncryptedString(
+                _field_type=cls,
+                encrypt_secret=cls.encrypt_secret,
+                encrypt_backend=cls.encrypt_backend,
+                encrypt_custom_backend=cls.encrypt_custom_backend,
+                encrypt_max_length=cls.encrypt_max_length,
+            ),
+            nullable=cls.nullable,
+            index=cls.index,
+            unique=cls.unique,
+            default=cls.default,
+            server_default=cls.server_default,
+        )
         return column
 
     @classmethod
     def expand_relationship(
-            cls,
-            value: Any,
-            child: Union["Model", "NewBaseModel"],
-            to_register: bool = True,
+        cls,
+        value: Any,
+        child: Union["Model", "NewBaseModel"],
+        to_register: bool = True,
     ) -> Any:
         """
         Function overwritten for relations, in basic field the value is returned as is.
@@ -332,7 +347,7 @@ class BaseField(FieldInfo):
         :rtype: None
         """
         if cls.owner is not None and (
-                cls.owner == cls.to or cls.owner.Meta == cls.to.Meta
+            cls.owner == cls.to or cls.owner.Meta == cls.to.Meta
         ):
             cls.self_reference = True
             cls.self_reference_primary = cls.name

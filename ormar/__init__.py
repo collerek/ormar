@@ -38,9 +38,12 @@ from ormar.fields import (
     BaseField,
     BigInteger,
     Boolean,
+    DECODERS_MAP,
     Date,
     DateTime,
     Decimal,
+    ENCODERS_MAP,
+    EncryptBackends,
     Float,
     ForeignKey,
     ForeignKeyField,
@@ -53,7 +56,6 @@ from ormar.fields import (
     Time,
     UUID,
     UniqueColumns,
-    EncryptBackends
 )  # noqa: I100
 from ormar.models import ExcludableItems, Model
 from ormar.models.metaclass import ModelMeta
@@ -111,5 +113,7 @@ __all__ = [
     "ExcludableItems",
     "and_",
     "or_",
-    "EncryptBackends"
+    "EncryptBackends",
+    "ENCODERS_MAP",
+    "DECODERS_MAP",
 ]

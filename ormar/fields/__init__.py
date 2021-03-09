@@ -21,8 +21,9 @@ from ormar.fields.model_fields import (
     Time,
     UUID,
 )
-from ormar.fields.through_field import Through, ThroughField
+from ormar.fields.parsers import DECODERS_MAP, ENCODERS_MAP
 from ormar.fields.sqlalchemy_encrypted import EncryptBackend, EncryptBackends
+from ormar.fields.through_field import Through, ThroughField
 
 __all__ = [
     "Decimal",
@@ -46,5 +47,7 @@ __all__ = [
     "ThroughField",
     "Through",
     "EncryptBackends",
-    "EncryptBackend"
+    "EncryptBackend",
+    "DECODERS_MAP",
+    "ENCODERS_MAP",
 ]

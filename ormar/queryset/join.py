@@ -88,13 +88,13 @@ class SqlJoin:
         return self.main_model.Meta.alias_manager
 
     @property
-    def to_table(self) -> str:
+    def to_table(self) -> sqlalchemy.Table:
         """
         Shortcut to table name of the next model
         :return: name of the target table
         :rtype: str
         """
-        return self.next_model.Meta.table.name
+        return self.next_model.Meta.table
 
     def _on_clause(
         self, previous_alias: str, from_clause: str, to_clause: str,
@@ -282,7 +282,7 @@ class SqlJoin:
         on_clause = self._on_clause(
             previous_alias=self.own_alias,
             from_clause=f"{self.target_field.owner.Meta.tablename}.{from_key}",
-            to_clause=f"{self.to_table}.{to_key}",
+            to_clause=f"{self.to_table.name}.{to_key}",
         )
         target_table = self.alias_manager.prefixed_table_name(
             self.next_alias, self.to_table
@@ -301,7 +301,7 @@ class SqlJoin:
         )
         self.columns.extend(
             self.alias_manager.prefixed_columns(
-                self.next_alias, self.next_model.Meta.table, self_related_fields
+                self.next_alias, target_table, self_related_fields
             )
         )
         self.used_aliases.append(self.next_alias)

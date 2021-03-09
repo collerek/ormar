@@ -67,24 +67,21 @@ class AliasManager:
             if not fields
             else [col for col in table.columns if col.name in fields]
         )
-        return [
-            text(f"{alias}{table.name}.{column.name} as {alias}{column.name}")
-            for column in all_columns
-        ]
+        return [column.label(f"{alias}{column.name}") for column in all_columns]
 
     @staticmethod
-    def prefixed_table_name(alias: str, name: str) -> text:
+    def prefixed_table_name(alias: str, table: sqlalchemy.Table) -> text:
         """
         Creates text clause with table name with aliased name.
 
         :param alias: alias of given table
         :type alias: str
-        :param name: table name
-        :type name: str
+        :param table: table
+        :type table: sqlalchemy.Table
         :return: sqlalchemy text clause as "table_name aliased_name"
         :rtype: sqlalchemy text clause
         """
-        return text(f"{name} {alias}_{name}")
+        return table.alias(f"{alias}_{table.name}")
 
     def add_relation_type(
         self, source_model: Type["Model"], relation_name: str, reverse_name: str = None,

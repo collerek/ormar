@@ -1,50 +1,49 @@
 # inspired by sqlalchemy-utils (https://github.com/kvesteri/sqlalchemy-utils)
 import abc
 import base64
-import datetime
-import json
 from enum import Enum
-from typing import Any, Callable, TYPE_CHECKING, Type, Union
+from typing import Any, Callable, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy.types as types
+from pydantic.utils import lenient_issubclass
 from sqlalchemy.engine.default import DefaultDialect
 
-from ormar import ModelDefinitionError
+import ormar  # noqa: I100, I202
+from ormar import ModelDefinitionError  # noqa: I202, I100
 
 cryptography = None
-try:
-    import cryptography
+try:  # pragma: nocover
+    import cryptography  # type: ignore
     from cryptography.fernet import Fernet
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import hashes
-except ImportError:
+except ImportError:  # pragma: nocover
     pass
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: nocover
     from ormar import BaseField
 
 
 class EncryptBackend(abc.ABC):
-
-    def _update_key(self, key):
+    def _refresh(self, key: Union[str, bytes]) -> None:
         if isinstance(key, str):
             key = key.encode()
         digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
         digest.update(key)
         engine_key = digest.finalize()
 
-        self._initialize_engine(engine_key)
+        self._initialize_backend(engine_key)
 
     @abc.abstractmethod
-    def _initialize_engine(self, secret_key: bytes):
+    def _initialize_backend(self, secret_key: bytes) -> None:  # pragma: nocover
         pass
 
     @abc.abstractmethod
-    def encrypt(self, value: Any) -> str:
+    def encrypt(self, value: Any) -> str:  # pragma: nocover
         pass
 
     @abc.abstractmethod
-    def decrypt(self, value: Any) -> str:
+    def decrypt(self, value: Any) -> str:  # pragma: nocover
         pass
 
 
@@ -53,11 +52,11 @@ class HashBackend(EncryptBackend):
     One-way hashing - in example for passwords, no way to decrypt the value!
     """
 
-    def _initialize_engine(self, secret_key: bytes):
+    def _initialize_backend(self, secret_key: bytes) -> None:
         self.secret_key = base64.urlsafe_b64encode(secret_key)
 
     def encrypt(self, value: Any) -> str:
-        if not isinstance(value, str):
+        if not isinstance(value, str):  # pragma: nocover
             value = repr(value)
         value = value.encode()
         digest = hashes.Hash(hashes.SHA512(), backend=default_backend())
@@ -67,7 +66,7 @@ class HashBackend(EncryptBackend):
         return hashed_value.hex()
 
     def decrypt(self, value: Any) -> str:
-        if not isinstance(value, str):
+        if not isinstance(value, str):  # pragma: nocover
             value = str(value)
         return value
 
@@ -77,7 +76,7 @@ class FernetBackend(EncryptBackend):
     Two-way encryption, data stored in db are encrypted but decrypted during query.
     """
 
-    def _initialize_engine(self, secret_key: bytes):
+    def _initialize_backend(self, secret_key: bytes) -> None:
         self.secret_key = base64.urlsafe_b64encode(secret_key)
         self.fernet = Fernet(self.secret_key)
 
@@ -86,14 +85,14 @@ class FernetBackend(EncryptBackend):
             value = repr(value)
         value = value.encode()
         encrypted = self.fernet.encrypt(value)
-        return encrypted.decode('utf-8')
+        return encrypted.decode("utf-8")
 
     def decrypt(self, value: Any) -> str:
-        if not isinstance(value, str):
+        if not isinstance(value, str):  # pragma: nocover
             value = str(value)
-        decrypted = self.fernet.decrypt(value.encode())
+        decrypted: Union[str, bytes] = self.fernet.decrypt(value.encode())
         if not isinstance(decrypted, str):
-            decrypted = decrypted.decode('utf-8')
+            decrypted = decrypted.decode("utf-8")
         return decrypted
 
 
@@ -104,115 +103,82 @@ class EncryptBackends(Enum):
     CUSTOM = 3
 
 
-backends_map = {
+BACKENDS_MAP = {
     EncryptBackends.FERNET: FernetBackend,
     EncryptBackends.HASH: HashBackend,
-    EncryptBackends.CUSTOM: None
 }
 
 
-class EncryptedString(types.TypeDecorator):  # pragma nocover
+class EncryptedString(types.TypeDecorator):
     """
     Used to store encrypted values in a database
     """
 
     impl = types.TypeEngine
 
-    def __init__(self,
-                 *args: Any,
-                 encrypt_secret: Union[str, Callable],
-                 _field_type: Type["BaseField"],
-                 encrypt_max_length: int = 5000,
-                 encrypt_backend: EncryptBackends = EncryptBackends.FERNET,
-                 encrypt_custom_backend: Type[EncryptBackend] = None,
-                 **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        if not cryptography:
+    def __init__(
+        self,
+        encrypt_secret: Union[str, Callable],
+        encrypt_backend: EncryptBackends = EncryptBackends.FERNET,
+        encrypt_custom_backend: Type[EncryptBackend] = None,
+        **kwargs: Any,
+    ) -> None:
+        _field_type = kwargs.pop("_field_type")
+        encrypt_max_length = kwargs.pop("encrypt_max_length", 5000)
+        super().__init__()
+        if not cryptography:  # pragma: nocover
             raise ModelDefinitionError(
                 "In order to encrypt a column 'cryptography' is required!"
             )
-        backend = backends_map.get(encrypt_backend, encrypt_custom_backend)
-        if not backend or not issubclass(backend, EncryptBackend):
+        backend = BACKENDS_MAP.get(encrypt_backend, encrypt_custom_backend)
+        if not backend or not lenient_issubclass(backend, EncryptBackend):
             raise ModelDefinitionError("Wrong or no encrypt backend provided!")
-        self.backend = backend()
-        self._field_type = _field_type
-        self._underlying_type = _field_type.column_type
-        self._key = encrypt_secret
-        self.max_length = encrypt_max_length
 
-    def __repr__(self) -> str:
+        self.backend: EncryptBackend = backend()
+        self._field_type: Type["BaseField"] = _field_type
+        self._underlying_type: Any = _field_type.column_type
+        self._key: Union[str, Callable] = encrypt_secret
+        self.max_length: int = encrypt_max_length
+        type_ = self._field_type.__type__
+        if type_ is None:  # pragma: nocover
+            raise ModelDefinitionError(
+                f"Improperly configured field " f"{self._field_type.name}"
+            )
+        self.type_: Any = type_
+
+    def __repr__(self) -> str:  # pragma: nocover
         return f"VARCHAR({self.max_length})"
 
     def load_dialect_impl(self, dialect: DefaultDialect) -> Any:
         return dialect.type_descriptor(types.VARCHAR(self.max_length))
 
-    @property
-    def key(self):
-        return self._key
-
-    @key.setter
-    def key(self, value):
-        self._key = value
-
-    def _update_key(self):
+    def _refresh(self) -> None:
         key = self._key() if callable(self._key) else self._key
-        self.backend._update_key(key)
+        self.backend._refresh(key)
 
-    def process_bind_param(self, value, dialect):
-        """Encrypt a value on the way in."""
-        if value is not None:
-            self._update_key()
+    def process_bind_param(self, value: Any, dialect: DefaultDialect) -> Optional[str]:
+        if value is None:
+            return value
+        self._refresh()
+        try:
+            value = self._underlying_type.process_bind_param(value, dialect)
+        except AttributeError:
+            encoder = ormar.ENCODERS_MAP.get(self.type_, None)
+            if encoder:
+                value = encoder(value)  # type: ignore
 
-            try:
-                value = self._underlying_type.process_bind_param(
-                    value, dialect
-                )
+        return self.backend.encrypt(value)
 
-            except AttributeError:
-                # Doesn't have 'process_bind_param'
-                type_ = self._field_type.__type__
-                if issubclass(type_, bool):
-                    value = 'true' if value else 'false'
+    def process_result_value(self, value: Any, dialect: DefaultDialect) -> Any:
+        if value is None:
+            return value
+        self._refresh()
+        decrypted_value = self.backend.decrypt(value)
+        try:
+            return self._underlying_type.process_result_value(decrypted_value, dialect)
+        except AttributeError:
+            decoder = ormar.DECODERS_MAP.get(self.type_, None)
+            if decoder:
+                return decoder(decrypted_value)  # type: ignore
 
-                elif issubclass(type_, (datetime.date, datetime.time)):
-                    value = value.isoformat()
-
-                # elif issubclass(type_, JSONType):
-                #     value = json.dumps(value)
-
-            return self.backend.encrypt(value)
-
-    def process_result_value(self, value, dialect):
-        """Decrypt value on the way out."""
-        if value is not None:
-            self._update_key()
-            decrypted_value = self.backend.decrypt(value)
-
-            try:
-                return self.underlying_type.process_result_value(
-                    decrypted_value, dialect
-                )
-
-            except AttributeError:
-                # Doesn't have 'process_result_value'
-
-                # Handle 'boolean' and 'dates'
-                type_ = self._field_type.__type__
-                # date_types = [datetime.datetime, datetime.time, datetime.date]
-
-                if issubclass(type_, bool):
-                    return decrypted_value == 'true'
-
-                # elif type_ in date_types:
-                #     return DatetimeHandler.process_value(
-                #         decrypted_value, type_
-                #     )
-
-                # elif issubclass(type_, JSONType):
-                #     return json.loads(decrypted_value)
-
-                # Handle all others
-                return self.underlying_type.python_type(decrypted_value)
-
-    def _coerce(self, value):
-        return self.underlying_type._coerce(value)
+            return self._field_type.__type__(decrypted_value)  # type: ignore

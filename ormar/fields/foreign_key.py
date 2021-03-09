@@ -184,10 +184,25 @@ def ForeignKey(  # noqa CFQ002
 
     owner = kwargs.pop("owner", None)
     self_reference = kwargs.pop("self_reference", False)
+
     default = kwargs.pop("default", None)
-    if default is not None:
+    encrypt_secret = kwargs.pop("encrypt_secret", None)
+    encrypt_backend = kwargs.pop("encrypt_backend", None)
+    encrypt_custom_backend = kwargs.pop("encrypt_custom_backend", None)
+    encrypt_max_length = kwargs.pop("encrypt_max_length", None)
+
+    not_supported = [
+        default,
+        encrypt_secret,
+        encrypt_backend,
+        encrypt_custom_backend,
+        encrypt_max_length,
+    ]
+    if any(x is not None for x in not_supported):
         raise ModelDefinitionError(
-            "Argument 'default' is not supported " "on relation fields!"
+            f"Argument {next((x for x in not_supported if x is not None))} "
+            f"is not supported "
+            "on relation fields!"
         )
 
     if to.__class__ == ForwardRef:
@@ -386,8 +401,6 @@ class ForeignKeyField(BaseField):
         :return: (if needed) registered Model
         :rtype: Model
         """
-        if cls.to.pk_type() == uuid.UUID and isinstance(value, str):
-            value = uuid.UUID(value)
         if not isinstance(value, cls.to.pk_type()):
             raise RelationshipInstanceError(
                 f"Relationship error - ForeignKey {cls.to.__name__} "
