@@ -374,7 +374,7 @@ class QuerysetProxy:
         model = await self.queryset.get(pk=kwargs[pk_name])
         return await model.update(**kwargs)
 
-    def filter(self, **kwargs: Any) -> "QuerysetProxy":  # noqa: A003, A001
+    def filter(self, *args: Any, **kwargs: Any) -> "QuerysetProxy":  # noqa: A003, A001
         """
         Allows you to filter by any `Model` attribute/field
         as well as to fetch instances, with a filter across an FK relationship.
@@ -386,6 +386,8 @@ class QuerysetProxy:
         *  contains - like `album__name__contains='Mal'` (sql like)
         *  icontains - like `album__name__icontains='mal'` (sql like case insensitive)
         *  in - like `album__name__in=['Malibu', 'Barclay']` (sql in)
+        *  isnull - like `album__name__isnull=True` (sql is null)
+           (isnotnull `album__name__isnull=False` (sql is not null))
         *  gt - like `position__gt=3` (sql >)
         *  gte - like `position__gte=3` (sql >=)
         *  lt - like `position__lt=3` (sql <)
@@ -402,10 +404,10 @@ class QuerysetProxy:
         :return: filtered QuerysetProxy
         :rtype: QuerysetProxy
         """
-        queryset = self.queryset.filter(**kwargs)
+        queryset = self.queryset.filter(*args, **kwargs)
         return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
 
-    def exclude(self, **kwargs: Any) -> "QuerysetProxy":  # noqa: A003, A001
+    def exclude(self, *args: Any, **kwargs: Any) -> "QuerysetProxy":  # noqa: A003, A001
         """
         Works exactly the same as filter and all modifiers (suffixes) are the same,
         but returns a *not* condition.
@@ -426,7 +428,7 @@ class QuerysetProxy:
         :return: filtered QuerysetProxy
         :rtype: QuerysetProxy
         """
-        queryset = self.queryset.exclude(**kwargs)
+        queryset = self.queryset.exclude(*args, **kwargs)
         return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
 
     def select_related(self, related: Union[List, str]) -> "QuerysetProxy":

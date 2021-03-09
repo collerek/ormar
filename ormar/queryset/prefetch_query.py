@@ -266,7 +266,7 @@ class PrefetchQuery:
                 model_cls=clause_target, select_related=[], filter_clauses=[],
             )
             kwargs = {f"{filter_column}__in": ids}
-            filter_clauses, _ = qryclause.prepare_filter(**kwargs)
+            filter_clauses, _ = qryclause.prepare_filter(_own_only=False, **kwargs)
             return filter_clauses
         return []
 

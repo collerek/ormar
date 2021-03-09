@@ -132,6 +132,11 @@ async def test_sort_order_on_main_model():
         assert songs[1].name == "Song 2"
         assert songs[2].name == "Song 3"
 
+        songs = await Song.objects.order_by("name").limit(2).all()
+        assert len(songs) == 2
+        assert songs[0].name == "Song 1"
+        assert songs[1].name == "Song 2"
+
         await Song.objects.create(name="Song 4", sort_order=1)
 
         songs = await Song.objects.order_by(["sort_order", "name"]).all()
@@ -215,6 +220,16 @@ async def test_sort_order_on_related_model():
         assert owners[1].toys[0].name == "Toy 6"
         assert owners[1].toys[1].name == "Toy 5"
         assert owners[1].name == "Hermes"
+
+        toys = (
+            await Toy.objects.select_related("owner")
+            .order_by(["owner__name", "name"])
+            .limit(2)
+            .all()
+        )
+        assert len(toys) == 2
+        assert toys[0].name == "Toy 2"
+        assert toys[1].name == "Toy 3"
 
 
 @pytest.mark.asyncio

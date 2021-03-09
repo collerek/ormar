@@ -4,6 +4,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Optional,
     Sequence,
     Set,
     TYPE_CHECKING,
@@ -13,7 +14,7 @@ from typing import (
 )
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
+    from ormar import Model, BaseField
 
 
 def check_node_not_dict_or_not_last_node(
@@ -238,18 +239,13 @@ def get_relationship_alias_model_and_str(
         related_field = target_model.Meta.model_fields[relation]
 
         if related_field.is_through:
-            # through is always last - cannot go further
-            is_through = True
-            related_parts.remove(relation)
-            through_field = related_field.owner.Meta.model_fields[
-                related_field.related_name or ""
-            ]
-            if len(previous_models) > 1 and previous_models[-2] == through_field.to:
-                previous_model = through_field.to
-                relation = through_field.related_name
-            else:
-                relation = related_field.related_name
-
+            (previous_model, relation, is_through) = _process_through_field(
+                related_parts=related_parts,
+                relation=relation,
+                related_field=related_field,
+                previous_model=previous_model,
+                previous_models=previous_models,
+            )
         if related_field.is_multi:
             previous_model = related_field.through
             relation = related_field.default_target_field_name()  # type: ignore
@@ -263,3 +259,39 @@ def get_relationship_alias_model_and_str(
     relation_str = "__".join(related_parts)
 
     return table_prefix, target_model, relation_str, is_through
+
+
+def _process_through_field(
+    related_parts: List,
+    relation: Optional[str],
+    related_field: Type["BaseField"],
+    previous_model: Type["Model"],
+    previous_models: List[Type["Model"]],
+) -> Tuple[Type["Model"], Optional[str], bool]:
+    """
+    Helper processing through models as they need to be treated differently.
+
+    :param related_parts: split relation string
+    :type related_parts: List[str]
+    :param relation: relation name
+    :type relation: str
+    :param related_field: field with relation declaration
+    :type related_field: Type["ForeignKeyField"]
+    :param previous_model: model from which relation is coming
+    :type previous_model: Type["Model"]
+    :param previous_models: list of already visited models in relation chain
+    :type previous_models: List[Type["Model"]]
+    :return: previous_model, relation, is_through
+    :rtype: Tuple[Type["Model"], str, bool]
+    """
+    is_through = True
+    related_parts.remove(relation)
+    through_field = related_field.owner.Meta.model_fields[
+        related_field.related_name or ""
+    ]
+    if len(previous_models) > 1 and previous_models[-2] == through_field.to:
+        previous_model = through_field.to
+        relation = through_field.related_name
+    else:
+        relation = related_field.related_name
+    return previous_model, relation, is_through

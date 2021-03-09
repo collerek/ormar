@@ -1,4 +1,3 @@
-import inspect
 from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy

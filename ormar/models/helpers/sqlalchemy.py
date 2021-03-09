@@ -150,17 +150,66 @@ def sqlalchemy_columns_from_model_fields(
             "Integer primary key named `id` created."
         )
     validate_related_names_in_relations(model_fields, new_model)
+    return _process_fields(model_fields=model_fields, new_model=new_model)
+
+
+def _process_fields(
+    model_fields: Dict, new_model: Type["Model"]
+) -> Tuple[Optional[str], List[sqlalchemy.Column]]:
+    """
+    Helper method.
+
+    Populates pkname and columns.
+    Trigger validation of primary_key - only one and required pk can be set,
+    cannot be pydantic_only.
+
+    Append fields to columns if it's not pydantic_only,
+    virtual ForeignKey or ManyToMany field.
+
+    Sets `owner` on each model_field as reference to newly created Model.
+
+    :raises ModelDefinitionError: if validation of related_names fail,
+    or pkname validation fails.
+    :param model_fields: dictionary of declared ormar model fields
+    :type model_fields: Dict[str, ormar.Field]
+    :param new_model:
+    :type new_model: Model class
+    :return: pkname, list of sqlalchemy columns
+    :rtype: Tuple[Optional[str], List[sqlalchemy.Column]]
+    """
     columns = []
     pkname = None
     for field_name, field in model_fields.items():
         field.owner = new_model
-        if field.is_multi and not field.through:
+        if _is_through_model_not_set(field):
             field.create_default_through_model()
         if field.primary_key:
             pkname = check_pk_column_validity(field_name, field, pkname)
-        if not field.pydantic_only and not field.virtual and not field.is_multi:
+        if _is_db_field(field):
             columns.append(field.get_column(field.get_alias()))
     return pkname, columns
+
+
+def _is_through_model_not_set(field: Type["BaseField"]) -> bool:
+    """
+    Alias to if check that verifies if through model was created.
+    :param field: field to check
+    :type field: Type["BaseField"]
+    :return: result of the check
+    :rtype: bool
+    """
+    return field.is_multi and not field.through
+
+
+def _is_db_field(field: Type["BaseField"]) -> bool:
+    """
+    Alias to if check that verifies if field should be included in database.
+    :param field: field to check
+    :type field: Type["BaseField"]
+    :return: result of the check
+    :rtype: bool
+    """
+    return not field.pydantic_only and not field.virtual and not field.is_multi
 
 
 def populate_meta_tablename_columns_and_pk(

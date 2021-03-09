@@ -96,6 +96,12 @@ def ManyToMany(
     if through is not None and through.__class__ != ForwardRef:
         forbid_through_relations(cast(Type["Model"], through))
 
+    default = kwargs.pop("default", None)
+    if default is not None:
+        raise ModelDefinitionError(
+            "Argument 'default' is not supported " "on relation fields!"
+        )
+
     if to.__class__ == ForwardRef:
         __type__ = to if not nullable else Optional[to]
         column_type = None

@@ -4,7 +4,9 @@ from typing import (
     List,
     Optional,
     TYPE_CHECKING,
+    Tuple,
     Type,
+    Union,
     cast,
 )
 
@@ -78,21 +80,12 @@ class ModelRow(NewBaseModel):
             related_models = group_related_list(select_related)
 
         if related_field:
-            if related_field.is_multi:
-                previous_model = related_field.through
-            else:
-                previous_model = related_field.owner
-            table_prefix = cls.Meta.alias_manager.resolve_relation_alias(
-                from_model=previous_model, relation_name=related_field.name
+            table_prefix = cls._process_table_prefix(
+                source_model=source_model,
+                current_relation_str=current_relation_str,
+                related_field=related_field,
+                used_prefixes=used_prefixes,
             )
-            if not table_prefix or table_prefix in used_prefixes:
-                manager = cls.Meta.alias_manager
-                table_prefix = manager.resolve_relation_alias_after_complex(
-                    source_model=source_model,
-                    relation_str=current_relation_str,
-                    relation_field=related_field,
-                )
-            used_prefixes.append(table_prefix)
 
         item = cls._populate_nested_models_from_row(
             item=item,
@@ -117,6 +110,44 @@ class ModelRow(NewBaseModel):
             instance = cast("Model", cls(**item))
             instance.set_save_status(True)
         return instance
+
+    @classmethod
+    def _process_table_prefix(
+        cls,
+        source_model: Type["Model"],
+        current_relation_str: str,
+        related_field: Type["ForeignKeyField"],
+        used_prefixes: List[str],
+    ) -> str:
+        """
+
+        :param source_model: model on which relation was defined
+        :type source_model: Type[Model]
+        :param current_relation_str: current relation string
+        :type current_relation_str: str
+        :param related_field: field with relation declaration
+        :type related_field: Type["ForeignKeyField"]
+        :param used_prefixes: list of already extracted prefixes
+        :type used_prefixes: List[str]
+        :return: table_prefix to use
+        :rtype: str
+        """
+        if related_field.is_multi:
+            previous_model = related_field.through
+        else:
+            previous_model = related_field.owner
+        table_prefix = cls.Meta.alias_manager.resolve_relation_alias(
+            from_model=previous_model, relation_name=related_field.name
+        )
+        if not table_prefix or table_prefix in used_prefixes:
+            manager = cls.Meta.alias_manager
+            table_prefix = manager.resolve_relation_alias_after_complex(
+                source_model=source_model,
+                relation_str=current_relation_str,
+                relation_field=related_field,
+            )
+        used_prefixes.append(table_prefix)
+        return table_prefix
 
     @classmethod
     def _populate_nested_models_from_row(  # noqa: CFQ002
@@ -170,14 +201,11 @@ class ModelRow(NewBaseModel):
             if model_excludable.is_excluded(related):
                 return item
 
-            relation_str = (
-                "__".join([current_relation_str, related])
-                if current_relation_str
-                else related
+            relation_str, remainder = cls._process_remainder_and_relation_string(
+                related_models=related_models,
+                current_relation_str=current_relation_str,
+                related=related,
             )
-            remainder = None
-            if isinstance(related_models, dict) and related_models[related]:
-                remainder = related_models[related]
             child = model_cls.from_row(
                 row,
                 related_models=remainder,
@@ -190,24 +218,84 @@ class ModelRow(NewBaseModel):
             )
             item[model_cls.get_column_name_from_alias(related)] = child
             if field.is_multi and child:
-                through_name = cls.Meta.model_fields[related].through.get_name()
-                through_child = cls.populate_through_instance(
+                cls._populate_through_instance(
                     row=row,
+                    item=item,
                     related=related,
-                    through_name=through_name,
                     excludable=excludable,
+                    child=child,
+                    proxy_source_model=proxy_source_model,
                 )
-
-                if child.__class__ != proxy_source_model:
-                    setattr(child, through_name, through_child)
-                else:
-                    item[through_name] = through_child
-                child.set_save_status(True)
 
         return item
 
+    @staticmethod
+    def _process_remainder_and_relation_string(
+        related_models: Union[Dict, List],
+        current_relation_str: Optional[str],
+        related: str,
+    ) -> Tuple[str, Optional[Union[Dict, List]]]:
+        """
+        Process remainder models and relation string
+
+        :param related_models: list or dict of related models
+        :type related_models: Union[Dict, List]
+        :param current_relation_str: current relation string
+        :type current_relation_str: Optional[str]
+        :param related: name of the relation
+        :type related: str
+        """
+        relation_str = (
+            "__".join([current_relation_str, related])
+            if current_relation_str
+            else related
+        )
+
+        remainder = None
+        if isinstance(related_models, dict) and related_models[related]:
+            remainder = related_models[related]
+        return relation_str, remainder
+
     @classmethod
-    def populate_through_instance(
+    def _populate_through_instance(  # noqa: CFQ002
+        cls,
+        row: sqlalchemy.engine.ResultProxy,
+        item: Dict,
+        related: str,
+        excludable: ExcludableItems,
+        child: "Model",
+        proxy_source_model: Optional[Type["Model"]],
+    ) -> None:
+        """
+        Populates the through model on reverse side of current query.
+        Normally it's child class, unless the query is from queryset.
+
+        :param row: row from db result
+        :type row: sqlalchemy.engine.ResultProxy
+        :param item: parent item dict
+        :type item: Dict
+        :param related: current relation name
+        :type related: str
+        :param excludable: structure of fields to include and exclude
+        :type excludable: ExcludableItems
+        :param child: child item of parent
+        :type child: "Model"
+        :param proxy_source_model: source model from which querysetproxy is constructed
+        :type proxy_source_model: Type["Model"]
+        """
+        through_name = cls.Meta.model_fields[related].through.get_name()
+        through_child = cls._create_through_instance(
+            row=row, related=related, through_name=through_name, excludable=excludable,
+        )
+
+        if child.__class__ != proxy_source_model:
+            setattr(child, through_name, through_child)
+        else:
+            item[through_name] = through_child
+        child.set_save_status(True)
+
+    @classmethod
+    def _create_through_instance(
         cls,
         row: sqlalchemy.engine.ResultProxy,
         through_name: str,
@@ -288,12 +376,11 @@ class ModelRow(NewBaseModel):
             model=cls, excludable=excludable, alias=table_prefix, use_alias=False,
         )
 
+        column_prefix = table_prefix + "_" if table_prefix else ""
         for column in cls.Meta.table.columns:
             alias = cls.get_column_name_from_alias(column.name)
             if alias not in item and alias in selected_columns:
-                prefixed_name = (
-                    f'{table_prefix + "_" if table_prefix else ""}{column.name}'
-                )
+                prefixed_name = f"{column_prefix}{column.name}"
                 item[alias] = source[prefixed_name]
 
         return item

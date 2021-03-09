@@ -56,7 +56,7 @@ from ormar.fields import (
 )  # noqa: I100
 from ormar.models import ExcludableItems, Model
 from ormar.models.metaclass import ModelMeta
-from ormar.queryset import OrderAction, QuerySet
+from ormar.queryset import OrderAction, QuerySet, and_, or_
 from ormar.relations import RelationType
 from ormar.signals import Signal
 
@@ -68,7 +68,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.9.6"
+__version__ = "0.9.7"
 __all__ = [
     "Integer",
     "BigInteger",
@@ -108,4 +108,6 @@ __all__ = [
     "ForeignKeyField",
     "OrderAction",
     "ExcludableItems",
+    "and_",
+    "or_",
 ]

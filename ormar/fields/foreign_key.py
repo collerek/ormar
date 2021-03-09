@@ -11,7 +11,7 @@ from pydantic.typing import ForwardRef, evaluate_forwardref
 from sqlalchemy import UniqueConstraint
 
 import ormar  # noqa I101
-from ormar.exceptions import RelationshipInstanceError
+from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
 from ormar.fields.base import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
@@ -75,7 +75,6 @@ def create_dummy_model(
     fields = {f"{pk_field.name}": (pk_field.__type__, None)}
 
     dummy_model = create_model(  # type: ignore
-
         f"PkOnly{base_model.get_name(lower=False)}{alias}",
         __module__=base_model.__module__,
         **fields,  # type: ignore
@@ -185,6 +184,11 @@ def ForeignKey(  # noqa CFQ002
 
     owner = kwargs.pop("owner", None)
     self_reference = kwargs.pop("self_reference", False)
+    default = kwargs.pop("default", None)
+    if default is not None:
+        raise ModelDefinitionError(
+            "Argument 'default' is not supported " "on relation fields!"
+        )
 
     if to.__class__ == ForwardRef:
         __type__ = to if not nullable else Optional[to]
