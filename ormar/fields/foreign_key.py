@@ -399,7 +399,7 @@ class ForeignKeyField(BaseField):
         :return: (if needed) registered Model
         :rtype: Model
         """
-        if cls.to.pk_type() == uuid.UUID and isinstance(value, str):
+        if cls.to.pk_type() == uuid.UUID and isinstance(value, str):  # pragma: nocover
             value = uuid.UUID(value)
         if not isinstance(value, cls.to.pk_type()):
             raise RelationshipInstanceError(
