@@ -54,7 +54,6 @@ class Author(ormar.Model):
     birth_year: int = ormar.Integer(
         nullable=True,
         encrypt_secret="secure89key%^&psdijfipew",
-        encrypt_max_length=200,
         encrypt_backend=ormar.EncryptBackends.FERNET,
     )
     test_text: str = ormar.Text(default="", **default_fernet)
@@ -146,7 +145,6 @@ def test_wrong_backend():
 
 def test_db_structure():
     assert Author.Meta.table.c.get("name").type.__class__ == EncryptedString
-    assert Author.Meta.table.c.get("birth_year").type.max_length == 200
 
 
 @pytest.mark.asyncio

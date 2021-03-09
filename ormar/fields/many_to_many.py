@@ -100,14 +100,12 @@ def ManyToMany(
     encrypt_secret = kwargs.pop("encrypt_secret", None)
     encrypt_backend = kwargs.pop("encrypt_backend", None)
     encrypt_custom_backend = kwargs.pop("encrypt_custom_backend", None)
-    encrypt_max_length = kwargs.pop("encrypt_max_length", None)
 
     not_supported = [
         default,
         encrypt_secret,
         encrypt_backend,
         encrypt_custom_backend,
-        encrypt_max_length,
     ]
     if any(x is not None for x in not_supported):
         raise ModelDefinitionError(

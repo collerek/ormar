@@ -124,7 +124,6 @@ class EncryptedString(types.TypeDecorator):
         **kwargs: Any,
     ) -> None:
         _field_type = kwargs.pop("_field_type")
-        encrypt_max_length = kwargs.pop("encrypt_max_length", 5000)
         super().__init__()
         if not cryptography:  # pragma: nocover
             raise ModelDefinitionError(
@@ -138,7 +137,6 @@ class EncryptedString(types.TypeDecorator):
         self._field_type: Type["BaseField"] = _field_type
         self._underlying_type: Any = _field_type.column_type
         self._key: Union[str, Callable] = encrypt_secret
-        self.max_length: int = encrypt_max_length
         type_ = self._field_type.__type__
         if type_ is None:  # pragma: nocover
             raise ModelDefinitionError(
@@ -147,12 +145,10 @@ class EncryptedString(types.TypeDecorator):
         self.type_: Any = type_
 
     def __repr__(self) -> str:  # pragma: nocover
-        return f"VARCHAR({self.max_length})"
+        return f"TEXT()"
 
     def load_dialect_impl(self, dialect: DefaultDialect) -> Any:
-        if dialect.name == 'mysql':  # pragma: nocover
-            return dialect.type_descriptor(types.TEXT())
-        return dialect.type_descriptor(types.VARCHAR(self.max_length))
+        return dialect.type_descriptor(types.TEXT())
 
     def _refresh(self) -> None:
         key = self._key() if callable(self._key) else self._key

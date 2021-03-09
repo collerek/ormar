@@ -58,7 +58,6 @@ class BaseField(FieldInfo):
     encrypt_secret: str
     encrypt_backend: EncryptBackends = EncryptBackends.NONE
     encrypt_custom_backend: Optional[Type[EncryptBackend]] = None
-    encrypt_max_length: int = 5000
 
     default: Any
     server_default: Any
@@ -304,7 +303,6 @@ class BaseField(FieldInfo):
                 encrypt_secret=cls.encrypt_secret,
                 encrypt_backend=cls.encrypt_backend,
                 encrypt_custom_backend=cls.encrypt_custom_backend,
-                encrypt_max_length=cls.encrypt_max_length,
             ),
             nullable=cls.nullable,
             index=cls.index,
