@@ -12,6 +12,7 @@ from sqlalchemy.types import TypeDecorator
 
 from ormar import ModelDefinitionError
 
+cryptography = None
 try:
     import cryptography
     from cryptography.fernet import Fernet
