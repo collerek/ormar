@@ -112,6 +112,24 @@ async def test_or_filters():
 
         books = (
             await Book.objects.select_related("author")
+            .filter(
+                ormar.or_(
+                    ormar.and_(
+                        ormar.or_(year__gt=1960, year__lt=1940),
+                        author__name="J.R.R. Tolkien",
+                    ),
+                    ormar.and_(year__lt=2000, author__name="Andrzej Sapkowski"),
+                )
+            )
+            .all()
+        )
+        assert len(books) == 3
+        assert books[0].title == "The Hobbit"
+        assert books[1].title == "The Silmarillion"
+        assert books[2].title == "The Witcher"
+
+        books = (
+            await Book.objects.select_related("author")
             .exclude(
                 ormar.or_(
                     ormar.and_(year__gt=1960, author__name="J.R.R. Tolkien"),
@@ -187,6 +205,38 @@ async def test_or_filters():
         with pytest.raises(QueryDefinitionError):
             await Book.objects.select_related("author").filter("wrong").all()
 
+        books = await tolkien.books.filter(
+            ormar.or_(year__lt=1940, year__gt=1960)
+        ).all()
+        assert len(books) == 2
+
+        books = await tolkien.books.filter(
+            ormar.and_(
+                ormar.or_(year__lt=1940, year__gt=1960), title__icontains="hobbit"
+            )
+        ).all()
+        assert len(books) == 1
+        assert tolkien.books[0].title == "The Hobbit"
+
+        books = (
+            await Book.objects.select_related("author")
+            .filter(ormar.or_(author__name="J.R.R. Tolkien"))
+            .all()
+        )
+        assert len(books) == 3
+
+        books = (
+            await Book.objects.select_related("author")
+            .filter(
+                ormar.or_(
+                    ormar.and_(author__name__icontains="tolkien"),
+                    ormar.and_(author__name__icontains="sapkowski"),
+                )
+            )
+            .all()
+        )
+        assert len(books) == 5
+
 
 # TODO: Check / modify
 # process and and or into filter groups (V)
@@ -196,5 +246,4 @@ async def test_or_filters():
 # finish docstrings (V)
 # fix types for FilterAction and FilterGroup (X)
 # add docs (V)
-
-# fix querysetproxy
+# fix querysetproxy (V)

@@ -172,7 +172,7 @@ await post.categories.filter(name="Test category3").update(
 
 ### filter
 
-`filter(**kwargs) -> QuerySet`
+`filter(*args, **kwargs) -> QuerySet`
 
 Allows you to filter by any Model attribute/field as well as to fetch instances, with a filter across an FK relationship.
 
@@ -181,7 +181,7 @@ Allows you to filter by any Model attribute/field as well as to fetch instances,
 
 ### exclude
 
-`exclude(**kwargs) -> QuerySet`
+`exclude(*args, **kwargs) -> QuerySet`
 
 Works exactly the same as filter and all modifiers (suffixes) are the same, but returns a not condition.
 

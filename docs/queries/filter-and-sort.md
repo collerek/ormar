@@ -288,6 +288,37 @@ books = (
 )
 ```
 
+If you want or need to you can nest deeper conditions as deep as you want, in example to
+acheive a query like this:
+
+sql:
+```
+WHERE ( ( ( books.year > 1960 OR books.year < 1940 ) 
+AND authors.name = 'J.R.R. Tolkien' ) OR 
+( books.year < 2000 AND authors.name = 'Andrzej Sapkowski' ) )
+```
+
+You can construct a query as follows:
+```python
+books = (
+    await Book.objects.select_related("author")
+    .filter(
+        ormar.or_(
+            ormar.and_(
+                ormar.or_(year__gt=1960, year__lt=1940),
+                author__name="J.R.R. Tolkien",
+            ),
+            ormar.and_(year__lt=2000, author__name="Andrzej Sapkowski"),
+        )
+    )
+    .all()
+)
+assert len(books) == 3
+assert books[0].title == "The Hobbit"
+assert books[1].title == "The Silmarillion"
+assert books[2].title == "The Witcher"
+```
+
 By now you should already have an idea how `ormar.or_` and `ormar.and_` works.
 Of course, you could chain them in any other methods of queryset, so in example a perfectly
 valid query can look like follows:
@@ -310,9 +341,48 @@ assert books[0].title == "The Witcher"
 !!!note
     Note that you cannot provide the same keyword argument several times so queries like `filter(ormar.or_(name='Jack', name='John'))` are not allowed. If you want to check the same
     column for several values simply use `in` operator: `filter(name__in=['Jack','John'])`.
-    Note that also that technically you can still do `filter(ormar.or_(name='Jack', name__exact='John'))`
-    but it's not recommended. The different operators can be used as long as they do not
-    repeat so `filter(ormar.or_(year__lt=1560, year__gt=2000))` is fine.
+
+If you pass only one parameter to `or_` or `and_` functions it's simply wrapped in parenthesis and
+has no effect on actual query, so in the end all 3 queries are identical:
+
+```python
+await Book.objects.filter(title='The Hobbit').get()
+await Book.objects.filter(ormar.or_(title='The Hobbit')).get()
+await Book.objects.filter(ormar.and_(title='The Hobbit')).get()
+```
+
+!!!note
+    Note that `or_` and `and_` queries will have `WHERE (title='The Hobbit')` but the parenthesis is redundant and has no real effect.
+
+This feature can be used if you **really** need to use the same field name twice.
+Remember that you cannot pass the same keyword arguments twice to the function, so
+how you can query in example `WHERE (authors.name LIKE '%tolkien%') OR (authors.name LIKE '%sapkowski%'))`?
+
+You cannot do:
+```python
+books = (
+    await Book.objects.select_related("author")
+        .filter(ormar.or_(
+        author__name__icontains="tolkien",
+        author__name__icontains="sapkowski" # you cannot use same keyword twice in or_!
+    ))                                      # python syntax error
+        .all()
+)
+```
+
+But you can do this:
+
+```python
+books = (
+    await Book.objects.select_related("author")
+        .filter(ormar.or_(
+        ormar.and_(author__name__icontains="tolkien"), # one argument == just wrapped in ()
+        ormar.and_(author__name__icontains="sapkowski")
+    ))
+        .all()
+)
+assert len(books) == 5
+```
 
 ## get
 

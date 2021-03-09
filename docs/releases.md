@@ -23,6 +23,9 @@
   ```
   Check the updated docs in Queries -> Filtering and sorting -> Complex filters
 
+## Other
+* Setting default on `ForeignKey` or `ManyToMany` raises and `ModelDefinition` exception as it is (and was) not supported
+
 # 0.9.6
 
 ##Important
