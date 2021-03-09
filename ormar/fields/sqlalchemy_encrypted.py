@@ -6,9 +6,7 @@ import json
 from enum import Enum
 from typing import Any, Callable, TYPE_CHECKING, Type, Union
 
-from sqlalchemy import String
-from sqlalchemy.engine.default import DefaultDialect
-from sqlalchemy.types import TypeDecorator
+import sqlalchemy.types as types
 
 from ormar import ModelDefinitionError
 
@@ -112,12 +110,12 @@ backends_map = {
 }
 
 
-class EncryptedString(TypeDecorator):  # pragma nocover
+class EncryptedString(types.TypeDecorator):  # pragma nocover
     """
     Used to store encrypted values in a database
     """
 
-    impl = String
+    impl = types.String
 
     def __init__(self,
                  *args: Any,
@@ -143,6 +141,7 @@ class EncryptedString(TypeDecorator):  # pragma nocover
 
     def __repr__(self) -> str:
         return f"String({self.max_length})"
+
     #
     # def load_dialect_impl(self, dialect: DefaultDialect) -> Any:
     #     dialect.type_descriptor(VARCHAR(self.max_length))
@@ -217,4 +216,3 @@ class EncryptedString(TypeDecorator):  # pragma nocover
 
     def _coerce(self, value):
         return self.underlying_type._coerce(value)
-
