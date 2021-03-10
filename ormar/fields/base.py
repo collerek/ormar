@@ -5,6 +5,12 @@ from pydantic import Field, Json, typing
 from pydantic.fields import FieldInfo, Required, Undefined
 
 import ormar  # noqa I101
+from ormar import ModelDefinitionError
+from ormar.fields.sqlalchemy_encrypted import (
+    EncryptBackend,
+    EncryptBackends,
+    EncryptedString,
+)
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
@@ -48,6 +54,10 @@ class BaseField(FieldInfo):
     through: Type["Model"]
     self_reference: bool = False
     self_reference_primary: Optional[str] = None
+
+    encrypt_secret: str
+    encrypt_backend: EncryptBackends = EncryptBackends.NONE
+    encrypt_custom_backend: Optional[Type[EncryptBackend]] = None
 
     default: Any
     server_default: Any
@@ -256,12 +266,45 @@ class BaseField(FieldInfo):
         :return: actual definition of the database column as sqlalchemy requires.
         :rtype: sqlalchemy.Column
         """
+        if cls.encrypt_backend == EncryptBackends.NONE:
+            column = sqlalchemy.Column(
+                cls.alias or name,
+                cls.column_type,
+                *cls.construct_constraints(),
+                primary_key=cls.primary_key,
+                nullable=cls.nullable and not cls.primary_key,
+                index=cls.index,
+                unique=cls.unique,
+                default=cls.default,
+                server_default=cls.server_default,
+            )
+        else:
+            column = cls._get_encrypted_column(name=name)
+        return column
+
+    @classmethod
+    def _get_encrypted_column(cls, name: str) -> sqlalchemy.Column:
+        """
+        Returns EncryptedString column type instead of actual column.
+
+        :param name: column name
+        :type name: str
+        :return: newly defined column
+        :rtype:  sqlalchemy.Column
+        """
+        if cls.primary_key or cls.is_relation:
+            raise ModelDefinitionError(
+                "Primary key field and relations fields" "cannot be encrypted!"
+            )
         column = sqlalchemy.Column(
             cls.alias or name,
-            cls.column_type,
-            *cls.construct_constraints(),
-            primary_key=cls.primary_key,
-            nullable=cls.nullable and not cls.primary_key,
+            EncryptedString(
+                _field_type=cls,
+                encrypt_secret=cls.encrypt_secret,
+                encrypt_backend=cls.encrypt_backend,
+                encrypt_custom_backend=cls.encrypt_custom_backend,
+            ),
+            nullable=cls.nullable,
             index=cls.index,
             unique=cls.unique,
             default=cls.default,

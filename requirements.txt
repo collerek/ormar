@@ -5,6 +5,7 @@ pydantic
 sqlalchemy
 typing_extensions
 orjson
+cryptography
 
 # Async database drivers
 aiomysql

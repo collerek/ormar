@@ -53,6 +53,7 @@ def convert_choices_if_needed(  # noqa: CCR001
     :return: value, choices list
     :rtype: Tuple[Any, List]
     """
+    # TODO use same maps as with EncryptedString
     choices = [o.value if isinstance(o, Enum) else o for o in field.choices]
 
     if field.__type__ in [datetime.datetime, datetime.date, datetime.time]:

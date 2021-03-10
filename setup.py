@@ -62,7 +62,8 @@ setup(
         "postgresql": ["asyncpg", "psycopg2"],
         "mysql": ["aiomysql", "pymysql"],
         "sqlite": ["aiosqlite"],
-        "orjson": ["orjson"]
+        "orjson": ["orjson"],
+        "crypto": ["cryptography"]
     },
     classifiers=[
         "Development Status :: 4 - Beta",

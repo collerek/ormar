@@ -38,9 +38,12 @@ from ormar.fields import (
     BaseField,
     BigInteger,
     Boolean,
+    DECODERS_MAP,
     Date,
     DateTime,
     Decimal,
+    ENCODERS_MAP,
+    EncryptBackends,
     Float,
     ForeignKey,
     ForeignKeyField,
@@ -68,7 +71,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.9.7"
+__version__ = "0.9.8"
 __all__ = [
     "Integer",
     "BigInteger",
@@ -110,4 +113,7 @@ __all__ = [
     "ExcludableItems",
     "and_",
     "or_",
+    "EncryptBackends",
+    "ENCODERS_MAP",
+    "DECODERS_MAP",
 ]

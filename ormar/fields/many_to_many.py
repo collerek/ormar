@@ -97,9 +97,21 @@ def ManyToMany(
         forbid_through_relations(cast(Type["Model"], through))
 
     default = kwargs.pop("default", None)
-    if default is not None:
+    encrypt_secret = kwargs.pop("encrypt_secret", None)
+    encrypt_backend = kwargs.pop("encrypt_backend", None)
+    encrypt_custom_backend = kwargs.pop("encrypt_custom_backend", None)
+
+    not_supported = [
+        default,
+        encrypt_secret,
+        encrypt_backend,
+        encrypt_custom_backend,
+    ]
+    if any(x is not None for x in not_supported):
         raise ModelDefinitionError(
-            "Argument 'default' is not supported " "on relation fields!"
+            f"Argument {next((x for x in not_supported if x is not None))} "
+            f"is not supported "
+            "on relation fields!"
         )
 
     if to.__class__ == ForwardRef:
