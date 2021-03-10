@@ -4,7 +4,7 @@ alembic.ini
 .idea
 .pytest_cache
 .mypy_cache
-.coverage
+*.coverage
 *.pyc
 *.log
 test.db
@@ -14,3 +14,4 @@ site
 profile.py
 *.db
 *.db-journal
+*coverage.xml
