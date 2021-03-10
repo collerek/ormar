@@ -31,7 +31,6 @@ class EncryptBackend(abc.ABC):
         digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
         digest.update(key)
         engine_key = digest.finalize()
-
         self._initialize_backend(engine_key)
 
     @abc.abstractmethod
@@ -165,7 +164,8 @@ class EncryptedString(types.TypeDecorator):
             if encoder:
                 value = encoder(value)  # type: ignore
 
-        return self.backend.encrypt(value)
+        encrypted_value = self.backend.encrypt(value)
+        return encrypted_value
 
     def process_result_value(self, value: Any, dialect: DefaultDialect) -> Any:
         if value is None:

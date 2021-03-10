@@ -1,3 +1,21 @@
+# 0.9.8
+
+## Features
+* Add possibility to encrypt the selected field(s) in the database
+  * As minimum you need to provide `encrypt_secret` and `encrypt_backend`
+  * `encrypt_backend` can be one of the `ormar.EncryptBackends` enum (`NONE, FERNET, HASH, CUSTOM`) - default: `NONE`
+  * When custom backend is selected you need to provide your backend class that subclasses `ormar.fields.EncryptBackend`
+  * You cannot encrypt `primary_key` column and relation columns (FK and M2M).
+  * Provided are 2 backends: HASH and FERNET
+    * HASH is a one-way hash (like for password), never decrypted on retrieval
+    * FERNET is a two-way encrypt/decrypt backend
+  * Note that in FERNET backend you loose `filtering` possibility altogether as part of the encrypted value is a timestamp.
+  * Note that in HASH backend you can filter by full value but filters like `contain` will not work as comparison is make on encrypted values
+  * Note that adding `encrypt_backend` changes the database column type to `TEXT`, which needs to be reflected in db either by migration or manual change
+
+## Fixes
+* (Advanced/ Internal) Restore custom sqlalchemy types (by `types.TypeDecorator` subclass) functionality that ceased to working so `process_result_value` was never called
+
 # 0.9.7
 
 ## Features

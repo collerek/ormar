@@ -1,5 +1,7 @@
 # type: ignore
+import base64
 import decimal
+import hashlib
 import uuid
 import datetime
 from typing import Any
@@ -9,7 +11,7 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar import ModelDefinitionError
+from ormar import ModelDefinitionError, NoMatch
 from ormar.fields.sqlalchemy_encrypted import EncryptedString
 from tests.settings import DATABASE_URL
 
@@ -72,6 +74,26 @@ class Author(ormar.Model):
         encrypt_secret="asda8",
         encrypt_backend=ormar.EncryptBackends.CUSTOM,
         encrypt_custom_backend=DummyBackend,
+    )
+
+
+class Filter(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "filters"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, **default_fernet)
+
+
+class Hash(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "hashes"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(
+        max_length=128,
+        encrypt_secret="udxc32",
+        encrypt_backend=ormar.EncryptBackends.HASH,
     )
 
 
@@ -184,3 +206,33 @@ async def test_save_and_retrieve():
         assert author.test_decimal == 3.5
         assert author.test_decimal2 == 5.5
         assert author.custom_backend == "test12"
+
+
+@pytest.mark.asyncio
+async def test_fernet_filters_nomatch():
+    async with database:
+        await Filter(name="test1").save()
+        await Filter(name="test1").save()
+
+        filters = await Filter.objects.all()
+        assert filters[0].name == filters[1].name == "test1"
+
+        with pytest.raises(NoMatch):
+            await Filter.objects.get(name="test1")
+
+
+@pytest.mark.asyncio
+async def test_hash_filters_works():
+    async with database:
+        await Hash(name="test1").save()
+        await Hash(name="test2").save()
+
+        secret = hashlib.sha256("udxc32".encode()).digest()
+        secret = base64.urlsafe_b64encode(secret)
+        hashed_test1 = hashlib.sha512(secret + "test1".encode()).hexdigest()
+
+        hash1 = await Hash.objects.get(name="test1")
+        assert hash1.name == hashed_test1
+
+        with pytest.raises(NoMatch):
+            await Filter.objects.get(name__icontains="test")
