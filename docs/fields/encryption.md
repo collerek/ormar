@@ -55,7 +55,7 @@ Note that since this backend never decrypt the stored value it's only applicable
 
 !!!note 
     Note that provided `encrypt_secret` is first hashed itself and used as salt, so in order to
-    compare to stored string you need to recreate this steps.
+    compare to stored string you need to recreate this steps. The `order_by` will not work as encrypted strings are compared so you cannot reliably order by.
 
 ```python
 class Hash(ormar.Model):
@@ -101,7 +101,8 @@ Value is encrypted on way to database end decrypted on way out. Can be used on a
 as the returned value is parsed to corresponding python type.
 
 !!!warning
-    Note that in `FERNET` backend you loose `filtering` possibility altogether as part of the encrypted value is a timestamp
+    Note that in `FERNET` backend you loose `filter`ing possibility altogether as part of the encrypted value is a timestamp.
+    The same goes for `order_by` as encrypted strings are compared so you cannot reliably order by. 
 
 ```python
 class Filter(ormar.Model):

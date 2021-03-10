@@ -77,14 +77,6 @@ class Author(ormar.Model):
     )
 
 
-class Filter(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "filters"
-
-    id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=100, **default_fernet)
-
-
 class Hash(ormar.Model):
     class Meta(BaseMeta):
         tablename = "hashes"
@@ -95,6 +87,24 @@ class Hash(ormar.Model):
         encrypt_secret="udxc32",
         encrypt_backend=ormar.EncryptBackends.HASH,
     )
+
+
+class Filter(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "filters"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, **default_fernet)
+    hash = ormar.ForeignKey(Hash)
+
+
+class Report(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "reports"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    filters = ormar.ManyToMany(Filter)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -236,3 +246,24 @@ async def test_hash_filters_works():
 
         with pytest.raises(NoMatch):
             await Filter.objects.get(name__icontains="test")
+
+
+@pytest.mark.asyncio
+async def test_related_model_fields_properly_decrypted():
+    async with database:
+        hash1 = await Hash(name="test1").save()
+        report = await Report.objects.create(name="Report1")
+        await report.filters.create(name="test1", hash=hash1)
+        await report.filters.create(name="test2")
+
+        report2 = await Report.objects.select_related("filters").get()
+        assert report2.filters[0].name == "test1"
+        assert report2.filters[1].name == "test2"
+
+        secret = hashlib.sha256("udxc32".encode()).digest()
+        secret = base64.urlsafe_b64encode(secret)
+        hashed_test1 = hashlib.sha512(secret + "test1".encode()).hexdigest()
+
+        report2 = await Report.objects.select_related("filters__hash").get()
+        assert report2.filters[0].name == "test1"
+        assert report2.filters[0].hash.name == hashed_test1

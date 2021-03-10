@@ -144,7 +144,7 @@ class EncryptedString(types.TypeDecorator):
         self.type_: Any = type_
 
     def __repr__(self) -> str:  # pragma: nocover
-        return f"TEXT()"
+        return "TEXT()"
 
     def load_dialect_impl(self, dialect: DefaultDialect) -> Any:
         return dialect.type_descriptor(types.TEXT())

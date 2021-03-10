@@ -472,6 +472,7 @@ Available Model Fields (with required args - optional ones in docs):
 * `Decimal(scale, precision)`
 * `UUID()`
 * `EnumField` - by passing `choices` to any other Field type
+* `EncryptedString` - by passing `encrypt_secret` and `encrypt_backend`
 * `ForeignKey(to)`
 * `ManyToMany(to, through)`
 
