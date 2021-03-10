@@ -369,9 +369,6 @@ class ModelRow(NewBaseModel):
         and values are database values
         :rtype: Dict
         """
-        # databases does not keep aliases in Record for postgres, change to raw row
-        source = row._row if cls.db_backend_name() == "postgresql" else row
-
         selected_columns = cls.own_table_columns(
             model=cls, excludable=excludable, alias=table_prefix, use_alias=False,
         )
@@ -381,6 +378,6 @@ class ModelRow(NewBaseModel):
             alias = cls.get_column_name_from_alias(column.name)
             if alias not in item and alias in selected_columns:
                 prefixed_name = f"{column_prefix}{column.name}"
-                item[alias] = source[prefixed_name]
+                item[alias] = row[prefixed_name]
 
         return item
