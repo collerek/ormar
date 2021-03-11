@@ -108,6 +108,30 @@ async def test_load_all_many_to_many():
 
 
 @pytest.mark.asyncio
+async def test_load_all_with_order():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            nick1 = await NickName.objects.create(name="Barry", is_lame=False)
+            nick2 = await NickName.objects.create(name="Joe", is_lame=True)
+            hq = await HQ.objects.create(name="Main")
+            await hq.nicks.add(nick1)
+            await hq.nicks.add(nick2)
+
+            hq = await HQ.objects.get(name="Main")
+            await hq.load_all(order_by="-nicks__name")
+
+            assert hq.nicks[0] == nick2
+            assert hq.nicks[0].name == "Joe"
+
+            assert hq.nicks[1] == nick1
+            assert hq.nicks[1].name == "Barry"
+
+            await hq.load_all()
+            assert hq.nicks[0] == nick1
+            assert hq.nicks[1] == nick2
+
+
+@pytest.mark.asyncio
 async def test_loading_reversed_relation():
     async with database:
         async with database.transaction(force_rollback=True):

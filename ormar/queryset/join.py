@@ -1,49 +1,54 @@
 from collections import OrderedDict
 from typing import (
     Any,
+    Dict,
     List,
     Optional,
     TYPE_CHECKING,
     Tuple,
-    Type,
+    Type, cast,
 )
 
 import sqlalchemy
 from sqlalchemy import text
 
 import ormar  # noqa I100
-from ormar.exceptions import RelationshipInstanceError
+from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
 from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
+    from ormar import Model, ManyToManyField
     from ormar.queryset import OrderAction
     from ormar.models.excludable import ExcludableItems
 
 
 class SqlJoin:
     def __init__(  # noqa:  CFQ002
-        self,
-        used_aliases: List,
-        select_from: sqlalchemy.sql.select,
-        columns: List[sqlalchemy.Column],
-        excludable: "ExcludableItems",
-        order_columns: Optional[List["OrderAction"]],
-        sorted_orders: OrderedDict,
-        main_model: Type["Model"],
-        relation_name: str,
-        relation_str: str,
-        related_models: Any = None,
-        own_alias: str = "",
-        source_model: Type["Model"] = None,
+            self,
+            used_aliases: List,
+            select_from: sqlalchemy.sql.select,
+            columns: List[sqlalchemy.Column],
+            excludable: "ExcludableItems",
+            order_columns: Optional[List["OrderAction"]],
+            sorted_orders: OrderedDict,
+            main_model: Type["Model"],
+            relation_name: str,
+            relation_str: str,
+            related_models: Any = None,
+            own_alias: str = "",
+            source_model: Type["Model"] = None,
+            already_sorted: Dict = None,
     ) -> None:
         self.relation_name = relation_name
         self.related_models = related_models or []
         self.select_from = select_from
         self.columns = columns
         self.excludable = excludable
+
         self.order_columns = order_columns
         self.sorted_orders = sorted_orders
+        self.already_sorted = already_sorted or dict()
+
         self.main_model = main_model
         self.own_alias = own_alias
         self.used_aliases = used_aliases
@@ -97,7 +102,7 @@ class SqlJoin:
         return self.next_model.Meta.table
 
     def _on_clause(
-        self, previous_alias: str, from_clause: str, to_clause: str,
+            self, previous_alias: str, from_clause: str, to_clause: str,
     ) -> text:
         """
         Receives aliases and names of both ends of the join and combines them
@@ -169,8 +174,8 @@ class SqlJoin:
         for related_name in self.related_models:
             remainder = None
             if (
-                isinstance(self.related_models, dict)
-                and self.related_models[related_name]
+                    isinstance(self.related_models, dict)
+                    and self.related_models[related_name]
             ):
                 remainder = self.related_models[related_name]
             self._process_deeper_join(related_name=related_name, remainder=remainder)
@@ -205,6 +210,7 @@ class SqlJoin:
             relation_str="__".join([self.relation_str, related_name]),
             own_alias=self.next_alias,
             source_model=self.source_model or self.main_model,
+            already_sorted=self.already_sorted,
         )
         (
             self.used_aliases,
@@ -251,18 +257,18 @@ class SqlJoin:
         """
         target_field = self.target_field
         is_primary_self_ref = (
-            target_field.self_reference
-            and self.relation_name == target_field.self_reference_primary
+                target_field.self_reference
+                and self.relation_name == target_field.self_reference_primary
         )
         if (is_primary_self_ref and not reverse) or (
-            not is_primary_self_ref and reverse
+                not is_primary_self_ref and reverse
         ):
             new_part = target_field.default_source_field_name()  # type: ignore
         else:
             new_part = target_field.default_target_field_name()  # type: ignore
         return new_part
 
-    def _process_join(self,) -> None:  # noqa: CFQ002
+    def _process_join(self, ) -> None:  # noqa: CFQ002
         """
         Resolves to and from column names and table names.
 
@@ -307,12 +313,11 @@ class SqlJoin:
         self.used_aliases.append(self.next_alias)
 
     def _set_default_primary_key_order_by(self) -> None:
-        clause = ormar.OrderAction(
-            order_str=self.next_model.Meta.pkname,
-            model_cls=self.next_model,
-            alias=self.next_alias,
-        )
-        self.sorted_orders[clause] = clause.get_text_clause()
+        for order_by in self.next_model.Meta.order_by:
+            clause = ormar.OrderAction(
+                order_str=order_by, model_cls=self.next_model, alias=self.next_alias,
+            )
+            self.sorted_orders[clause] = clause.get_text_clause()
 
     def _get_order_bys(self) -> None:  # noqa: CCR001
         """
@@ -320,18 +325,60 @@ class SqlJoin:
         Otherwise by default each table is sorted by a primary key column asc.
         """
         alias = self.next_alias
+        current_table_sorted = False
+        if f"{alias}_{self.next_model.get_name()}" in self.already_sorted:
+            current_table_sorted = True
         if self.order_columns:
-            current_table_sorted = False
             for condition in self.order_columns:
                 if condition.check_if_filter_apply(
-                    target_model=self.next_model, alias=alias
+                        target_model=self.next_model, alias=alias
                 ):
                     current_table_sorted = True
                     self.sorted_orders[condition] = condition.get_text_clause()
-            if not current_table_sorted and not self.target_field.is_multi:
-                self._set_default_primary_key_order_by()
+                    self.already_sorted[
+                        f"{self.next_alias}_{self.next_model.get_name()}"
+                    ] = condition
+        # TODO: refactor into smaller helper functions
+        if self.target_field.orders_by and not current_table_sorted:
+            current_table_sorted = True
+            for order_by in self.target_field.orders_by:
+                if self.target_field.is_multi and "__" in order_by:
+                    parts = order_by.split("__")
+                    if (
+                            len(parts) > 2
+                            or parts[0] != self.target_field.through.get_name()
+                    ):
+                        raise ModelDefinitionError(
+                            "You can order the relation only"
+                            "by related or link table columns!"
+                        )
+                    model = self.target_field.owner
+                    clause = ormar.OrderAction(
+                        order_str=order_by, model_cls=model, alias=alias,
+                    )
+                elif self.target_field.is_multi:
+                    alias = self.alias_manager.resolve_relation_alias(
+                        from_model=self.target_field.through,
+                        relation_name=cast("ManyToManyField",
+                                           self.target_field).default_target_field_name(),
+                    )
+                    model = self.target_field.to
+                    clause = ormar.OrderAction(
+                        order_str=order_by, model_cls=model, alias=alias
+                    )
+                else:
+                    alias = self.alias_manager.resolve_relation_alias(
+                        from_model=self.target_field.owner,
+                        relation_name=self.target_field.name,
+                    )
+                    model = self.target_field.to
+                    clause = ormar.OrderAction(
+                        order_str=order_by, model_cls=model, alias=alias
+                    )
+                self.sorted_orders[clause] = clause.get_text_clause()
+                self.already_sorted[f"{alias}_{model.get_name()}"] = clause
 
-        elif not self.target_field.is_multi:
+        if not current_table_sorted and not self.target_field.is_multi:
             self._set_default_primary_key_order_by()
 
     def _get_to_and_from_keys(self) -> Tuple[str, str]:

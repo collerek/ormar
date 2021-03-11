@@ -51,6 +51,8 @@ def populate_default_options_values(
         new_model.Meta.model_fields = model_fields
     if not hasattr(new_model.Meta, "abstract"):
         new_model.Meta.abstract = False
+    if not hasattr(new_model.Meta, "order_by"):
+        new_model.Meta.order_by = []
 
     if any(
         is_field_an_forward_ref(field) for field in new_model.Meta.model_fields.values()

@@ -3,7 +3,7 @@ import sys
 import uuid
 from dataclasses import dataclass
 from random import choices
-from typing import Any, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import sqlalchemy
 from pydantic import BaseModel, create_model
@@ -119,6 +119,35 @@ def populate_fk_params_based_on_to_model(
     return __type__, constraints, column_type
 
 
+def validate_not_allowed_fields(kwargs: Dict) -> None:
+    """
+    Verifies if not allowed parameters are set on relation models.
+    Usually they are omitted later anyway but this way it's explicitly
+    notify the user that it's not allowed/ supported.
+
+    :raises ModelDefinitionError: if any forbidden field is set
+    :param kwargs: dict of kwargs to verify passed to relation field
+    :type kwargs: Dict
+    """
+    default = kwargs.pop("default", None)
+    encrypt_secret = kwargs.pop("encrypt_secret", None)
+    encrypt_backend = kwargs.pop("encrypt_backend", None)
+    encrypt_custom_backend = kwargs.pop("encrypt_custom_backend", None)
+
+    not_supported = [
+        default,
+        encrypt_secret,
+        encrypt_backend,
+        encrypt_custom_backend,
+    ]
+    if any(x is not None for x in not_supported):
+        raise ModelDefinitionError(
+            f"Argument {next((x for x in not_supported if x is not None))} "
+            f"is not supported "
+            "on relation fields!"
+        )
+
+
 class UniqueColumns(UniqueConstraint):
     """
     Subclass of sqlalchemy.UniqueConstraint.
@@ -184,24 +213,10 @@ def ForeignKey(  # noqa CFQ002
 
     owner = kwargs.pop("owner", None)
     self_reference = kwargs.pop("self_reference", False)
+    orders_by = kwargs.pop("orders_by", None)
+    related_orders_by = kwargs.pop("related_orders_by", None)
 
-    default = kwargs.pop("default", None)
-    encrypt_secret = kwargs.pop("encrypt_secret", None)
-    encrypt_backend = kwargs.pop("encrypt_backend", None)
-    encrypt_custom_backend = kwargs.pop("encrypt_custom_backend", None)
-
-    not_supported = [
-        default,
-        encrypt_secret,
-        encrypt_backend,
-        encrypt_custom_backend,
-    ]
-    if any(x is not None for x in not_supported):
-        raise ModelDefinitionError(
-            f"Argument {next((x for x in not_supported if x is not None))} "
-            f"is not supported "
-            "on relation fields!"
-        )
+    validate_not_allowed_fields(kwargs)
 
     if to.__class__ == ForwardRef:
         __type__ = to if not nullable else Optional[to]
@@ -237,6 +252,8 @@ def ForeignKey(  # noqa CFQ002
         owner=owner,
         self_reference=self_reference,
         is_relation=True,
+        orders_by=orders_by,
+        related_orders_by=related_orders_by,
     )
 
     return type("ForeignKey", (ForeignKeyField, BaseField), namespace)
