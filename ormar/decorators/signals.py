@@ -22,7 +22,7 @@ def receiver(
     def _decorator(func: Callable) -> Callable:
         """
 
-        Internal decorator that does all the registeriing.
+        Internal decorator that does all the registering.
 
         :param func: function to register as receiver
         :type func: Callable
@@ -117,3 +117,57 @@ def pre_delete(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
     :rtype: Callable
     """
     return receiver(signal="pre_delete", senders=senders)
+
+
+def pre_relation_add(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
+    """
+    Connect given function to all senders for pre_relation_add signal.
+
+    :param senders: one or a list of "Model" classes
+    that should have the signal receiver registered
+    :type senders: Union[Type["Model"], List[Type["Model"]]]
+    :return: returns the original function untouched
+    :rtype: Callable
+    """
+    return receiver(signal="pre_relation_add", senders=senders)
+
+
+def post_relation_add(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
+    """
+    Connect given function to all senders for post_relation_add signal.
+
+    :param senders: one or a list of "Model" classes
+    that should have the signal receiver registered
+    :type senders: Union[Type["Model"], List[Type["Model"]]]
+    :return: returns the original function untouched
+    :rtype: Callable
+    """
+    return receiver(signal="post_relation_add", senders=senders)
+
+
+def pre_relation_remove(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
+    """
+    Connect given function to all senders for pre_relation_remove signal.
+
+    :param senders: one or a list of "Model" classes
+    that should have the signal receiver registered
+    :type senders: Union[Type["Model"], List[Type["Model"]]]
+    :return: returns the original function untouched
+    :rtype: Callable
+    """
+    return receiver(signal="pre_relation_remove", senders=senders)
+
+
+def post_relation_remove(
+    senders: Union[Type["Model"], List[Type["Model"]]]
+) -> Callable:
+    """
+    Connect given function to all senders for post_relation_remove signal.
+
+    :param senders: one or a list of "Model" classes
+    that should have the signal receiver registered
+    :type senders: Union[Type["Model"], List[Type["Model"]]]
+    :return: returns the original function untouched
+    :rtype: Callable
+    """
+    return receiver(signal="post_relation_remove", senders=senders)

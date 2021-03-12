@@ -6,7 +6,8 @@ from typing import (
     Optional,
     TYPE_CHECKING,
     Tuple,
-    Type, cast,
+    Type,
+    cast,
 )
 
 import sqlalchemy
@@ -24,20 +25,20 @@ if TYPE_CHECKING:  # pragma no cover
 
 class SqlJoin:
     def __init__(  # noqa:  CFQ002
-            self,
-            used_aliases: List,
-            select_from: sqlalchemy.sql.select,
-            columns: List[sqlalchemy.Column],
-            excludable: "ExcludableItems",
-            order_columns: Optional[List["OrderAction"]],
-            sorted_orders: OrderedDict,
-            main_model: Type["Model"],
-            relation_name: str,
-            relation_str: str,
-            related_models: Any = None,
-            own_alias: str = "",
-            source_model: Type["Model"] = None,
-            already_sorted: Dict = None,
+        self,
+        used_aliases: List,
+        select_from: sqlalchemy.sql.select,
+        columns: List[sqlalchemy.Column],
+        excludable: "ExcludableItems",
+        order_columns: Optional[List["OrderAction"]],
+        sorted_orders: OrderedDict,
+        main_model: Type["Model"],
+        relation_name: str,
+        relation_str: str,
+        related_models: Any = None,
+        own_alias: str = "",
+        source_model: Type["Model"] = None,
+        already_sorted: Dict = None,
     ) -> None:
         self.relation_name = relation_name
         self.related_models = related_models or []
@@ -102,7 +103,7 @@ class SqlJoin:
         return self.next_model.Meta.table
 
     def _on_clause(
-            self, previous_alias: str, from_clause: str, to_clause: str,
+        self, previous_alias: str, from_clause: str, to_clause: str,
     ) -> text:
         """
         Receives aliases and names of both ends of the join and combines them
@@ -174,8 +175,8 @@ class SqlJoin:
         for related_name in self.related_models:
             remainder = None
             if (
-                    isinstance(self.related_models, dict)
-                    and self.related_models[related_name]
+                isinstance(self.related_models, dict)
+                and self.related_models[related_name]
             ):
                 remainder = self.related_models[related_name]
             self._process_deeper_join(related_name=related_name, remainder=remainder)
@@ -257,18 +258,18 @@ class SqlJoin:
         """
         target_field = self.target_field
         is_primary_self_ref = (
-                target_field.self_reference
-                and self.relation_name == target_field.self_reference_primary
+            target_field.self_reference
+            and self.relation_name == target_field.self_reference_primary
         )
         if (is_primary_self_ref and not reverse) or (
-                not is_primary_self_ref and reverse
+            not is_primary_self_ref and reverse
         ):
             new_part = target_field.default_source_field_name()  # type: ignore
         else:
             new_part = target_field.default_target_field_name()  # type: ignore
         return new_part
 
-    def _process_join(self, ) -> None:  # noqa: CFQ002
+    def _process_join(self,) -> None:  # noqa: CFQ002
         """
         Resolves to and from column names and table names.
 
@@ -331,7 +332,7 @@ class SqlJoin:
         if self.order_columns:
             for condition in self.order_columns:
                 if condition.check_if_filter_apply(
-                        target_model=self.next_model, alias=alias
+                    target_model=self.next_model, alias=alias
                 ):
                     current_table_sorted = True
                     self.sorted_orders[condition] = condition.get_text_clause()
@@ -345,8 +346,8 @@ class SqlJoin:
                 if self.target_field.is_multi and "__" in order_by:
                     parts = order_by.split("__")
                     if (
-                            len(parts) > 2
-                            or parts[0] != self.target_field.through.get_name()
+                        len(parts) > 2
+                        or parts[0] != self.target_field.through.get_name()
                     ):
                         raise ModelDefinitionError(
                             "You can order the relation only"
@@ -359,8 +360,9 @@ class SqlJoin:
                 elif self.target_field.is_multi:
                     alias = self.alias_manager.resolve_relation_alias(
                         from_model=self.target_field.through,
-                        relation_name=cast("ManyToManyField",
-                                           self.target_field).default_target_field_name(),
+                        relation_name=cast(
+                            "ManyToManyField", self.target_field
+                        ).default_target_field_name(),
                     )
                     model = self.target_field.to
                     clause = ormar.OrderAction(

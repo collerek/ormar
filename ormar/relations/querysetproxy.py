@@ -12,6 +12,8 @@ from typing import (  # noqa: I100, I201
     cast,
 )
 
+from sqlalchemy.engine import ResultProxy
+
 import ormar
 from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
 
@@ -116,6 +118,7 @@ class QuerysetProxy:
         :type child: Model
         """
         model_cls = self.relation.through
+        # TODO: Add support for pk with default not only autoincrement id
         owner_column = self.related_field.default_target_field_name()  # type: ignore
         child_column = self.related_field.default_source_field_name()  # type: ignore
         rel_kwargs = {owner_column: self._owner.pk, child_column: child.pk}
@@ -184,6 +187,52 @@ class QuerysetProxy:
         :rtype: int
         """
         return await self.queryset.count()
+
+    async def max(  # noqa: A003
+        self, columns: Union[str, List[str]]
+    ) -> Union[Any, ResultProxy]:
+        """
+        Returns max value of columns for rows matching the given criteria
+        (applied with `filter` and `exclude` if set before).
+
+        :return: max value of column(s)
+        :rtype: Any
+        """
+        return await self.queryset.max(columns=columns)
+
+    async def min(  # noqa: A003
+        self, columns: Union[str, List[str]]
+    ) -> Union[Any, ResultProxy]:
+        """
+        Returns min value of columns for rows matching the given criteria
+        (applied with `filter` and `exclude` if set before).
+
+        :return: min value of column(s)
+        :rtype: Any
+        """
+        return await self.queryset.min(columns=columns)
+
+    async def sum(  # noqa: A003
+        self, columns: Union[str, List[str]]
+    ) -> Union[Any, ResultProxy]:
+        """
+        Returns sum value of columns for rows matching the given criteria
+        (applied with `filter` and `exclude` if set before).
+
+        :return: sum value of columns
+        :rtype: int
+        """
+        return await self.queryset.sum(columns=columns)
+
+    async def avg(self, columns: Union[str, List[str]]) -> Union[Any, ResultProxy]:
+        """
+        Returns avg value of columns for rows matching the given criteria
+        (applied with `filter` and `exclude` if set before).
+
+        :return: avg value of columns
+        :rtype: Union[int, float, List]
+        """
+        return await self.queryset.avg(columns=columns)
 
     async def clear(self, keep_reversed: bool = True) -> int:
         """
