@@ -72,8 +72,10 @@ def create_test_database():
 
 @pytest.fixture(autouse=True, scope="function")
 async def cleanup():
-    await Book.objects.delete(each=True)
-    await Author.objects.delete(each=True)
+    yield
+    async with database:
+        await Book.objects.delete(each=True)
+        await Author.objects.delete(each=True)
 
 
 @pytest.mark.asyncio
