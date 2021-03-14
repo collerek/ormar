@@ -14,7 +14,6 @@ from typing import (
 import databases
 import sqlalchemy
 from sqlalchemy import bindparam
-from sqlalchemy.engine import ResultProxy
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
@@ -558,22 +557,24 @@ class QuerySet:
         expr = sqlalchemy.func.count().select().select_from(expr)
         return await self.database.fetch_val(expr)
 
-    async def _query_aggr_function(self, func_name: str, columns: List):
+    async def _query_aggr_function(self, func_name: str, columns: List) -> Any:
         func = getattr(sqlalchemy.func, func_name)
         select_actions = [
-            SelectAction(select_str=column, model_cls=self.model)
-            for column in columns
+            SelectAction(select_str=column, model_cls=self.model) for column in columns
         ]
+        if func_name in ["sum", "avg"]:
+            if any(not x.is_numeric for x in select_actions):
+                raise QueryDefinitionError(
+                    "You can use sum and svg only with" "numeric types of columns"
+                )
         select_columns = [x.apply_func(func, use_label=True) for x in select_actions]
         expr = self.build_select_expression().alias(f"subquery_for_{func_name}")
         expr = sqlalchemy.select(select_columns).select_from(expr)
         # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
         result = await self.database.fetch_one(expr)
-        return result if len(result) > 1 else result[0]  # type: ignore
+        return dict(result) if len(result) > 1 else result[0]  # type: ignore
 
-    async def max(  # noqa: A003
-        self, columns: Union[str, List[str]]
-    ) -> Union[Any, ResultProxy]:
+    async def max(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
         """
         Returns max value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -585,9 +586,7 @@ class QuerySet:
             columns = [columns]
         return await self._query_aggr_function(func_name="max", columns=columns)
 
-    async def min(  # noqa: A003
-        self, columns: Union[str, List[str]]
-    ) -> Union[Any, ResultProxy]:
+    async def min(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
         """
         Returns min value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -599,9 +598,7 @@ class QuerySet:
             columns = [columns]
         return await self._query_aggr_function(func_name="min", columns=columns)
 
-    async def sum(  # noqa: A003
-        self, columns: Union[str, List[str]]
-    ) -> Union[Any, ResultProxy]:
+    async def sum(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
         """
         Returns sum value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -613,7 +610,7 @@ class QuerySet:
             columns = [columns]
         return await self._query_aggr_function(func_name="sum", columns=columns)
 
-    async def avg(self, columns: Union[str, List[str]]) -> Union[Any, ResultProxy]:
+    async def avg(self, columns: Union[str, List[str]]) -> Any:
         """
         Returns avg value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -974,6 +971,7 @@ class QuerySet:
                     "You cannot update unsaved objects. "
                     f"{self.model.__name__} has to have {pk_name} filled."
                 )
+            new_kwargs = self.model.parse_non_db_fields(new_kwargs)
             new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
             new_kwargs = self.model.translate_columns_to_aliases(new_kwargs)
             new_kwargs = {"new_" + k: v for k, v in new_kwargs.items() if k in columns}

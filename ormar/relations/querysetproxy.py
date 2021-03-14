@@ -12,9 +12,8 @@ from typing import (  # noqa: I100, I201
     cast,
 )
 
-from sqlalchemy.engine import ResultProxy
 
-import ormar
+import ormar  # noqa: I100, I202
 from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
 
 if TYPE_CHECKING:  # pragma no cover
@@ -118,7 +117,6 @@ class QuerysetProxy:
         :type child: Model
         """
         model_cls = self.relation.through
-        # TODO: Add support for pk with default not only autoincrement id
         owner_column = self.related_field.default_target_field_name()  # type: ignore
         child_column = self.related_field.default_source_field_name()  # type: ignore
         rel_kwargs = {owner_column: self._owner.pk, child_column: child.pk}
@@ -129,10 +127,8 @@ class QuerysetProxy:
                 f"model without primary key set! \n"
                 f"Save the child model first."
             )
-        expr = model_cls.Meta.table.insert()
-        expr = expr.values(**final_kwargs)
-        # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
-        await model_cls.Meta.database.execute(expr)
+        print('final kwargs', final_kwargs)
+        await model_cls(**final_kwargs).save()
 
     async def update_through_instance(self, child: "Model", **kwargs: Any) -> None:
         """
@@ -148,6 +144,7 @@ class QuerysetProxy:
         child_column = self.related_field.default_source_field_name()  # type: ignore
         rel_kwargs = {owner_column: self._owner.pk, child_column: child.pk}
         through_model = await model_cls.objects.get(**rel_kwargs)
+        print('update kwargs', kwargs)
         await through_model.update(**kwargs)
 
     async def delete_through_instance(self, child: "Model") -> None:
@@ -188,9 +185,7 @@ class QuerysetProxy:
         """
         return await self.queryset.count()
 
-    async def max(  # noqa: A003
-        self, columns: Union[str, List[str]]
-    ) -> Union[Any, ResultProxy]:
+    async def max(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
         """
         Returns max value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -200,9 +195,7 @@ class QuerysetProxy:
         """
         return await self.queryset.max(columns=columns)
 
-    async def min(  # noqa: A003
-        self, columns: Union[str, List[str]]
-    ) -> Union[Any, ResultProxy]:
+    async def min(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
         """
         Returns min value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -212,9 +205,7 @@ class QuerysetProxy:
         """
         return await self.queryset.min(columns=columns)
 
-    async def sum(  # noqa: A003
-        self, columns: Union[str, List[str]]
-    ) -> Union[Any, ResultProxy]:
+    async def sum(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
         """
         Returns sum value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -224,7 +215,7 @@ class QuerysetProxy:
         """
         return await self.queryset.sum(columns=columns)
 
-    async def avg(self, columns: Union[str, List[str]]) -> Union[Any, ResultProxy]:
+    async def avg(self, columns: Union[str, List[str]]) -> Any:
         """
         Returns avg value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).

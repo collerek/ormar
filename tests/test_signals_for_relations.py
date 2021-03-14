@@ -70,7 +70,7 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(autouse=True, scope="function")
 async def cleanup():
     yield
     async with database:

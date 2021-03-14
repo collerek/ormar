@@ -320,6 +320,48 @@ class SqlJoin:
             )
             self.sorted_orders[clause] = clause.get_text_clause()
 
+    def _verify_allowed_order_field(self, order_by: str) -> None:
+        """
+        Verifies if proper field string is used.
+        :param order_by: string with order by definition
+        :type order_by: str
+        """
+        parts = order_by.split("__")
+        if len(parts) > 2 or parts[0] != self.target_field.through.get_name():
+            raise ModelDefinitionError(
+                "You can order the relation only " "by related or link table columns!"
+            )
+
+    def _get_alias_and_model(self, order_by: str) -> Tuple[str, Type["Model"]]:
+        """
+        Returns proper model and alias to be applied in the clause.
+
+        :param order_by: string with order by definition
+        :type order_by: str
+        :return: alias and model to be used in clause
+        :rtype: Tuple[str, Type["Model"]]
+        """
+        if self.target_field.is_multi and "__" in order_by:
+            self._verify_allowed_order_field(order_by=order_by)
+            alias = self.next_alias
+            model = self.target_field.owner
+        elif self.target_field.is_multi:
+            alias = self.alias_manager.resolve_relation_alias(
+                from_model=self.target_field.through,
+                relation_name=cast(
+                    "ManyToManyField", self.target_field
+                ).default_target_field_name(),
+            )
+            model = self.target_field.to
+        else:
+            alias = self.alias_manager.resolve_relation_alias(
+                from_model=self.target_field.owner,
+                relation_name=self.target_field.name,
+            )
+            model = self.target_field.to
+
+        return alias, model
+
     def _get_order_bys(self) -> None:  # noqa: CCR001
         """
         Triggers construction of order bys if they are given.
@@ -339,44 +381,13 @@ class SqlJoin:
                     self.already_sorted[
                         f"{self.next_alias}_{self.next_model.get_name()}"
                     ] = condition
-        # TODO: refactor into smaller helper functions
         if self.target_field.orders_by and not current_table_sorted:
             current_table_sorted = True
             for order_by in self.target_field.orders_by:
-                if self.target_field.is_multi and "__" in order_by:
-                    parts = order_by.split("__")
-                    if (
-                        len(parts) > 2
-                        or parts[0] != self.target_field.through.get_name()
-                    ):
-                        raise ModelDefinitionError(
-                            "You can order the relation only"
-                            "by related or link table columns!"
-                        )
-                    model = self.target_field.owner
-                    clause = ormar.OrderAction(
-                        order_str=order_by, model_cls=model, alias=alias,
-                    )
-                elif self.target_field.is_multi:
-                    alias = self.alias_manager.resolve_relation_alias(
-                        from_model=self.target_field.through,
-                        relation_name=cast(
-                            "ManyToManyField", self.target_field
-                        ).default_target_field_name(),
-                    )
-                    model = self.target_field.to
-                    clause = ormar.OrderAction(
-                        order_str=order_by, model_cls=model, alias=alias
-                    )
-                else:
-                    alias = self.alias_manager.resolve_relation_alias(
-                        from_model=self.target_field.owner,
-                        relation_name=self.target_field.name,
-                    )
-                    model = self.target_field.to
-                    clause = ormar.OrderAction(
-                        order_str=order_by, model_cls=model, alias=alias
-                    )
+                alias, model = self._get_alias_and_model(order_by=order_by)
+                clause = ormar.OrderAction(
+                    order_str=order_by, model_cls=model, alias=alias
+                )
                 self.sorted_orders[clause] = clause.get_text_clause()
                 self.already_sorted[f"{alias}_{model.get_name()}"] = clause
 

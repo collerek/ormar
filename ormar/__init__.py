@@ -22,15 +22,15 @@ And what's a better name for python ORM than snakes cabinet :)
 from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
 from ormar.decorators import (  # noqa: I100
     post_delete,
-    post_save,
-    post_update,
     post_relation_add,
     post_relation_remove,
+    post_save,
+    post_update,
     pre_delete,
-    pre_save,
-    pre_update,
     pre_relation_add,
     pre_relation_remove,
+    pre_save,
+    pre_update,
     property_field,
 )
 from ormar.exceptions import (  # noqa: I100

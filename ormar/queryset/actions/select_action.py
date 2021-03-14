@@ -1,10 +1,11 @@
-from typing import Callable, TYPE_CHECKING, Type
+import decimal
+from typing import Any, Callable, TYPE_CHECKING, Type
 
 import sqlalchemy
 
-from ormar.queryset.actions.query_action import QueryAction
+from ormar.queryset.actions.query_action import QueryAction  # noqa: I202
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
 
 
@@ -22,13 +23,20 @@ class SelectAction(QueryAction):
         self, select_str: str, model_cls: Type["Model"], alias: str = None
     ) -> None:
         super().__init__(query_str=select_str, model_cls=model_cls)
-        if alias:
+        if alias:  # pragma: no cover
             self.table_prefix = alias
 
     def _split_value_into_parts(self, order_str: str) -> None:
         parts = order_str.split("__")
         self.field_name = parts[-1]
         self.related_parts = parts[:-1]
+
+    @property
+    def is_numeric(self) -> bool:
+        return self.get_target_field_type() in [int, float, decimal.Decimal]
+
+    def get_target_field_type(self) -> Any:
+        return self.target_model.Meta.model_fields[self.field_name].__type__
 
     def get_text_clause(self) -> sqlalchemy.sql.expression.TextClause:
         alias = f"{self.table_prefix}_" if self.table_prefix else ""

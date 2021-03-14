@@ -69,6 +69,7 @@ class Model(ModelRow):
         :return: saved Model
         :rtype: Model
         """
+        await self.signals.pre_save.send(sender=self.__class__, instance=self)
         self_fields = self._extract_model_db_fields()
 
         if not self.pk and self.Meta.model_fields[self.Meta.pkname].autoincrement:
@@ -81,8 +82,6 @@ class Model(ModelRow):
                 if k not in self.extract_related_names()
             }
         )
-
-        await self.signals.pre_save.send(sender=self.__class__, instance=self)
 
         self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.insert()
@@ -216,7 +215,9 @@ class Model(ModelRow):
                 "You cannot update not saved model! Use save or upsert method."
             )
 
-        await self.signals.pre_update.send(sender=self.__class__, instance=self)
+        await self.signals.pre_update.send(
+            sender=self.__class__, instance=self, passed_args=kwargs
+        )
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
         self_fields = self.translate_columns_to_aliases(self_fields)

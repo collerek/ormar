@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, Dict, List, Type
 from uuid import UUID, uuid4
 
 import databases
@@ -6,6 +6,8 @@ import pytest
 import sqlalchemy
 
 import ormar
+from ormar import ModelDefinitionError, Model, QuerySet, pre_update
+from ormar import pre_save, pre_relation_add
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -30,7 +32,7 @@ class Link(ormar.Model):
     class Meta(BaseMeta):
         tablename = "link_table"
 
-    id: int = ormar.Integer(primary_key=True)
+    id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     animal_order: int = ormar.Integer(nullable=True)
     human_order: int = ormar.Integer(nullable=True)
 
@@ -50,6 +52,17 @@ class Human(ormar.Model):
     )
 
 
+class Human2(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "humans2"
+
+    id: UUID = ormar.UUID(primary_key=True, default=uuid4)
+    name: str = ormar.Text(default="")
+    favoriteAnimals: List[Animal] = ormar.ManyToMany(
+        Animal, related_name="favoriteHumans2", orders_by=["link__animal_order__fail"]
+    )
+
+
 @pytest.fixture(autouse=True, scope="module")
 def create_test_database():
     engine = sqlalchemy.create_engine(DATABASE_URL)
@@ -60,8 +73,93 @@ def create_test_database():
 
 
 @pytest.mark.asyncio
+async def test_ordering_by_through_fail():
+    async with database:
+        alice = await Human2(name="Alice").save()
+        spot = await Animal(name="Spot").save()
+        await alice.favoriteAnimals.add(spot)
+        with pytest.raises(ModelDefinitionError):
+            await alice.load_all()
+
+
+def get_filtered_query(
+        sender: Type[Model], instance: Model, to_class: Type[Model]
+) -> QuerySet:
+    pk = getattr(instance, f"{to_class.get_name()}").pk
+    filter_kwargs = {f"{to_class.get_name()}": pk}
+    query = sender.objects.filter(**filter_kwargs)
+    return query
+
+
+async def populate_order_on_insert(
+        sender: Type[Model], instance: Model, from_class: Type[Model],
+        to_class: Type[Model]
+):
+    order_column = f"{from_class.get_name()}_order"
+    if getattr(instance, order_column) is None:
+        query = get_filtered_query(sender, instance, to_class)
+        max_order = await query.max(order_column)
+        max_order = max_order + 1 if max_order is not None else 0
+        setattr(instance, order_column, max_order)
+    else:
+        await reorder_on_update(sender, instance, from_class, to_class,
+                                passed_args={
+                                    order_column: getattr(instance, order_column)})
+
+
+async def reorder_on_update(
+        sender: Type[Model], instance: Model, from_class: Type[Model],
+        to_class: Type[Model], passed_args: Dict
+):
+    order = f"{from_class.get_name()}_order"
+    if order in passed_args:
+        query = get_filtered_query(sender, instance, to_class)
+        to_reorder = await query.exclude(pk=instance.pk).order_by(order).all()
+        old_order = getattr(instance, order)
+        new_order = passed_args.get(order)
+        if to_reorder:
+            for link in to_reorder:
+                setattr(link, order, getattr(link, order) + 1)
+            await sender.objects.bulk_update(to_reorder, columns=[order])
+        check = await get_filtered_query(sender, instance, to_class).all()
+        print('reordered', check)
+
+
+@pre_save(Link)
+async def order_link_on_insert(sender: Type[Model], instance: Model, **kwargs: Any):
+    relations = list(instance.extract_related_names())
+    rel_one = sender.Meta.model_fields[relations[0]].to
+    rel_two = sender.Meta.model_fields[relations[1]].to
+    await populate_order_on_insert(sender, instance, from_class=rel_one,
+                                   to_class=rel_two)
+    await populate_order_on_insert(sender, instance, from_class=rel_two,
+                                   to_class=rel_one)
+
+
+@pre_update(Link)
+async def reorder_links_on_update(
+        sender: Type[ormar.Model], instance: ormar.Model, passed_args: Dict,
+        **kwargs: Any
+):
+    relations = list(instance.extract_related_names())
+    rel_one = sender.Meta.model_fields[relations[0]].to
+    rel_two = sender.Meta.model_fields[relations[1]].to
+    await reorder_on_update(sender, instance, from_class=rel_one, to_class=rel_two,
+                            passed_args=passed_args)
+    await reorder_on_update(sender, instance, from_class=rel_two, to_class=rel_one,
+                            passed_args=passed_args)
+
+
+@pytest.mark.asyncio
 async def test_ordering_by_through_on_m2m_field():
     async with database:
+        def verify_order(instance, expected):
+            field_name = (
+                "favoriteAnimals" if isinstance(instance,
+                                                Human) else "favoriteHumans"
+            )
+            assert [x.name for x in getattr(instance, field_name)] == expected
+
         alice = await Human(name="Alice").save()
         bob = await Human(name="Bob").save()
         charlie = await Human(name="Charlie").save()
@@ -70,98 +168,55 @@ async def test_ordering_by_through_on_m2m_field():
         kitty = await Animal(name="Kitty").save()
         noodle = await Animal(name="Noodle").save()
 
-        # you need to add them in order anyway so can provide order explicitly
-        # if you have a lot of them a list with enumerate might be an option
-        await alice.favoriteAnimals.add(noodle, animal_order=0, human_order=0)
-        await alice.favoriteAnimals.add(spot, animal_order=1, human_order=0)
-        await alice.favoriteAnimals.add(kitty, animal_order=2, human_order=0)
+        await alice.favoriteAnimals.add(noodle)
+        await alice.favoriteAnimals.add(spot)
+        await alice.favoriteAnimals.add(kitty)
 
-        # you dont have to reload queries on queryset clears the existing related
-        # alice = await alice.reload()
         await alice.load_all()
-        assert [x.name for x in alice.favoriteAnimals] == ["Noodle", "Spot", "Kitty"]
+        verify_order(alice, ["Noodle", "Spot", "Kitty"])
 
-        await bob.favoriteAnimals.add(noodle, animal_order=0, human_order=1)
-        await bob.favoriteAnimals.add(kitty, animal_order=1, human_order=1)
-        await bob.favoriteAnimals.add(spot, animal_order=2, human_order=1)
+        await bob.favoriteAnimals.add(noodle)
+        await bob.favoriteAnimals.add(kitty)
+        await bob.favoriteAnimals.add(spot)
 
         await bob.load_all()
-        assert [x.name for x in bob.favoriteAnimals] == ["Noodle", "Kitty", "Spot"]
+        verify_order(bob, ["Noodle", "Kitty", "Spot"])
 
-        await charlie.favoriteAnimals.add(kitty, animal_order=0, human_order=2)
-        await charlie.favoriteAnimals.add(noodle, animal_order=1, human_order=2)
-        await charlie.favoriteAnimals.add(spot, animal_order=2, human_order=2)
+        await charlie.favoriteAnimals.add(kitty)
+        await charlie.favoriteAnimals.add(noodle)
+        await charlie.favoriteAnimals.add(spot)
 
         await charlie.load_all()
-        assert [x.name for x in charlie.favoriteAnimals] == ["Kitty", "Noodle", "Spot"]
+        verify_order(charlie, ["Kitty", "Noodle", "Spot"])
 
         animals = [noodle, kitty, spot]
         for animal in animals:
             await animal.load_all()
-            assert [x.name for x in animal.favoriteHumans] == [
-                "Alice",
-                "Bob",
-                "Charlie",
-            ]
+            verify_order(animal, ["Alice", "Bob", "Charlie"])
 
         zack = await Human(name="Zack").save()
 
-        async def reorder_humans(animal, new_ordered_humans):
-            noodle_links = await Link.objects.filter(animal=animal).all()
-            for link in noodle_links:
-                link.human_order = next(
-                    (
-                        i
-                        for i, x in enumerate(new_ordered_humans)
-                        if x.pk == link.human.pk
-                    ),
-                    None,
-                )
-            await Link.objects.bulk_update(noodle_links, columns=["human_order"])
-
         await noodle.favoriteHumans.add(zack, animal_order=0, human_order=0)
-        await reorder_humans(noodle, [zack, alice, bob, charlie])
         await noodle.load_all()
-        assert [x.name for x in noodle.favoriteHumans] == [
-            "Zack",
-            "Alice",
-            "Bob",
-            "Charlie",
-        ]
+        verify_order(noodle, ["Zack", "Alice", "Bob", "Charlie"])
 
         await zack.load_all()
-        assert [x.name for x in zack.favoriteAnimals] == ["Noodle"]
+        verify_order(zack, ["Noodle"])
 
-        humans = noodle.favoriteHumans
-        humans.insert(1, humans.pop(0))
-        await reorder_humans(noodle, humans)
+        await noodle.favoriteHumans.filter(name='Zack').update(
+            link=dict(human_order=1))
         await noodle.load_all()
-        assert [x.name for x in noodle.favoriteHumans] == [
-            "Alice",
-            "Zack",
-            "Bob",
-            "Charlie",
-        ]
+        verify_order(noodle, ["Alice", "Zack", "Bob", "Charlie"])
 
-        humans.insert(2, humans.pop(1))
-        await reorder_humans(noodle, humans)
+        await noodle.favoriteHumans.filter(name='Zack').update(
+            link=dict(human_order=2))
         await noodle.load_all()
-        assert [x.name for x in noodle.favoriteHumans] == [
-            "Alice",
-            "Bob",
-            "Zack",
-            "Charlie",
-        ]
+        verify_order(noodle, ["Alice", "Bob", "Zack", "Charlie"])
 
-        humans.insert(3, humans.pop(2))
-        await reorder_humans(noodle, humans)
+        await noodle.favoriteHumans.filter(name='Zack').update(
+            link=dict(human_order=3))
         await noodle.load_all()
-        assert [x.name for x in noodle.favoriteHumans] == [
-            "Alice",
-            "Bob",
-            "Charlie",
-            "Zack",
-        ]
+        verify_order(noodle, ["Alice", "Bob", "Charlie", "Zack"])
 
         await kitty.favoriteHumans.remove(bob)
         await kitty.load_all()
@@ -169,8 +224,9 @@ async def test_ordering_by_through_on_m2m_field():
 
         bob = await noodle.favoriteHumans.get(pk=bob.pk)
         assert bob.link.human_order == 1
+
         await noodle.favoriteHumans.remove(
             await noodle.favoriteHumans.filter(link__human_order=2).get()
         )
         await noodle.load_all()
-        assert [x.name for x in noodle.favoriteHumans] == ["Alice", "Bob", "Zack"]
+        verify_order(noodle, ["Alice", "Bob", "Zack"])
