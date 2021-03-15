@@ -161,7 +161,7 @@ async def test_only_one_side_has_through() -> Any:
         assert post2.categories[0].postcategory is not None
 
         categories = await Category.objects.select_related("posts").all()
-        categories = cast(Sequence[Category], categories)
+        assert isinstance(categories[0], Category)
         assert categories[0].postcategory is None
         assert categories[0].posts[0].postcategory is not None
 

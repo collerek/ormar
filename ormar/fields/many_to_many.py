@@ -5,7 +5,7 @@ from pydantic.typing import ForwardRef, evaluate_forwardref
 import ormar  # noqa: I100
 from ormar import ModelDefinitionError
 from ormar.fields import BaseField
-from ormar.fields.foreign_key import ForeignKeyField
+from ormar.fields.foreign_key import ForeignKeyField, validate_not_allowed_fields
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
@@ -93,26 +93,13 @@ def ManyToMany(
     nullable = kwargs.pop("nullable", True)
     owner = kwargs.pop("owner", None)
     self_reference = kwargs.pop("self_reference", False)
+    orders_by = kwargs.pop("orders_by", None)
+    related_orders_by = kwargs.pop("related_orders_by", None)
+
     if through is not None and through.__class__ != ForwardRef:
         forbid_through_relations(cast(Type["Model"], through))
 
-    default = kwargs.pop("default", None)
-    encrypt_secret = kwargs.pop("encrypt_secret", None)
-    encrypt_backend = kwargs.pop("encrypt_backend", None)
-    encrypt_custom_backend = kwargs.pop("encrypt_custom_backend", None)
-
-    not_supported = [
-        default,
-        encrypt_secret,
-        encrypt_backend,
-        encrypt_custom_backend,
-    ]
-    if any(x is not None for x in not_supported):
-        raise ModelDefinitionError(
-            f"Argument {next((x for x in not_supported if x is not None))} "
-            f"is not supported "
-            "on relation fields!"
-        )
+    validate_not_allowed_fields(kwargs)
 
     if to.__class__ == ForwardRef:
         __type__ = to if not nullable else Optional[to]
@@ -141,6 +128,8 @@ def ManyToMany(
         self_reference=self_reference,
         is_relation=True,
         is_multi=True,
+        orders_by=orders_by,
+        related_orders_by=related_orders_by,
     )
 
     return type("ManyToMany", (ManyToManyField, BaseField), namespace)

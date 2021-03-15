@@ -192,6 +192,47 @@ Send for `Model.update()` method.
 
 `sender` is a `ormar.Model` class and `instance` is the model that was deleted.
 
+### pre_relation_add
+
+`pre_relation_add(sender: Type["Model"], instance: "Model", child: "Model", 
+relation_name: str, passed_args: Dict)`
+
+Send for `Model.relation_name.add()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
+
+`sender` - sender class, `instance` - instance to which related model is added, `child` - model being added,
+`relation_name` - name of the relation to which child is added, for add signals also `passed_kwargs` - dict of kwargs passed to `add()`
+
+### post_relation_add
+
+`post_relation_add(sender: Type["Model"], instance: "Model", child: "Model", 
+relation_name: str, passed_args: Dict)`
+
+Send for `Model.relation_name.add()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
+
+`sender` - sender class, `instance` - instance to which related model is added, `child` - model being added,
+`relation_name` - name of the relation to which child is added, for add signals also `passed_kwargs` - dict of kwargs passed to `add()`
+
+### pre_relation_remove
+
+`pre_relation_remove(sender: Type["Model"], instance: "Model", child: "Model", 
+relation_name: str)`
+
+Send for `Model.relation_name.remove()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
+
+`sender` - sender class, `instance` - instance to which related model is added, `child` - model being added,
+`relation_name` - name of the relation to which child is added.
+
+### post_relation_remove
+
+`post_relation_remove(sender: Type["Model"], instance: "Model", child: "Model", 
+relation_name: str, passed_args: Dict)`
+
+Send for `Model.relation_name.remove()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
+
+`sender` - sender class, `instance` - instance to which related model is added, `child` - model being added,
+`relation_name` - name of the relation to which child is added.
+
+
 ## Defining your own signals
 
 Note that you can create your own signals although you will have to send them manually in your code or subclass `ormar.Model`

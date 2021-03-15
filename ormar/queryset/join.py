@@ -1,22 +1,24 @@
 from collections import OrderedDict
 from typing import (
     Any,
+    Dict,
     List,
     Optional,
     TYPE_CHECKING,
     Tuple,
     Type,
+    cast,
 )
 
 import sqlalchemy
 from sqlalchemy import text
 
 import ormar  # noqa I100
-from ormar.exceptions import RelationshipInstanceError
+from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
 from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
+    from ormar import Model, ManyToManyField
     from ormar.queryset import OrderAction
     from ormar.models.excludable import ExcludableItems
 
@@ -36,14 +38,18 @@ class SqlJoin:
         related_models: Any = None,
         own_alias: str = "",
         source_model: Type["Model"] = None,
+        already_sorted: Dict = None,
     ) -> None:
         self.relation_name = relation_name
         self.related_models = related_models or []
         self.select_from = select_from
         self.columns = columns
         self.excludable = excludable
+
         self.order_columns = order_columns
         self.sorted_orders = sorted_orders
+        self.already_sorted = already_sorted or dict()
+
         self.main_model = main_model
         self.own_alias = own_alias
         self.used_aliases = used_aliases
@@ -205,6 +211,7 @@ class SqlJoin:
             relation_str="__".join([self.relation_str, related_name]),
             own_alias=self.next_alias,
             source_model=self.source_model or self.main_model,
+            already_sorted=self.already_sorted,
         )
         (
             self.used_aliases,
@@ -307,12 +314,53 @@ class SqlJoin:
         self.used_aliases.append(self.next_alias)
 
     def _set_default_primary_key_order_by(self) -> None:
-        clause = ormar.OrderAction(
-            order_str=self.next_model.Meta.pkname,
-            model_cls=self.next_model,
-            alias=self.next_alias,
-        )
-        self.sorted_orders[clause] = clause.get_text_clause()
+        for order_by in self.next_model.Meta.orders_by:
+            clause = ormar.OrderAction(
+                order_str=order_by, model_cls=self.next_model, alias=self.next_alias,
+            )
+            self.sorted_orders[clause] = clause.get_text_clause()
+
+    def _verify_allowed_order_field(self, order_by: str) -> None:
+        """
+        Verifies if proper field string is used.
+        :param order_by: string with order by definition
+        :type order_by: str
+        """
+        parts = order_by.split("__")
+        if len(parts) > 2 or parts[0] != self.target_field.through.get_name():
+            raise ModelDefinitionError(
+                "You can order the relation only " "by related or link table columns!"
+            )
+
+    def _get_alias_and_model(self, order_by: str) -> Tuple[str, Type["Model"]]:
+        """
+        Returns proper model and alias to be applied in the clause.
+
+        :param order_by: string with order by definition
+        :type order_by: str
+        :return: alias and model to be used in clause
+        :rtype: Tuple[str, Type["Model"]]
+        """
+        if self.target_field.is_multi and "__" in order_by:
+            self._verify_allowed_order_field(order_by=order_by)
+            alias = self.next_alias
+            model = self.target_field.owner
+        elif self.target_field.is_multi:
+            alias = self.alias_manager.resolve_relation_alias(
+                from_model=self.target_field.through,
+                relation_name=cast(
+                    "ManyToManyField", self.target_field
+                ).default_target_field_name(),
+            )
+            model = self.target_field.to
+        else:
+            alias = self.alias_manager.resolve_relation_alias(
+                from_model=self.target_field.owner,
+                relation_name=self.target_field.name,
+            )
+            model = self.target_field.to
+
+        return alias, model
 
     def _get_order_bys(self) -> None:  # noqa: CCR001
         """
@@ -320,18 +368,30 @@ class SqlJoin:
         Otherwise by default each table is sorted by a primary key column asc.
         """
         alias = self.next_alias
+        current_table_sorted = False
+        if f"{alias}_{self.next_model.get_name()}" in self.already_sorted:
+            current_table_sorted = True
         if self.order_columns:
-            current_table_sorted = False
             for condition in self.order_columns:
                 if condition.check_if_filter_apply(
                     target_model=self.next_model, alias=alias
                 ):
                     current_table_sorted = True
                     self.sorted_orders[condition] = condition.get_text_clause()
-            if not current_table_sorted and not self.target_field.is_multi:
-                self._set_default_primary_key_order_by()
+                    self.already_sorted[
+                        f"{self.next_alias}_{self.next_model.get_name()}"
+                    ] = condition
+        if self.target_field.orders_by and not current_table_sorted:
+            current_table_sorted = True
+            for order_by in self.target_field.orders_by:
+                alias, model = self._get_alias_and_model(order_by=order_by)
+                clause = ormar.OrderAction(
+                    order_str=order_by, model_cls=model, alias=alias
+                )
+                self.sorted_orders[clause] = clause.get_text_clause()
+                self.already_sorted[f"{alias}_{model.get_name()}"] = clause
 
-        elif not self.target_field.is_multi:
+        if not current_table_sorted and not self.target_field.is_multi:
             self._set_default_primary_key_order_by()
 
     def _get_to_and_from_keys(self) -> Tuple[str, str]:

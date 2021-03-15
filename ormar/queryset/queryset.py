@@ -18,7 +18,7 @@ from sqlalchemy import bindparam
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
 from ormar.exceptions import ModelError, ModelPersistenceError, QueryDefinitionError
-from ormar.queryset import FilterQuery
+from ormar.queryset import FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
 from ormar.queryset.prefetch_query import PrefetchQuery
@@ -557,6 +557,71 @@ class QuerySet:
         expr = sqlalchemy.func.count().select().select_from(expr)
         return await self.database.fetch_val(expr)
 
+    async def _query_aggr_function(self, func_name: str, columns: List) -> Any:
+        func = getattr(sqlalchemy.func, func_name)
+        select_actions = [
+            SelectAction(select_str=column, model_cls=self.model) for column in columns
+        ]
+        if func_name in ["sum", "avg"]:
+            if any(not x.is_numeric for x in select_actions):
+                raise QueryDefinitionError(
+                    "You can use sum and svg only with" "numeric types of columns"
+                )
+        select_columns = [x.apply_func(func, use_label=True) for x in select_actions]
+        expr = self.build_select_expression().alias(f"subquery_for_{func_name}")
+        expr = sqlalchemy.select(select_columns).select_from(expr)
+        # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
+        result = await self.database.fetch_one(expr)
+        return dict(result) if len(result) > 1 else result[0]  # type: ignore
+
+    async def max(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
+        """
+        Returns max value of columns for rows matching the given criteria
+        (applied with `filter` and `exclude` if set before).
+
+        :return: max value of column(s)
+        :rtype: Any
+        """
+        if not isinstance(columns, list):
+            columns = [columns]
+        return await self._query_aggr_function(func_name="max", columns=columns)
+
+    async def min(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
+        """
+        Returns min value of columns for rows matching the given criteria
+        (applied with `filter` and `exclude` if set before).
+
+        :return: min value of column(s)
+        :rtype: Any
+        """
+        if not isinstance(columns, list):
+            columns = [columns]
+        return await self._query_aggr_function(func_name="min", columns=columns)
+
+    async def sum(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
+        """
+        Returns sum value of columns for rows matching the given criteria
+        (applied with `filter` and `exclude` if set before).
+
+        :return: sum value of columns
+        :rtype: int
+        """
+        if not isinstance(columns, list):
+            columns = [columns]
+        return await self._query_aggr_function(func_name="sum", columns=columns)
+
+    async def avg(self, columns: Union[str, List[str]]) -> Any:
+        """
+        Returns avg value of columns for rows matching the given criteria
+        (applied with `filter` and `exclude` if set before).
+
+        :return: avg value of columns
+        :rtype: Union[int, float, List]
+        """
+        if not isinstance(columns, list):
+            columns = [columns]
+        return await self._query_aggr_function(func_name="avg", columns=columns)
+
     async def update(self, each: bool = False, **kwargs: Any) -> int:
         """
         Updates the model table after applying the filters from kwargs.
@@ -773,7 +838,7 @@ class QuerySet:
         model = await self.get(pk=kwargs[pk_name])
         return await model.update(**kwargs)
 
-    async def all(self, **kwargs: Any) -> Sequence[Optional["Model"]]:  # noqa: A003
+    async def all(self, **kwargs: Any) -> List[Optional["Model"]]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 
@@ -906,6 +971,7 @@ class QuerySet:
                     "You cannot update unsaved objects. "
                     f"{self.model.__name__} has to have {pk_name} filled."
                 )
+            new_kwargs = self.model.parse_non_db_fields(new_kwargs)
             new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
             new_kwargs = self.model.translate_columns_to_aliases(new_kwargs)
             new_kwargs = {"new_" + k: v for k, v in new_kwargs.items() if k in columns}

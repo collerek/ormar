@@ -128,6 +128,58 @@ class Post(ormar.Model):
     
     It allows you to use `await post.categories.all()` but also `await category.posts.all()` to fetch data related only to specific post, category etc.
 
+## Relationship default sort order
+
+By default relations follow model default sort order so `primary_key` column ascending, or any sort order se in `Meta` class.
+
+!!!tip
+    To read more about models sort order visit [models](../models/index.md#model-sort-order) section of documentation
+
+But you can modify the order in which related models are loaded during query by providing `orders_by` and `related_orders_by`
+parameters to relations.
+
+In relations you can sort only by directly related model columns or for `ManyToMany` 
+columns also `Through` model columns `{through_field_name}__{column_name}`
+
+Sample configuration might look like this:
+
+```python hl_lines="24"
+database = databases.Database(DATABASE_URL)
+metadata = sqlalchemy.MetaData()
+
+
+class BaseMeta(ormar.ModelMeta):
+    metadata = metadata
+    database = database
+
+
+class Author(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "authors"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
+class Book(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "books"
+
+    id: int = ormar.Integer(primary_key=True)
+    author: Optional[Author] = ormar.ForeignKey(
+        Author, orders_by=["name"], related_orders_by=["-year"]
+    )
+    title: str = ormar.String(max_length=100)
+    year: int = ormar.Integer(nullable=True)
+    ranking: int = ormar.Integer(nullable=True)
+```
+
+Now calls:
+
+`await Author.objects.select_related("books").get()` - the books will be sorted by the book year descending
+
+`await Book.objects.select_related("author").all()` - the authors will be sorted by author name ascending
+
 ## Self-reference and postponed references
 
 In order to create auto-relation or create two models that reference each other in at least two

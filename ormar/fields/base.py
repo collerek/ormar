@@ -54,6 +54,8 @@ class BaseField(FieldInfo):
     through: Type["Model"]
     self_reference: bool = False
     self_reference_primary: Optional[str] = None
+    orders_by: Optional[List[str]] = None
+    related_orders_by: Optional[List[str]] = None
 
     encrypt_secret: str
     encrypt_backend: EncryptBackends = EncryptBackends.NONE

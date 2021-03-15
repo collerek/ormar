@@ -110,6 +110,7 @@ def register_reverse_model_fields(model_field: Type["ForeignKeyField"]) -> None:
             owner=model_field.to,
             self_reference=model_field.self_reference,
             self_reference_primary=model_field.self_reference_primary,
+            orders_by=model_field.related_orders_by,
         )
         # register foreign keys on through model
         model_field = cast(Type["ManyToManyField"], model_field)
@@ -123,6 +124,7 @@ def register_reverse_model_fields(model_field: Type["ForeignKeyField"]) -> None:
             related_name=model_field.name,
             owner=model_field.to,
             self_reference=model_field.self_reference,
+            orders_by=model_field.related_orders_by,
         )
 
 

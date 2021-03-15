@@ -69,6 +69,7 @@ class Model(ModelRow):
         :return: saved Model
         :rtype: Model
         """
+        await self.signals.pre_save.send(sender=self.__class__, instance=self)
         self_fields = self._extract_model_db_fields()
 
         if not self.pk and self.Meta.model_fields[self.Meta.pkname].autoincrement:
@@ -81,8 +82,6 @@ class Model(ModelRow):
                 if k not in self.extract_related_names()
             }
         )
-
-        await self.signals.pre_save.send(sender=self.__class__, instance=self)
 
         self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.insert()
@@ -216,7 +215,9 @@ class Model(ModelRow):
                 "You cannot update not saved model! Use save or upsert method."
             )
 
-        await self.signals.pre_update.send(sender=self.__class__, instance=self)
+        await self.signals.pre_update.send(
+            sender=self.__class__, instance=self, passed_args=kwargs
+        )
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
         self_fields = self.translate_columns_to_aliases(self_fields)
@@ -273,7 +274,10 @@ class Model(ModelRow):
         return self
 
     async def load_all(
-        self: T, follow: bool = False, exclude: Union[List, str, Set, Dict] = None
+        self: T,
+        follow: bool = False,
+        exclude: Union[List, str, Set, Dict] = None,
+        order_by: Union[List, str] = None,
     ) -> T:
         """
         Allow to refresh existing Models fields from database.
@@ -291,6 +295,8 @@ class Model(ModelRow):
         will load second Model A but will never follow into Model X.
         Nested relations of those kind need to be loaded manually.
 
+        :param order_by: columns by which models should be sorted
+        :type order_by: Union[List, str]
         :raises NoMatch: If given pk is not found in database.
 
         :param exclude: related models to exclude
@@ -308,6 +314,8 @@ class Model(ModelRow):
         queryset = self.__class__.objects
         if exclude:
             queryset = queryset.exclude_fields(exclude)
+        if order_by:
+            queryset = queryset.order_by(order_by)
         instance = await queryset.select_related(relations).get(pk=self.pk)
         self._orm.clear()
         self.update_from_dict(instance.dict())

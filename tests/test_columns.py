@@ -1,5 +1,4 @@
 import datetime
-import os
 
 import databases
 import pydantic

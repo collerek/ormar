@@ -216,6 +216,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             )
             if isinstance(object.__getattribute__(self, "__dict__").get(name), list):
                 # virtual foreign key or many to many
+                # TODO: Fix double items in dict, no effect on real action ugly repr
+                # if model.pk not in [x.pk for  x in related_list]:
                 object.__getattribute__(self, "__dict__")[name].append(model)
             else:
                 # foreign key relation

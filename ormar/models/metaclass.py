@@ -71,6 +71,7 @@ class ModelMeta:
     signals: SignalEmitter
     abstract: bool
     requires_ref_update: bool
+    orders_by: List[str]
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:
@@ -139,6 +140,10 @@ def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
         signals.post_save = Signal()
         signals.post_update = Signal()
         signals.post_delete = Signal()
+        signals.pre_relation_add = Signal()
+        signals.post_relation_add = Signal()
+        signals.pre_relation_remove = Signal()
+        signals.post_relation_remove = Signal()
         new_model.Meta.signals = signals
 
 

@@ -1,7 +1,7 @@
 """
 Contains QuerySet and different Query classes to allow for constructing of sql queries.
 """
-from ormar.queryset.actions import FilterAction, OrderAction
+from ormar.queryset.actions import FilterAction, OrderAction, SelectAction
 from ormar.queryset.clause import and_, or_
 from ormar.queryset.filter_query import FilterQuery
 from ormar.queryset.limit_query import LimitQuery
@@ -17,6 +17,7 @@ __all__ = [
     "OrderQuery",
     "FilterAction",
     "OrderAction",
+    "SelectAction",
     "and_",
     "or_",
 ]

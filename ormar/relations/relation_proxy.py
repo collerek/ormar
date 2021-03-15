@@ -152,6 +152,12 @@ class RelationProxy(list):
                 f"Object {self._owner.get_name()} has no "
                 f"{item.get_name()} with given primary key!"
             )
+        await self._owner.signals.pre_relation_remove.send(
+            sender=self._owner.__class__,
+            instance=self._owner,
+            child=item,
+            relation_name=self.field_name,
+        )
         super().remove(item)
         relation_name = self.related_field_name
         relation = item._orm._get(relation_name)
@@ -169,6 +175,12 @@ class RelationProxy(list):
                 await item.update()
             else:
                 await item.delete()
+        await self._owner.signals.post_relation_remove.send(
+            sender=self._owner.__class__,
+            instance=self._owner,
+            child=item,
+            relation_name=self.field_name,
+        )
 
     async def add(self, item: "Model", **kwargs: Any) -> None:
         """
@@ -182,6 +194,13 @@ class RelationProxy(list):
         :type item: Model
         """
         relation_name = self.related_field_name
+        await self._owner.signals.pre_relation_add.send(
+            sender=self._owner.__class__,
+            instance=self._owner,
+            child=item,
+            relation_name=self.field_name,
+            passed_kwargs=kwargs,
+        )
         self._check_if_model_saved()
         if self.type_ == ormar.RelationType.MULTIPLE:
             await self.queryset_proxy.create_through_instance(item, **kwargs)
@@ -189,3 +208,10 @@ class RelationProxy(list):
         else:
             setattr(item, relation_name, self._owner)
             await item.update()
+        await self._owner.signals.post_relation_add.send(
+            sender=self._owner.__class__,
+            instance=self._owner,
+            child=item,
+            relation_name=self.field_name,
+            passed_kwargs=kwargs,
+        )

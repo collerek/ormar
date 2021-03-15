@@ -12,7 +12,8 @@ from typing import (  # noqa: I100, I201
     cast,
 )
 
-import ormar
+
+import ormar  # noqa: I100, I202
 from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
 
 if TYPE_CHECKING:  # pragma no cover
@@ -126,10 +127,7 @@ class QuerysetProxy:
                 f"model without primary key set! \n"
                 f"Save the child model first."
             )
-        expr = model_cls.Meta.table.insert()
-        expr = expr.values(**final_kwargs)
-        # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
-        await model_cls.Meta.database.execute(expr)
+        await model_cls(**final_kwargs).save()
 
     async def update_through_instance(self, child: "Model", **kwargs: Any) -> None:
         """
@@ -184,6 +182,46 @@ class QuerysetProxy:
         :rtype: int
         """
         return await self.queryset.count()
+
+    async def max(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
+        """
+        Returns max value of columns for rows matching the given criteria
+        (applied with `filter` and `exclude` if set before).
+
+        :return: max value of column(s)
+        :rtype: Any
+        """
+        return await self.queryset.max(columns=columns)
+
+    async def min(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
+        """
+        Returns min value of columns for rows matching the given criteria
+        (applied with `filter` and `exclude` if set before).
+
+        :return: min value of column(s)
+        :rtype: Any
+        """
+        return await self.queryset.min(columns=columns)
+
+    async def sum(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
+        """
+        Returns sum value of columns for rows matching the given criteria
+        (applied with `filter` and `exclude` if set before).
+
+        :return: sum value of columns
+        :rtype: int
+        """
+        return await self.queryset.sum(columns=columns)
+
+    async def avg(self, columns: Union[str, List[str]]) -> Any:
+        """
+        Returns avg value of columns for rows matching the given criteria
+        (applied with `filter` and `exclude` if set before).
+
+        :return: avg value of columns
+        :rtype: Union[int, float, List]
+        """
+        return await self.queryset.avg(columns=columns)
 
     async def clear(self, keep_reversed: bool = True) -> int:
         """

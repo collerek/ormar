@@ -22,9 +22,13 @@ And what's a better name for python ORM than snakes cabinet :)
 from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
 from ormar.decorators import (  # noqa: I100
     post_delete,
+    post_relation_add,
+    post_relation_remove,
     post_save,
     post_update,
     pre_delete,
+    pre_relation_add,
+    pre_relation_remove,
     pre_save,
     pre_update,
     property_field,
@@ -71,7 +75,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.9.8"
+__version__ = "0.9.9"
 __all__ = [
     "Integer",
     "BigInteger",
@@ -102,9 +106,13 @@ __all__ = [
     "post_delete",
     "post_save",
     "post_update",
+    "post_relation_add",
+    "post_relation_remove",
     "pre_delete",
     "pre_save",
     "pre_update",
+    "pre_relation_remove",
+    "pre_relation_add",
     "Signal",
     "BaseField",
     "ManyToManyField",

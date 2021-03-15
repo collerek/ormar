@@ -1,3 +1,4 @@
+import uuid
 from typing import Dict, Optional, Set, TYPE_CHECKING
 
 import ormar
@@ -54,6 +55,25 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         ):
             del new_kwargs[pkname]
         return new_kwargs
+
+    @classmethod
+    def parse_non_db_fields(cls, model_dict: Dict) -> Dict:
+        """
+        Receives dictionary of model that is about to be saved and changes uuid fields
+        to strings in bulk_update.
+
+        :param model_dict: dictionary of model that is about to be saved
+        :type model_dict: Dict
+        :return: dictionary of model that is about to be saved
+        :rtype: Dict
+        """
+        for name, field in cls.Meta.model_fields.items():
+            if field.__type__ == uuid.UUID and name in model_dict:
+                parsers = {"string": lambda x: str(x), "hex": lambda x: "%.32x" % x.int}
+                uuid_format = field.column_type.uuid_format
+                parser = parsers.get(uuid_format, lambda x: x)
+                model_dict[name] = parser(model_dict[name])
+        return model_dict
 
     @classmethod
     def substitute_models_with_pks(cls, model_dict: Dict) -> Dict:  # noqa  CCR001

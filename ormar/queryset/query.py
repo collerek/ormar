@@ -63,14 +63,23 @@ class Query:
         That way the subquery with limit and offset only on main model has proper
         sorting applied and correct models are fetched.
         """
+        current_table_sorted = False
         if self.order_columns:
             for clause in self.order_columns:
                 if clause.is_source_model_order:
+                    current_table_sorted = True
                     self.sorted_orders[clause] = clause.get_text_clause()
-        else:
-            clause = ormar.OrderAction(
-                order_str=self.model_cls.Meta.pkname, model_cls=self.model_cls
-            )
+
+        if not current_table_sorted:
+            self._apply_default_model_sorting()
+
+    def _apply_default_model_sorting(self) -> None:
+        """
+        Applies orders_by from model Meta class (if provided), if it was not provided
+        it was filled by metaclass so it's always there and falls back to pk column
+        """
+        for order_by in self.model_cls.Meta.orders_by:
+            clause = ormar.OrderAction(order_str=order_by, model_cls=self.model_cls)
             self.sorted_orders[clause] = clause.get_text_clause()
 
     def _pagination_query_required(self) -> bool:
