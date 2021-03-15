@@ -27,7 +27,7 @@ class Author(ormar.Model):
 class Book(ormar.Model):
     class Meta(BaseMeta):
         tablename = "books"
-        order_by = ["-ranking"]
+        orders_by = ["-ranking"]
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(

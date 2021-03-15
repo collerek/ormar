@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Type, cast
+from typing import Any, Dict, List, Tuple, Type, cast
 from uuid import UUID, uuid4
 
 import databases
@@ -6,7 +6,7 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar import ModelDefinitionError, Model, QuerySet, pre_update
+from ormar import ModelDefinitionError, Model, QuerySet, pre_relation_remove, pre_update
 from ormar import pre_save
 from tests.settings import DATABASE_URL
 
@@ -95,6 +95,15 @@ def _get_filtered_query(
     return query
 
 
+def _get_through_model_relations(
+    sender: Type[Model], instance: Model
+) -> Tuple[Type[Model], Type[Model]]:
+    relations = list(instance.extract_related_names())
+    rel_one = sender.Meta.model_fields[relations[0]].to
+    rel_two = sender.Meta.model_fields[relations[1]].to
+    return rel_one, rel_two
+
+
 async def _populate_order_on_insert(
     sender: Type[Model], instance: Model, from_class: Type[Model], to_class: Type[Model]
 ):
@@ -161,9 +170,7 @@ async def order_link_on_insert(sender: Type[Model], instance: Model, **kwargs: A
     by calling save() on a model. Note that signal functions for pre_save signal accepts
     sender class, instance and have to accept **kwargs even if it's empty as of now.
     """
-    relations = list(instance.extract_related_names())
-    rel_one = sender.Meta.model_fields[relations[0]].to
-    rel_two = sender.Meta.model_fields[relations[1]].to
+    rel_one, rel_two = _get_through_model_relations(sender, instance)
     await _populate_order_on_insert(
         sender=sender, instance=instance, from_class=rel_one, to_class=rel_two
     )
@@ -183,9 +190,7 @@ async def reorder_links_on_update(
     update and have to accept **kwargs even if it's empty as of now.
     """
 
-    relations = list(instance.extract_related_names())
-    rel_one = sender.Meta.model_fields[relations[0]].to
-    rel_two = sender.Meta.model_fields[relations[1]].to
+    rel_one, rel_two = _get_through_model_relations(sender, instance)
     await _reorder_on_update(
         sender=sender,
         instance=instance,
@@ -202,6 +207,46 @@ async def reorder_links_on_update(
     )
 
 
+@pre_relation_remove([Animal, Human])
+async def reorder_links_on_remove(
+    sender: Type[ormar.Model],
+    instance: ormar.Model,
+    child: ormar.Model,
+    relation_name: str,
+    **kwargs: Any,
+):
+    """
+    Signal receiver registered on Anima and Human models, triggered every time before
+    relation on a model is removed. Note that signal functions for pre_relation_remove
+    signal accepts sender class, instance, child, relation_name and have to accept
+    **kwargs even if it's empty as of now.
+
+    Note that if classes have many relations you need to check if current one is ordered
+    """
+    through_class = sender.Meta.model_fields[relation_name].through
+    through_instance = getattr(instance, through_class.get_name())
+    if not through_instance:
+        parent_pk = instance.pk
+        child_pk = child.pk
+        filter_kwargs = {f"{sender.get_name()}": parent_pk, child.get_name(): child_pk}
+        through_instance = await through_class.objects.get(**filter_kwargs)
+    rel_one, rel_two = _get_through_model_relations(through_class, through_instance)
+    await _reorder_on_update(
+        sender=through_class,
+        instance=through_instance,
+        from_class=rel_one,
+        to_class=rel_two,
+        passed_args={f"{rel_one.get_name()}_order": 999999},
+    )
+    await _reorder_on_update(
+        sender=through_class,
+        instance=through_instance,
+        from_class=rel_two,
+        to_class=rel_one,
+        passed_args={f"{rel_two.get_name()}_order": 999999},
+    )
+
+
 @pytest.mark.asyncio
 async def test_ordering_by_through_on_m2m_field():
     async with database:
@@ -210,7 +255,13 @@ async def test_ordering_by_through_on_m2m_field():
             field_name = (
                 "favoriteAnimals" if isinstance(instance, Human) else "favoriteHumans"
             )
+            order_field_name = (
+                "animal_order" if isinstance(instance, Human) else "human_order"
+            )
             assert [x.name for x in getattr(instance, field_name)] == expected
+            assert [
+                getattr(x.link, order_field_name) for x in getattr(instance, field_name)
+            ] == [i for i in range(len(expected))]
 
         alice = await Human(name="Alice").save()
         bob = await Human(name="Bob").save()

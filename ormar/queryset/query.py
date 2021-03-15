@@ -71,7 +71,7 @@ class Query:
                     self.sorted_orders[clause] = clause.get_text_clause()
 
         if not current_table_sorted:
-            for order_by in self.model_cls.Meta.order_by:
+            for order_by in self.model_cls.Meta.orders_by:
                 clause = ormar.OrderAction(order_str=order_by, model_cls=self.model_cls)
                 self.sorted_orders[clause] = clause.get_text_clause()
 

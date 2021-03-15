@@ -252,9 +252,9 @@ def populate_meta_tablename_columns_and_pk(
 
     new_model.Meta.columns = columns
     new_model.Meta.pkname = pkname
-    if not new_model.Meta.order_by:
+    if not new_model.Meta.orders_by:
         # by default we sort by pk name if other option not provided
-        new_model.Meta.order_by.append(pkname)
+        new_model.Meta.orders_by.append(pkname)
     return new_model
 
 

@@ -1,3 +1,48 @@
+# 0.9.9
+
+## Features
+*  Add possibility to change default ordering of relations and models.
+    * To change model sorting pass `orders_by = [columns]` where `columns: List[str]` to model `Meta` class
+    * To change relation order_by pass `orders_by = [columns]` where `columns: List[str]`
+    * To change reverse relation order_by pass `related_orders_by = [columns]` where `columns: List[str]`
+    * Arguments can be column names or `-{col_name}` to sort descending
+    * In relations you can sort only by directly related model columns 
+      or for `ManyToMany` columns also `Through` model columns `"{through_field_name}__{column_name}"`
+    * Order in which order_by clauses are applied is as follows:
+      * Explicitly passed `order_by()` calls in query
+      * Relation passed `orders_by` if exists
+      * Model `Meta` class `orders_by`
+      * Model primary key column asc (fallback, used if none of above provided)
+*  Add 4 new aggregated functions -> `min`, `max`, `sum` and `avg` that are their 
+   corresponding sql equivalents. 
+    *  You can pass one or many column names including related columns.
+    *  As of now each column passed is aggregated separately (so `sum(col1+col2)` is not possible, 
+       you can have `sum(col1, col2)` and later add 2 returned sums in python)
+    *  You cannot `sum` and `avg` non numeric columns
+    *  If you aggregate on one column, the single value is directly returned as a result
+    *  If you aggregate on multiple columns a dictionary with column: result pairs is returned
+*  Add 4 new signals -> `pre_relation_add`, `post_relation_add`, `pre_relation_remove` and `post_relation_remove`
+    *  The newly added signals are emitted for `ManyToMany` relations (both sides) 
+       and reverse side of `ForeignKey` relation (same as `QuerysetProxy` is exposed).
+    *  Signals recieve following args: `sender: Type[Model]` - sender class, 
+       `instance: Model` - instance to which related model is added, `child: Model` - model being added,
+       `relation_name: str` - name of the relation to which child is added, 
+       for add signals also `passed_kwargs: Dict` - dict of kwargs passed to `add()`
+
+## Changes
+* `Through` models for ManyToMany relations are now instantiated on creation, deletion and update, so you can provide not only
+  autoincrement int as a primary key but any column type with default function provided.
+* Since `Through` models are now instantiated you can also subscribe to `Through` model 
+  pre/post save/update/delete signals
+* `pre_update` signals receivers now get also passed_args argument which is a 
+  dict of values passed to update function if any (else empty dict)
+  
+## Fixes
+* `pre_update` signal now is sent before the extraction of values so you can modify the passed
+  instance in place and modified fields values will be reflected in database
+* `bulk_update` now works correctly also with `UUID` primary key column type
+
+
 # 0.9.8
 
 ## Features

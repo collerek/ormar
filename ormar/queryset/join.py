@@ -314,7 +314,7 @@ class SqlJoin:
         self.used_aliases.append(self.next_alias)
 
     def _set_default_primary_key_order_by(self) -> None:
-        for order_by in self.next_model.Meta.order_by:
+        for order_by in self.next_model.Meta.orders_by:
             clause = ormar.OrderAction(
                 order_str=order_by, model_cls=self.next_model, alias=self.next_alias,
             )

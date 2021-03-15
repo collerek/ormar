@@ -71,7 +71,7 @@ class ModelMeta:
     signals: SignalEmitter
     abstract: bool
     requires_ref_update: bool
-    order_by: List[str]
+    orders_by: List[str]
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:
