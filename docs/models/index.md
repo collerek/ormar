@@ -368,6 +368,51 @@ You can set this parameter by providing `Meta` class `constraints` argument.
 --8<-- "../docs_src/models/docs006.py"
 ```
 
+## Model sort order
+
+When querying the database with given model by default the Model is ordered by the `primary_key`
+column ascending. If you wish to change the default behaviour you can do it by providing `orders_by`
+parameter to model `Meta` class.
+
+Sample default ordering:
+```python
+database = databases.Database(DATABASE_URL)
+metadata = sqlalchemy.MetaData()
+
+
+class BaseMeta(ormar.ModelMeta):
+    metadata = metadata
+    database = database
+
+# default sort by column id ascending
+class Author(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "authors"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+```
+Modified
+```python
+
+database = databases.Database(DATABASE_URL)
+metadata = sqlalchemy.MetaData()
+
+
+class BaseMeta(ormar.ModelMeta):
+    metadata = metadata
+    database = database
+
+# now default sort by name descending
+class Author(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "authors"
+        orders_by = ["-name"]
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+```
+
 ## Model Initialization
 
 There are two ways to create and persist the `Model` instance in the database.

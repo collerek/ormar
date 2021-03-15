@@ -71,9 +71,16 @@ class Query:
                     self.sorted_orders[clause] = clause.get_text_clause()
 
         if not current_table_sorted:
-            for order_by in self.model_cls.Meta.orders_by:
-                clause = ormar.OrderAction(order_str=order_by, model_cls=self.model_cls)
-                self.sorted_orders[clause] = clause.get_text_clause()
+            self._apply_default_model_sorting()
+
+    def _apply_default_model_sorting(self) -> None:
+        """
+        Applies orders_by from model Meta class (if provided), if it was not provided
+        it was filled by metaclass so it's always there and falls back to pk column
+        """
+        for order_by in self.model_cls.Meta.orders_by:
+            clause = ormar.OrderAction(order_str=order_by, model_cls=self.model_cls)
+            self.sorted_orders[clause] = clause.get_text_clause()
 
     def _pagination_query_required(self) -> bool:
         """

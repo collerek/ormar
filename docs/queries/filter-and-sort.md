@@ -289,7 +289,7 @@ books = (
 ```
 
 If you want or need to you can nest deeper conditions as deep as you want, in example to
-acheive a query like this:
+achieve a query like this:
 
 sql:
 ```
@@ -563,6 +563,38 @@ assert owner.toys[1].name == "Toy 1"
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
+
+### Default sorting in ormar
+
+Since order of rows in a database is not guaranteed, `ormar` **always** issues an `order by` sql clause to each (part of) query even if you do not provide order yourself. 
+
+When querying the database with given model by default the `Model` is ordered by the `primary_key`
+column ascending. If you wish to change the default behaviour you can do it by providing `orders_by`
+parameter to model `Meta` class.
+
+!!!tip
+    To read more about models sort order visit [models](../models/index.md#model-sort-order) section of documentation
+
+By default the relations follow the same ordering, but you can modify the order in which related models are loaded during query by providing `orders_by` and `related_orders_by`
+parameters to relations.
+
+!!!tip
+    To read more about models sort order visit [relations](../relations/index.md#relationship-default-sort-order) section of documentation
+
+Order in which order_by clauses are applied is as follows:
+
+  * Explicitly passed `order_by()` calls in query
+  * Relation passed `orders_by` and `related_orders_by` if exists
+  * Model `Meta` class `orders_by`
+  * Model `primary_key` column ascending (fallback, used if none of above provided)
+
+**Order from only one source is applied to each `Model` (so that you can always overwrite it in a single query).**
+
+That means that if you provide explicit `order_by` for a model in a query, the `Relation` and `Model` sort orders are skipped.
+
+If you provide a `Relation` one, the `Model` sort is skipped.
+
+Finally, if you provide one for `Model` the default one by `primary_key` is skipped.
 
 ### QuerysetProxy methods
 
