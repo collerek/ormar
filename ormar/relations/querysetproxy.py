@@ -127,7 +127,6 @@ class QuerysetProxy:
                 f"model without primary key set! \n"
                 f"Save the child model first."
             )
-        print('final kwargs', final_kwargs)
         await model_cls(**final_kwargs).save()
 
     async def update_through_instance(self, child: "Model", **kwargs: Any) -> None:
@@ -144,7 +143,6 @@ class QuerysetProxy:
         child_column = self.related_field.default_source_field_name()  # type: ignore
         rel_kwargs = {owner_column: self._owner.pk, child_column: child.pk}
         through_model = await model_cls.objects.get(**rel_kwargs)
-        print('update kwargs', kwargs)
         await through_model.update(**kwargs)
 
     async def delete_through_instance(self, child: "Model") -> None:

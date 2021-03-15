@@ -838,7 +838,7 @@ class QuerySet:
         model = await self.get(pk=kwargs[pk_name])
         return await model.update(**kwargs)
 
-    async def all(self, **kwargs: Any) -> Sequence[Optional["Model"]]:  # noqa: A003
+    async def all(self, **kwargs: Any) -> List[Optional["Model"]]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List, Type, cast
 from uuid import UUID, uuid4
 
 import databases
@@ -7,7 +7,7 @@ import sqlalchemy
 
 import ormar
 from ormar import ModelDefinitionError, Model, QuerySet, pre_update
-from ormar import pre_save, pre_relation_add
+from ormar import pre_save
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -82,81 +82,133 @@ async def test_ordering_by_through_fail():
             await alice.load_all()
 
 
-def get_filtered_query(
-        sender: Type[Model], instance: Model, to_class: Type[Model]
+def _get_filtered_query(
+    sender: Type[Model], instance: Model, to_class: Type[Model]
 ) -> QuerySet:
+    """
+    Helper function.
+    Gets the query filtered by the appropriate class name.
+    """
     pk = getattr(instance, f"{to_class.get_name()}").pk
     filter_kwargs = {f"{to_class.get_name()}": pk}
     query = sender.objects.filter(**filter_kwargs)
     return query
 
 
-async def populate_order_on_insert(
-        sender: Type[Model], instance: Model, from_class: Type[Model],
-        to_class: Type[Model]
+async def _populate_order_on_insert(
+    sender: Type[Model], instance: Model, from_class: Type[Model], to_class: Type[Model]
 ):
+    """
+    Helper function.
+
+    Get max values from database for both orders and adds 1 (0 if max is None) if the
+    order is not provided. If the order is provided it reorders the existing links
+    to match the newly defined order.
+
+    Assumes names f"{model.get_name()}_order" like for Animal: animal_order.
+    """
     order_column = f"{from_class.get_name()}_order"
     if getattr(instance, order_column) is None:
-        query = get_filtered_query(sender, instance, to_class)
+        query = _get_filtered_query(sender, instance, to_class)
         max_order = await query.max(order_column)
         max_order = max_order + 1 if max_order is not None else 0
         setattr(instance, order_column, max_order)
     else:
-        await reorder_on_update(sender, instance, from_class, to_class,
-                                passed_args={
-                                    order_column: getattr(instance, order_column)})
+        await _reorder_on_update(
+            sender=sender,
+            instance=instance,
+            from_class=from_class,
+            to_class=to_class,
+            passed_args={order_column: getattr(instance, order_column)},
+        )
 
 
-async def reorder_on_update(
-        sender: Type[Model], instance: Model, from_class: Type[Model],
-        to_class: Type[Model], passed_args: Dict
+async def _reorder_on_update(
+    sender: Type[Model],
+    instance: Model,
+    from_class: Type[Model],
+    to_class: Type[Model],
+    passed_args: Dict,
 ):
+    """
+    Helper function.
+    Actually reorders links by given order passed in add/update query to the link
+    model.
+
+    Assumes names f"{model.get_name()}_order" like for Animal: animal_order.
+    """
     order = f"{from_class.get_name()}_order"
     if order in passed_args:
-        query = get_filtered_query(sender, instance, to_class)
+        query = _get_filtered_query(sender, instance, to_class)
         to_reorder = await query.exclude(pk=instance.pk).order_by(order).all()
-        old_order = getattr(instance, order)
         new_order = passed_args.get(order)
-        if to_reorder:
-            for link in to_reorder:
-                setattr(link, order, getattr(link, order) + 1)
-            await sender.objects.bulk_update(to_reorder, columns=[order])
-        check = await get_filtered_query(sender, instance, to_class).all()
-        print('reordered', check)
+        if to_reorder and new_order is not None:
+            # can be more efficient - here we renumber all even if not needed.
+            for ind, link in enumerate(to_reorder):
+                if ind < new_order:
+                    setattr(link, order, ind)
+                else:
+                    setattr(link, order, ind + 1)
+            await sender.objects.bulk_update(
+                cast(List[Model], to_reorder), columns=[order]
+            )
 
 
 @pre_save(Link)
 async def order_link_on_insert(sender: Type[Model], instance: Model, **kwargs: Any):
+    """
+    Signal receiver registered on Link model, triggered every time before one is created
+    by calling save() on a model. Note that signal functions for pre_save signal accepts
+    sender class, instance and have to accept **kwargs even if it's empty as of now.
+    """
     relations = list(instance.extract_related_names())
     rel_one = sender.Meta.model_fields[relations[0]].to
     rel_two = sender.Meta.model_fields[relations[1]].to
-    await populate_order_on_insert(sender, instance, from_class=rel_one,
-                                   to_class=rel_two)
-    await populate_order_on_insert(sender, instance, from_class=rel_two,
-                                   to_class=rel_one)
+    await _populate_order_on_insert(
+        sender=sender, instance=instance, from_class=rel_one, to_class=rel_two
+    )
+    await _populate_order_on_insert(
+        sender=sender, instance=instance, from_class=rel_two, to_class=rel_one
+    )
 
 
 @pre_update(Link)
 async def reorder_links_on_update(
-        sender: Type[ormar.Model], instance: ormar.Model, passed_args: Dict,
-        **kwargs: Any
+    sender: Type[ormar.Model], instance: ormar.Model, passed_args: Dict, **kwargs: Any
 ):
+    """
+    Signal receiver registered on Link model, triggered every time before one is updated
+    by calling update() on a model. Note that signal functions for pre_update signal
+    accepts sender class, instance, passed_args which is a dict of kwargs passed to
+    update and have to accept **kwargs even if it's empty as of now.
+    """
+
     relations = list(instance.extract_related_names())
     rel_one = sender.Meta.model_fields[relations[0]].to
     rel_two = sender.Meta.model_fields[relations[1]].to
-    await reorder_on_update(sender, instance, from_class=rel_one, to_class=rel_two,
-                            passed_args=passed_args)
-    await reorder_on_update(sender, instance, from_class=rel_two, to_class=rel_one,
-                            passed_args=passed_args)
+    await _reorder_on_update(
+        sender=sender,
+        instance=instance,
+        from_class=rel_one,
+        to_class=rel_two,
+        passed_args=passed_args,
+    )
+    await _reorder_on_update(
+        sender=sender,
+        instance=instance,
+        from_class=rel_two,
+        to_class=rel_one,
+        passed_args=passed_args,
+    )
 
 
 @pytest.mark.asyncio
 async def test_ordering_by_through_on_m2m_field():
     async with database:
+
         def verify_order(instance, expected):
             field_name = (
-                "favoriteAnimals" if isinstance(instance,
-                                                Human) else "favoriteHumans"
+                "favoriteAnimals" if isinstance(instance, Human) else "favoriteHumans"
             )
             assert [x.name for x in getattr(instance, field_name)] == expected
 
@@ -196,25 +248,22 @@ async def test_ordering_by_through_on_m2m_field():
 
         zack = await Human(name="Zack").save()
 
-        await noodle.favoriteHumans.add(zack, animal_order=0, human_order=0)
+        await noodle.favoriteHumans.add(zack, human_order=0)
         await noodle.load_all()
         verify_order(noodle, ["Zack", "Alice", "Bob", "Charlie"])
 
         await zack.load_all()
         verify_order(zack, ["Noodle"])
 
-        await noodle.favoriteHumans.filter(name='Zack').update(
-            link=dict(human_order=1))
+        await noodle.favoriteHumans.filter(name="Zack").update(link=dict(human_order=1))
         await noodle.load_all()
         verify_order(noodle, ["Alice", "Zack", "Bob", "Charlie"])
 
-        await noodle.favoriteHumans.filter(name='Zack').update(
-            link=dict(human_order=2))
+        await noodle.favoriteHumans.filter(name="Zack").update(link=dict(human_order=2))
         await noodle.load_all()
         verify_order(noodle, ["Alice", "Bob", "Zack", "Charlie"])
 
-        await noodle.favoriteHumans.filter(name='Zack').update(
-            link=dict(human_order=3))
+        await noodle.favoriteHumans.filter(name="Zack").update(link=dict(human_order=3))
         await noodle.load_all()
         verify_order(noodle, ["Alice", "Bob", "Charlie", "Zack"])
 

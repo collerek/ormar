@@ -1,8 +1,6 @@
 import uuid
 from typing import Dict, Optional, Set, TYPE_CHECKING
 
-import pydantic
-
 import ormar
 from ormar.exceptions import ModelPersistenceError
 from ormar.models.helpers.validation import validate_choices
@@ -53,7 +51,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         pkname = cls.Meta.pkname
         pk = cls.Meta.model_fields[pkname]
         if new_kwargs.get(pkname, ormar.Undefined) is None and (
-                pk.nullable or pk.autoincrement
+            pk.nullable or pk.autoincrement
         ):
             del new_kwargs[pkname]
         return new_kwargs
@@ -71,10 +69,10 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         """
         for name, field in cls.Meta.model_fields.items():
             if field.__type__ == uuid.UUID and name in model_dict:
-                if field.column_type.uuid_format == "string":
-                    model_dict[name] = str(model_dict[name])
-                else:
-                    model_dict[name] = "%.32x" % model_dict[name].int
+                parsers = {"string": lambda x: str(x), "hex": lambda x: "%.32x" % x.int}
+                uuid_format = field.column_type.uuid_format
+                parser = parsers.get(uuid_format, lambda x: x)
+                model_dict[name] = parser(model_dict[name])
         return model_dict
 
     @classmethod
@@ -126,9 +124,9 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         """
         for field_name, field in cls.Meta.model_fields.items():
             if (
-                    field_name not in new_kwargs
-                    and field.has_default(use_server=False)
-                    and not field.pydantic_only
+                field_name not in new_kwargs
+                and field.has_default(use_server=False)
+                and not field.pydantic_only
             ):
                 new_kwargs[field_name] = field.get_default()
             # clear fields with server_default set as None
