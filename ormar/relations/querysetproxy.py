@@ -8,7 +8,7 @@ from typing import (  # noqa: I100, I201
     Sequence,
     Set,
     TYPE_CHECKING,
-    TypeVar, Union,
+    Type, TypeVar, Union,
     cast,
 )
 
@@ -35,11 +35,13 @@ class QuerysetProxy(Generic[TM]):
         relation: "Relation"
 
     def __init__(
-        self, relation: "Relation", type_: "RelationType", qryset: "QuerySet" = None
+        self, relation: "Relation", to: Type["TM"], type_: "RelationType",
+            qryset: Optional["QuerySet"] = None
     ) -> None:
         self.relation: Relation = relation
-        self._queryset: Optional["QuerySet[TM]"] = qryset
+        self._queryset = qryset
         self.type_: "RelationType" = type_
+        self.to = to
         self._owner: Union[CallableProxyType, "Model"] = self.relation.manager.owner
         self.related_field_name = self._owner.Meta.model_fields[
             self.relation.field_name
@@ -53,7 +55,7 @@ class QuerysetProxy(Generic[TM]):
         )
 
     @property
-    def queryset(self) -> "QuerySet":
+    def queryset(self) -> "QuerySet[TM]":
         """
         Returns queryset if it's set, AttributeError otherwise.
         :return: QuerySet
@@ -64,7 +66,7 @@ class QuerysetProxy(Generic[TM]):
         return self._queryset
 
     @queryset.setter
-    def queryset(self, value: "QuerySet") -> None:
+    def queryset(self, value: "QuerySet[TM]") -> None:
         """
         Set's the queryset. Initialized in RelationProxy.
         :param value: QuerySet
@@ -445,7 +447,7 @@ class QuerysetProxy(Generic[TM]):
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.filter(*args, **kwargs)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(relation=self.relation, to=self.to, type_=self.type_, qryset=queryset)
 
     def exclude(self, *args: Any, **kwargs: Any) -> "QuerysetProxy":  # noqa: A003, A001
         """
@@ -469,7 +471,7 @@ class QuerysetProxy(Generic[TM]):
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.exclude(*args, **kwargs)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(relation=self.relation, to=self.to, type_=self.type_, qryset=queryset)
 
     def select_related(self, related: Union[List, str]) -> "QuerysetProxy":
         """
@@ -491,7 +493,7 @@ class QuerysetProxy(Generic[TM]):
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.select_related(related)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(relation=self.relation, to=self.to, type_=self.type_, qryset=queryset)
 
     def prefetch_related(self, related: Union[List, str]) -> "QuerysetProxy":
         """
@@ -514,7 +516,7 @@ class QuerysetProxy(Generic[TM]):
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.prefetch_related(related)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(relation=self.relation, to=self.to, type_=self.type_, qryset=queryset)
 
     def paginate(self, page: int, page_size: int = 20) -> "QuerysetProxy":
         """
@@ -531,7 +533,7 @@ class QuerysetProxy(Generic[TM]):
         :rtype: QuerySet
         """
         queryset = self.queryset.paginate(page=page, page_size=page_size)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(relation=self.relation, to=self.to, type_=self.type_, qryset=queryset)
 
     def limit(self, limit_count: int) -> "QuerysetProxy":
         """
@@ -545,7 +547,7 @@ class QuerysetProxy(Generic[TM]):
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.limit(limit_count)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(relation=self.relation, to=self.to, type_=self.type_, qryset=queryset)
 
     def offset(self, offset: int) -> "QuerysetProxy":
         """
@@ -559,7 +561,7 @@ class QuerysetProxy(Generic[TM]):
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.offset(offset)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(relation=self.relation, to=self.to, type_=self.type_, qryset=queryset)
 
     def fields(self, columns: Union[List, str, Set, Dict]) -> "QuerysetProxy":
         """
@@ -607,7 +609,7 @@ class QuerysetProxy(Generic[TM]):
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.fields(columns)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(relation=self.relation,  to=self.to,type_=self.type_, qryset=queryset)
 
     def exclude_fields(self, columns: Union[List, str, Set, Dict]) -> "QuerysetProxy":
         """
@@ -639,7 +641,7 @@ class QuerysetProxy(Generic[TM]):
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.exclude_fields(columns=columns)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(relation=self.relation, to=self.to, type_=self.type_, qryset=queryset)
 
     def order_by(self, columns: Union[List, str]) -> "QuerysetProxy":
         """
@@ -676,4 +678,4 @@ class QuerysetProxy(Generic[TM]):
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.order_by(columns)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(relation=self.relation, to=self.to, type_=self.type_, qryset=queryset)

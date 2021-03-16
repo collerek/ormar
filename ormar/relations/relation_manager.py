@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Sequence, TYPE_CHECKING, Type, Union
+from typing import Dict, List, Optional, Sequence, TYPE_CHECKING, Type, TypeVar, Union
 from weakref import proxy
 
 from ormar.relations.relation import Relation, RelationType
@@ -7,6 +7,7 @@ from ormar.relations.utils import get_relations_sides_and_names
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import NewBaseModel, Model, TM
     from ormar.fields import ForeignKeyField, BaseField
+M = TypeVar("M", bound="Model")
 
 
 class RelationsManager:
@@ -15,16 +16,17 @@ class RelationsManager:
     """
 
     def __init__(
-        self,
-        related_fields: List[Type["ForeignKeyField"]] = None,
-        owner: Optional["Model"] = None,
+            self,
+            related_fields: List[Type["ForeignKeyField"]] = None,
+            owner: Optional["Model"] = None,
     ) -> None:
         self.owner = proxy(owner)
         self._related_fields = related_fields or []
         self._related_names = [field.name for field in self._related_fields]
-        self._relations: Dict[str, Relation] = dict()
+        self._relations: Dict = dict()
         for field in self._related_fields:
-            self._add_relation(field=field, to=field.to)
+            self._add_relation(field=field, to=field.to,
+                               through=getattr(field, "through", None))
 
     def __contains__(self, item: str) -> bool:
         """
@@ -41,7 +43,7 @@ class RelationsManager:
         for relation in self._relations.values():
             relation.clear()
 
-    def get(self, name: str) -> Optional[Union["Model", Sequence["Model"]]]:
+    def get(self, name: str) -> Optional[Union["TM", Sequence["TM"]]]:
         """
         Returns the related model/models if relation is set.
         Actual call is delegated to Relation instance registered under relation name.
@@ -57,7 +59,7 @@ class RelationsManager:
         return None  # pragma nocover
 
     @staticmethod
-    def add(parent: "Model", child: "Model", field: Type["ForeignKeyField"],) -> None:
+    def add(parent: "Model", child: "TM", field: Type["ForeignKeyField"], ) -> None:
         """
         Adds relation on both sides -> meaning on both child and parent models.
         One side of the relation is always weakref proxy to avoid circular refs.
@@ -78,17 +80,17 @@ class RelationsManager:
         )
 
         # print('adding parent', parent.get_name(), child.get_name(), child_name)
-        parent_relation = parent._orm._get(child_name)
+        parent_relation: Optional[Relation[TM]] = parent._orm._get(child_name)
         if parent_relation:
             parent_relation.add(child)  # type: ignore
 
         # print('adding child', child.get_name(), parent.get_name(), to_name)
-        child_relation = child._orm._get(to_name)
+        child_relation: Optional[Relation[Model]] = child._orm._get(to_name)
         if child_relation:
             child_relation.add(parent)
 
     def remove(
-        self, name: str, child: Union["NewBaseModel", Type["NewBaseModel"]]
+            self, name: str, child: Union["TM", Type["TM"]]
     ) -> None:
         """
         Removes given child from relation with given name.
@@ -100,13 +102,14 @@ class RelationsManager:
         :param child: child to remove from relation
         :type child: Union[Model, Type[Model]]
         """
-        relation = self._get(name)
+        relation: Optional[Relation[TM]] = self._get(name)
         if relation:
             relation.remove(child)
 
     @staticmethod
     def remove_parent(
-        item: Union["NewBaseModel", Type["NewBaseModel"]], parent: "Model", name: str
+            item: Union["TM", Type["TM"]], parent: "Model",
+            name: str
     ) -> None:
         """
         Removes given parent from relation with given name.
@@ -124,7 +127,7 @@ class RelationsManager:
         item._orm.remove(name, parent)
         parent._orm.remove(relation_name, item)
 
-    def _get(self, name: str) -> Optional[Relation]:
+    def _get(self, name: str) -> Optional[Relation[TM]]:
         """
         Returns the actual relation and not the related model(s).
 
@@ -153,7 +156,12 @@ class RelationsManager:
             return RelationType.THROUGH
         return RelationType.PRIMARY if not field.virtual else RelationType.REVERSE
 
-    def _add_relation(self, field: Type["BaseField"], to: Type["TM"]) -> None:
+    def _add_relation(
+            self,
+            field: Type["BaseField"],
+            to: Type["TM"],
+            through: Type["M"]
+    ) -> None:
         """
         Registers relation in the manager.
         Adds Relation instance under field.name.
@@ -161,10 +169,11 @@ class RelationsManager:
         :param field: field with relation declaration
         :type field: Type[BaseField]
         """
-        self._relations[field.name] = Relation(
+        relation = Relation[TM](
             manager=self,
             type_=self._get_relation_type(field),
             field_name=field.name,
             to=to,
-            through=getattr(field, "through", None),
+            through=through,
         )
+        self._relations[field.name] = relation

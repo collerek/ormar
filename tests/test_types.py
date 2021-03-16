@@ -58,15 +58,19 @@ async def test_types() -> None:
         book = await Book.objects.create(title='Test', author=author)
         book2 = await Book.objects.select_related('author').get()
         books = await Book.objects.select_related('author').all()
+        author_books = await author.books.all()
         assert book.author.name == 'Test Author'
         assert book2.author.name == 'Test Author'
-        if TYPE_CHECKING:
+        if TYPE_CHECKING:  # pragma: no cover
             reveal_type(book._orm._relations['author'].to)
             reveal_type(book2)
             reveal_type(query)
             reveal_type(book)
             reveal_type(book.author)
+            reveal_type(author)
             reveal_type(book.author.name)
-            reveal_type(await author.books.all())
+            reveal_type(author.books)
+            reveal_type(author.books._queryset)
+            reveal_type(author_books)
             reveal_type(books)
         assert_type(book)

@@ -396,7 +396,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         cause some dialect require different treatment"""
         return cls.Meta.database._backend._dialect.name
 
-    def remove(self, parent: "Model", name: str) -> None:
+    def remove(self: "TM", parent: "Model", name: str) -> None:  # type: ignore
         """Removes child from relation with given name in RelationshipManager"""
         self._orm.remove_parent(self, parent, name)
 

@@ -39,7 +39,7 @@ class Relation(Generic[TM]):
         type_: RelationType,
         field_name: str,
         to: Type["TM"],
-        through: Type["M"] = None,
+        through: Type["Model"] = None,
     ) -> None:
         """
         Initialize the Relation and keep the related models either as instances of
@@ -66,7 +66,7 @@ class Relation(Generic[TM]):
         self._through = through
         self.field_name: str = field_name
         self.related_models: Optional[Union[RelationProxy, "TM"]] = (
-            RelationProxy(relation=self, type_=type_, field_name=field_name)
+            RelationProxy(relation=self, to=self.to, type_=type_, field_name=field_name)
             if type_ in (RelationType.REVERSE, RelationType.MULTIPLE)
             else None
         )
@@ -80,7 +80,7 @@ class Relation(Generic[TM]):
             self._owner.__dict__[self.field_name] = None
 
     @property
-    def through(self) -> Type["M"]:
+    def through(self) -> Type["Model"]:
         if not self._through:  # pragma: no cover
             raise RelationshipInstanceError("Relation does not have through model!")
         return self._through
@@ -96,6 +96,7 @@ class Relation(Generic[TM]):
         ]
         self.related_models = RelationProxy(
             relation=self,
+            to=self.to,
             type_=self._type,
             field_name=self.field_name,
             data_=cleaned_data,

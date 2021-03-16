@@ -6,7 +6,7 @@ except ImportError:  # pragma: nocover
     from typing_extensions import Protocol  # type: ignore
 
 if TYPE_CHECKING:  # noqa: C901; #pragma nocover
-    from ormar import Model
+    from ormar import Model, TM
     from ormar.relations.querysetproxy import QuerysetProxy
 
 
@@ -38,10 +38,10 @@ class QuerySetProtocol(Protocol):  # pragma: nocover
     def offset(self, offset: int) -> "QuerysetProxy":
         ...
 
-    async def first(self, **kwargs: Any) -> "Model":
+    async def first(self, **kwargs: Any) -> "TM":
         ...
 
-    async def get(self, **kwargs: Any) -> "Model":
+    async def get(self, **kwargs: Any) -> "TM":
         ...
 
     async def all(  # noqa: A003, A001
@@ -49,16 +49,16 @@ class QuerySetProtocol(Protocol):  # pragma: nocover
     ) -> Sequence[Optional["Model"]]:
         ...
 
-    async def create(self, **kwargs: Any) -> "Model":
+    async def create(self, **kwargs: Any) -> "TM":
         ...
 
     async def update(self, each: bool = False, **kwargs: Any) -> int:
         ...
 
-    async def get_or_create(self, **kwargs: Any) -> "Model":
+    async def get_or_create(self, **kwargs: Any) -> "TM":
         ...
 
-    async def update_or_create(self, **kwargs: Any) -> "Model":
+    async def update_or_create(self, **kwargs: Any) -> "TM":
         ...
 
     def fields(self, columns: Union[List, str, Set, Dict]) -> "QuerysetProxy":

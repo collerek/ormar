@@ -1,15 +1,15 @@
-from typing import TYPE_CHECKING, Tuple, Type
+from typing import TYPE_CHECKING, Tuple, Type, cast
 from weakref import proxy
 
 from ormar.fields.foreign_key import ForeignKeyField
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
+    from ormar import Model, TM
 
 
 def get_relations_sides_and_names(
-    to_field: Type[ForeignKeyField], parent: "Model", child: "Model",
-) -> Tuple["Model", "Model", str, str]:
+    to_field: Type[ForeignKeyField], parent: "Model", child: "TM",
+) -> Tuple["Model", "TM", str, str]:
     """
     Determines the names of child and parent relations names, as well as
     changes one of the sides of the relation into weakref.proxy to model.
@@ -27,7 +27,7 @@ def get_relations_sides_and_names(
     child_name = to_field.get_related_name()
     if to_field.virtual:
         child_name, to_name = to_name, child_name
-        child, parent = parent, proxy(child)
+        child, parent = cast(TM, parent), proxy(child)
     else:
         child = proxy(child)
     return parent, child, child_name, to_name

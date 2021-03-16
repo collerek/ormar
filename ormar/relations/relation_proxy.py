@@ -1,16 +1,18 @@
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Generic, Optional, TYPE_CHECKING, Type, TypeVar
 
 import ormar
 from ormar.exceptions import NoMatch, RelationshipInstanceError
 from ormar.relations.querysetproxy import QuerysetProxy
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model, RelationType
+    from ormar import Model, RelationType, TM
     from ormar.relations import Relation
     from ormar.queryset import QuerySet
+else:
+    TM = TypeVar("TM", bound="Model")
 
 
-class RelationProxy(list):
+class RelationProxy(Generic[TM], list):
     """
     Proxy of the Relation that is a list with special methods.
     """
@@ -18,6 +20,7 @@ class RelationProxy(list):
     def __init__(
         self,
         relation: "Relation",
+        to: Type[TM],
         type_: "RelationType",
         field_name: str,
         data_: Any = None,
@@ -27,8 +30,8 @@ class RelationProxy(list):
         self.type_: "RelationType" = type_
         self.field_name = field_name
         self._owner: "Model" = self.relation.manager.owner
-        self.queryset_proxy: QuerysetProxy = QuerysetProxy(
-            relation=self.relation, type_=type_
+        self.queryset_proxy = QuerysetProxy(
+            relation=self.relation, to=to, type_=type_
         )
         self._related_field_name: Optional[str] = None
 
@@ -83,7 +86,7 @@ class RelationProxy(list):
         Initializes the QuerySetProxy if not yet initialized.
         """
         if not self._check_if_queryset_is_initialized():
-            self.queryset_proxy.queryset = self._set_queryset()
+            self.queryset_proxy.queryset = self._set_queryset(target=self.relation.to)
 
     def _check_if_queryset_is_initialized(self) -> bool:
         """
@@ -107,7 +110,7 @@ class RelationProxy(list):
                 "You cannot query relationships from unsaved model."
             )
 
-    def _set_queryset(self) -> "QuerySet":
+    def _set_queryset(self, target: Type["TM"]) -> "QuerySet[TM]":
         """
         Creates new QuerySet with relation model and pre filters it with currents
         parent model primary key, so all queries by definition are already related
@@ -123,7 +126,7 @@ class RelationProxy(list):
         kwargs = {f"{related_field.get_alias()}__{pkname}": self._owner.pk}
         queryset = (
             ormar.QuerySet(
-                model_cls=self.relation.to, proxy_source_model=self._owner.__class__
+                model_cls=target, proxy_source_model=self._owner.__class__
             )
             .select_related(related_field.name)
             .filter(**kwargs)
@@ -131,7 +134,7 @@ class RelationProxy(list):
         return queryset
 
     async def remove(  # type: ignore
-        self, item: "Model", keep_reversed: bool = True
+        self, item: "TM", keep_reversed: bool = True
     ) -> None:
         """
         Removes the related from relation with parent.
@@ -160,7 +163,7 @@ class RelationProxy(list):
         )
         super().remove(item)
         relation_name = self.related_field_name
-        relation = item._orm._get(relation_name)
+        relation: Optional[Relation[Model]] = item._orm._get(relation_name)
         if relation is None:  # pragma nocover
             raise ValueError(
                 f"{self._owner.get_name()} does not have relation {relation_name}"
@@ -182,7 +185,7 @@ class RelationProxy(list):
             relation_name=self.field_name,
         )
 
-    async def add(self, item: "Model", **kwargs: Any) -> None:
+    async def add(self, item: "TM", **kwargs: Any) -> None:
         """
         Adds child model to relation.
 
