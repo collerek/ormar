@@ -50,7 +50,7 @@ class AliasTest(ormar.Model):
 
     id: int = ormar.Integer(name="alias_id", primary_key=True)
     name: str = ormar.String(name="alias_name", max_length=100)
-    nested: str = ormar.ForeignKey(AliasNested, name="nested_alias")
+    nested: Optional[AliasNested] = ormar.ForeignKey(AliasNested, name="nested_alias")
 
 
 class Toy(ormar.Model):
@@ -61,7 +61,7 @@ class Toy(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    owner: Owner = ormar.ForeignKey(Owner)
+    owner: Optional[Owner] = ormar.ForeignKey(Owner)
 
 
 class Factory(ormar.Model):

@@ -1,13 +1,13 @@
 from typing import (
     Any,
     Dict,
-    List,
+    Generic, List,
     Optional,
     Sequence,
     Set,
     TYPE_CHECKING,
     Type,
-    Union,
+    TypeVar, Union,
     cast,
 )
 
@@ -17,7 +17,7 @@ from sqlalchemy import bindparam
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
-from ormar.exceptions import ModelError, ModelPersistenceError, QueryDefinitionError
+from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
 from ormar.queryset import FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
@@ -25,20 +25,23 @@ from ormar.queryset.prefetch_query import PrefetchQuery
 from ormar.queryset.query import Query
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
+    from ormar import Model, TM
     from ormar.models.metaclass import ModelMeta
-    from ormar.relations.querysetproxy import QuerysetProxy
     from ormar.models.excludable import ExcludableItems
+else:
+    TM = TypeVar("TM")
+
+M = TypeVar("M", bound="Model")
 
 
-class QuerySet:
+class QuerySet(Generic[TM]):
     """
     Main class to perform database queries, exposed on each model as objects attribute.
     """
 
     def __init__(  # noqa CFQ002
         self,
-        model_cls: Optional[Type["Model"]] = None,
+        model_cls: Optional[Type["TM"]] = None,
         filter_clauses: List = None,
         exclude_clauses: List = None,
         select_related: List = None,
@@ -48,7 +51,7 @@ class QuerySet:
         order_bys: List = None,
         prefetch_related: List = None,
         limit_raw_sql: bool = False,
-        proxy_source_model: Optional[Type["Model"]] = None,
+        proxy_source_model: Optional[Type[M]] = None,
     ) -> None:
         self.proxy_source_model = proxy_source_model
         self.model_cls = model_cls
@@ -61,22 +64,6 @@ class QuerySet:
         self._excludable = excludable or ormar.ExcludableItems()
         self.order_bys = order_bys or []
         self.limit_sql_raw = limit_raw_sql
-
-    def __get__(
-        self,
-        instance: Optional[Union["QuerySet", "QuerysetProxy"]],
-        owner: Union[Type["Model"], Type["QuerysetProxy"]],
-    ) -> "QuerySet":
-        if issubclass(owner, ormar.Model):
-            if owner.Meta.requires_ref_update:
-                raise ModelError(
-                    f"Model {owner.get_name()} has not updated "
-                    f"ForwardRefs. \nBefore using the model you "
-                    f"need to call update_forward_refs()."
-                )
-            owner = cast(Type["Model"], owner)
-            return self.__class__(model_cls=owner)
-        return self.__class__()  # pragma: no cover
 
     @property
     def model_meta(self) -> "ModelMeta":
@@ -91,7 +78,7 @@ class QuerySet:
         return self.model_cls.Meta
 
     @property
-    def model(self) -> Type["Model"]:
+    def model(self) -> Type["TM"]:
         """
         Shortcut to model class set on QuerySet.
 
@@ -113,8 +100,8 @@ class QuerySet:
         order_bys: List = None,
         prefetch_related: List = None,
         limit_raw_sql: bool = None,
-        proxy_source_model: Optional[Type["Model"]] = None,
-    ) -> "QuerySet":
+        proxy_source_model: Optional[Type["M"]] = None,
+    ) -> "QuerySet[TM]":
         """
         Method that returns new instance of queryset based on passed params,
         all not passed params are taken from current values.
@@ -148,8 +135,8 @@ class QuerySet:
         )
 
     async def _prefetch_related_models(
-        self, models: List[Optional["Model"]], rows: List
-    ) -> List[Optional["Model"]]:
+        self, models: List[Optional[TM]], rows: List
+    ) -> List[Optional[TM]]:
         """
         Performs prefetch query for selected models names.
 
@@ -169,7 +156,7 @@ class QuerySet:
         )
         return await query.prefetch_related(models=models, rows=rows)  # type: ignore
 
-    def _process_query_result_rows(self, rows: List) -> List[Optional["Model"]]:
+    def _process_query_result_rows(self, rows: List) -> List[Optional[TM]]:
         """
         Process database rows and initialize ormar Model from each of the rows.
 
@@ -221,7 +208,7 @@ class QuerySet:
         return filter_groups
 
     @staticmethod
-    def check_single_result_rows_count(rows: Sequence[Optional["Model"]]) -> None:
+    def check_single_result_rows_count(rows: Sequence[Optional[TM]]) -> None:
         """
         Verifies if the result has one and only one row.
 
@@ -286,7 +273,7 @@ class QuerySet:
 
     def filter(  # noqa: A003
         self, *args: Any, _exclude: bool = False, **kwargs: Any
-    ) -> "QuerySet":
+    ) -> "QuerySet[TM]":
         """
         Allows you to filter by any `Model` attribute/field
         as well as to fetch instances, with a filter across an FK relationship.
@@ -337,7 +324,7 @@ class QuerySet:
             select_related=select_related,
         )
 
-    def exclude(self, *args: Any, **kwargs: Any) -> "QuerySet":  # noqa: A003
+    def exclude(self, *args: Any, **kwargs: Any) -> "QuerySet[TM]":  # noqa: A003
         """
         Works exactly the same as filter and all modifiers (suffixes) are the same,
         but returns a *not* condition.
@@ -358,7 +345,7 @@ class QuerySet:
         """
         return self.filter(_exclude=True, *args, **kwargs)
 
-    def select_related(self, related: Union[List, str]) -> "QuerySet":
+    def select_related(self, related: Union[List, str]) -> "QuerySet[TM]":
         """
         Allows to prefetch related models during the same query.
 
@@ -381,7 +368,7 @@ class QuerySet:
         related = sorted(list(set(list(self._select_related) + related)))
         return self.rebuild_self(select_related=related,)
 
-    def prefetch_related(self, related: Union[List, str]) -> "QuerySet":
+    def prefetch_related(self, related: Union[List, str]) -> "QuerySet[TM]":
         """
         Allows to prefetch related models during query - but opposite to
         `select_related` each subsequent model is fetched in a separate database query.
@@ -461,7 +448,7 @@ class QuerySet:
 
         return self.rebuild_self(excludable=excludable,)
 
-    def exclude_fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet":
+    def exclude_fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet[TM]":
         """
         With `exclude_fields()` you can select subset of model columns that will
         be excluded to limit the data load.
@@ -490,7 +477,7 @@ class QuerySet:
         """
         return self.fields(columns=columns, _is_exclude=True)
 
-    def order_by(self, columns: Union[List, str]) -> "QuerySet":
+    def order_by(self, columns: Union[List, str]) -> "QuerySet[TM]":
         """
         With `order_by()` you can order the results from database based on your
         choice of fields.
@@ -680,7 +667,7 @@ class QuerySet:
         )
         return await self.database.execute(expr)
 
-    def paginate(self, page: int, page_size: int = 20) -> "QuerySet":
+    def paginate(self, page: int, page_size: int = 20) -> "QuerySet[TM]":
         """
         You can paginate the result which is a combination of offset and limit clauses.
         Limit is set to page size and offset is set to (page-1) * page_size.
@@ -699,7 +686,7 @@ class QuerySet:
         query_offset = (page - 1) * page_size
         return self.rebuild_self(limit_count=limit_count, offset=query_offset,)
 
-    def limit(self, limit_count: int, limit_raw_sql: bool = None) -> "QuerySet":
+    def limit(self, limit_count: int, limit_raw_sql: bool = None) -> "QuerySet[TM]":
         """
         You can limit the results to desired number of parent models.
 
@@ -716,7 +703,7 @@ class QuerySet:
         limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
         return self.rebuild_self(limit_count=limit_count, limit_raw_sql=limit_raw_sql,)
 
-    def offset(self, offset: int, limit_raw_sql: bool = None) -> "QuerySet":
+    def offset(self, offset: int, limit_raw_sql: bool = None) -> "QuerySet[TM]":
         """
         You can also offset the results by desired number of main models.
 
@@ -733,7 +720,7 @@ class QuerySet:
         limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
         return self.rebuild_self(offset=offset, limit_raw_sql=limit_raw_sql,)
 
-    async def first(self, **kwargs: Any) -> "Model":
+    async def first(self, **kwargs: Any) -> TM:
         """
         Gets the first row from the db ordered by primary key column ascending.
 
@@ -764,7 +751,7 @@ class QuerySet:
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
-    async def get(self, **kwargs: Any) -> "Model":
+    async def get(self, **kwargs: Any) -> TM:
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -803,7 +790,7 @@ class QuerySet:
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
-    async def get_or_create(self, **kwargs: Any) -> "Model":
+    async def get_or_create(self, **kwargs: Any) -> "TM":
         """
         Combination of create and get methods.
 
@@ -821,7 +808,7 @@ class QuerySet:
         except NoMatch:
             return await self.create(**kwargs)
 
-    async def update_or_create(self, **kwargs: Any) -> "Model":
+    async def update_or_create(self, **kwargs: Any) -> TM:
         """
         Updates the model, or in case there is no match in database creates a new one.
 
@@ -838,7 +825,7 @@ class QuerySet:
         model = await self.get(pk=kwargs[pk_name])
         return await model.update(**kwargs)
 
-    async def all(self, **kwargs: Any) -> List[Optional["Model"]]:  # noqa: A003
+    async def all(self, **kwargs: Any) -> List[Optional[TM]]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 
@@ -862,7 +849,7 @@ class QuerySet:
 
         return result_rows
 
-    async def create(self, **kwargs: Any) -> "Model":
+    async def create(self, **kwargs: Any) -> TM:
         """
         Creates the model instance, saves it in a database and returns the updates model
         (with pk populated if not passed and autoincrement is set).
@@ -905,7 +892,7 @@ class QuerySet:
         )
         return instance
 
-    async def bulk_create(self, objects: List["Model"]) -> None:
+    async def bulk_create(self, objects: List[TM]) -> None:
         """
         Performs a bulk update in one database session to speed up the process.
 
@@ -931,7 +918,7 @@ class QuerySet:
             objt.set_save_status(True)
 
     async def bulk_update(  # noqa:  CCR001
-        self, objects: List["Model"], columns: List[str] = None
+        self, objects: List[TM], columns: List[str] = None
     ) -> None:
         """
         Performs bulk update in one database session to speed up the process.

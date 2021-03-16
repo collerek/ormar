@@ -151,7 +151,7 @@ class RelationMixin:
         """
         source_visited = source_visited or cls._populate_source_model_prefixes()
         relations = cls.extract_related_names()
-        processed_relations = []
+        processed_relations: List[str] = []
         for relation in relations:
             target_model = cls.Meta.model_fields[relation].to
             if cls._is_reverse_side_of_same_relation(source_model, target_model):

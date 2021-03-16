@@ -45,7 +45,7 @@ from ormar.relations.alias_manager import AliasManager
 from ormar.relations.relation_manager import RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model
+    from ormar.models import Model, TM
     from ormar.signals import SignalEmitter
 
     IntStr = Union[int, str]
@@ -309,7 +309,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :rtype: Optional[Union[Model, List[Model]]]
         """
         if item in self._orm:
-            return self._orm.get(item)  # type: ignore
+            return self._orm.get(item)
         return None  # pragma no cover
 
     def __eq__(self, other: object) -> bool:

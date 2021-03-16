@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import databases
 import pytest
@@ -50,7 +50,7 @@ class Company(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
     founded: int = ormar.Integer(nullable=True)
-    hq: HQ = ormar.ForeignKey(HQ)
+    hq: Optional[HQ] = ormar.ForeignKey(HQ)
 
 
 @pytest.fixture(autouse=True, scope="module")

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 import databases
 import pytest
@@ -32,7 +32,7 @@ class Workshop(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     topic: str = ormar.String(max_length=255, index=True)
-    category: Union[ormar.Model, Category] = ormar.ForeignKey(
+    category: Optional[Category] = ormar.ForeignKey(
         Category, related_name="workshops", nullable=False
     )
 

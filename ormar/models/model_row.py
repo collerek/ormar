@@ -18,7 +18,7 @@ from ormar.models.helpers.models import group_related_list
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar.fields import ForeignKeyField
-    from ormar.models import Model
+    from ormar.models import Model, TM
 
 
 class ModelRow(NewBaseModel):
@@ -26,7 +26,7 @@ class ModelRow(NewBaseModel):
     def from_row(  # noqa: CFQ002
         cls,
         row: sqlalchemy.engine.ResultProxy,
-        source_model: Type["Model"],
+        source_model: Type["TM"],
         select_related: List = None,
         related_models: Any = None,
         related_field: Type["ForeignKeyField"] = None,
@@ -34,7 +34,7 @@ class ModelRow(NewBaseModel):
         current_relation_str: str = "",
         proxy_source_model: Optional[Type["Model"]] = None,
         used_prefixes: List[str] = None,
-    ) -> Optional["Model"]:
+    ) -> Optional["TM"]:
         """
         Model method to convert raw sql row from database into ormar.Model instance.
         Traverses nested models if they were specified in select_related for query.
@@ -102,12 +102,12 @@ class ModelRow(NewBaseModel):
             item=item, row=row, table_prefix=table_prefix, excludable=excludable
         )
 
-        instance: Optional["Model"] = None
+        instance: Optional["TM"] = None
         if item.get(cls.Meta.pkname, None) is not None:
             item["__excluded__"] = cls.get_names_to_exclude(
                 excludable=excludable, alias=table_prefix
             )
-            instance = cast("Model", cls(**item))
+            instance = cast("TM", cls(**item))
             instance.set_save_status(True)
         return instance
 

@@ -1,12 +1,12 @@
 from typing import (
     Dict,
     List,
-    Sequence,
+    Optional, Sequence,
     Set,
     TYPE_CHECKING,
     Tuple,
     Type,
-    cast,
+    TypeVar, cast,
 )
 
 import ormar
@@ -15,11 +15,12 @@ from ormar.queryset.query import Query
 from ormar.queryset.utils import extract_models_to_dict_of_lists, translate_list_to_dict
 
 if TYPE_CHECKING:  # pragma: no cover
-    from ormar import Model
+    from ormar import Model, TM
     from ormar.fields import ForeignKeyField, BaseField
     from ormar.queryset import OrderAction
     from ormar.models.excludable import ExcludableItems
 
+M = TypeVar("M", bound="Model")
 
 def sort_models(models: List["Model"], orders_by: Dict) -> List["Model"]:
     """
@@ -99,7 +100,7 @@ class PrefetchQuery:
 
     def __init__(  # noqa: CFQ002
         self,
-        model_cls: Type["Model"],
+        model_cls: Type["TM"],
         excludable: "ExcludableItems",
         prefetch_related: List,
         select_related: List,
@@ -121,8 +122,8 @@ class PrefetchQuery:
         )
 
     async def prefetch_related(
-        self, models: Sequence["Model"], rows: List
-    ) -> Sequence["Model"]:
+        self, models: List[Optional["TM"]], rows: List
+    ) -> List["TM"]:
         """
         Main entry point for prefetch_query.
 
@@ -271,8 +272,8 @@ class PrefetchQuery:
         return []
 
     def _populate_nested_related(
-        self, model: "Model", prefetch_dict: Dict, orders_by: Dict,
-    ) -> "Model":
+        self, model: "M", prefetch_dict: Dict, orders_by: Dict,
+    ) -> "M":
         """
         Populates all related models children of parent model that are
         included in prefetch query.
@@ -315,8 +316,8 @@ class PrefetchQuery:
         return model
 
     async def _prefetch_related_models(
-        self, models: Sequence["Model"], rows: List
-    ) -> Sequence["Model"]:
+        self, models: List[Optional["TM"]], rows: List
+    ) -> List["TM"]:
         """
         Main method of the query.
 
@@ -349,14 +350,14 @@ class PrefetchQuery:
                 excludable=self.excludable,
                 orders_by=orders_by.get(related, {}),
             )
-        final_models = []
+        final_models: List["TM"] = []
         for model in models:
             final_models.append(
                 self._populate_nested_related(
-                    model=model, prefetch_dict=prefetch_dict, orders_by=self.order_dict
+                    model=cast("TM", model), prefetch_dict=prefetch_dict, orders_by=self.order_dict
                 )
             )
-        return models
+        return final_models
 
     async def _extract_related_models(  # noqa: CFQ002, CCR001
         self,

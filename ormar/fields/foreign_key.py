@@ -3,7 +3,10 @@ import sys
 import uuid
 from dataclasses import dataclass
 from random import choices
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, Dict, Generic, List, Literal, Optional, TYPE_CHECKING, Tuple, \
+    Type, \
+    TypeVar, \
+    Union, cast, overload
 
 import sqlalchemy
 from pydantic import BaseModel, create_model
@@ -15,16 +18,20 @@ from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
 from ormar.fields.base import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model, NewBaseModel
+    from ormar.models import Model, NewBaseModel, TM, TypeTM
     from ormar.fields import ManyToManyField
 
     if sys.version_info < (3, 7):
-        ToType = Type["Model"]
+        ToType = Type[TM]
     else:
-        ToType = Union[Type["Model"], "ForwardRef"]
+        ToType = Union[Type[TM], "ForwardRef"]
+else:
+    TM = TypeVar("TM", bound="Model")
+
+M = TypeVar("M", bound="Model")
 
 
-def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
+def create_dummy_instance(fk: "TypeTM", pk: Any = None) -> "TM":
     """
     Ormar never returns you a raw data.
     So if you have a related field that has a value populated
@@ -55,8 +62,8 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
 
 
 def create_dummy_model(
-    base_model: Type["Model"],
-    pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
+        base_model: "TypeTM",
+        pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
 ) -> Type["BaseModel"]:
     """
     Used to construct a dummy pydantic model for type hints and pydantic validation.
@@ -70,7 +77,7 @@ def create_dummy_model(
     :rtype: pydantic.BaseModel
     """
     alias = (
-        "".join(choices(string.ascii_uppercase, k=2)) + uuid.uuid4().hex[:4]
+            "".join(choices(string.ascii_uppercase, k=2)) + uuid.uuid4().hex[:4]
     ).lower()
     fields = {f"{pk_field.name}": (pk_field.__type__, None)}
 
@@ -83,7 +90,7 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-    to: Type["Model"], nullable: bool, onupdate: str = None, ondelete: str = None,
+        to: "TypeTM", nullable: bool, onupdate: str = None, ondelete: str = None,
 ) -> Tuple[Any, List, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
@@ -169,17 +176,17 @@ class ForeignKeyConstraint:
 
 
 def ForeignKey(  # noqa CFQ002
-    to: "ToType",
-    *,
-    name: str = None,
-    unique: bool = False,
-    nullable: bool = True,
-    related_name: str = None,
-    virtual: bool = False,
-    onupdate: str = None,
-    ondelete: str = None,
-    **kwargs: Any,
-) -> Any:
+        to: "ToType",
+        *,
+        name: str = None,
+        unique: bool = False,
+        nullable: bool = True,
+        related_name: str = None,
+        virtual: bool = False,
+        onupdate: str = None,
+        ondelete: str = None,
+        **kwargs: Any,
+):
     """
     Despite a name it's a function that returns constructed ForeignKeyField.
     This function is actually used in model declaration (as ormar.ForeignKey(ToModel)).
@@ -264,7 +271,7 @@ class ForeignKeyField(BaseField):
     Actual class returned from ForeignKey function call and stored in model_fields.
     """
 
-    to: Type["Model"]
+    to: "TypeTM"
     name: str
     related_name: str  # type: ignore
     virtual: bool
@@ -323,8 +330,8 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _extract_model_from_sequence(
-        cls, value: List, child: "Model", to_register: bool,
-    ) -> List["Model"]:
+            cls, value: List["TM"], child: "TM", to_register: bool,
+    ) -> List["TM"]:
         """
         Takes a list of Models and registers them on parent.
         Registration is mutual, so children have also reference to parent.
@@ -349,8 +356,8 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _register_existing_model(
-        cls, value: "Model", child: "Model", to_register: bool,
-    ) -> "Model":
+            cls, value: "TM", child: "TM", to_register: bool,
+    ) -> "TM":
         """
         Takes already created instance and registers it for parent.
         Registration is mutual, so children have also reference to parent.
@@ -372,8 +379,8 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _construct_model_from_dict(
-        cls, value: dict, child: "Model", to_register: bool
-    ) -> "Model":
+            cls, value: dict, child: "TM", to_register: bool
+    ) -> "TM":
         """
         Takes a dictionary, creates a instance and registers it for parent.
         If dictionary contains only one field and it's a pk it is a __pk_only__ model.
@@ -399,8 +406,8 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _construct_model_from_pk(
-        cls, value: Any, child: "Model", to_register: bool
-    ) -> "Model":
+            cls, value: Any, child: "TM", to_register: bool
+    ) -> "TM":
         """
         Takes a pk value, creates a dummy instance and registers it for parent.
         Registration is mutual, so children have also reference to parent.
@@ -424,13 +431,13 @@ class ForeignKeyField(BaseField):
                 f"is of type {cls.to.pk_type()} "
                 f"while {type(value)} passed as a parameter."
             )
-        model = create_dummy_instance(fk=cls.to, pk=value)
+        model: "TM" = create_dummy_instance(fk=cls.to, pk=value)
         if to_register:
             cls.register_relation(model=model, child=child)
         return model
 
     @classmethod
-    def register_relation(cls, model: "Model", child: "Model") -> None:
+    def register_relation(cls, model: "M", child: "TM") -> None:
         """
         Registers relation between parent and child in relation manager.
         Relation manager is kep on each model (different instance).
@@ -460,11 +467,11 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def expand_relationship(
-        cls,
-        value: Any,
-        child: Union["Model", "NewBaseModel"],
-        to_register: bool = True,
-    ) -> Optional[Union["Model", List["Model"]]]:
+            cls,
+            value: Any,
+            child: Union["TM", "NewBaseModel"],
+            to_register: bool = True,
+    ) -> Optional[Union["TM", List["TM"]]]:
         """
         For relations the child model is first constructed (if needed),
         registered in relation and returned.

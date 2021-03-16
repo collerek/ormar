@@ -5,7 +5,7 @@ from ormar.relations.relation import Relation, RelationType
 from ormar.relations.utils import get_relations_sides_and_names
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import NewBaseModel, Model
+    from ormar.models import NewBaseModel, Model, TM
     from ormar.fields import ForeignKeyField, BaseField
 
 
@@ -24,7 +24,7 @@ class RelationsManager:
         self._related_names = [field.name for field in self._related_fields]
         self._relations: Dict[str, Relation] = dict()
         for field in self._related_fields:
-            self._add_relation(field)
+            self._add_relation(field=field, to=field.to)
 
     def __contains__(self, item: str) -> bool:
         """
@@ -153,7 +153,7 @@ class RelationsManager:
             return RelationType.THROUGH
         return RelationType.PRIMARY if not field.virtual else RelationType.REVERSE
 
-    def _add_relation(self, field: Type["BaseField"]) -> None:
+    def _add_relation(self, field: Type["BaseField"], to: Type["TM"]) -> None:
         """
         Registers relation in the manager.
         Adds Relation instance under field.name.
@@ -165,6 +165,6 @@ class RelationsManager:
             manager=self,
             type_=self._get_relation_type(field),
             field_name=field.name,
-            to=field.to,
+            to=to,
             through=getattr(field, "through", None),
         )

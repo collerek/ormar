@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, Set, TYPE_CHECKING, Type, Union
+from typing import Generic, List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union
 
 import ormar  # noqa I100
 from ormar.exceptions import RelationshipInstanceError  # noqa I100
@@ -7,7 +7,10 @@ from ormar.relations.relation_proxy import RelationProxy
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import RelationsManager
-    from ormar.models import Model, NewBaseModel
+    from ormar.models import Model, NewBaseModel, TM
+else:
+    TM = TypeVar('TM', bound='Model')
+M = TypeVar('M', bound='Model')
 
 
 class RelationType(Enum):
@@ -25,7 +28,7 @@ class RelationType(Enum):
     THROUGH = 4
 
 
-class Relation:
+class Relation(Generic[TM]):
     """
     Keeps related Models and handles adding/removing of the children.
     """
@@ -35,8 +38,8 @@ class Relation:
         manager: "RelationsManager",
         type_: RelationType,
         field_name: str,
-        to: Type["Model"],
-        through: Type["Model"] = None,
+        to: Type["TM"],
+        through: Type["M"] = None,
     ) -> None:
         """
         Initialize the Relation and keep the related models either as instances of
@@ -59,10 +62,10 @@ class Relation:
         self._owner: "Model" = manager.owner
         self._type: RelationType = type_
         self._to_remove: Set = set()
-        self.to: Type["Model"] = to
+        self.to: Type["TM"] = to
         self._through = through
         self.field_name: str = field_name
-        self.related_models: Optional[Union[RelationProxy, "Model"]] = (
+        self.related_models: Optional[Union[RelationProxy, "TM"]] = (
             RelationProxy(relation=self, type_=type_, field_name=field_name)
             if type_ in (RelationType.REVERSE, RelationType.MULTIPLE)
             else None
@@ -77,7 +80,7 @@ class Relation:
             self._owner.__dict__[self.field_name] = None
 
     @property
-    def through(self) -> Type["Model"]:
+    def through(self) -> Type["M"]:
         if not self._through:  # pragma: no cover
             raise RelationshipInstanceError("Relation does not have through model!")
         return self._through
@@ -102,7 +105,7 @@ class Relation:
         self._to_remove = set()
 
     def _find_existing(
-        self, child: Union["NewBaseModel", Type["NewBaseModel"]]
+        self, child: Union["TM", Type["TM"]]
     ) -> Optional[int]:
         """
         Find child model in RelationProxy if exists.
@@ -124,7 +127,7 @@ class Relation:
                 self._to_remove.add(ind)
         return None
 
-    def add(self, child: "Model") -> None:
+    def add(self, child: "TM") -> None:
         """
         Adds child Model to relation, either sets child as related model or adds
         it to the list in RelationProxy depending on relation type.
@@ -146,7 +149,7 @@ class Relation:
                 rel.append(child)
                 self._owner.__dict__[relation_name] = rel
 
-    def remove(self, child: Union["NewBaseModel", Type["NewBaseModel"]]) -> None:
+    def remove(self, child: Union["TM", Type["TM"]]) -> None:
         """
         Removes child Model from relation, either sets None as related model or removes
         it from the list in RelationProxy depending on relation type.
@@ -165,7 +168,7 @@ class Relation:
                 self.related_models.pop(position)  # type: ignore
                 del self._owner.__dict__[relation_name][position]
 
-    def get(self) -> Optional[Union[List["Model"], "Model"]]:
+    def get(self) -> Optional[Union[List["TM"], "TM"]]:
         """
         Return the related model or models from RelationProxy.
 

@@ -10,11 +10,11 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Type,
-    Union,
+    Union, cast,
 )
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model, BaseField
+    from ormar import Model, BaseField, TM
 
 
 def check_node_not_dict_or_not_last_node(
@@ -146,7 +146,7 @@ def update_dict_from_list(curr_dict: Dict, list_to_update: Union[List, Set]) -> 
 
 
 def extract_nested_models(  # noqa: CCR001
-    model: "Model", model_type: Type["Model"], select_dict: Dict, extracted: Dict
+    model: "TM", model_type: Type["TM"], select_dict: Dict, extracted: Dict
 ) -> None:
     """
     Iterates over model relations and extracts all nested models from select_dict and
@@ -188,8 +188,8 @@ def extract_nested_models(  # noqa: CCR001
 
 
 def extract_models_to_dict_of_lists(
-    model_type: Type["Model"],
-    models: Sequence["Model"],
+    model_type: Type["TM"],
+    models: List[Optional["TM"]],
     select_dict: Dict,
     extracted: Dict = None,
 ) -> Dict:
@@ -212,7 +212,7 @@ def extract_models_to_dict_of_lists(
     if not extracted:
         extracted = dict()
     for model in models:
-        extract_nested_models(model, model_type, select_dict, extracted)
+        extract_nested_models(cast("TM", model), model_type, select_dict, extracted)
     return extracted
 
 

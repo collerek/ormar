@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Type, TypeVar, Union
 
 import sqlalchemy
 from pydantic import Field, Json, typing
@@ -13,7 +13,7 @@ from ormar.fields.sqlalchemy_encrypted import (
 )
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model
+    from ormar.models import Model, TM
     from ormar.models import NewBaseModel
 
 

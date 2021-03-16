@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import databases
 import pytest
@@ -41,7 +41,7 @@ class NickName(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
     is_lame: bool = ormar.Boolean(nullable=True)
-    level: CringeLevel = ormar.ForeignKey(CringeLevel)
+    level: Optional[CringeLevel] = ormar.ForeignKey(CringeLevel)
 
 
 class HQ(ormar.Model):
@@ -60,7 +60,7 @@ class Company(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
     founded: int = ormar.Integer(nullable=True)
-    hq: HQ = ormar.ForeignKey(HQ, related_name="companies")
+    hq: Optional[HQ] = ormar.ForeignKey(HQ, related_name="companies")
 
 
 @pytest.fixture(autouse=True, scope="module")
