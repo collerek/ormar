@@ -43,7 +43,7 @@ class RelationsManager:
         for relation in self._relations.values():
             relation.clear()
 
-    def get(self, name: str) -> Optional[Union["TM", Sequence["TM"]]]:
+    def get(self, name: str) -> Optional[Union["TM", List["TM"]]]:
         """
         Returns the related model/models if relation is set.
         Actual call is delegated to Relation instance registered under relation name.
@@ -127,7 +127,7 @@ class RelationsManager:
         item._orm.remove(name, parent)
         parent._orm.remove(relation_name, item)
 
-    def _get(self, name: str) -> Optional[Relation[TM]]:
+    def _get(self, name: str) -> Optional[Relation["TM"]]:
         """
         Returns the actual relation and not the related model(s).
 
@@ -169,7 +169,7 @@ class RelationsManager:
         :param field: field with relation declaration
         :type field: Type[BaseField]
         """
-        relation = Relation[TM](
+        relation = Relation["TM"](
             manager=self,
             type_=self._get_relation_type(field),
             field_name=field.name,

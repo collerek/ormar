@@ -27,7 +27,7 @@ def get_relations_sides_and_names(
     child_name = to_field.get_related_name()
     if to_field.virtual:
         child_name, to_name = to_name, child_name
-        child, parent = cast(TM, parent), proxy(child)
+        child, parent = cast("TM", parent), proxy(child)
     else:
         child = proxy(child)
     return parent, child, child_name, to_name

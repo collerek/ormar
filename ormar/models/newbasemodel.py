@@ -229,7 +229,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             super().__setattr__(name, value)
             self.set_save_status(False)
 
-    def __getattribute__(self, item: str) -> Any:  # noqa: CCR001
+    def __getattribute__(self, item: str):  # noqa: CCR001
         """
         Because we need to overwrite getting the attribute by ormar instead of pydantic
         as well as returning related models and not the value stored on the model the
@@ -299,7 +299,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     def _extract_related_model_instead_of_field(
         self, item: str
-    ) -> Optional[Union["Model", Sequence["Model"]]]:
+    ) -> Optional[Union["TM", Sequence["TM"]]]:
         """
         Retrieves the related model/models from RelationshipManager.
 
@@ -309,7 +309,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :rtype: Optional[Union[Model, List[Model]]]
         """
         if item in self._orm:
-            return self._orm.get(item)
+            result: Optional[Union[List["TM"], "TM"]] = self._orm.get(item)
+            if isinstance(result, list):
+                return cast(List["TM"], result)
+            return cast("TM", result)
         return None  # pragma no cover
 
     def __eq__(self, other: object) -> bool:

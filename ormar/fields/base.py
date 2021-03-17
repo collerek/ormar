@@ -16,8 +16,13 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, TM
     from ormar.models import NewBaseModel
 
+class MetaTest(type):
+    pass
 
-class BaseField(FieldInfo):
+class FieldDecorator(metaclass=MetaTest):
+    pass
+
+class BaseField(FieldDecorator, FieldInfo):
     """
     BaseField serves as a parent class for all basic Fields in ormar.
     It keeps all common parameters available for all fields as well as

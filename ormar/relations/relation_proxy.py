@@ -66,6 +66,9 @@ class RelationProxy(Generic[TM], list):
             return getattr(self.queryset_proxy, item)
         return super().__getattribute__(item)
 
+    def __getitem__(self, item) -> "TM":  # type: ignore
+        return super().__getitem__(item)
+
     def __getattr__(self, item: str) -> Any:
         """
         Delegates calls for non existing attributes to QuerySetProxy.

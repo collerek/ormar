@@ -16,6 +16,14 @@ class BaseMeta(ormar.ModelMeta):
     database = database
 
 
+class Publisher(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "publishers"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
 class Author(ormar.Model):
     class Meta(BaseMeta):
         tablename = "authors"
@@ -23,6 +31,7 @@ class Author(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
+    publishers = ormar.ManyToMany(Publisher)
 
 
 class Book(ormar.Model):
@@ -54,7 +63,17 @@ def assert_type(book: Book):
 async def test_types() -> None:
     async with database:
         query = Book.objects
+        publisher = await Publisher(name="Test publisher").save()
         author = await Author.objects.create(name='Test Author')
+        await author.publishers.add(publisher)
+        author2 = await Author.objects.select_related('publishers').get()
+        publishers = author2.publishers
+        publisher2 = await Publisher.objects.select_related('authors').get()
+        authors = publisher2.authors
+        assert authors[0] == author
+        for author in authors:
+            if TYPE_CHECKING:
+                reveal_type(author)  # iter of relation proxy
         book = await Book.objects.create(title='Test', author=author)
         book2 = await Book.objects.select_related('author').get()
         books = await Book.objects.select_related('author').all()
@@ -62,15 +81,20 @@ async def test_types() -> None:
         assert book.author.name == 'Test Author'
         assert book2.author.name == 'Test Author'
         if TYPE_CHECKING:  # pragma: no cover
-            reveal_type(book._orm._relations['author'].to)
-            reveal_type(book2)
-            reveal_type(query)
-            reveal_type(book)
-            reveal_type(book.author)
-            reveal_type(author)
-            reveal_type(book.author.name)
-            reveal_type(author.books)
-            reveal_type(author.books._queryset)
-            reveal_type(author_books)
-            reveal_type(books)
+            reveal_type(publisher)  # model method
+            reveal_type(publishers)  # many to many
+            reveal_type(publishers[0])  # item in m2m list
+            # getting relation without __getattribute__
+            reveal_type(publisher2._extract_related_model_instead_of_field('authors'))  # TODO: wrong
+            reveal_type(authors)  # reverse many to many  # TODO: wrong
+            reveal_type(book2)  # queryset get
+            reveal_type(books)  # queryset all
+            reveal_type(book)  # queryset - create
+            reveal_type(query)  # queryset itself
+            reveal_type(book.author)  # fk
+            reveal_type(author.books._queryset)  # queryset in querysetproxy  # TODO: wrong
+            reveal_type(author.books)  # reverse fk  # TODO: wrong
+            reveal_type(author)  # another test for queryset get different model
+            reveal_type(book.author.name)  # field on related model
+            reveal_type(author_books)  # querysetproxy for fk  # TODO: wrong
         assert_type(book)

@@ -176,7 +176,7 @@ class ForeignKeyConstraint:
 
 
 def ForeignKey(  # noqa CFQ002
-        to: "ToType",
+        to: Type[TM],
         *,
         name: str = None,
         unique: bool = False,
@@ -186,7 +186,7 @@ def ForeignKey(  # noqa CFQ002
         onupdate: str = None,
         ondelete: str = None,
         **kwargs: Any,
-):
+) -> "TM":
     """
     Despite a name it's a function that returns constructed ForeignKeyField.
     This function is actually used in model declaration (as ormar.ForeignKey(ToModel)).
@@ -263,7 +263,7 @@ def ForeignKey(  # noqa CFQ002
         related_orders_by=related_orders_by,
     )
 
-    return type("ForeignKey", (ForeignKeyField, BaseField), namespace)
+    return type("ForeignKey", (ForeignKeyField, BaseField), namespace)  # type: ignore
 
 
 class ForeignKeyField(BaseField):

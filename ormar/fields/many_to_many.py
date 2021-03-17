@@ -8,17 +8,18 @@ from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField, validate_not_allowed_fields
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model
+    from ormar.models import Model, TM
+    from ormar.relations.relation_proxy import RelationProxy
 
     if sys.version_info < (3, 7):
-        ToType = Type["Model"]
+        ToType = Type["TM"]
     else:
-        ToType = Union[Type["Model"], "ForwardRef"]
+        ToType = Union[Type["TM"], "ForwardRef"]
 
 REF_PREFIX = "#/components/schemas/"
 
 
-def forbid_through_relations(through: Type["Model"]) -> None:
+def forbid_through_relations(through: Type["TM"]) -> None:
     """
     Verifies if the through model does not have relations.
 
@@ -34,7 +35,7 @@ def forbid_through_relations(through: Type["Model"]) -> None:
 
 
 def populate_m2m_params_based_on_to_model(
-    to: Type["Model"], nullable: bool
+    to: Type["TM"], nullable: bool
 ) -> Tuple[Any, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
@@ -58,14 +59,14 @@ def populate_m2m_params_based_on_to_model(
 
 
 def ManyToMany(
-    to: "ToType",
+    to: Type["TM"],
     through: Optional["ToType"] = None,
     *,
     name: str = None,
     unique: bool = False,
     virtual: bool = False,
     **kwargs: Any,
-) -> Any:
+) -> "RelationProxy[TM]":
     """
     Despite a name it's a function that returns constructed ManyToManyField.
     This function is actually used in model declaration
@@ -132,10 +133,10 @@ def ManyToMany(
         related_orders_by=related_orders_by,
     )
 
-    return type("ManyToMany", (ManyToManyField, BaseField), namespace)
+    return type("ManyToMany", (ManyToManyField, BaseField), namespace)  # type: ignore
 
 
-class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationProtocol):
+class ManyToManyField(ForeignKeyField):
     """
     Actual class returned from ManyToMany function call and stored in model_fields.
     """
