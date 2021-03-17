@@ -1,14 +1,15 @@
 from typing import (
     Any,
     Dict,
-    Generic, List,
+    Generic,
+    List,
     Optional,
     Sequence,
     Set,
     TYPE_CHECKING,
     Type,
-    TypeVar, Union,
-    cast,
+    TypeVar,
+    Union,
 )
 
 import databases

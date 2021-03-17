@@ -1,13 +1,14 @@
 from typing import (
     Any,
     Dict,
-    Generic, List,
+    List,
     Optional,
     Set,
     TYPE_CHECKING,
     Tuple,
     Type,
-    TypeVar, Union,
+    TypeVar,
+    Union,
     cast,
 )
 
@@ -559,8 +560,8 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
     def objects(cls: Type["TM"]) -> "QuerySet[TM]":  # type: ignore
         if cls.Meta.requires_ref_update:
             raise ModelError(
-                        f"Model {cls.get_name()} has not updated "
-                        f"ForwardRefs. \nBefore using the model you "
-                        f"need to call update_forward_refs()."
-                    )
+                f"Model {cls.get_name()} has not updated "
+                f"ForwardRefs. \nBefore using the model you "
+                f"need to call update_forward_refs()."
+            )
         return QuerySet(model_cls=cls)

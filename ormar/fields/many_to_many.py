@@ -136,7 +136,7 @@ def ManyToMany(
     return type("ManyToMany", (ManyToManyField, BaseField), namespace)  # type: ignore
 
 
-class ManyToManyField(ForeignKeyField):
+class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationProtocol):
     """
     Actual class returned from ManyToMany function call and stored in model_fields.
     """

@@ -229,7 +229,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             super().__setattr__(name, value)
             self.set_save_status(False)
 
-    def __getattribute__(self, item: str):  # noqa: CCR001
+    def __getattribute__(self, item: str) -> Any:  # noqa: CCR001
         """
         Because we need to overwrite getting the attribute by ormar instead of pydantic
         as well as returning related models and not the value stored on the model the

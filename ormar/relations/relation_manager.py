@@ -1,11 +1,11 @@
-from typing import Dict, List, Optional, Sequence, TYPE_CHECKING, Type, TypeVar, Union
+from typing import Dict, List, Optional, TYPE_CHECKING, Type, TypeVar, Union
 from weakref import proxy
 
 from ormar.relations.relation import Relation, RelationType
 from ormar.relations.utils import get_relations_sides_and_names
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import NewBaseModel, Model, TM
+    from ormar.models import Model, TM
     from ormar.fields import ForeignKeyField, BaseField
 M = TypeVar("M", bound="Model")
 
@@ -16,17 +16,18 @@ class RelationsManager:
     """
 
     def __init__(
-            self,
-            related_fields: List[Type["ForeignKeyField"]] = None,
-            owner: Optional["Model"] = None,
+        self,
+        related_fields: List[Type["ForeignKeyField"]] = None,
+        owner: Optional["Model"] = None,
     ) -> None:
         self.owner = proxy(owner)
         self._related_fields = related_fields or []
         self._related_names = [field.name for field in self._related_fields]
         self._relations: Dict = dict()
         for field in self._related_fields:
-            self._add_relation(field=field, to=field.to,
-                               through=getattr(field, "through", None))
+            self._add_relation(
+                field=field, to=field.to, through=getattr(field, "through", None)
+            )
 
     def __contains__(self, item: str) -> bool:
         """
@@ -59,7 +60,7 @@ class RelationsManager:
         return None  # pragma nocover
 
     @staticmethod
-    def add(parent: "Model", child: "TM", field: Type["ForeignKeyField"], ) -> None:
+    def add(parent: "Model", child: "TM", field: Type["ForeignKeyField"],) -> None:
         """
         Adds relation on both sides -> meaning on both child and parent models.
         One side of the relation is always weakref proxy to avoid circular refs.
@@ -89,9 +90,7 @@ class RelationsManager:
         if child_relation:
             child_relation.add(parent)
 
-    def remove(
-            self, name: str, child: Union["TM", Type["TM"]]
-    ) -> None:
+    def remove(self, name: str, child: Union["TM", Type["TM"]]) -> None:
         """
         Removes given child from relation with given name.
         Since you can have many relations between two models you need to pass a name
@@ -108,8 +107,7 @@ class RelationsManager:
 
     @staticmethod
     def remove_parent(
-            item: Union["TM", Type["TM"]], parent: "Model",
-            name: str
+        item: Union["TM", Type["TM"]], parent: "Model", name: str
     ) -> None:
         """
         Removes given parent from relation with given name.
@@ -157,10 +155,7 @@ class RelationsManager:
         return RelationType.PRIMARY if not field.virtual else RelationType.REVERSE
 
     def _add_relation(
-            self,
-            field: Type["BaseField"],
-            to: Type["TM"],
-            through: Type["M"]
+        self, field: Type["BaseField"], to: Type["TM"], through: Type["M"]
     ) -> None:
         """
         Registers relation in the manager.

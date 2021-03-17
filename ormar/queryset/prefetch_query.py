@@ -1,12 +1,13 @@
 from typing import (
     Dict,
     List,
-    Optional, Sequence,
+    Optional,
     Set,
     TYPE_CHECKING,
     Tuple,
     Type,
-    TypeVar, cast,
+    TypeVar,
+    cast,
 )
 
 import ormar
@@ -21,6 +22,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ormar.models.excludable import ExcludableItems
 
 M = TypeVar("M", bound="Model")
+
 
 def sort_models(models: List["Model"], orders_by: Dict) -> List["Model"]:
     """
@@ -354,7 +356,9 @@ class PrefetchQuery:
         for model in models:
             final_models.append(
                 self._populate_nested_related(
-                    model=cast("TM", model), prefetch_dict=prefetch_dict, orders_by=self.order_dict
+                    model=cast("TM", model),
+                    prefetch_dict=prefetch_dict,
+                    orders_by=self.order_dict,
                 )
             )
         return final_models

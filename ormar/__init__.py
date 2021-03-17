@@ -125,5 +125,5 @@ __all__ = [
     "ENCODERS_MAP",
     "DECODERS_MAP",
     "TM",
-    "TypeTM"
+    "TypeTM",
 ]

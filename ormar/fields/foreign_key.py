@@ -3,10 +3,7 @@ import sys
 import uuid
 from dataclasses import dataclass
 from random import choices
-from typing import Any, Dict, Generic, List, Literal, Optional, TYPE_CHECKING, Tuple, \
-    Type, \
-    TypeVar, \
-    Union, cast, overload
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union
 
 import sqlalchemy
 from pydantic import BaseModel, create_model
@@ -62,8 +59,8 @@ def create_dummy_instance(fk: "TypeTM", pk: Any = None) -> "TM":
 
 
 def create_dummy_model(
-        base_model: "TypeTM",
-        pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
+    base_model: "TypeTM",
+    pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
 ) -> Type["BaseModel"]:
     """
     Used to construct a dummy pydantic model for type hints and pydantic validation.
@@ -77,7 +74,7 @@ def create_dummy_model(
     :rtype: pydantic.BaseModel
     """
     alias = (
-            "".join(choices(string.ascii_uppercase, k=2)) + uuid.uuid4().hex[:4]
+        "".join(choices(string.ascii_uppercase, k=2)) + uuid.uuid4().hex[:4]
     ).lower()
     fields = {f"{pk_field.name}": (pk_field.__type__, None)}
 
@@ -90,7 +87,7 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-        to: "TypeTM", nullable: bool, onupdate: str = None, ondelete: str = None,
+    to: "TypeTM", nullable: bool, onupdate: str = None, ondelete: str = None,
 ) -> Tuple[Any, List, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
@@ -176,16 +173,16 @@ class ForeignKeyConstraint:
 
 
 def ForeignKey(  # noqa CFQ002
-        to: Type[TM],
-        *,
-        name: str = None,
-        unique: bool = False,
-        nullable: bool = True,
-        related_name: str = None,
-        virtual: bool = False,
-        onupdate: str = None,
-        ondelete: str = None,
-        **kwargs: Any,
+    to: Type[TM],
+    *,
+    name: str = None,
+    unique: bool = False,
+    nullable: bool = True,
+    related_name: str = None,
+    virtual: bool = False,
+    onupdate: str = None,
+    ondelete: str = None,
+    **kwargs: Any,
 ) -> "TM":
     """
     Despite a name it's a function that returns constructed ForeignKeyField.
@@ -330,7 +327,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _extract_model_from_sequence(
-            cls, value: List["TM"], child: "TM", to_register: bool,
+        cls, value: List["TM"], child: "TM", to_register: bool,
     ) -> List["TM"]:
         """
         Takes a list of Models and registers them on parent.
@@ -356,7 +353,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _register_existing_model(
-            cls, value: "TM", child: "TM", to_register: bool,
+        cls, value: "TM", child: "TM", to_register: bool,
     ) -> "TM":
         """
         Takes already created instance and registers it for parent.
@@ -379,7 +376,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _construct_model_from_dict(
-            cls, value: dict, child: "TM", to_register: bool
+        cls, value: dict, child: "TM", to_register: bool
     ) -> "TM":
         """
         Takes a dictionary, creates a instance and registers it for parent.
@@ -406,7 +403,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def _construct_model_from_pk(
-            cls, value: Any, child: "TM", to_register: bool
+        cls, value: Any, child: "TM", to_register: bool
     ) -> "TM":
         """
         Takes a pk value, creates a dummy instance and registers it for parent.
@@ -467,10 +464,7 @@ class ForeignKeyField(BaseField):
 
     @classmethod
     def expand_relationship(
-            cls,
-            value: Any,
-            child: Union["TM", "NewBaseModel"],
-            to_register: bool = True,
+        cls, value: Any, child: Union["TM", "NewBaseModel"], to_register: bool = True,
     ) -> Optional[Union["TM", List["TM"]]]:
         """
         For relations the child model is first constructed (if needed),

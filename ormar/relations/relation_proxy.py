@@ -30,9 +30,7 @@ class RelationProxy(Generic[TM], list):
         self.type_: "RelationType" = type_
         self.field_name = field_name
         self._owner: "Model" = self.relation.manager.owner
-        self.queryset_proxy = QuerysetProxy(
-            relation=self.relation, to=to, type_=type_
-        )
+        self.queryset_proxy = QuerysetProxy(relation=self.relation, to=to, type_=type_)
         self._related_field_name: Optional[str] = None
 
     @property
@@ -66,7 +64,7 @@ class RelationProxy(Generic[TM], list):
             return getattr(self.queryset_proxy, item)
         return super().__getattribute__(item)
 
-    def __getitem__(self, item) -> "TM":  # type: ignore
+    def __getitem__(self, item: Any) -> "TM":  # type: ignore
         return super().__getitem__(item)
 
     def __getattr__(self, item: str) -> Any:
@@ -128,9 +126,7 @@ class RelationProxy(Generic[TM], list):
         self._check_if_model_saved()
         kwargs = {f"{related_field.get_alias()}__{pkname}": self._owner.pk}
         queryset = (
-            ormar.QuerySet(
-                model_cls=target, proxy_source_model=self._owner.__class__
-            )
+            ormar.QuerySet(model_cls=target, proxy_source_model=self._owner.__class__)
             .select_related(related_field.name)
             .filter(**kwargs)
         )

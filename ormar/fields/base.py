@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, TYPE_CHECKING, Type, TypeVar, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
 from pydantic import Field, Json, typing
@@ -13,16 +13,11 @@ from ormar.fields.sqlalchemy_encrypted import (
 )
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model, TM
+    from ormar.models import Model
     from ormar.models import NewBaseModel
 
-class MetaTest(type):
-    pass
 
-class FieldDecorator(metaclass=MetaTest):
-    pass
-
-class BaseField(FieldDecorator, FieldInfo):
+class BaseField(FieldInfo):
     """
     BaseField serves as a parent class for all basic Fields in ormar.
     It keeps all common parameters available for all fields as well as

@@ -5,12 +5,12 @@ from typing import (
     Dict,
     List,
     Optional,
-    Sequence,
     Set,
     TYPE_CHECKING,
     Tuple,
     Type,
-    Union, cast,
+    Union,
+    cast,
 )
 
 if TYPE_CHECKING:  # pragma no cover

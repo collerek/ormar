@@ -5,7 +5,8 @@ from typing import (
     Set,
     TYPE_CHECKING,
     Tuple,
-    Type, TypeVar,
+    Type,
+    TypeVar,
     Union,
 )
 
@@ -16,7 +17,7 @@ from ormar.models.metaclass import ModelMeta
 from ormar.models.model_row import ModelRow
 
 
-TM = TypeVar('TM', bound="Model")  # Generic Represent a type of Model
+TM = TypeVar("TM", bound="Model")  # Generic Represent a type of Model
 TypeTM = Type[TM]
 
 

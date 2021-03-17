@@ -7,10 +7,10 @@ from ormar.relations.relation_proxy import RelationProxy
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import RelationsManager
-    from ormar.models import Model, NewBaseModel, TM
+    from ormar.models import Model, TM
 else:
-    TM = TypeVar('TM', bound='Model')
-M = TypeVar('M', bound='Model')
+    TM = TypeVar("TM", bound="Model")
+M = TypeVar("M", bound="Model")
 
 
 class RelationType(Enum):
@@ -105,9 +105,7 @@ class Relation(Generic[TM]):
         self._owner.__dict__[relation_name] = cleaned_data
         self._to_remove = set()
 
-    def _find_existing(
-        self, child: Union["TM", Type["TM"]]
-    ) -> Optional[int]:
+    def _find_existing(self, child: Union["TM", Type["TM"]]) -> Optional[int]:
         """
         Find child model in RelationProxy if exists.
 
