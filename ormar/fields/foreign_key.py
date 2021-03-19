@@ -15,7 +15,7 @@ from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
 from ormar.fields.base import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model, NewBaseModel
+    from ormar.models import Model, NewBaseModel, T
     from ormar.fields import ManyToManyField
 
     if sys.version_info < (3, 7):
@@ -24,7 +24,7 @@ if TYPE_CHECKING:  # pragma no cover
         ToType = Union[Type["Model"], "ForwardRef"]
 
 
-def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
+def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
     """
     Ormar never returns you a raw data.
     So if you have a related field that has a value populated
@@ -55,7 +55,7 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
 
 
 def create_dummy_model(
-    base_model: Type["Model"],
+    base_model: Type["T"],
     pk_field: Union[BaseField, "ForeignKeyField", "ManyToManyField"],
 ) -> Type["BaseModel"]:
     """
@@ -83,7 +83,7 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-    to: Type["Model"], nullable: bool, onupdate: str = None, ondelete: str = None,
+    to: Type["T"], nullable: bool, onupdate: str = None, ondelete: str = None,
 ) -> Tuple[Any, List, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
@@ -169,7 +169,7 @@ class ForeignKeyConstraint:
 
 
 def ForeignKey(  # noqa CFQ002
-    to: "ToType",
+    to: Type["T"],
     *,
     name: str = None,
     unique: bool = False,
@@ -179,7 +179,7 @@ def ForeignKey(  # noqa CFQ002
     onupdate: str = None,
     ondelete: str = None,
     **kwargs: Any,
-) -> Any:
+) -> "T":
     """
     Despite a name it's a function that returns constructed ForeignKeyField.
     This function is actually used in model declaration (as ormar.ForeignKey(ToModel)).

@@ -117,7 +117,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
         register_through_shortcut_fields(model_field=model_field)
         adjust_through_many_to_many_model(model_field=model_field)
     else:
-        model_field.to.Meta.model_fields[related_name] = ForeignKey(
+        model_field.to.Meta.model_fields[related_name] = ForeignKey(  # type: ignore
             model_field.owner,
             real_name=related_name,
             virtual=True,

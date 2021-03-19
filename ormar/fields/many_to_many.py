@@ -65,7 +65,7 @@ def ManyToMany(
     unique: bool = False,
     virtual: bool = False,
     **kwargs: Any,
-) -> Any:
+):
     """
     Despite a name it's a function that returns constructed ManyToManyField.
     This function is actually used in model declaration

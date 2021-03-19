@@ -18,6 +18,7 @@ from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
 from ormar import ModelDefinitionError  # noqa I100
+from ormar.exceptions import ModelError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
@@ -44,6 +45,7 @@ from ormar.signals import Signal, SignalEmitter
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+    from ormar.models import T
 
 CONFIG_KEY = "Config"
 PARSED_FIELDS_KEY = "__parsed_fields__"
@@ -545,6 +547,15 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                         field_name=field_name, model=new_model
                     )
                 new_model.Meta.alias_manager = alias_manager
-                new_model.objects = QuerySet(new_model)
 
         return new_model
+
+    @property
+    def objects(cls: Type["T"]) -> "QuerySet[T]":  # type: ignore
+        if cls.Meta.requires_ref_update:
+            raise ModelError(
+                f"Model {cls.get_name()} has not updated "
+                f"ForwardRefs. \nBefore using the model you "
+                f"need to call update_forward_refs()."
+            )
+        return QuerySet(model_cls=cls)

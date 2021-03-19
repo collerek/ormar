@@ -26,14 +26,14 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
     """
     parent_name = model_field.default_target_field_name()
     child_name = model_field.default_source_field_name()
-
-    model_field.through.Meta.model_fields[parent_name] = ormar.ForeignKey(
+    model_fields = model_field.through.Meta.model_fields
+    model_fields[parent_name] = ormar.ForeignKey(  # type: ignore
         model_field.to,
         real_name=parent_name,
         ondelete="CASCADE",
         owner=model_field.through,
     )
-    model_field.through.Meta.model_fields[child_name] = ormar.ForeignKey(
+    model_fields[child_name] = ormar.ForeignKey(  # type: ignore
         model_field.owner,
         real_name=child_name,
         ondelete="CASCADE",
