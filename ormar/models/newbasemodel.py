@@ -14,7 +14,7 @@ from typing import (
     TYPE_CHECKING,
     Type,
     Union,
-    cast,
+    cast, no_type_check,
 )
 
 try:
@@ -47,6 +47,7 @@ from ormar.relations.relation_manager import RelationsManager
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
     from ormar.signals import SignalEmitter
+    from ormar.queryset import QuerySet
 
     IntStr = Union[int, str]
     DictStrAny = Dict[str, Any]
@@ -67,6 +68,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     __slots__ = ("_orm_id", "_orm_saved", "_orm", "_pk_column")
 
     if TYPE_CHECKING:  # pragma no cover
+        pk: Any
         __model_fields__: Dict[str, BaseField]
         __table__: sqlalchemy.Table
         __fields__: Dict[str, pydantic.fields.ModelField]
@@ -77,6 +79,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         __database__: databases.Database
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
+        _orm_id: int
         _orm_saved: bool
         _related_names: Optional[Set]
         _related_names_hash: str
@@ -229,7 +232,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             super().__setattr__(name, value)
             self.set_save_status(False)
 
-    def __getattribute__(self, item: str) -> Any:  # noqa: CCR001
+    def __getattribute__(self, item: str):  # noqa: CCR001
         """
         Because we need to overwrite getting the attribute by ormar instead of pydantic
         as well as returning related models and not the value stored on the model the
@@ -265,13 +268,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if item == "pk":
             return object.__getattribute__(self, "__dict__").get(self.Meta.pkname, None)
         if item in object.__getattribute__(self, "extract_related_names")():
-            return object.__getattribute__(
-                self, "_extract_related_model_instead_of_field"
-            )(item)
+            return self._extract_related_model_instead_of_field(item)
         if item in object.__getattribute__(self, "extract_through_names")():
-            return object.__getattribute__(
-                self, "_extract_related_model_instead_of_field"
-            )(item)
+            return self._extract_related_model_instead_of_field(item)
         if item in object.__getattribute__(self, "Meta").property_fields:
             value = object.__getattribute__(self, item)
             return value() if callable(value) else value

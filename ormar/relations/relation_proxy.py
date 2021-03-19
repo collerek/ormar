@@ -27,11 +27,11 @@ class RelationProxy(Generic[T], list):
         data_: Any = None,
     ) -> None:
         super().__init__(data_ or ())
-        self.relation: "Relation" = relation
+        self.relation: "Relation[T]" = relation
         self.type_: "RelationType" = type_
         self.field_name = field_name
         self._owner: "Model" = self.relation.manager.owner
-        self.queryset_proxy: QuerysetProxy = QuerysetProxy(
+        self.queryset_proxy: QuerysetProxy[T] = QuerysetProxy[T](
             relation=self.relation, to=to, type_=type_
         )
         self._related_field_name: Optional[str] = None
@@ -70,7 +70,7 @@ class RelationProxy(Generic[T], list):
             return getattr(self.queryset_proxy, item)
         return super().__getattribute__(item)
 
-    def __getattr__(self, item: str) -> "T":
+    def __getattr__(self, item: str) -> Any:
         """
         Delegates calls for non existing attributes to QuerySetProxy.
 
@@ -114,7 +114,7 @@ class RelationProxy(Generic[T], list):
                 "You cannot query relationships from unsaved model."
             )
 
-    def _set_queryset(self) -> "QuerySet":
+    def _set_queryset(self) -> "QuerySet[T]":
         """
         Creates new QuerySet with relation model and pre filters it with currents
         parent model primary key, so all queries by definition are already related
@@ -138,7 +138,7 @@ class RelationProxy(Generic[T], list):
         return queryset
 
     async def remove(  # type: ignore
-        self, item: "Model", keep_reversed: bool = True
+        self, item: "T", keep_reversed: bool = True
     ) -> None:
         """
         Removes the related from relation with parent.
@@ -189,7 +189,7 @@ class RelationProxy(Generic[T], list):
             relation_name=self.field_name,
         )
 
-    async def add(self, item: "Model", **kwargs: Any) -> None:
+    async def add(self, item: "T", **kwargs: Any) -> None:
         """
         Adds child model to relation.
 

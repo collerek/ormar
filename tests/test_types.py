@@ -73,31 +73,29 @@ async def test_types() -> None:
         authors = publisher2.authors
         assert authors[0] == author
         for author in authors:
-            if TYPE_CHECKING:  # pragma: no cover
-                reveal_type(author)  # iter of relation proxy
+            pass
+            # if TYPE_CHECKING:  # pragma: no cover
+            #     reveal_type(author)  # iter of relation proxy
         book = await Book.objects.create(title="Test", author=author)
         book2 = await Book.objects.select_related("author").get()
         books = await Book.objects.select_related("author").all()
         author_books = await author.books.all()
         assert book.author.name == "Test Author"
         assert book2.author.name == "Test Author"
-        if TYPE_CHECKING:  # pragma: no cover
-            reveal_type(publisher)  # model method
-            reveal_type(publishers)  # many to many
-            reveal_type(publishers[0])  # item in m2m list
-            # getting relation without __getattribute__
-            reveal_type(authors)  # reverse many to many  # TODO: wrong
-            reveal_type(book2)  # queryset get
-            reveal_type(books)  # queryset all
-            reveal_type(book)  # queryset - create
-            reveal_type(query)  # queryset itself
-            reveal_type(book.author)  # fk
-            reveal_type(
-                author.books.queryset_proxy
-            )  # queryset in querysetproxy  # TODO: wrong
-            reveal_type(author.books)  # reverse fk  # TODO: wrong
-            reveal_type(author)  # another test for queryset get different model
-            reveal_type(book.author.name)  # field on related model
-            reveal_type(author_books)  # querysetproxy for fk  # TODO: wrong
-            reveal_type(author_books[0])  # item i qs proxy for fk  # TODO: wrong
+        # if TYPE_CHECKING:  # pragma: no cover
+        #     reveal_type(publisher)  # model method
+        #     reveal_type(publishers)  # many to many
+        #     reveal_type(publishers[0])  # item in m2m list
+        #     # getting relation without __getattribute__
+        #     reveal_type(authors)  # reverse many to many  # TODO: wrong
+        #     reveal_type(book2)  # queryset get
+        #     reveal_type(books)  # queryset all
+        #     reveal_type(book)  # queryset - create
+        #     reveal_type(query)  # queryset itself
+        #     reveal_type(book.author)  # fk
+        #     reveal_type(author.books)  # reverse fk relation proxy  # TODO: wrong
+        #     reveal_type(author)  # another test for queryset get different model
+        #     reveal_type(book.author.name)  # field on related model
+        #     reveal_type(author_books)  # querysetproxy result for fk  # TODO: wrong
+        #     reveal_type(author_books[0])  # item in qs proxy for fk  # TODO: wrong
         assert_type(book)

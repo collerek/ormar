@@ -1,5 +1,6 @@
 from enum import Enum
-from typing import List, Optional, Set, TYPE_CHECKING, Type, Union
+from typing import Generic, List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union, \
+    cast
 
 import ormar  # noqa I100
 from ormar.exceptions import RelationshipInstanceError  # noqa I100
@@ -7,7 +8,10 @@ from ormar.relations.relation_proxy import RelationProxy
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import RelationsManager
-    from ormar.models import Model, NewBaseModel
+    from ormar.models import Model, NewBaseModel, T
+    from ormar.relations.relation_proxy import RelationProxy
+else:
+    T = TypeVar("T", bound="Model")
 
 
 class RelationType(Enum):
@@ -25,7 +29,7 @@ class RelationType(Enum):
     THROUGH = 4
 
 
-class Relation:
+class Relation(Generic[T]):
     """
     Keeps related Models and handles adding/removing of the children.
     """
@@ -35,7 +39,7 @@ class Relation:
         manager: "RelationsManager",
         type_: RelationType,
         field_name: str,
-        to: Type["Model"],
+        to: Type["T"],
         through: Type["Model"] = None,
     ) -> None:
         """
@@ -59,7 +63,7 @@ class Relation:
         self._owner: "Model" = manager.owner
         self._type: RelationType = type_
         self._to_remove: Set = set()
-        self.to: Type["Model"] = to
+        self.to: Type["T"] = to
         self._through = through
         self.field_name: str = field_name
         self.related_models: Optional[Union[RelationProxy, "Model"]] = (
@@ -73,7 +77,8 @@ class Relation:
             self.related_models = None
             self._owner.__dict__[self.field_name] = None
         elif self.related_models is not None:
-            self.related_models._clear()
+            related_models = cast("RelationProxy", self.related_models)
+            related_models._clear()
             self._owner.__dict__[self.field_name] = None
 
     @property
