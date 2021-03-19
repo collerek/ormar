@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
 
-def check_if_field_has_choices(field: Type[BaseField]) -> bool:
+def check_if_field_has_choices(field: BaseField) -> bool:
     """
     Checks if given field has choices populated.
     A if it has one, a validator for this field needs to be attached.
@@ -34,7 +34,7 @@ def check_if_field_has_choices(field: Type[BaseField]) -> bool:
 
 
 def convert_choices_if_needed(  # noqa: CCR001
-    field: Type["BaseField"], value: Any
+    field: "BaseField", value: Any
 ) -> Tuple[Any, List]:
     """
     Converts dates to isoformat as fastapi can check this condition in routes
@@ -47,7 +47,7 @@ def convert_choices_if_needed(  # noqa: CCR001
     Converts decimal to float with given scale.
 
     :param field: ormar field to check with choices
-    :type field: Type[BaseField]
+    :type field: BaseField
     :param values: current values of the model to verify
     :type values: Dict
     :return: value, choices list
@@ -77,13 +77,13 @@ def convert_choices_if_needed(  # noqa: CCR001
     return value, choices
 
 
-def validate_choices(field: Type["BaseField"], value: Any) -> None:
+def validate_choices(field: "BaseField", value: Any) -> None:
     """
     Validates if given value is in provided choices.
 
     :raises ValueError: If value is not in choices.
     :param field:field to validate
-    :type field: Type[BaseField]
+    :type field: BaseField
     :param value: value of the field
     :type value: Any
     """

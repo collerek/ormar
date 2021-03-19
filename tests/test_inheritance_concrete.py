@@ -193,8 +193,8 @@ def test_field_redefining_in_concrete_models():
         created_date: str = ormar.String(max_length=200, name="creation_date")
 
     changed_field = RedefinedField.Meta.model_fields["created_date"]
-    assert changed_field.default is None
-    assert changed_field.alias == "creation_date"
+    assert changed_field.ormar_default is None
+    assert changed_field.get_alias() == "creation_date"
     assert any(x.name == "creation_date" for x in RedefinedField.Meta.table.columns)
     assert isinstance(
         RedefinedField.Meta.table.columns["creation_date"].type, sa.sql.sqltypes.String,

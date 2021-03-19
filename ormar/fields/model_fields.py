@@ -1,7 +1,7 @@
 import datetime
 import decimal
 import uuid
-from typing import Any, Optional, TYPE_CHECKING, Type
+from typing import Any, Optional, TYPE_CHECKING
 
 import pydantic
 import sqlalchemy
@@ -63,7 +63,7 @@ class ModelFieldFactory:
     _bases: Any = (BaseField,)
     _type: Any = None
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> Type[BaseField]:  # type: ignore
+    def __new__(cls, *args: Any, **kwargs: Any) -> BaseField:  # type: ignore
         cls.validate(**kwargs)
 
         default = kwargs.pop("default", None)
@@ -77,7 +77,6 @@ class ModelFieldFactory:
         encrypt_secret = kwargs.pop("encrypt_secret", None)
         encrypt_backend = kwargs.pop("encrypt_backend", EncryptBackends.NONE)
         encrypt_custom_backend = kwargs.pop("encrypt_custom_backend", None)
-        encrypt_max_length = kwargs.pop("encrypt_max_length", 5000)
 
         namespace = dict(
             __type__=cls._type,
@@ -97,10 +96,10 @@ class ModelFieldFactory:
             encrypt_secret=encrypt_secret,
             encrypt_backend=encrypt_backend,
             encrypt_custom_backend=encrypt_custom_backend,
-            encrypt_max_length=encrypt_max_length,
             **kwargs
         )
-        return type(cls.__name__, cls._bases, namespace)
+        Field = type(cls.__name__, cls._bases, {})
+        return Field(**namespace)
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:  # pragma no cover
@@ -141,7 +140,7 @@ class String(ModelFieldFactory, str):
         curtail_length: int = None,
         regex: str = None,
         **kwargs: Any
-    ) -> Type[BaseField]:  # type: ignore
+    ) -> BaseField:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -194,7 +193,7 @@ class Integer(ModelFieldFactory, int):
         maximum: int = None,
         multiple_of: int = None,
         **kwargs: Any
-    ) -> Type[BaseField]:
+    ) -> BaseField:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
             autoincrement
@@ -236,7 +235,7 @@ class Text(ModelFieldFactory, str):
 
     def __new__(  # type: ignore
         cls, *, allow_blank: bool = True, strip_whitespace: bool = False, **kwargs: Any
-    ) -> Type[BaseField]:
+    ) -> BaseField:
         kwargs = {
             **kwargs,
             **{
@@ -276,7 +275,7 @@ class Float(ModelFieldFactory, float):
         maximum: float = None,
         multiple_of: int = None,
         **kwargs: Any
-    ) -> Type[BaseField]:
+    ) -> BaseField:
         kwargs = {
             **kwargs,
             **{
@@ -430,7 +429,7 @@ class BigInteger(Integer, int):
         maximum: int = None,
         multiple_of: int = None,
         **kwargs: Any
-    ) -> Type[BaseField]:
+    ) -> BaseField:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
             autoincrement
@@ -481,7 +480,7 @@ class Decimal(ModelFieldFactory, decimal.Decimal):
         max_digits: int = None,
         decimal_places: int = None,
         **kwargs: Any
-    ) -> Type[BaseField]:
+    ) -> BaseField:
         kwargs = {
             **kwargs,
             **{
@@ -544,7 +543,7 @@ class UUID(ModelFieldFactory, uuid.UUID):
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, uuid_format: str = "hex", **kwargs: Any
-    ) -> Type[BaseField]:
+    ) -> BaseField:
         kwargs = {
             **kwargs,
             **{

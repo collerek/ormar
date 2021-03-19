@@ -57,7 +57,8 @@ def Through(  # noqa CFQ002
         is_through=True,
     )
 
-    return type("Through", (ThroughField, BaseField), namespace)
+    Field = type("Through", (ThroughField, BaseField), {})
+    return Field(**namespace)
 
 
 class ThroughField(ForeignKeyField):

@@ -132,7 +132,8 @@ def ManyToMany(
         related_orders_by=related_orders_by,
     )
 
-    return type("ManyToMany", (ManyToManyField, BaseField), namespace)
+    Field = type("ManyToMany", (ManyToManyField, BaseField), {})
+    return Field(**namespace)
 
 
 class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationProtocol):
@@ -140,8 +141,14 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
     Actual class returned from ManyToMany function call and stored in model_fields.
     """
 
-    @classmethod
-    def get_source_related_name(cls) -> str:
+    def __init__(self, **kwargs: Any) -> None:
+        if TYPE_CHECKING:  # pragma: no cover
+            self.__type__: type
+            self.to: Type["Model"]
+            self.through: Type["Model"]
+        super().__init__(**kwargs)
+
+    def get_source_related_name(self) -> str:
         """
         Returns name to use for source relation name.
         For FK it's the same, differs for m2m fields.
@@ -150,32 +157,31 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :rtype: str
         """
         return (
-            cls.through.Meta.model_fields[cls.default_source_field_name()].related_name
-            or cls.name
+            self.through.Meta.model_fields[
+                self.default_source_field_name()
+            ].related_name
+            or self.name
         )
 
-    @classmethod
-    def default_target_field_name(cls) -> str:
+    def default_target_field_name(self) -> str:
         """
         Returns default target model name on through model.
         :return: name of the field
         :rtype: str
         """
-        prefix = "from_" if cls.self_reference else ""
-        return f"{prefix}{cls.to.get_name()}"
+        prefix = "from_" if self.self_reference else ""
+        return f"{prefix}{self.to.get_name()}"
 
-    @classmethod
-    def default_source_field_name(cls) -> str:
+    def default_source_field_name(self) -> str:
         """
         Returns default target model name on through model.
         :return: name of the field
         :rtype: str
         """
-        prefix = "to_" if cls.self_reference else ""
-        return f"{prefix}{cls.owner.get_name()}"
+        prefix = "to_" if self.self_reference else ""
+        return f"{prefix}{self.owner.get_name()}"
 
-    @classmethod
-    def has_unresolved_forward_refs(cls) -> bool:
+    def has_unresolved_forward_refs(self) -> bool:
         """
         Verifies if the filed has any ForwardRefs that require updating before the
         model can be used.
@@ -183,10 +189,9 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :return: result of the check
         :rtype: bool
         """
-        return cls.to.__class__ == ForwardRef or cls.through.__class__ == ForwardRef
+        return self.to.__class__ == ForwardRef or self.through.__class__ == ForwardRef
 
-    @classmethod
-    def evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None:
+    def evaluate_forward_ref(self, globalns: Any, localns: Any) -> None:
         """
         Evaluates the ForwardRef to actual Field based on global and local namespaces
 
@@ -197,27 +202,26 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :return: None
         :rtype: None
         """
-        if cls.to.__class__ == ForwardRef:
-            cls.to = evaluate_forwardref(
-                cls.to,  # type: ignore
+        if self.to.__class__ == ForwardRef:
+            self.to = evaluate_forwardref(
+                self.to,  # type: ignore
                 globalns,
                 localns or None,
             )
 
-            (cls.__type__, cls.column_type,) = populate_m2m_params_based_on_to_model(
-                to=cls.to, nullable=cls.nullable,
+            (self.__type__, self.column_type,) = populate_m2m_params_based_on_to_model(
+                to=self.to, nullable=self.nullable,
             )
 
-        if cls.through.__class__ == ForwardRef:
-            cls.through = evaluate_forwardref(
-                cls.through,  # type: ignore
+        if self.through.__class__ == ForwardRef:
+            self.through = evaluate_forwardref(
+                self.through,  # type: ignore
                 globalns,
                 localns or None,
             )
-            forbid_through_relations(cls.through)
+            forbid_through_relations(self.through)
 
-    @classmethod
-    def get_relation_name(cls) -> str:
+    def get_relation_name(self) -> str:
         """
         Returns name of the relation, which can be a own name or through model
         names for m2m models
@@ -225,34 +229,32 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :return: result of the check
         :rtype: bool
         """
-        if cls.self_reference and cls.name == cls.self_reference_primary:
-            return cls.default_source_field_name()
-        return cls.default_target_field_name()
+        if self.self_reference and self.name == self.self_reference_primary:
+            return self.default_source_field_name()
+        return self.default_target_field_name()
 
-    @classmethod
-    def get_source_model(cls) -> Type["Model"]:
+    def get_source_model(self) -> Type["Model"]:
         """
         Returns model from which the relation comes -> either owner or through model
 
         :return: source model
         :rtype: Type["Model"]
         """
-        return cls.through
+        return self.through
 
-    @classmethod
-    def create_default_through_model(cls) -> None:
+    def create_default_through_model(self) -> None:
         """
         Creates default empty through model if no additional fields are required.
         """
-        owner_name = cls.owner.get_name(lower=False)
-        to_name = cls.to.get_name(lower=False)
+        owner_name = self.owner.get_name(lower=False)
+        to_name = self.to.get_name(lower=False)
         class_name = f"{owner_name}{to_name}"
         table_name = f"{owner_name.lower()}s_{to_name.lower()}s"
         new_meta_namespace = {
             "tablename": table_name,
-            "database": cls.owner.Meta.database,
-            "metadata": cls.owner.Meta.metadata,
+            "database": self.owner.Meta.database,
+            "metadata": self.owner.Meta.metadata,
         }
         new_meta = type("Meta", (), new_meta_namespace)
         through_model = type(class_name, (ormar.Model,), {"Meta": new_meta})
-        cls.through = cast(Type["Model"], through_model)
+        self.through = cast(Type["Model"], through_model)

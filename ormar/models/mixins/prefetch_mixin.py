@@ -41,7 +41,7 @@ class PrefetchQueryMixin(RelationMixin):
             field_name = parent_model.Meta.model_fields[related].get_related_name()
             field = target_model.Meta.model_fields[field_name]
             if field.is_multi:
-                field = cast(Type["ManyToManyField"], field)
+                field = cast("ManyToManyField", field)
                 field_name = field.default_target_field_name()
                 sub_field = field.through.Meta.model_fields[field_name]
                 return field.through, sub_field.get_alias()
@@ -78,7 +78,7 @@ class PrefetchQueryMixin(RelationMixin):
         return column.get_alias() if use_raw else column.name
 
     @classmethod
-    def get_related_field_name(cls, target_field: Type["ForeignKeyField"]) -> str:
+    def get_related_field_name(cls, target_field: "ForeignKeyField") -> str:
         """
         Returns name of the relation field that should be used in prefetch query.
         This field is later used to register relation in prefetch query,

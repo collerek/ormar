@@ -12,7 +12,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.fields import BaseField
 
 
-def is_field_an_forward_ref(field: Type["BaseField"]) -> bool:
+def is_field_an_forward_ref(field: "BaseField") -> bool:
     """
     Checks if field is a relation field and whether any of the referenced models
     are ForwardRefs that needs to be updated before proceeding.

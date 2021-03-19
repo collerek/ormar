@@ -29,7 +29,7 @@ class ModelRow(NewBaseModel):
         source_model: Type["Model"],
         select_related: List = None,
         related_models: Any = None,
-        related_field: Type["ForeignKeyField"] = None,
+        related_field: "ForeignKeyField" = None,
         excludable: ExcludableItems = None,
         current_relation_str: str = "",
         proxy_source_model: Optional[Type["Model"]] = None,
@@ -65,7 +65,7 @@ class ModelRow(NewBaseModel):
         :param related_models: list or dict of related models
         :type related_models: Union[List, Dict]
         :param related_field: field with relation declaration
-        :type related_field: Type[ForeignKeyField]
+        :type related_field: ForeignKeyField
         :return: returns model if model is populated from database
         :rtype: Optional[Model]
         """
@@ -116,7 +116,7 @@ class ModelRow(NewBaseModel):
         cls,
         source_model: Type["Model"],
         current_relation_str: str,
-        related_field: Type["ForeignKeyField"],
+        related_field: "ForeignKeyField",
         used_prefixes: List[str],
     ) -> str:
         """
@@ -126,7 +126,7 @@ class ModelRow(NewBaseModel):
         :param current_relation_str: current relation string
         :type current_relation_str: str
         :param related_field: field with relation declaration
-        :type related_field: Type["ForeignKeyField"]
+        :type related_field: "ForeignKeyField"
         :param used_prefixes: list of already extracted prefixes
         :type used_prefixes: List[str]
         :return: table_prefix to use
@@ -193,7 +193,7 @@ class ModelRow(NewBaseModel):
 
         for related in related_models:
             field = cls.Meta.model_fields[related]
-            field = cast(Type["ForeignKeyField"], field)
+            field = cast("ForeignKeyField", field)
             model_cls = field.to
             model_excludable = excludable.get(
                 model_cls=cast(Type["Model"], cls), alias=table_prefix

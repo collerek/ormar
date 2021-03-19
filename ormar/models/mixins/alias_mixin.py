@@ -67,6 +67,6 @@ class AliasMixin:
         :rtype: Dict
         """
         for field_name, field in cls.Meta.model_fields.items():
-            if field.alias and field.alias in new_kwargs:
-                new_kwargs[field_name] = new_kwargs.pop(field.alias)
+            if field.get_alias() and field.get_alias() in new_kwargs:
+                new_kwargs[field_name] = new_kwargs.pop(field.get_alias())
         return new_kwargs

@@ -1,4 +1,3 @@
-import inspect
 from typing import (
     Callable,
     List,
@@ -8,6 +7,8 @@ from typing import (
     Type,
     Union,
 )
+
+from ormar import BaseField
 
 
 class RelationMixin:
@@ -85,7 +86,11 @@ class RelationMixin:
 
         related_names = set()
         for name, field in cls.Meta.model_fields.items():
-            if inspect.isclass(field) and field.is_relation and not field.is_through:
+            if (
+                isinstance(field, BaseField)
+                and field.is_relation
+                and not field.is_through
+            ):
                 related_names.add(name)
         cls._related_names = related_names
 
