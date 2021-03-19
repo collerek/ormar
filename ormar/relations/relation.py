@@ -63,7 +63,7 @@ class Relation:
         self._through = through
         self.field_name: str = field_name
         self.related_models: Optional[Union[RelationProxy, "Model"]] = (
-            RelationProxy(relation=self, type_=type_, field_name=field_name)
+            RelationProxy(relation=self, type_=type_, to=to, field_name=field_name)
             if type_ in (RelationType.REVERSE, RelationType.MULTIPLE)
             else None
         )
@@ -94,6 +94,7 @@ class Relation:
         self.related_models = RelationProxy(
             relation=self,
             type_=self._type,
+            to=self.to,
             field_name=self.field_name,
             data_=cleaned_data,
         )

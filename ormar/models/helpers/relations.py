@@ -101,7 +101,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
     """
     related_name = model_field.get_related_name()
     if model_field.is_multi:
-        model_field.to.Meta.model_fields[related_name] = ManyToMany(
+        model_field.to.Meta.model_fields[related_name] = ManyToMany(  # type: ignore
             model_field.owner,
             through=model_field.through,
             name=related_name,

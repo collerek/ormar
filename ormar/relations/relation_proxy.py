@@ -1,4 +1,4 @@
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Generic, Optional, TYPE_CHECKING, Type, TypeVar
 
 import ormar
 from ormar.exceptions import NoMatch, RelationshipInstanceError
@@ -6,11 +6,14 @@ from ormar.relations.querysetproxy import QuerysetProxy
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model, RelationType
+    from ormar.models import T
     from ormar.relations import Relation
     from ormar.queryset import QuerySet
+else:
+    T = TypeVar("T", bound="Model")
 
 
-class RelationProxy(list):
+class RelationProxy(Generic[T], list):
     """
     Proxy of the Relation that is a list with special methods.
     """
@@ -19,6 +22,7 @@ class RelationProxy(list):
         self,
         relation: "Relation",
         type_: "RelationType",
+        to: Type["T"],
         field_name: str,
         data_: Any = None,
     ) -> None:
@@ -28,7 +32,7 @@ class RelationProxy(list):
         self.field_name = field_name
         self._owner: "Model" = self.relation.manager.owner
         self.queryset_proxy: QuerysetProxy = QuerysetProxy(
-            relation=self.relation, type_=type_
+            relation=self.relation, to=to, type_=type_
         )
         self._related_field_name: Optional[str] = None
 
@@ -48,6 +52,9 @@ class RelationProxy(list):
 
         return self._related_field_name
 
+    def __getitem__(self, item) -> "T":  # type: ignore
+        return super().__getitem__(item)
+
     def __getattribute__(self, item: str) -> Any:
         """
         Since some QuerySetProxy methods overwrite builtin list methods we
@@ -63,7 +70,7 @@ class RelationProxy(list):
             return getattr(self.queryset_proxy, item)
         return super().__getattribute__(item)
 
-    def __getattr__(self, item: str) -> Any:
+    def __getattr__(self, item: str) -> "T":
         """
         Delegates calls for non existing attributes to QuerySetProxy.
 

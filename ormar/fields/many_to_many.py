@@ -8,7 +8,8 @@ from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField, validate_not_allowed_fields
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model
+    from ormar.models import Model, T
+    from ormar.relations.relation_proxy import RelationProxy
 
     if sys.version_info < (3, 7):
         ToType = Type["Model"]
@@ -58,14 +59,14 @@ def populate_m2m_params_based_on_to_model(
 
 
 def ManyToMany(
-    to: "ToType",
+    to: Type["T"],
     through: Optional["ToType"] = None,
     *,
     name: str = None,
     unique: bool = False,
     virtual: bool = False,
     **kwargs: Any,
-):
+) -> "RelationProxy[T]":
     """
     Despite a name it's a function that returns constructed ManyToManyField.
     This function is actually used in model declaration

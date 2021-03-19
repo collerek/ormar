@@ -86,11 +86,6 @@ async def test_types() -> None:
             reveal_type(publishers)  # many to many
             reveal_type(publishers[0])  # item in m2m list
             # getting relation without __getattribute__
-            to_model = Publisher.Meta.model_fields['authors'].to
-            reveal_type(
-                publisher2._extract_related_model_instead_of_field("authors")
-            )  # TODO: wrong
-            reveal_type(publisher.Meta.model_fields['authors'].to)  # TODO: wrong
             reveal_type(authors)  # reverse many to many  # TODO: wrong
             reveal_type(book2)  # queryset get
             reveal_type(books)  # queryset all
