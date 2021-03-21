@@ -14,7 +14,7 @@ from typing import (
     TYPE_CHECKING,
     Type,
     Union,
-    cast, no_type_check,
+    cast,
 )
 
 try:
@@ -47,7 +47,6 @@ from ormar.relations.relation_manager import RelationsManager
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
     from ormar.signals import SignalEmitter
-    from ormar.queryset import QuerySet
 
     IntStr = Union[int, str]
     DictStrAny = Dict[str, Any]
@@ -232,7 +231,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             super().__setattr__(name, value)
             self.set_save_status(False)
 
-    def __getattribute__(self, item: str):  # noqa: CCR001
+    def __getattribute__(self, item: str) -> Any:  # noqa: CCR001
         """
         Because we need to overwrite getting the attribute by ormar instead of pydantic
         as well as returning related models and not the value stored on the model the

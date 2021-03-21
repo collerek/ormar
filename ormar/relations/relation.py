@@ -1,6 +1,15 @@
 from enum import Enum
-from typing import Generic, List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union, \
-    cast
+from typing import (
+    Generic,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import ormar  # noqa I100
 from ormar.exceptions import RelationshipInstanceError  # noqa I100
@@ -9,7 +18,6 @@ from ormar.relations.relation_proxy import RelationProxy
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import RelationsManager
     from ormar.models import Model, NewBaseModel, T
-    from ormar.relations.relation_proxy import RelationProxy
 else:
     T = TypeVar("T", bound="Model")
 

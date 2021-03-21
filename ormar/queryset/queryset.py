@@ -1,13 +1,15 @@
 from typing import (
     Any,
     Dict,
-    Generic, List,
+    Generic,
+    List,
     Optional,
     Sequence,
     Set,
     TYPE_CHECKING,
     Type,
-    TypeVar, Union,
+    TypeVar,
+    Union,
     cast,
 )
 
@@ -17,7 +19,7 @@ from sqlalchemy import bindparam
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
-from ormar.exceptions import ModelError, ModelPersistenceError, QueryDefinitionError
+from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
 from ormar.queryset import FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
@@ -28,7 +30,6 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.models import T
     from ormar.models.metaclass import ModelMeta
-    from ormar.relations.querysetproxy import QuerysetProxy
     from ormar.models.excludable import ExcludableItems
 else:
     T = TypeVar("T", bound="Model")
@@ -64,7 +65,6 @@ class QuerySet(Generic[T]):
         self._excludable = excludable or ormar.ExcludableItems()
         self.order_bys = order_bys or []
         self.limit_sql_raw = limit_raw_sql
-
 
     @property
     def model_meta(self) -> "ModelMeta":
@@ -368,6 +368,32 @@ class QuerySet(Generic[T]):
 
         related = sorted(list(set(list(self._select_related) + related)))
         return self.rebuild_self(select_related=related,)
+
+    def select_all(self, follow: bool = False) -> "QuerySet[T]":
+        """
+        By default adds only directly related models.
+
+        If follow=True is set it adds also related models of related models.
+
+        To not get stuck in an infinite loop as related models also keep a relation
+        to parent model visited models set is kept.
+
+        That way already visited models that are nested are loaded, but the load do not
+        follow them inside. So Model A -> Model B -> Model C -> Model A -> Model X
+        will load second Model A but will never follow into Model X.
+        Nested relations of those kind need to be loaded manually.
+
+        :param follow: flag to trigger deep save -
+        by default only directly related models are saved
+        with follow=True also related models of related models are saved
+        :type follow: bool
+        :return: reloaded Model
+        :rtype: Model
+        """
+        relations = list(self.model.extract_related_names())
+        if follow:
+            relations = self.model._iterate_related_models()
+        return self.rebuild_self(select_related=relations,)
 
     def prefetch_related(self, related: Union[List, str]) -> "QuerySet[T]":
         """

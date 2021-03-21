@@ -52,7 +52,7 @@ class RelationProxy(Generic[T], list):
 
         return self._related_field_name
 
-    def __getitem__(self, item) -> "T":  # type: ignore
+    def __getitem__(self, item: Any) -> "T":  # type: ignore
         return super().__getitem__(item)
 
     def __getattribute__(self, item: str) -> Any:
