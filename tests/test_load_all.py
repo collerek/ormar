@@ -209,6 +209,18 @@ async def test_loading_nested():
             assert hq2.nicks[1].level.name == "Low"
             assert hq2.nicks[1].level.language.name == "English"
 
+            hq5 = await HQ.objects.select_all().get(name="Main")
+            assert len(hq5.nicks) == 2
+            await hq5.nicks.select_all(follow=True).all()
+            assert hq5.nicks[0] == nick1
+            assert hq5.nicks[0].name == "BazingaO"
+            assert hq5.nicks[0].level.name == "High"
+            assert hq5.nicks[0].level.language.name == "English"
+            assert hq5.nicks[1] == nick2
+            assert hq5.nicks[1].name == "Bazinga20"
+            assert hq5.nicks[1].level.name == "Low"
+            assert hq5.nicks[1].level.language.name == "English"
+
             await hq.load_all(follow=True, exclude="nicks__level__language")
             assert len(hq.nicks) == 2
             assert hq.nicks[0].level.language is None

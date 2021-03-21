@@ -5,7 +5,7 @@
 *  Dropped supported for long deprecated notation of field definition in which you use ormar fields as type hints i.e. `test_field: ormar.Integger() = None`
 *  Improved type hints -> `mypy` can properly resolve related models fields (`ForeignKey` and `ManyToMany`) as well as return types of `QuerySet` methods. 
    Those mentioned are now returning proper model (i.e. `Book`) instead or `ormar.Model` type. There is still problem with reverse sides of relation and `QuerysetProxy` methods, 
-   to ease type hints now those return `Any`. 
+   to ease type hints now those return `Any`. Partially fixes #112.
 
 ## Features
 
@@ -13,6 +13,11 @@
   It is an equivalent of the Model's `load_all()` method but can be used directly in a query.
   By default `select_all()` adds only directly related models, with `follow=True` also related models
   of related models are added without loops in relations.
+
+## Internals
+
+*  `ormar` fields are no longer stored as Classes in `Meta.model_fields` dictionary 
+   but instead they are stored as instances.
 
 # 0.9.9
 
