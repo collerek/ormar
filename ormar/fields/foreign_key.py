@@ -3,7 +3,17 @@ import sys
 import uuid
 from dataclasses import dataclass
 from random import choices
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    TYPE_CHECKING,
+    Tuple,
+    Type,
+    Union,
+    overload,
+)
 
 import sqlalchemy
 from pydantic import BaseModel, create_model
@@ -19,9 +29,9 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.fields import ManyToManyField
 
     if sys.version_info < (3, 7):
-        ToType = Type["Model"]
+        ToType = Type["T"]
     else:
-        ToType = Union[Type["Model"], "ForwardRef"]
+        ToType = Union[Type["T"], "ForwardRef"]
 
 
 def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
@@ -168,8 +178,18 @@ class ForeignKeyConstraint:
     onupdate: Optional[str]
 
 
+@overload
+def ForeignKey(to: Type["T"], **kwargs: Any) -> "T":
+    ...
+
+
+@overload
+def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":
+    ...
+
+
 def ForeignKey(  # noqa CFQ002
-    to: Type["T"],
+    to: "ToType",
     *,
     name: str = None,
     unique: bool = False,
