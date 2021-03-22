@@ -179,12 +179,12 @@ class ForeignKeyConstraint:
 
 
 @overload
-def ForeignKey(to: Type["T"], **kwargs: Any) -> "T":
+def ForeignKey(to: Type["T"], **kwargs: Any) -> "T":  # pragma: no cover
     ...
 
 
 @overload
-def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":
+def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":  # pragma: no cover
     ...
 
 

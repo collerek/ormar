@@ -69,12 +69,12 @@ def populate_m2m_params_based_on_to_model(
 
 
 @overload
-def ManyToMany(to: Type["T"], **kwargs: Any) -> "RelationProxy[T]":
+def ManyToMany(to: Type["T"], **kwargs: Any) -> "RelationProxy[T]":  # pragma: no cover
     ...
 
 
 @overload
-def ManyToMany(to: ForwardRef, **kwargs: Any) -> "RelationProxy":
+def ManyToMany(to: ForwardRef, **kwargs: Any) -> "RelationProxy":  # pragma: no cover
     ...
 
 
