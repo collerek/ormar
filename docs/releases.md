@@ -10,13 +10,15 @@
 ## Features
 
 * add `select_all(follow: bool = False)` method to `QuerySet` and `QuerysetProxy`. 
-  It is an equivalent of the Model's `load_all()` method but can be used directly in a query.
+  It is kind of equivalent of the Model's `load_all()` method but can be used directly in a query.
   By default `select_all()` adds only directly related models, with `follow=True` also related models
-  of related models are added without loops in relations.
+  of related models are added without loops in relations. Note that it's not and end `async` model
+  so you still have to issue `get()`, `all()` etc. as `select_all()` returns a QuerySet (or proxy)
+  like `fields()` or `order_by()`.
 
 ## Internals
 
-*  `ormar` fields are no longer stored as Classes in `Meta.model_fields` dictionary 
+*  `ormar` fields are no longer stored as classes in `Meta.model_fields` dictionary 
    but instead they are stored as instances.
 
 # 0.9.9

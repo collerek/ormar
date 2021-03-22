@@ -3,6 +3,7 @@
 To join one table to another, so load also related models you can use following methods.
 
 * `select_related(related: Union[List, str]) -> QuerySet`
+* `select_all(follow: bool = True) -> QuerySet`
 * `prefetch_related(related: Union[List, str]) -> QuerySet`
 
 
@@ -12,6 +13,7 @@ To join one table to another, so load also related models you can use following 
 
 * `QuerysetProxy`
     * `QuerysetProxy.select_related(related: Union[List, str])` method
+    * `QuerysetProxy.select_all(follow: bool=True)` method
     * `QuerysetProxy.prefetch_related(related: Union[List, str])` method
 
 ## select_related
@@ -141,6 +143,88 @@ fields and the final `Models` are fetched for you.
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
+
+## select_all
+
+`select_all(follow: bool = False) -> QuerySet`
+
+By default when you select `all()` none of the relations are loaded, likewise, 
+when `select_related()` is used you need to explicitly specify all relations that should
+be loaded. If you want to include also nested relations this can be cumberstone.
+
+That's why `select_all()` was introduced, so by default load all relations of a model 
+(so kind of opposite as with `all()` approach).
+
+By default adds only directly related models of a parent model (from which the query is run).
+
+If `follow=True` is set it adds also related models of related models.
+
+!!!info
+    To not get stuck in an infinite loop as related models also keep a relation
+    to parent model visited models set is kept.
+    
+    That way already visited models that are nested are loaded, but the load do not
+    follow them inside. So Model A -> Model B -> Model C -> Model A -> Model X
+    will load second Model A but will never follow into Model X.
+    Nested relations of those kind need to be loaded manually.
+
+With sample date like follow:
+
+```python
+database = databases.Database(DATABASE_URL, force_rollback=True)
+metadata = sqlalchemy.MetaData()
+
+
+class BaseMeta(ormar.ModelMeta):
+    database = database
+    metadata = metadata
+
+
+class Address(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "addresses"
+
+    id: int = ormar.Integer(primary_key=True)
+    street: str = ormar.String(max_length=100, nullable=False)
+    number: int = ormar.Integer(nullable=False)
+    post_code: str = ormar.String(max_length=20, nullable=False)
+
+
+
+class Branch(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "branches"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, nullable=False)
+    address = ormar.ForeignKey(Address)
+
+
+class Company(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "companies"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, nullable=False, name="company_name")
+    founded: int = ormar.Integer(nullable=True)
+    branches = ormar.ManyToMany(Branch)  
+```
+
+To select all `Companies` with all `Branches` and `Addresses` you can simply query:
+
+```python
+companies = await Company.objects.select_all(follow=True).all()
+
+# which is equivalent to:
+companies = await Company.objects.select_related('branches__address').all()
+```
+
+Of course in this case it's quite easy to issue explicit relation names in `select_related`,
+but the benefit of `select_all()` shows when you have multiple relations. 
+
+If for example `Company` would have 3 relations and all of those 3 relations have it's own 
+3 relations you would have to issue 9 relation strings to `select_related`, `select_all()`
+is also resistant to change in names of relations.
 
 ## prefetch_related
 
@@ -403,6 +487,15 @@ objects from other side of the relation.
 
 !!!tip 
     To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+### select_all
+
+Works exactly the same as [select_all](./#select_all) function above but allows you to fetch related
+objects from other side of the relation.
+
+!!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
 
 ### prefetch_related
 
