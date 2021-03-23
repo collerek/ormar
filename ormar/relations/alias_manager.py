@@ -151,7 +151,7 @@ class AliasManager:
         self,
         source_model: Union[Type["Model"], Type["ModelRow"]],
         relation_str: str,
-        relation_field: Type["ForeignKeyField"],
+        relation_field: "ForeignKeyField",
     ) -> str:
         """
         Given source model and relation string returns the alias for this complex
@@ -159,7 +159,7 @@ class AliasManager:
         field definition.
 
         :param relation_field: field with direct relation definition
-        :type relation_field: Type["ForeignKeyField"]
+        :type relation_field: "ForeignKeyField"
         :param source_model: model with query starts
         :type source_model: source Model
         :param relation_str: string with relation joins defined

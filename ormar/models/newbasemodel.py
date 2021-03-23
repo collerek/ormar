@@ -67,7 +67,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     __slots__ = ("_orm_id", "_orm_saved", "_orm", "_pk_column")
 
     if TYPE_CHECKING:  # pragma no cover
-        __model_fields__: Dict[str, Type[BaseField]]
+        pk: Any
+        __model_fields__: Dict[str, BaseField]
         __table__: sqlalchemy.Table
         __fields__: Dict[str, pydantic.fields.ModelField]
         __pydantic_model__: Type[BaseModel]
@@ -77,6 +78,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         __database__: databases.Database
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
+        _orm_id: int
         _orm_saved: bool
         _related_names: Optional[Set]
         _related_names_hash: str
@@ -265,13 +267,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if item == "pk":
             return object.__getattribute__(self, "__dict__").get(self.Meta.pkname, None)
         if item in object.__getattribute__(self, "extract_related_names")():
-            return object.__getattribute__(
-                self, "_extract_related_model_instead_of_field"
-            )(item)
+            return self._extract_related_model_instead_of_field(item)
         if item in object.__getattribute__(self, "extract_through_names")():
-            return object.__getattribute__(
-                self, "_extract_related_model_instead_of_field"
-            )(item)
+            return self._extract_related_model_instead_of_field(item)
         if item in object.__getattribute__(self, "Meta").property_fields:
             value = object.__getattribute__(self, item)
             return value() if callable(value) else value
@@ -455,7 +453,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         fields_to_check = cls.Meta.model_fields.copy()
         for field in fields_to_check.values():
             if field.has_unresolved_forward_refs():
-                field = cast(Type[ForeignKeyField], field)
+                field = cast(ForeignKeyField, field)
                 field.evaluate_forward_ref(globalns=globalns, localns=localns)
                 field.set_self_reference_flag()
                 expand_reverse_relationship(model_field=field)
@@ -747,12 +745,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 )
         return self_fields
 
-    def get_relation_model_id(self, target_field: Type["BaseField"]) -> Optional[int]:
+    def get_relation_model_id(self, target_field: "BaseField") -> Optional[int]:
         """
         Returns an id of the relation side model to use in prefetch query.
 
         :param target_field: field with relation definition
-        :type target_field: Type["BaseField"]
+        :type target_field: "BaseField"
         :return: value of pk if set
         :rtype: Optional[int]
         """

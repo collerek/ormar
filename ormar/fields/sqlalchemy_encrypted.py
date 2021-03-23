@@ -133,7 +133,7 @@ class EncryptedString(types.TypeDecorator):
             raise ModelDefinitionError("Wrong or no encrypt backend provided!")
 
         self.backend: EncryptBackend = backend()
-        self._field_type: Type["BaseField"] = _field_type
+        self._field_type: "BaseField" = _field_type
         self._underlying_type: Any = _field_type.column_type
         self._key: Union[str, Callable] = encrypt_secret
         type_ = self._field_type.__type__

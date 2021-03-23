@@ -292,7 +292,7 @@ class PrefetchQuery:
 
         for related in related_to_extract:
             target_field = model.Meta.model_fields[related]
-            target_field = cast(Type["ForeignKeyField"], target_field)
+            target_field = cast("ForeignKeyField", target_field)
             target_model = target_field.to.get_name()
             model_id = model.get_relation_model_id(target_field=target_field)
 
@@ -394,7 +394,7 @@ class PrefetchQuery:
         :rtype: None
         """
         target_field = target_model.Meta.model_fields[related]
-        target_field = cast(Type["ForeignKeyField"], target_field)
+        target_field = cast("ForeignKeyField", target_field)
         reverse = False
         if target_field.virtual or target_field.is_multi:
             reverse = True
@@ -461,7 +461,7 @@ class PrefetchQuery:
 
     async def _run_prefetch_query(
         self,
-        target_field: Type["BaseField"],
+        target_field: "BaseField",
         excludable: "ExcludableItems",
         filter_clauses: List,
         related_field_name: str,
@@ -474,7 +474,7 @@ class PrefetchQuery:
         models.
 
         :param target_field: ormar field with relation definition
-        :type target_field: Type["BaseField"]
+        :type target_field: "BaseField"
         :param filter_clauses: list of clauses, actually one clause with ids of relation
         :type filter_clauses: List[sqlalchemy.sql.elements.TextClause]
         :return: table prefix and raw rows from sql response
@@ -540,13 +540,13 @@ class PrefetchQuery:
         )
 
     def _update_already_loaded_rows(  # noqa: CFQ002
-        self, target_field: Type["BaseField"], prefetch_dict: Dict, orders_by: Dict,
+        self, target_field: "BaseField", prefetch_dict: Dict, orders_by: Dict,
     ) -> None:
         """
         Updates models that are already loaded, usually children of children.
 
         :param target_field: ormar field with relation definition
-        :type target_field: Type["BaseField"]
+        :type target_field: "BaseField"
         :param prefetch_dict: dictionaries of related models to prefetch
         :type prefetch_dict: Dict
         :param orders_by: dictionary of order by clauses by model
@@ -561,7 +561,7 @@ class PrefetchQuery:
     def _populate_rows(  # noqa: CFQ002
         self,
         rows: List,
-        target_field: Type["ForeignKeyField"],
+        target_field: "ForeignKeyField",
         parent_model: Type["Model"],
         table_prefix: str,
         exclude_prefix: str,
@@ -584,7 +584,7 @@ class PrefetchQuery:
         :param rows: raw sql response from the prefetch query
         :type rows: List[sqlalchemy.engine.result.RowProxy]
         :param target_field: field with relation definition from parent model
-        :type target_field: Type["BaseField"]
+        :type target_field: "BaseField"
         :param parent_model: model with relation definition
         :type parent_model: Type[Model]
         :param table_prefix: prefix of the target table from current relation

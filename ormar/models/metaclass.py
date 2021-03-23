@@ -18,6 +18,7 @@ from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
 from ormar import ModelDefinitionError  # noqa I100
+from ormar.exceptions import ModelError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
@@ -44,6 +45,7 @@ from ormar.signals import Signal, SignalEmitter
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+    from ormar.models import T
 
 CONFIG_KEY = "Config"
 PARSED_FIELDS_KEY = "__parsed_fields__"
@@ -63,9 +65,7 @@ class ModelMeta:
     columns: List[sqlalchemy.Column]
     constraints: List[ColumnCollectionConstraint]
     pkname: str
-    model_fields: Dict[
-        str, Union[Type[BaseField], Type[ForeignKeyField], Type[ManyToManyField]]
-    ]
+    model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]]
     alias_manager: AliasManager
     property_fields: Set
     signals: SignalEmitter
@@ -215,7 +215,7 @@ def update_attrs_from_base_meta(  # noqa: CCR001
 
 
 def copy_and_replace_m2m_through_model(  # noqa: CFQ002
-    field: Type[ManyToManyField],
+    field: ManyToManyField,
     field_name: str,
     table_name: str,
     parent_fields: Dict,
@@ -238,7 +238,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     :param base_class: base class model
     :type base_class: Type["Model"]
     :param field: field with relations definition
-    :type field: Type[ManyToManyField]
+    :type field: ManyToManyField
     :param field_name: name of the relation field
     :type field_name: str
     :param table_name: name of the table
@@ -250,9 +250,10 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     :param meta: metaclass of currently created model
     :type meta: ModelMeta
     """
-    copy_field: Type[BaseField] = type(  # type: ignore
-        field.__name__, (ManyToManyField, BaseField), dict(field.__dict__)
+    Field: Type[BaseField] = type(  # type: ignore
+        field.__class__.__name__, (ManyToManyField, BaseField), {}
     )
+    copy_field = Field(**dict(field.__dict__))
     related_name = field.related_name + "_" + table_name
     copy_field.related_name = related_name  # type: ignore
 
@@ -293,9 +294,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
     base_class: Type["Model"],
     curr_class: type,
     attrs: Dict,
-    model_fields: Dict[
-        str, Union[Type[BaseField], Type[ForeignKeyField], Type[ManyToManyField]]
-    ],
+    model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
 ) -> Tuple[Dict, Dict]:
     """
     Copy the key parameters [databse, metadata, property_fields and constraints]
@@ -342,7 +341,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
         )
         for field_name, field in base_class.Meta.model_fields.items():
             if field.is_multi:
-                field = cast(Type["ManyToManyField"], field)
+                field = cast(ManyToManyField, field)
                 copy_and_replace_m2m_through_model(
                     field=field,
                     field_name=field_name,
@@ -354,9 +353,10 @@ def copy_data_from_parent_model(  # noqa: CCR001
                 )
 
             elif field.is_relation and field.related_name:
-                copy_field = type(  # type: ignore
-                    field.__name__, (ForeignKeyField, BaseField), dict(field.__dict__)
+                Field = type(  # type: ignore
+                    field.__class__.__name__, (ForeignKeyField, BaseField), {}
                 )
+                copy_field = Field(**dict(field.__dict__))
                 related_name = field.related_name + "_" + table_name
                 copy_field.related_name = related_name  # type: ignore
                 parent_fields[field_name] = copy_field
@@ -372,9 +372,7 @@ def extract_from_parents_definition(  # noqa: CCR001
     base_class: type,
     curr_class: type,
     attrs: Dict,
-    model_fields: Dict[
-        str, Union[Type[BaseField], Type[ForeignKeyField], Type[ManyToManyField]]
-    ],
+    model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
 ) -> Tuple[Dict, Dict]:
     """
     Extracts fields from base classes if they have valid oramr fields.
@@ -549,6 +547,15 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                         field_name=field_name, model=new_model
                     )
                 new_model.Meta.alias_manager = alias_manager
-                new_model.objects = QuerySet(new_model)
 
         return new_model
+
+    @property
+    def objects(cls: Type["T"]) -> "QuerySet[T]":  # type: ignore
+        if cls.Meta.requires_ref_update:
+            raise ModelError(
+                f"Model {cls.get_name()} has not updated "
+                f"ForwardRefs. \nBefore using the model you "
+                f"need to call update_forward_refs()."
+            )
+        return QuerySet(model_cls=cls)

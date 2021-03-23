@@ -86,6 +86,11 @@ async def test_load_all_fk_rel():
             assert hq.companies[0].name == "Banzai"
             assert hq.companies[0].founded == 1988
 
+            hq2 = await HQ.objects.select_all().get(name="Main")
+            assert hq2.companies[0] == company
+            assert hq2.companies[0].name == "Banzai"
+            assert hq2.companies[0].founded == 1988
+
 
 @pytest.mark.asyncio
 async def test_load_all_many_to_many():
@@ -105,6 +110,12 @@ async def test_load_all_many_to_many():
 
             assert hq.nicks[1] == nick2
             assert hq.nicks[1].name == "Bazinga20"
+
+            hq2 = await HQ.objects.select_all().get(name="Main")
+            assert hq2.nicks[0] == nick1
+            assert hq2.nicks[0].name == "BazingaO"
+            assert hq2.nicks[1] == nick2
+            assert hq2.nicks[1].name == "Bazinga20"
 
 
 @pytest.mark.asyncio
@@ -130,6 +141,16 @@ async def test_load_all_with_order():
             assert hq.nicks[0] == nick1
             assert hq.nicks[1] == nick2
 
+            hq2 = (
+                await HQ.objects.select_all().order_by("-nicks__name").get(name="Main")
+            )
+            assert hq2.nicks[0] == nick2
+            assert hq2.nicks[1] == nick1
+
+            hq3 = await HQ.objects.select_all().get(name="Main")
+            assert hq3.nicks[0] == nick1
+            assert hq3.nicks[1] == nick2
+
 
 @pytest.mark.asyncio
 async def test_loading_reversed_relation():
@@ -142,6 +163,9 @@ async def test_loading_reversed_relation():
             await company.load_all()
 
             assert company.hq == hq
+
+            company2 = await Company.objects.select_all().get(name="Banzai")
+            assert company2.hq == hq
 
 
 @pytest.mark.asyncio
@@ -174,10 +198,42 @@ async def test_loading_nested():
             assert hq.nicks[1].level.name == "Low"
             assert hq.nicks[1].level.language.name == "English"
 
+            hq2 = await HQ.objects.select_all(follow=True).get(name="Main")
+            assert hq2.nicks[0] == nick1
+            assert hq2.nicks[0].name == "BazingaO"
+            assert hq2.nicks[0].level.name == "High"
+            assert hq2.nicks[0].level.language.name == "English"
+
+            assert hq2.nicks[1] == nick2
+            assert hq2.nicks[1].name == "Bazinga20"
+            assert hq2.nicks[1].level.name == "Low"
+            assert hq2.nicks[1].level.language.name == "English"
+
+            hq5 = await HQ.objects.select_all().get(name="Main")
+            assert len(hq5.nicks) == 2
+            await hq5.nicks.select_all(follow=True).all()
+            assert hq5.nicks[0] == nick1
+            assert hq5.nicks[0].name == "BazingaO"
+            assert hq5.nicks[0].level.name == "High"
+            assert hq5.nicks[0].level.language.name == "English"
+            assert hq5.nicks[1] == nick2
+            assert hq5.nicks[1].name == "Bazinga20"
+            assert hq5.nicks[1].level.name == "Low"
+            assert hq5.nicks[1].level.language.name == "English"
+
             await hq.load_all(follow=True, exclude="nicks__level__language")
             assert len(hq.nicks) == 2
             assert hq.nicks[0].level.language is None
             assert hq.nicks[1].level.language is None
+
+            hq3 = (
+                await HQ.objects.select_all(follow=True)
+                .exclude_fields("nicks__level__language")
+                .get(name="Main")
+            )
+            assert len(hq3.nicks) == 2
+            assert hq3.nicks[0].level.language is None
+            assert hq3.nicks[1].level.language is None
 
             await hq.load_all(follow=True, exclude="nicks__level__language__level")
             assert len(hq.nicks) == 2

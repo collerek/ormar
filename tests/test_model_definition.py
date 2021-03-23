@@ -29,7 +29,7 @@ class ExampleModel(Model):
     test_string: str = ormar.String(max_length=250)
     test_text: str = ormar.Text(default="")
     test_bool: bool = ormar.Boolean(nullable=False)
-    test_float: ormar.Float() = None  # type: ignore
+    test_float = ormar.Float(nullable=True)
     test_datetime = ormar.DateTime(default=datetime.datetime.now)
     test_date = ormar.Date(default=datetime.date.today)
     test_time = ormar.Time(default=datetime.time)

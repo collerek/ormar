@@ -1,4 +1,4 @@
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Generic, Optional, TYPE_CHECKING, Type, TypeVar
 
 import ormar
 from ormar.exceptions import NoMatch, RelationshipInstanceError
@@ -6,11 +6,14 @@ from ormar.relations.querysetproxy import QuerysetProxy
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model, RelationType
+    from ormar.models import T
     from ormar.relations import Relation
     from ormar.queryset import QuerySet
+else:
+    T = TypeVar("T", bound="Model")
 
 
-class RelationProxy(list):
+class RelationProxy(Generic[T], list):
     """
     Proxy of the Relation that is a list with special methods.
     """
@@ -19,16 +22,17 @@ class RelationProxy(list):
         self,
         relation: "Relation",
         type_: "RelationType",
+        to: Type["T"],
         field_name: str,
         data_: Any = None,
     ) -> None:
         super().__init__(data_ or ())
-        self.relation: "Relation" = relation
+        self.relation: "Relation[T]" = relation
         self.type_: "RelationType" = type_
         self.field_name = field_name
         self._owner: "Model" = self.relation.manager.owner
-        self.queryset_proxy: QuerysetProxy = QuerysetProxy(
-            relation=self.relation, type_=type_
+        self.queryset_proxy: QuerysetProxy[T] = QuerysetProxy[T](
+            relation=self.relation, to=to, type_=type_
         )
         self._related_field_name: Optional[str] = None
 
@@ -47,6 +51,9 @@ class RelationProxy(list):
         self._related_field_name = owner_field.get_related_name()
 
         return self._related_field_name
+
+    def __getitem__(self, item: Any) -> "T":  # type: ignore
+        return super().__getitem__(item)
 
     def __getattribute__(self, item: str) -> Any:
         """
@@ -107,7 +114,7 @@ class RelationProxy(list):
                 "You cannot query relationships from unsaved model."
             )
 
-    def _set_queryset(self) -> "QuerySet":
+    def _set_queryset(self) -> "QuerySet[T]":
         """
         Creates new QuerySet with relation model and pre filters it with currents
         parent model primary key, so all queries by definition are already related
@@ -131,7 +138,7 @@ class RelationProxy(list):
         return queryset
 
     async def remove(  # type: ignore
-        self, item: "Model", keep_reversed: bool = True
+        self, item: "T", keep_reversed: bool = True
     ) -> None:
         """
         Removes the related from relation with parent.
@@ -182,7 +189,7 @@ class RelationProxy(list):
             relation_name=self.field_name,
         )
 
-    async def add(self, item: "Model", **kwargs: Any) -> None:
+    async def add(self, item: "T", **kwargs: Any) -> None:
         """
         Adds child model to relation.
 

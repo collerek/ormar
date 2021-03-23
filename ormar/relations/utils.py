@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Tuple, Type
+from typing import TYPE_CHECKING, Tuple
 from weakref import proxy
 
 from ormar.fields.foreign_key import ForeignKeyField
@@ -8,7 +8,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def get_relations_sides_and_names(
-    to_field: Type[ForeignKeyField], parent: "Model", child: "Model",
+    to_field: ForeignKeyField, parent: "Model", child: "Model",
 ) -> Tuple["Model", "Model", str, str]:
     """
     Determines the names of child and parent relations names, as well as

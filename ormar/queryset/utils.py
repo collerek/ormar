@@ -264,7 +264,7 @@ def get_relationship_alias_model_and_str(
 def _process_through_field(
     related_parts: List,
     relation: Optional[str],
-    related_field: Type["BaseField"],
+    related_field: "BaseField",
     previous_model: Type["Model"],
     previous_models: List[Type["Model"]],
 ) -> Tuple[Type["Model"], Optional[str], bool]:
@@ -276,7 +276,7 @@ def _process_through_field(
     :param relation: relation name
     :type relation: str
     :param related_field: field with relation declaration
-    :type related_field: Type["ForeignKeyField"]
+    :type related_field: "ForeignKeyField"
     :param previous_model: model from which relation is coming
     :type previous_model: Type["Model"]
     :param previous_models: list of already visited models in relation chain

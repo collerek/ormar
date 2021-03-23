@@ -14,7 +14,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.models import NewBaseModel
 
 
-def adjust_through_many_to_many_model(model_field: Type["ManyToManyField"]) -> None:
+def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
     """
     Registers m2m relation on through model.
     Sets ormar.ForeignKey from through model to both child and parent models.
@@ -26,14 +26,14 @@ def adjust_through_many_to_many_model(model_field: Type["ManyToManyField"]) -> N
     """
     parent_name = model_field.default_target_field_name()
     child_name = model_field.default_source_field_name()
-
-    model_field.through.Meta.model_fields[parent_name] = ormar.ForeignKey(
+    model_fields = model_field.through.Meta.model_fields
+    model_fields[parent_name] = ormar.ForeignKey(  # type: ignore
         model_field.to,
         real_name=parent_name,
         ondelete="CASCADE",
         owner=model_field.through,
     )
-    model_field.through.Meta.model_fields[child_name] = ormar.ForeignKey(
+    model_fields[child_name] = ormar.ForeignKey(  # type: ignore
         model_field.owner,
         real_name=child_name,
         ondelete="CASCADE",
@@ -52,7 +52,7 @@ def adjust_through_many_to_many_model(model_field: Type["ManyToManyField"]) -> N
 
 
 def create_and_append_m2m_fk(
-    model: Type["Model"], model_field: Type["ManyToManyField"], field_name: str
+    model: Type["Model"], model_field: "ManyToManyField", field_name: str
 ) -> None:
     """
     Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.
@@ -190,22 +190,22 @@ def _process_fields(
     return pkname, columns
 
 
-def _is_through_model_not_set(field: Type["BaseField"]) -> bool:
+def _is_through_model_not_set(field: "BaseField") -> bool:
     """
     Alias to if check that verifies if through model was created.
     :param field: field to check
-    :type field: Type["BaseField"]
+    :type field: "BaseField"
     :return: result of the check
     :rtype: bool
     """
     return field.is_multi and not field.through
 
 
-def _is_db_field(field: Type["BaseField"]) -> bool:
+def _is_db_field(field: "BaseField") -> bool:
     """
     Alias to if check that verifies if field should be included in database.
     :param field: field to check
-    :type field: Type["BaseField"]
+    :type field: "BaseField"
     :return: result of the check
     :rtype: bool
     """
@@ -298,7 +298,7 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
 
 
 def update_column_definition(
-    model: Union[Type["Model"], Type["NewBaseModel"]], field: Type["ForeignKeyField"]
+    model: Union[Type["Model"], Type["NewBaseModel"]], field: "ForeignKeyField"
 ) -> None:
     """
     Updates a column with a new type column based on updated parameters in FK fields.
@@ -306,7 +306,7 @@ def update_column_definition(
     :param model: model on which columns needs to be updated
     :type model: Type["Model"]
     :param field: field with column definition that requires update
-    :type field: Type[ForeignKeyField]
+    :type field: ForeignKeyField
     :return: None
     :rtype: None
     """

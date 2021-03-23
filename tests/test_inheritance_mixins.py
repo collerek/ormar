@@ -64,8 +64,10 @@ def test_field_redefining():
         id: int = ormar.Integer(primary_key=True)
         created_date: datetime.datetime = ormar.DateTime(name="creation_date")
 
-    assert RedefinedField.Meta.model_fields["created_date"].default is None
-    assert RedefinedField.Meta.model_fields["created_date"].alias == "creation_date"
+    assert RedefinedField.Meta.model_fields["created_date"].ormar_default is None
+    assert (
+        RedefinedField.Meta.model_fields["created_date"].get_alias() == "creation_date"
+    )
     assert any(x.name == "creation_date" for x in RedefinedField.Meta.table.columns)
 
 
@@ -87,8 +89,10 @@ def test_field_redefining_in_second_raises_error():
         id: int = ormar.Integer(primary_key=True)
         created_date: str = ormar.String(max_length=200, name="creation_date")
 
-    assert RedefinedField2.Meta.model_fields["created_date"].default is None
-    assert RedefinedField2.Meta.model_fields["created_date"].alias == "creation_date"
+    assert RedefinedField2.Meta.model_fields["created_date"].ormar_default is None
+    assert (
+        RedefinedField2.Meta.model_fields["created_date"].get_alias() == "creation_date"
+    )
     assert any(x.name == "creation_date" for x in RedefinedField2.Meta.table.columns)
     assert isinstance(
         RedefinedField2.Meta.table.columns["creation_date"].type,

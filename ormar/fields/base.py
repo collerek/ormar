@@ -1,7 +1,7 @@
-from typing import Any, List, Optional, TYPE_CHECKING, Type, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
-from pydantic import Field, Json, typing
+from pydantic import Json, typing
 from pydantic.fields import FieldInfo, Required, Undefined
 
 import ormar  # noqa I101
@@ -28,44 +28,62 @@ class BaseField(FieldInfo):
     to pydantic field types like ConstrainedStr
     """
 
-    __type__ = None
-    related_name = None
+    def __init__(self, **kwargs: Any) -> None:
+        self.__type__: type = kwargs.pop("__type__", None)
+        self.related_name = kwargs.pop("related_name", None)
 
-    column_type: sqlalchemy.Column
-    constraints: List = []
-    name: str
-    alias: str
+        self.column_type: sqlalchemy.Column = kwargs.pop("column_type", None)
+        self.constraints: List = kwargs.pop("constraints", list())
+        self.name: str = kwargs.pop("name", None)
+        self.db_alias: str = kwargs.pop("alias", None)
 
-    primary_key: bool
-    autoincrement: bool
-    nullable: bool
-    index: bool
-    unique: bool
-    pydantic_only: bool
-    choices: typing.Sequence
+        self.primary_key: bool = kwargs.pop("primary_key", False)
+        self.autoincrement: bool = kwargs.pop("autoincrement", False)
+        self.nullable: bool = kwargs.pop("nullable", False)
+        self.index: bool = kwargs.pop("index", False)
+        self.unique: bool = kwargs.pop("unique", False)
+        self.pydantic_only: bool = kwargs.pop("pydantic_only", False)
+        self.choices: typing.Sequence = kwargs.pop("choices", False)
 
-    virtual: bool = False  # ManyToManyFields and reverse ForeignKeyFields
-    is_multi: bool = False  # ManyToManyField
-    is_relation: bool = False  # ForeignKeyField + subclasses
-    is_through: bool = False  # ThroughFields
+        self.virtual: bool = kwargs.pop(
+            "virtual", None
+        )  # ManyToManyFields and reverse ForeignKeyFields
+        self.is_multi: bool = kwargs.pop("is_multi", None)  # ManyToManyField
+        self.is_relation: bool = kwargs.pop(
+            "is_relation", None
+        )  # ForeignKeyField + subclasses
+        self.is_through: bool = kwargs.pop("is_through", False)  # ThroughFields
 
-    owner: Type["Model"]
-    to: Type["Model"]
-    through: Type["Model"]
-    self_reference: bool = False
-    self_reference_primary: Optional[str] = None
-    orders_by: Optional[List[str]] = None
-    related_orders_by: Optional[List[str]] = None
+        self.owner: Type["Model"] = kwargs.pop("owner", None)
+        self.to: Type["Model"] = kwargs.pop("to", None)
+        self.through: Type["Model"] = kwargs.pop("through", None)
+        self.self_reference: bool = kwargs.pop("self_reference", False)
+        self.self_reference_primary: Optional[str] = kwargs.pop(
+            "self_reference_primary", None
+        )
+        self.orders_by: Optional[List[str]] = kwargs.pop("orders_by", None)
+        self.related_orders_by: Optional[List[str]] = kwargs.pop(
+            "related_orders_by", None
+        )
 
-    encrypt_secret: str
-    encrypt_backend: EncryptBackends = EncryptBackends.NONE
-    encrypt_custom_backend: Optional[Type[EncryptBackend]] = None
+        self.encrypt_secret: str = kwargs.pop("encrypt_secret", None)
+        self.encrypt_backend: EncryptBackends = kwargs.pop(
+            "encrypt_backend", EncryptBackends.NONE
+        )
+        self.encrypt_custom_backend: Optional[Type[EncryptBackend]] = kwargs.pop(
+            "encrypt_custom_backend", None
+        )
 
-    default: Any
-    server_default: Any
+        self.ormar_default: Any = kwargs.pop("default", None)
+        self.server_default: Any = kwargs.pop("server_default", None)
 
-    @classmethod
-    def is_valid_uni_relation(cls) -> bool:
+        for name, value in kwargs.items():
+            setattr(self, name, value)
+
+        kwargs.update(self.get_pydantic_default())
+        super().__init__(**kwargs)
+
+    def is_valid_uni_relation(self) -> bool:
         """
         Checks if field is a relation definition but only for ForeignKey relation,
         so excludes ManyToMany fields, as well as virtual ForeignKey
@@ -78,10 +96,9 @@ class BaseField(FieldInfo):
         :return: result of the check
         :rtype: bool
         """
-        return not cls.is_multi and not cls.virtual
+        return not self.is_multi and not self.virtual
 
-    @classmethod
-    def get_alias(cls) -> str:
+    def get_alias(self) -> str:
         """
         Used to translate Model column names to database column names during db queries.
 
@@ -89,73 +106,25 @@ class BaseField(FieldInfo):
         otherwise field name in ormar/pydantic
         :rtype: str
         """
-        return cls.alias if cls.alias else cls.name
+        return self.db_alias if self.db_alias else self.name
 
-    @classmethod
-    def is_valid_field_info_field(cls, field_name: str) -> bool:
-        """
-        Checks if field belongs to pydantic FieldInfo
-        - used during setting default pydantic values.
-        Excludes defaults and alias as they are populated separately
-        (defaults) or not at all (alias)
-
-        :param field_name: field name of BaseFIeld
-        :type field_name: str
-        :return: True if field is present on pydantic.FieldInfo
-        :rtype: bool
-        """
-        return (
-            field_name not in ["default", "default_factory", "alias", "allow_mutation"]
-            and not field_name.startswith("__")
-            and hasattr(cls, field_name)
-            and not callable(getattr(cls, field_name))
-        )
-
-    @classmethod
-    def get_base_pydantic_field_info(cls, allow_null: bool) -> FieldInfo:
+    def get_pydantic_default(self) -> Dict:
         """
         Generates base pydantic.FieldInfo with only default and optionally
         required to fix pydantic Json field being set to required=False.
         Used in an ormar Model Metaclass.
 
-        :param allow_null: flag if the default value can be None
-        or if it should be populated by pydantic Undefined
-        :type allow_null: bool
         :return: instance of base pydantic.FieldInfo
         :rtype: pydantic.FieldInfo
         """
-        base = cls.default_value()
+        base = self.default_value()
         if base is None:
-            base = (
-                FieldInfo(default=None)
-                if (cls.nullable or allow_null)
-                else FieldInfo(default=Undefined)
-            )
-        if cls.__type__ == Json and base.default is Undefined:
-            base.default = Required
+            base = dict(default=None) if self.nullable else dict(default=Undefined)
+        if self.__type__ == Json and base.get("default") is Undefined:
+            base["default"] = Required
         return base
 
-    @classmethod
-    def convert_to_pydantic_field_info(cls, allow_null: bool = False) -> FieldInfo:
-        """
-        Converts a BaseField into pydantic.FieldInfo
-        that is later easily processed by pydantic.
-        Used in an ormar Model Metaclass.
-
-        :param allow_null: flag if the default value can be None
-        or if it should be populated by pydantic Undefined
-        :type allow_null: bool
-        :return: actual instance of pydantic.FieldInfo with all needed fields populated
-        :rtype: pydantic.FieldInfo
-        """
-        base = cls.get_base_pydantic_field_info(allow_null=allow_null)
-        for attr_name in FieldInfo.__dict__.keys():
-            if cls.is_valid_field_info_field(attr_name):
-                setattr(base, attr_name, cls.__dict__.get(attr_name))
-        return base
-
-    @classmethod
-    def default_value(cls, use_server: bool = False) -> Optional[FieldInfo]:
+    def default_value(self, use_server: bool = False) -> Optional[Dict]:
         """
         Returns a FieldInfo instance with populated default
         (static) or default_factory (function).
@@ -173,17 +142,20 @@ class BaseField(FieldInfo):
         which is returning a FieldInfo instance
         :rtype: Optional[pydantic.FieldInfo]
         """
-        if cls.is_auto_primary_key():
-            return Field(default=None)
-        if cls.has_default(use_server=use_server):
-            default = cls.default if cls.default is not None else cls.server_default
+        if self.is_auto_primary_key():
+            return dict(default=None)
+        if self.has_default(use_server=use_server):
+            default = (
+                self.ormar_default
+                if self.ormar_default is not None
+                else self.server_default
+            )
             if callable(default):
-                return Field(default_factory=default)
-            return Field(default=default)
+                return dict(default_factory=default)
+            return dict(default=default)
         return None
 
-    @classmethod
-    def get_default(cls, use_server: bool = False) -> Any:  # noqa CCR001
+    def get_default(self, use_server: bool = False) -> Any:  # noqa CCR001
         """
         Return default value for a field.
         If the field is Callable the function is called and actual result is returned.
@@ -195,18 +167,17 @@ class BaseField(FieldInfo):
         :return: default value for the field if set, otherwise implicit None
         :rtype: Any
         """
-        if cls.has_default():
+        if self.has_default():
             default = (
-                cls.default
-                if cls.default is not None
-                else (cls.server_default if use_server else None)
+                self.ormar_default
+                if self.ormar_default is not None
+                else (self.server_default if use_server else None)
             )
             if callable(default):
                 default = default()
             return default
 
-    @classmethod
-    def has_default(cls, use_server: bool = True) -> bool:
+    def has_default(self, use_server: bool = True) -> bool:
         """
         Checks if the field has default value set.
 
@@ -216,12 +187,11 @@ class BaseField(FieldInfo):
         :return: result of the check if default value is set
         :rtype: bool
         """
-        return cls.default is not None or (
-            cls.server_default is not None and use_server
+        return self.ormar_default is not None or (
+            self.server_default is not None and use_server
         )
 
-    @classmethod
-    def is_auto_primary_key(cls) -> bool:
+    def is_auto_primary_key(self) -> bool:
         """
         Checks if field is first a primary key and if it,
         it's than check if it's set to autoincrement.
@@ -230,12 +200,11 @@ class BaseField(FieldInfo):
         :return: result of the check for primary key and autoincrement
         :rtype: bool
         """
-        if cls.primary_key:
-            return cls.autoincrement
+        if self.primary_key:
+            return self.autoincrement
         return False
 
-    @classmethod
-    def construct_constraints(cls) -> List:
+    def construct_constraints(self) -> List:
         """
         Converts list of ormar constraints into sqlalchemy ForeignKeys.
         Has to be done dynamically as sqlalchemy binds ForeignKey to the table.
@@ -249,15 +218,14 @@ class BaseField(FieldInfo):
                 con.reference,
                 ondelete=con.ondelete,
                 onupdate=con.onupdate,
-                name=f"fk_{cls.owner.Meta.tablename}_{cls.to.Meta.tablename}"
-                f"_{cls.to.get_column_alias(cls.to.Meta.pkname)}_{cls.name}",
+                name=f"fk_{self.owner.Meta.tablename}_{self.to.Meta.tablename}"
+                f"_{self.to.get_column_alias(self.to.Meta.pkname)}_{self.name}",
             )
-            for con in cls.constraints
+            for con in self.constraints
         ]
         return constraints
 
-    @classmethod
-    def get_column(cls, name: str) -> sqlalchemy.Column:
+    def get_column(self, name: str) -> sqlalchemy.Column:
         """
         Returns definition of sqlalchemy.Column used in creation of sqlalchemy.Table.
         Populates name, column type constraints, as well as a number of parameters like
@@ -268,24 +236,23 @@ class BaseField(FieldInfo):
         :return: actual definition of the database column as sqlalchemy requires.
         :rtype: sqlalchemy.Column
         """
-        if cls.encrypt_backend == EncryptBackends.NONE:
+        if self.encrypt_backend == EncryptBackends.NONE:
             column = sqlalchemy.Column(
-                cls.alias or name,
-                cls.column_type,
-                *cls.construct_constraints(),
-                primary_key=cls.primary_key,
-                nullable=cls.nullable and not cls.primary_key,
-                index=cls.index,
-                unique=cls.unique,
-                default=cls.default,
-                server_default=cls.server_default,
+                self.db_alias or name,
+                self.column_type,
+                *self.construct_constraints(),
+                primary_key=self.primary_key,
+                nullable=self.nullable and not self.primary_key,
+                index=self.index,
+                unique=self.unique,
+                default=self.ormar_default,
+                server_default=self.server_default,
             )
         else:
-            column = cls._get_encrypted_column(name=name)
+            column = self._get_encrypted_column(name=name)
         return column
 
-    @classmethod
-    def _get_encrypted_column(cls, name: str) -> sqlalchemy.Column:
+    def _get_encrypted_column(self, name: str) -> sqlalchemy.Column:
         """
         Returns EncryptedString column type instead of actual column.
 
@@ -294,29 +261,28 @@ class BaseField(FieldInfo):
         :return: newly defined column
         :rtype:  sqlalchemy.Column
         """
-        if cls.primary_key or cls.is_relation:
+        if self.primary_key or self.is_relation:
             raise ModelDefinitionError(
                 "Primary key field and relations fields" "cannot be encrypted!"
             )
         column = sqlalchemy.Column(
-            cls.alias or name,
+            self.db_alias or name,
             EncryptedString(
-                _field_type=cls,
-                encrypt_secret=cls.encrypt_secret,
-                encrypt_backend=cls.encrypt_backend,
-                encrypt_custom_backend=cls.encrypt_custom_backend,
+                _field_type=self,
+                encrypt_secret=self.encrypt_secret,
+                encrypt_backend=self.encrypt_backend,
+                encrypt_custom_backend=self.encrypt_custom_backend,
             ),
-            nullable=cls.nullable,
-            index=cls.index,
-            unique=cls.unique,
-            default=cls.default,
-            server_default=cls.server_default,
+            nullable=self.nullable,
+            index=self.index,
+            unique=self.unique,
+            default=self.ormar_default,
+            server_default=self.server_default,
         )
         return column
 
-    @classmethod
     def expand_relationship(
-        cls,
+        self,
         value: Any,
         child: Union["Model", "NewBaseModel"],
         to_register: bool = True,
@@ -339,21 +305,19 @@ class BaseField(FieldInfo):
         """
         return value
 
-    @classmethod
-    def set_self_reference_flag(cls) -> None:
+    def set_self_reference_flag(self) -> None:
         """
         Sets `self_reference` to True if field to and owner are same model.
         :return: None
         :rtype: None
         """
-        if cls.owner is not None and (
-            cls.owner == cls.to or cls.owner.Meta == cls.to.Meta
+        if self.owner is not None and (
+            self.owner == self.to or self.owner.Meta == self.to.Meta
         ):
-            cls.self_reference = True
-            cls.self_reference_primary = cls.name
+            self.self_reference = True
+            self.self_reference_primary = self.name
 
-    @classmethod
-    def has_unresolved_forward_refs(cls) -> bool:
+    def has_unresolved_forward_refs(self) -> bool:
         """
         Verifies if the filed has any ForwardRefs that require updating before the
         model can be used.
@@ -363,8 +327,7 @@ class BaseField(FieldInfo):
         """
         return False
 
-    @classmethod
-    def evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None:
+    def evaluate_forward_ref(self, globalns: Any, localns: Any) -> None:
         """
         Evaluates the ForwardRef to actual Field based on global and local namespaces
 
@@ -376,8 +339,7 @@ class BaseField(FieldInfo):
         :rtype: None
         """
 
-    @classmethod
-    def get_related_name(cls) -> str:
+    def get_related_name(self) -> str:
         """
         Returns name to use for reverse relation.
         It's either set as `related_name` or by default it's owner model. get_name + 's'

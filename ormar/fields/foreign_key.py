@@ -3,7 +3,17 @@ import sys
 import uuid
 from dataclasses import dataclass
 from random import choices
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    TYPE_CHECKING,
+    Tuple,
+    Type,
+    Union,
+    overload,
+)
 
 import sqlalchemy
 from pydantic import BaseModel, create_model
@@ -15,16 +25,16 @@ from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
 from ormar.fields.base import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model, NewBaseModel
+    from ormar.models import Model, NewBaseModel, T
     from ormar.fields import ManyToManyField
 
     if sys.version_info < (3, 7):
-        ToType = Type["Model"]
+        ToType = Type["T"]
     else:
-        ToType = Union[Type["Model"], "ForwardRef"]
+        ToType = Union[Type["T"], "ForwardRef"]
 
 
-def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
+def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
     """
     Ormar never returns you a raw data.
     So if you have a related field that has a value populated
@@ -55,8 +65,8 @@ def create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model":
 
 
 def create_dummy_model(
-    base_model: Type["Model"],
-    pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
+    base_model: Type["T"],
+    pk_field: Union[BaseField, "ForeignKeyField", "ManyToManyField"],
 ) -> Type["BaseModel"]:
     """
     Used to construct a dummy pydantic model for type hints and pydantic validation.
@@ -65,7 +75,7 @@ def create_dummy_model(
     :param base_model: class of target dummy model
     :type base_model: Model class
     :param pk_field: ormar Field to be set on pydantic Model
-    :type pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]]
+    :type pk_field: Union[BaseField, "ForeignKeyField", "ManyToManyField"]
     :return: constructed dummy model
     :rtype: pydantic.BaseModel
     """
@@ -83,7 +93,7 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-    to: Type["Model"], nullable: bool, onupdate: str = None, ondelete: str = None,
+    to: Type["T"], nullable: bool, onupdate: str = None, ondelete: str = None,
 ) -> Tuple[Any, List, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
@@ -168,6 +178,16 @@ class ForeignKeyConstraint:
     onupdate: Optional[str]
 
 
+@overload
+def ForeignKey(to: Type["T"], **kwargs: Any) -> "T":  # pragma: no cover
+    ...
+
+
+@overload
+def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":  # pragma: no cover
+    ...
+
+
 def ForeignKey(  # noqa CFQ002
     to: "ToType",
     *,
@@ -179,7 +199,7 @@ def ForeignKey(  # noqa CFQ002
     onupdate: str = None,
     ondelete: str = None,
     **kwargs: Any,
-) -> Any:
+) -> "T":
     """
     Despite a name it's a function that returns constructed ForeignKeyField.
     This function is actually used in model declaration (as ormar.ForeignKey(ToModel)).
@@ -256,7 +276,8 @@ def ForeignKey(  # noqa CFQ002
         related_orders_by=related_orders_by,
     )
 
-    return type("ForeignKey", (ForeignKeyField, BaseField), namespace)
+    Field = type("ForeignKey", (ForeignKeyField, BaseField), {})
+    return Field(**namespace)
 
 
 class ForeignKeyField(BaseField):
@@ -264,15 +285,15 @@ class ForeignKeyField(BaseField):
     Actual class returned from ForeignKey function call and stored in model_fields.
     """
 
-    to: Type["Model"]
-    name: str
-    related_name: str  # type: ignore
-    virtual: bool
-    ondelete: str
-    onupdate: str
+    def __init__(self, **kwargs: Any) -> None:
+        if TYPE_CHECKING:  # pragma: no cover
+            self.__type__: type
+            self.to: Type["Model"]
+        self.ondelete: str = kwargs.pop("ondelete", None)
+        self.onupdate: str = kwargs.pop("onupdate", None)
+        super().__init__(**kwargs)
 
-    @classmethod
-    def get_source_related_name(cls) -> str:
+    def get_source_related_name(self) -> str:
         """
         Returns name to use for source relation name.
         For FK it's the same, differs for m2m fields.
@@ -280,20 +301,18 @@ class ForeignKeyField(BaseField):
         :return: name of the related_name or default related name.
         :rtype: str
         """
-        return cls.get_related_name()
+        return self.get_related_name()
 
-    @classmethod
-    def get_related_name(cls) -> str:
+    def get_related_name(self) -> str:
         """
         Returns name to use for reverse relation.
         It's either set as `related_name` or by default it's owner model. get_name + 's'
         :return: name of the related_name or default related name.
         :rtype: str
         """
-        return cls.related_name or cls.owner.get_name() + "s"
+        return self.related_name or self.owner.get_name() + "s"
 
-    @classmethod
-    def evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None:
+    def evaluate_forward_ref(self, globalns: Any, localns: Any) -> None:
         """
         Evaluates the ForwardRef to actual Field based on global and local namespaces
 
@@ -304,26 +323,25 @@ class ForeignKeyField(BaseField):
         :return: None
         :rtype: None
         """
-        if cls.to.__class__ == ForwardRef:
-            cls.to = evaluate_forwardref(
-                cls.to,  # type: ignore
+        if self.to.__class__ == ForwardRef:
+            self.to = evaluate_forwardref(
+                self.to,  # type: ignore
                 globalns,
                 localns or None,
             )
             (
-                cls.__type__,
-                cls.constraints,
-                cls.column_type,
+                self.__type__,
+                self.constraints,
+                self.column_type,
             ) = populate_fk_params_based_on_to_model(
-                to=cls.to,
-                nullable=cls.nullable,
-                ondelete=cls.ondelete,
-                onupdate=cls.onupdate,
+                to=self.to,
+                nullable=self.nullable,
+                ondelete=self.ondelete,
+                onupdate=self.onupdate,
             )
 
-    @classmethod
     def _extract_model_from_sequence(
-        cls, value: List, child: "Model", to_register: bool,
+        self, value: List, child: "Model", to_register: bool,
     ) -> List["Model"]:
         """
         Takes a list of Models and registers them on parent.
@@ -341,15 +359,14 @@ class ForeignKeyField(BaseField):
         :rtype: List["Model"]
         """
         return [
-            cls.expand_relationship(  # type: ignore
+            self.expand_relationship(  # type: ignore
                 value=val, child=child, to_register=to_register,
             )
             for val in value
         ]
 
-    @classmethod
     def _register_existing_model(
-        cls, value: "Model", child: "Model", to_register: bool,
+        self, value: "Model", child: "Model", to_register: bool,
     ) -> "Model":
         """
         Takes already created instance and registers it for parent.
@@ -367,12 +384,11 @@ class ForeignKeyField(BaseField):
         :rtype: Model
         """
         if to_register:
-            cls.register_relation(model=value, child=child)
+            self.register_relation(model=value, child=child)
         return value
 
-    @classmethod
     def _construct_model_from_dict(
-        cls, value: dict, child: "Model", to_register: bool
+        self, value: dict, child: "Model", to_register: bool
     ) -> "Model":
         """
         Takes a dictionary, creates a instance and registers it for parent.
@@ -390,16 +406,15 @@ class ForeignKeyField(BaseField):
         :return: (if needed) registered Model
         :rtype: Model
         """
-        if len(value.keys()) == 1 and list(value.keys())[0] == cls.to.Meta.pkname:
+        if len(value.keys()) == 1 and list(value.keys())[0] == self.to.Meta.pkname:
             value["__pk_only__"] = True
-        model = cls.to(**value)
+        model = self.to(**value)
         if to_register:
-            cls.register_relation(model=model, child=child)
+            self.register_relation(model=model, child=child)
         return model
 
-    @classmethod
     def _construct_model_from_pk(
-        cls, value: Any, child: "Model", to_register: bool
+        self, value: Any, child: "Model", to_register: bool
     ) -> "Model":
         """
         Takes a pk value, creates a dummy instance and registers it for parent.
@@ -416,21 +431,20 @@ class ForeignKeyField(BaseField):
         :return: (if needed) registered Model
         :rtype: Model
         """
-        if cls.to.pk_type() == uuid.UUID and isinstance(value, str):  # pragma: nocover
+        if self.to.pk_type() == uuid.UUID and isinstance(value, str):  # pragma: nocover
             value = uuid.UUID(value)
-        if not isinstance(value, cls.to.pk_type()):
+        if not isinstance(value, self.to.pk_type()):
             raise RelationshipInstanceError(
-                f"Relationship error - ForeignKey {cls.to.__name__} "
-                f"is of type {cls.to.pk_type()} "
+                f"Relationship error - ForeignKey {self.to.__name__} "
+                f"is of type {self.to.pk_type()} "
                 f"while {type(value)} passed as a parameter."
             )
-        model = create_dummy_instance(fk=cls.to, pk=value)
+        model = create_dummy_instance(fk=self.to, pk=value)
         if to_register:
-            cls.register_relation(model=model, child=child)
+            self.register_relation(model=model, child=child)
         return model
 
-    @classmethod
-    def register_relation(cls, model: "Model", child: "Model") -> None:
+    def register_relation(self, model: "Model", child: "Model") -> None:
         """
         Registers relation between parent and child in relation manager.
         Relation manager is kep on each model (different instance).
@@ -444,11 +458,10 @@ class ForeignKeyField(BaseField):
         :type child: Model class
         """
         model._orm.add(
-            parent=model, child=child, field=cls,
+            parent=model, child=child, field=self,
         )
 
-    @classmethod
-    def has_unresolved_forward_refs(cls) -> bool:
+    def has_unresolved_forward_refs(self) -> bool:
         """
         Verifies if the filed has any ForwardRefs that require updating before the
         model can be used.
@@ -456,11 +469,10 @@ class ForeignKeyField(BaseField):
         :return: result of the check
         :rtype: bool
         """
-        return cls.to.__class__ == ForwardRef
+        return self.to.__class__ == ForwardRef
 
-    @classmethod
     def expand_relationship(
-        cls,
+        self,
         value: Any,
         child: Union["Model", "NewBaseModel"],
         to_register: bool = True,
@@ -483,20 +495,19 @@ class ForeignKeyField(BaseField):
         :rtype: Optional[Union["Model", List["Model"]]]
         """
         if value is None:
-            return None if not cls.virtual else []
+            return None if not self.virtual else []
         constructors = {
-            f"{cls.to.__name__}": cls._register_existing_model,
-            "dict": cls._construct_model_from_dict,
-            "list": cls._extract_model_from_sequence,
+            f"{self.to.__name__}": self._register_existing_model,
+            "dict": self._construct_model_from_dict,
+            "list": self._extract_model_from_sequence,
         }
 
         model = constructors.get(  # type: ignore
-            value.__class__.__name__, cls._construct_model_from_pk
+            value.__class__.__name__, self._construct_model_from_pk
         )(value, child, to_register)
         return model
 
-    @classmethod
-    def get_relation_name(cls) -> str:  # pragma: no cover
+    def get_relation_name(self) -> str:  # pragma: no cover
         """
         Returns name of the relation, which can be a own name or through model
         names for m2m models
@@ -504,14 +515,13 @@ class ForeignKeyField(BaseField):
         :return: result of the check
         :rtype: bool
         """
-        return cls.name
+        return self.name
 
-    @classmethod
-    def get_source_model(cls) -> Type["Model"]:  # pragma: no cover
+    def get_source_model(self) -> Type["Model"]:  # pragma: no cover
         """
         Returns model from which the relation comes -> either owner or through model
 
         :return: source model
         :rtype: Type["Model"]
         """
-        return cls.owner
+        return self.owner

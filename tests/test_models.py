@@ -120,9 +120,9 @@ async def create_test_database():
 
 def test_model_class():
     assert list(User.Meta.model_fields.keys()) == ["id", "name"]
-    assert issubclass(User.Meta.model_fields["id"], pydantic.fields.FieldInfo)
+    assert issubclass(User.Meta.model_fields["id"].__class__, pydantic.fields.FieldInfo)
     assert User.Meta.model_fields["id"].primary_key is True
-    assert issubclass(User.Meta.model_fields["name"], pydantic.fields.FieldInfo)
+    assert isinstance(User.Meta.model_fields["name"], pydantic.fields.FieldInfo)
     assert User.Meta.model_fields["name"].max_length == 100
     assert isinstance(User.Meta.table, sqlalchemy.Table)
 

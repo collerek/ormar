@@ -2,28 +2,32 @@ from _weakref import CallableProxyType
 from typing import (  # noqa: I100, I201
     Any,
     Dict,
+    Generic,
     List,
     MutableSequence,
     Optional,
     Sequence,
     Set,
     TYPE_CHECKING,
+    Type,
+    TypeVar,
     Union,
     cast,
 )
-
 
 import ormar  # noqa: I100, I202
 from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
-    from ormar.models import Model
+    from ormar.models import Model, T
     from ormar.queryset import QuerySet
     from ormar import RelationType
+else:
+    T = TypeVar("T", bound="Model")
 
 
-class QuerysetProxy:
+class QuerysetProxy(Generic[T]):
     """
     Exposes QuerySet methods on relations, but also handles creating and removing
     of through Models for m2m relations.
@@ -33,16 +37,21 @@ class QuerysetProxy:
         relation: "Relation"
 
     def __init__(
-        self, relation: "Relation", type_: "RelationType", qryset: "QuerySet" = None
+        self,
+        relation: "Relation",
+        to: Type["T"],
+        type_: "RelationType",
+        qryset: "QuerySet[T]" = None,
     ) -> None:
         self.relation: Relation = relation
-        self._queryset: Optional["QuerySet"] = qryset
+        self._queryset: Optional["QuerySet[T]"] = qryset
         self.type_: "RelationType" = type_
         self._owner: Union[CallableProxyType, "Model"] = self.relation.manager.owner
         self.related_field_name = self._owner.Meta.model_fields[
             self.relation.field_name
         ].get_related_name()
-        self.related_field = self.relation.to.Meta.model_fields[self.related_field_name]
+        self.to: Type[T] = to
+        self.related_field = to.Meta.model_fields[self.related_field_name]
         self.owner_pk_value = self._owner.pk
         self.through_model_name = (
             self.related_field.through.get_name()
@@ -51,7 +60,7 @@ class QuerysetProxy:
         )
 
     @property
-    def queryset(self) -> "QuerySet":
+    def queryset(self) -> "QuerySet[T]":
         """
         Returns queryset if it's set, AttributeError otherwise.
         :return: QuerySet
@@ -70,7 +79,7 @@ class QuerysetProxy:
         """
         self._queryset = value
 
-    def _assign_child_to_parent(self, child: Optional["Model"]) -> None:
+    def _assign_child_to_parent(self, child: Optional["T"]) -> None:
         """
         Registers child in parents RelationManager.
 
@@ -82,9 +91,7 @@ class QuerysetProxy:
             rel_name = self.relation.field_name
             setattr(owner, rel_name, child)
 
-    def _register_related(
-        self, child: Union["Model", Sequence[Optional["Model"]]]
-    ) -> None:
+    def _register_related(self, child: Union["T", Sequence[Optional["T"]]]) -> None:
         """
         Registers child/ children in parents RelationManager.
 
@@ -96,7 +103,7 @@ class QuerysetProxy:
                 self._assign_child_to_parent(subchild)
         else:
             assert isinstance(child, ormar.Model)
-            child = cast("Model", child)
+            child = cast("T", child)
             self._assign_child_to_parent(child)
 
     def _clean_items_on_load(self) -> None:
@@ -107,7 +114,7 @@ class QuerysetProxy:
             for item in self.relation.related_models[:]:
                 self.relation.remove(item)
 
-    async def create_through_instance(self, child: "Model", **kwargs: Any) -> None:
+    async def create_through_instance(self, child: "T", **kwargs: Any) -> None:
         """
         Crete a through model instance in the database for m2m relations.
 
@@ -129,7 +136,7 @@ class QuerysetProxy:
             )
         await model_cls(**final_kwargs).save()
 
-    async def update_through_instance(self, child: "Model", **kwargs: Any) -> None:
+    async def update_through_instance(self, child: "T", **kwargs: Any) -> None:
         """
         Updates a through model instance in the database for m2m relations.
 
@@ -145,7 +152,7 @@ class QuerysetProxy:
         through_model = await model_cls.objects.get(**rel_kwargs)
         await through_model.update(**kwargs)
 
-    async def delete_through_instance(self, child: "Model") -> None:
+    async def delete_through_instance(self, child: "T") -> None:
         """
         Removes through model instance from the database for m2m relations.
 
@@ -254,7 +261,7 @@ class QuerysetProxy:
             )
         return await queryset.delete(**kwargs)  # type: ignore
 
-    async def first(self, **kwargs: Any) -> "Model":
+    async def first(self, **kwargs: Any) -> "T":
         """
         Gets the first row from the db ordered by primary key column ascending.
 
@@ -272,7 +279,7 @@ class QuerysetProxy:
         self._register_related(first)
         return first
 
-    async def get(self, **kwargs: Any) -> "Model":
+    async def get(self, **kwargs: Any) -> "T":
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -296,7 +303,7 @@ class QuerysetProxy:
         self._register_related(get)
         return get
 
-    async def all(self, **kwargs: Any) -> Sequence[Optional["Model"]]:  # noqa: A003
+    async def all(self, **kwargs: Any) -> List[Optional["T"]]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 
@@ -318,7 +325,7 @@ class QuerysetProxy:
         self._register_related(all_items)
         return all_items
 
-    async def create(self, **kwargs: Any) -> "Model":
+    async def create(self, **kwargs: Any) -> "T":
         """
         Creates the model instance, saves it in a database and returns the updates model
         (with pk populated if not passed and autoincrement is set).
@@ -375,7 +382,7 @@ class QuerysetProxy:
                 )
         return len(children)
 
-    async def get_or_create(self, **kwargs: Any) -> "Model":
+    async def get_or_create(self, **kwargs: Any) -> "T":
         """
         Combination of create and get methods.
 
@@ -393,7 +400,7 @@ class QuerysetProxy:
         except ormar.NoMatch:
             return await self.create(**kwargs)
 
-    async def update_or_create(self, **kwargs: Any) -> "Model":
+    async def update_or_create(self, **kwargs: Any) -> "T":
         """
         Updates the model, or in case there is no match in database creates a new one.
 
@@ -412,7 +419,9 @@ class QuerysetProxy:
         model = await self.queryset.get(pk=kwargs[pk_name])
         return await model.update(**kwargs)
 
-    def filter(self, *args: Any, **kwargs: Any) -> "QuerysetProxy":  # noqa: A003, A001
+    def filter(  # noqa: A003, A001
+        self, *args: Any, **kwargs: Any
+    ) -> "QuerysetProxy[T]":
         """
         Allows you to filter by any `Model` attribute/field
         as well as to fetch instances, with a filter across an FK relationship.
@@ -443,9 +452,13 @@ class QuerysetProxy:
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.filter(*args, **kwargs)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(
+            relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
+        )
 
-    def exclude(self, *args: Any, **kwargs: Any) -> "QuerysetProxy":  # noqa: A003, A001
+    def exclude(
+        self, *args: Any, **kwargs: Any
+    ) -> "QuerysetProxy[T]":  # noqa: A003, A001
         """
         Works exactly the same as filter and all modifiers (suffixes) are the same,
         but returns a *not* condition.
@@ -467,9 +480,37 @@ class QuerysetProxy:
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.exclude(*args, **kwargs)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(
+            relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
+        )
 
-    def select_related(self, related: Union[List, str]) -> "QuerysetProxy":
+    def select_all(self, follow: bool = False) -> "QuerysetProxy[T]":
+        """
+        By default adds only directly related models.
+
+        If follow=True is set it adds also related models of related models.
+
+        To not get stuck in an infinite loop as related models also keep a relation
+        to parent model visited models set is kept.
+
+        That way already visited models that are nested are loaded, but the load do not
+        follow them inside. So Model A -> Model B -> Model C -> Model A -> Model X
+        will load second Model A but will never follow into Model X.
+        Nested relations of those kind need to be loaded manually.
+
+        :param follow: flag to trigger deep save -
+        by default only directly related models are saved
+        with follow=True also related models of related models are saved
+        :type follow: bool
+        :return: reloaded Model
+        :rtype: Model
+        """
+        queryset = self.queryset.select_all(follow=follow)
+        return self.__class__(
+            relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
+        )
+
+    def select_related(self, related: Union[List, str]) -> "QuerysetProxy[T]":
         """
         Allows to prefetch related models during the same query.
 
@@ -489,9 +530,11 @@ class QuerysetProxy:
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.select_related(related)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(
+            relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
+        )
 
-    def prefetch_related(self, related: Union[List, str]) -> "QuerysetProxy":
+    def prefetch_related(self, related: Union[List, str]) -> "QuerysetProxy[T]":
         """
         Allows to prefetch related models during query - but opposite to
         `select_related` each subsequent model is fetched in a separate database query.
@@ -512,9 +555,11 @@ class QuerysetProxy:
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.prefetch_related(related)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(
+            relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
+        )
 
-    def paginate(self, page: int, page_size: int = 20) -> "QuerysetProxy":
+    def paginate(self, page: int, page_size: int = 20) -> "QuerysetProxy[T]":
         """
         You can paginate the result which is a combination of offset and limit clauses.
         Limit is set to page size and offset is set to (page-1) * page_size.
@@ -529,9 +574,11 @@ class QuerysetProxy:
         :rtype: QuerySet
         """
         queryset = self.queryset.paginate(page=page, page_size=page_size)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(
+            relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
+        )
 
-    def limit(self, limit_count: int) -> "QuerysetProxy":
+    def limit(self, limit_count: int) -> "QuerysetProxy[T]":
         """
         You can limit the results to desired number of parent models.
 
@@ -543,9 +590,11 @@ class QuerysetProxy:
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.limit(limit_count)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(
+            relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
+        )
 
-    def offset(self, offset: int) -> "QuerysetProxy":
+    def offset(self, offset: int) -> "QuerysetProxy[T]":
         """
         You can also offset the results by desired number of main models.
 
@@ -557,9 +606,11 @@ class QuerysetProxy:
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.offset(offset)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(
+            relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
+        )
 
-    def fields(self, columns: Union[List, str, Set, Dict]) -> "QuerysetProxy":
+    def fields(self, columns: Union[List, str, Set, Dict]) -> "QuerysetProxy[T]":
         """
         With `fields()` you can select subset of model columns to limit the data load.
 
@@ -605,9 +656,13 @@ class QuerysetProxy:
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.fields(columns)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(
+            relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
+        )
 
-    def exclude_fields(self, columns: Union[List, str, Set, Dict]) -> "QuerysetProxy":
+    def exclude_fields(
+        self, columns: Union[List, str, Set, Dict]
+    ) -> "QuerysetProxy[T]":
         """
         With `exclude_fields()` you can select subset of model columns that will
         be excluded to limit the data load.
@@ -637,9 +692,11 @@ class QuerysetProxy:
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.exclude_fields(columns=columns)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(
+            relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
+        )
 
-    def order_by(self, columns: Union[List, str]) -> "QuerysetProxy":
+    def order_by(self, columns: Union[List, str]) -> "QuerysetProxy[T]":
         """
         With `order_by()` you can order the results from database based on your
         choice of fields.
@@ -674,4 +731,6 @@ class QuerysetProxy:
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.order_by(columns)
-        return self.__class__(relation=self.relation, type_=self.type_, qryset=queryset)
+        return self.__class__(
+            relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
+        )

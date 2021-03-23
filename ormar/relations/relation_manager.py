@@ -16,7 +16,7 @@ class RelationsManager:
 
     def __init__(
         self,
-        related_fields: List[Type["ForeignKeyField"]] = None,
+        related_fields: List["ForeignKeyField"] = None,
         owner: Optional["Model"] = None,
     ) -> None:
         self.owner = proxy(owner)
@@ -57,7 +57,7 @@ class RelationsManager:
         return None  # pragma nocover
 
     @staticmethod
-    def add(parent: "Model", child: "Model", field: Type["ForeignKeyField"],) -> None:
+    def add(parent: "Model", child: "Model", field: "ForeignKeyField",) -> None:
         """
         Adds relation on both sides -> meaning on both child and parent models.
         One side of the relation is always weakref proxy to avoid circular refs.
@@ -138,12 +138,12 @@ class RelationsManager:
             return relation
         return None
 
-    def _get_relation_type(self, field: Type["BaseField"]) -> RelationType:
+    def _get_relation_type(self, field: "BaseField") -> RelationType:
         """
         Returns type of the relation declared on a field.
 
         :param field: field with relation declaration
-        :type field: Type[BaseField]
+        :type field: BaseField
         :return: type of the relation defined on field
         :rtype: RelationType
         """
@@ -153,13 +153,13 @@ class RelationsManager:
             return RelationType.THROUGH
         return RelationType.PRIMARY if not field.virtual else RelationType.REVERSE
 
-    def _add_relation(self, field: Type["BaseField"]) -> None:
+    def _add_relation(self, field: "BaseField") -> None:
         """
         Registers relation in the manager.
         Adds Relation instance under field.name.
 
         :param field: field with relation declaration
-        :type field: Type[BaseField]
+        :type field: BaseField
         """
         self._relations[field.name] = Relation(
             manager=self,
