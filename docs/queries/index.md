@@ -46,6 +46,7 @@ To read more about any specific section or function please refer to the details 
 ### [Read data from database](./read.md)
 
 * `get(**kwargs) -> Model`
+* `get_or_none(**kwargs) -> Optional[Model]`
 * `get_or_create(**kwargs) -> Model`
 * `first() -> Model`
 * `all(**kwargs) -> List[Optional[Model]]`
@@ -57,6 +58,7 @@ To read more about any specific section or function please refer to the details 
 
 * `QuerysetProxy`
     * `QuerysetProxy.get(**kwargs)` method
+    * `QuerysetProxy.get_or_none(**kwargs)` method
     * `QuerysetProxy.get_or_create(**kwargs)` method
     * `QuerysetProxy.first()` method
     * `QuerysetProxy.all(**kwargs)` method
@@ -122,6 +124,7 @@ To read more about any specific section or function please refer to the details 
 * `exclude(**kwargs) -> QuerySet`
 * `order_by(columns:Union[List, str]) -> QuerySet`
 * `get(**kwargs) -> Model`
+* `get_or_none(**kwargs) -> Optional[Model]`
 * `get_or_create(**kwargs) -> Model`
 * `all(**kwargs) -> List[Optional[Model]]`
 
@@ -131,6 +134,7 @@ To read more about any specific section or function please refer to the details 
     * `QuerysetProxy.exclude(**kwargs)` method
     * `QuerysetProxy.order_by(columns:Union[List, str])` method
     * `QuerysetProxy.get(**kwargs)` method
+    * `QuerysetProxy.get_or_none(**kwargs)` method
     * `QuerysetProxy.get_or_create(**kwargs)` method
     * `QuerysetProxy.all(**kwargs)` method
   

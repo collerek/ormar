@@ -5,6 +5,7 @@ You can use following methods to filter the data (sql where clause).
 * `filter(**kwargs) -> QuerySet`
 * `exclude(**kwargs) -> QuerySet`
 * `get(**kwargs) -> Model`
+* `get_or_none(**kwargs) -> Optional[Model]`
 * `get_or_create(**kwargs) -> Model`
 * `all(**kwargs) -> List[Optional[Model]]`
 
@@ -13,6 +14,7 @@ You can use following methods to filter the data (sql where clause).
     * `QuerysetProxy.filter(**kwargs)` method
     * `QuerysetProxy.exclude(**kwargs)` method
     * `QuerysetProxy.get(**kwargs)` method
+    * `QuerysetProxy.get_or_none(**kwargs)` method
     * `QuerysetProxy.get_or_create(**kwargs)` method
     * `QuerysetProxy.all(**kwargs)` method
 
@@ -397,6 +399,11 @@ When any kwargs are passed it's a shortcut equivalent to calling `filter(**kwarg
     
     To read more about `get` go to [read/get](../read/#get)
 
+## get_or_none
+
+Exact equivalent of get described above but instead of raising the exception returns `None` if no db record matching the criteria is found.
+
+
 ## get_or_create
 
 `get_or_create(**kwargs) -> Model`
@@ -460,6 +467,11 @@ objects from other side of the relation.
 
 !!!tip 
     To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+#### get_or_none
+
+Exact equivalent of get described above but instead of raising the exception returns `None` if no db record matching the criteria is found.
+
 
 #### get_or_create
 

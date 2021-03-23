@@ -1,3 +1,14 @@
+# 0.10.1
+
+## Features
+
+* add `get_or_none(**kwargs)` method to `QuerySet` and `QuerysetProxy`. It is exact equivalent of `get(**kwargs)` but instead of raising `ormar.NoMatch` exception if there is no db record matching the criteria, `get_or_none` simply returns `None`.
+  
+## Fixes
+
+*  Fix dialect dependent quoting of column and table names in order_by clauses not working
+   properly in postgres.
+
 # 0.10.0
 
 ## Breaking
