@@ -230,6 +230,8 @@ async def test_fernet_filters_nomatch():
         with pytest.raises(NoMatch):
             await Filter.objects.get(name="test1")
 
+        assert await Filter.objects.get_or_none(name="test1") is None
+
 
 @pytest.mark.asyncio
 async def test_hash_filters_works():

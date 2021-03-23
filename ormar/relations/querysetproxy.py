@@ -279,6 +279,30 @@ class QuerysetProxy(Generic[T]):
         self._register_related(first)
         return first
 
+    async def get_or_none(self, **kwargs: Any) -> Optional["T"]:
+        """
+        Get's the first row from the db meeting the criteria set by kwargs.
+
+        If no criteria set it will return the last row in db sorted by pk.
+
+        Passing a criteria is actually calling filter(**kwargs) method described below.
+
+        If not match is found None will be returned.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: returned model
+        :rtype: Model
+        """
+        try:
+            get = await self.queryset.get(**kwargs)
+        except ormar.NoMatch:
+            return None
+
+        self._clean_items_on_load()
+        self._register_related(get)
+        return get
+
     async def get(self, **kwargs: Any) -> "T":
         """
         Get's the first row from the db meeting the criteria set by kwargs.

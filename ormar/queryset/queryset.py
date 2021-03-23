@@ -778,6 +778,26 @@ class QuerySet(Generic[T]):
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
+    async def get_or_none(self, **kwargs: Any) -> Optional["T"]:
+        """
+        Get's the first row from the db meeting the criteria set by kwargs.
+
+        If no criteria set it will return the last row in db sorted by pk.
+
+        Passing a criteria is actually calling filter(**kwargs) method described below.
+
+        If not match is found None will be returned.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: returned model
+        :rtype: Model
+        """
+        try:
+            return await self.get(**kwargs)
+        except ormar.NoMatch:
+            return None
+
     async def get(self, **kwargs: Any) -> "T":
         """
         Get's the first row from the db meeting the criteria set by kwargs.

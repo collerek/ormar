@@ -55,6 +55,13 @@ track == track2
 
     If there are multiple rows meeting the criteria the `MultipleMatches` exception is raised.
 
+## get_or_none
+
+`get_or_none(**kwargs) -> Model`
+
+Exact equivalent of get described above but instead of raising the exception returns `None` if no db record matching the criteria is found.
+
+
 ## get_or_create
 
 `get_or_create(**kwargs) -> Model`
@@ -189,6 +196,14 @@ objects from other side of the relation.
 
 !!!tip 
     To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+### get_or_none
+
+Exact equivalent of get described above but instead of raising the exception returns `None` if no db record matching the criteria is found.
+
+!!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
 
 ### get_or_create
 

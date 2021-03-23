@@ -429,6 +429,7 @@ metadata.drop_all(engine)
 
 *  `create(**kwargs): -> Model`
 *  `get(**kwargs): -> Model`
+*  `get_or_none(**kwargs): -> Optional[Model]`
 *  `get_or_create(**kwargs) -> Model`
 *  `first(): -> Model`
 *  `update(each: bool = False, **kwargs) -> int`

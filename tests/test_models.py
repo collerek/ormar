@@ -220,6 +220,8 @@ async def test_model_get():
             with pytest.raises(ormar.NoMatch):
                 await User.objects.get()
 
+            assert await User.objects.get_or_none() is None
+
             user = await User.objects.create(name="Tom")
             lookup = await User.objects.get()
             assert lookup == user

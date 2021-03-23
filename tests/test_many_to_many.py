@@ -84,6 +84,18 @@ async def test_not_saved_raises_error(cleanup):
 
 
 @pytest.mark.asyncio
+async def test_not_existing_raises_error(cleanup):
+    async with database:
+        guido = await Author(first_name="Guido", last_name="Van Rossum").save()
+        post = await Post.objects.create(title="Hello, M2M", author=guido)
+
+        with pytest.raises(NoMatch):
+            await post.categories.get()
+
+        assert await post.categories.get_or_none() is None
+
+
+@pytest.mark.asyncio
 async def test_assigning_related_objects(cleanup):
     async with database:
         guido = await Author.objects.create(first_name="Guido", last_name="Van Rossum")
@@ -94,6 +106,9 @@ async def test_assigning_related_objects(cleanup):
         await post.categories.add(news)
         # or from the other end:
         await news.posts.add(post)
+
+        assert await post.categories.get_or_none(name="no exist") is None
+        assert await post.categories.get_or_none(name="News") == news
 
         # Creating columns object from instance:
         await post.categories.create(name="Tips")

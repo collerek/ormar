@@ -69,7 +69,13 @@ class OrderAction(QueryAction):
         :rtype: sqlalchemy.sql.elements.TextClause
         """
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
-        return text(f"{prefix}{self.table}" f".{self.field_alias} {self.direction}")
+        table_name = self.table.name
+        field_name = self.field_alias
+        if not prefix:
+            dialect = self.target_model.Meta.database._backend._dialect
+            table_name = dialect.identifier_preparer.quote(table_name)
+            field_name = dialect.identifier_preparer.quote(field_name)
+        return text(f"{prefix}{table_name}" f".{field_name} {self.direction}")
 
     def _split_value_into_parts(self, order_str: str) -> None:
         if order_str.startswith("-"):
