@@ -226,6 +226,10 @@ If for example `Company` would have 3 relations and all of those 3 relations hav
 3 relations you would have to issue 9 relation strings to `select_related`, `select_all()`
 is also resistant to change in names of relations.
 
+!!!note
+    Note that you can chain `select_all()` with other `QuerySet` methods like `filter`, `exclude_fields` etc.
+    To exclude relations use `exclude_fields()` call with names of relations (also nested) to exclude.
+
 ## prefetch_related
 
 `prefetch_related(related: Union[List, str]) -> QuerySet`
