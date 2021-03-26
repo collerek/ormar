@@ -1,9 +1,19 @@
 # 0.10.2
 
+## Features
+
+* `save_related(follow=False)` now accept also second argument `save_related(follow=False, save_all=False)`.
+  By default so with `save_all=False` `ormar` only upserts models that are no saved (so new or updated ones), 
+  with `save_all=True` all related models are saved, regardless of `saved` status, which might be usefull if updated
+  models comes from api call, so are not changed in backend.
+
 ## Fixes
 
 *  Fix improper relation field resolution in `QuerysetProxy` if fk column has different database alias.
 
+## Other
+
+*  Performance optimizations
 
 # 0.10.1
 

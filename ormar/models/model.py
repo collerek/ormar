@@ -101,7 +101,11 @@ class Model(ModelRow):
         return self
 
     async def save_related(  # noqa: CCR001
-        self, follow: bool = False, visited: Set = None, update_count: int = 0
+        self,
+        follow: bool = False,
+        save_all: bool = False,
+        visited: Set = None,
+        update_count: int = 0,
     ) -> int:  # noqa: CCR001
         """
         Triggers a upsert method on all related models
@@ -145,6 +149,7 @@ class Model(ModelRow):
                     update_count, visited = await self._update_and_follow(
                         rel=rel,
                         follow=follow,
+                        save_all=save_all,
                         visited=visited,
                         update_count=update_count,
                     )
@@ -152,14 +157,18 @@ class Model(ModelRow):
             else:
                 rel = getattr(self, related)
                 update_count, visited = await self._update_and_follow(
-                    rel=rel, follow=follow, visited=visited, update_count=update_count
+                    rel=rel,
+                    follow=follow,
+                    save_all=save_all,
+                    visited=visited,
+                    update_count=update_count,
                 )
                 visited.add(rel.__class__)
         return update_count
 
     @staticmethod
     async def _update_and_follow(
-        rel: "Model", follow: bool, visited: Set, update_count: int
+        rel: "Model", follow: bool, save_all: bool, visited: Set, update_count: int
     ) -> Tuple[int, Set]:
         """
         Internal method used in save_related to follow related models and update numbers
@@ -181,9 +190,12 @@ class Model(ModelRow):
         """
         if follow and rel.__class__ not in visited:
             update_count = await rel.save_related(
-                follow=follow, visited=visited, update_count=update_count
+                follow=follow,
+                save_all=save_all,
+                visited=visited,
+                update_count=update_count,
             )
-        if not rel.saved:
+        if not rel.saved or save_all:
             await rel.upsert()
             update_count += 1
         return update_count, visited

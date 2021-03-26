@@ -110,6 +110,9 @@ async def test_saving_many_to_many():
             count = await hq.save_related()
             assert count == 0
 
+            count = await hq.save_related(save_all=True)
+            assert count == 2
+
             hq.nicks[0].name = "Kabucha"
             hq.nicks[1].name = "Kabucha2"
             assert not hq.nicks[0].saved
