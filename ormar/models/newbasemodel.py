@@ -341,8 +341,11 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         return (
             self._orm_id == other._orm_id
             or (self.pk == other.pk and self.pk is not None)
-            or self.dict(exclude=self.extract_related_names())
-            == other.dict(exclude=other.extract_related_names())
+            or (
+                (self.pk is None and other.pk is None)
+                and self.dict(exclude=self.extract_related_names())
+                == other.dict(exclude=other.extract_related_names())
+            )
         )
 
     @classmethod
