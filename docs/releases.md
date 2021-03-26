@@ -1,3 +1,10 @@
+# 0.10.2
+
+## Fixes
+
+*  Fix improper relation field resolution in `QuerysetProxy` if fk column has different database alias.
+
+
 # 0.10.1
 
 ## Features
