@@ -267,9 +267,13 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if item == "pk":
             return object.__getattribute__(self, "__dict__").get(self.Meta.pkname, None)
         if item in object.__getattribute__(self, "extract_related_names")():
-            return self._extract_related_model_instead_of_field(item)
+            return object.__getattribute__(
+                self, "_extract_related_model_instead_of_field"
+            )(item)
         if item in object.__getattribute__(self, "extract_through_names")():
-            return self._extract_related_model_instead_of_field(item)
+            return object.__getattribute__(
+                self, "_extract_related_model_instead_of_field"
+            )(item)
         if item in object.__getattribute__(self, "Meta").property_fields:
             value = object.__getattribute__(self, item)
             return value() if callable(value) else value
