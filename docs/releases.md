@@ -10,6 +10,7 @@
 ## Fixes
 
 *  Fix improper relation field resolution in `QuerysetProxy` if fk column has different database alias.
+*  Fix hitting recursion error with very complicated models structure with loops.
 
 ## Other
 

@@ -30,6 +30,9 @@ renderer:
         - title: Excludable Items
           contents:
               - models.excludable.*
+        - title: Traversible
+          contents:
+            - models.traversible.*
         - title: Model Table Proxy
           contents:
             - models.modelproxy.*

@@ -59,6 +59,7 @@ nav:
         - Model Table Proxy: api/models/model-table-proxy.md
         - Model Metaclass: api/models/model-metaclass.md
         - Excludable Items: api/models/excludable-items.md
+        - Traversible: api/models/traversible.md
       - Fields:
           - Base Field: api/fields/base-field.md
           - Model Fields: api/fields/model-fields.md
