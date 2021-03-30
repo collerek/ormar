@@ -19,6 +19,7 @@
 ## Other
 
 *  Performance optimizations
+*  Split tests into packages based on tested area
 
 # 0.10.1
 

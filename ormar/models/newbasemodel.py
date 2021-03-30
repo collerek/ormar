@@ -584,8 +584,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             nested_model = getattr(self, field)
             if isinstance(nested_model, MutableSequence):
                 dict_instance[field] = self._extract_nested_models_from_list(
-                    relation_map=self._skip_ellipsis(
-                        relation_map, field, default_return=dict()  # type: ignore
+                    relation_map=self._skip_ellipsis(  # type: ignore
+                        relation_map, field, default_return=dict()
                     ),
                     models=nested_model,
                     include=self._skip_ellipsis(include, field),

@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 from tests.settings import DATABASE_URL
-from tests.test_inheritance_mixins import Category, Subject, metadata, db as database  # type: ignore
+from tests.test_inheritance.test_inheritance_mixins import Category, Subject, metadata, db as database  # type: ignore
 
 app = FastAPI()
 app.state.database = database
