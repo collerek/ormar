@@ -4,8 +4,12 @@
 
 * `save_related(follow=False)` now accept also second argument `save_related(follow=False, save_all=False)`.
   By default so with `save_all=False` `ormar` only upserts models that are no saved (so new or updated ones), 
-  with `save_all=True` all related models are saved, regardless of `saved` status, which might be usefull if updated
+  with `save_all=True` all related models are saved, regardless of `saved` status, which might be useful if updated
   models comes from api call, so are not changed in backend.
+*  `dict()` method previously included only directly related models or nested models if they were not nullable and not virtual, 
+   now all related models not previosuly visited without loops are included in `dict()`. This should be not breaking
+   as just more data will be dumped to dict, but it should not be missing.
+
 
 ## Fixes
 

@@ -112,27 +112,6 @@ class RelationMixin:
         return related_names
 
     @classmethod
-    def _exclude_related_names_not_required(cls, nested: bool = False) -> Set:
-        """
-        Returns a set of non mandatory related models field names.
-
-        For a main model (not nested) only nullable related field names are returned,
-        for nested models all related models are returned.
-
-        :param nested: flag setting nested models (child of previous one, not main one)
-        :type nested: bool
-        :return: set of non mandatory related fields
-        :rtype: Set
-        """
-        if nested:
-            return cls.extract_related_names()
-        related_names = cls.extract_related_names()
-        related_names = {
-            name for name in related_names if cls.Meta.model_fields[name].nullable
-        }
-        return related_names
-
-    @classmethod
     def _iterate_related_models(  # noqa: CCR001
         cls, node_list: NodeList = None, source_relation: str = None
     ) -> List[str]:
