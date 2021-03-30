@@ -191,6 +191,9 @@ class Model(ModelRow):
             value = [value]
 
         for val in value:
+            if not val.saved or save_all:
+                await val.upsert()
+                update_count += 1
             if follow:
                 update_count = await val.save_related(
                     follow=follow,
@@ -198,9 +201,6 @@ class Model(ModelRow):
                     relation_map=relation_map,
                     update_count=update_count,
                 )
-            if not val.saved or save_all:
-                await val.upsert()
-                update_count += 1
         return update_count
 
     async def update(self: T, **kwargs: Any) -> T:
