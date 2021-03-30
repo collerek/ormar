@@ -2,19 +2,22 @@
 
 ## Features
 
-* `save_related(follow=False)` now accept also second argument `save_related(follow=False, save_all=False)`.
-  By default so with `save_all=False` `ormar` only upserts models that are no saved (so new or updated ones), 
+* `Model.save_related(follow=False)` now accept also two additional arguments: `Model.save_related(follow=False, save_all=False, exclude=None)`.
+  *  `save_all:bool` -> By default (so with `save_all=False`) `ormar` only upserts models that are not saved (so new or updated ones), 
   with `save_all=True` all related models are saved, regardless of `saved` status, which might be useful if updated
-  models comes from api call, so are not changed in backend.
+  models comes from api call, so are not changed in the backend.
+  *  `exclude: Union[Set, Dict, None]` -> set/dict of relations to exclude from save, those relation won't be saved even with `follow=True` and `save_all=True`. 
+     To exclude nested relations pass a nested dictionary like: `exclude={"child":{"sub_child": {"exclude_sub_child_realtion"}}}`. The allowed values follow
+     the `fields/exclude_fields` (from `QuerySet`) methods schema so when in doubt you can refer to docs in queries -> selecting subset of fields -> fields.
 *  `dict()` method previously included only directly related models or nested models if they were not nullable and not virtual, 
-   now all related models not previosuly visited without loops are included in `dict()`. This should be not breaking
+   now all related models not previously visited without loops are included in `dict()`. This should be not breaking
    as just more data will be dumped to dict, but it should not be missing.
 
 
 ## Fixes
 
 *  Fix improper relation field resolution in `QuerysetProxy` if fk column has different database alias.
-*  Fix hitting recursion error with very complicated models structure with loops.
+*  Fix hitting recursion error with very complicated models structure with loops when calling `dict()`.
 
 ## Other
 

@@ -127,6 +127,41 @@ def update(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR001
     return current_dict
 
 
+def subtract_dict(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR001
+    """
+    Update one dict with another but with regard for nested keys.
+
+    That way nested sets are unionised, dicts updated and
+    only other values are overwritten.
+
+    :param current_dict: dict to update
+    :type current_dict: Dict[str, ellipsis]
+    :param updating_dict: dict with values to update
+    :type updating_dict: Dict
+    :return: combination of both dicts
+    :rtype: Dict
+    """
+    if current_dict is Ellipsis:
+        return dict()
+    for key, value in updating_dict.items():
+        old_key = current_dict.get(key, {})
+        new_value: Optional[Union[Dict, Set]] = None
+        if not old_key:
+            continue
+        if isinstance(value, collections.abc.Mapping):
+            if isinstance(old_key, set):
+                old_key = convert_set_to_required_dict(old_key)
+            new_value = subtract_dict(old_key, value)
+        elif isinstance(value, set) and isinstance(old_key, set):
+            new_value = old_key.difference(value)
+
+        if new_value:
+            current_dict[key] = new_value
+        else:
+            current_dict.pop(key, None)
+    return current_dict
+
+
 def update_dict_from_list(curr_dict: Dict, list_to_update: Union[List, Set]) -> Dict:
     """
     Converts the list into dictionary and later performs special update, where
