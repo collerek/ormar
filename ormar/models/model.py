@@ -191,7 +191,7 @@ class Model(ModelRow):
             value = [value]
 
         for val in value:
-            if not val.saved or save_all:
+            if (not val.saved or save_all) and not val.__pk_only__:
                 await val.upsert()
                 update_count += 1
             if follow:
