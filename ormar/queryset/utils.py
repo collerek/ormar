@@ -141,19 +141,27 @@ def subtract_dict(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR00
     :return: combination of both dicts
     :rtype: Dict
     """
-    if current_dict is Ellipsis:
-        return dict()
     for key, value in updating_dict.items():
         old_key = current_dict.get(key, {})
         new_value: Optional[Union[Dict, Set]] = None
         if not old_key:
             continue
-        if isinstance(value, collections.abc.Mapping):
-            if isinstance(old_key, set):
-                old_key = convert_set_to_required_dict(old_key)
-            new_value = subtract_dict(old_key, value)
-        elif isinstance(value, set) and isinstance(old_key, set):
+        if isinstance(value, set) and isinstance(old_key, set):
             new_value = old_key.difference(value)
+        elif isinstance(value, (set, collections.abc.Mapping)) and isinstance(
+            old_key, (set, collections.abc.Mapping)
+        ):
+            value = (
+                convert_set_to_required_dict(value)
+                if not isinstance(value, collections.abc.Mapping)
+                else value
+            )
+            old_key = (
+                convert_set_to_required_dict(old_key)
+                if not isinstance(old_key, collections.abc.Mapping)
+                else old_key
+            )
+            new_value = subtract_dict(old_key, value)
 
         if new_value:
             current_dict[key] = new_value

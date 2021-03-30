@@ -136,6 +136,44 @@ def test_subtracting_dict_inc_set_with_dict_inc_set():
     assert test == {"cc": {"aa": {"yy"}, "bb": Ellipsis}}
 
 
+def test_subtracting_with_set_and_dict():
+    curr_dict = {
+        "translation": {
+            "filters": {
+                "values": Ellipsis,
+                "reports": {"report": {"charts": {"chart": Ellipsis}}},
+            },
+            "translations": {"language": Ellipsis},
+            "filtervalues": {
+                "filter": {"reports": {"report": {"charts": {"chart": Ellipsis}}}}
+            },
+        },
+        "chart": {
+            "reports": {
+                "report": {
+                    "filters": {
+                        "filter": {
+                            "translation": {
+                                "translations": {"language": Ellipsis},
+                                "filtervalues": Ellipsis,
+                            },
+                            "values": {
+                                "translation": {"translations": {"language": Ellipsis}}
+                            },
+                        }
+                    }
+                }
+            }
+        },
+    }
+    dict_to_update = {
+        "chart": Ellipsis,
+        "translation": {"filters", "filtervalues", "chartcolumns"},
+    }
+    test = subtract_dict(curr_dict, dict_to_update)
+    assert test == {"translation": {"translations": {"language": Ellipsis}}}
+
+
 database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
