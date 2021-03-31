@@ -9,15 +9,21 @@
   *  `exclude: Union[Set, Dict, None]` -> set/dict of relations to exclude from save, those relation won't be saved even with `follow=True` and `save_all=True`. 
      To exclude nested relations pass a nested dictionary like: `exclude={"child":{"sub_child": {"exclude_sub_child_realtion"}}}`. The allowed values follow
      the `fields/exclude_fields` (from `QuerySet`) methods schema so when in doubt you can refer to docs in queries -> selecting subset of fields -> fields.
-*  `dict()` method previously included only directly related models or nested models if they were not nullable and not virtual, 
+*  `Model.dict()` method previously included only directly related models or nested models if they were not nullable and not virtual, 
    now all related models not previously visited without loops are included in `dict()`. This should be not breaking
    as just more data will be dumped to dict, but it should not be missing.
-
+*  `QuerySet.delete(each=False, **kwargs)` previously required that you either pass a `filter` (by `**kwargs` or as a separate `filter()` call) or set `each=True` now also accepts
+    `exclude()` calls that generates NOT filter. So either `each=True` needs to be set to delete whole table or at least one of `filter/exclude` clauses.
+*  Same thing applies to `QuerySet.update(each=False, **kwargs)` which also previously required that you either pass a `filter` (by `**kwargs` or as a separate `filter()` call) or set `each=True` now also accepts
+    `exclude()` calls that generates NOT filter. So either `each=True` needs to be set to update whole table or at least one of `filter/exclude` clauses.
+*  Same thing applies to `QuerysetProxy.update(each=False, **kwargs)` which also previously required that you either pass a `filter` (by `**kwargs` or as a separate `filter()` call) or set `each=True` now also accepts
+    `exclude()` calls that generates NOT filter. So either `each=True` needs to be set to update whole table or at least one of `filter/exclude` clauses.
 
 ## Fixes
 
 *  Fix improper relation field resolution in `QuerysetProxy` if fk column has different database alias.
 *  Fix hitting recursion error with very complicated models structure with loops when calling `dict()`.
+*  Fix bug when two non-relation fields were merged (appended) in query result when they were not relation fields (i.e. JSON)
 
 ## Other
 

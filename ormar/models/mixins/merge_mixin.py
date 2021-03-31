@@ -60,20 +60,23 @@ class MergeModelMixin:
         :return: current Model instance with data merged from previous one.
         :rtype: Model
         """
-        for field in one.Meta.model_fields.keys():
-            current_field = getattr(one, field)
-            if isinstance(current_field, list) and not isinstance(
-                current_field, ormar.Model
-            ):
-                setattr(other, field, current_field + getattr(other, field))
-            elif (
-                isinstance(current_field, ormar.Model)
-                and current_field.pk == getattr(other, field).pk
-            ):
-                setattr(
-                    other,
-                    field,
-                    cls.merge_two_instances(current_field, getattr(other, field)),
-                )
+        for field_name, field in one.Meta.model_fields.items():
+            current_field = getattr(one, field_name)
+            if field.is_relation:
+                if isinstance(current_field, list):
+                    setattr(
+                        other, field_name, current_field + getattr(other, field_name)
+                    )
+                elif (
+                    isinstance(current_field, ormar.Model)
+                    and current_field.pk == getattr(other, field_name).pk
+                ):
+                    setattr(
+                        other,
+                        field_name,
+                        cls.merge_two_instances(
+                            current_field, getattr(other, field_name)
+                        ),
+                    )
         other.set_save_status(True)
         return other

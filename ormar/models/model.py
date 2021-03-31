@@ -150,15 +150,16 @@ class Model(ModelRow):
         for related in self.extract_related_names():
             if relation_map and related in relation_map:
                 value = getattr(self, related)
-                update_count = await self._update_and_follow(
-                    value=value,
-                    follow=follow,
-                    save_all=save_all,
-                    relation_map=self._skip_ellipsis(  # type: ignore
-                        relation_map, related, default_return={}
-                    ),
-                    update_count=update_count,
-                )
+                if value:
+                    update_count = await self._update_and_follow(
+                        value=value,
+                        follow=follow,
+                        save_all=save_all,
+                        relation_map=self._skip_ellipsis(  # type: ignore
+                            relation_map, related, default_return={}
+                        ),
+                        update_count=update_count,
+                    )
         return update_count
 
     @staticmethod

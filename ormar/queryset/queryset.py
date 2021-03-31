@@ -650,7 +650,7 @@ class QuerySet(Generic[T]):
         :return: number of updated rows
         :rtype: int
         """
-        if not each and not self.filter_clauses:
+        if not each and not (self.filter_clauses or self.exclude_clauses):
             raise QueryDefinitionError(
                 "You cannot update without filtering the queryset first. "
                 "If you want to update all rows use update(each=True, **kwargs)"
@@ -665,6 +665,9 @@ class QuerySet(Generic[T]):
 
         expr = FilterQuery(filter_clauses=self.filter_clauses).apply(
             self.table.update().values(**updates)
+        )
+        expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
+            expr
         )
         return await self.database.execute(expr)
 
@@ -684,13 +687,16 @@ class QuerySet(Generic[T]):
         """
         if kwargs:
             return await self.filter(**kwargs).delete()
-        if not each and not self.filter_clauses:
+        if not each and not (self.filter_clauses or self.exclude_clauses):
             raise QueryDefinitionError(
                 "You cannot delete without filtering the queryset first. "
                 "If you want to delete all rows use delete(each=True)"
             )
         expr = FilterQuery(filter_clauses=self.filter_clauses).apply(
             self.table.delete()
+        )
+        expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
+            expr
         )
         return await self.database.execute(expr)
 
