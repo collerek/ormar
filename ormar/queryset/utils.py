@@ -18,7 +18,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def check_node_not_dict_or_not_last_node(
-    part: str, parts: List, current_level: Any
+    part: str, is_last: bool, current_level: Any
 ) -> bool:
     """
     Checks if given name is not present in the current level of the structure.
@@ -36,7 +36,7 @@ def check_node_not_dict_or_not_last_node(
     :return: result of the check
     :rtype: bool
     """
-    return (part not in current_level and part != parts[-1]) or (
+    return (part not in current_level and not is_last) or (
         part in current_level and not isinstance(current_level[part], dict)
     )
 
@@ -71,9 +71,10 @@ def translate_list_to_dict(  # noqa: CCR001
             else:
                 def_val = "asc"
 
-        for part in parts:
+        for ind, part in enumerate(parts):
+            is_last = ind == len(parts) - 1
             if check_node_not_dict_or_not_last_node(
-                part=part, parts=parts, current_level=current_level
+                part=part, is_last=is_last, current_level=current_level
             ):
                 current_level[part] = dict()
             elif part not in current_level:

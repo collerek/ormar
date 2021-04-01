@@ -24,6 +24,7 @@
 *  Fix improper relation field resolution in `QuerysetProxy` if fk column has different database alias.
 *  Fix hitting recursion error with very complicated models structure with loops when calling `dict()`.
 *  Fix bug when two non-relation fields were merged (appended) in query result when they were not relation fields (i.e. JSON)
+*  Fix bug when during translation to dict from list the same relation name is used in chain but leads to different models
 
 ## Other
 
