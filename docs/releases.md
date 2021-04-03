@@ -26,6 +26,7 @@
 *  Fix bug when two non-relation fields were merged (appended) in query result when they were not relation fields (i.e. JSON)
 *  Fix bug when during translation to dict from list the same relation name is used in chain but leads to different models
 *  Fix bug when bulk_create would try to save also `property_field` decorated methods and `pydantic` fields
+*  Fix wrong merging of deeply nested chain of reversed relations
 
 ## Other
 
