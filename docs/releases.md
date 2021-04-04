@@ -1,6 +1,6 @@
 # 0.10.2
 
-## Features
+## ✨ Features
 
 * `Model.save_related(follow=False)` now accept also two additional arguments: `Model.save_related(follow=False, save_all=False, exclude=None)`.
   *  `save_all:bool` -> By default (so with `save_all=False`) `ormar` only upserts models that are not saved (so new or updated ones), 
@@ -19,7 +19,7 @@
 *  Same thing applies to `QuerysetProxy.update(each=False, **kwargs)` which also previously required that you either pass a `filter` (by `**kwargs` or as a separate `filter()` call) or set `each=True` now also accepts
     `exclude()` calls that generates NOT filter. So either `each=True` needs to be set to update whole table or at least one of `filter/exclude` clauses.
 
-## Fixes
+## 🐛 Fixes
 
 *  Fix improper relation field resolution in `QuerysetProxy` if fk column has different database alias.
 *  Fix hitting recursion error with very complicated models structure with loops when calling `dict()`.
@@ -28,7 +28,7 @@
 *  Fix bug when bulk_create would try to save also `property_field` decorated methods and `pydantic` fields
 *  Fix wrong merging of deeply nested chain of reversed relations
 
-## Other
+## 💬 Other
 
 *  Performance optimizations
 *  Split tests into packages based on tested area
