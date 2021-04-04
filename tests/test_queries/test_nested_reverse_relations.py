@@ -26,7 +26,7 @@ class DataSource(ormar.Model):
 
 class DataSourceTable(ormar.Model):
     class Meta(BaseMeta):
-        tablename = "tables"
+        tablename = "source_tables"
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200, index=True)
@@ -37,7 +37,7 @@ class DataSourceTable(ormar.Model):
 
 class DataSourceTableColumn(ormar.Model):
     class Meta(BaseMeta):
-        tablename = "columns"
+        tablename = "source_columns"
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200, index=True)
