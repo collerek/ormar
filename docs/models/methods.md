@@ -88,7 +88,7 @@ await track.save() # will raise integrity error as pk is populated
 
 ## update
 
-`update(**kwargs) -> self`
+`update(_columns: List[str] = None, **kwargs) -> self`
 
 You can update models by using `QuerySet.update()` method or by updating your model attributes (fields) and calling `update()` method.
 
@@ -100,6 +100,42 @@ To persist a newly created model use `save()` or `upsert(**kwargs)` methods.
 track = await Track.objects.get(name='The Bird')
 await track.update(name='The Bird Strikes Again')
 ```
+
+To update only selected columns from model into the database provide a list of columns that should be updated to `_columns` argument.
+
+In example:
+
+```python
+class Movie(ormar.Model):
+    class Meta:
+        tablename = "movies"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, nullable=False, name="title")
+    year: int = ormar.Integer()
+    profit: float = ormar.Float()
+
+terminator = await Movie(name='Terminator', year=1984, profit=0.078).save()
+
+terminator.name = "Terminator 2"
+terminator.year = 1991
+terminator.profit = 0.520
+
+# update only name
+await terminator.update(_columns=["name"])
+
+# note that terminator instance was not reloaded so
+assert terminator.year == 1991
+
+# but once you load the data from db you see it was not updated
+await terminator.load()
+assert terminator.year == 1984
+```
+
+!!!warning
+        Note that `update()` does not refresh the instance of the Model, so if you change more columns than you pass in `_columns` list your Model instance will have different values than the database!
 
 ## upsert
 

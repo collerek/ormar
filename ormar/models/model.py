@@ -204,7 +204,7 @@ class Model(ModelRow):
                 )
         return update_count
 
-    async def update(self: T, **kwargs: Any) -> T:
+    async def update(self: T, _columns: List[str] = None, **kwargs: Any) -> T:
         """
         Performs update of Model instance in the database.
         Fields can be updated before or you can pass them as kwargs.
@@ -213,6 +213,8 @@ class Model(ModelRow):
 
         Sets model save status to True.
 
+        :param _columns: list of columns to update, if None all are updated
+        :type _columns: List
         :raises ModelPersistenceError: If the pk column is not set
 
         :param kwargs: list of fields to update as field=value pairs
@@ -233,6 +235,8 @@ class Model(ModelRow):
         )
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
+        if _columns:
+            self_fields = {k: v for k, v in self_fields.items() if k in _columns}
         self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.update().values(**self_fields)
         expr = expr.where(self.pk_column == getattr(self, self.Meta.pkname))
