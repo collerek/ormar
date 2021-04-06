@@ -4,7 +4,12 @@ import sqlalchemy
 import ormar
 from ormar.models.mixins import ExcludableMixin
 from ormar.queryset.prefetch_query import sort_models
-from ormar.queryset.utils import translate_list_to_dict, update_dict_from_list, update
+from ormar.queryset.utils import (
+    subtract_dict,
+    translate_list_to_dict,
+    update_dict_from_list,
+    update,
+)
 from tests.settings import DATABASE_URL
 
 
@@ -79,6 +84,21 @@ def test_updating_dict_inc_set_with_dict():
     }
 
 
+def test_subtracting_dict_inc_set_with_dict():
+    curr_dict = {
+        "aa": Ellipsis,
+        "bb": Ellipsis,
+        "cc": {"aa": {"xx", "yy"}, "bb": Ellipsis},
+    }
+    dict_to_update = {
+        "uu": Ellipsis,
+        "bb": {"cc", "dd"},
+        "cc": {"aa": {"xx": {"oo": Ellipsis}}, "bb": Ellipsis},
+    }
+    test = subtract_dict(curr_dict, dict_to_update)
+    assert test == {"aa": Ellipsis, "cc": {"aa": {"yy": Ellipsis}}}
+
+
 def test_updating_dict_inc_set_with_dict_inc_set():
     curr_dict = {
         "aa": Ellipsis,
@@ -97,6 +117,61 @@ def test_updating_dict_inc_set_with_dict_inc_set():
         "cc": {"aa": {"xx", "yy", "oo", "zz", "ii"}, "bb": Ellipsis},
         "uu": Ellipsis,
     }
+
+
+def test_subtracting_dict_inc_set_with_dict_inc_set():
+    curr_dict = {
+        "aa": Ellipsis,
+        "bb": Ellipsis,
+        "cc": {"aa": {"xx", "yy"}, "bb": Ellipsis},
+        "dd": {"aa", "bb"},
+    }
+    dict_to_update = {
+        "aa": Ellipsis,
+        "bb": {"cc", "dd"},
+        "cc": {"aa": {"xx", "oo", "zz", "ii"}},
+        "dd": {"aa", "bb"},
+    }
+    test = subtract_dict(curr_dict, dict_to_update)
+    assert test == {"cc": {"aa": {"yy"}, "bb": Ellipsis}}
+
+
+def test_subtracting_with_set_and_dict():
+    curr_dict = {
+        "translation": {
+            "filters": {
+                "values": Ellipsis,
+                "reports": {"report": {"charts": {"chart": Ellipsis}}},
+            },
+            "translations": {"language": Ellipsis},
+            "filtervalues": {
+                "filter": {"reports": {"report": {"charts": {"chart": Ellipsis}}}}
+            },
+        },
+        "chart": {
+            "reports": {
+                "report": {
+                    "filters": {
+                        "filter": {
+                            "translation": {
+                                "translations": {"language": Ellipsis},
+                                "filtervalues": Ellipsis,
+                            },
+                            "values": {
+                                "translation": {"translations": {"language": Ellipsis}}
+                            },
+                        }
+                    }
+                }
+            }
+        },
+    }
+    dict_to_update = {
+        "chart": Ellipsis,
+        "translation": {"filters", "filtervalues", "chartcolumns"},
+    }
+    test = subtract_dict(curr_dict, dict_to_update)
+    assert test == {"translation": {"translations": {"language": Ellipsis}}}
 
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

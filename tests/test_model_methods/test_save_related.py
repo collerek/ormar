@@ -91,6 +91,14 @@ async def test_saving_related_fk_rel():
             assert count == 1
             assert comp.hq.saved
 
+            comp.hq.name = "Suburbs 2"
+            assert not comp.hq.saved
+            assert comp.saved
+
+            count = await comp.save_related(exclude={"hq"})
+            assert count == 0
+            assert not comp.hq.saved
+
 
 @pytest.mark.asyncio
 async def test_saving_many_to_many():
@@ -110,6 +118,9 @@ async def test_saving_many_to_many():
             count = await hq.save_related()
             assert count == 0
 
+            count = await hq.save_related(save_all=True)
+            assert count == 2
+
             hq.nicks[0].name = "Kabucha"
             hq.nicks[1].name = "Kabucha2"
             assert not hq.nicks[0].saved
@@ -119,6 +130,16 @@ async def test_saving_many_to_many():
             assert count == 2
             assert hq.nicks[0].saved
             assert hq.nicks[1].saved
+
+            hq.nicks[0].name = "Kabucha a"
+            hq.nicks[1].name = "Kabucha2 a"
+            assert not hq.nicks[0].saved
+            assert not hq.nicks[1].saved
+
+            count = await hq.save_related(exclude={"nicks": ...})
+            assert count == 0
+            assert not hq.nicks[0].saved
+            assert not hq.nicks[1].saved
 
 
 @pytest.mark.asyncio
@@ -208,3 +229,16 @@ async def test_saving_nested():
             assert hq.nicks[0].level.saved
             assert hq.nicks[1].saved
             assert hq.nicks[1].level.saved
+
+            hq.nicks[0].level.name = "Low 2"
+            hq.nicks[1].level.name = "Medium 2"
+            assert not hq.nicks[0].level.saved
+            assert not hq.nicks[1].level.saved
+            assert hq.nicks[0].saved
+            assert hq.nicks[1].saved
+            count = await hq.save_related(follow=True, exclude={"nicks": {"level"}})
+            assert count == 0
+            assert hq.nicks[0].saved
+            assert not hq.nicks[0].level.saved
+            assert hq.nicks[1].saved
+            assert not hq.nicks[1].level.saved

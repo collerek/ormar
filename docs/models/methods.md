@@ -10,6 +10,13 @@ Each model instance have a set of methods to `save`, `update` or `load` itself.
 
 Available methods are described below.
 
+## `pydantic` methods
+
+Note that each `ormar.Model` is also a `pydantic.BaseModel`, so all `pydantic` methods are also available on a model,
+especially `dict()` and `json()` methods that can also accept `exclude`, `include` and other parameters.
+
+To read more check [pydantic][pydantic] documentation
+
 ## load
 
 By default when you query a table without prefetching related models, the ormar will still construct
@@ -81,7 +88,7 @@ await track.save() # will raise integrity error as pk is populated
 
 ## update
 
-`update(**kwargs) -> self`
+`update(_columns: List[str] = None, **kwargs) -> self`
 
 You can update models by using `QuerySet.update()` method or by updating your model attributes (fields) and calling `update()` method.
 
@@ -93,6 +100,42 @@ To persist a newly created model use `save()` or `upsert(**kwargs)` methods.
 track = await Track.objects.get(name='The Bird')
 await track.update(name='The Bird Strikes Again')
 ```
+
+To update only selected columns from model into the database provide a list of columns that should be updated to `_columns` argument.
+
+In example:
+
+```python
+class Movie(ormar.Model):
+    class Meta:
+        tablename = "movies"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, nullable=False, name="title")
+    year: int = ormar.Integer()
+    profit: float = ormar.Float()
+
+terminator = await Movie(name='Terminator', year=1984, profit=0.078).save()
+
+terminator.name = "Terminator 2"
+terminator.year = 1991
+terminator.profit = 0.520
+
+# update only name
+await terminator.update(_columns=["name"])
+
+# note that terminator instance was not reloaded so
+assert terminator.year == 1991
+
+# but once you load the data from db you see it was not updated
+await terminator.load()
+assert terminator.year == 1984
+```
+
+!!!warning
+        Note that `update()` does not refresh the instance of the Model, so if you change more columns than you pass in `_columns` list your Model instance will have different values than the database!
 
 ## upsert
 
@@ -127,7 +170,7 @@ await track.delete() # will delete the model from database
 
 ## save_related
 
-`save_related(follow: bool = False) -> None`
+`save_related(follow: bool = False, save_all: bool = False, exclude=Optional[Union[Set, Dict]]) -> None`
 
 Method goes through all relations of the `Model` on which the method is called, 
 and calls `upsert()` method on each model that is **not** saved. 
@@ -138,16 +181,27 @@ By default the `save_related` method saved only models that are directly related
 
 But you can specify the `follow=True` parameter to traverse through nested models and save all of them in the relation tree.
 
+By default save_related saves only model that has not `saved` status, meaning that they were modified in current scope.
+
+If you want to force saving all of the related methods use `save_all=True` flag, which will upsert all related models, regardless of their save status.
+
+If you want to skip saving some of the relations you can pass `exclude` parameter. 
+
+`Exclude` can be a set of own model relations,
+or it can be a dictionary that can also contain nested items. 
+
+!!!note
+        Note that `exclude` parameter in `save_related` accepts only relation fields names, so
+        if you pass any other fields they will be saved anyway
+
+!!!note
+        To read more about the structure of possible values passed to `exclude` check `Queryset.fields` method documentation.
+
 !!!warning
     To avoid circular updates with `follow=True` set, `save_related` keeps a set of already visited Models, 
     and won't perform nested `save_related` on Models that were already visited.
     
     So if you have a diamond or circular relations types you need to perform the updates in a manual way.
-    
-    ```python
-    # in example like this the second Street (coming from City) won't be save_related, so ZipCode won't be updated
-    Street -> District -> City -> Street -> ZipCode
-    ```
 
 [fields]: ../fields.md
 [relations]: ../relations/index.md

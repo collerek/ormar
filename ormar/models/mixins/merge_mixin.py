@@ -1,7 +1,8 @@
 from collections import OrderedDict
-from typing import List, TYPE_CHECKING
+from typing import Dict, List, Optional, TYPE_CHECKING, cast
 
 import ormar
+from ormar.queryset.utils import translate_list_to_dict
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -46,13 +47,17 @@ class MergeModelMixin:
         return merged_rows
 
     @classmethod
-    def merge_two_instances(cls, one: "Model", other: "Model") -> "Model":
+    def merge_two_instances(
+        cls, one: "Model", other: "Model", relation_map: Dict = None
+    ) -> "Model":
         """
         Merges current (other) Model and previous one (one) and returns the current
         Model instance with data merged from previous one.
 
         If needed it's calling itself recurrently and merges also children models.
 
+        :param relation_map: map of models relations to follow
+        :type relation_map: Dict
         :param one: previous model instance
         :type one: Model
         :param other: current model instance
@@ -60,20 +65,80 @@ class MergeModelMixin:
         :return: current Model instance with data merged from previous one.
         :rtype: Model
         """
-        for field in one.Meta.model_fields.keys():
-            current_field = getattr(one, field)
-            if isinstance(current_field, list) and not isinstance(
-                current_field, ormar.Model
-            ):
-                setattr(other, field, current_field + getattr(other, field))
+        relation_map = (
+            relation_map
+            if relation_map is not None
+            else translate_list_to_dict(one._iterate_related_models())
+        )
+        for field_name in relation_map:
+            current_field = getattr(one, field_name)
+            other_value = getattr(other, field_name, [])
+            if isinstance(current_field, list):
+                value_to_set = cls._merge_items_lists(
+                    field_name=field_name,
+                    current_field=current_field,
+                    other_value=other_value,
+                    relation_map=relation_map,
+                )
+                setattr(other, field_name, value_to_set)
             elif (
                 isinstance(current_field, ormar.Model)
-                and current_field.pk == getattr(other, field).pk
+                and current_field.pk == other_value.pk
             ):
                 setattr(
                     other,
-                    field,
-                    cls.merge_two_instances(current_field, getattr(other, field)),
+                    field_name,
+                    cls.merge_two_instances(
+                        current_field,
+                        other_value,
+                        relation_map=one._skip_ellipsis(  # type: ignore
+                            relation_map, field_name, default_return=dict()
+                        ),
+                    ),
                 )
         other.set_save_status(True)
         return other
+
+    @classmethod
+    def _merge_items_lists(
+        cls,
+        field_name: str,
+        current_field: List,
+        other_value: List,
+        relation_map: Optional[Dict],
+    ) -> List:
+        """
+        Takes two list of nested models and process them going deeper
+        according with the map.
+
+        If model from one's list is in other -> they are merged with relations
+        to follow passed from map.
+
+        If one's model is not in other it's simply appended to the list.
+
+        :param field_name: name of the current relation field
+        :type field_name: str
+        :param current_field: list of nested models from one model
+        :type current_field: List[Model]
+        :param other_value: list of nested models from other model
+        :type other_value: List[Model]
+        :param relation_map: map of relations to follow
+        :type relation_map: Dict
+        :return: merged list of models
+        :rtype: List[Model]
+        """
+        value_to_set = [x for x in other_value]
+        for cur_field in current_field:
+            if cur_field in other_value:
+                old_value = next((x for x in other_value if x == cur_field), None)
+                new_val = cls.merge_two_instances(
+                    cur_field,
+                    cast("Model", old_value),
+                    relation_map=cur_field._skip_ellipsis(  # type: ignore
+                        relation_map, field_name, default_return=dict()
+                    ),
+                )
+                value_to_set = [x for x in value_to_set if x != cur_field] + [new_val]
+            else:
+                value_to_set.append(cur_field)
+        return value_to_set

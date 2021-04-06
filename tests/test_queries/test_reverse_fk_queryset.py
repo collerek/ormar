@@ -18,7 +18,7 @@ class Album(ormar.Model):
         metadata = metadata
         database = database
 
-    id: int = ormar.Integer(primary_key=True)
+    id: int = ormar.Integer(primary_key=True, name="album_id")
     name: str = ormar.String(max_length=100)
     is_best_seller: bool = ormar.Boolean(default=False)
 
@@ -29,7 +29,7 @@ class Writer(ormar.Model):
         metadata = metadata
         database = database
 
-    id: int = ormar.Integer(primary_key=True)
+    id: int = ormar.Integer(primary_key=True, name="writer_id")
     name: str = ormar.String(max_length=100)
 
 
@@ -40,11 +40,11 @@ class Track(ormar.Model):
         database = database
 
     id: int = ormar.Integer(primary_key=True)
-    album: Optional[Album] = ormar.ForeignKey(Album)
+    album: Optional[Album] = ormar.ForeignKey(Album, name="album_id")
     title: str = ormar.String(max_length=100)
     position: int = ormar.Integer()
     play_count: int = ormar.Integer(nullable=True)
-    written_by: Optional[Writer] = ormar.ForeignKey(Writer)
+    written_by: Optional[Writer] = ormar.ForeignKey(Writer, name="writer_id")
 
 
 async def get_sample_data():

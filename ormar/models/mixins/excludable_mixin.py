@@ -138,10 +138,8 @@ class ExcludableMixin(RelationMixin):
         return columns
 
     @classmethod
-    def _update_excluded_with_related_not_required(
-        cls,
-        exclude: Union["AbstractSetIntStr", "MappingIntStrAny", None],
-        nested: bool = False,
+    def _update_excluded_with_related(
+        cls, exclude: Union["AbstractSetIntStr", "MappingIntStrAny", None],
     ) -> Union[Set, Dict]:
         """
         Used during generation of the dict().
@@ -159,8 +157,9 @@ class ExcludableMixin(RelationMixin):
         :rtype: Union[Set, Dict]
         """
         exclude = exclude or {}
-        related_set = cls._exclude_related_names_not_required(nested=nested)
+        related_set = cls.extract_related_names()
         if isinstance(exclude, set):
+            exclude = {s for s in exclude}
             exclude.union(related_set)
         else:
             related_dict = translate_list_to_dict(related_set)

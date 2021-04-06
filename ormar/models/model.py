@@ -4,7 +4,6 @@ from typing import (
     List,
     Set,
     TYPE_CHECKING,
-    Tuple,
     TypeVar,
     Union,
 )
@@ -14,7 +13,7 @@ from ormar.exceptions import ModelPersistenceError, NoMatch
 from ormar.models import NewBaseModel  # noqa I100
 from ormar.models.metaclass import ModelMeta
 from ormar.models.model_row import ModelRow
-
+from ormar.queryset.utils import subtract_dict, translate_list_to_dict
 
 T = TypeVar("T", bound="Model")
 
@@ -101,8 +100,13 @@ class Model(ModelRow):
         return self
 
     async def save_related(  # noqa: CCR001
-        self, follow: bool = False, visited: Set = None, update_count: int = 0
-    ) -> int:  # noqa: CCR001
+        self,
+        follow: bool = False,
+        save_all: bool = False,
+        relation_map: Dict = None,
+        exclude: Union[Set, Dict] = None,
+        update_count: int = 0,
+    ) -> int:
         """
         Triggers a upsert method on all related models
         if the instances are not already saved.
@@ -118,77 +122,89 @@ class Model(ModelRow):
         Model A but will never follow into Model C.
         Nested relations of those kind need to be persisted manually.
 
+        :param exclude: items to exclude during saving of relations
+        :type exclude: Union[Set, Dict]
+        :param relation_map: map of relations to follow
+        :type relation_map: Dict
+        :param save_all: flag if all models should be saved or only not saved ones
+        :type save_all: bool
         :param follow: flag to trigger deep save -
         by default only directly related models are saved
         with follow=True also related models of related models are saved
         :type follow: bool
-        :param visited: internal parameter for recursive calls - already visited models
-        :type visited: Set
         :param update_count: internal parameter for recursive calls -
         number of updated instances
         :type update_count: int
         :return: number of updated/saved models
         :rtype: int
         """
-        if not visited:
-            visited = {self.__class__}
-        else:
-            visited = {x for x in visited}
-            visited.add(self.__class__)
+        relation_map = (
+            relation_map
+            if relation_map is not None
+            else translate_list_to_dict(self._iterate_related_models())
+        )
+        if exclude and isinstance(exclude, Set):
+            exclude = translate_list_to_dict(exclude)
+        relation_map = subtract_dict(relation_map, exclude or {})
 
         for related in self.extract_related_names():
-            if (
-                self.Meta.model_fields[related].virtual
-                or self.Meta.model_fields[related].is_multi
-            ):
-                for rel in getattr(self, related):
-                    update_count, visited = await self._update_and_follow(
-                        rel=rel,
+            if relation_map and related in relation_map:
+                value = getattr(self, related)
+                if value:
+                    update_count = await self._update_and_follow(
+                        value=value,
                         follow=follow,
-                        visited=visited,
+                        save_all=save_all,
+                        relation_map=self._skip_ellipsis(  # type: ignore
+                            relation_map, related, default_return={}
+                        ),
                         update_count=update_count,
                     )
-                visited.add(self.Meta.model_fields[related].to)
-            else:
-                rel = getattr(self, related)
-                update_count, visited = await self._update_and_follow(
-                    rel=rel, follow=follow, visited=visited, update_count=update_count
-                )
-                visited.add(rel.__class__)
         return update_count
 
     @staticmethod
     async def _update_and_follow(
-        rel: "Model", follow: bool, visited: Set, update_count: int
-    ) -> Tuple[int, Set]:
+        value: Union["Model", List["Model"]],
+        follow: bool,
+        save_all: bool,
+        relation_map: Dict,
+        update_count: int,
+    ) -> int:
         """
         Internal method used in save_related to follow related models and update numbers
         of updated related instances.
 
-        :param rel: Model to follow
-        :type rel: Model
+        :param value: Model to follow
+        :type value: Model
+        :param relation_map: map of relations to follow
+        :type relation_map: Dict
         :param follow: flag to trigger deep save -
         by default only directly related models are saved
         with follow=True also related models of related models are saved
         :type follow: bool
-        :param visited: internal parameter for recursive calls - already visited models
-        :type visited: Set
         :param update_count: internal parameter for recursive calls -
         number of updated instances
         :type update_count: int
         :return: tuple of update count and visited
-        :rtype: Tuple[int, Set]
+        :rtype: int
         """
-        if follow and rel.__class__ not in visited:
-            update_count = await rel.save_related(
-                follow=follow, visited=visited, update_count=update_count
-            )
-        if not rel.saved:
-            await rel.upsert()
-            update_count += 1
-        return update_count, visited
+        if not isinstance(value, list):
+            value = [value]
 
-    async def update(self: T, **kwargs: Any) -> T:
+        for val in value:
+            if (not val.saved or save_all) and not val.__pk_only__:
+                await val.upsert()
+                update_count += 1
+            if follow:
+                update_count = await val.save_related(
+                    follow=follow,
+                    save_all=save_all,
+                    relation_map=relation_map,
+                    update_count=update_count,
+                )
+        return update_count
+
+    async def update(self: T, _columns: List[str] = None, **kwargs: Any) -> T:
         """
         Performs update of Model instance in the database.
         Fields can be updated before or you can pass them as kwargs.
@@ -197,6 +213,8 @@ class Model(ModelRow):
 
         Sets model save status to True.
 
+        :param _columns: list of columns to update, if None all are updated
+        :type _columns: List
         :raises ModelPersistenceError: If the pk column is not set
 
         :param kwargs: list of fields to update as field=value pairs
@@ -217,6 +235,8 @@ class Model(ModelRow):
         )
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
+        if _columns:
+            self_fields = {k: v for k, v in self_fields.items() if k in _columns}
         self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.update().values(**self_fields)
         expr = expr.where(self.pk_column == getattr(self, self.Meta.pkname))

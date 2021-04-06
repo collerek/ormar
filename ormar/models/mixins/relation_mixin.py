@@ -4,11 +4,10 @@ from typing import (
     Optional,
     Set,
     TYPE_CHECKING,
-    Type,
-    Union,
 )
 
 from ormar import BaseField
+from ormar.models.traversible import NodeList
 
 
 class RelationMixin:
@@ -17,7 +16,7 @@ class RelationMixin:
     """
 
     if TYPE_CHECKING:  # pragma no cover
-        from ormar import ModelMeta, Model
+        from ormar import ModelMeta
 
         Meta: ModelMeta
         _related_names: Optional[Set]
@@ -113,82 +112,37 @@ class RelationMixin:
         return related_names
 
     @classmethod
-    def _exclude_related_names_not_required(cls, nested: bool = False) -> Set:
-        """
-        Returns a set of non mandatory related models field names.
-
-        For a main model (not nested) only nullable related field names are returned,
-        for nested models all related models are returned.
-
-        :param nested: flag setting nested models (child of previous one, not main one)
-        :type nested: bool
-        :return: set of non mandatory related fields
-        :rtype: Set
-        """
-        if nested:
-            return cls.extract_related_names()
-        related_names = cls.extract_related_names()
-        related_names = {
-            name for name in related_names if cls.Meta.model_fields[name].nullable
-        }
-        return related_names
-
-    @classmethod
     def _iterate_related_models(  # noqa: CCR001
-        cls,
-        visited: Set[str] = None,
-        source_visited: Set[str] = None,
-        source_relation: str = None,
-        source_model: Union[Type["Model"], Type["RelationMixin"]] = None,
+        cls, node_list: NodeList = None, source_relation: str = None
     ) -> List[str]:
         """
         Iterates related models recursively to extract relation strings of
         nested not visited models.
 
-        :param visited: set of already visited models
-        :type visited: Set[str]
-        :param source_relation: name of the current relation
-        :type source_relation: str
-        :param source_model: model from which relation comes in nested relations
-        :type source_model: Type["Model"]
         :return: list of relation strings to be passed to select_related
         :rtype: List[str]
         """
-        source_visited = source_visited or cls._populate_source_model_prefixes()
+        if not node_list:
+            node_list = NodeList()
+            current_node = node_list.add(node_class=cls)
+        else:
+            current_node = node_list[-1]
         relations = cls.extract_related_names()
         processed_relations = []
         for relation in relations:
-            target_model = cls.Meta.model_fields[relation].to
-            if cls._is_reverse_side_of_same_relation(source_model, target_model):
-                continue
-            if target_model not in source_visited or not source_model:
+            if not current_node.visited(relation):
+                target_model = cls.Meta.model_fields[relation].to
+                node_list.add(
+                    node_class=target_model,
+                    relation_name=relation,
+                    parent_node=current_node,
+                )
                 deep_relations = target_model._iterate_related_models(
-                    visited=visited,
-                    source_visited=source_visited,
-                    source_relation=relation,
-                    source_model=cls,
+                    source_relation=relation, node_list=node_list
                 )
                 processed_relations.extend(deep_relations)
-            else:
-                processed_relations.append(relation)
 
         return cls._get_final_relations(processed_relations, source_relation)
-
-    @staticmethod
-    def _is_reverse_side_of_same_relation(
-        source_model: Optional[Union[Type["Model"], Type["RelationMixin"]]],
-        target_model: Type["Model"],
-    ) -> bool:
-        """
-        Alias to check if source model is the same as target
-        :param source_model: source model - relation comes from it
-        :type source_model: Type["Model"]
-        :param target_model: target model - relation leads to it
-        :type target_model: Type["Model"]
-        :return: result of the check
-        :rtype: bool
-        """
-        return bool(source_model and target_model == source_model)
 
     @staticmethod
     def _get_final_relations(
@@ -212,12 +166,3 @@ class RelationMixin:
         else:
             final_relations = [source_relation] if source_relation else []
         return final_relations
-
-    @classmethod
-    def _populate_source_model_prefixes(cls) -> Set:
-        relations = cls.extract_related_names()
-        visited = {cls}
-        for relation in relations:
-            target_model = cls.Meta.model_fields[relation].to
-            visited.add(target_model)
-        return visited

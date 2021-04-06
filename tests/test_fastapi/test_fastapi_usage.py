@@ -48,7 +48,11 @@ def test_read_main():
         )
         assert response.status_code == 200
         assert response.json() == {
-            "category": {"id": None, "name": "test cat"},
+            "category": {
+                "id": None,
+                "items": [{"id": 1, "name": "test"}],
+                "name": "test cat",
+            },
             "id": 1,
             "name": "test",
         }

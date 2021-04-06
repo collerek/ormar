@@ -32,9 +32,27 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :rtype: Dict[str, str]
         """
         new_kwargs = cls._remove_pk_from_kwargs(new_kwargs)
+        new_kwargs = cls._remove_not_ormar_fields(new_kwargs)
         new_kwargs = cls.substitute_models_with_pks(new_kwargs)
         new_kwargs = cls.populate_default_values(new_kwargs)
         new_kwargs = cls.translate_columns_to_aliases(new_kwargs)
+        return new_kwargs
+
+    @classmethod
+    def _remove_not_ormar_fields(cls, new_kwargs: dict) -> dict:
+        """
+        Removes primary key for if it's nullable or autoincrement pk field,
+        and it's set to None.
+
+        :param new_kwargs: dictionary of model that is about to be saved
+        :type new_kwargs: Dict[str, str]
+        :return: dictionary of model that is about to be saved
+        :rtype: Dict[str, str]
+        """
+        ormar_fields = {
+            k for k, v in cls.Meta.model_fields.items() if not v.pydantic_only
+        }
+        new_kwargs = {k: v for k, v in new_kwargs.items() if k in ormar_fields}
         return new_kwargs
 
     @classmethod

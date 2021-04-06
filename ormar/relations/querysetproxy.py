@@ -389,7 +389,11 @@ class QuerysetProxy(Generic[T]):
         :rtype: int
         """
         # queryset proxy always have one filter for pk of parent model
-        if not each and len(self.queryset.filter_clauses) == 1:
+        if (
+            not each
+            and (len(self.queryset.filter_clauses) + len(self.queryset.exclude_clauses))
+            == 1
+        ):
             raise QueryDefinitionError(
                 "You cannot update without filtering the queryset first. "
                 "If you want to update all rows use update(each=True, **kwargs)"

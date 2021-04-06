@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 from tests.settings import DATABASE_URL
-from tests.test_inheritance_concrete import (  # type: ignore
+from tests.test_inheritance.test_inheritance_concrete import (  # type: ignore
     Category,
     Subject,
     Person,

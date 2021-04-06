@@ -127,7 +127,7 @@ class RelationProxy(Generic[T], list):
         related_field = self.relation.to.Meta.model_fields[related_field_name]
         pkname = self._owner.get_column_alias(self._owner.Meta.pkname)
         self._check_if_model_saved()
-        kwargs = {f"{related_field.get_alias()}__{pkname}": self._owner.pk}
+        kwargs = {f"{related_field.name}__{pkname}": self._owner.pk}
         queryset = (
             ormar.QuerySet(
                 model_cls=self.relation.to, proxy_source_model=self._owner.__class__
