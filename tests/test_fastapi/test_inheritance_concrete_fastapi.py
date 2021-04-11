@@ -1,4 +1,5 @@
 import datetime
+from typing import List
 
 import pytest
 import sqlalchemy
@@ -59,6 +60,12 @@ async def get_bus(item_id: int):
     return bus
 
 
+@app.get("/buses/", response_model=List[Bus])
+async def get_buses():
+    buses = await Bus.objects.select_related(["owner", "co_owner"]).all()
+    return buses
+
+
 @app.post("/trucks/", response_model=Truck)
 async def create_truck(truck: Truck):
     await truck.save()
@@ -82,6 +89,12 @@ async def add_bus_coowner(item_id: int, person: Person):
     bus = await Bus2.objects.select_related(["owner", "co_owners"]).get(pk=item_id)
     await bus.co_owners.add(person)
     return bus
+
+
+@app.get("/buses2/", response_model=List[Bus2])
+async def get_buses2():
+    buses = await Bus2.objects.select_related(["owner", "co_owners"]).all()
+    return buses
 
 
 @app.post("/trucks2/", response_model=Truck2)
@@ -172,6 +185,10 @@ def test_inheritance_with_relation():
         assert unicorn2.co_owner.name == "Joe"
         assert unicorn2.max_persons == 50
 
+        buses = [Bus(**x) for x in client.get("/buses/").json()]
+        assert len(buses) == 1
+        assert buses[0].name == "Unicorn"
+
 
 def test_inheritance_with_m2m_relation():
     client = TestClient(app)
@@ -217,3 +234,7 @@ def test_inheritance_with_m2m_relation():
         assert shelby.co_owners[0] == alex
         assert shelby.co_owners[1] == joe
         assert shelby.max_capacity == 2000
+
+        buses = [Bus2(**x) for x in client.get("/buses2/").json()]
+        assert len(buses) == 1
+        assert buses[0].name == "Unicorn"

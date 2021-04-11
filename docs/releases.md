@@ -1,3 +1,29 @@
+# 0.10.3
+
+## ✨ Features
+
+* `ForeignKey` and `ManyToMany` now support `skip_reverse: bool = False` flag [#118](https://github.com/collerek/ormar/issues/118).
+  If you set `skip_reverse` flag internally the field is still registered on the other 
+  side of the relationship so you can:
+  * `filter` by related models fields from reverse model
+  * `order_by` by related models fields from reverse model 
+  
+  But you cannot:
+  * access the related field from reverse model with `related_name`
+  * even if you `select_related` from reverse side of the model the returned models won't be populated in reversed instance (the join is not prevented so you still can `filter` and `order_by`)
+  * the relation won't be populated in `dict()` and `json()`
+  * you cannot pass the nested related objects when populating from `dict()` or `json()` (also through `fastapi`). It will be either ignored or raise error depending on `extra` setting in pydantic `Config`.
+
+## 🐛 Fixes
+
+*  Fix weakref `ReferenceError` error [#118](https://github.com/collerek/ormar/issues/118)
+*  Fix error raised by Through fields when pydantic `Config.extra="forbid"` is set
+
+## 💬 Other
+*  Introduce link to `sqlalchemy-to-ormar` auto-translator for models
+*  Provide links to fastapi ecosystem libraries that support `ormar`
+
+
 # 0.10.2
 
 ## ✨ Features

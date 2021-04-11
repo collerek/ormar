@@ -22,7 +22,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
     from ormar.models import Model, T
     from ormar.queryset import QuerySet
-    from ormar import RelationType
+    from ormar import RelationType, ForeignKeyField
 else:
     T = TypeVar("T", bound="Model")
 
@@ -251,7 +251,7 @@ class QuerysetProxy(Generic[T]):
             owner_column = self._owner.get_name()
         else:
             queryset = ormar.QuerySet(model_cls=self.relation.to)  # type: ignore
-            owner_column = self.related_field.name
+            owner_column = self.related_field_name
         kwargs = {owner_column: self._owner}
         self._clean_items_on_load()
         if keep_reversed and self.type_ == ormar.RelationType.REVERSE:
@@ -367,7 +367,7 @@ class QuerysetProxy(Generic[T]):
         """
         through_kwargs = kwargs.pop(self.through_model_name, {})
         if self.type_ == ormar.RelationType.REVERSE:
-            kwargs[self.related_field.name] = self._owner
+            kwargs[self.related_field_name] = self._owner
         created = await self.queryset.create(**kwargs)
         self._register_related(created)
         if self.type_ == ormar.RelationType.MULTIPLE:

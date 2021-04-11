@@ -20,6 +20,7 @@ class RelationMixin:
 
         Meta: ModelMeta
         _related_names: Optional[Set]
+        _through_names: Optional[Set]
         _related_fields: Optional[List]
         get_name: Callable
 
@@ -57,19 +58,23 @@ class RelationMixin:
         return related_fields
 
     @classmethod
-    def extract_through_names(cls) -> Set:
+    def extract_through_names(cls) -> Set[str]:
         """
         Extracts related fields through names which are shortcuts to through models.
 
         :return: set of related through fields names
         :rtype: Set
         """
-        related_fields = set()
-        for name in cls.extract_related_names():
-            field = cls.Meta.model_fields[name]
-            if field.is_multi:
-                related_fields.add(field.through.get_name(lower=True))
-        return related_fields
+        if isinstance(cls._through_names, Set):
+            return cls._through_names
+
+        related_names = set()
+        for name, field in cls.Meta.model_fields.items():
+            if isinstance(field, BaseField) and field.is_through:
+                related_names.add(name)
+
+        cls._through_names = related_names
+        return related_names
 
     @classmethod
     def extract_related_names(cls) -> Set[str]:
@@ -89,6 +94,7 @@ class RelationMixin:
                 isinstance(field, BaseField)
                 and field.is_relation
                 and not field.is_through
+                and not field.skip_field
             ):
                 related_names.add(name)
         cls._related_names = related_names

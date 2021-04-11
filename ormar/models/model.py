@@ -24,7 +24,11 @@ class Model(ModelRow):
         Meta: ModelMeta
 
     def __repr__(self) -> str:  # pragma nocover
-        _repr = {k: getattr(self, k) for k, v in self.Meta.model_fields.items()}
+        _repr = {
+            k: getattr(self, k)
+            for k, v in self.Meta.model_fields.items()
+            if not v.skip_field
+        }
         return f"{self.__class__.__name__}({str(_repr)})"
 
     async def upsert(self: T, **kwargs: Any) -> T:

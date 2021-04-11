@@ -53,6 +53,8 @@ class BaseField(FieldInfo):
             "is_relation", None
         )  # ForeignKeyField + subclasses
         self.is_through: bool = kwargs.pop("is_through", False)  # ThroughFields
+        self.skip_reverse: bool = kwargs.pop("skip_reverse", False)
+        self.skip_field: bool = kwargs.pop("skip_field", False)
 
         self.owner: Type["Model"] = kwargs.pop("owner", None)
         self.to: Type["Model"] = kwargs.pop("to", None)

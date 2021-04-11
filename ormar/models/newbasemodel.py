@@ -81,6 +81,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         _orm_id: int
         _orm_saved: bool
         _related_names: Optional[Set]
+        _through_names: Optional[Set]
         _related_names_hash: str
         _choices_fields: Optional[Set]
         _pydantic_fields: Set
@@ -165,6 +166,11 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         for field_to_nullify in excluded:
             new_kwargs[field_to_nullify] = None
 
+        # extract through fields
+        through_tmp_dict = dict()
+        for field_name in self.extract_through_names():
+            through_tmp_dict[field_name] = new_kwargs.pop(field_name, None)
+
         values, fields_set, validation_error = pydantic.validate_model(
             self, new_kwargs  # type: ignore
         )
@@ -173,6 +179,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         object.__setattr__(self, "__dict__", values)
         object.__setattr__(self, "__fields_set__", fields_set)
+
+        # add back through fields
+        new_kwargs.update(through_tmp_dict)
 
         # register the columns models after initialization
         for related in self.extract_related_names().union(self.extract_through_names()):
@@ -592,13 +601,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     exclude=self._skip_ellipsis(exclude, field),
                 )
             elif nested_model is not None:
-                dict_instance[field] = nested_model.dict(
-                    relation_map=self._skip_ellipsis(
-                        relation_map, field, default_return=dict()
-                    ),
-                    include=self._skip_ellipsis(include, field),
-                    exclude=self._skip_ellipsis(exclude, field),
-                )
+                try:
+                    dict_instance[field] = nested_model.dict(
+                        relation_map=self._skip_ellipsis(
+                            relation_map, field, default_return=dict()
+                        ),
+                        include=self._skip_ellipsis(include, field),
+                        exclude=self._skip_ellipsis(exclude, field),
+                    )
+                except ReferenceError:
+                    dict_instance[field] = None
             else:
                 dict_instance[field] = None
         return dict_instance
