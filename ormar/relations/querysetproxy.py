@@ -16,7 +16,7 @@ from typing import (  # noqa: I100, I201
 )
 
 import ormar  # noqa: I100, I202
-from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
+from ormar.exceptions import ModelPersistenceError, NoMatch, QueryDefinitionError
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
@@ -151,6 +151,21 @@ class QuerysetProxy(Generic[T]):
         rel_kwargs = {owner_column: self._owner.pk, child_column: child.pk}
         through_model = await model_cls.objects.get(**rel_kwargs)
         await through_model.update(**kwargs)
+
+    async def upsert_through_instance(self, child: "T", **kwargs: Any) -> None:
+        """
+        Updates a through model instance in the database for m2m relations if
+        it already exists, else creates one.
+
+        :param kwargs: dict of additional keyword arguments for through instance
+        :type kwargs: Any
+        :param child: child model instance
+        :type child: Model
+        """
+        try:
+            await self.update_through_instance(child=child, **kwargs)
+        except NoMatch:
+            await self.create_through_instance(child=child, **kwargs)
 
     async def delete_through_instance(self, child: "T") -> None:
         """

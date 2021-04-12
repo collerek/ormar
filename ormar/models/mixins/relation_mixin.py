@@ -4,9 +4,10 @@ from typing import (
     Optional,
     Set,
     TYPE_CHECKING,
+    cast,
 )
 
-from ormar import BaseField
+from ormar import BaseField, ForeignKeyField
 from ormar.models.traversible import NodeList
 
 
@@ -39,7 +40,7 @@ class RelationMixin:
         return self_fields
 
     @classmethod
-    def extract_related_fields(cls) -> List:
+    def extract_related_fields(cls) -> List["ForeignKeyField"]:
         """
         Returns List of ormar Fields for all relations declared on a model.
         List is cached in cls._related_fields for quicker access.
@@ -52,7 +53,7 @@ class RelationMixin:
 
         related_fields = []
         for name in cls.extract_related_names().union(cls.extract_through_names()):
-            related_fields.append(cls.Meta.model_fields[name])
+            related_fields.append(cast("ForeignKeyField", cls.Meta.model_fields[name]))
         cls._related_fields = related_fields
 
         return related_fields

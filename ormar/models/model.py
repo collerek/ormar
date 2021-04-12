@@ -2,6 +2,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Optional,
     Set,
     TYPE_CHECKING,
     TypeVar,
@@ -16,6 +17,9 @@ from ormar.models.model_row import ModelRow
 from ormar.queryset.utils import subtract_dict, translate_list_to_dict
 
 T = TypeVar("T", bound="Model")
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ormar import ForeignKeyField
 
 
 class Model(ModelRow):
@@ -110,6 +114,8 @@ class Model(ModelRow):
         relation_map: Dict = None,
         exclude: Union[Set, Dict] = None,
         update_count: int = 0,
+        previous_model: "Model" = None,
+        relation_field: Optional["ForeignKeyField"] = None,
     ) -> int:
         """
         Triggers a upsert method on all related models
@@ -126,6 +132,10 @@ class Model(ModelRow):
         Model A but will never follow into Model C.
         Nested relations of those kind need to be persisted manually.
 
+        :param relation_field: field with relation leading to this model
+        :type relation_field: Optional[ForeignKeyField]
+        :param previous_model: previous model from which method came
+        :type previous_model: Model
         :param exclude: items to exclude during saving of relations
         :type exclude: Union[Set, Dict]
         :param relation_map: map of relations to follow
@@ -151,61 +161,53 @@ class Model(ModelRow):
             exclude = translate_list_to_dict(exclude)
         relation_map = subtract_dict(relation_map, exclude or {})
 
-        for related in self.extract_related_names():
-            if relation_map and related in relation_map:
-                value = getattr(self, related)
-                if value:
-                    update_count = await self._update_and_follow(
-                        value=value,
-                        follow=follow,
-                        save_all=save_all,
-                        relation_map=self._skip_ellipsis(  # type: ignore
-                            relation_map, related, default_return={}
-                        ),
-                        update_count=update_count,
-                    )
-        return update_count
+        if relation_map:
+            fields_to_visit = {
+                field
+                for field in self.extract_related_fields()
+                if field.name in relation_map
+            }
+            pre_save = {
+                field
+                for field in fields_to_visit
+                if not field.virtual and not field.is_multi
+            }
 
-    @staticmethod
-    async def _update_and_follow(
-        value: Union["Model", List["Model"]],
-        follow: bool,
-        save_all: bool,
-        relation_map: Dict,
-        update_count: int,
-    ) -> int:
-        """
-        Internal method used in save_related to follow related models and update numbers
-        of updated related instances.
+            update_count = await self._update_relation_list(
+                fields_list=pre_save,
+                follow=follow,
+                save_all=save_all,
+                relation_map=relation_map,
+                update_count=update_count,
+            )
 
-        :param value: Model to follow
-        :type value: Model
-        :param relation_map: map of relations to follow
-        :type relation_map: Dict
-        :param follow: flag to trigger deep save -
-        by default only directly related models are saved
-        with follow=True also related models of related models are saved
-        :type follow: bool
-        :param update_count: internal parameter for recursive calls -
-        number of updated instances
-        :type update_count: int
-        :return: tuple of update count and visited
-        :rtype: int
-        """
-        if not isinstance(value, list):
-            value = [value]
+            update_count = await self._upsert_model(
+                instance=self,
+                save_all=save_all,
+                previous_model=previous_model,
+                relation_field=relation_field,
+                update_count=update_count,
+            )
 
-        for val in value:
-            if (not val.saved or save_all) and not val.__pk_only__:
-                await val.upsert()
-                update_count += 1
-            if follow:
-                update_count = await val.save_related(
-                    follow=follow,
-                    save_all=save_all,
-                    relation_map=relation_map,
-                    update_count=update_count,
-                )
+            post_save = fields_to_visit - pre_save
+
+            update_count = await self._update_relation_list(
+                fields_list=post_save,
+                follow=follow,
+                save_all=save_all,
+                relation_map=relation_map,
+                update_count=update_count,
+            )
+
+        else:
+            update_count = await self._upsert_model(
+                instance=self,
+                save_all=save_all,
+                previous_model=previous_model,
+                relation_field=relation_field,
+                update_count=update_count,
+            )
+
         return update_count
 
     async def update(self: T, _columns: List[str] = None, **kwargs: Any) -> T:

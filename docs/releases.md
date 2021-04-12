@@ -13,6 +13,17 @@
   * even if you `select_related` from reverse side of the model the returned models won't be populated in reversed instance (the join is not prevented so you still can `filter` and `order_by`)
   * the relation won't be populated in `dict()` and `json()`
   * you cannot pass the nested related objects when populating from `dict()` or `json()` (also through `fastapi`). It will be either ignored or raise error depending on `extra` setting in pydantic `Config`.
+* `Model.save_related()` now can save whole data tree in once [#148](https://github.com/collerek/ormar/discussions/148)
+  meaning:
+  * it knows if it should save main `Model` or related `Model` first to preserve the relation
+  * it saves main `Model` if 
+    * it's not `saved`,
+    * has no `pk` value 
+    * or `save_all=True` flag is set 
+  
+    in those cases you don't have to split save into two calls (`save()` and `save_related()`)
+  * it supports also `ManyToMany` relations
+  * it supports also optional `Through` model values for m2m relations
 
 ## 🐛 Fixes
 
