@@ -189,6 +189,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 new_kwargs.get(related), self, to_register=True,
             )
 
+        if hasattr(self, "_init_private_attributes"):
+            # introduced in pydantic 1.7
+            self._init_private_attributes()
+
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
         """
         Overwrites setattr in object to allow for special behaviour of certain params.
@@ -292,6 +296,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             value = object.__getattribute__(self, "__dict__").get(item, None)
             value = object.__getattribute__(self, "_convert_json")(item, value, "loads")
             return value
+
         return object.__getattribute__(self, item)  # pragma: no cover
 
     def _verify_model_can_be_initialized(self) -> None:
@@ -590,18 +595,19 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         for field in fields:
             if not relation_map or field not in relation_map:
                 continue
-            nested_model = getattr(self, field)
-            if isinstance(nested_model, MutableSequence):
-                dict_instance[field] = self._extract_nested_models_from_list(
-                    relation_map=self._skip_ellipsis(  # type: ignore
-                        relation_map, field, default_return=dict()
-                    ),
-                    models=nested_model,
-                    include=self._skip_ellipsis(include, field),
-                    exclude=self._skip_ellipsis(exclude, field),
-                )
-            elif nested_model is not None:
-                try:
+            try:
+                nested_model = getattr(self, field)
+                if isinstance(nested_model, MutableSequence):
+                    dict_instance[field] = self._extract_nested_models_from_list(
+                        relation_map=self._skip_ellipsis(  # type: ignore
+                            relation_map, field, default_return=dict()
+                        ),
+                        models=nested_model,
+                        include=self._skip_ellipsis(include, field),
+                        exclude=self._skip_ellipsis(exclude, field),
+                    )
+                elif nested_model is not None:
+
                     dict_instance[field] = nested_model.dict(
                         relation_map=self._skip_ellipsis(
                             relation_map, field, default_return=dict()
@@ -609,9 +615,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                         include=self._skip_ellipsis(include, field),
                         exclude=self._skip_ellipsis(exclude, field),
                     )
-                except ReferenceError:
+                else:
                     dict_instance[field] = None
-            else:
+            except ReferenceError:
                 dict_instance[field] = None
         return dict_instance
 

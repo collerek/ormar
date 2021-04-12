@@ -18,6 +18,7 @@
 
 *  Fix weakref `ReferenceError` error [#118](https://github.com/collerek/ormar/issues/118)
 *  Fix error raised by Through fields when pydantic `Config.extra="forbid"` is set
+*  Fix bug with `pydantic.PrivateAttr` not being initialized at `__init__` [#149](https://github.com/collerek/ormar/issues/149)
 
 ## 💬 Other
 *  Introduce link to `sqlalchemy-to-ormar` auto-translator for models

@@ -22,7 +22,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
     from ormar.models import Model, T
     from ormar.queryset import QuerySet
-    from ormar import RelationType, ForeignKeyField
+    from ormar import RelationType
 else:
     T = TypeVar("T", bound="Model")
 
