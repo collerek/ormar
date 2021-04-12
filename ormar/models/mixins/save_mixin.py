@@ -224,7 +224,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
     async def _upsert_through_model(
         instance: "Model",
         previous_model: "Model",
-        relation_field: Optional["ForeignKeyField"],
+        relation_field: "ForeignKeyField",
     ) -> None:
         """
         Upsert through model for m2m relation.
