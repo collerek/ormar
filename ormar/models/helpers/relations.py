@@ -111,6 +111,9 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
             self_reference=model_field.self_reference,
             self_reference_primary=model_field.self_reference_primary,
             orders_by=model_field.related_orders_by,
+            skip_field=model_field.skip_reverse,
+            through_relation_name=model_field.through_reverse_relation_name,
+            through_reverse_relation_name=model_field.through_relation_name,
         )
         # register foreign keys on through model
         model_field = cast("ManyToManyField", model_field)
@@ -125,6 +128,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
             owner=model_field.to,
             self_reference=model_field.self_reference,
             orders_by=model_field.related_orders_by,
+            skip_field=model_field.skip_reverse,
         )
 
 
@@ -145,6 +149,7 @@ def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:
         virtual=True,
         related_name=model_field.name,
         owner=model_field.owner,
+        nullable=True,
     )
 
     model_field.to.Meta.model_fields[through_name] = Through(
@@ -153,6 +158,7 @@ def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:
         virtual=True,
         related_name=related_name,
         owner=model_field.to,
+        nullable=True,
     )
 
 

@@ -16,7 +16,7 @@ from typing import (  # noqa: I100, I201
 )
 
 import ormar  # noqa: I100, I202
-from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
+from ormar.exceptions import ModelPersistenceError, NoMatch, QueryDefinitionError
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
@@ -152,6 +152,21 @@ class QuerysetProxy(Generic[T]):
         through_model = await model_cls.objects.get(**rel_kwargs)
         await through_model.update(**kwargs)
 
+    async def upsert_through_instance(self, child: "T", **kwargs: Any) -> None:
+        """
+        Updates a through model instance in the database for m2m relations if
+        it already exists, else creates one.
+
+        :param kwargs: dict of additional keyword arguments for through instance
+        :type kwargs: Any
+        :param child: child model instance
+        :type child: Model
+        """
+        try:
+            await self.update_through_instance(child=child, **kwargs)
+        except NoMatch:
+            await self.create_through_instance(child=child, **kwargs)
+
     async def delete_through_instance(self, child: "T") -> None:
         """
         Removes through model instance from the database for m2m relations.
@@ -251,7 +266,7 @@ class QuerysetProxy(Generic[T]):
             owner_column = self._owner.get_name()
         else:
             queryset = ormar.QuerySet(model_cls=self.relation.to)  # type: ignore
-            owner_column = self.related_field.name
+            owner_column = self.related_field_name
         kwargs = {owner_column: self._owner}
         self._clean_items_on_load()
         if keep_reversed and self.type_ == ormar.RelationType.REVERSE:
@@ -367,7 +382,7 @@ class QuerysetProxy(Generic[T]):
         """
         through_kwargs = kwargs.pop(self.through_model_name, {})
         if self.type_ == ormar.RelationType.REVERSE:
-            kwargs[self.related_field.name] = self._owner
+            kwargs[self.related_field_name] = self._owner
         created = await self.queryset.create(**kwargs)
         self._register_related(created)
         if self.type_ == ormar.RelationType.MULTIPLE:

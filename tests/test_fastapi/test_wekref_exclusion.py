@@ -123,6 +123,16 @@ async def get_test_5(thing_id: UUID):
     return await Thing.objects.all(other_thing__id=thing_id)
 
 
+@app.get(
+    "/test/error", response_model=List[Thing], response_model_exclude={"other_thing"}
+)
+async def get_weakref():
+    ots = await OtherThing.objects.all()
+    ot = ots[0]
+    ts = await ot.things.all()
+    return ts
+
+
 def test_endpoints():
     client = TestClient(app)
     with client:
@@ -145,3 +155,7 @@ def test_endpoints():
         resp5 = client.get(f"/test/5/{ot.id}")
         assert resp5.status_code == 200
         assert len(resp5.json()) == 3
+
+        resp6 = client.get("/test/error")
+        assert resp6.status_code == 200
+        assert len(resp6.json()) == 3

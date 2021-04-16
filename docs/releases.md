@@ -1,3 +1,97 @@
+# 0.10.3
+
+## ✨ Features
+
+* `ForeignKey` and `ManyToMany` now support `skip_reverse: bool = False` flag [#118](https://github.com/collerek/ormar/issues/118).
+  If you set `skip_reverse` flag internally the field is still registered on the other 
+  side of the relationship so you can:
+  * `filter` by related models fields from reverse model
+  * `order_by` by related models fields from reverse model 
+  
+  But you cannot:
+  * access the related field from reverse model with `related_name`
+  * even if you `select_related` from reverse side of the model the returned models won't be populated in reversed instance (the join is not prevented so you still can `filter` and `order_by`)
+  * the relation won't be populated in `dict()` and `json()`
+  * you cannot pass the nested related objects when populating from `dict()` or `json()` (also through `fastapi`). It will be either ignored or raise error depending on `extra` setting in pydantic `Config`.
+* `Model.save_related()` now can save whole data tree in once [#148](https://github.com/collerek/ormar/discussions/148)
+  meaning:
+  * it knows if it should save main `Model` or related `Model` first to preserve the relation
+  * it saves main `Model` if 
+    * it's not `saved`,
+    * has no `pk` value 
+    * or `save_all=True` flag is set 
+  
+    in those cases you don't have to split save into two calls (`save()` and `save_related()`)
+  * it supports also `ManyToMany` relations
+  * it supports also optional `Through` model values for m2m relations
+*  Add possibility to customize `Through` model relation field names.
+  * By default `Through` model relation names default to related model name in lowercase.
+    So in example like this:
+    ```python
+    ... # course declaration ommited
+    class Student(ormar.Model):
+        class Meta:
+            database = database
+            metadata = metadata
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        courses = ormar.ManyToMany(Course)
+    
+    # will produce default Through model like follows (example simplified)
+    class StudentCourse(ormar.Model):
+        class Meta:
+            database = database
+            metadata = metadata
+            tablename = "students_courses"
+    
+        id: int = ormar.Integer(primary_key=True)
+        student = ormar.ForeignKey(Student) # default name
+        course = ormar.ForeignKey(Course)  # default name
+    ```
+  * To customize the names of fields/relation in Through model now you can use new parameters to `ManyToMany`:
+    * `through_relation_name` - name of the field leading to the model in which `ManyToMany` is declared
+    * `through_reverse_relation_name` - name of the field leading to the model to which `ManyToMany` leads to
+    
+    Example:
+    ```python
+    ... # course declaration ommited
+    class Student(ormar.Model):
+        class Meta:
+            database = database
+            metadata = metadata
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        courses = ormar.ManyToMany(Course,
+                                   through_relation_name="student_id",
+                                   through_reverse_relation_name="course_id")
+    
+    # will produce default Through model like follows (example simplified)
+    class StudentCourse(ormar.Model):
+        class Meta:
+            database = database
+            metadata = metadata
+            tablename = "students_courses"
+    
+        id: int = ormar.Integer(primary_key=True)
+        student_id = ormar.ForeignKey(Student) # set by through_relation_name
+        course_id = ormar.ForeignKey(Course)  # set by through_reverse_relation_name
+    ```  
+
+## 🐛 Fixes
+
+*  Fix weakref `ReferenceError` error [#118](https://github.com/collerek/ormar/issues/118)
+*  Fix error raised by Through fields when pydantic `Config.extra="forbid"` is set
+*  Fix bug with `pydantic.PrivateAttr` not being initialized at `__init__` [#149](https://github.com/collerek/ormar/issues/149)
+*  Fix bug with pydantic-type `exclude` in `dict()` with `__all__` key not working
+
+## 💬 Other
+*  Introduce link to `sqlalchemy-to-ormar` auto-translator for models
+*  Provide links to fastapi ecosystem libraries that support `ormar`
+*  Add transactions to docs (supported with `databases`)
+
+
 # 0.10.2
 
 ## ✨ Features

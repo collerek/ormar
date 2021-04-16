@@ -4,9 +4,10 @@ from typing import (
     Optional,
     Set,
     TYPE_CHECKING,
+    cast,
 )
 
-from ormar import BaseField
+from ormar import BaseField, ForeignKeyField
 from ormar.models.traversible import NodeList
 
 
@@ -20,6 +21,7 @@ class RelationMixin:
 
         Meta: ModelMeta
         _related_names: Optional[Set]
+        _through_names: Optional[Set]
         _related_fields: Optional[List]
         get_name: Callable
 
@@ -38,7 +40,7 @@ class RelationMixin:
         return self_fields
 
     @classmethod
-    def extract_related_fields(cls) -> List:
+    def extract_related_fields(cls) -> List["ForeignKeyField"]:
         """
         Returns List of ormar Fields for all relations declared on a model.
         List is cached in cls._related_fields for quicker access.
@@ -51,25 +53,29 @@ class RelationMixin:
 
         related_fields = []
         for name in cls.extract_related_names().union(cls.extract_through_names()):
-            related_fields.append(cls.Meta.model_fields[name])
+            related_fields.append(cast("ForeignKeyField", cls.Meta.model_fields[name]))
         cls._related_fields = related_fields
 
         return related_fields
 
     @classmethod
-    def extract_through_names(cls) -> Set:
+    def extract_through_names(cls) -> Set[str]:
         """
         Extracts related fields through names which are shortcuts to through models.
 
         :return: set of related through fields names
         :rtype: Set
         """
-        related_fields = set()
-        for name in cls.extract_related_names():
-            field = cls.Meta.model_fields[name]
-            if field.is_multi:
-                related_fields.add(field.through.get_name(lower=True))
-        return related_fields
+        if isinstance(cls._through_names, Set):
+            return cls._through_names
+
+        related_names = set()
+        for name, field in cls.Meta.model_fields.items():
+            if isinstance(field, BaseField) and field.is_through:
+                related_names.add(name)
+
+        cls._through_names = related_names
+        return related_names
 
     @classmethod
     def extract_related_names(cls) -> Set[str]:
@@ -89,6 +95,7 @@ class RelationMixin:
                 isinstance(field, BaseField)
                 and field.is_relation
                 and not field.is_through
+                and not field.skip_field
             ):
                 related_names.add(name)
         cls._related_names = related_names

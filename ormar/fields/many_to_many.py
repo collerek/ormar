@@ -112,10 +112,18 @@ def ManyToMany(
     """
     related_name = kwargs.pop("related_name", None)
     nullable = kwargs.pop("nullable", True)
+
     owner = kwargs.pop("owner", None)
     self_reference = kwargs.pop("self_reference", False)
+
     orders_by = kwargs.pop("orders_by", None)
     related_orders_by = kwargs.pop("related_orders_by", None)
+
+    skip_reverse = kwargs.pop("skip_reverse", False)
+    skip_field = kwargs.pop("skip_field", False)
+
+    through_relation_name = kwargs.pop("through_relation_name", None)
+    through_reverse_relation_name = kwargs.pop("through_reverse_relation_name", None)
 
     if through is not None and through.__class__ != ForwardRef:
         forbid_through_relations(cast(Type["Model"], through))
@@ -151,6 +159,10 @@ def ManyToMany(
         is_multi=True,
         orders_by=orders_by,
         related_orders_by=related_orders_by,
+        skip_reverse=skip_reverse,
+        skip_field=skip_field,
+        through_relation_name=through_relation_name,
+        through_reverse_relation_name=through_reverse_relation_name,
     )
 
     Field = type("ManyToMany", (ManyToManyField, BaseField), {})
@@ -183,24 +195,6 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
             ].related_name
             or self.name
         )
-
-    def default_target_field_name(self) -> str:
-        """
-        Returns default target model name on through model.
-        :return: name of the field
-        :rtype: str
-        """
-        prefix = "from_" if self.self_reference else ""
-        return f"{prefix}{self.to.get_name()}"
-
-    def default_source_field_name(self) -> str:
-        """
-        Returns default target model name on through model.
-        :return: name of the field
-        :rtype: str
-        """
-        prefix = "to_" if self.self_reference else ""
-        return f"{prefix}{self.owner.get_name()}"
 
     def has_unresolved_forward_refs(self) -> bool:
         """

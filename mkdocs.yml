@@ -31,6 +31,7 @@ nav:
     - queries/pagination-and-rows-number.md
     - queries/aggregations.md
   - Signals: signals.md
+  - Transactions: transactions.md
   - Use with Fastapi: fastapi.md
   - Use with mypy: mypy.md
   - PyCharm plugin: plugin.md

@@ -198,10 +198,88 @@ or it can be a dictionary that can also contain nested items.
         To read more about the structure of possible values passed to `exclude` check `Queryset.fields` method documentation.
 
 !!!warning
-    To avoid circular updates with `follow=True` set, `save_related` keeps a set of already visited Models, 
+    To avoid circular updates with `follow=True` set, `save_related` keeps a set of already visited Models on each branch of relation tree, 
     and won't perform nested `save_related` on Models that were already visited.
     
-    So if you have a diamond or circular relations types you need to perform the updates in a manual way.
+    So if you have circular relations types you need to perform the updates in a manual way.
+
+Note that with `save_all=True` and `follow=True` you can use `save_related()` to save whole relation tree at once.
+
+Example:
+
+```python
+class Department(ormar.Model):
+    class Meta:
+        database = database
+        metadata = metadata
+
+    id: int = ormar.Integer(primary_key=True)
+    department_name: str = ormar.String(max_length=100)
+
+
+class Course(ormar.Model):
+    class Meta:
+        database = database
+        metadata = metadata
+
+    id: int = ormar.Integer(primary_key=True)
+    course_name: str = ormar.String(max_length=100)
+    completed: bool = ormar.Boolean()
+    department: Optional[Department] = ormar.ForeignKey(Department)
+
+
+class Student(ormar.Model):
+    class Meta:
+        database = database
+        metadata = metadata
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    courses = ormar.ManyToMany(Course)
+
+to_save = {
+            "department_name": "Ormar",
+            "courses": [
+                {"course_name": "basic1",
+                 "completed": True,
+                 "students": [
+                     {"name": "Jack"},
+                     {"name": "Abi"}
+                 ]},
+                {"course_name": "basic2",
+                 "completed": True,
+                 "students": [
+                     {"name": "Kate"},
+                     {"name": "Miranda"}
+                 ]
+                 },
+            ],
+        }
+# initializa whole tree
+department = Department(**to_save)
+
+# save all at once (one after another)
+await department.save_related(follow=True, save_all=True)
+
+department_check = await Department.objects.select_all(follow=True).get()
+
+to_exclude = {
+    "id": ...,
+    "courses": {
+        "id": ...,
+        "students": {"id", "studentcourse"}
+    }
+}
+# after excluding ids and through models you get exact same payload used to
+# construct whole tree
+assert department_check.dict(exclude=to_exclude) == to_save
+
+```
+
+
+!!!warning
+    `save_related()` iterates all relations and all models and upserts() them one by one,
+    so it will save all models but might not be optimal in regard of number of database queries.
 
 [fields]: ../fields.md
 [relations]: ../relations/index.md

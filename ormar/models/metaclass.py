@@ -90,6 +90,7 @@ def add_cached_properties(new_model: Type["Model"]) -> None:
     """
     new_model._quick_access_fields = quick_access_set
     new_model._related_names = None
+    new_model._through_names = None
     new_model._related_fields = None
     new_model._pydantic_fields = {name for name in new_model.__fields__}
     new_model._choices_fields = set()
@@ -536,6 +537,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 new_model = populate_meta_tablename_columns_and_pk(name, new_model)
                 populate_meta_sqlalchemy_table_if_required(new_model.Meta)
                 expand_reverse_relationships(new_model)
+                # TODO: iterate only related fields
                 for field in new_model.Meta.model_fields.values():
                     register_relation_in_alias_manager(field=field)
 

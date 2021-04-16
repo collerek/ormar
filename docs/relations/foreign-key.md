@@ -27,6 +27,66 @@ By default it's child (source) `Model` name + s, like courses in snippet below:
 
 Reverse relation exposes API to manage related objects also from parent side.
 
+### Skipping reverse relation
+
+If you are sure you don't want the reverse relation you can use `skip_reverse=True` 
+flag of the `ForeignKey`.
+
+  If you set `skip_reverse` flag internally the field is still registered on the other 
+  side of the relationship so you can:
+  * `filter` by related models fields from reverse model
+  * `order_by` by related models fields from reverse model 
+  
+  But you cannot:
+  * access the related field from reverse model with `related_name`
+  * even if you `select_related` from reverse side of the model the returned models won't be populated in reversed instance (the join is not prevented so you still can `filter` and `order_by` over the relation)
+  * the relation won't be populated in `dict()` and `json()`
+  * you cannot pass the nested related objects when populating from dictionary or json (also through `fastapi`). It will be either ignored or error will be raised depending on `extra` setting in pydantic `Config`.
+
+Example:
+
+```python
+class Author(ormar.Model):
+    class Meta(BaseMeta):
+        pass
+
+    id: int = ormar.Integer(primary_key=True)
+    first_name: str = ormar.String(max_length=80)
+    last_name: str = ormar.String(max_length=80)
+
+
+class Post(ormar.Model):
+    class Meta(BaseMeta):
+        pass
+
+    id: int = ormar.Integer(primary_key=True)
+    title: str = ormar.String(max_length=200)
+    author: Optional[Author] = ormar.ForeignKey(Author, skip_reverse=True)
+
+# create sample data
+author = Author(first_name="Test", last_name="Author")
+post = Post(title="Test Post", author=author)
+
+assert post.author == author  # ok
+assert author.posts  # Attribute error!
+
+# but still can use in order_by
+authors = (
+    await Author.objects.select_related("posts").order_by("posts__title").all()
+)
+assert authors[0].first_name == "Test"
+
+# note that posts are not populated for author even if explicitly
+# included in select_related - note no posts in dict()
+assert author.dict(exclude={"id"}) == {"first_name": "Test", "last_name": "Author"}
+
+# still can filter through fields of related model
+authors = await Author.objects.filter(posts__title="Test Post").all()
+assert authors[0].first_name == "Test"
+assert len(authors) == 1
+```
+
+
 ### add
 
 Adding child model from parent side causes adding related model to currently loaded parent relation, 

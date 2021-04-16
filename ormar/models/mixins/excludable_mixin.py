@@ -14,7 +14,6 @@ from typing import (
 
 from ormar.models.excludable import ExcludableItems
 from ormar.models.mixins.relation_mixin import RelationMixin
-from ormar.queryset.utils import translate_list_to_dict, update
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -138,9 +137,7 @@ class ExcludableMixin(RelationMixin):
         return columns
 
     @classmethod
-    def _update_excluded_with_related(
-        cls, exclude: Union["AbstractSetIntStr", "MappingIntStrAny", None],
-    ) -> Union[Set, Dict]:
+    def _update_excluded_with_related(cls, exclude: Union[Set, Dict, None],) -> Set:
         """
         Used during generation of the dict().
         To avoid cyclical references and max recurrence limit nested models have to
@@ -151,8 +148,6 @@ class ExcludableMixin(RelationMixin):
 
         :param exclude: set/dict with fields to exclude
         :type exclude: Union[Set, Dict, None]
-        :param nested: flag setting nested models (child of previous one, not main one)
-        :type nested: bool
         :return: set or dict with excluded fields added.
         :rtype: Union[Set, Dict]
         """
@@ -160,10 +155,11 @@ class ExcludableMixin(RelationMixin):
         related_set = cls.extract_related_names()
         if isinstance(exclude, set):
             exclude = {s for s in exclude}
-            exclude.union(related_set)
-        else:
-            related_dict = translate_list_to_dict(related_set)
-            exclude = update(related_dict, exclude)
+            exclude = exclude.union(related_set)
+        elif isinstance(exclude, dict):
+            # relations are handled in ormar - take only own fields (ellipsis in dict)
+            exclude = {k for k, v in exclude.items() if v is Ellipsis}
+            exclude = exclude.union(related_set)
         return exclude
 
     @classmethod

@@ -124,15 +124,14 @@ class RelationProxy(Generic[T], list):
         :rtype: QuerySet
         """
         related_field_name = self.related_field_name
-        related_field = self.relation.to.Meta.model_fields[related_field_name]
         pkname = self._owner.get_column_alias(self._owner.Meta.pkname)
         self._check_if_model_saved()
-        kwargs = {f"{related_field.name}__{pkname}": self._owner.pk}
+        kwargs = {f"{related_field_name}__{pkname}": self._owner.pk}
         queryset = (
             ormar.QuerySet(
                 model_cls=self.relation.to, proxy_source_model=self._owner.__class__
             )
-            .select_related(related_field.name)
+            .select_related(related_field_name)
             .filter(**kwargs)
         )
         return queryset
@@ -168,11 +167,12 @@ class RelationProxy(Generic[T], list):
         super().remove(item)
         relation_name = self.related_field_name
         relation = item._orm._get(relation_name)
-        if relation is None:  # pragma nocover
-            raise ValueError(
-                f"{self._owner.get_name()} does not have relation {relation_name}"
-            )
-        relation.remove(self._owner)
+        # if relation is None:  # pragma nocover
+        #     raise ValueError(
+        #         f"{self._owner.get_name()} does not have relation {relation_name}"
+        #     )
+        if relation:
+            relation.remove(self._owner)
         self.relation.remove(item)
         if self.type_ == ormar.RelationType.MULTIPLE:
             await self.queryset_proxy.delete_through_instance(item)
@@ -211,7 +211,7 @@ class RelationProxy(Generic[T], list):
         self._check_if_model_saved()
         if self.type_ == ormar.RelationType.MULTIPLE:
             await self.queryset_proxy.create_through_instance(item, **kwargs)
-            setattr(item, relation_name, self._owner)
+            setattr(self._owner, self.field_name, item)
         else:
             setattr(item, relation_name, self._owner)
             await item.update()

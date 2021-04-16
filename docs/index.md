@@ -47,14 +47,34 @@ since they actually have to create and connect to database in most of the tests.
 
 Yet remember that those are - well - tests and not all solutions are suitable to be used in real life applications.
 
+### Part of the `fastapi` ecosystem
+
+As part of the fastapi ecosystem `ormar` is supported in libraries that somehow work with databases.
+
+As of now `ormar` is supported by:
+
+*  [`fastapi-users`](https://github.com/frankie567/fastapi-users)
+*  [`fastapi-crudrouter`](https://github.com/awtkns/fastapi-crudrouter)
+*  [`fastapi-pagination`](https://github.com/uriyyo/fastapi-pagination)
+
+If you maintain or use different library and would like it to support `ormar` let us know how we can help.
+
 ### Dependencies
 
 Ormar is built with:
 
-  * [`SQLAlchemy core`][sqlalchemy-core] for query building.
+  * [`sqlalchemy core`][sqlalchemy-core] for query building.
   * [`databases`][databases] for cross-database async support.
   * [`pydantic`][pydantic] for data validation.
   * `typing_extensions` for python 3.6 - 3.7
+
+### Migrating from `sqlalchemy`
+
+If you currently use `sqlalchemy` and would like to switch to `ormar` check out the auto-translation
+tool that can help you with translating existing sqlalchemy orm models so you do not have to do it manually.
+
+**Beta** versions available at github: [`sqlalchemy-to-ormar`](https://github.com/collerek/sqlalchemy-to-ormar)
+or simply `pip install sqlalchemy-to-ormar`
 
 ### Migrations & Database creation
 
