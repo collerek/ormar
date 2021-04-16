@@ -514,7 +514,11 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             fields = [
                 field
                 for field in fields
-                if field not in exclude or exclude.get(field) is not Ellipsis
+                if field not in exclude
+                or (
+                    exclude.get(field) is not Ellipsis
+                    and exclude.get(field) != {"__all__"}
+                )
             ]
         return fields
 
@@ -567,6 +571,18 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         result = self.get_child(items, key)
         return result if result is not Ellipsis else default_return
 
+    def _convert_all(self, items: Union[Set, Dict, None]) -> Union[Set, Dict, None]:
+        """
+        Helper to convert __all__ pydantic special index to ormar which does not
+        support index based exclusions.
+
+        :param items: current include/exclude value
+        :type items: Union[Set, Dict, None]
+        """
+        if isinstance(items, dict) and "__all__" in items:
+            return items.get("__all__")
+        return items
+
     def _extract_nested_models(  # noqa: CCR001
         self,
         relation_map: Dict,
@@ -603,8 +619,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                             relation_map, field, default_return=dict()
                         ),
                         models=nested_model,
-                        include=self._skip_ellipsis(include, field),
-                        exclude=self._skip_ellipsis(exclude, field),
+                        include=self._convert_all(self._skip_ellipsis(include, field)),
+                        exclude=self._convert_all(self._skip_ellipsis(exclude, field)),
                     )
                 elif nested_model is not None:
 
@@ -612,8 +628,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                         relation_map=self._skip_ellipsis(
                             relation_map, field, default_return=dict()
                         ),
-                        include=self._skip_ellipsis(include, field),
-                        exclude=self._skip_ellipsis(exclude, field),
+                        include=self._convert_all(self._skip_ellipsis(include, field)),
+                        exclude=self._convert_all(self._skip_ellipsis(exclude, field)),
                     )
                 else:
                     dict_instance[field] = None

@@ -1,5 +1,5 @@
 import json
-from typing import List, Optional
+from typing import Optional
 
 import databases
 import pytest
@@ -50,6 +50,16 @@ class Course(ormar.Model):
     department: Optional[Department] = ormar.ForeignKey(Department)
 
 
+class Student(ormar.Model):
+    class Meta:
+        database = database
+        metadata = metadata
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    courses = ormar.ManyToMany(Course)
+
+
 # create db and tables
 @pytest.fixture(autouse=True, scope="module")
 def create_test_database():
@@ -59,19 +69,49 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-@app.post("/DepartmentWithCourses/", response_model=Department)
+to_exclude = {
+    "id": ...,
+    "courses": {
+        "__all__": {"id": ..., "students": {"__all__": {"id", "studentcourse"}}}
+    },
+}
+
+exclude_all = {"id": ..., "courses": {"__all__"}}
+
+to_exclude_ormar = {
+    "id": ...,
+    "courses": {"id": ..., "students": {"id", "studentcourse"}},
+}
+
+
+@app.post("/departments/", response_model=Department)
 async def create_department(department: Department):
-    # there is no save all - you need to split into save and save_related
-    await department.save()
     await department.save_related(follow=True, save_all=True)
     return department
 
 
-@app.get("/DepartmentsAll/", response_model=List[Department])
-async def get_Courses():
-    # if you don't provide default name it related model name + s so courses not course
-    departmentall = await Department.objects.select_related("courses").all()
-    return departmentall
+@app.get("/departments/{department_name}")
+async def get_department(department_name: str):
+    department = await Department.objects.select_all(follow=True).get(
+        department_name=department_name
+    )
+    return department.dict(exclude=to_exclude)
+
+
+@app.get("/departments/{department_name}/second")
+async def get_department_exclude(department_name: str):
+    department = await Department.objects.select_all(follow=True).get(
+        department_name=department_name
+    )
+    return department.dict(exclude=to_exclude_ormar)
+
+
+@app.get("/departments/{department_name}/exclude")
+async def get_department_exclude_all(department_name: str):
+    department = await Department.objects.select_all(follow=True).get(
+        department_name=department_name
+    )
+    return department.dict(exclude=exclude_all)
 
 
 def test_saving_related_in_fastapi():
@@ -80,11 +120,19 @@ def test_saving_related_in_fastapi():
         payload = {
             "department_name": "Ormar",
             "courses": [
-                {"course_name": "basic1", "completed": True},
-                {"course_name": "basic2", "completed": True},
+                {
+                    "course_name": "basic1",
+                    "completed": True,
+                    "students": [{"name": "Jack"}, {"name": "Abi"}],
+                },
+                {
+                    "course_name": "basic2",
+                    "completed": True,
+                    "students": [{"name": "Kate"}, {"name": "Miranda"}],
+                },
             ],
         }
-        response = client.post("/DepartmentWithCourses/", data=json.dumps(payload))
+        response = client.post("/departments/", data=json.dumps(payload))
         department = Department(**response.json())
 
         assert department.id is not None
@@ -95,12 +143,9 @@ def test_saving_related_in_fastapi():
         assert department.courses[1].course_name == "basic2"
         assert department.courses[1].completed
 
-        response = client.get("/DepartmentsAll/")
-        departments = [Department(**x) for x in response.json()]
-        assert departments[0].id is not None
-        assert len(departments[0].courses) == 2
-        assert departments[0].department_name == "Ormar"
-        assert departments[0].courses[0].course_name == "basic1"
-        assert departments[0].courses[0].completed
-        assert departments[0].courses[1].course_name == "basic2"
-        assert departments[0].courses[1].completed
+        response = client.get("/departments/Ormar")
+        response2 = client.get("/departments/Ormar/second")
+        assert response.json() == response2.json() == payload
+
+        response3 = client.get("/departments/Ormar/exclude")
+        assert response3.json() == {"department_name": "Ormar"}

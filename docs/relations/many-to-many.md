@@ -20,6 +20,122 @@ post = await Post.objects.create(title="Hello, M2M", author=guido)
 news = await Category.objects.create(name="News")
 ```
 
+## Reverse relation
+
+`ForeignKey` fields are automatically registering reverse side of the relation.
+
+By default it's child (source) `Model` name + s, like courses in snippet below: 
+
+```python
+class Category(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "categories"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=40)
+
+
+class Post(ormar.Model):
+    class Meta(BaseMeta):
+        pass
+
+    id: int = ormar.Integer(primary_key=True)
+    title: str = ormar.String(max_length=200)
+    categories: Optional[List[Category]] = ormar.ManyToMany(Category)
+
+# create some sample data
+post = await Post.objects.create(title="Hello, M2M")
+news = await Category.objects.create(name="News")
+await post.categories.add(news)
+    
+# now you can query and access from both sides:
+post_check = Post.objects.select_related("categories").get()
+assert post_check.categories[0] == news
+
+# query through auto registered reverse side
+category_check = Category.objects.select_related("posts").get()
+assert category_check.posts[0] == post
+```
+
+Reverse relation exposes API to manage related objects also from parent side.
+
+### related_name
+
+By default, the related_name is generated in the same way as for the `ForeignKey` relation (class.name.lower()+'s'), 
+but in the same way you can overwrite this name by providing `related_name` parameter like below:
+
+```Python
+categories: Optional[Union[Category, List[Category]]] = ormar.ManyToMany(
+        Category, through=PostCategory, related_name="new_categories"
+    )
+```
+
+!!!warning
+    When you provide multiple relations to the same model `ormar` can no longer auto generate
+    the `related_name` for you. Therefore, in that situation you **have to** provide `related_name`
+    for all but one (one can be default and generated) or all related fields.
+
+
+### Skipping reverse relation
+
+If you are sure you don't want the reverse relation you can use `skip_reverse=True` 
+flag of the `ManyToMany`.
+
+  If you set `skip_reverse` flag internally the field is still registered on the other 
+  side of the relationship so you can:
+  * `filter` by related models fields from reverse model
+  * `order_by` by related models fields from reverse model 
+  
+  But you cannot:
+  * access the related field from reverse model with `related_name`
+  * even if you `select_related` from reverse side of the model the returned models won't be populated in reversed instance (the join is not prevented so you still can `filter` and `order_by` over the relation)
+  * the relation won't be populated in `dict()` and `json()`
+  * you cannot pass the nested related objects when populating from dictionary or json (also through `fastapi`). It will be either ignored or error will be raised depending on `extra` setting in pydantic `Config`.
+
+Example:
+
+```python
+class Category(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "categories"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=40)
+
+
+class Post(ormar.Model):
+    class Meta(BaseMeta):
+        pass
+
+    id: int = ormar.Integer(primary_key=True)
+    title: str = ormar.String(max_length=200)
+    categories: Optional[List[Category]] = ormar.ManyToMany(Category, skip_reverse=True)
+
+# create some sample data
+post = await Post.objects.create(title="Hello, M2M")
+news = await Category.objects.create(name="News")
+await post.categories.add(news)
+
+assert post.categories[0] == news  # ok
+assert news.posts  # Attribute error!
+
+# but still can use in order_by
+categories = (
+    await Category.objects.select_related("posts").order_by("posts__title").all()
+)
+assert categories[0].first_name == "Test"
+
+# note that posts are not populated for author even if explicitly
+# included in select_related - note no posts in dict()
+assert news.dict(exclude={"id"}) == {"name": "News"}
+
+# still can filter through fields of related model
+categories = await Category.objects.filter(posts__title="Hello, M2M").all()
+assert categories[0].name == "News"
+assert len(categories) == 1
+```
+
+
 ## Through Model
 
 Optionally if you want to add additional fields you can explicitly create and pass
@@ -219,22 +335,6 @@ await news.posts.clear()
 Reverse relation exposes QuerysetProxy API that allows you to query related model like you would issue a normal Query.
 
 To read which methods of QuerySet are available read below [querysetproxy][querysetproxy]
-
-## related_name
-
-By default, the related_name is generated in the same way as for the `ForeignKey` relation (class.name.lower()+'s'), 
-but in the same way you can overwrite this name by providing `related_name` parameter like below:
-
-```Python
-categories: Optional[Union[Category, List[Category]]] = ormar.ManyToMany(
-        Category, through=PostCategory, related_name="new_categories"
-    )
-```
-
-!!!warning
-    When you provide multiple relations to the same model `ormar` can no longer auto generate
-    the `related_name` for you. Therefore, in that situation you **have to** provide `related_name`
-    for all but one (one can be default and generated) or all related fields.
 
 
 [queries]: ./queries.md
