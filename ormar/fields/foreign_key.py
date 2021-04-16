@@ -318,29 +318,23 @@ class ForeignKeyField(BaseField):
         """
         return self.related_name or self.owner.get_name() + "s"
 
-    def default_target_field_name(self, reverse: bool = False) -> str:
+    def default_target_field_name(self) -> str:
         """
         Returns default target model name on through model.
-        :param reverse: flag to grab name without accessing related field
-        :type reverse: bool
         :return: name of the field
         :rtype: str
         """
-        self_rel_prefix = "from_" if not reverse else "to_"
-        prefix = self_rel_prefix if self.self_reference else ""
-        return f"{prefix}{self.to.get_name()}"
+        prefix = "from_" if self.self_reference else ""
+        return self.through_reverse_relation_name or f"{prefix}{self.to.get_name()}"
 
-    def default_source_field_name(self, reverse: bool = False) -> str:
+    def default_source_field_name(self) -> str:
         """
         Returns default target model name on through model.
-        :param reverse: flag to grab name without accessing related field
-        :type reverse: bool
         :return: name of the field
         :rtype: str
         """
-        self_rel_prefix = "to_" if not reverse else "from_"
-        prefix = self_rel_prefix if self.self_reference else ""
-        return f"{prefix}{self.owner.get_name()}"
+        prefix = "to_" if self.self_reference else ""
+        return self.through_relation_name or f"{prefix}{self.owner.get_name()}"
 
     def evaluate_forward_ref(self, globalns: Any, localns: Any) -> None:
         """

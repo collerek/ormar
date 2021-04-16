@@ -24,6 +24,60 @@
     in those cases you don't have to split save into two calls (`save()` and `save_related()`)
   * it supports also `ManyToMany` relations
   * it supports also optional `Through` model values for m2m relations
+*  Add possibility to customize `Through` model relation field names.
+  * By default `Through` model relation names default to related model name in lowercase.
+    So in example like this:
+    ```python
+    ... # course declaration ommited
+    class Student(ormar.Model):
+        class Meta:
+            database = database
+            metadata = metadata
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        courses = ormar.ManyToMany(Course)
+    
+    # will produce default Through model like follows (example simplified)
+    class StudentCourse(ormar.Model):
+        class Meta:
+            database = database
+            metadata = metadata
+            tablename = "students_courses"
+    
+        id: int = ormar.Integer(primary_key=True)
+        student = ormar.ForeignKey(Student) # default name
+        course = ormar.ForeignKey(Course)  # default name
+    ```
+  * To customize the names of fields/relation in Through model now you can use new parameters to `ManyToMany`:
+    * `through_relation_name` - name of the field leading to the model in which `ManyToMany` is declared
+    * `through_reverse_relation_name` - name of the field leading to the model to which `ManyToMany` leads to
+    
+    Example:
+    ```python
+    ... # course declaration ommited
+    class Student(ormar.Model):
+        class Meta:
+            database = database
+            metadata = metadata
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        courses = ormar.ManyToMany(Course,
+                                   through_relation_name="student_id",
+                                   through_reverse_relation_name="course_id")
+    
+    # will produce default Through model like follows (example simplified)
+    class StudentCourse(ormar.Model):
+        class Meta:
+            database = database
+            metadata = metadata
+            tablename = "students_courses"
+    
+        id: int = ormar.Integer(primary_key=True)
+        student_id = ormar.ForeignKey(Student) # set by through_relation_name
+        course_id = ormar.ForeignKey(Course)  # set by through_reverse_relation_name
+    ```  
 
 ## 🐛 Fixes
 
