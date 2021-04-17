@@ -1,3 +1,9 @@
+# 0.10.4
+
+## ✨ Features
+
+* Add possibility to `filter` and `order_by` with field access instead of dunder separated strings.
+
 # 0.10.3
 
 ## ✨ Features
