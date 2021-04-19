@@ -2,7 +2,106 @@
 
 ## ✨ Features
 
-* Add possibility to `filter` and `order_by` with field access instead of dunder separated strings.
+* Add possibility to `filter` and `order_by` with field access instead of dunder separated strings. [#51](https://github.com/collerek/ormar/issues/51)
+  * Accessing a field with attribute access (chain of dot notation) can be used to construct `FilterGroups` (`ormar.and_` and `ormar.or_`)
+  * Field access overloads set of python operators and provide a set of functions to allow same functionality as with dunder separated param names in `**kwargs`, that means that querying from sample model `Track` related to model `Album` now you have more options:
+    *  exact - exact match to value, sql `column = <VALUE>` 
+       * OLD: `album__name__exact='Malibu'`
+       * NEW: can be also written as `Track.album.name == 'Malibu`
+    *  iexact - exact match sql `column = <VALUE>` (case insensitive)
+       * OLD: `album__name__iexact='malibu'`
+       * NEW: can be also written as `Track.album.name.iexact('malibu')`
+    *  contains - sql `column LIKE '%<VALUE>%'`
+       * OLD: `album__name__contains='Mal'`
+       * NEW: can be also written as `Track.album.name % 'Mal')`
+       * NEW: can be also written as `Track.album.name.contains('Mal')`
+    *  icontains - sql `column LIKE '%<VALUE>%'` (case insensitive)
+       * OLD: `album__name__icontains='mal'`
+       * NEW: can be also written as `Track.album.name.icontains('mal')`
+    *  in - sql ` column IN (<VALUE1>, <VALUE2>, ...)`
+       * OLD: `album__name__in=['Malibu', 'Barclay']`
+       * NEW: can be also written as `Track.album.name << ['Malibu', 'Barclay']`
+       * NEW: can be also written as `Track.album.name.in_(['Malibu', 'Barclay'])`
+    *  isnull - sql `column IS NULL` (and sql `column IS NOT NULL`) 
+       * OLD: `album__name__isnull=True` (isnotnull `album__name__isnull=False`)
+       * NEW: can be also written as `Track.album.name >> None`
+       * NEW: can be also written as `Track.album.name.is_null(True)`
+       * NEW: not null can be also written as `Track.album.name.is_null(False)`
+       * NEW: not null can be also written as `~(Track.album.name >> None)`
+       * NEW: not null can be also written as `~(Track.album.name.is_null(True))`
+    *  gt - sql `column > <VALUE>` (greater than)
+       * OLD: `position__gt=3`
+       * NEW: can be also written as `Track.album.name > 3`
+    *  gte - sql `column >= <VALUE>` (greater or equal than)
+       * OLD: `position__gte=3`
+       * NEW: can be also written as `Track.album.name >= 3`
+    *  lt - sql `column < <VALUE>` (lower than)
+       * OLD: `position__lt=3`
+       * NEW: can be also written as `Track.album.name < 3`
+    *  lte - sql `column <= <VALUE>` (lower equal than)
+       * OLD: `position__lte=3` 
+       * NEW: can be also written as `Track.album.name <= 3`
+    *  startswith - sql `column LIKE '<VALUE>%'` (exact start match)
+       * OLD: `album__name__startswith='Mal'`
+       * NEW: can be also written as `Track.album.name.startswith('Mal')`
+    *  istartswith - sql `column LIKE '<VALUE>%'` (case insensitive)
+       * OLD: `album__name__istartswith='mal'`
+       * NEW: can be also written as `Track.album.name.istartswith('mal')`
+    *  endswith - sql `column LIKE '%<VALUE>'` (exact end match)
+       * OLD: `album__name__endswith='ibu'`
+       * NEW: can be also written as `Track.album.name.endswith('ibu')`
+    *  iendswith - sql `column LIKE '%<VALUE>'` (case insensitive)
+       * OLD: `album__name__iendswith='IBU'` 
+       * NEW: can be also written as `Track.album.name.iendswith('IBU')`
+* You can provide `FilterGroups` not only in `filter()` and `exclude()` but also in:
+  * `get()`
+  * `get_or_none()`
+  * `get_or_create()`
+  * `first()`
+  * `all()`
+  * `delete()`
+* With `FilterGroups` (`ormar.and_` and `ormar.or_`) you can now use: 
+  *  `&` - as `and_` instead of next level of nesting
+  *  `|` - as `or_' instead of next level of nesting
+  *  `~` - as negation of the filter group
+* To combine groups of filters into one set of conditions use `&` (sql `AND`) and `|` (sql `OR`)
+  ```python
+  # Following queries are equivalent:
+  # sql: ( product.name = 'Test'  AND  product.rating >= 3.0 ) 
+  
+  # ormar OPTION 1 - OLD one
+  Product.objects.filter(name='Test', rating__gte=3.0).get()
+  
+  # ormar OPTION 2 - OLD one
+  Product.objects.filter(ormar.and_(name='Test', rating__gte=3.0)).get()
+  
+  # ormar OPTION 3 - NEW one (field access)
+  Product.objects.filter((Product.name == 'Test') & (Product.rating >=3.0)).get()
+  ```
+* Same applies to nested complicated filters
+  ```python
+  # Following queries are equivalent:
+  # sql: ( product.name = 'Test' AND product.rating >= 3.0 ) 
+  #       OR (categories.name IN ('Toys', 'Books'))
+  
+  # ormar OPTION 1 - OLD one
+  Product.objects.filter(ormar.or_(
+                            ormar.and_(name='Test', rating__gte=3.0), 
+                            categories__name__in=['Toys', 'Books'])
+                        ).get()
+  
+  # ormar OPTION 2 - NEW one (instead of nested or use `|`)
+  Product.objects.filter(
+                        ormar.and_(name='Test', rating__gte=3.0) | 
+                        ormar.and_(categories__name__in=['Toys', 'Books'])
+                        ).get()
+  
+  # ormar OPTION 3 - NEW one (field access)
+  Product.objects.filter(
+                        ((Product.name='Test') & (Product.rating >= 3.0)) | 
+                        (Product.categories.name << ['Toys', 'Books'])
+                        ).get()
+  ```
 
 # 0.10.3
 

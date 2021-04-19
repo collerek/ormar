@@ -1,8 +1,8 @@
 from typing import Any
 
 from ormar.queryset.actions import OrderAction
-from ormar.queryset.actions import FilterAction
 from ormar.queryset.actions.filter_action import METHODS_TO_OPERATORS
+from ormar.queryset.clause import FilterGroup
 
 
 class FieldAccessor:
@@ -13,6 +13,10 @@ class FieldAccessor:
         self._field = field
         self._model = model
         self._access_chain = access_chain
+
+    def __bool__(self):
+        # hack to avoid pydantic name check from parent model
+        return False
 
     def __getattr__(self, item: str) -> Any:
         if self._field and item == self._field.name:
@@ -32,7 +36,7 @@ class FieldAccessor:
                     field=field,
                     access_chain=self._access_chain + f"__{item}",
                 )
-        return object.__getattribute__(self, item)
+        return object.__getattribute__(self, item)  # pragma: no cover
 
     def _check_field(self) -> None:
         if not self._field:
@@ -40,57 +44,60 @@ class FieldAccessor:
                 "Cannot filter by Model, you need to provide model name"
             )
 
-    def _select_operator(self, op: str, other: Any) -> FilterAction:
+    def _select_operator(self, op: str, other: Any) -> FilterGroup:
         self._check_field()
-        return FilterAction(
-            filter_str=self._access_chain + f"__{METHODS_TO_OPERATORS[op]}",
-            value=other,
-            model_cls=self._source_model,
-        )
+        filter_kwg = {self._access_chain + f"__{METHODS_TO_OPERATORS[op]}": other}
+        return FilterGroup(**filter_kwg)
 
-    def __eq__(self, other: Any) -> FilterAction:  # type: ignore
+    def __eq__(self, other: Any) -> FilterGroup:  # type: ignore
         return self._select_operator(op="__eq__", other=other)
 
-    def __ge__(self, other: Any) -> FilterAction:
+    def __ge__(self, other: Any) -> FilterGroup:
         return self._select_operator(op="__ge__", other=other)
 
-    def __gt__(self, other: Any) -> FilterAction:
+    def __gt__(self, other: Any) -> FilterGroup:
         return self._select_operator(op="__gt__", other=other)
 
-    def __le__(self, other: Any) -> FilterAction:
+    def __le__(self, other: Any) -> FilterGroup:
         return self._select_operator(op="__le__", other=other)
 
-    def __lt__(self, other) -> FilterAction:
+    def __lt__(self, other) -> FilterGroup:
         return self._select_operator(op="__lt__", other=other)
 
-    def __mod__(self, other) -> FilterAction:
+    def __mod__(self, other) -> FilterGroup:
         return self._select_operator(op="__mod__", other=other)
 
-    def __contains__(self, item) -> FilterAction:
-        return self._select_operator(op="in", other=item)
+    def __lshift__(self, other) -> FilterGroup:
+        return self._select_operator(op="in", other=other)
 
-    def iexact(self, other) -> FilterAction:
+    def __rshift__(self, other) -> FilterGroup:
+        return self._select_operator(op="isnull", other=True)
+
+    def in_(self, other) -> FilterGroup:
+        return self._select_operator(op="in", other=other)
+
+    def iexact(self, other) -> FilterGroup:
         return self._select_operator(op="iexact", other=other)
 
-    def contains(self, other) -> FilterAction:
+    def contains(self, other) -> FilterGroup:
         return self._select_operator(op="contains", other=other)
 
-    def icontains(self, other) -> FilterAction:
+    def icontains(self, other) -> FilterGroup:
         return self._select_operator(op="icontains", other=other)
 
-    def startswith(self, other) -> FilterAction:
+    def startswith(self, other) -> FilterGroup:
         return self._select_operator(op="startswith", other=other)
 
-    def istartswith(self, other) -> FilterAction:
+    def istartswith(self, other) -> FilterGroup:
         return self._select_operator(op="istartswith", other=other)
 
-    def endswith(self, other) -> FilterAction:
+    def endswith(self, other) -> FilterGroup:
         return self._select_operator(op="endswith", other=other)
 
-    def iendswith(self, other) -> FilterAction:
+    def iendswith(self, other) -> FilterGroup:
         return self._select_operator(op="iendswith", other=other)
 
-    def isnull(self, other) -> FilterAction:
+    def isnull(self, other) -> FilterGroup:
         return self._select_operator(op="isnull", other=other)
 
     def asc(self) -> OrderAction:
