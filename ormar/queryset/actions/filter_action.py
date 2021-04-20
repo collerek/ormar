@@ -56,7 +56,7 @@ class FilterAction(QueryAction):
     Extracted in order to easily change table prefixes on complex relations.
     """
 
-    def __init__(self, filter_str: str, value: Any, model_cls: Type["Model"],) -> None:
+    def __init__(self, filter_str: str, value: Any, model_cls: Type["Model"], ) -> None:
         super().__init__(query_str=filter_str, model_cls=model_cls)
         self.filter_value = value
         self._escape_characters_in_clause()
@@ -149,7 +149,7 @@ class FilterAction(QueryAction):
         return clause
 
     def _compile_clause(
-        self, clause: sqlalchemy.sql.expression.BinaryExpression, modifiers: Dict,
+            self, clause: sqlalchemy.sql.expression.BinaryExpression, modifiers: Dict,
     ) -> sqlalchemy.sql.expression.TextClause:
         """
         Compiles the clause to str using appropriate database dialect, replace columns
@@ -176,6 +176,7 @@ class FilterAction(QueryAction):
         clause_text = clause_text.replace(
             f"{self.table.name}.{self.column.name}", aliased_name
         )
-        clause_text = clause_text.replace("%%", "%")  # remove doubles in some dialects
+        if self.target_model.Meta.database._backend._dialect.name != 'sqlite':
+            clause_text = clause_text.replace("%%", "%")  # remove %% in some dialects
         clause = text(clause_text)
         return clause
