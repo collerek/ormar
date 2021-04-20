@@ -176,6 +176,6 @@ class FilterAction(QueryAction):
         clause_text = clause_text.replace(
             f"{self.table.name}.{self.column.name}", aliased_name
         )
-        clause_text.replace("%%", "%")  # remove doubles in some dialects
+        clause_text = clause_text.replace("%%", "%")  # remove doubles in some dialects
         clause = text(clause_text)
         return clause
