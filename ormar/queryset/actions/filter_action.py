@@ -176,7 +176,8 @@ class FilterAction(QueryAction):
         clause_text = clause_text.replace(
             f"{self.table.name}.{self.column.name}", aliased_name
         )
-        if self.target_model.Meta.database._backend._dialect.name != 'sqlite':
+        dialect_name = self.target_model.Meta.database._backend._dialect.name
+        if dialect_name != 'sqlite':  # pragma: no cover
             clause_text = clause_text.replace("%%", "%")  # remove %% in some dialects
         clause = text(clause_text)
         return clause
