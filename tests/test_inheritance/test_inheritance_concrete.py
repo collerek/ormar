@@ -173,6 +173,7 @@ def test_init_of_abstract_model():
 
 def test_duplicated_related_name_on_different_model():
     with pytest.raises(ModelDefinitionError):
+
         class Bus3(Car2):  # pragma: no cover
             class Meta:
                 tablename = "buses3"
@@ -202,6 +203,7 @@ def test_field_redefining_in_concrete_models():
 
 def test_model_subclassing_that_redefines_constraints_column_names():
     with pytest.raises(ModelDefinitionError):
+
         class WrongField2(DateFieldsModel):  # pragma: no cover
             class Meta(ormar.ModelMeta):
                 tablename = "wrongs"
@@ -214,6 +216,7 @@ def test_model_subclassing_that_redefines_constraints_column_names():
 
 def test_model_subclassing_non_abstract_raises_error():
     with pytest.raises(ModelDefinitionError):
+
         class WrongField2(DateFieldsModelNoSubclass):  # pragma: no cover
             class Meta(ormar.ModelMeta):
                 tablename = "wrongs"
@@ -231,7 +234,7 @@ def test_params_are_inherited():
 
 
 def round_date_to_seconds(
-        date: datetime.datetime,
+    date: datetime.datetime,
 ) -> datetime.datetime:  # pragma: no cover
     if date.microsecond >= 500000:
         date = date + datetime.timedelta(seconds=1)
@@ -274,9 +277,9 @@ async def test_fields_inherited_from_mixin():
 
             sub2 = (
                 await Subject.objects.select_related("category")
-                    .order_by("-created_date")
-                    .exclude_fields("updated_date")
-                    .get()
+                .order_by("-created_date")
+                .exclude_fields("updated_date")
+                .get()
             )
             assert round_date_to_seconds(sub2.created_date) == round_date_to_seconds(
                 sub.created_date
@@ -291,9 +294,9 @@ async def test_fields_inherited_from_mixin():
 
             sub3 = (
                 await Subject.objects.prefetch_related("category")
-                    .order_by("-created_date")
-                    .exclude_fields({"updated_date": ..., "category": {"updated_date"}})
-                    .get()
+                .order_by("-created_date")
+                .exclude_fields({"updated_date": ..., "category": {"updated_date"}})
+                .get()
             )
             assert round_date_to_seconds(sub3.created_date) == round_date_to_seconds(
                 sub.created_date
@@ -346,8 +349,8 @@ async def test_inheritance_with_relation():
                         "coowned_buses": {"created_date"},
                     }
                 )
-                    .prefetch_related(["coowned_trucks", "coowned_buses"])
-                    .get(name="Joe")
+                .prefetch_related(["coowned_trucks", "coowned_buses"])
+                .get(name="Joe")
             )
             assert joe_check.pk == joe.pk
             assert joe_check.coowned_trucks[0] == shelby
@@ -394,8 +397,8 @@ async def test_inheritance_with_multi_relation():
 
             unicorn = (
                 await Bus2.objects.select_related(["owner", "co_owners"])
-                    .order_by("-co_owners__name")
-                    .get()
+                .order_by("-co_owners__name")
+                .get()
             )
             assert unicorn.name == "Unicorn 2"
             assert unicorn.owner.name == "Sam"
@@ -404,8 +407,8 @@ async def test_inheritance_with_multi_relation():
 
             unicorn = (
                 await Bus2.objects.select_related(["owner", "co_owners"])
-                    .order_by("co_owners__name")
-                    .get()
+                .order_by("co_owners__name")
+                .get()
             )
             assert unicorn.name == "Unicorn 2"
             assert unicorn.owner.name == "Sam"
@@ -428,8 +431,8 @@ async def test_inheritance_with_multi_relation():
                         "coowned_buses2": {"created_date"},
                     }
                 )
-                    .prefetch_related(["coowned_trucks2", "coowned_buses2"])
-                    .get(name="Joe")
+                .prefetch_related(["coowned_trucks2", "coowned_buses2"])
+                .get(name="Joe")
             )
             assert joe_check.pk == joe.pk
             assert joe_check.coowned_trucks2[0] == shelby
@@ -443,8 +446,8 @@ async def test_inheritance_with_multi_relation():
 
             unicorn = (
                 await Bus2.objects.select_related(["owner", "co_owners"])
-                    .filter(co_owners__name="Joe")
-                    .get()
+                .filter(co_owners__name="Joe")
+                .get()
             )
             assert unicorn.name == "Unicorn 2"
             assert unicorn.owner.name == "Sam"
@@ -454,8 +457,8 @@ async def test_inheritance_with_multi_relation():
 
             unicorn = (
                 await Bus2.objects.select_related(["owner", "co_owners"])
-                    .exclude(co_owners__name="Joe")
-                    .get()
+                .exclude(co_owners__name="Joe")
+                .get()
             )
             assert unicorn.name == "Unicorn 2"
             assert unicorn.owner.name == "Sam"
@@ -477,9 +480,9 @@ async def test_inheritance_with_multi_relation():
 
             unicorns = (
                 await Bus2.objects.select_related(["owner", "co_owners"])
-                    .filter(name__contains="Unicorn")
-                    .order_by("-name")
-                    .all()
+                .filter(name__contains="Unicorn")
+                .order_by("-name")
+                .all()
             )
             assert unicorns[0].name == "Unicorn 3"
             assert unicorns[0].owner.name == "Joe"
@@ -493,10 +496,10 @@ async def test_inheritance_with_multi_relation():
 
             unicorns = (
                 await Bus2.objects.select_related(["owner", "co_owners"])
-                    .filter(name__contains="Unicorn")
-                    .order_by("-name")
-                    .limit(2, limit_raw_sql=True)
-                    .all()
+                .filter(name__contains="Unicorn")
+                .order_by("-name")
+                .limit(2, limit_raw_sql=True)
+                .all()
             )
             assert len(unicorns) == 2
             assert unicorns[1].name == "Unicorn 2"

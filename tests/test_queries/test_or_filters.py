@@ -72,6 +72,14 @@ async def test_or_filters():
 
         books = (
             await Book.objects.select_related("author")
+            .filter((Book.author.name == "J.R.R. Tolkien") | (Book.year < 1995))
+            .all()
+        )
+        assert len(books) == 4
+        assert not any([x.title == "The Tower of Fools" for x in books])
+
+        books = (
+            await Book.objects.select_related("author")
             .filter(ormar.or_(year__gt=1960, year__lt=1940))
             .filter(author__name="J.R.R. Tolkien")
             .all()
@@ -104,6 +112,26 @@ async def test_or_filters():
                 )
             )
             .filter(title__startswith="The")
+            .all()
+        )
+        assert len(books) == 2
+        assert books[0].title == "The Silmarillion"
+        assert books[1].title == "The Witcher"
+
+        books = (
+            await Book.objects.select_related("author")
+            .filter(
+                (
+                    (
+                        (Book.year > 1960) & (Book.author.name == "J.R.R. Tolkien")
+                        | (
+                            (Book.year < 2000)
+                            & (Book.author.name == "Andrzej Sapkowski")
+                        )
+                    )
+                    & (Book.title.startswith("The"))
+                ),
+            )
             .all()
         )
         assert len(books) == 2

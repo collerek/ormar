@@ -567,8 +567,14 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             field = self.Meta.model_fields.get(item)
             if field.is_relation:
                 return FieldAccessor(
-                    source_model=self, model=field.to, access_chain=item
+                    source_model=cast(Type["Model"], self),
+                    model=field.to,
+                    access_chain=item,
                 )
             else:
-                return FieldAccessor(source_model=self, field=field, access_chain=item)
+                return FieldAccessor(
+                    source_model=cast(Type["Model"], self),
+                    field=field,
+                    access_chain=item,
+                )
         return object.__getattribute__(self, item)

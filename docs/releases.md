@@ -102,6 +102,15 @@
                         (Product.categories.name << ['Toys', 'Books'])
                         ).get()
   ```
+* Now you can alos use field access to provide OrderActions to `order_by()`
+  * Order ascending:
+    * OLD: `Product.objects.order_by("name").all()`
+    * NEW: `Product.objects.order_by(Product.name.asc()).all()`  
+  * Order descending:
+    * OLD: `Product.objects.order_by("-name").all()`
+    * NEW: `Product.objects.order_by(Product.name.desc()).all()`
+  * You can of course also combine different models and many order_bys:
+    `Product.objects.order_by([Product.category.name.asc(), Product.name.desc()]).all()`
 
 # 0.10.3
 

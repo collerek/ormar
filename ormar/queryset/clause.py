@@ -25,10 +25,11 @@ class FilterGroup:
     """
 
     def __init__(
-            self, *args: Any,
-            _filter_type: FilterType = FilterType.AND,
-            _exclude: bool = False,
-            **kwargs: Any,
+        self,
+        *args: Any,
+        _filter_type: FilterType = FilterType.AND,
+        _exclude: bool = False,
+        **kwargs: Any,
     ) -> None:
         self.filter_type = _filter_type
         self.exclude = _exclude
@@ -41,7 +42,7 @@ class FilterGroup:
     def __and__(self, other: "FilterGroup") -> "FilterGroup":
         return FilterGroup(self, other)
 
-    def __or__(self, other) -> "FilterGroup":
+    def __or__(self, other: "FilterGroup") -> "FilterGroup":
         return FilterGroup(self, other, _filter_type=FilterType.OR)
 
     def __invert__(self) -> "FilterGroup":
@@ -49,10 +50,10 @@ class FilterGroup:
         return self
 
     def resolve(
-            self,
-            model_cls: Type["Model"],
-            select_related: List = None,
-            filter_clauses: List = None,
+        self,
+        model_cls: Type["Model"],
+        select_related: List = None,
+        filter_clauses: List = None,
     ) -> Tuple[List[FilterAction], List[str]]:
         """
         Resolves the FilterGroups actions to use proper target model, replace
@@ -123,13 +124,15 @@ class FilterGroup:
         prefix = " NOT " if self.exclude else ""
         if self.filter_type == FilterType.AND:
             clause = sqlalchemy.text(
-                f"{prefix}( " + str(
-                    sqlalchemy.sql.and_(*self._get_text_clauses())) + " )"
+                f"{prefix}( "
+                + str(sqlalchemy.sql.and_(*self._get_text_clauses()))
+                + " )"
             )
         else:
             clause = sqlalchemy.text(
-                f"{prefix}( " + str(
-                    sqlalchemy.sql.or_(*self._get_text_clauses())) + " )"
+                f"{prefix}( "
+                + str(sqlalchemy.sql.or_(*self._get_text_clauses()))
+                + " )"
             )
         return clause
 
@@ -182,7 +185,7 @@ class QueryClause:
     """
 
     def __init__(
-            self, model_cls: Type["Model"], filter_clauses: List, select_related: List,
+        self, model_cls: Type["Model"], filter_clauses: List, select_related: List,
     ) -> None:
 
         self._select_related = select_related[:]
@@ -192,7 +195,7 @@ class QueryClause:
         self.table = self.model_cls.Meta.table
 
     def prepare_filter(  # noqa: A003
-            self, _own_only: bool = False, **kwargs: Any
+        self, _own_only: bool = False, **kwargs: Any
     ) -> Tuple[List[FilterAction], List[str]]:
         """
         Main external access point that processes the clauses into sqlalchemy text
@@ -217,7 +220,7 @@ class QueryClause:
         return filter_clauses, select_related
 
     def _populate_filter_clauses(
-            self, _own_only: bool, **kwargs: Any
+        self, _own_only: bool, **kwargs: Any
     ) -> Tuple[List[FilterAction], List[str]]:
         """
         Iterates all clauses and extracts used operator and field from related
@@ -298,7 +301,7 @@ class QueryClause:
         return prefixes
 
     def _switch_filter_action_prefixes(
-            self, filter_clauses: List[FilterAction]
+        self, filter_clauses: List[FilterAction]
     ) -> List[FilterAction]:
         """
         Substitutes aliases for filter action if the complex key (whole relation str) is

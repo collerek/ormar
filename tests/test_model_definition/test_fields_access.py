@@ -112,11 +112,11 @@ def test_operator_return_proper_filter_action(method, expected, expected_value):
 
     group_ = getattr(PriceList.categories.products.rating, method)("Test")
     assert group_._kwargs_dict == {
-        f"categories__products__rating__{expected}": expected_value}
+        f"categories__products__rating__{expected}": expected_value
+    }
 
 
-@pytest.mark.parametrize("method, expected_direction",
-                         [("asc", ""), ("desc", "desc"), ])
+@pytest.mark.parametrize("method, expected_direction", [("asc", ""), ("desc", "desc"),])
 def test_operator_return_proper_order_action(method, expected_direction):
     action = getattr(Product.name, method)()
     assert action.source_model == Product
@@ -141,17 +141,20 @@ def test_combining_groups_together():
     group = (Product.name == "Test") & (Product.rating >= 3.0)
     group.resolve(model_cls=Product)
     assert len(group._nested_groups) == 2
-    assert str(group.get_text_clause()) == ("( ( product.name = 'Test' ) AND"
-                                            " ( product.rating >= 3.0 ) )")
+    assert str(group.get_text_clause()) == (
+        "( ( product.name = 'Test' ) AND" " ( product.rating >= 3.0 ) )"
+    )
 
     group = ~((Product.name == "Test") & (Product.rating >= 3.0))
     group.resolve(model_cls=Product)
     assert len(group._nested_groups) == 2
-    assert str(group.get_text_clause()) == (" NOT ( ( product.name = 'Test' ) AND"
-                                            " ( product.rating >= 3.0 ) )")
+    assert str(group.get_text_clause()) == (
+        " NOT ( ( product.name = 'Test' ) AND" " ( product.rating >= 3.0 ) )"
+    )
 
     group = ((Product.name == "Test") & (Product.rating >= 3.0)) | (
-            Product.category.name << (["Toys", "Books"]))
+        Product.category.name << (["Toys", "Books"])
+    )
     group.resolve(model_cls=Product)
     assert len(group._nested_groups) == 2
     assert len(group._nested_groups[0]._nested_groups) == 2
@@ -159,22 +162,27 @@ def test_combining_groups_together():
     category_prefix = group._nested_groups[1].actions[0].table_prefix
     assert group_str == (
         "( ( ( product.name = 'Test' ) AND ( product.rating >= 3.0 ) ) "
-        f"OR ( {category_prefix}_categories.name IN ('Toys', 'Books') ) )")
+        f"OR ( {category_prefix}_categories.name IN ('Toys', 'Books') ) )"
+    )
 
     group = (Product.name % "Test") | (
-        (Product.category.price_lists.name.startswith("Aa")) | (
-                    Product.category.name << (["Toys", "Books"])))
+        (Product.category.price_lists.name.startswith("Aa"))
+        | (Product.category.name << (["Toys", "Books"]))
+    )
     group.resolve(model_cls=Product)
     assert len(group._nested_groups) == 2
     assert len(group._nested_groups[1]._nested_groups) == 2
     group_str = str(group.get_text_clause())
-    price_list_prefix = group._nested_groups[1]._nested_groups[0].actions[
-        0].table_prefix
+    price_list_prefix = (
+        group._nested_groups[1]._nested_groups[0].actions[0].table_prefix
+    )
     category_prefix = group._nested_groups[1]._nested_groups[1].actions[0].table_prefix
     assert group_str == (
         f"( ( product.name LIKE '%Test%' ) "
         f"OR ( ( {price_list_prefix}_price_lists.name LIKE 'Aa%' ) "
-        f"OR ( {category_prefix}_categories.name IN ('Toys', 'Books') ) ) )")
+        f"OR ( {category_prefix}_categories.name IN ('Toys', 'Books') ) ) )"
+    )
+
 
 # @pytest.mark.asyncio
 # async def test_filtering_by_field_access():
@@ -195,9 +203,6 @@ def test_combining_groups_together():
 # * overload operators and add missing functions that return FilterAction (V)
 # * return OrderAction for desc() and asc() (V)
 # * create filter groups for & and | (and ~ - NOT?) (V)
-
-# * accept args in all functions that accept filters? or only filter and exclude?
+# * accept args in all functions that accept filters? or only filter and exclude? (V)
 # all functions: delete, first, get, get_or_none, get_or_create, all, filter, exclude
-# and same from queryset, should they also accept filter groups?
-# * accept OrderActions in order_by
-#
+# * accept OrderActions in order_by (V)

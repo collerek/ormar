@@ -276,7 +276,7 @@ class QuerysetProxy(Generic[T]):
             )
         return await queryset.delete(**kwargs)  # type: ignore
 
-    async def first(self, *args, **kwargs: Any) -> "T":
+    async def first(self, *args: Any, **kwargs: Any) -> "T":
         """
         Gets the first row from the db ordered by primary key column ascending.
 
@@ -294,7 +294,7 @@ class QuerysetProxy(Generic[T]):
         self._register_related(first)
         return first
 
-    async def get_or_none(self, *args, **kwargs: Any) -> Optional["T"]:
+    async def get_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -318,7 +318,7 @@ class QuerysetProxy(Generic[T]):
         self._register_related(get)
         return get
 
-    async def get(self, *args, **kwargs: Any) -> "T":
+    async def get(self, *args: Any, **kwargs: Any) -> "T":
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -342,7 +342,7 @@ class QuerysetProxy(Generic[T]):
         self._register_related(get)
         return get
 
-    async def all(self, *args, **kwargs: Any) -> List[Optional["T"]]:  # noqa: A003
+    async def all(self, *args: Any, **kwargs: Any) -> List[Optional["T"]]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 
@@ -425,7 +425,7 @@ class QuerysetProxy(Generic[T]):
                 )
         return len(children)
 
-    async def get_or_create(self, *args, **kwargs: Any) -> "T":
+    async def get_or_create(self, *args: Any, **kwargs: Any) -> "T":
         """
         Combination of create and get methods.
 

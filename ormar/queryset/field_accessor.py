@@ -1,20 +1,27 @@
-from typing import Any
+from typing import Any, TYPE_CHECKING, Type
 
 from ormar.queryset.actions import OrderAction
 from ormar.queryset.actions.filter_action import METHODS_TO_OPERATORS
 from ormar.queryset.clause import FilterGroup
 
+if TYPE_CHECKING:  # pragma: no cover
+    from ormar import BaseField, Model
+
 
 class FieldAccessor:
     def __init__(
-        self, source_model=None, field=None, model=None, access_chain: str = ""
-    ):
+            self,
+            source_model: Type["Model"],
+            field: "BaseField" = None,
+            model: Type["Model"] = None,
+            access_chain: str = "",
+    ) -> None:
         self._source_model = source_model
         self._field = field
         self._model = model
         self._access_chain = access_chain
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         # hack to avoid pydantic name check from parent model
         return False
 
@@ -22,8 +29,8 @@ class FieldAccessor:
         if self._field and item == self._field.name:
             return self._field
 
-        if item in self._model.Meta.model_fields:
-            field = self._model.Meta.model_fields.get(item)
+        if self._model and item in self._model.Meta.model_fields:
+            field = self._model.Meta.model_fields[item]
             if field.is_relation:
                 return FieldAccessor(
                     source_model=self._source_model,
@@ -61,43 +68,43 @@ class FieldAccessor:
     def __le__(self, other: Any) -> FilterGroup:
         return self._select_operator(op="__le__", other=other)
 
-    def __lt__(self, other) -> FilterGroup:
+    def __lt__(self, other: Any) -> FilterGroup:
         return self._select_operator(op="__lt__", other=other)
 
-    def __mod__(self, other) -> FilterGroup:
+    def __mod__(self, other: Any) -> FilterGroup:
         return self._select_operator(op="__mod__", other=other)
 
-    def __lshift__(self, other) -> FilterGroup:
+    def __lshift__(self, other: Any) -> FilterGroup:
         return self._select_operator(op="in", other=other)
 
-    def __rshift__(self, other) -> FilterGroup:
+    def __rshift__(self, other: Any) -> FilterGroup:
         return self._select_operator(op="isnull", other=True)
 
-    def in_(self, other) -> FilterGroup:
+    def in_(self, other: Any) -> FilterGroup:
         return self._select_operator(op="in", other=other)
 
-    def iexact(self, other) -> FilterGroup:
+    def iexact(self, other: Any) -> FilterGroup:
         return self._select_operator(op="iexact", other=other)
 
-    def contains(self, other) -> FilterGroup:
+    def contains(self, other: Any) -> FilterGroup:
         return self._select_operator(op="contains", other=other)
 
-    def icontains(self, other) -> FilterGroup:
+    def icontains(self, other: Any) -> FilterGroup:
         return self._select_operator(op="icontains", other=other)
 
-    def startswith(self, other) -> FilterGroup:
+    def startswith(self, other: Any) -> FilterGroup:
         return self._select_operator(op="startswith", other=other)
 
-    def istartswith(self, other) -> FilterGroup:
+    def istartswith(self, other: Any) -> FilterGroup:
         return self._select_operator(op="istartswith", other=other)
 
-    def endswith(self, other) -> FilterGroup:
+    def endswith(self, other: Any) -> FilterGroup:
         return self._select_operator(op="endswith", other=other)
 
-    def iendswith(self, other) -> FilterGroup:
+    def iendswith(self, other: Any) -> FilterGroup:
         return self._select_operator(op="iendswith", other=other)
 
-    def isnull(self, other) -> FilterGroup:
+    def isnull(self, other: Any) -> FilterGroup:
         return self._select_operator(op="isnull", other=other)
 
     def asc(self) -> OrderAction:

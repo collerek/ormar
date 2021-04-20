@@ -541,7 +541,8 @@ class QuerySet(Generic[T]):
 
         orders_by = [
             OrderAction(order_str=x, model_cls=self.model_cls)  # type: ignore
-            if not isinstance(x, OrderAction) else x
+            if not isinstance(x, OrderAction)
+            else x
             for x in columns
         ]
 
@@ -672,7 +673,7 @@ class QuerySet(Generic[T]):
         )
         return await self.database.execute(expr)
 
-    async def delete(self, *args, each: bool = False, **kwargs: Any) -> int:
+    async def delete(self, *args: Any, each: bool = False, **kwargs: Any) -> int:
         """
         Deletes from the model table after applying the filters from kwargs.
 
@@ -754,7 +755,7 @@ class QuerySet(Generic[T]):
         limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
         return self.rebuild_self(offset=offset, limit_raw_sql=limit_raw_sql,)
 
-    async def first(self, *args, **kwargs: Any) -> "T":
+    async def first(self, *args: Any, **kwargs: Any) -> "T":
         """
         Gets the first row from the db ordered by primary key column ascending.
 
@@ -785,7 +786,7 @@ class QuerySet(Generic[T]):
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
-    async def get_or_none(self, *args, **kwargs: Any) -> Optional["T"]:
+    async def get_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -805,7 +806,7 @@ class QuerySet(Generic[T]):
         except ormar.NoMatch:
             return None
 
-    async def get(self, *args, **kwargs: Any) -> "T":
+    async def get(self, *args: Any, **kwargs: Any) -> "T":
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -844,7 +845,7 @@ class QuerySet(Generic[T]):
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
-    async def get_or_create(self, *args, **kwargs: Any) -> "T":
+    async def get_or_create(self, *args: Any, **kwargs: Any) -> "T":
         """
         Combination of create and get methods.
 
@@ -879,7 +880,7 @@ class QuerySet(Generic[T]):
         model = await self.get(pk=kwargs[pk_name])
         return await model.update(**kwargs)
 
-    async def all(self, *args, **kwargs: Any) -> List[Optional["T"]]:  # noqa: A003
+    async def all(self, *args: Any, **kwargs: Any) -> List[Optional["T"]]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 
