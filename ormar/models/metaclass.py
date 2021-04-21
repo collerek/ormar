@@ -39,7 +39,7 @@ from ormar.models.helpers import (
     sqlalchemy_columns_from_model_fields,
 )
 from ormar.models.quick_access_views import quick_access_set
-from ormar.queryset import QuerySet
+from ormar.queryset import FieldAccessor, QuerySet
 from ormar.relations.alias_manager import AliasManager
 from ormar.signals import Signal, SignalEmitter
 
@@ -561,3 +561,20 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 f"need to call update_forward_refs()."
             )
         return QuerySet(model_cls=cls)
+
+    def __getattr__(self, item: str) -> Any:
+        if item in object.__getattribute__(self, "Meta").model_fields:
+            field = self.Meta.model_fields.get(item)
+            if field.is_relation:
+                return FieldAccessor(
+                    source_model=cast(Type["Model"], self),
+                    model=field.to,
+                    access_chain=item,
+                )
+            else:
+                return FieldAccessor(
+                    source_model=cast(Type["Model"], self),
+                    field=field,
+                    access_chain=item,
+                )
+        return object.__getattribute__(self, item)

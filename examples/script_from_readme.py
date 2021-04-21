@@ -87,7 +87,10 @@ async def create():
 
 async def read():
     # Fetch an instance, without loading a foreign key relationship on it.
+    # Django style
     book = await Book.objects.get(title="The Hobbit")
+    # or python style
+    book = await Book.objects.get(Book.title == "The Hobbit")
     book2 = await Book.objects.first()
 
     # first() fetch the instance with lower primary key value
@@ -193,7 +196,7 @@ async def joins():
     # visit: https://collerek.github.io/ormar/relations/
 
     # to read more about joins and subqueries
-    # visit: https://collerek.github.io/ormar/queries/delete/
+    # visit: https://collerek.github.io/ormar/queries/joins-and-subqueries/
 
 
 async def filter_and_sort():
@@ -201,20 +204,30 @@ async def filter_and_sort():
     # get(), all() etc.
     # to use special methods or access related model fields use double
     # underscore like to filter by the name of the author use author__name
+    # Django style
     books = await Book.objects.all(author__name="J.R.R. Tolkien")
+    # python style
+    books = await Book.objects.all(Book.author.name == "J.R.R. Tolkien")
     assert len(books) == 3
 
     # filter can accept special methods also separated with double underscore
     # to issue sql query ` where authors.name like "%tolkien%"` that is not
     # case sensitive (hence small t in Tolkien)
+    # Django style
     books = await Book.objects.filter(author__name__icontains="tolkien").all()
+    # python style
+    books = await Book.objects.filter(Book.author.name.icontains("tolkien")).all()
     assert len(books) == 3
 
     # to sort use order_by() function of queryset
     # to sort decreasing use hyphen before the field name
     # same as with filter you can use double underscores to access related fields
+    # Django style
     books = await Book.objects.filter(author__name__icontains="tolkien").order_by(
         "-year").all()
+    # python style
+    books = await Book.objects.filter(Book.author.name.icontains("tolkien")).order_by(
+        Book.year.desc()).all()
     assert len(books) == 3
     assert books[0].title == "The Silmarillion"
     assert books[2].title == "The Hobbit"
@@ -284,11 +297,23 @@ async def pagination():
 
 
 async def aggregations():
-    # ormar currently supports count:
+    # count:
     assert 2 == await Author.objects.count()
 
-    # and exists
+    # exists
     assert await Book.objects.filter(title="The Hobbit").exists()
+
+    # max
+    assert 1990 == await Book.objects.max(columns=["year"])
+
+    # min
+    assert 1937 == await Book.objects.min(columns=["year"])
+
+    # avg
+    assert 1964.75 == await Book.objects.avg(columns=["year"])
+
+    # sum
+    assert 7859 == await Book.objects.sum(columns=["year"])
 
     # to read more about aggregated functions
     # visit: https://collerek.github.io/ormar/queries/aggregations/

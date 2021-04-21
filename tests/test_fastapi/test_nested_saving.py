@@ -1,5 +1,5 @@
 import json
-from typing import Optional
+from typing import Any, Dict, Optional, Set, Type, Union, cast
 
 import databases
 import pytest
@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 import ormar
+from ormar.queryset.utils import translate_list_to_dict
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -82,6 +83,24 @@ to_exclude_ormar = {
     "id": ...,
     "courses": {"id": ..., "students": {"id", "studentcourse"}},
 }
+
+
+def auto_exclude_id_field(to_exclude: Any) -> Union[Dict, Set]:
+    if isinstance(to_exclude, dict):
+        for key in to_exclude.keys():
+            to_exclude[key] = auto_exclude_id_field(to_exclude[key])
+        to_exclude["id"] = Ellipsis
+        return to_exclude
+    else:
+        return {"id"}
+
+
+def generate_exclude_for_ids(model: Type[ormar.Model]) -> Dict:
+    to_exclude_base = translate_list_to_dict(model._iterate_related_models())
+    return cast(Dict, auto_exclude_id_field(to_exclude=to_exclude_base))
+
+
+to_exclude_auto = generate_exclude_for_ids(model=Department)
 
 
 @app.post("/departments/", response_model=Department)

@@ -122,7 +122,17 @@ async def test_sort_order_on_main_model():
         assert songs[1].name == "Song 2"
         assert songs[2].name == "Song 1"
 
+        songs = await Song.objects.order_by(Song.sort_order.desc()).all()
+        assert songs[0].name == "Song 3"
+        assert songs[1].name == "Song 2"
+        assert songs[2].name == "Song 1"
+
         songs = await Song.objects.order_by("sort_order").all()
+        assert songs[0].name == "Song 1"
+        assert songs[1].name == "Song 2"
+        assert songs[2].name == "Song 3"
+
+        songs = await Song.objects.order_by(Song.sort_order.asc()).all()
         assert songs[0].name == "Song 1"
         assert songs[1].name == "Song 2"
         assert songs[2].name == "Song 3"
@@ -140,6 +150,14 @@ async def test_sort_order_on_main_model():
         await Song.objects.create(name="Song 4", sort_order=1)
 
         songs = await Song.objects.order_by(["sort_order", "name"]).all()
+        assert songs[0].name == "Song 1"
+        assert songs[1].name == "Song 4"
+        assert songs[2].name == "Song 2"
+        assert songs[3].name == "Song 3"
+
+        songs = await Song.objects.order_by(
+            [Song.sort_order.asc(), Song.name.asc()]
+        ).all()
         assert songs[0].name == "Song 1"
         assert songs[1].name == "Song 4"
         assert songs[2].name == "Song 2"

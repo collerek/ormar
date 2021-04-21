@@ -26,6 +26,23 @@ FILTER_OPERATORS = {
     "lt": "__lt__",
     "lte": "__le__",
 }
+METHODS_TO_OPERATORS = {
+    "__eq__": "exact",
+    "__mod__": "contains",
+    "__gt__": "gt",
+    "__ge__": "gte",
+    "__lt__": "lt",
+    "__le__": "lte",
+    "iexact": "iexact",
+    "contains": "contains",
+    "icontains": "icontains",
+    "startswith": "startswith",
+    "istartswith": "istartswith",
+    "endswith": "endswith",
+    "iendswith": "iendswith",
+    "isnull": "isnull",
+    "in": "in",
+}
 ESCAPE_CHARACTERS = ["%", "_"]
 
 
@@ -159,5 +176,8 @@ class FilterAction(QueryAction):
         clause_text = clause_text.replace(
             f"{self.table.name}.{self.column.name}", aliased_name
         )
+        dialect_name = self.target_model.Meta.database._backend._dialect.name
+        if dialect_name != "sqlite":  # pragma: no cover
+            clause_text = clause_text.replace("%%", "%")  # remove %% in some dialects
         clause = text(clause_text)
         return clause

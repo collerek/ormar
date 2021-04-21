@@ -22,7 +22,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.relations import Relation
     from ormar.models import Model, T
     from ormar.queryset import QuerySet
-    from ormar import RelationType
+    from ormar import OrderAction, RelationType
 else:
     T = TypeVar("T", bound="Model")
 
@@ -276,7 +276,7 @@ class QuerysetProxy(Generic[T]):
             )
         return await queryset.delete(**kwargs)  # type: ignore
 
-    async def first(self, **kwargs: Any) -> "T":
+    async def first(self, *args: Any, **kwargs: Any) -> "T":
         """
         Gets the first row from the db ordered by primary key column ascending.
 
@@ -289,12 +289,12 @@ class QuerysetProxy(Generic[T]):
         :return:
         :rtype: _asyncio.Future
         """
-        first = await self.queryset.first(**kwargs)
+        first = await self.queryset.first(*args, **kwargs)
         self._clean_items_on_load()
         self._register_related(first)
         return first
 
-    async def get_or_none(self, **kwargs: Any) -> Optional["T"]:
+    async def get_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -310,7 +310,7 @@ class QuerysetProxy(Generic[T]):
         :rtype: Model
         """
         try:
-            get = await self.queryset.get(**kwargs)
+            get = await self.queryset.get(*args, **kwargs)
         except ormar.NoMatch:
             return None
 
@@ -318,7 +318,7 @@ class QuerysetProxy(Generic[T]):
         self._register_related(get)
         return get
 
-    async def get(self, **kwargs: Any) -> "T":
+    async def get(self, *args: Any, **kwargs: Any) -> "T":
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -337,12 +337,12 @@ class QuerysetProxy(Generic[T]):
         :return: returned model
         :rtype: Model
         """
-        get = await self.queryset.get(**kwargs)
+        get = await self.queryset.get(*args, **kwargs)
         self._clean_items_on_load()
         self._register_related(get)
         return get
 
-    async def all(self, **kwargs: Any) -> List[Optional["T"]]:  # noqa: A003
+    async def all(self, *args: Any, **kwargs: Any) -> List[Optional["T"]]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 
@@ -359,7 +359,7 @@ class QuerysetProxy(Generic[T]):
         :return: list of returned models
         :rtype: List[Model]
         """
-        all_items = await self.queryset.all(**kwargs)
+        all_items = await self.queryset.all(*args, **kwargs)
         self._clean_items_on_load()
         self._register_related(all_items)
         return all_items
@@ -425,7 +425,7 @@ class QuerysetProxy(Generic[T]):
                 )
         return len(children)
 
-    async def get_or_create(self, **kwargs: Any) -> "T":
+    async def get_or_create(self, *args: Any, **kwargs: Any) -> "T":
         """
         Combination of create and get methods.
 
@@ -439,7 +439,7 @@ class QuerysetProxy(Generic[T]):
         :rtype: Model
         """
         try:
-            return await self.get(**kwargs)
+            return await self.get(*args, **kwargs)
         except ormar.NoMatch:
             return await self.create(**kwargs)
 
@@ -739,7 +739,7 @@ class QuerysetProxy(Generic[T]):
             relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
         )
 
-    def order_by(self, columns: Union[List, str]) -> "QuerysetProxy[T]":
+    def order_by(self, columns: Union[List, str, "OrderAction"]) -> "QuerysetProxy[T]":
         """
         With `order_by()` you can order the results from database based on your
         choice of fields.

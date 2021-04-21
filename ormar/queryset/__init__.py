@@ -3,6 +3,7 @@ Contains QuerySet and different Query classes to allow for constructing of sql q
 """
 from ormar.queryset.actions import FilterAction, OrderAction, SelectAction
 from ormar.queryset.clause import and_, or_
+from ormar.queryset.field_accessor import FieldAccessor
 from ormar.queryset.filter_query import FilterQuery
 from ormar.queryset.limit_query import LimitQuery
 from ormar.queryset.offset_query import OffsetQuery
@@ -20,4 +21,5 @@ __all__ = [
     "SelectAction",
     "and_",
     "or_",
+    "FieldAccessor",
 ]

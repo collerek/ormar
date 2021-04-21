@@ -7,6 +7,7 @@ from typing import (
     Sequence,
     Set,
     TYPE_CHECKING,
+    Tuple,
     Type,
     TypeVar,
     Union,
@@ -180,16 +181,19 @@ class QuerySet(Generic[T]):
             return self.model.merge_instances_list(result_rows)  # type: ignore
         return cast(List[Optional["T"]], result_rows)
 
-    def _resolve_filter_groups(self, groups: Any) -> List[FilterGroup]:
+    def _resolve_filter_groups(
+        self, groups: Any
+    ) -> Tuple[List[FilterGroup], List[str]]:
         """
         Resolves filter groups to populate FilterAction params in group tree.
 
         :param groups: tuple of FilterGroups
         :type groups: Any
         :return: list of resolver groups
-        :rtype: List[FilterGroup]
+        :rtype: Tuple[List[FilterGroup], List[str]]
         """
         filter_groups = []
+        select_related = self._select_related
         if groups:
             for group in groups:
                 if not isinstance(group, FilterGroup):
@@ -200,13 +204,13 @@ class QuerySet(Generic[T]):
                         "other values need to be passed by"
                         "keyword arguments"
                     )
-                group.resolve(
+                _, select_related = group.resolve(
                     model_cls=self.model,
                     select_related=self._select_related,
                     filter_clauses=self.filter_clauses,
                 )
                 filter_groups.append(group)
-        return filter_groups
+        return filter_groups, select_related
 
     @staticmethod
     def check_single_result_rows_count(rows: Sequence[Optional["T"]]) -> None:
@@ -304,10 +308,10 @@ class QuerySet(Generic[T]):
         :return: filtered QuerySet
         :rtype: QuerySet
         """
-        filter_groups = self._resolve_filter_groups(groups=args)
+        filter_groups, select_related = self._resolve_filter_groups(groups=args)
         qryclause = QueryClause(
             model_cls=self.model,
-            select_related=self._select_related,
+            select_related=select_related,
             filter_clauses=self.filter_clauses,
         )
         filter_clauses, select_related = qryclause.prepare_filter(**kwargs)
@@ -504,7 +508,7 @@ class QuerySet(Generic[T]):
         """
         return self.fields(columns=columns, _is_exclude=True)
 
-    def order_by(self, columns: Union[List, str]) -> "QuerySet[T]":
+    def order_by(self, columns: Union[List, str, OrderAction]) -> "QuerySet[T]":
         """
         With `order_by()` you can order the results from database based on your
         choice of fields.
@@ -541,6 +545,8 @@ class QuerySet(Generic[T]):
 
         orders_by = [
             OrderAction(order_str=x, model_cls=self.model_cls)  # type: ignore
+            if not isinstance(x, OrderAction)
+            else x
             for x in columns
         ]
 
@@ -671,7 +677,7 @@ class QuerySet(Generic[T]):
         )
         return await self.database.execute(expr)
 
-    async def delete(self, each: bool = False, **kwargs: Any) -> int:
+    async def delete(self, *args: Any, each: bool = False, **kwargs: Any) -> int:
         """
         Deletes from the model table after applying the filters from kwargs.
 
@@ -685,8 +691,8 @@ class QuerySet(Generic[T]):
         :return: number of deleted rows
         :rtype:int
         """
-        if kwargs:
-            return await self.filter(**kwargs).delete()
+        if kwargs or args:
+            return await self.filter(*args, **kwargs).delete()
         if not each and not (self.filter_clauses or self.exclude_clauses):
             raise QueryDefinitionError(
                 "You cannot delete without filtering the queryset first. "
@@ -753,7 +759,7 @@ class QuerySet(Generic[T]):
         limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
         return self.rebuild_self(offset=offset, limit_raw_sql=limit_raw_sql,)
 
-    async def first(self, **kwargs: Any) -> "T":
+    async def first(self, *args: Any, **kwargs: Any) -> "T":
         """
         Gets the first row from the db ordered by primary key column ascending.
 
@@ -764,8 +770,8 @@ class QuerySet(Generic[T]):
         :return: returned model
         :rtype: Model
         """
-        if kwargs:
-            return await self.filter(**kwargs).first()
+        if kwargs or args:
+            return await self.filter(*args, **kwargs).first()
 
         expr = self.build_select_expression(
             limit=1,
@@ -784,7 +790,7 @@ class QuerySet(Generic[T]):
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
-    async def get_or_none(self, **kwargs: Any) -> Optional["T"]:
+    async def get_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -800,11 +806,11 @@ class QuerySet(Generic[T]):
         :rtype: Model
         """
         try:
-            return await self.get(**kwargs)
+            return await self.get(*args, **kwargs)
         except ormar.NoMatch:
             return None
 
-    async def get(self, **kwargs: Any) -> "T":
+    async def get(self, *args: Any, **kwargs: Any) -> "T":
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -819,8 +825,8 @@ class QuerySet(Generic[T]):
         :return: returned model
         :rtype: Model
         """
-        if kwargs:
-            return await self.filter(**kwargs).get()
+        if kwargs or args:
+            return await self.filter(*args, **kwargs).get()
 
         if not self.filter_clauses:
             expr = self.build_select_expression(
@@ -843,7 +849,7 @@ class QuerySet(Generic[T]):
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
-    async def get_or_create(self, **kwargs: Any) -> "T":
+    async def get_or_create(self, *args: Any, **kwargs: Any) -> "T":
         """
         Combination of create and get methods.
 
@@ -857,7 +863,7 @@ class QuerySet(Generic[T]):
         :rtype: Model
         """
         try:
-            return await self.get(**kwargs)
+            return await self.get(*args, **kwargs)
         except NoMatch:
             return await self.create(**kwargs)
 
@@ -878,7 +884,7 @@ class QuerySet(Generic[T]):
         model = await self.get(pk=kwargs[pk_name])
         return await model.update(**kwargs)
 
-    async def all(self, **kwargs: Any) -> List[Optional["T"]]:  # noqa: A003
+    async def all(self, *args: Any, **kwargs: Any) -> List[Optional["T"]]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 
@@ -891,8 +897,8 @@ class QuerySet(Generic[T]):
         :return: list of returned models
         :rtype: List[Model]
         """
-        if kwargs:
-            return await self.filter(**kwargs).all()
+        if kwargs or args:
+            return await self.filter(*args, **kwargs).all()
 
         expr = self.build_select_expression()
         rows = await self.database.fetch_all(expr)

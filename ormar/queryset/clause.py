@@ -25,15 +25,29 @@ class FilterGroup:
     """
 
     def __init__(
-        self, *args: Any, _filter_type: FilterType = FilterType.AND, **kwargs: Any,
+        self,
+        *args: Any,
+        _filter_type: FilterType = FilterType.AND,
+        _exclude: bool = False,
+        **kwargs: Any,
     ) -> None:
         self.filter_type = _filter_type
-        self.exclude = False
+        self.exclude = _exclude
         self._nested_groups: List["FilterGroup"] = list(args)
         self._resolved = False
         self.is_source_model_filter = False
         self._kwargs_dict = kwargs
         self.actions: List[FilterAction] = []
+
+    def __and__(self, other: "FilterGroup") -> "FilterGroup":
+        return FilterGroup(self, other)
+
+    def __or__(self, other: "FilterGroup") -> "FilterGroup":
+        return FilterGroup(self, other, _filter_type=FilterType.OR)
+
+    def __invert__(self) -> "FilterGroup":
+        self.exclude = not self.exclude
+        return self
 
     def resolve(
         self,
@@ -107,13 +121,18 @@ class FilterGroup:
         :return: complied and escaped clause
         :rtype: sqlalchemy.sql.elements.TextClause
         """
+        prefix = " NOT " if self.exclude else ""
         if self.filter_type == FilterType.AND:
             clause = sqlalchemy.text(
-                "( " + str(sqlalchemy.sql.and_(*self._get_text_clauses())) + " )"
+                f"{prefix}( "
+                + str(sqlalchemy.sql.and_(*self._get_text_clauses()))
+                + " )"
             )
         else:
             clause = sqlalchemy.text(
-                "( " + str(sqlalchemy.sql.or_(*self._get_text_clauses())) + " )"
+                f"{prefix}( "
+                + str(sqlalchemy.sql.or_(*self._get_text_clauses()))
+                + " )"
             )
         return clause
 

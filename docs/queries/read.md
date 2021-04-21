@@ -2,10 +2,10 @@
 
 Following methods allow you to load data from the database.
 
-* `get(**kwargs) -> Model`
-* `get_or_create(**kwargs) -> Model`
-* `first() -> Model`
-* `all(**kwargs) -> List[Optional[Model]]`
+* `get(*args, **kwargs) -> Model`
+* `get_or_create(*args, **kwargs) -> Model`
+* `first(*args, **kwargs) -> Model`
+* `all(*args, **kwargs) -> List[Optional[Model]]`
 
 
 * `Model`
@@ -13,20 +13,20 @@ Following methods allow you to load data from the database.
 
 
 * `QuerysetProxy`
-    * `QuerysetProxy.get(**kwargs)` method
-    * `QuerysetProxy.get_or_create(**kwargs)` method
-    * `QuerysetProxy.first()` method
-    * `QuerysetProxy.all(**kwargs)` method
+    * `QuerysetProxy.get(*args, **kwargs)` method
+    * `QuerysetProxy.get_or_create(*args, **kwargs)` method
+    * `QuerysetProxy.first(*args, **kwargs)` method
+    * `QuerysetProxy.all(*args, **kwargs)` method
 
 ## get
 
-`get(**kwargs) -> Model`
+`get(*args, **kwargs) -> Model`
 
 Get's the first row from the db meeting the criteria set by kwargs.
 
 If no criteria set it will return the last row in db sorted by pk column.
 
-Passing a criteria is actually calling filter(**kwargs) method described below.
+Passing a criteria is actually calling filter(*args, **kwargs) method described below.
 
 ```python
 class Track(ormar.Model):
@@ -57,14 +57,14 @@ track == track2
 
 ## get_or_none
 
-`get_or_none(**kwargs) -> Model`
+`get_or_none(*args, **kwargs) -> Model`
 
 Exact equivalent of get described above but instead of raising the exception returns `None` if no db record matching the criteria is found.
 
 
 ## get_or_create
 
-`get_or_create(**kwargs) -> Model`
+`get_or_create(*args, **kwargs) -> Model`
 
 Combination of create and get methods.
 
@@ -102,7 +102,7 @@ assert album == album2
 
 ## first
 
-`first() -> Model`
+`first(*args, **kwargs) -> Model`
 
 Gets the first row from the db ordered by primary key column ascending.
 
@@ -127,11 +127,11 @@ assert album.name == 'The Cat'
 
 ## all
 
-`all(**kwargs) -> List[Optional["Model"]]`
+`all(*args, **kwargs) -> List[Optional["Model"]]`
 
 Returns all rows from a database for given model for set filter options.
 
-Passing kwargs is a shortcut and equals to calling `filter(**kwrags).all()`.
+Passing kwargs is a shortcut and equals to calling `filter(*args, **kwargs).all()`.
 
 If there are no rows meeting the criteria an empty list is returned.
 
