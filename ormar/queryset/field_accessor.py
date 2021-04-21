@@ -10,11 +10,11 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class FieldAccessor:
     def __init__(
-            self,
-            source_model: Type["Model"],
-            field: "BaseField" = None,
-            model: Type["Model"] = None,
-            access_chain: str = "",
+        self,
+        source_model: Type["Model"],
+        field: "BaseField" = None,
+        model: Type["Model"] = None,
+        access_chain: str = "",
     ) -> None:
         self._source_model = source_model
         self._field = field

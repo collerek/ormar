@@ -2,7 +2,7 @@
 
 ## ✨ Features
 
-* Add possibility to `filter` and `order_by` with field access instead of dunder separated strings. [#51](https://github.com/collerek/ormar/issues/51)
+* Add **Python style** to `filter` and `order_by` with field access instead of dunder separated strings. [#51](https://github.com/collerek/ormar/issues/51)
   * Accessing a field with attribute access (chain of dot notation) can be used to construct `FilterGroups` (`ormar.and_` and `ormar.or_`)
   * Field access overloads set of python operators and provide a set of functions to allow same functionality as with dunder separated param names in `**kwargs`, that means that querying from sample model `Track` related to model `Album` now you have more options:
     *  exact - exact match to value, sql `column = <VALUE>` 
@@ -102,7 +102,7 @@
                         (Product.categories.name << ['Toys', 'Books'])
                         ).get()
   ```
-* Now you can alos use field access to provide OrderActions to `order_by()`
+* Now you can also use field access to provide OrderActions to `order_by()`
   * Order ascending:
     * OLD: `Product.objects.order_by("name").all()`
     * NEW: `Product.objects.order_by(Product.name.asc()).all()`  
@@ -111,6 +111,12 @@
     * NEW: `Product.objects.order_by(Product.name.desc()).all()`
   * You can of course also combine different models and many order_bys:
     `Product.objects.order_by([Product.category.name.asc(), Product.name.desc()]).all()`
+
+## 🐛 Fixes
+
+*  Not really a bug but rather inconsistency. Providing a filter with nested model i.e. `album__category__name = 'AA'` 
+   is checking if album and category models are included in `select_related()` and if not it's auto-adding them there.
+   The same functionality was not working for `FilterGroups` (`and_` and `or_`), now it works (also for python style filters which return `FilterGroups`).
 
 # 0.10.3
 

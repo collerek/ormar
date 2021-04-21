@@ -7,6 +7,7 @@ from typing import (
     Sequence,
     Set,
     TYPE_CHECKING,
+    Tuple,
     Type,
     TypeVar,
     Union,
@@ -180,16 +181,19 @@ class QuerySet(Generic[T]):
             return self.model.merge_instances_list(result_rows)  # type: ignore
         return cast(List[Optional["T"]], result_rows)
 
-    def _resolve_filter_groups(self, groups: Any) -> List[FilterGroup]:
+    def _resolve_filter_groups(
+        self, groups: Any
+    ) -> Tuple[List[FilterGroup], List[str]]:
         """
         Resolves filter groups to populate FilterAction params in group tree.
 
         :param groups: tuple of FilterGroups
         :type groups: Any
         :return: list of resolver groups
-        :rtype: List[FilterGroup]
+        :rtype: Tuple[List[FilterGroup], List[str]]
         """
         filter_groups = []
+        select_related = self._select_related
         if groups:
             for group in groups:
                 if not isinstance(group, FilterGroup):
@@ -200,13 +204,13 @@ class QuerySet(Generic[T]):
                         "other values need to be passed by"
                         "keyword arguments"
                     )
-                group.resolve(
+                _, select_related = group.resolve(
                     model_cls=self.model,
                     select_related=self._select_related,
                     filter_clauses=self.filter_clauses,
                 )
                 filter_groups.append(group)
-        return filter_groups
+        return filter_groups, select_related
 
     @staticmethod
     def check_single_result_rows_count(rows: Sequence[Optional["T"]]) -> None:
@@ -304,10 +308,10 @@ class QuerySet(Generic[T]):
         :return: filtered QuerySet
         :rtype: QuerySet
         """
-        filter_groups = self._resolve_filter_groups(groups=args)
+        filter_groups, select_related = self._resolve_filter_groups(groups=args)
         qryclause = QueryClause(
             model_cls=self.model,
-            select_related=self._select_related,
+            select_related=select_related,
             filter_clauses=self.filter_clauses,
         )
         filter_clauses, select_related = qryclause.prepare_filter(**kwargs)

@@ -2,27 +2,27 @@
 
 You can use following methods to filter the data (sql where clause).
 
-* `filter(**kwargs) -> QuerySet`
-* `exclude(**kwargs) -> QuerySet`
-* `get(**kwargs) -> Model`
-* `get_or_none(**kwargs) -> Optional[Model]`
-* `get_or_create(**kwargs) -> Model`
-* `all(**kwargs) -> List[Optional[Model]]`
+* `filter(*args, **kwargs) -> QuerySet`
+* `exclude(*args, **kwargs) -> QuerySet`
+* `get(*args, **kwargs) -> Model`
+* `get_or_none(*args, **kwargs) -> Optional[Model]`
+* `get_or_create(*args, **kwargs) -> Model`
+* `all(*args, **kwargs) -> List[Optional[Model]]`
 
 
 * `QuerysetProxy`
-    * `QuerysetProxy.filter(**kwargs)` method
-    * `QuerysetProxy.exclude(**kwargs)` method
-    * `QuerysetProxy.get(**kwargs)` method
-    * `QuerysetProxy.get_or_none(**kwargs)` method
-    * `QuerysetProxy.get_or_create(**kwargs)` method
-    * `QuerysetProxy.all(**kwargs)` method
+    * `QuerysetProxy.filter(*args, **kwargs)` method
+    * `QuerysetProxy.exclude(*args, **kwargs)` method
+    * `QuerysetProxy.get(*args, **kwargs)` method
+    * `QuerysetProxy.get_or_none(*args, **kwargs)` method
+    * `QuerysetProxy.get_or_create(*args, **kwargs)` method
+    * `QuerysetProxy.all(*args, **kwargs)` method
 
 And following methods to sort the data (sql order by clause).
 
-* `order_by(columns:Union[List, str]) -> QuerySet`
+* `order_by(columns:Union[List, str, OrderAction]) -> QuerySet`
 * `QuerysetProxy`
-    * `QuerysetProxy.order_by(columns:Union[List, str])` method
+    * `QuerysetProxy.order_by(columns:Union[List, str, OrderAction])` method
 
 ## Filtering
 
@@ -65,24 +65,107 @@ tracks = Track.objects.filter(album__name="Fantasies").all()
 # will return all tracks where the columns album name = 'Fantasies'
 ```
 
+### Django style filters
+
 You can use special filter suffix to change the filter operands:
 
-* exact - like `album__name__exact='Malibu'` (exact match)
-* iexact - like `album__name__iexact='malibu'` (exact match case insensitive)
-* contains - like `album__name__contains='Mal'` (sql like)
-* icontains - like `album__name__icontains='mal'` (sql like case insensitive)
-* in - like `album__name__in=['Malibu', 'Barclay']` (sql in)
-*  isnull - like `album__name__isnull=True` (sql is null)
-   (isnotnull `album__name__isnull=False` (sql is not null))
-* gt - like `position__gt=3` (sql >)
-* gte - like `position__gte=3` (sql >=)
-* lt - like `position__lt=3` (sql <)
-* lte - like `position__lte=3` (sql <=)
-* startswith - like `album__name__startswith='Mal'` (exact start match)
-* istartswith - like `album__name__istartswith='mal'` (exact start match case
-  insensitive)
-* endswith - like `album__name__endswith='ibu'` (exact end match)
-* iendswith - like `album__name__iendswith='IBU'` (exact end match case insensitive)
+*  exact - exact match to value, sql `column = <VALUE>` 
+   * can be written as`album__name__exact='Malibu'`
+*  iexact - exact match sql `column = <VALUE>` (case insensitive)
+   * can be written as`album__name__iexact='malibu'`
+*  contains - sql `column LIKE '%<VALUE>%'`
+   * can be written as`album__name__contains='Mal'`
+*  icontains - sql `column LIKE '%<VALUE>%'` (case insensitive)
+   * can be written as`album__name__icontains='mal'`
+*  in - sql ` column IN (<VALUE1>, <VALUE2>, ...)`
+   * can be written as`album__name__in=['Malibu', 'Barclay']`
+*  isnull - sql `column IS NULL` (and sql `column IS NOT NULL`) 
+   * can be written as`album__name__isnull=True` (isnotnull `album__name__isnull=False`)
+*  gt - sql `column > <VALUE>` (greater than)
+   * can be written as`position__gt=3`
+*  gte - sql `column >= <VALUE>` (greater or equal than)
+   * can be written as`position__gte=3`
+*  lt - sql `column < <VALUE>` (lower than)
+   * can be written as`position__lt=3`
+*  lte - sql `column <= <VALUE>` (lower equal than)
+   * can be written as`position__lte=3` 
+*  startswith - sql `column LIKE '<VALUE>%'` (exact start match)
+   * can be written as`album__name__startswith='Mal'`
+*  istartswith - sql `column LIKE '<VALUE>%'` (case insensitive)
+   * can be written as`album__name__istartswith='mal'`
+*  endswith - sql `column LIKE '%<VALUE>'` (exact end match)
+   * can be written as`album__name__endswith='ibu'`
+*  iendswith - sql `column LIKE '%<VALUE>'` (case insensitive)
+   * can be written as`album__name__iendswith='IBU'` 
+    
+Some samples:
+
+```python
+# sql: ( product.name = 'Test'  AND  product.rating >= 3.0 ) 
+Product.objects.filter(name='Test', rating__gte=3.0).get()
+
+# sql: ( product.name = 'Test' AND product.rating >= 3.0 ) 
+#       OR (categories.name IN ('Toys', 'Books'))
+Product.objects.filter(
+    ormar.or_(
+        ormar.and_(name='Test', rating__gte=3.0), 
+        categories__name__in=['Toys', 'Books'])
+    ).get()
+# note: to read more about and_ and or_ read complex filters section below
+```
+
+### Python style filters
+
+*  exact - exact match to value, sql `column = <VALUE>` 
+   * can be written as `Track.album.name == 'Malibu`
+*  iexact - exact match sql `column = <VALUE>` (case insensitive)
+   * can be written as `Track.album.name.iexact('malibu')`
+*  contains - sql `column LIKE '%<VALUE>%'`
+   * can be written as `Track.album.name % 'Mal')`
+   * can be written as `Track.album.name.contains('Mal')`
+*  icontains - sql `column LIKE '%<VALUE>%'` (case insensitive)
+   * can be written as `Track.album.name.icontains('mal')`
+*  in - sql ` column IN (<VALUE1>, <VALUE2>, ...)`
+   * can be written as `Track.album.name << ['Malibu', 'Barclay']`
+   * can be written as `Track.album.name.in_(['Malibu', 'Barclay'])`
+*  isnull - sql `column IS NULL` (and sql `column IS NOT NULL`) 
+   * can be written as `Track.album.name >> None`
+   * can be written as `Track.album.name.is_null(True)`
+   * not null can be written as `Track.album.name.is_null(False)`
+   * not null can be written as `~(Track.album.name >> None)`
+   * not null can be written as `~(Track.album.name.is_null(True))`
+*  gt - sql `column > <VALUE>` (greater than)
+   * can be written as `Track.album.name > 3`
+*  gte - sql `column >= <VALUE>` (greater or equal than)
+   * can be written as `Track.album.name >= 3`
+*  lt - sql `column < <VALUE>` (lower than)
+   * can be written as `Track.album.name < 3`
+*  lte - sql `column <= <VALUE>` (lower equal than)
+   * can be written as `Track.album.name <= 3`
+*  startswith - sql `column LIKE '<VALUE>%'` (exact start match)
+   * can be written as `Track.album.name.startswith('Mal')`
+*  istartswith - sql `column LIKE '<VALUE>%'` (case insensitive)
+   * can be written as `Track.album.name.istartswith('mal')`
+*  endswith - sql `column LIKE '%<VALUE>'` (exact end match)
+   * can be written as `Track.album.name.endswith('ibu')`
+*  iendswith - sql `column LIKE '%<VALUE>'` (case insensitive)
+   * can be written as `Track.album.name.iendswith('IBU')`
+
+Some samples:
+
+```python
+# sql: ( product.name = 'Test'  AND  product.rating >= 3.0 ) 
+Product.objects.filter(
+    (Product.name == 'Test') & (Product.rating >=3.0)
+).get()
+
+# sql: ( product.name = 'Test' AND product.rating >= 3.0 ) 
+#       OR (categories.name IN ('Toys', 'Books'))
+Product.objects.filter(
+        ((Product.name='Test') & (Product.rating >= 3.0)) | 
+        (Product.categories.name << ['Toys', 'Books'])
+    ).get()
+```
 
 !!!note 
     All methods that do not return the rows explicitly returns a QueySet instance so
@@ -155,7 +238,7 @@ In order to build `OR` and nested conditions ormar provides two functions that c
 `filter()` and `exclude()` in `QuerySet` and `QuerysetProxy`. 
 
 !!!note
-    Note that you cannot provide those methods in any other method like `get()` or `all()` which accepts only keyword arguments. 
+    Note that you can provide those methods in any other method like `get()` or `all()` that accepts `*args`. 
 
 Call to `or_` and `and_` can be nested in each other, as well as combined with keyword arguments.
 Since it sounds more complicated than it is, let's look at some examples.
@@ -208,10 +291,21 @@ Let's select books of Tolkien **OR** books written after 1970
 sql:
 `WHERE ( authors.name = 'J.R.R. Tolkien' OR books.year > 1970 )`
 
+### Django style
 ```python
 books = (
     await Book.objects.select_related("author")
     .filter(ormar.or_(author__name="J.R.R. Tolkien", year__gt=1970))
+    .all()
+)
+assert len(books) == 5
+```
+
+### Python style
+```python
+books = (
+    await Book.objects.select_related("author")
+    .filter((Book.author.name=="J.R.R. Tolkien") | (Book.year > 1970))
     .all()
 )
 assert len(books) == 5
@@ -222,6 +316,7 @@ Now let's select books written after 1960 or before 1940 which were written by T
 sql:
 `WHERE ( books.year > 1960 OR books.year < 1940 ) AND authors.name = 'J.R.R. Tolkien'`
 
+### Django style
 ```python
 # OPTION 1 - split and into separate call
 books = (
@@ -249,11 +344,38 @@ assert books[0].title == "The Hobbit"
 assert books[1].title == "The Silmarillion"
 ```
 
+### Python style
+```python
+books = (
+    await Book.objects.select_related("author")
+    .filter((Book.year > 1960) | (Book.year < 1940))
+    .filter(Book.author.name == "J.R.R. Tolkien")
+    .all()
+)
+assert len(books) == 2
+
+# OPTION 2 - all in one
+books = (
+    await Book.objects.select_related("author")
+    .filter(
+        (
+            (Book.year > 1960) | (Book.year < 1940)
+        ) & (Book.author.name == "J.R.R. Tolkien")
+    )
+    .all()
+)
+
+assert len(books) == 2
+assert books[0].title == "The Hobbit"
+assert books[1].title == "The Silmarillion"
+```
+
 Books of Sapkowski from before 2000 or books of Tolkien written after 1960
 
 sql:
 `WHERE ( ( books.year > 1960 AND authors.name = 'J.R.R. Tolkien' ) OR ( books.year < 2000 AND authors.name = 'Andrzej Sapkowski' ) ) `
 
+### Django style
 ```python
 books = (
     await Book.objects.select_related("author")
@@ -268,7 +390,20 @@ books = (
 assert len(books) == 2
 ```
 
-Of course those functions can have more than 2 conditions, so if we for example want also 
+### Python style
+```python
+books = (
+    await Book.objects.select_related("author")
+    .filter(    
+        ((Book.year > 1960) & (Book.author.name == "J.R.R. Tolkien")) |
+        ((Book.year < 2000) & (Book.author.name == "Andrzej Sapkowski"))
+    )
+    .all()
+)
+assert len(books) == 2
+```
+
+Of course those functions can have more than 2 conditions, so if we for example want 
 books that contains 'hobbit':
 
 sql:
@@ -276,6 +411,7 @@ sql:
 ( books.year < 2000 AND os0cec_authors.name = 'Andrzej Sapkowski' ) OR 
 books.title LIKE '%hobbit%' )`
 
+### Django style
 ```python
 books = (
     await Book.objects.select_related("author")
@@ -285,6 +421,19 @@ books = (
             ormar.and_(year__lt=2000, author__name="Andrzej Sapkowski"),
             title__icontains="hobbit",
         )
+    )
+    .all()
+)
+```
+
+### Python style
+```python
+books = (
+    await Book.objects.select_related("author")
+    .filter(    
+        ((Book.year > 1960) & (Book.author.name == "J.R.R. Tolkien")) |
+        ((Book.year < 2000) & (Book.author.name == "Andrzej Sapkowski")) |
+        (Book.title.icontains("hobbit"))
     )
     .all()
 )
@@ -301,6 +450,28 @@ AND authors.name = 'J.R.R. Tolkien' ) OR
 ```
 
 You can construct a query as follows:
+
+### Django style
+```python
+books = (
+    await Book.objects.select_related("author")
+    .filter(
+        ormar.or_(
+            ormar.and_(
+                ormar.or_(year__gt=1960, year__lt=1940),
+                author__name="J.R.R. Tolkien",
+            ),
+            ormar.and_(year__lt=2000, author__name="Andrzej Sapkowski"),
+        )
+    )
+    .all()
+)
+assert len(books) == 3
+assert books[0].title == "The Hobbit"
+assert books[1].title == "The Silmarillion"
+assert books[2].title == "The Witcher"
+```
+
 ```python
 books = (
     await Book.objects.select_related("author")
@@ -339,10 +510,12 @@ assert len(books) == 1
 assert books[0].title == "The Witcher"
 ```
 
+Same applies to python style chaining and nesting.
 
-!!!note
-    Note that you cannot provide the same keyword argument several times so queries like `filter(ormar.or_(name='Jack', name='John'))` are not allowed. If you want to check the same
-    column for several values simply use `in` operator: `filter(name__in=['Jack','John'])`.
+### Django style
+
+Note that with django style you cannot provide the same keyword argument several times so queries like `filter(ormar.or_(name='Jack', name='John'))` are not allowed. If you want to check the same
+column for several values simply use `in` operator: `filter(name__in=['Jack','John'])`.
 
 If you pass only one parameter to `or_` or `and_` functions it's simply wrapped in parenthesis and
 has no effect on actual query, so in the end all 3 queries are identical:
@@ -386,13 +559,28 @@ books = (
 assert len(books) == 5
 ```
 
+### Python style
+
+Note that with python style you can perfectly use the same fields as many times as you want.
+
+```python
+books = (
+    await Book.objects.select_related("author")
+        .filter(
+        (Book.author.name.icontains("tolkien")) |
+        (Book.author.name.icontains("sapkowski"))
+    ))                                      
+        .all()
+)
+```
+
 ## get
 
-`get(**kwargs) -> Model`
+`get(*args, **kwargs) -> Model`
 
 Get's the first row from the db meeting the criteria set by kwargs.
 
-When any kwargs are passed it's a shortcut equivalent to calling `filter(**kwargs).get()`
+When any args and/or kwargs are passed it's a shortcut equivalent to calling `filter(*args, **kwargs).get()`
 
 !!!tip
     To read more about `filter` go to [filter](./#filter).
@@ -403,14 +591,13 @@ When any kwargs are passed it's a shortcut equivalent to calling `filter(**kwarg
 
 Exact equivalent of get described above but instead of raising the exception returns `None` if no db record matching the criteria is found.
 
-
 ## get_or_create
 
-`get_or_create(**kwargs) -> Model`
+`get_or_create(*args, **kwargs) -> Model`
 
 Combination of create and get methods.
 
-When any kwargs are passed it's a shortcut equivalent to calling `filter(**kwargs).get_or_create()`
+When any args and/or kwargs are passed it's a shortcut equivalent to calling `filter(*args, **kwargs).get_or_create()`
 
 !!!tip
     To read more about `filter` go to [filter](./#filter).
@@ -423,11 +610,11 @@ When any kwargs are passed it's a shortcut equivalent to calling `filter(**kwarg
 
 ## all
 
-`all(**kwargs) -> List[Optional["Model"]]`
+`all(*args, **kwargs) -> List[Optional["Model"]]`
 
 Returns all rows from a database for given model for set filter options.
 
-When any kwargs are passed it's a shortcut equivalent to calling `filter(**kwargs).all()`
+When any kwargs are passed it's a shortcut equivalent to calling `filter(*args, **kwargs).all()`
 
 !!!tip
     To read more about `filter` go to [filter](./#filter).
@@ -493,7 +680,7 @@ objects from other side of the relation.
 
 ### order_by
 
-`order_by(columns: Union[List, str]) -> QuerySet`
+`order_by(columns: Union[List, str, OrderAction]) -> QuerySet`
 
 With `order_by()` you can order the results from database based on your choice of
 fields.
@@ -534,6 +721,7 @@ Given sample Models like following:
 
 To order by main model field just provide a field name
 
+### Django style
 ```python
 toys = await Toy.objects.select_related("owner").order_by("name").all()
 assert [x.name.replace("Toy ", "") for x in toys] == [
@@ -543,11 +731,23 @@ assert toys[0].owner == zeus
 assert toys[1].owner == aphrodite
 ```
 
+### Python style
+```python
+toys = await Toy.objects.select_related("owner").order_by(Toy.name.asc()).all()
+assert [x.name.replace("Toy ", "") for x in toys] == [
+    str(x + 1) for x in range(6)
+]
+assert toys[0].owner == zeus
+assert toys[1].owner == aphrodite
+```
+
+
 To sort on nested models separate field names with dunder '__'.
 
 You can sort this way across all relation types -> `ForeignKey`, reverse virtual FK
 and `ManyToMany` fields.
 
+### Django style
 ```python
 toys = await Toy.objects.select_related("owner").order_by("owner__name").all()
 assert toys[0].owner.name == toys[1].owner.name == "Aphrodite"
@@ -555,13 +755,34 @@ assert toys[2].owner.name == toys[3].owner.name == "Hermes"
 assert toys[4].owner.name == toys[5].owner.name == "Zeus"
 ```
 
+### Python style
+```python
+toys = await Toy.objects.select_related("owner").order_by(Toy.owner.name.asc()).all()
+assert toys[0].owner.name == toys[1].owner.name == "Aphrodite"
+assert toys[2].owner.name == toys[3].owner.name == "Hermes"
+assert toys[4].owner.name == toys[5].owner.name == "Zeus"
+```
+
 To sort in descending order provide a hyphen in front of the field name
 
+### Django style
 ```python
 owner = (
     await Owner.objects.select_related("toys")
         .order_by("-toys__name")
         .filter(name="Zeus")
+        .get()
+)
+assert owner.toys[0].name == "Toy 4"
+assert owner.toys[1].name == "Toy 1"
+```
+
+### Python style
+```python
+owner = (
+    await Owner.objects.select_related("toys")
+        .order_by(Owner.toys.name.desc())
+        .filter(Owner.name == "Zeus")
         .get()
 )
 assert owner.toys[0].name == "Toy 4"
