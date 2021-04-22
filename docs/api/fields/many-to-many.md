@@ -1,6 +1,19 @@
 <a name="fields.many_to_many"></a>
 # fields.many\_to\_many
 
+<a name="fields.many_to_many.forbid_through_relations"></a>
+#### forbid\_through\_relations
+
+```python
+forbid_through_relations(through: Type["Model"]) -> None
+```
+
+Verifies if the through model does not have relations.
+
+**Arguments**:
+
+- `through (Type['Model])`: through Model to be checked
+
 <a name="fields.many_to_many.populate_m2m_params_based_on_to_model"></a>
 #### populate\_m2m\_params\_based\_on\_to\_model
 
@@ -24,7 +37,7 @@ pydantic field to use and type of the target column field.
 #### ManyToMany
 
 ```python
-ManyToMany(to: "ToType", through: Optional["ToType"] = None, *, name: str = None, unique: bool = False, virtual: bool = False, **kwargs: Any, ,) -> Any
+ManyToMany(to: "ToType", through: Optional["ToType"] = None, *, name: str = None, unique: bool = False, virtual: bool = False, **kwargs: Any, ,) -> "RelationProxy[T]"
 ```
 
 Despite a name it's a function that returns constructed ManyToManyField.
@@ -60,8 +73,7 @@ Actual class returned from ManyToMany function call and stored in model_fields.
 #### get\_source\_related\_name
 
 ```python
- | @classmethod
- | get_source_related_name(cls) -> str
+ | get_source_related_name() -> str
 ```
 
 Returns name to use for source relation name.
@@ -72,40 +84,11 @@ It's either set as `related_name` or by default it's field name.
 
 `(str)`: name of the related_name or default related name.
 
-<a name="fields.many_to_many.ManyToManyField.default_target_field_name"></a>
-#### default\_target\_field\_name
-
-```python
- | @classmethod
- | default_target_field_name(cls) -> str
-```
-
-Returns default target model name on through model.
-
-**Returns**:
-
-`(str)`: name of the field
-
-<a name="fields.many_to_many.ManyToManyField.default_source_field_name"></a>
-#### default\_source\_field\_name
-
-```python
- | @classmethod
- | default_source_field_name(cls) -> str
-```
-
-Returns default target model name on through model.
-
-**Returns**:
-
-`(str)`: name of the field
-
 <a name="fields.many_to_many.ManyToManyField.has_unresolved_forward_refs"></a>
 #### has\_unresolved\_forward\_refs
 
 ```python
- | @classmethod
- | has_unresolved_forward_refs(cls) -> bool
+ | has_unresolved_forward_refs() -> bool
 ```
 
 Verifies if the filed has any ForwardRefs that require updating before the
@@ -119,8 +102,7 @@ model can be used.
 #### evaluate\_forward\_ref
 
 ```python
- | @classmethod
- | evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None
+ | evaluate_forward_ref(globalns: Any, localns: Any) -> None
 ```
 
 Evaluates the ForwardRef to actual Field based on global and local namespaces
@@ -138,8 +120,7 @@ Evaluates the ForwardRef to actual Field based on global and local namespaces
 #### get\_relation\_name
 
 ```python
- | @classmethod
- | get_relation_name(cls) -> str
+ | get_relation_name() -> str
 ```
 
 Returns name of the relation, which can be a own name or through model
@@ -153,8 +134,7 @@ names for m2m models
 #### get\_source\_model
 
 ```python
- | @classmethod
- | get_source_model(cls) -> Type["Model"]
+ | get_source_model() -> Type["Model"]
 ```
 
 Returns model from which the relation comes -> either owner or through model
@@ -167,8 +147,7 @@ Returns model from which the relation comes -> either owner or through model
 #### create\_default\_through\_model
 
 ```python
- | @classmethod
- | create_default_through_model(cls) -> None
+ | create_default_through_model() -> None
 ```
 
 Creates default empty through model if no additional fields are required.

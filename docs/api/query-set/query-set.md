@@ -5,7 +5,7 @@
 ## QuerySet Objects
 
 ```python
-class QuerySet()
+class QuerySet(Generic[T])
 ```
 
 Main class to perform database queries, exposed on each model as objects attribute.
@@ -29,7 +29,7 @@ Shortcut to model class Meta set on QuerySet model.
 
 ```python
  | @property
- | model() -> Type["Model"]
+ | model() -> Type["T"]
 ```
 
 Shortcut to model class set on QuerySet.
@@ -52,7 +52,7 @@ all not passed params are taken from current values.
 #### \_prefetch\_related\_models
 
 ```python
- | async _prefetch_related_models(models: Sequence[Optional["Model"]], rows: List) -> Sequence[Optional["Model"]]
+ | async _prefetch_related_models(models: List[Optional["T"]], rows: List) -> List[Optional["T"]]
 ```
 
 Performs prefetch query for selected models names.
@@ -70,7 +70,7 @@ Performs prefetch query for selected models names.
 #### \_process\_query\_result\_rows
 
 ```python
- | _process_query_result_rows(rows: List) -> Sequence[Optional["Model"]]
+ | _process_query_result_rows(rows: List) -> List[Optional["T"]]
 ```
 
 Process database rows and initialize ormar Model from each of the rows.
@@ -83,12 +83,29 @@ Process database rows and initialize ormar Model from each of the rows.
 
 `(List[Model])`: list of models
 
+<a name="queryset.queryset.QuerySet._resolve_filter_groups"></a>
+#### \_resolve\_filter\_groups
+
+```python
+ | _resolve_filter_groups(groups: Any) -> Tuple[List[FilterGroup], List[str]]
+```
+
+Resolves filter groups to populate FilterAction params in group tree.
+
+**Arguments**:
+
+- `groups (Any)`: tuple of FilterGroups
+
+**Returns**:
+
+`(Tuple[List[FilterGroup], List[str]])`: list of resolver groups
+
 <a name="queryset.queryset.QuerySet.check_single_result_rows_count"></a>
 #### check\_single\_result\_rows\_count
 
 ```python
  | @staticmethod
- | check_single_result_rows_count(rows: Sequence[Optional["Model"]]) -> None
+ | check_single_result_rows_count(rows: Sequence[Optional["T"]]) -> None
 ```
 
 Verifies if the result has one and only one row.
@@ -149,7 +166,7 @@ If any of the params is not passed the QuerySet own value is used.
 #### filter
 
 ```python
- | filter(_exclude: bool = False, **kwargs: Any) -> "QuerySet"
+ | filter(*args: Any, *, _exclude: bool = False, **kwargs: Any) -> "QuerySet[T]"
 ```
 
 Allows you to filter by any `Model` attribute/field
@@ -162,6 +179,8 @@ You can use special filter suffix to change the filter operands:
 *  contains - like `album__name__contains='Mal'` (sql like)
 *  icontains - like `album__name__icontains='mal'` (sql like case insensitive)
 *  in - like `album__name__in=['Malibu', 'Barclay']` (sql in)
+*  isnull - like `album__name__isnull=True` (sql is null)
+(isnotnull `album__name__isnull=False` (sql is not null))
 *  gt - like `position__gt=3` (sql >)
 *  gte - like `position__gte=3` (sql >=)
 *  lt - like `position__lt=3` (sql <)
@@ -184,7 +203,7 @@ You can use special filter suffix to change the filter operands:
 #### exclude
 
 ```python
- | exclude(**kwargs: Any) -> "QuerySet"
+ | exclude(*args: Any, **kwargs: Any) -> "QuerySet[T]"
 ```
 
 Works exactly the same as filter and all modifiers (suffixes) are the same,
@@ -211,7 +230,7 @@ becomes a union of conditions.
 #### select\_related
 
 ```python
- | select_related(related: Union[List, str]) -> "QuerySet"
+ | select_related(related: Union[List, str]) -> "QuerySet[T]"
 ```
 
 Allows to prefetch related models during the same query.
@@ -232,11 +251,40 @@ To chain related `Models` relation use double underscores between names.
 
 `(QuerySet)`: QuerySet
 
+<a name="queryset.queryset.QuerySet.select_all"></a>
+#### select\_all
+
+```python
+ | select_all(follow: bool = False) -> "QuerySet[T]"
+```
+
+By default adds only directly related models.
+
+If follow=True is set it adds also related models of related models.
+
+To not get stuck in an infinite loop as related models also keep a relation
+to parent model visited models set is kept.
+
+That way already visited models that are nested are loaded, but the load do not
+follow them inside. So Model A -> Model B -> Model C -> Model A -> Model X
+will load second Model A but will never follow into Model X.
+Nested relations of those kind need to be loaded manually.
+
+**Arguments**:
+
+- `follow (bool)`: flag to trigger deep save -
+by default only directly related models are saved
+with follow=True also related models of related models are saved
+
+**Returns**:
+
+`(Model)`: reloaded Model
+
 <a name="queryset.queryset.QuerySet.prefetch_related"></a>
 #### prefetch\_related
 
 ```python
- | prefetch_related(related: Union[List, str]) -> "QuerySet"
+ | prefetch_related(related: Union[List, str]) -> "QuerySet[T]"
 ```
 
 Allows to prefetch related models during query - but opposite to
@@ -262,7 +310,7 @@ To chain related `Models` relation use double underscores between names.
 #### fields
 
 ```python
- | fields(columns: Union[List, str, Set, Dict], _is_exclude: bool = False) -> "QuerySet"
+ | fields(columns: Union[List, str, Set, Dict], _is_exclude: bool = False) -> "QuerySet[T]"
 ```
 
 With `fields()` you can select subset of model columns to limit the data load.
@@ -314,7 +362,7 @@ To include whole nested model specify model related field name and ellipsis.
 #### exclude\_fields
 
 ```python
- | exclude_fields(columns: Union[List, str, Set, Dict]) -> "QuerySet"
+ | exclude_fields(columns: Union[List, str, Set, Dict]) -> "QuerySet[T]"
 ```
 
 With `exclude_fields()` you can select subset of model columns that will
@@ -349,7 +397,7 @@ if explicitly excluded.
 #### order\_by
 
 ```python
- | order_by(columns: Union[List, str]) -> "QuerySet"
+ | order_by(columns: Union[List, str, OrderAction]) -> "QuerySet[T]"
 ```
 
 With `order_by()` you can order the results from database based on your
@@ -413,6 +461,62 @@ Returns number of rows matching the given criteria
 
 `(int)`: number of rows
 
+<a name="queryset.queryset.QuerySet.max"></a>
+#### max
+
+```python
+ | async max(columns: Union[str, List[str]]) -> Any
+```
+
+Returns max value of columns for rows matching the given criteria
+(applied with `filter` and `exclude` if set before).
+
+**Returns**:
+
+`(Any)`: max value of column(s)
+
+<a name="queryset.queryset.QuerySet.min"></a>
+#### min
+
+```python
+ | async min(columns: Union[str, List[str]]) -> Any
+```
+
+Returns min value of columns for rows matching the given criteria
+(applied with `filter` and `exclude` if set before).
+
+**Returns**:
+
+`(Any)`: min value of column(s)
+
+<a name="queryset.queryset.QuerySet.sum"></a>
+#### sum
+
+```python
+ | async sum(columns: Union[str, List[str]]) -> Any
+```
+
+Returns sum value of columns for rows matching the given criteria
+(applied with `filter` and `exclude` if set before).
+
+**Returns**:
+
+`(int)`: sum value of columns
+
+<a name="queryset.queryset.QuerySet.avg"></a>
+#### avg
+
+```python
+ | async avg(columns: Union[str, List[str]]) -> Any
+```
+
+Returns avg value of columns for rows matching the given criteria
+(applied with `filter` and `exclude` if set before).
+
+**Returns**:
+
+`(Union[int, float, List])`: avg value of columns
+
 <a name="queryset.queryset.QuerySet.update"></a>
 #### update
 
@@ -438,7 +542,7 @@ each=True flag to affect whole table.
 #### delete
 
 ```python
- | async delete(each: bool = False, **kwargs: Any) -> int
+ | async delete(*args: Any, *, each: bool = False, **kwargs: Any) -> int
 ```
 
 Deletes from the model table after applying the filters from kwargs.
@@ -459,7 +563,7 @@ each=True flag to affect whole table.
 #### paginate
 
 ```python
- | paginate(page: int, page_size: int = 20) -> "QuerySet"
+ | paginate(page: int, page_size: int = 20) -> "QuerySet[T]"
 ```
 
 You can paginate the result which is a combination of offset and limit clauses.
@@ -478,7 +582,7 @@ Limit is set to page size and offset is set to (page-1) * page_size.
 #### limit
 
 ```python
- | limit(limit_count: int, limit_raw_sql: bool = None) -> "QuerySet"
+ | limit(limit_count: int, limit_raw_sql: bool = None) -> "QuerySet[T]"
 ```
 
 You can limit the results to desired number of parent models.
@@ -499,7 +603,7 @@ models use the `limit_raw_sql` parameter flag, and set it to `True`.
 #### offset
 
 ```python
- | offset(offset: int, limit_raw_sql: bool = None) -> "QuerySet"
+ | offset(offset: int, limit_raw_sql: bool = None) -> "QuerySet[T]"
 ```
 
 You can also offset the results by desired number of main models.
@@ -520,7 +624,7 @@ models use the `limit_raw_sql` parameter flag, and set it to `True`.
 #### first
 
 ```python
- | async first(**kwargs: Any) -> "Model"
+ | async first(*args: Any, **kwargs: Any) -> "T"
 ```
 
 Gets the first row from the db ordered by primary key column ascending.
@@ -538,11 +642,34 @@ Gets the first row from the db ordered by primary key column ascending.
 
 `(Model)`: returned model
 
+<a name="queryset.queryset.QuerySet.get_or_none"></a>
+#### get\_or\_none
+
+```python
+ | async get_or_none(*args: Any, **kwargs: Any) -> Optional["T"]
+```
+
+Get's the first row from the db meeting the criteria set by kwargs.
+
+If no criteria set it will return the last row in db sorted by pk.
+
+Passing a criteria is actually calling filter(**kwargs) method described below.
+
+If not match is found None will be returned.
+
+**Arguments**:
+
+- `kwargs (Any)`: fields names and proper value types
+
+**Returns**:
+
+`(Model)`: returned model
+
 <a name="queryset.queryset.QuerySet.get"></a>
 #### get
 
 ```python
- | async get(**kwargs: Any) -> "Model"
+ | async get(*args: Any, **kwargs: Any) -> "T"
 ```
 
 Get's the first row from the db meeting the criteria set by kwargs.
@@ -568,7 +695,7 @@ Passing a criteria is actually calling filter(**kwargs) method described below.
 #### get\_or\_create
 
 ```python
- | async get_or_create(**kwargs: Any) -> "Model"
+ | async get_or_create(*args: Any, **kwargs: Any) -> "T"
 ```
 
 Combination of create and get methods.
@@ -589,7 +716,7 @@ it creates a new one with given kwargs.
 #### update\_or\_create
 
 ```python
- | async update_or_create(**kwargs: Any) -> "Model"
+ | async update_or_create(**kwargs: Any) -> "T"
 ```
 
 Updates the model, or in case there is no match in database creates a new one.
@@ -606,7 +733,7 @@ Updates the model, or in case there is no match in database creates a new one.
 #### all
 
 ```python
- | async all(**kwargs: Any) -> Sequence[Optional["Model"]]
+ | async all(*args: Any, **kwargs: Any) -> List[Optional["T"]]
 ```
 
 Returns all rows from a database for given model for set filter options.
@@ -627,7 +754,7 @@ If there are no rows meeting the criteria an empty list is returned.
 #### create
 
 ```python
- | async create(**kwargs: Any) -> "Model"
+ | async create(**kwargs: Any) -> "T"
 ```
 
 Creates the model instance, saves it in a database and returns the updates model
@@ -647,7 +774,7 @@ The allowed kwargs are `Model` fields names and proper value types.
 #### bulk\_create
 
 ```python
- | async bulk_create(objects: List["Model"]) -> None
+ | async bulk_create(objects: List["T"]) -> None
 ```
 
 Performs a bulk update in one database session to speed up the process.
@@ -666,7 +793,7 @@ Bulk operations do not send signals.
 #### bulk\_update
 
 ```python
- | async bulk_update(objects: List["Model"], columns: List[str] = None) -> None
+ | async bulk_update(objects: List["T"], columns: List[str] = None) -> None
 ```
 
 Performs bulk update in one database session to speed up the process.

@@ -28,6 +28,16 @@ Applies order_by queries on main model when it's used as a subquery.
 That way the subquery with limit and offset only on main model has proper
 sorting applied and correct models are fetched.
 
+<a name="queryset.query.Query._apply_default_model_sorting"></a>
+#### \_apply\_default\_model\_sorting
+
+```python
+ | _apply_default_model_sorting() -> None
+```
+
+Applies orders_by from model Meta class (if provided), if it was not provided
+it was filled by metaclass so it's always there and falls back to pk column
+
 <a name="queryset.query.Query._pagination_query_required"></a>
 #### \_pagination\_query\_required
 
@@ -62,11 +72,13 @@ Returns ready to run query with all joins and clauses.
 
 `(sqlalchemy.sql.selectable.Select)`: ready to run query with all joins and clauses.
 
-<a name="queryset.query.Query._build_pagination_subquery"></a>
-#### \_build\_pagination\_subquery
+<a name="queryset.query.Query._build_pagination_condition"></a>
+#### \_build\_pagination\_condition
 
 ```python
- | _build_pagination_subquery() -> sqlalchemy.sql.select
+ | _build_pagination_condition() -> Tuple[
+ |         sqlalchemy.sql.expression.TextClause, sqlalchemy.sql.expression.TextClause
+ |     ]
 ```
 
 In order to apply limit and offset on main table in join only
@@ -78,9 +90,8 @@ Needed only if limit or offset are set, the flag limit_sql_raw is not set
 and query has select_related applied. Otherwise we can limit/offset normally
 at the end of whole query.
 
-**Returns**:
-
-`(sqlalchemy.sql.select)`: constructed subquery on main table with limit, offset and order applied
+The condition is added to filters to filter out desired number of main model
+primary key values. Whole query is used to determine the values.
 
 <a name="queryset.query.Query._apply_expression_modifiers"></a>
 #### \_apply\_expression\_modifiers

@@ -12,7 +12,7 @@ class Model(ModelRow)
 #### upsert
 
 ```python
- | async upsert(**kwargs: Any) -> "Model"
+ | async upsert(**kwargs: Any) -> T
 ```
 
 Performs either a save or an update depending on the presence of the pk.
@@ -31,7 +31,7 @@ For save kwargs are ignored, used only in update if provided.
 #### save
 
 ```python
- | async save() -> "Model"
+ | async save() -> T
 ```
 
 Performs a save of given Model instance.
@@ -60,7 +60,7 @@ Sets model save status to True.
 #### save\_related
 
 ```python
- | async save_related(follow: bool = False, visited: Set = None, update_count: int = 0) -> int
+ | async save_related(follow: bool = False, save_all: bool = False, relation_map: Dict = None, exclude: Union[Set, Dict] = None, update_count: int = 0, previous_model: "Model" = None, relation_field: Optional["ForeignKeyField"] = None) -> int
 ```
 
 Triggers a upsert method on all related models
@@ -79,10 +79,14 @@ Nested relations of those kind need to be persisted manually.
 
 **Arguments**:
 
+- `relation_field (Optional[ForeignKeyField])`: field with relation leading to this model
+- `previous_model (Model)`: previous model from which method came
+- `exclude (Union[Set, Dict])`: items to exclude during saving of relations
+- `relation_map (Dict)`: map of relations to follow
+- `save_all (bool)`: flag if all models should be saved or only not saved ones
 - `follow (bool)`: flag to trigger deep save -
 by default only directly related models are saved
 with follow=True also related models of related models are saved
-- `visited (Set)`: internal parameter for recursive calls - already visited models
 - `update_count (int)`: internal parameter for recursive calls -
 number of updated instances
 
@@ -90,36 +94,11 @@ number of updated instances
 
 `(int)`: number of updated/saved models
 
-<a name="models.model.Model._update_and_follow"></a>
-#### \_update\_and\_follow
-
-```python
- | @staticmethod
- | async _update_and_follow(rel: "Model", follow: bool, visited: Set, update_count: int) -> Tuple[int, Set]
-```
-
-Internal method used in save_related to follow related models and update numbers
-of updated related instances.
-
-**Arguments**:
-
-- `rel (Model)`: Model to follow
-- `follow (bool)`: flag to trigger deep save -
-by default only directly related models are saved
-with follow=True also related models of related models are saved
-- `visited (Set)`: internal parameter for recursive calls - already visited models
-- `update_count (int)`: internal parameter for recursive calls -
-number of updated instances
-
-**Returns**:
-
-`(Tuple[int, Set])`: tuple of update count and visited
-
 <a name="models.model.Model.update"></a>
 #### update
 
 ```python
- | async update(**kwargs: Any) -> "Model"
+ | async update(_columns: List[str] = None, **kwargs: Any) -> T
 ```
 
 Performs update of Model instance in the database.
@@ -129,13 +108,14 @@ Sends pre_update and post_update signals.
 
 Sets model save status to True.
 
+**Arguments**:
+
+- `_columns (List)`: list of columns to update, if None all are updated
+- `kwargs (Any)`: list of fields to update as field=value pairs
+
 **Raises**:
 
 - `ModelPersistenceError`: If the pk column is not set
-
-**Arguments**:
-
-- `kwargs (Any)`: list of fields to update as field=value pairs
 
 **Returns**:
 
@@ -166,7 +146,7 @@ or update and the Model will be saved in database again.
 #### load
 
 ```python
- | async load() -> "Model"
+ | async load() -> T
 ```
 
 Allow to refresh existing Models fields from database.
@@ -185,7 +165,7 @@ Does NOT refresh the related models fields if they were loaded before.
 #### load\_all
 
 ```python
- | async load_all(follow: bool = False, exclude: Union[List, str, Set, Dict] = None) -> "Model"
+ | async load_all(follow: bool = False, exclude: Union[List, str, Set, Dict] = None, order_by: Union[List, str] = None) -> T
 ```
 
 Allow to refresh existing Models fields from database.
@@ -203,16 +183,17 @@ follow them inside. So Model A -> Model B -> Model C -> Model A -> Model X
 will load second Model A but will never follow into Model X.
 Nested relations of those kind need to be loaded manually.
 
-**Raises**:
-
-- `NoMatch`: If given pk is not found in database.
-
 **Arguments**:
 
-- `exclude ()`: 
+- `order_by (Union[List, str])`: columns by which models should be sorted
+- `exclude (Union[List, str, Set, Dict])`: related models to exclude
 - `follow (bool)`: flag to trigger deep save -
 by default only directly related models are saved
 with follow=True also related models of related models are saved
+
+**Raises**:
+
+- `NoMatch`: If given pk is not found in database.
 
 **Returns**:
 

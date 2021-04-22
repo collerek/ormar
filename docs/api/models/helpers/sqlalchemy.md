@@ -5,7 +5,7 @@
 #### adjust\_through\_many\_to\_many\_model
 
 ```python
-adjust_through_many_to_many_model(model_field: Type["ManyToManyField"]) -> None
+adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None
 ```
 
 Registers m2m relation on through model.
@@ -21,7 +21,7 @@ Sets pydantic fields with child and parent model types.
 #### create\_and\_append\_m2m\_fk
 
 ```python
-create_and_append_m2m_fk(model: Type["Model"], model_field: Type["ManyToManyField"], field_name: str) -> None
+create_and_append_m2m_fk(model: Type["Model"], model_field: "ManyToManyField", field_name: str) -> None
 ```
 
 Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.
@@ -98,6 +98,72 @@ or pkname validation fails.
 
 `(Tuple[Optional[str], List[sqlalchemy.Column]])`: pkname, list of sqlalchemy columns
 
+<a name="models.helpers.sqlalchemy._process_fields"></a>
+#### \_process\_fields
+
+```python
+_process_fields(model_fields: Dict, new_model: Type["Model"]) -> Tuple[Optional[str], List[sqlalchemy.Column]]
+```
+
+Helper method.
+
+Populates pkname and columns.
+Trigger validation of primary_key - only one and required pk can be set,
+cannot be pydantic_only.
+
+Append fields to columns if it's not pydantic_only,
+virtual ForeignKey or ManyToMany field.
+
+Sets `owner` on each model_field as reference to newly created Model.
+
+**Raises**:
+
+- `ModelDefinitionError`: if validation of related_names fail,
+or pkname validation fails.
+
+**Arguments**:
+
+- `model_fields (Dict[str, ormar.Field])`: dictionary of declared ormar model fields
+- `new_model (Model class)`: 
+
+**Returns**:
+
+`(Tuple[Optional[str], List[sqlalchemy.Column]])`: pkname, list of sqlalchemy columns
+
+<a name="models.helpers.sqlalchemy._is_through_model_not_set"></a>
+#### \_is\_through\_model\_not\_set
+
+```python
+_is_through_model_not_set(field: "BaseField") -> bool
+```
+
+Alias to if check that verifies if through model was created.
+
+**Arguments**:
+
+- `field ("BaseField")`: field to check
+
+**Returns**:
+
+`(bool)`: result of the check
+
+<a name="models.helpers.sqlalchemy._is_db_field"></a>
+#### \_is\_db\_field
+
+```python
+_is_db_field(field: "BaseField") -> bool
+```
+
+Alias to if check that verifies if field should be included in database.
+
+**Arguments**:
+
+- `field ("BaseField")`: field to check
+
+**Returns**:
+
+`(bool)`: result of the check
+
 <a name="models.helpers.sqlalchemy.populate_meta_tablename_columns_and_pk"></a>
 #### populate\_meta\_tablename\_columns\_and\_pk
 
@@ -165,7 +231,7 @@ It populates name, metadata, columns and constraints.
 #### update\_column\_definition
 
 ```python
-update_column_definition(model: Union[Type["Model"], Type["NewBaseModel"]], field: Type["ForeignKeyField"]) -> None
+update_column_definition(model: Union[Type["Model"], Type["NewBaseModel"]], field: "ForeignKeyField") -> None
 ```
 
 Updates a column with a new type column based on updated parameters in FK fields.
@@ -173,7 +239,7 @@ Updates a column with a new type column based on updated parameters in FK fields
 **Arguments**:
 
 - `model (Type["Model"])`: model on which columns needs to be updated
-- `field (Type[ForeignKeyField])`: field with column definition that requires update
+- `field (ForeignKeyField)`: field with column definition that requires update
 
 **Returns**:
 

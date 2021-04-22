@@ -5,7 +5,7 @@
 ## QuerysetProxy Objects
 
 ```python
-class QuerysetProxy()
+class QuerysetProxy(Generic[T])
 ```
 
 Exposes QuerySet methods on relations, but also handles creating and removing
@@ -16,7 +16,7 @@ of through Models for m2m relations.
 
 ```python
  | @property
- | queryset() -> "QuerySet"
+ | queryset() -> "QuerySet[T]"
 ```
 
 Returns queryset if it's set, AttributeError otherwise.
@@ -43,7 +43,7 @@ Set's the queryset. Initialized in RelationProxy.
 #### \_assign\_child\_to\_parent
 
 ```python
- | _assign_child_to_parent(child: Optional["Model"]) -> None
+ | _assign_child_to_parent(child: Optional["T"]) -> None
 ```
 
 Registers child in parents RelationManager.
@@ -56,7 +56,7 @@ Registers child in parents RelationManager.
 #### \_register\_related
 
 ```python
- | _register_related(child: Union["Model", Sequence[Optional["Model"]]]) -> None
+ | _register_related(child: Union["T", Sequence[Optional["T"]]]) -> None
 ```
 
 Registers child/ children in parents RelationManager.
@@ -78,7 +78,7 @@ Cleans the current list of the related models.
 #### create\_through\_instance
 
 ```python
- | async create_through_instance(child: "Model", **kwargs: Any) -> None
+ | async create_through_instance(child: "T", **kwargs: Any) -> None
 ```
 
 Crete a through model instance in the database for m2m relations.
@@ -92,10 +92,25 @@ Crete a through model instance in the database for m2m relations.
 #### update\_through\_instance
 
 ```python
- | async update_through_instance(child: "Model", **kwargs: Any) -> None
+ | async update_through_instance(child: "T", **kwargs: Any) -> None
 ```
 
 Updates a through model instance in the database for m2m relations.
+
+**Arguments**:
+
+- `kwargs (Any)`: dict of additional keyword arguments for through instance
+- `child (Model)`: child model instance
+
+<a name="relations.querysetproxy.QuerysetProxy.upsert_through_instance"></a>
+#### upsert\_through\_instance
+
+```python
+ | async upsert_through_instance(child: "T", **kwargs: Any) -> None
+```
+
+Updates a through model instance in the database for m2m relations if
+it already exists, else creates one.
 
 **Arguments**:
 
@@ -106,7 +121,7 @@ Updates a through model instance in the database for m2m relations.
 #### delete\_through\_instance
 
 ```python
- | async delete_through_instance(child: "Model") -> None
+ | async delete_through_instance(child: "T") -> None
 ```
 
 Removes through model instance from the database for m2m relations.
@@ -147,6 +162,62 @@ Actual call delegated to QuerySet.
 
 `(int)`: number of rows
 
+<a name="relations.querysetproxy.QuerysetProxy.max"></a>
+#### max
+
+```python
+ | async max(columns: Union[str, List[str]]) -> Any
+```
+
+Returns max value of columns for rows matching the given criteria
+(applied with `filter` and `exclude` if set before).
+
+**Returns**:
+
+`(Any)`: max value of column(s)
+
+<a name="relations.querysetproxy.QuerysetProxy.min"></a>
+#### min
+
+```python
+ | async min(columns: Union[str, List[str]]) -> Any
+```
+
+Returns min value of columns for rows matching the given criteria
+(applied with `filter` and `exclude` if set before).
+
+**Returns**:
+
+`(Any)`: min value of column(s)
+
+<a name="relations.querysetproxy.QuerysetProxy.sum"></a>
+#### sum
+
+```python
+ | async sum(columns: Union[str, List[str]]) -> Any
+```
+
+Returns sum value of columns for rows matching the given criteria
+(applied with `filter` and `exclude` if set before).
+
+**Returns**:
+
+`(int)`: sum value of columns
+
+<a name="relations.querysetproxy.QuerysetProxy.avg"></a>
+#### avg
+
+```python
+ | async avg(columns: Union[str, List[str]]) -> Any
+```
+
+Returns avg value of columns for rows matching the given criteria
+(applied with `filter` and `exclude` if set before).
+
+**Returns**:
+
+`(Union[int, float, List])`: avg value of columns
+
 <a name="relations.querysetproxy.QuerysetProxy.clear"></a>
 #### clear
 
@@ -175,7 +246,7 @@ or not, keep_reversed=False deletes them from database.
 #### first
 
 ```python
- | async first(**kwargs: Any) -> "Model"
+ | async first(*args: Any, **kwargs: Any) -> "T"
 ```
 
 Gets the first row from the db ordered by primary key column ascending.
@@ -192,11 +263,34 @@ List of related models is cleared before the call.
 
 `(_asyncio.Future)`: 
 
+<a name="relations.querysetproxy.QuerysetProxy.get_or_none"></a>
+#### get\_or\_none
+
+```python
+ | async get_or_none(*args: Any, **kwargs: Any) -> Optional["T"]
+```
+
+Get's the first row from the db meeting the criteria set by kwargs.
+
+If no criteria set it will return the last row in db sorted by pk.
+
+Passing a criteria is actually calling filter(**kwargs) method described below.
+
+If not match is found None will be returned.
+
+**Arguments**:
+
+- `kwargs (Any)`: fields names and proper value types
+
+**Returns**:
+
+`(Model)`: returned model
+
 <a name="relations.querysetproxy.QuerysetProxy.get"></a>
 #### get
 
 ```python
- | async get(**kwargs: Any) -> "Model"
+ | async get(*args: Any, **kwargs: Any) -> "T"
 ```
 
 Get's the first row from the db meeting the criteria set by kwargs.
@@ -226,7 +320,7 @@ List of related models is cleared before the call.
 #### all
 
 ```python
- | async all(**kwargs: Any) -> Sequence[Optional["Model"]]
+ | async all(*args: Any, **kwargs: Any) -> List[Optional["T"]]
 ```
 
 Returns all rows from a database for given model for set filter options.
@@ -251,7 +345,7 @@ List of related models is cleared before the call.
 #### create
 
 ```python
- | async create(**kwargs: Any) -> "Model"
+ | async create(**kwargs: Any) -> "T"
 ```
 
 Creates the model instance, saves it in a database and returns the updates model
@@ -296,7 +390,7 @@ each=True flag to affect whole table.
 #### get\_or\_create
 
 ```python
- | async get_or_create(**kwargs: Any) -> "Model"
+ | async get_or_create(*args: Any, **kwargs: Any) -> "T"
 ```
 
 Combination of create and get methods.
@@ -317,7 +411,7 @@ it creates a new one with given kwargs.
 #### update\_or\_create
 
 ```python
- | async update_or_create(**kwargs: Any) -> "Model"
+ | async update_or_create(**kwargs: Any) -> "T"
 ```
 
 Updates the model, or in case there is no match in database creates a new one.
@@ -336,7 +430,7 @@ Actual call delegated to QuerySet.
 #### filter
 
 ```python
- | filter(**kwargs: Any) -> "QuerysetProxy"
+ | filter(*args: Any, **kwargs: Any) -> "QuerysetProxy[T]"
 ```
 
 Allows you to filter by any `Model` attribute/field
@@ -349,6 +443,8 @@ You can use special filter suffix to change the filter operands:
 *  contains - like `album__name__contains='Mal'` (sql like)
 *  icontains - like `album__name__icontains='mal'` (sql like case insensitive)
 *  in - like `album__name__in=['Malibu', 'Barclay']` (sql in)
+*  isnull - like `album__name__isnull=True` (sql is null)
+(isnotnull `album__name__isnull=False` (sql is not null))
 *  gt - like `position__gt=3` (sql >)
 *  gte - like `position__gte=3` (sql >=)
 *  lt - like `position__lt=3` (sql <)
@@ -372,7 +468,7 @@ Actual call delegated to QuerySet.
 #### exclude
 
 ```python
- | exclude(**kwargs: Any) -> "QuerysetProxy"
+ | exclude(*args: Any, **kwargs: Any) -> "QuerysetProxy[T]"
 ```
 
 Works exactly the same as filter and all modifiers (suffixes) are the same,
@@ -397,11 +493,40 @@ Actual call delegated to QuerySet.
 
 `(QuerysetProxy)`: filtered QuerysetProxy
 
+<a name="relations.querysetproxy.QuerysetProxy.select_all"></a>
+#### select\_all
+
+```python
+ | select_all(follow: bool = False) -> "QuerysetProxy[T]"
+```
+
+By default adds only directly related models.
+
+If follow=True is set it adds also related models of related models.
+
+To not get stuck in an infinite loop as related models also keep a relation
+to parent model visited models set is kept.
+
+That way already visited models that are nested are loaded, but the load do not
+follow them inside. So Model A -> Model B -> Model C -> Model A -> Model X
+will load second Model A but will never follow into Model X.
+Nested relations of those kind need to be loaded manually.
+
+**Arguments**:
+
+- `follow (bool)`: flag to trigger deep save -
+by default only directly related models are saved
+with follow=True also related models of related models are saved
+
+**Returns**:
+
+`(Model)`: reloaded Model
+
 <a name="relations.querysetproxy.QuerysetProxy.select_related"></a>
 #### select\_related
 
 ```python
- | select_related(related: Union[List, str]) -> "QuerysetProxy"
+ | select_related(related: Union[List, str]) -> "QuerysetProxy[T]"
 ```
 
 Allows to prefetch related models during the same query.
@@ -428,7 +553,7 @@ Actual call delegated to QuerySet.
 #### prefetch\_related
 
 ```python
- | prefetch_related(related: Union[List, str]) -> "QuerysetProxy"
+ | prefetch_related(related: Union[List, str]) -> "QuerysetProxy[T]"
 ```
 
 Allows to prefetch related models during query - but opposite to
@@ -456,7 +581,7 @@ Actual call delegated to QuerySet.
 #### paginate
 
 ```python
- | paginate(page: int, page_size: int = 20) -> "QuerysetProxy"
+ | paginate(page: int, page_size: int = 20) -> "QuerysetProxy[T]"
 ```
 
 You can paginate the result which is a combination of offset and limit clauses.
@@ -477,7 +602,7 @@ Actual call delegated to QuerySet.
 #### limit
 
 ```python
- | limit(limit_count: int) -> "QuerysetProxy"
+ | limit(limit_count: int) -> "QuerysetProxy[T]"
 ```
 
 You can limit the results to desired number of parent models.
@@ -496,7 +621,7 @@ Actual call delegated to QuerySet.
 #### offset
 
 ```python
- | offset(offset: int) -> "QuerysetProxy"
+ | offset(offset: int) -> "QuerysetProxy[T]"
 ```
 
 You can also offset the results by desired number of main models.
@@ -515,7 +640,7 @@ Actual call delegated to QuerySet.
 #### fields
 
 ```python
- | fields(columns: Union[List, str, Set, Dict]) -> "QuerysetProxy"
+ | fields(columns: Union[List, str, Set, Dict]) -> "QuerysetProxy[T]"
 ```
 
 With `fields()` you can select subset of model columns to limit the data load.
@@ -568,7 +693,7 @@ Actual call delegated to QuerySet.
 #### exclude\_fields
 
 ```python
- | exclude_fields(columns: Union[List, str, Set, Dict]) -> "QuerysetProxy"
+ | exclude_fields(columns: Union[List, str, Set, Dict]) -> "QuerysetProxy[T]"
 ```
 
 With `exclude_fields()` you can select subset of model columns that will
@@ -605,7 +730,7 @@ Actual call delegated to QuerySet.
 #### order\_by
 
 ```python
- | order_by(columns: Union[List, str]) -> "QuerysetProxy"
+ | order_by(columns: Union[List, str, "OrderAction"]) -> "QuerysetProxy[T]"
 ```
 
 With `order_by()` you can order the results from database based on your

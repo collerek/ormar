@@ -69,34 +69,34 @@ tracks = Track.objects.filter(album__name="Fantasies").all()
 
 You can use special filter suffix to change the filter operands:
 
-*  exact - exact match to value, sql `column = <VALUE>` 
-   * can be written as`album__name__exact='Malibu'`
-*  iexact - exact match sql `column = <VALUE>` (case insensitive)
-   * can be written as`album__name__iexact='malibu'`
-*  contains - sql `column LIKE '%<VALUE>%'`
-   * can be written as`album__name__contains='Mal'`
-*  icontains - sql `column LIKE '%<VALUE>%'` (case insensitive)
-   * can be written as`album__name__icontains='mal'`
-*  in - sql ` column IN (<VALUE1>, <VALUE2>, ...)`
-   * can be written as`album__name__in=['Malibu', 'Barclay']`
-*  isnull - sql `column IS NULL` (and sql `column IS NOT NULL`) 
-   * can be written as`album__name__isnull=True` (isnotnull `album__name__isnull=False`)
-*  gt - sql `column > <VALUE>` (greater than)
-   * can be written as`position__gt=3`
-*  gte - sql `column >= <VALUE>` (greater or equal than)
-   * can be written as`position__gte=3`
-*  lt - sql `column < <VALUE>` (lower than)
-   * can be written as`position__lt=3`
-*  lte - sql `column <= <VALUE>` (lower equal than)
-   * can be written as`position__lte=3` 
-*  startswith - sql `column LIKE '<VALUE>%'` (exact start match)
-   * can be written as`album__name__startswith='Mal'`
-*  istartswith - sql `column LIKE '<VALUE>%'` (case insensitive)
-   * can be written as`album__name__istartswith='mal'`
-*  endswith - sql `column LIKE '%<VALUE>'` (exact end match)
-   * can be written as`album__name__endswith='ibu'`
-*  iendswith - sql `column LIKE '%<VALUE>'` (case insensitive)
-   * can be written as`album__name__iendswith='IBU'` 
+*  **exact** - exact match to value, sql `column = <VALUE>` 
+       * can be written as`album__name__exact='Malibu'`
+*  **iexact** - exact match sql `column = <VALUE>` (case insensitive)
+      * can be written as`album__name__iexact='malibu'`
+*  **contains** - sql `column LIKE '%<VALUE>%'`
+       * can be written as`album__name__contains='Mal'`
+*  **icontains** - sql `column LIKE '%<VALUE>%'` (case insensitive)
+       * can be written as`album__name__icontains='mal'`
+*  **in** - sql ` column IN (<VALUE1>, <VALUE2>, ...)`
+       * can be written as`album__name__in=['Malibu', 'Barclay']`
+*  **isnull** - sql `column IS NULL` (and sql `column IS NOT NULL`) 
+      * can be written as`album__name__isnull=True` (isnotnull `album__name__isnull=False`)
+*  **gt** - sql `column > <VALUE>` (greater than)
+       * can be written as`position__gt=3`
+*  **gte** - sql `column >= <VALUE>` (greater or equal than)
+       * can be written as`position__gte=3`
+*  **lt** - sql `column < <VALUE>` (lower than)
+       * can be written as`position__lt=3`
+*  **lte** - sql `column <= <VALUE>` (lower equal than)
+       * can be written as`position__lte=3` 
+*  **startswith** - sql `column LIKE '<VALUE>%'` (exact start match)
+       * can be written as`album__name__startswith='Mal'`
+*  **istartswith** - sql `column LIKE '<VALUE>%'` (case insensitive)
+       * can be written as`album__name__istartswith='mal'`
+*  **endswith** - sql `column LIKE '%<VALUE>'` (exact end match)
+       * can be written as`album__name__endswith='ibu'`
+*  **iendswith** - sql `column LIKE '%<VALUE>'` (case insensitive)
+       * can be written as`album__name__iendswith='IBU'` 
     
 Some samples:
 
@@ -116,40 +116,40 @@ Product.objects.filter(
 
 ### Python style filters
 
-*  exact - exact match to value, sql `column = <VALUE>` 
-   * can be written as `Track.album.name == 'Malibu`
-*  iexact - exact match sql `column = <VALUE>` (case insensitive)
-   * can be written as `Track.album.name.iexact('malibu')`
-*  contains - sql `column LIKE '%<VALUE>%'`
-   * can be written as `Track.album.name % 'Mal')`
-   * can be written as `Track.album.name.contains('Mal')`
-*  icontains - sql `column LIKE '%<VALUE>%'` (case insensitive)
-   * can be written as `Track.album.name.icontains('mal')`
-*  in - sql ` column IN (<VALUE1>, <VALUE2>, ...)`
-   * can be written as `Track.album.name << ['Malibu', 'Barclay']`
-   * can be written as `Track.album.name.in_(['Malibu', 'Barclay'])`
-*  isnull - sql `column IS NULL` (and sql `column IS NOT NULL`) 
-   * can be written as `Track.album.name >> None`
-   * can be written as `Track.album.name.is_null(True)`
-   * not null can be written as `Track.album.name.is_null(False)`
-   * not null can be written as `~(Track.album.name >> None)`
-   * not null can be written as `~(Track.album.name.is_null(True))`
-*  gt - sql `column > <VALUE>` (greater than)
-   * can be written as `Track.album.name > 3`
-*  gte - sql `column >= <VALUE>` (greater or equal than)
-   * can be written as `Track.album.name >= 3`
-*  lt - sql `column < <VALUE>` (lower than)
-   * can be written as `Track.album.name < 3`
-*  lte - sql `column <= <VALUE>` (lower equal than)
-   * can be written as `Track.album.name <= 3`
-*  startswith - sql `column LIKE '<VALUE>%'` (exact start match)
-   * can be written as `Track.album.name.startswith('Mal')`
-*  istartswith - sql `column LIKE '<VALUE>%'` (case insensitive)
-   * can be written as `Track.album.name.istartswith('mal')`
-*  endswith - sql `column LIKE '%<VALUE>'` (exact end match)
-   * can be written as `Track.album.name.endswith('ibu')`
-*  iendswith - sql `column LIKE '%<VALUE>'` (case insensitive)
-   * can be written as `Track.album.name.iendswith('IBU')`
+*  **exact** - exact match to value, sql `column = <VALUE>` 
+      * can be written as `Track.album.name == 'Malibu`
+*  **iexact** - exact match sql `column = <VALUE>` (case insensitive)
+      * can be written as `Track.album.name.iexact('malibu')`
+*  **contains** - sql `column LIKE '%<VALUE>%'`
+       * can be written as `Track.album.name % 'Mal')`
+       * can be written as `Track.album.name.contains('Mal')`
+*  **icontains** - sql `column LIKE '%<VALUE>%'` (case insensitive)
+       * can be written as `Track.album.name.icontains('mal')`
+*  **in** - sql ` column IN (<VALUE1>, <VALUE2>, ...)`
+       * can be written as `Track.album.name << ['Malibu', 'Barclay']`
+       * can be written as `Track.album.name.in_(['Malibu', 'Barclay'])`
+*  **isnull** - sql `column IS NULL` (and sql `column IS NOT NULL`) 
+       * can be written as `Track.album.name >> None`
+       * can be written as `Track.album.name.isnull(True)`
+       * not null can be written as `Track.album.name.isnull(False)`
+       * not null can be written as `~(Track.album.name >> None)`
+       * not null can be written as `~(Track.album.name.isnull(True))`
+*  **gt** - sql `column > <VALUE>` (greater than)
+       * can be written as `Track.album.name > 3`
+*  **gte** - sql `column >= <VALUE>` (greater or equal than)
+       * can be written as `Track.album.name >= 3`
+*  **lt** - sql `column < <VALUE>` (lower than)
+       * can be written as `Track.album.name < 3`
+*  **lte** - sql `column <= <VALUE>` (lower equal than)
+       * can be written as `Track.album.name <= 3`
+*  **startswith** - sql `column LIKE '<VALUE>%'` (exact start match)
+       * can be written as `Track.album.name.startswith('Mal')`
+*  **istartswith** - sql `column LIKE '<VALUE>%'` (case insensitive)
+       * can be written as `Track.album.name.istartswith('mal')`
+*  **endswith** - sql `column LIKE '%<VALUE>'` (exact end match)
+       * can be written as `Track.album.name.endswith('ibu')`
+*  **iendswith** - sql `column LIKE '%<VALUE>'` (case insensitive)
+       * can be written as `Track.album.name.iendswith('IBU')`
 
 Some samples:
 
@@ -291,7 +291,7 @@ Let's select books of Tolkien **OR** books written after 1970
 sql:
 `WHERE ( authors.name = 'J.R.R. Tolkien' OR books.year > 1970 )`
 
-### Django style
+#### Django style
 ```python
 books = (
     await Book.objects.select_related("author")
@@ -301,7 +301,7 @@ books = (
 assert len(books) == 5
 ```
 
-### Python style
+#### Python style
 ```python
 books = (
     await Book.objects.select_related("author")
@@ -316,7 +316,7 @@ Now let's select books written after 1960 or before 1940 which were written by T
 sql:
 `WHERE ( books.year > 1960 OR books.year < 1940 ) AND authors.name = 'J.R.R. Tolkien'`
 
-### Django style
+#### Django style
 ```python
 # OPTION 1 - split and into separate call
 books = (
@@ -344,7 +344,7 @@ assert books[0].title == "The Hobbit"
 assert books[1].title == "The Silmarillion"
 ```
 
-### Python style
+#### Python style
 ```python
 books = (
     await Book.objects.select_related("author")
@@ -375,7 +375,7 @@ Books of Sapkowski from before 2000 or books of Tolkien written after 1960
 sql:
 `WHERE ( ( books.year > 1960 AND authors.name = 'J.R.R. Tolkien' ) OR ( books.year < 2000 AND authors.name = 'Andrzej Sapkowski' ) ) `
 
-### Django style
+#### Django style
 ```python
 books = (
     await Book.objects.select_related("author")
@@ -390,7 +390,7 @@ books = (
 assert len(books) == 2
 ```
 
-### Python style
+#### Python style
 ```python
 books = (
     await Book.objects.select_related("author")
@@ -411,7 +411,7 @@ sql:
 ( books.year < 2000 AND os0cec_authors.name = 'Andrzej Sapkowski' ) OR 
 books.title LIKE '%hobbit%' )`
 
-### Django style
+#### Django style
 ```python
 books = (
     await Book.objects.select_related("author")
@@ -426,7 +426,7 @@ books = (
 )
 ```
 
-### Python style
+#### Python style
 ```python
 books = (
     await Book.objects.select_related("author")
@@ -451,7 +451,7 @@ AND authors.name = 'J.R.R. Tolkien' ) OR
 
 You can construct a query as follows:
 
-### Django style
+#### Django style
 ```python
 books = (
     await Book.objects.select_related("author")
@@ -472,16 +472,21 @@ assert books[1].title == "The Silmarillion"
 assert books[2].title == "The Witcher"
 ```
 
+#### Python style
 ```python
 books = (
     await Book.objects.select_related("author")
-    .filter(
-        ormar.or_(
-            ormar.and_(
-                ormar.or_(year__gt=1960, year__lt=1940),
-                author__name="J.R.R. Tolkien",
-            ),
-            ormar.and_(year__lt=2000, author__name="Andrzej Sapkowski"),
+    .filter(        
+        (
+            (
+            (Book.year > 1960) |
+            (Book.year < 1940)
+            ) &
+            (Book.author.name == "J.R.R. Tolkien")
+        ) |
+        (
+            (Book.year < 2000) & 
+            (Book.author.name == "Andrzej Sapkowski")
         )
     )
     .all()
@@ -512,7 +517,7 @@ assert books[0].title == "The Witcher"
 
 Same applies to python style chaining and nesting.
 
-### Django style
+#### Django style
 
 Note that with django style you cannot provide the same keyword argument several times so queries like `filter(ormar.or_(name='Jack', name='John'))` are not allowed. If you want to check the same
 column for several values simply use `in` operator: `filter(name__in=['Jack','John'])`.
@@ -559,7 +564,7 @@ books = (
 assert len(books) == 5
 ```
 
-### Python style
+#### Python style
 
 Note that with python style you can perfectly use the same fields as many times as you want.
 
@@ -721,7 +726,7 @@ Given sample Models like following:
 
 To order by main model field just provide a field name
 
-### Django style
+#### Django style
 ```python
 toys = await Toy.objects.select_related("owner").order_by("name").all()
 assert [x.name.replace("Toy ", "") for x in toys] == [
@@ -731,7 +736,7 @@ assert toys[0].owner == zeus
 assert toys[1].owner == aphrodite
 ```
 
-### Python style
+#### Python style
 ```python
 toys = await Toy.objects.select_related("owner").order_by(Toy.name.asc()).all()
 assert [x.name.replace("Toy ", "") for x in toys] == [
@@ -747,7 +752,7 @@ To sort on nested models separate field names with dunder '__'.
 You can sort this way across all relation types -> `ForeignKey`, reverse virtual FK
 and `ManyToMany` fields.
 
-### Django style
+#### Django style
 ```python
 toys = await Toy.objects.select_related("owner").order_by("owner__name").all()
 assert toys[0].owner.name == toys[1].owner.name == "Aphrodite"
@@ -755,7 +760,7 @@ assert toys[2].owner.name == toys[3].owner.name == "Hermes"
 assert toys[4].owner.name == toys[5].owner.name == "Zeus"
 ```
 
-### Python style
+#### Python style
 ```python
 toys = await Toy.objects.select_related("owner").order_by(Toy.owner.name.asc()).all()
 assert toys[0].owner.name == toys[1].owner.name == "Aphrodite"
@@ -765,7 +770,7 @@ assert toys[4].owner.name == toys[5].owner.name == "Zeus"
 
 To sort in descending order provide a hyphen in front of the field name
 
-### Django style
+#### Django style
 ```python
 owner = (
     await Owner.objects.select_related("toys")
@@ -777,7 +782,7 @@ assert owner.toys[0].name == "Toy 4"
 assert owner.toys[1].name == "Toy 1"
 ```
 
-### Python style
+#### Python style
 ```python
 owner = (
     await Owner.objects.select_related("toys")

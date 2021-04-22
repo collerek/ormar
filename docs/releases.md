@@ -25,10 +25,10 @@
     *  isnull - sql `column IS NULL` (and sql `column IS NOT NULL`) 
        * OLD: `album__name__isnull=True` (isnotnull `album__name__isnull=False`)
        * NEW: can be also written as `Track.album.name >> None`
-       * NEW: can be also written as `Track.album.name.is_null(True)`
-       * NEW: not null can be also written as `Track.album.name.is_null(False)`
+       * NEW: can be also written as `Track.album.name.isnull(True)`
+       * NEW: not null can be also written as `Track.album.name.isnull(False)`
        * NEW: not null can be also written as `~(Track.album.name >> None)`
-       * NEW: not null can be also written as `~(Track.album.name.is_null(True))`
+       * NEW: not null can be also written as `~(Track.album.name.isnull(True))`
     *  gt - sql `column > <VALUE>` (greater than)
        * OLD: `position__gt=3`
        * NEW: can be also written as `Track.album.name > 3`

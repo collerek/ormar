@@ -56,7 +56,7 @@ List has to have sqlalchemy names of columns (ormar aliases) not the ormar ones.
 
 ```python
  | @staticmethod
- | prefixed_table_name(alias: str, name: str) -> text
+ | prefixed_table_name(alias: str, table: sqlalchemy.Table) -> text
 ```
 
 Creates text clause with table name with aliased name.
@@ -64,7 +64,7 @@ Creates text clause with table name with aliased name.
 **Arguments**:
 
 - `alias (str)`: alias of given table
-- `name (str)`: table name
+- `table (sqlalchemy.Table)`: table
 
 **Returns**:
 
@@ -138,7 +138,7 @@ Given model and relation name returns the alias for this relation.
 #### resolve\_relation\_alias\_after\_complex
 
 ```python
- | resolve_relation_alias_after_complex(source_model: Union[Type["Model"], Type["ModelRow"]], relation_str: str, relation_field: Type["ForeignKeyField"]) -> str
+ | resolve_relation_alias_after_complex(source_model: Union[Type["Model"], Type["ModelRow"]], relation_str: str, relation_field: "ForeignKeyField") -> str
 ```
 
 Given source model and relation string returns the alias for this complex
@@ -147,7 +147,7 @@ field definition.
 
 **Arguments**:
 
-- `relation_field (Type["ForeignKeyField"])`: field with direct relation definition
+- `relation_field ("ForeignKeyField")`: field with direct relation definition
 - `source_model (source Model)`: model with query starts
 - `relation_str (str)`: string with relation joins defined
 

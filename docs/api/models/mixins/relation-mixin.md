@@ -30,7 +30,7 @@ related fields.
 
 ```python
  | @classmethod
- | extract_related_fields(cls) -> List
+ | extract_related_fields(cls) -> List["ForeignKeyField"]
 ```
 
 Returns List of ormar Fields for all relations declared on a model.
@@ -45,7 +45,7 @@ List is cached in cls._related_fields for quicker access.
 
 ```python
  | @classmethod
- | extract_through_names(cls) -> Set
+ | extract_through_names(cls) -> Set[str]
 ```
 
 Extracts related fields through names which are shortcuts to through models.
@@ -84,43 +84,35 @@ related fields that are not stored as foreign keys on given model.
 
 `(Set)`: set of model fields with non fk relation fields excluded
 
-<a name="models.mixins.relation_mixin.RelationMixin._exclude_related_names_not_required"></a>
-#### \_exclude\_related\_names\_not\_required
-
-```python
- | @classmethod
- | _exclude_related_names_not_required(cls, nested: bool = False) -> Set
-```
-
-Returns a set of non mandatory related models field names.
-
-For a main model (not nested) only nullable related field names are returned,
-for nested models all related models are returned.
-
-**Arguments**:
-
-- `nested (bool)`: flag setting nested models (child of previous one, not main one)
-
-**Returns**:
-
-`(Set)`: set of non mandatory related fields
-
 <a name="models.mixins.relation_mixin.RelationMixin._iterate_related_models"></a>
 #### \_iterate\_related\_models
 
 ```python
  | @classmethod
- | _iterate_related_models(cls, visited: Set[Union[Type["Model"], Type["RelationMixin"]]] = None, source_relation: str = None, source_model: Union[Type["Model"], Type["RelationMixin"]] = None) -> List[str]
+ | _iterate_related_models(cls, node_list: NodeList = None, source_relation: str = None) -> List[str]
 ```
 
 Iterates related models recursively to extract relation strings of
 nested not visited models.
 
+**Returns**:
+
+`(List[str])`: list of relation strings to be passed to select_related
+
+<a name="models.mixins.relation_mixin.RelationMixin._get_final_relations"></a>
+#### \_get\_final\_relations
+
+```python
+ | @staticmethod
+ | _get_final_relations(processed_relations: List, source_relation: Optional[str]) -> List[str]
+```
+
+Helper method to prefix nested relation strings with current source relation
+
 **Arguments**:
 
-- `visited (Set[str])`: set of already visited models
+- `processed_relations (List[str])`: list of already processed relation str
 - `source_relation (str)`: name of the current relation
-- `source_model (Type["Model"])`: model from which relation comes in nested relations
 
 **Returns**:
 

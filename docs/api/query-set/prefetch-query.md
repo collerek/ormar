@@ -241,7 +241,7 @@ Calls itself recurrently to extract deeper nested relations of related model.
 #### \_run\_prefetch\_query
 
 ```python
- | async _run_prefetch_query(target_field: Type["BaseField"], excludable: "ExcludableItems", filter_clauses: List, related_field_name: str) -> Tuple[str, str, List]
+ | async _run_prefetch_query(target_field: "BaseField", excludable: "ExcludableItems", filter_clauses: List, related_field_name: str) -> Tuple[str, str, List]
 ```
 
 Actually runs the queries against the database and populates the raw response
@@ -252,7 +252,7 @@ models.
 
 **Arguments**:
 
-- `target_field (Type["BaseField"])`: ormar field with relation definition
+- `target_field ("BaseField")`: ormar field with relation definition
 - `filter_clauses (List[sqlalchemy.sql.elements.TextClause])`: list of clauses, actually one clause with ids of relation
 
 **Returns**:
@@ -283,14 +283,14 @@ deeper on related model and already loaded in select related query.
 #### \_update\_already\_loaded\_rows
 
 ```python
- | _update_already_loaded_rows(target_field: Type["BaseField"], prefetch_dict: Dict, orders_by: Dict) -> None
+ | _update_already_loaded_rows(target_field: "BaseField", prefetch_dict: Dict, orders_by: Dict) -> None
 ```
 
 Updates models that are already loaded, usually children of children.
 
 **Arguments**:
 
-- `target_field (Type["BaseField"])`: ormar field with relation definition
+- `target_field ("BaseField")`: ormar field with relation definition
 - `prefetch_dict (Dict)`: dictionaries of related models to prefetch
 - `orders_by (Dict)`: dictionary of order by clauses by model
 
@@ -298,7 +298,7 @@ Updates models that are already loaded, usually children of children.
 #### \_populate\_rows
 
 ```python
- | _populate_rows(rows: List, target_field: Type["ForeignKeyField"], parent_model: Type["Model"], table_prefix: str, exclude_prefix: str, excludable: "ExcludableItems", prefetch_dict: Dict, orders_by: Dict) -> None
+ | _populate_rows(rows: List, target_field: "ForeignKeyField", parent_model: Type["Model"], table_prefix: str, exclude_prefix: str, excludable: "ExcludableItems", prefetch_dict: Dict, orders_by: Dict) -> None
 ```
 
 Instantiates children models extracted from given relation.
@@ -314,7 +314,7 @@ and set on the parent model after sorting if needed.
 
 - `excludable (ExcludableItems)`: structure of fields to include and exclude
 - `rows (List[sqlalchemy.engine.result.RowProxy])`: raw sql response from the prefetch query
-- `target_field (Type["BaseField"])`: field with relation definition from parent model
+- `target_field ("BaseField")`: field with relation definition from parent model
 - `parent_model (Type[Model])`: model with relation definition
 - `table_prefix (str)`: prefix of the target table from current relation
 - `prefetch_dict (Dict)`: dictionaries of related models to prefetch

@@ -128,3 +128,75 @@ that should have the signal receiver registered
 
 `(Callable)`: returns the original function untouched
 
+<a name="decorators.signals.pre_relation_add"></a>
+#### pre\_relation\_add
+
+```python
+pre_relation_add(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable
+```
+
+Connect given function to all senders for pre_relation_add signal.
+
+**Arguments**:
+
+- `senders (Union[Type["Model"], List[Type["Model"]]])`: one or a list of "Model" classes
+that should have the signal receiver registered
+
+**Returns**:
+
+`(Callable)`: returns the original function untouched
+
+<a name="decorators.signals.post_relation_add"></a>
+#### post\_relation\_add
+
+```python
+post_relation_add(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable
+```
+
+Connect given function to all senders for post_relation_add signal.
+
+**Arguments**:
+
+- `senders (Union[Type["Model"], List[Type["Model"]]])`: one or a list of "Model" classes
+that should have the signal receiver registered
+
+**Returns**:
+
+`(Callable)`: returns the original function untouched
+
+<a name="decorators.signals.pre_relation_remove"></a>
+#### pre\_relation\_remove
+
+```python
+pre_relation_remove(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable
+```
+
+Connect given function to all senders for pre_relation_remove signal.
+
+**Arguments**:
+
+- `senders (Union[Type["Model"], List[Type["Model"]]])`: one or a list of "Model" classes
+that should have the signal receiver registered
+
+**Returns**:
+
+`(Callable)`: returns the original function untouched
+
+<a name="decorators.signals.post_relation_remove"></a>
+#### post\_relation\_remove
+
+```python
+post_relation_remove(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable
+```
+
+Connect given function to all senders for post_relation_remove signal.
+
+**Arguments**:
+
+- `senders (Union[Type["Model"], List[Type["Model"]]])`: one or a list of "Model" classes
+that should have the signal receiver registered
+
+**Returns**:
+
+`(Callable)`: returns the original function untouched
+

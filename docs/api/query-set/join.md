@@ -27,7 +27,7 @@ Shortcut for ormar's model AliasManager stored on Meta.
 
 ```python
  | @property
- | to_table() -> str
+ | to_table() -> sqlalchemy.Table
 ```
 
 Shortcut to table name of the next model
@@ -171,6 +171,36 @@ Adds aliases of required column to list of columns to include in query.
 Updates the used aliases list directly.
 
 Process order_by causes for non m2m relations.
+
+<a name="queryset.join.SqlJoin._verify_allowed_order_field"></a>
+#### \_verify\_allowed\_order\_field
+
+```python
+ | _verify_allowed_order_field(order_by: str) -> None
+```
+
+Verifies if proper field string is used.
+
+**Arguments**:
+
+- `order_by (str)`: string with order by definition
+
+<a name="queryset.join.SqlJoin._get_alias_and_model"></a>
+#### \_get\_alias\_and\_model
+
+```python
+ | _get_alias_and_model(order_by: str) -> Tuple[str, Type["Model"]]
+```
+
+Returns proper model and alias to be applied in the clause.
+
+**Arguments**:
+
+- `order_by (str)`: string with order by definition
+
+**Returns**:
+
+`(Tuple[str, Type["Model"]])`: alias and model to be used in clause
 
 <a name="queryset.join.SqlJoin._get_order_bys"></a>
 #### \_get\_order\_bys

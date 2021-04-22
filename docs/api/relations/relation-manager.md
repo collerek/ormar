@@ -50,7 +50,7 @@ Actual call is delegated to Relation instance registered under relation name.
 
 ```python
  | @staticmethod
- | add(parent: "Model", child: "Model", field: Type["ForeignKeyField"]) -> None
+ | add(parent: "Model", child: "Model", field: "ForeignKeyField") -> None
 ```
 
 Adds relation on both sides -> meaning on both child and parent models.
@@ -121,14 +121,14 @@ Returns the actual relation and not the related model(s).
 #### \_get\_relation\_type
 
 ```python
- | _get_relation_type(field: Type["BaseField"]) -> RelationType
+ | _get_relation_type(field: "BaseField") -> RelationType
 ```
 
 Returns type of the relation declared on a field.
 
 **Arguments**:
 
-- `field (Type[BaseField])`: field with relation declaration
+- `field (BaseField)`: field with relation declaration
 
 **Returns**:
 
@@ -138,7 +138,7 @@ Returns type of the relation declared on a field.
 #### \_add\_relation
 
 ```python
- | _add_relation(field: Type["BaseField"]) -> None
+ | _add_relation(field: "BaseField") -> None
 ```
 
 Registers relation in the manager.
@@ -146,5 +146,5 @@ Adds Relation instance under field.name.
 
 **Arguments**:
 
-- `field (Type[BaseField])`: field with relation declaration
+- `field (BaseField)`: field with relation declaration
 
