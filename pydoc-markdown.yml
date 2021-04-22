@@ -122,6 +122,9 @@ renderer:
         - title: Offset Query
           contents:
             - queryset.offset_query.*
+        - title: Field accessor
+          contents:
+            - queryset.field_accessor.*
         - title: Utils
           contents:
             - queryset.utils.*

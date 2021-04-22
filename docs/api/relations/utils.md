@@ -5,7 +5,7 @@
 #### get\_relations\_sides\_and\_names
 
 ```python
-get_relations_sides_and_names(to_field: Type[ForeignKeyField], parent: "Model", child: "Model") -> Tuple["Model", "Model", str, str]
+get_relations_sides_and_names(to_field: ForeignKeyField, parent: "Model", child: "Model") -> Tuple["Model", "Model", str, str]
 ```
 
 Determines the names of child and parent relations names, as well as

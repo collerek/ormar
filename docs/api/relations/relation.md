@@ -18,7 +18,7 @@ Different types of relations supported by ormar:
 ## Relation Objects
 
 ```python
-class Relation()
+class Relation(Generic[T])
 ```
 
 Keeps related Models and handles adding/removing of the children.
@@ -27,7 +27,7 @@ Keeps related Models and handles adding/removing of the children.
 #### \_\_init\_\_
 
 ```python
- | __init__(manager: "RelationsManager", type_: RelationType, field_name: str, to: Type["Model"], through: Type["Model"] = None) -> None
+ | __init__(manager: "RelationsManager", type_: RelationType, field_name: str, to: Type["T"], through: Type["Model"] = None) -> None
 ```
 
 Initialize the Relation and keep the related models either as instances of

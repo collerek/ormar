@@ -5,7 +5,7 @@
 #### create\_dummy\_instance
 
 ```python
-create_dummy_instance(fk: Type["Model"], pk: Any = None) -> "Model"
+create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T"
 ```
 
 Ormar never returns you a raw data.
@@ -31,7 +31,7 @@ If the nested related Models are required they are set with -1 as pk value.
 #### create\_dummy\_model
 
 ```python
-create_dummy_model(base_model: Type["Model"], pk_field: Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]]) -> Type["BaseModel"]
+create_dummy_model(base_model: Type["T"], pk_field: Union[BaseField, "ForeignKeyField", "ManyToManyField"]) -> Type["BaseModel"]
 ```
 
 Used to construct a dummy pydantic model for type hints and pydantic validation.
@@ -40,7 +40,7 @@ Populates only pk field and set it to desired type.
 **Arguments**:
 
 - `base_model (Model class)`: class of target dummy model
-- `pk_field (Type[Union[BaseField, "ForeignKeyField", "ManyToManyField"]])`: ormar Field to be set on pydantic Model
+- `pk_field (Union[BaseField, "ForeignKeyField", "ManyToManyField"])`: ormar Field to be set on pydantic Model
 
 **Returns**:
 
@@ -50,7 +50,7 @@ Populates only pk field and set it to desired type.
 #### populate\_fk\_params\_based\_on\_to\_model
 
 ```python
-populate_fk_params_based_on_to_model(to: Type["Model"], nullable: bool, onupdate: str = None, ondelete: str = None) -> Tuple[Any, List, Any]
+populate_fk_params_based_on_to_model(to: Type["T"], nullable: bool, onupdate: str = None, ondelete: str = None) -> Tuple[Any, List, Any]
 ```
 
 Based on target to model to which relation leads to populates the type of the
@@ -68,6 +68,25 @@ How to treat child rows on delete of parent (the one where FK is defined) model.
 **Returns**:
 
 `(Tuple[Any, List, Any])`: tuple with target pydantic type, list of fk constraints and target col type
+
+<a name="fields.foreign_key.validate_not_allowed_fields"></a>
+#### validate\_not\_allowed\_fields
+
+```python
+validate_not_allowed_fields(kwargs: Dict) -> None
+```
+
+Verifies if not allowed parameters are set on relation models.
+Usually they are omitted later anyway but this way it's explicitly
+notify the user that it's not allowed/ supported.
+
+**Raises**:
+
+- `ModelDefinitionError`: if any forbidden field is set
+
+**Arguments**:
+
+- `kwargs (Dict)`: dict of kwargs to verify passed to relation field
 
 <a name="fields.foreign_key.UniqueColumns"></a>
 ## UniqueColumns Objects
@@ -94,7 +113,7 @@ to produce sqlalchemy.ForeignKeys
 #### ForeignKey
 
 ```python
-ForeignKey(to: "ToType", *, name: str = None, unique: bool = False, nullable: bool = True, related_name: str = None, virtual: bool = False, onupdate: str = None, ondelete: str = None, **kwargs: Any, ,) -> Any
+ForeignKey(to: "ToType", *, name: str = None, unique: bool = False, nullable: bool = True, related_name: str = None, virtual: bool = False, onupdate: str = None, ondelete: str = None, **kwargs: Any, ,) -> "T"
 ```
 
 Despite a name it's a function that returns constructed ForeignKeyField.
@@ -134,8 +153,7 @@ Actual class returned from ForeignKey function call and stored in model_fields.
 #### get\_source\_related\_name
 
 ```python
- | @classmethod
- | get_source_related_name(cls) -> str
+ | get_source_related_name() -> str
 ```
 
 Returns name to use for source relation name.
@@ -150,8 +168,7 @@ It's either set as `related_name` or by default it's owner model. get_name + 's'
 #### get\_related\_name
 
 ```python
- | @classmethod
- | get_related_name(cls) -> str
+ | get_related_name() -> str
 ```
 
 Returns name to use for reverse relation.
@@ -161,12 +178,37 @@ It's either set as `related_name` or by default it's owner model. get_name + 's'
 
 `(str)`: name of the related_name or default related name.
 
+<a name="fields.foreign_key.ForeignKeyField.default_target_field_name"></a>
+#### default\_target\_field\_name
+
+```python
+ | default_target_field_name() -> str
+```
+
+Returns default target model name on through model.
+
+**Returns**:
+
+`(str)`: name of the field
+
+<a name="fields.foreign_key.ForeignKeyField.default_source_field_name"></a>
+#### default\_source\_field\_name
+
+```python
+ | default_source_field_name() -> str
+```
+
+Returns default target model name on through model.
+
+**Returns**:
+
+`(str)`: name of the field
+
 <a name="fields.foreign_key.ForeignKeyField.evaluate_forward_ref"></a>
 #### evaluate\_forward\_ref
 
 ```python
- | @classmethod
- | evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None
+ | evaluate_forward_ref(globalns: Any, localns: Any) -> None
 ```
 
 Evaluates the ForwardRef to actual Field based on global and local namespaces
@@ -184,8 +226,7 @@ Evaluates the ForwardRef to actual Field based on global and local namespaces
 #### \_extract\_model\_from\_sequence
 
 ```python
- | @classmethod
- | _extract_model_from_sequence(cls, value: List, child: "Model", to_register: bool) -> List["Model"]
+ | _extract_model_from_sequence(value: List, child: "Model", to_register: bool) -> List["Model"]
 ```
 
 Takes a list of Models and registers them on parent.
@@ -207,8 +248,7 @@ Used in reverse FK relations.
 #### \_register\_existing\_model
 
 ```python
- | @classmethod
- | _register_existing_model(cls, value: "Model", child: "Model", to_register: bool) -> "Model"
+ | _register_existing_model(value: "Model", child: "Model", to_register: bool) -> "Model"
 ```
 
 Takes already created instance and registers it for parent.
@@ -230,8 +270,7 @@ Used in reverse FK relations and normal FK for single models.
 #### \_construct\_model\_from\_dict
 
 ```python
- | @classmethod
- | _construct_model_from_dict(cls, value: dict, child: "Model", to_register: bool) -> "Model"
+ | _construct_model_from_dict(value: dict, child: "Model", to_register: bool) -> "Model"
 ```
 
 Takes a dictionary, creates a instance and registers it for parent.
@@ -254,8 +293,7 @@ Used in normal FK for dictionaries.
 #### \_construct\_model\_from\_pk
 
 ```python
- | @classmethod
- | _construct_model_from_pk(cls, value: Any, child: "Model", to_register: bool) -> "Model"
+ | _construct_model_from_pk(value: Any, child: "Model", to_register: bool) -> "Model"
 ```
 
 Takes a pk value, creates a dummy instance and registers it for parent.
@@ -277,8 +315,7 @@ Used in normal FK for dictionaries.
 #### register\_relation
 
 ```python
- | @classmethod
- | register_relation(cls, model: "Model", child: "Model") -> None
+ | register_relation(model: "Model", child: "Model") -> None
 ```
 
 Registers relation between parent and child in relation manager.
@@ -296,8 +333,7 @@ Used in Metaclass and sometimes some relations are missing
 #### has\_unresolved\_forward\_refs
 
 ```python
- | @classmethod
- | has_unresolved_forward_refs(cls) -> bool
+ | has_unresolved_forward_refs() -> bool
 ```
 
 Verifies if the filed has any ForwardRefs that require updating before the
@@ -311,8 +347,7 @@ model can be used.
 #### expand\_relationship
 
 ```python
- | @classmethod
- | expand_relationship(cls, value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True) -> Optional[Union["Model", List["Model"]]]
+ | expand_relationship(value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True) -> Optional[Union["Model", List["Model"]]]
 ```
 
 For relations the child model is first constructed (if needed),
@@ -336,8 +371,7 @@ Selects the appropriate constructor based on a passed value.
 #### get\_relation\_name
 
 ```python
- | @classmethod
- | get_relation_name(cls) -> str
+ | get_relation_name() -> str
 ```
 
 Returns name of the relation, which can be a own name or through model
@@ -351,8 +385,7 @@ names for m2m models
 #### get\_source\_model
 
 ```python
- | @classmethod
- | get_source_model(cls) -> Type["Model"]
+ | get_source_model() -> Type["Model"]
 ```
 
 Returns model from which the relation comes -> either owner or through model

@@ -5,7 +5,7 @@
 #### check\_if\_field\_has\_choices
 
 ```python
-check_if_field_has_choices(field: Type[BaseField]) -> bool
+check_if_field_has_choices(field: BaseField) -> bool
 ```
 
 Checks if given field has choices populated.
@@ -23,7 +23,7 @@ A if it has one, a validator for this field needs to be attached.
 #### convert\_choices\_if\_needed
 
 ```python
-convert_choices_if_needed(field: Type["BaseField"], value: Any) -> Tuple[Any, List]
+convert_choices_if_needed(field: "BaseField", value: Any) -> Tuple[Any, List]
 ```
 
 Converts dates to isoformat as fastapi can check this condition in routes
@@ -37,7 +37,7 @@ Converts decimal to float with given scale.
 
 **Arguments**:
 
-- `field (Type[BaseField])`: ormar field to check with choices
+- `field (BaseField)`: ormar field to check with choices
 - `values (Dict)`: current values of the model to verify
 
 **Returns**:
@@ -48,7 +48,7 @@ Converts decimal to float with given scale.
 #### validate\_choices
 
 ```python
-validate_choices(field: Type["BaseField"], value: Any) -> None
+validate_choices(field: "BaseField", value: Any) -> None
 ```
 
 Validates if given value is in provided choices.
@@ -59,7 +59,7 @@ Validates if given value is in provided choices.
 
 **Arguments**:
 
-- `field (Type[BaseField])`: field to validate
+- `field (BaseField)`: field to validate
 - `value (Any)`: value of the field
 
 <a name="models.helpers.validation.choices_validator"></a>

@@ -5,7 +5,7 @@
 #### check\_node\_not\_dict\_or\_not\_last\_node
 
 ```python
-check_node_not_dict_or_not_last_node(part: str, parts: List, current_level: Any) -> bool
+check_node_not_dict_or_not_last_node(part: str, is_last: bool, current_level: Any) -> bool
 ```
 
 Checks if given name is not present in the current level of the structure.
@@ -70,6 +70,27 @@ Required key is Ellipsis.
 
 ```python
 update(current_dict: Any, updating_dict: Any) -> Dict
+```
+
+Update one dict with another but with regard for nested keys.
+
+That way nested sets are unionised, dicts updated and
+only other values are overwritten.
+
+**Arguments**:
+
+- `current_dict (Dict[str, ellipsis])`: dict to update
+- `updating_dict (Dict)`: dict with values to update
+
+**Returns**:
+
+`(Dict)`: combination of both dicts
+
+<a name="queryset.utils.subtract_dict"></a>
+#### subtract\_dict
+
+```python
+subtract_dict(current_dict: Any, updating_dict: Any) -> Dict
 ```
 
 Update one dict with another but with regard for nested keys.
@@ -168,4 +189,25 @@ constructed, extracts alias based on last relation leading to target model.
 **Returns**:
 
 `(Tuple[str, Type["Model"], str])`: table prefix, target model and relation string
+
+<a name="queryset.utils._process_through_field"></a>
+#### \_process\_through\_field
+
+```python
+_process_through_field(related_parts: List, relation: Optional[str], related_field: "BaseField", previous_model: Type["Model"], previous_models: List[Type["Model"]]) -> Tuple[Type["Model"], Optional[str], bool]
+```
+
+Helper processing through models as they need to be treated differently.
+
+**Arguments**:
+
+- `related_parts (List[str])`: split relation string
+- `relation (str)`: relation name
+- `related_field ("ForeignKeyField")`: field with relation declaration
+- `previous_model (Type["Model"])`: model from which relation is coming
+- `previous_models (List[Type["Model"]])`: list of already visited models in relation chain
+
+**Returns**:
+
+`(Tuple[Type["Model"], str, bool])`: previous_model, relation, is_through
 

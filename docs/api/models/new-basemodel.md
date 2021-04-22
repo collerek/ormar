@@ -364,7 +364,7 @@ Returns related field names applying on them include and exclude set.
 
 ```python
  | @staticmethod
- | _extract_nested_models_from_list(models: MutableSequence, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None]) -> List
+ | _extract_nested_models_from_list(relation_map: Dict, models: MutableSequence, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None]) -> List
 ```
 
 Converts list of models into list of dictionaries.
@@ -383,7 +383,7 @@ Converts list of models into list of dictionaries.
 #### \_skip\_ellipsis
 
 ```python
- | _skip_ellipsis(items: Union[Set, Dict, None], key: str) -> Union[Set, Dict, None]
+ | _skip_ellipsis(items: Union[Set, Dict, None], key: str, default_return: Any = None) -> Union[Set, Dict, None]
 ```
 
 Helper to traverse the include/exclude dictionaries.
@@ -399,11 +399,25 @@ and not the actual set/dict with fields names.
 
 `(Union[Set, Dict, None])`: nested value of the items
 
+<a name="models.newbasemodel.NewBaseModel._convert_all"></a>
+#### \_convert\_all
+
+```python
+ | _convert_all(items: Union[Set, Dict, None]) -> Union[Set, Dict, None]
+```
+
+Helper to convert __all__ pydantic special index to ormar which does not
+support index based exclusions.
+
+**Arguments**:
+
+- `items (Union[Set, Dict, None])`: current include/exclude value
+
 <a name="models.newbasemodel.NewBaseModel._extract_nested_models"></a>
 #### \_extract\_nested\_models
 
 ```python
- | _extract_nested_models(nested: bool, dict_instance: Dict, include: Optional[Dict], exclude: Optional[Dict]) -> Dict
+ | _extract_nested_models(relation_map: Dict, dict_instance: Dict, include: Optional[Dict], exclude: Optional[Dict]) -> Dict
 ```
 
 Traverse nested models and converts them into dictionaries.
@@ -424,7 +438,7 @@ Calls itself recursively if needed.
 #### dict
 
 ```python
- | dict(*, include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None, by_alias: bool = False, skip_defaults: bool = None, exclude_unset: bool = False, exclude_defaults: bool = False, exclude_none: bool = False, nested: bool = False) -> "DictStrAny"
+ | dict(*, include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None, by_alias: bool = False, skip_defaults: bool = None, exclude_unset: bool = False, exclude_defaults: bool = False, exclude_none: bool = False, relation_map: Dict = None) -> "DictStrAny"
 ```
 
 Generate a dictionary representation of the model,
@@ -443,7 +457,7 @@ Additionally fields decorated with @property_field are also added.
 - `exclude_unset (bool)`: flag to exclude not set values - passed to pydantic
 - `exclude_defaults (bool)`: flag to exclude default values - passed to pydantic
 - `exclude_none (bool)`: flag to exclude None values - passed to pydantic
-- `nested (bool)`: flag if the current model is nested
+- `relation_map (Dict)`: map of the relations to follow to avoid circural deps
 
 **Returns**:
 
@@ -536,14 +550,14 @@ That includes own non-relational fields ang foreign key fields.
 #### get\_relation\_model\_id
 
 ```python
- | get_relation_model_id(target_field: Type["BaseField"]) -> Optional[int]
+ | get_relation_model_id(target_field: "BaseField") -> Optional[int]
 ```
 
 Returns an id of the relation side model to use in prefetch query.
 
 **Arguments**:
 
-- `target_field (Type["BaseField"])`: field with relation definition
+- `target_field ("BaseField")`: field with relation definition
 
 **Returns**:
 

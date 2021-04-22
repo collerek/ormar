@@ -5,7 +5,7 @@
 #### is\_field\_an\_forward\_ref
 
 ```python
-is_field_an_forward_ref(field: Type["BaseField"]) -> bool
+is_field_an_forward_ref(field: "BaseField") -> bool
 ```
 
 Checks if field is a relation field and whether any of the referenced models
@@ -91,7 +91,7 @@ extraction of ormar model_fields.
 #### group\_related\_list
 
 ```python
-group_related_list(list_: List) -> Dict
+group_related_list(list_: List) -> collections.OrderedDict
 ```
 
 Translates the list of related strings into a dictionary.

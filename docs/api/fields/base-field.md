@@ -20,8 +20,7 @@ to pydantic field types like ConstrainedStr
 #### is\_valid\_uni\_relation
 
 ```python
- | @classmethod
- | is_valid_uni_relation(cls) -> bool
+ | is_valid_uni_relation() -> bool
 ```
 
 Checks if field is a relation definition but only for ForeignKey relation,
@@ -40,8 +39,7 @@ Model columns only.
 #### get\_alias
 
 ```python
- | @classmethod
- | get_alias(cls) -> str
+ | get_alias() -> str
 ```
 
 Used to translate Model column names to database column names during db queries.
@@ -51,75 +49,26 @@ Used to translate Model column names to database column names during db queries.
 `(str)`: returns custom database column name if defined by user,
 otherwise field name in ormar/pydantic
 
-<a name="fields.base.BaseField.is_valid_field_info_field"></a>
-#### is\_valid\_field\_info\_field
+<a name="fields.base.BaseField.get_pydantic_default"></a>
+#### get\_pydantic\_default
 
 ```python
- | @classmethod
- | is_valid_field_info_field(cls, field_name: str) -> bool
-```
-
-Checks if field belongs to pydantic FieldInfo
-- used during setting default pydantic values.
-Excludes defaults and alias as they are populated separately
-(defaults) or not at all (alias)
-
-**Arguments**:
-
-- `field_name (str)`: field name of BaseFIeld
-
-**Returns**:
-
-`(bool)`: True if field is present on pydantic.FieldInfo
-
-<a name="fields.base.BaseField.get_base_pydantic_field_info"></a>
-#### get\_base\_pydantic\_field\_info
-
-```python
- | @classmethod
- | get_base_pydantic_field_info(cls, allow_null: bool) -> FieldInfo
+ | get_pydantic_default() -> Dict
 ```
 
 Generates base pydantic.FieldInfo with only default and optionally
 required to fix pydantic Json field being set to required=False.
 Used in an ormar Model Metaclass.
 
-**Arguments**:
-
-- `allow_null (bool)`: flag if the default value can be None
-or if it should be populated by pydantic Undefined
-
 **Returns**:
 
 `(pydantic.FieldInfo)`: instance of base pydantic.FieldInfo
-
-<a name="fields.base.BaseField.convert_to_pydantic_field_info"></a>
-#### convert\_to\_pydantic\_field\_info
-
-```python
- | @classmethod
- | convert_to_pydantic_field_info(cls, allow_null: bool = False) -> FieldInfo
-```
-
-Converts a BaseField into pydantic.FieldInfo
-that is later easily processed by pydantic.
-Used in an ormar Model Metaclass.
-
-**Arguments**:
-
-- `allow_null (bool)`: flag if the default value can be None
-or if it should be populated by pydantic Undefined
-
-**Returns**:
-
-`(pydantic.FieldInfo)`: actual instance of pydantic.FieldInfo with all needed fields populated
 
 <a name="fields.base.BaseField.default_value"></a>
 #### default\_value
 
 ```python
- | @classmethod
- | default_value(cls, use_server: bool = False) -> Optional[FieldInfo]
+ | default_value(use_server: bool = False) -> Optional[Dict]
 ```
 
 Returns a FieldInfo instance with populated default
@@ -145,8 +94,7 @@ which is returning a FieldInfo instance
 #### get\_default
 
 ```python
- | @classmethod
- | get_default(cls, use_server: bool = False) -> Any
+ | get_default(use_server: bool = False) -> Any
 ```
 
 Return default value for a field.
@@ -166,8 +114,7 @@ treated as default value, default False
 #### has\_default
 
 ```python
- | @classmethod
- | has_default(cls, use_server: bool = True) -> bool
+ | has_default(use_server: bool = True) -> bool
 ```
 
 Checks if the field has default value set.
@@ -185,8 +132,7 @@ treated as default value, default False
 #### is\_auto\_primary\_key
 
 ```python
- | @classmethod
- | is_auto_primary_key(cls) -> bool
+ | is_auto_primary_key() -> bool
 ```
 
 Checks if field is first a primary key and if it,
@@ -201,8 +147,7 @@ Autoincrement primary_key is nullable/optional.
 #### construct\_constraints
 
 ```python
- | @classmethod
- | construct_constraints(cls) -> List
+ | construct_constraints() -> List
 ```
 
 Converts list of ormar constraints into sqlalchemy ForeignKeys.
@@ -217,8 +162,7 @@ And we need a new ForeignKey for subclasses of current model
 #### get\_column
 
 ```python
- | @classmethod
- | get_column(cls, name: str) -> sqlalchemy.Column
+ | get_column(name: str) -> sqlalchemy.Column
 ```
 
 Returns definition of sqlalchemy.Column used in creation of sqlalchemy.Table.
@@ -233,12 +177,28 @@ primary_key, index, unique, nullable, default and server_default.
 
 `(sqlalchemy.Column)`: actual definition of the database column as sqlalchemy requires.
 
+<a name="fields.base.BaseField._get_encrypted_column"></a>
+#### \_get\_encrypted\_column
+
+```python
+ | _get_encrypted_column(name: str) -> sqlalchemy.Column
+```
+
+Returns EncryptedString column type instead of actual column.
+
+**Arguments**:
+
+- `name (str)`: column name
+
+**Returns**:
+
+`(sqlalchemy.Column)`: newly defined column
+
 <a name="fields.base.BaseField.expand_relationship"></a>
 #### expand\_relationship
 
 ```python
- | @classmethod
- | expand_relationship(cls, value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True) -> Any
+ | expand_relationship(value: Any, child: Union["Model", "NewBaseModel"], to_register: bool = True) -> Any
 ```
 
 Function overwritten for relations, in basic field the value is returned as is.
@@ -261,8 +221,7 @@ dict (from Model) or actual instance/list of a "Model".
 #### set\_self\_reference\_flag
 
 ```python
- | @classmethod
- | set_self_reference_flag(cls) -> None
+ | set_self_reference_flag() -> None
 ```
 
 Sets `self_reference` to True if field to and owner are same model.
@@ -275,8 +234,7 @@ Sets `self_reference` to True if field to and owner are same model.
 #### has\_unresolved\_forward\_refs
 
 ```python
- | @classmethod
- | has_unresolved_forward_refs(cls) -> bool
+ | has_unresolved_forward_refs() -> bool
 ```
 
 Verifies if the filed has any ForwardRefs that require updating before the
@@ -290,8 +248,7 @@ model can be used.
 #### evaluate\_forward\_ref
 
 ```python
- | @classmethod
- | evaluate_forward_ref(cls, globalns: Any, localns: Any) -> None
+ | evaluate_forward_ref(globalns: Any, localns: Any) -> None
 ```
 
 Evaluates the ForwardRef to actual Field based on global and local namespaces
@@ -309,8 +266,7 @@ Evaluates the ForwardRef to actual Field based on global and local namespaces
 #### get\_related\_name
 
 ```python
- | @classmethod
- | get_related_name(cls) -> str
+ | get_related_name() -> str
 ```
 
 Returns name to use for reverse relation.

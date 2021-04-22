@@ -5,7 +5,7 @@
 ## RelationProxy Objects
 
 ```python
-class RelationProxy(list)
+class RelationProxy(Generic[T],  list)
 ```
 
 Proxy of the Relation that is a list with special methods.
@@ -96,7 +96,7 @@ Otherwise QuerySetProxy cannot filter by parent primary key.
 #### \_set\_queryset
 
 ```python
- | _set_queryset() -> "QuerySet"
+ | _set_queryset() -> "QuerySet[T]"
 ```
 
 Creates new QuerySet with relation model and pre filters it with currents
@@ -111,7 +111,7 @@ to the parent model only, without need for user to filter them.
 #### remove
 
 ```python
- | async remove(item: "Model", keep_reversed: bool = True) -> None
+ | async remove(item: "T", keep_reversed: bool = True) -> None
 ```
 
 Removes the related from relation with parent.
@@ -131,7 +131,7 @@ will be deleted, and not only removed from relation).
 #### add
 
 ```python
- | async add(item: "Model", **kwargs: Any) -> None
+ | async add(item: "T", **kwargs: Any) -> None
 ```
 
 Adds child model to relation.

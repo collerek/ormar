@@ -102,7 +102,7 @@ Updates Meta parameters in child from parent if needed.
 #### copy\_and\_replace\_m2m\_through\_model
 
 ```python
-copy_and_replace_m2m_through_model(field: Type[ManyToManyField], field_name: str, table_name: str, parent_fields: Dict, attrs: Dict, meta: ModelMeta, base_class: Type["Model"]) -> None
+copy_and_replace_m2m_through_model(field: ManyToManyField, field_name: str, table_name: str, parent_fields: Dict, attrs: Dict, meta: ModelMeta, base_class: Type["Model"]) -> None
 ```
 
 Clones class with Through model for m2m relations, appends child name to the name
@@ -119,7 +119,7 @@ Removes the original sqlalchemy table from metadata if it was not removed.
 **Arguments**:
 
 - `base_class (Type["Model"])`: base class model
-- `field (Type[ManyToManyField])`: field with relations definition
+- `field (ManyToManyField)`: field with relations definition
 - `field_name (str)`: name of the relation field
 - `table_name (str)`: name of the table
 - `parent_fields (Dict)`: dictionary of fields to copy to new models from parent
@@ -130,9 +130,7 @@ Removes the original sqlalchemy table from metadata if it was not removed.
 #### copy\_data\_from\_parent\_model
 
 ```python
-copy_data_from_parent_model(base_class: Type["Model"], curr_class: type, attrs: Dict, model_fields: Dict[
-        str, Union[Type[BaseField], Type[ForeignKeyField], Type[ManyToManyField]]
-    ]) -> Tuple[Dict, Dict]
+copy_data_from_parent_model(base_class: Type["Model"], curr_class: type, attrs: Dict, model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]]) -> Tuple[Dict, Dict]
 ```
 
 Copy the key parameters [databse, metadata, property_fields and constraints]
@@ -162,9 +160,7 @@ Since relation fields requires different related_name for different children
 #### extract\_from\_parents\_definition
 
 ```python
-extract_from_parents_definition(base_class: type, curr_class: type, attrs: Dict, model_fields: Dict[
-        str, Union[Type[BaseField], Type[ForeignKeyField], Type[ManyToManyField]]
-    ]) -> Tuple[Dict, Dict]
+extract_from_parents_definition(base_class: type, curr_class: type, attrs: Dict, model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]]) -> Tuple[Dict, Dict]
 ```
 
 Extracts fields from base classes if they have valid oramr fields.

@@ -13,7 +13,7 @@ class ModelRow(NewBaseModel)
 
 ```python
  | @classmethod
- | from_row(cls, row: sqlalchemy.engine.ResultProxy, source_model: Type["Model"], select_related: List = None, related_models: Any = None, related_field: Type["ForeignKeyField"] = None, excludable: ExcludableItems = None, current_relation_str: str = "", proxy_source_model: Optional[Type["Model"]] = None) -> Optional["Model"]
+ | from_row(cls, row: sqlalchemy.engine.ResultProxy, source_model: Type["Model"], select_related: List = None, related_models: Any = None, related_field: "ForeignKeyField" = None, excludable: ExcludableItems = None, current_relation_str: str = "", proxy_source_model: Optional[Type["Model"]] = None, used_prefixes: List[str] = None) -> Optional["Model"]
 ```
 
 Model method to convert raw sql row from database into ormar.Model instance.
@@ -30,6 +30,7 @@ nested models in result.
 
 **Arguments**:
 
+- `used_prefixes (List[str])`: list of already extracted prefixes
 - `proxy_source_model (Optional[Type["ModelRow"]])`: source model from which querysetproxy is constructed
 - `excludable (ExcludableItems)`: structure of fields to include and exclude
 - `current_relation_str (str)`: name of the relation field
@@ -37,18 +38,37 @@ nested models in result.
 - `row (sqlalchemy.engine.result.ResultProxy)`: raw result row from the database
 - `select_related (List)`: list of names of related models fetched from database
 - `related_models (Union[List, Dict])`: list or dict of related models
-- `related_field (Type[ForeignKeyField])`: field with relation declaration
+- `related_field (ForeignKeyField)`: field with relation declaration
 
 **Returns**:
 
 `(Optional[Model])`: returns model if model is populated from database
+
+<a name="models.model_row.ModelRow._process_table_prefix"></a>
+#### \_process\_table\_prefix
+
+```python
+ | @classmethod
+ | _process_table_prefix(cls, source_model: Type["Model"], current_relation_str: str, related_field: "ForeignKeyField", used_prefixes: List[str]) -> str
+```
+
+**Arguments**:
+
+- `source_model (Type[Model])`: model on which relation was defined
+- `current_relation_str (str)`: current relation string
+- `related_field ("ForeignKeyField")`: field with relation declaration
+- `used_prefixes (List[str])`: list of already extracted prefixes
+
+**Returns**:
+
+`(str)`: table_prefix to use
 
 <a name="models.model_row.ModelRow._populate_nested_models_from_row"></a>
 #### \_populate\_nested\_models\_from\_row
 
 ```python
  | @classmethod
- | _populate_nested_models_from_row(cls, item: dict, row: sqlalchemy.engine.ResultProxy, source_model: Type["Model"], related_models: Any, excludable: ExcludableItems, table_prefix: str, current_relation_str: str = None, proxy_source_model: Type["Model"] = None) -> dict
+ | _populate_nested_models_from_row(cls, item: dict, row: sqlalchemy.engine.ResultProxy, source_model: Type["Model"], related_models: Any, excludable: ExcludableItems, table_prefix: str, used_prefixes: List[str], current_relation_str: str = None, proxy_source_model: Type["Model"] = None) -> dict
 ```
 
 Traverses structure of related models and populates the nested models
@@ -75,12 +95,48 @@ instances. In the end those instances are added to the final model dictionary.
 `(Dict)`: dictionary with keys corresponding to model fields names
 and values are database values
 
-<a name="models.model_row.ModelRow.populate_through_instance"></a>
-#### populate\_through\_instance
+<a name="models.model_row.ModelRow._process_remainder_and_relation_string"></a>
+#### \_process\_remainder\_and\_relation\_string
+
+```python
+ | @staticmethod
+ | _process_remainder_and_relation_string(related_models: Union[Dict, List], current_relation_str: Optional[str], related: str) -> Tuple[str, Optional[Union[Dict, List]]]
+```
+
+Process remainder models and relation string
+
+**Arguments**:
+
+- `related_models (Union[Dict, List])`: list or dict of related models
+- `current_relation_str (Optional[str])`: current relation string
+- `related (str)`: name of the relation
+
+<a name="models.model_row.ModelRow._populate_through_instance"></a>
+#### \_populate\_through\_instance
 
 ```python
  | @classmethod
- | populate_through_instance(cls, row: sqlalchemy.engine.ResultProxy, through_name: str, related: str, excludable: ExcludableItems) -> "ModelRow"
+ | _populate_through_instance(cls, row: sqlalchemy.engine.ResultProxy, item: Dict, related: str, excludable: ExcludableItems, child: "Model", proxy_source_model: Optional[Type["Model"]]) -> None
+```
+
+Populates the through model on reverse side of current query.
+Normally it's child class, unless the query is from queryset.
+
+**Arguments**:
+
+- `row (sqlalchemy.engine.ResultProxy)`: row from db result
+- `item (Dict)`: parent item dict
+- `related (str)`: current relation name
+- `excludable (ExcludableItems)`: structure of fields to include and exclude
+- `child ("Model")`: child item of parent
+- `proxy_source_model (Type["Model"])`: source model from which querysetproxy is constructed
+
+<a name="models.model_row.ModelRow._create_through_instance"></a>
+#### \_create\_through\_instance
+
+```python
+ | @classmethod
+ | _create_through_instance(cls, row: sqlalchemy.engine.ResultProxy, through_name: str, related: str, excludable: ExcludableItems) -> "ModelRow"
 ```
 
 Initialize the through model from db row.

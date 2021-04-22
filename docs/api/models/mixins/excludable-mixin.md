@@ -78,12 +78,12 @@ Primary key field is always added and cannot be excluded (will be added anyway).
 
 `(List[str])`: list of column field names or aliases
 
-<a name="models.mixins.excludable_mixin.ExcludableMixin._update_excluded_with_related_not_required"></a>
-#### \_update\_excluded\_with\_related\_not\_required
+<a name="models.mixins.excludable_mixin.ExcludableMixin._update_excluded_with_related"></a>
+#### \_update\_excluded\_with\_related
 
 ```python
  | @classmethod
- | _update_excluded_with_related_not_required(cls, exclude: Union["AbstractSetIntStr", "MappingIntStrAny", None], nested: bool = False) -> Union[Set, Dict]
+ | _update_excluded_with_related(cls, exclude: Union[Set, Dict, None]) -> Set
 ```
 
 Used during generation of the dict().
@@ -96,7 +96,6 @@ exclusion, for nested models all related models are excluded.
 **Arguments**:
 
 - `exclude (Union[Set, Dict, None])`: set/dict with fields to exclude
-- `nested (bool)`: flag setting nested models (child of previous one, not main one)
 
 **Returns**:
 
