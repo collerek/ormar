@@ -1,3 +1,11 @@
+# 0.10.5
+
+## 🐛 Fixes
+
+*  Fix bug in `fastapi-pagination` [#73](https://github.com/uriyyo/fastapi-pagination/issues/73)
+*  Remove unnecessary `Optional` in `List[Optional[T]]` in return value for `QuerySet.all()` and `Querysetproxy.all()` return values [#174](https://github.com/collerek/ormar/issues/174)
+*  Run tests coverage publish only on internal prs instead of all in github action.
+
 # 0.10.4
 
 ## ✨ Features

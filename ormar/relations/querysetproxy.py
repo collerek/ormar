@@ -342,7 +342,7 @@ class QuerysetProxy(Generic[T]):
         self._register_related(get)
         return get
 
-    async def all(self, *args: Any, **kwargs: Any) -> List[Optional["T"]]:  # noqa: A003
+    async def all(self, *args: Any, **kwargs: Any) -> List["T"]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 

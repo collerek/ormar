@@ -137,8 +137,8 @@ class QuerySet(Generic[T]):
         )
 
     async def _prefetch_related_models(
-        self, models: List[Optional["T"]], rows: List
-    ) -> List[Optional["T"]]:
+        self, models: List["T"], rows: List
+    ) -> List["T"]:
         """
         Performs prefetch query for selected models names.
 
@@ -158,7 +158,7 @@ class QuerySet(Generic[T]):
         )
         return await query.prefetch_related(models=models, rows=rows)  # type: ignore
 
-    def _process_query_result_rows(self, rows: List) -> List[Optional["T"]]:
+    def _process_query_result_rows(self, rows: List) -> List["T"]:
         """
         Process database rows and initialize ormar Model from each of the rows.
 
@@ -179,7 +179,7 @@ class QuerySet(Generic[T]):
         ]
         if result_rows:
             return self.model.merge_instances_list(result_rows)  # type: ignore
-        return cast(List[Optional["T"]], result_rows)
+        return cast(List["T"], result_rows)
 
     def _resolve_filter_groups(
         self, groups: Any
@@ -884,7 +884,7 @@ class QuerySet(Generic[T]):
         model = await self.get(pk=kwargs[pk_name])
         return await model.update(**kwargs)
 
-    async def all(self, *args: Any, **kwargs: Any) -> List[Optional["T"]]:  # noqa: A003
+    async def all(self, *args: Any, **kwargs: Any) -> List["T"]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 

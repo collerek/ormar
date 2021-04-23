@@ -12,6 +12,7 @@ quick_access_set = {
     "__fields__",
     "__fields_set__",
     "__json_encoder__",
+    "__pk_only__",
     "__post_root_validators__",
     "__pre_root_validators__",
     "__private_attributes__",
