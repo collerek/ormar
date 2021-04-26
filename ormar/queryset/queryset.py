@@ -796,7 +796,8 @@ class QuerySet(Generic[T]):
 
         If no criteria set it will return the last row in db sorted by pk.
 
-        Passing a criteria is actually calling filter(**kwargs) method described below.
+        Passing a criteria is actually calling filter(*args, **kwargs) method described
+        below.
 
         If not match is found None will be returned.
 
@@ -816,7 +817,8 @@ class QuerySet(Generic[T]):
 
         If no criteria set it will return the last row in db sorted by pk.
 
-        Passing a criteria is actually calling filter(**kwargs) method described below.
+        Passing a criteria is actually calling filter(*args, **kwargs) method described
+        below.
 
         :raises NoMatch: if no rows are returned
         :raises MultipleMatches: if more than 1 row is returned.
@@ -853,9 +855,12 @@ class QuerySet(Generic[T]):
         """
         Combination of create and get methods.
 
-        Tries to get a row meeting the criteria fro kwargs
+        Tries to get a row meeting the criteria for kwargs
         and if `NoMatch` exception is raised
         it creates a new one with given kwargs.
+
+        Passing a criteria is actually calling filter(*args, **kwargs) method described
+        below.
 
         :param kwargs: fields names and proper value types
         :type kwargs: Any
@@ -888,7 +893,8 @@ class QuerySet(Generic[T]):
         """
         Returns all rows from a database for given model for set filter options.
 
-        Passing kwargs is a shortcut and equals to calling `filter(**kwrags).all()`.
+        Passing args and/or kwargs is a shortcut and equals to calling 
+        `filter(*args, **kwargs).all()`.
 
         If there are no rows meeting the criteria an empty list is returned.
 
