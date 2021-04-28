@@ -1,3 +1,14 @@
+# 0.10.6
+
+## ✨ Features
+
+* Add `LargeBinary(max_length)` field type [#166](https://github.com/collerek/ormar/issues/166)
+
+## 💬 Other
+
+*  Add connecting the database in quickstart in readme [#180](https://github.com/collerek/ormar/issues/180) 
+
+
 # 0.10.5
 
 ## 🐛 Fixes

@@ -57,7 +57,7 @@ def create_test_database():
 
 
 def assert_type(book: Book):
-    print(book)
+    _ = str(book)
 
 
 @pytest.mark.asyncio

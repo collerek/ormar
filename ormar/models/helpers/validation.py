@@ -73,6 +73,8 @@ def convert_choices_if_needed(  # noqa: CCR001
             else value
         )
         choices = [round(float(o), precision) for o in choices]
+    elif field.__type__ == bytes:
+        value = value if isinstance(value, bytes) else value.encode("utf-8")
 
     return value, choices
 

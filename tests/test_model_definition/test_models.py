@@ -1,6 +1,6 @@
 import asyncio
-import uuid
 import datetime
+import uuid
 from typing import List
 
 import databases
@@ -9,7 +9,7 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar.exceptions import QueryDefinitionError, NoMatch, ModelError
+from ormar.exceptions import ModelError, NoMatch, QueryDefinitionError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -24,6 +24,20 @@ class JsonSample(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     test_json = ormar.JSON(nullable=True)
+
+
+blob = b"test"
+blob2 = b"test2icac89uc98"
+
+
+class LargeBinarySample(ormar.Model):
+    class Meta:
+        tablename = "my_bolbs"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    test_binary = ormar.LargeBinary(max_length=100000, choices=[blob, blob2])
 
 
 class UUIDSample(ormar.Model):
@@ -102,15 +116,8 @@ class Country(ormar.Model):
     )
 
 
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.get_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest.fixture(autouse=True, scope="module")
-async def create_test_database():
+def create_test_database():
     engine = sqlalchemy.create_engine(DATABASE_URL)
     metadata.drop_all(engine)
     metadata.create_all(engine)
@@ -149,6 +156,19 @@ async def test_json_column():
             assert len(items) == 2
             assert items[0].test_json == dict(aa=12)
             assert items[1].test_json == dict(aa=12)
+
+
+@pytest.mark.asyncio
+async def test_binary_column():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            await LargeBinarySample.objects.create(test_binary=blob)
+            await LargeBinarySample.objects.create(test_binary=blob2)
+
+            items = await LargeBinarySample.objects.all()
+            assert len(items) == 2
+            assert items[0].test_binary == blob
+            assert items[1].test_binary == blob2
 
 
 @pytest.mark.asyncio

@@ -319,6 +319,16 @@ async def aggregations():
     # visit: https://collerek.github.io/ormar/queries/aggregations/
 
 
+async def with_connect(function):
+    # note that for any other backend than sqlite you actually need to
+    # connect to the database to perform db operations
+    async with database:
+        await function()
+
+    # note that if you use framework like `fastapi` you shouldn't connect
+    # in your endpoints but have a global connection pool
+    # check https://collerek.github.io/ormar/fastapi/ and section with db connection
+
 # gather and execute all functions
 # note - normally import should be at the beginning of the file
 import asyncio
@@ -329,7 +339,7 @@ for func in [create, read, update, delete, joins,
              filter_and_sort, subset_of_columns,
              pagination, aggregations]:
     print(f"Executing: {func.__name__}")
-    asyncio.run(func())
+    asyncio.run(with_connect(func))
 
 # drop the database tables
 metadata.drop_all(engine)

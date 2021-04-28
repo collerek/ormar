@@ -53,6 +53,7 @@ from ormar.fields import (
     ForeignKeyField,
     Integer,
     JSON,
+    LargeBinary,
     ManyToMany,
     ManyToManyField,
     String,
@@ -124,4 +125,5 @@ __all__ = [
     "EncryptBackends",
     "ENCODERS_MAP",
     "DECODERS_MAP",
+    "LargeBinary",
 ]

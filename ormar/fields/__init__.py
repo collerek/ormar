@@ -16,6 +16,7 @@ from ormar.fields.model_fields import (
     Float,
     Integer,
     JSON,
+    LargeBinary,
     String,
     Text,
     Time,
@@ -50,4 +51,5 @@ __all__ = [
     "EncryptBackend",
     "DECODERS_MAP",
     "ENCODERS_MAP",
+    "LargeBinary",
 ]

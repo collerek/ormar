@@ -127,6 +127,17 @@ You can use either `length` and `precision` parameters or `max_digits` and `deci
 * Sqlalchemy column: `sqlalchemy.JSON`  
 * Type (used for pydantic): `pydantic.Json` 
 
+### LargeBinary
+
+`LargeBinary(max_length)` has a required `max_length` parameter.  
+
+* Sqlalchemy column: `sqlalchemy.LargeBinary`  
+* Type (used for pydantic): `bytes`
+
+LargeBinary length is used in some backend (i.e. mysql) to determine the size of the field,
+in other backends it's simply ignored yet in ormar it's always required. It should be max
+size of the file/bytes in bytes.
+
 ### UUID
 
 `UUID(uuid_format: str = 'hex')` has no required parameters.  

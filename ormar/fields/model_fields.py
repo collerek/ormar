@@ -415,6 +415,53 @@ class JSON(ModelFieldFactory, pydantic.Json):
         return sqlalchemy.JSON()
 
 
+class LargeBinary(ModelFieldFactory, bytes):
+    """
+    LargeBinary field factory that construct Field classes and populated their values.
+    """
+
+    _type = bytes
+
+    def __new__(  # type: ignore # noqa CFQ002
+        cls, *, max_length: int = None, **kwargs: Any
+    ) -> BaseField:  # type: ignore
+        kwargs = {
+            **kwargs,
+            **{
+                k: v
+                for k, v in locals().items()
+                if k not in ["cls", "__class__", "kwargs"]
+            },
+        }
+        return super().__new__(cls, **kwargs)
+
+    @classmethod
+    def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
+        return sqlalchemy.LargeBinary(length=kwargs.get("max_length"))
+
+    @classmethod
+    def validate(cls, **kwargs: Any) -> None:
+        """
+        Used to validate if all required parameters on a given field type are set.
+        :param kwargs: all params passed during construction
+        :type kwargs: Any
+        """
+        max_length = kwargs.get("max_length", None)
+        if max_length is None or max_length <= 0:
+            raise ModelDefinitionError(
+                "Parameter max_length is required for field LargeBinary"
+            )
+
+
 class BigInteger(Integer, int):
     """
     BigInteger field factory that construct Field classes and populated their values.
