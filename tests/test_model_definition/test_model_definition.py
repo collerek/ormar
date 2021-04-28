@@ -219,6 +219,19 @@ def test_decimal_error_in_model_definition():
 
 
 @typing.no_type_check
+def test_binary_error_without_length_model_definition():
+    with pytest.raises(ModelDefinitionError):
+
+        class ExampleModel2(Model):
+            class Meta:
+                tablename = "example6"
+                database = database
+                metadata = metadata
+
+            test: bytes = ormar.LargeBinary(primary_key=True)
+
+
+@typing.no_type_check
 def test_string_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
 

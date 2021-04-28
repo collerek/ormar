@@ -17,7 +17,7 @@ class BaseMeta(ormar.ModelMeta):
     database = database
 
 
-class Test(ormar.Model):
+class ModelTest(ormar.Model):
     class Meta(BaseMeta):
         pass
 
@@ -44,7 +44,7 @@ def create_test_database():
 @pytest.mark.asyncio
 async def test_working_with_pydantic_fields():
     async with database:
-        test = Test(name="Test")
+        test = ModelTest(name="Test")
         assert test.name == "Test"
         assert test.url == "www.example.com"
 
@@ -52,7 +52,7 @@ async def test_working_with_pydantic_fields():
         assert test.url == "www.sdta.ada.pt"
 
         await test.save()
-        test_check = await Test.objects.get()
+        test_check = await ModelTest.objects.get()
 
         assert test_check.name == "Test"
         assert test_check.url == "www.example.com"

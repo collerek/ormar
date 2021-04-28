@@ -17,3 +17,9 @@ test_mysql:
 
 test_sqlite:
 	bash scripts/test.sh -svv
+
+test:
+	pytest
+
+coverage:
+	pytest --cov=ormar --cov=tests --cov-fail-under=100 --cov-report=term-missing
