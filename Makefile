@@ -23,3 +23,9 @@ test:
 
 coverage:
 	pytest --cov=ormar --cov=tests --cov-fail-under=100 --cov-report=term-missing
+
+black:
+	black ormar tests
+
+mypy:
+	mypy ormar tests

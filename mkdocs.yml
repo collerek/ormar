@@ -12,6 +12,7 @@ nav:
   - Fields:
     - Common parameters: fields/common-parameters.md
     - Fields types: fields/field-types.md
+    - Pydantic only fields: fields/pydantic-fields.md
     - Fields encryption: fields/encryption.md
   - Relations:
     - relations/index.md

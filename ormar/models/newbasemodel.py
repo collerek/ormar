@@ -12,6 +12,7 @@ from typing import (
     Sequence,
     Set,
     TYPE_CHECKING,
+    Tuple,
     Type,
     Union,
     cast,
@@ -150,6 +151,13 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     k,
                     self.Meta.model_fields[k].expand_relationship(
                         v, self, to_register=False,
+                    )
+                    if k in self.Meta.model_fields
+                    else (
+                        v
+                        if k in self.__fields__
+                        # some random key will raise KeyError
+                        else self.__fields__["_Q*DHPQ(JAS*((JA)###*(&"]
                     ),
                     "dumps",
                 )
@@ -243,7 +251,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         else:
             if name in object.__getattribute__(self, "_choices_fields"):
                 validate_choices(field=self.Meta.model_fields[name], value=value)
-            super().__setattr__(name, value)
+            super().__setattr__(name, self._convert_json(name, value, op="dumps"))
             self.set_save_status(False)
 
     def __getattribute__(self, item: str) -> Any:  # noqa: CCR001

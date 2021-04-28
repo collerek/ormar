@@ -98,6 +98,7 @@ def get_pydantic_base_orm_config() -> Type[pydantic.BaseConfig]:
 
     class Config(pydantic.BaseConfig):
         orm_mode = True
+        validate_assignment = True
 
     return Config
 

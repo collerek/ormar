@@ -3,10 +3,29 @@
 ## ✨ Features
 
 * Add `LargeBinary(max_length)` field type [#166](https://github.com/collerek/ormar/issues/166)
+* Add support for normal pydantic fields (including Models) instead of `pydantic_only` 
+  attribute which is now deprecated [#160](https://github.com/collerek/ormar/issues/160).
+  Pydantic fields should be declared normally as in pydantic model next to ormar fields, 
+  note that (obviously) `ormar` does not save and load the value for this field in 
+  database that mean that **ONE** of the following has to be true:
+  
+    * pydantic field declared on ormar model has to be `Optional` (defaults to None)
+    * pydantic field has to have a default value set
+    * pydantic field has `default_factory` function set
+    * ormar.Model with pydantic field has to overwrite `__init__()` and provide the value there
+    
+    If none of the above `ormar` (or rather pydantic) will fail during loading data from the database,
+    with missing required value for declared pydantic field.
+
+## 🐛 Fixes
+
+* By default `pydantic` is not validating fields during assignment, 
+  which is not a desirable setting for an ORM, now all `ormar.Models` 
+  have validation turned-on during assignment (like `model.column = 'value'`)
 
 ## 💬 Other
 
-*  Add connecting the database in quickstart in readme [#180](https://github.com/collerek/ormar/issues/180) 
+*  Add connecting to the database in QuickStart in readme [#180](https://github.com/collerek/ormar/issues/180) 
 
 
 # 0.10.5
