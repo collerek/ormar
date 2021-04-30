@@ -48,7 +48,7 @@ class RelationMixin:
         :return: list of related fields
         :rtype: List
         """
-        if isinstance(cls._related_fields, List):
+        if cls._related_fields is not None:
             return cls._related_fields
 
         related_fields = []
@@ -66,7 +66,7 @@ class RelationMixin:
         :return: set of related through fields names
         :rtype: Set
         """
-        if isinstance(cls._through_names, Set):
+        if cls._through_names is not None:
             return cls._through_names
 
         related_names = set()
@@ -86,7 +86,7 @@ class RelationMixin:
         :return: set of related fields names
         :rtype: Set
         """
-        if isinstance(cls._related_names, Set):
+        if cls._related_names is not None:
             return cls._related_names
 
         related_names = set()

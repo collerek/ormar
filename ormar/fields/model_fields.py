@@ -62,6 +62,7 @@ class ModelFieldFactory:
 
     _bases: Any = (BaseField,)
     _type: Any = None
+    _sample: Any = None
 
     def __new__(cls, *args: Any, **kwargs: Any) -> BaseField:  # type: ignore
         cls.validate(**kwargs)
@@ -80,6 +81,7 @@ class ModelFieldFactory:
 
         namespace = dict(
             __type__=cls._type,
+            __sample__=cls._sample,
             alias=kwargs.pop("name", None),
             name=None,
             primary_key=primary_key,
@@ -129,6 +131,7 @@ class String(ModelFieldFactory, str):
     """
 
     _type = str
+    _sample = "string"
 
     def __new__(  # type: ignore # noqa CFQ002
         cls,
@@ -185,6 +188,7 @@ class Integer(ModelFieldFactory, int):
     """
 
     _type = int
+    _sample = 0
 
     def __new__(  # type: ignore
         cls,
@@ -232,6 +236,7 @@ class Text(ModelFieldFactory, str):
     """
 
     _type = str
+    _sample = "text"
 
     def __new__(  # type: ignore
         cls, *, allow_blank: bool = True, strip_whitespace: bool = False, **kwargs: Any
@@ -267,6 +272,7 @@ class Float(ModelFieldFactory, float):
     """
 
     _type = float
+    _sample = 0.0
 
     def __new__(  # type: ignore
         cls,
@@ -316,6 +322,7 @@ else:
         """
 
         _type = bool
+        _sample = True
 
         @classmethod
         def get_column_type(cls, **kwargs: Any) -> Any:
@@ -337,6 +344,7 @@ class DateTime(ModelFieldFactory, datetime.datetime):
     """
 
     _type = datetime.datetime
+    _sample = "datetime"
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
@@ -358,6 +366,7 @@ class Date(ModelFieldFactory, datetime.date):
     """
 
     _type = datetime.date
+    _sample = "date"
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
@@ -379,6 +388,7 @@ class Time(ModelFieldFactory, datetime.time):
     """
 
     _type = datetime.time
+    _sample = "time"
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
@@ -400,6 +410,7 @@ class JSON(ModelFieldFactory, pydantic.Json):
     """
 
     _type = pydantic.Json
+    _sample = '{"json": "json"}'
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
@@ -421,6 +432,7 @@ class LargeBinary(ModelFieldFactory, bytes):
     """
 
     _type = bytes
+    _sample = "bytes"
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, max_length: int = None, **kwargs: Any
@@ -468,6 +480,7 @@ class BigInteger(Integer, int):
     """
 
     _type = int
+    _sample = 0
 
     def __new__(  # type: ignore
         cls,
@@ -515,6 +528,7 @@ class Decimal(ModelFieldFactory, decimal.Decimal):
     """
 
     _type = decimal.Decimal
+    _sample = 0.0
 
     def __new__(  # type: ignore # noqa CFQ002
         cls,
@@ -587,6 +601,7 @@ class UUID(ModelFieldFactory, uuid.UUID):
     """
 
     _type = uuid.UUID
+    _sample = "uuid"
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, uuid_format: str = "hex", **kwargs: Any

@@ -31,6 +31,7 @@ class BaseField(FieldInfo):
 
     def __init__(self, **kwargs: Any) -> None:
         self.__type__: type = kwargs.pop("__type__", None)
+        self.__sample__: type = kwargs.pop("__sample__", None)
         self.related_name = kwargs.pop("related_name", None)
 
         self.column_type: sqlalchemy.Column = kwargs.pop("column_type", None)

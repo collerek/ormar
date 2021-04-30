@@ -1,6 +1,7 @@
 from typing import List
 
 import databases
+import pydantic
 import pytest
 import sqlalchemy
 from fastapi import FastAPI
@@ -124,6 +125,18 @@ def test_schema_modification():
         x.get("type") == "array" for x in schema["properties"]["categories"]["anyOf"]
     )
     assert schema["properties"]["categories"]["title"] == "Categories"
+    assert schema["example"] == {
+        "id": 0,
+        "name": "string",
+        "categories": [{"id": 0, "name": "string"}],
+    }
+
+    schema = Category.schema()
+    assert schema["example"] == {
+        "id": 0,
+        "name": "string",
+        "items": [{"id": 0, "name": "string"}],
+    }
 
 
 def test_schema_gen():

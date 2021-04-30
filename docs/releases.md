@@ -16,6 +16,9 @@
     
     If none of the above `ormar` (or rather pydantic) will fail during loading data from the database,
     with missing required value for declared pydantic field.
+* Ormar provides now a meaningful examples in openapi schema, including nested models.
+  The same algorithm is used to iterate related models without looks 
+  as with `dict()` and `select/load_all`. Examples appear also in `fastapi`. [#157](https://github.com/collerek/ormar/issues/157)
 
 ## 🐛 Fixes
 
@@ -26,7 +29,9 @@
 ## 💬 Other
 
 *  Add connecting to the database in QuickStart in readme [#180](https://github.com/collerek/ormar/issues/180) 
-
+*  OpenAPI schema does no longer include `ormar.Model` docstring as description, 
+   instead just model name is provided if you do not provide your own docstring.
+*  Some performance improvements.
 
 # 0.10.5
 

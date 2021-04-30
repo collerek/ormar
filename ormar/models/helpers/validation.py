@@ -15,6 +15,7 @@ from pydantic.main import SchemaExtraCallable
 import ormar  # noqa: I100, I202
 from ormar.fields import BaseField
 from ormar.models.helpers.models import meta_field_not_set
+from ormar.queryset.utils import translate_list_to_dict
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -116,11 +117,44 @@ def choices_validator(cls: Type["Model"], values: Dict[str, Any]) -> Dict[str, A
     return values
 
 
+def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> Dict:
+    """
+    Generates example to be included in schema in fastapi.
+
+    :param model: ormar.Model
+    :type model: Type["Model"]
+    :param relation_map: dict with relations to follow
+    :type relation_map: Optional[Dict]
+    :return:
+    :rtype: Dict[str, int]
+    """
+    example: Dict[str, Any] = dict()
+    relation_map = (
+        relation_map
+        if relation_map is not None
+        else translate_list_to_dict(model._iterate_related_models())
+    )
+    for name, field in model.Meta.model_fields.items():
+        if not field.is_relation:
+            example[name] = field.__sample__
+        elif isinstance(relation_map, dict) and name in relation_map:
+            value = generate_model_example(
+                field.to, relation_map=relation_map.get(name, {})
+            )
+            new_value = [value] if field.is_multi or field.virtual else value
+            example[name] = new_value
+
+    return example
+
+
 def construct_modify_schema_function(fields_with_choices: List) -> SchemaExtraCallable:
     """
     Modifies the schema to include fields with choices validator.
     Those fields will be displayed in schema as Enum types with available choices
     values listed next to them.
+
+    Note that schema extra has to be a function, otherwise it's called to soon
+    before all the relations are expanded.
 
     :param fields_with_choices: list of fields with choices validation
     :type fields_with_choices: List
@@ -133,6 +167,28 @@ def construct_modify_schema_function(fields_with_choices: List) -> SchemaExtraCa
             if field_id in fields_with_choices:
                 prop["enum"] = list(model.Meta.model_fields[field_id].choices)
                 prop["description"] = prop.get("description", "") + "An enumeration."
+        schema["example"] = generate_model_example(model=model)
+        if "Main base class of ormar Model." in schema.get("description", ""):
+            schema["description"] = f"{model.__name__}"
+
+    return staticmethod(schema_extra)  # type: ignore
+
+
+def construct_schema_function_without_choices() -> SchemaExtraCallable:
+    """
+    Modifies model example and description if needed.
+
+    Note that schema extra has to be a function, otherwise it's called to soon
+    before all the relations are expanded.
+
+    :return: callable that will be run by pydantic to modify the schema
+    :rtype: Callable
+    """
+
+    def schema_extra(schema: Dict[str, Any], model: Type["Model"]) -> None:
+        schema["example"] = generate_model_example(model=model)
+        if "Main base class of ormar Model." in schema.get("description", ""):
+            schema["description"] = f"{model.__name__}"
 
     return staticmethod(schema_extra)  # type: ignore
 
@@ -162,3 +218,5 @@ def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
             model.Config.schema_extra = construct_modify_schema_function(
                 fields_with_choices=fields_with_choices
             )
+        else:
+            model.Config.schema_extra = construct_schema_function_without_choices()
