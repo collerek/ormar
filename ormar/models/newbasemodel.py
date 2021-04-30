@@ -316,11 +316,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     k,
                     model_fields[k].expand_relationship(v, self, to_register=False,)
                     if k in model_fields
-                    else (
-                        v
-                        if k in pydantic_fields
-                        else model_fields["HAP&*YA^)*GW^&QT6567q56gGG%$%"]
-                    ),
+                    else (v if k in pydantic_fields else model_fields[k]),
                     "dumps",
                 )
                 for k, v in kwargs.items()

@@ -1,8 +1,9 @@
 import datetime
 import decimal
+import numbers
 import uuid
 from enum import Enum
-from typing import Any, Dict, List, TYPE_CHECKING, Tuple, Type
+from typing import Any, Dict, List, Set, TYPE_CHECKING, Tuple, Type, Union
 
 try:
     import orjson as json
@@ -138,13 +139,77 @@ def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> D
         if not field.is_relation:
             example[name] = field.__sample__
         elif isinstance(relation_map, dict) and name in relation_map:
-            value = generate_model_example(
-                field.to, relation_map=relation_map.get(name, {})
+            example[name] = get_nested_model_example(
+                name=name, field=field, relation_map=relation_map
             )
-            new_value = [value] if field.is_multi or field.virtual else value
-            example[name] = new_value
+    to_exclude = {name for name in model.Meta.model_fields}
+    pydantic_repr = generate_pydantic_example(pydantic_model=model, exclude=to_exclude)
+    example.update(pydantic_repr)
 
     return example
+
+
+def get_nested_model_example(
+    name: str, field: "BaseField", relation_map: Dict
+) -> Union[List, Dict]:
+    """
+    Gets representation of nested model.
+
+    :param name: name of the field to follow
+    :type name: str
+    :param field: ormar field
+    :type field: BaseField
+    :param relation_map: dict with relation map
+    :type relation_map: Dict
+    :return: nested model or list of nested model repr
+    :rtype: Union[List, Dict]
+    """
+    value = generate_model_example(field.to, relation_map=relation_map.get(name, {}))
+    new_value: Union[List, Dict] = [value] if field.is_multi or field.virtual else value
+    return new_value
+
+
+def generate_pydantic_example(
+    pydantic_model: Type[pydantic.BaseModel], exclude: Set = None
+) -> Dict:
+    """
+    Generates dict with example.
+
+    :param pydantic_model: model to parse
+    :type pydantic_model: Type[pydantic.BaseModel]
+    :param exclude: list of fields to exclude
+    :type exclude: Optional[Set]
+    :return: dict with fields and sample values
+    :rtype: Dict
+    """
+    example: Dict[str, Any] = dict()
+    exclude = exclude or set()
+    for name in pydantic_model.__fields__:
+        if name not in exclude:
+            field = pydantic_model.__fields__[name]
+            type_ = field.type_
+            if getattr(field.outer_type_, "_name", None) == "List":
+                example[name] = [get_pydantic_example_repr(type_)]
+            else:
+                example[name] = get_pydantic_example_repr(type_)
+    return example
+
+
+def get_pydantic_example_repr(type_: Any) -> Any:
+    """
+    Gets sample representation of pydantic field for example dict.
+
+    :param type_: type of pydantic field
+    :type type_: Any
+    :return: representation to include in example
+    :rtype: Any
+    """
+    if issubclass(type_, (numbers.Number, decimal.Decimal)):
+        return 0
+    elif issubclass(type_, pydantic.BaseModel):
+        return generate_pydantic_example(pydantic_model=type_)
+    else:
+        return "string"
 
 
 def construct_modify_schema_function(fields_with_choices: List) -> SchemaExtraCallable:
