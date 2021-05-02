@@ -11,6 +11,7 @@ except ImportError:  # pragma: no cover
     import json  # type: ignore
 
 import pydantic
+from pydantic.fields import SHAPE_LIST
 from pydantic.main import SchemaExtraCallable
 
 import ormar  # noqa: I100, I202
@@ -184,14 +185,14 @@ def generate_pydantic_example(
     """
     example: Dict[str, Any] = dict()
     exclude = exclude or set()
-    for name in pydantic_model.__fields__:
-        if name not in exclude:
-            field = pydantic_model.__fields__[name]
-            type_ = field.type_
-            if getattr(field.outer_type_, "_name", None) == "List":
-                example[name] = [get_pydantic_example_repr(type_)]
-            else:
-                example[name] = get_pydantic_example_repr(type_)
+    name_to_check = [name for name in pydantic_model.__fields__ if name not in exclude]
+    for name in name_to_check:
+        field = pydantic_model.__fields__[name]
+        type_ = field.type_
+        if field.shape == SHAPE_LIST:
+            example[name] = [get_pydantic_example_repr(type_)]
+        else:
+            example[name] = get_pydantic_example_repr(type_)
     return example
 
 
