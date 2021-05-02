@@ -3,6 +3,7 @@ import itertools
 import sqlite3
 from typing import Any, Dict, List, TYPE_CHECKING, Tuple, Type
 
+import pydantic
 from pydantic.typing import ForwardRef
 import ormar  # noqa: I100
 from ormar.models.helpers.pydantic import populate_pydantic_default_values
@@ -60,6 +61,12 @@ def populate_default_options_values(
         new_model.Meta.requires_ref_update = True
     else:
         new_model.Meta.requires_ref_update = False
+
+    new_model._json_fields = {
+        name
+        for name, field in new_model.Meta.model_fields.items()
+        if field.__type__ == pydantic.Json
+    }
 
 
 class Connection(sqlite3.Connection):

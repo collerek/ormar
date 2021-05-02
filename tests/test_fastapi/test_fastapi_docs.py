@@ -1,6 +1,8 @@
-from typing import List
+import datetime
+from typing import List, Optional
 
 import databases
+import pydantic
 import pytest
 import sqlalchemy
 from fastapi import FastAPI
@@ -34,6 +36,17 @@ class LocalMeta:
     database = database
 
 
+class PTestA(pydantic.BaseModel):
+    c: str
+    d: bytes
+    e: datetime.datetime
+
+
+class PTestP(pydantic.BaseModel):
+    a: int
+    b: Optional[PTestA]
+
+
 class Category(ormar.Model):
     class Meta(LocalMeta):
         tablename = "categories"
@@ -48,6 +61,8 @@ class Item(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
+    pydantic_int: Optional[int]
+    test_P: Optional[List[PTestP]]
     categories = ormar.ManyToMany(Category)
 
 
@@ -124,6 +139,29 @@ def test_schema_modification():
         x.get("type") == "array" for x in schema["properties"]["categories"]["anyOf"]
     )
     assert schema["properties"]["categories"]["title"] == "Categories"
+    assert schema["example"] == {
+        "categories": [{"id": 0, "name": "string"}],
+        "id": 0,
+        "name": "string",
+        "pydantic_int": 0,
+        "test_P": [{"a": 0, "b": {"c": "string", "d": "string", "e": "string"}}],
+    }
+
+    schema = Category.schema()
+    assert schema["example"] == {
+        "id": 0,
+        "name": "string",
+        "items": [
+            {
+                "id": 0,
+                "name": "string",
+                "pydantic_int": 0,
+                "test_P": [
+                    {"a": 0, "b": {"c": "string", "d": "string", "e": "string"}}
+                ],
+            }
+        ],
+    }
 
 
 def test_schema_gen():

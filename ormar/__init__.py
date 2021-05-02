@@ -53,6 +53,7 @@ from ormar.fields import (
     ForeignKeyField,
     Integer,
     JSON,
+    LargeBinary,
     ManyToMany,
     ManyToManyField,
     String,
@@ -75,7 +76,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.10.5"
+__version__ = "0.10.6"
 __all__ = [
     "Integer",
     "BigInteger",
@@ -124,4 +125,5 @@ __all__ = [
     "EncryptBackends",
     "ENCODERS_MAP",
     "DECODERS_MAP",
+    "LargeBinary",
 ]

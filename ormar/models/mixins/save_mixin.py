@@ -275,12 +275,12 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :rtype: int
         """
         for field in fields_list:
-            value = getattr(self, field.name) or []
-            if not isinstance(value, list):
-                value = [value]
-            for val in value:
+            values = getattr(self, field.name) or []
+            if not isinstance(values, list):
+                values = [values]
+            for value in values:
                 if follow:
-                    update_count = await val.save_related(
+                    update_count = await value.save_related(
                         follow=follow,
                         save_all=save_all,
                         relation_map=self._skip_ellipsis(  # type: ignore
@@ -291,8 +291,8 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
                         relation_field=field,
                     )
                 else:
-                    update_count = await val._upsert_model(
-                        instance=val,
+                    update_count = await value._upsert_model(
+                        instance=value,
                         save_all=save_all,
                         previous_model=self,
                         relation_field=field,

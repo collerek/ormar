@@ -80,7 +80,7 @@ def create_dummy_model(
     :rtype: pydantic.BaseModel
     """
     alias = (
-        "".join(choices(string.ascii_uppercase, k=2)) + uuid.uuid4().hex[:4]
+        "".join(choices(string.ascii_uppercase, k=6))  # + uuid.uuid4().hex[:4]
     ).lower()
     fields = {f"{pk_field.name}": (pk_field.__type__, None)}
 

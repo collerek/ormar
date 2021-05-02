@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import uuid
+from base64 import b64encode
 from enum import Enum
 
 import databases
@@ -20,6 +21,10 @@ app.state.database = database
 
 uuid1 = uuid.uuid4()
 uuid2 = uuid.uuid4()
+
+
+blob = b"test"
+blob2 = b"test2icac89uc98"
 
 
 class EnumTest(Enum):
@@ -57,6 +62,7 @@ class Organisation(ormar.Model):
     random_json: pydantic.Json = ormar.JSON(choices=["aa", '{"aa":"bb"}'])
     random_uuid: uuid.UUID = ormar.UUID(choices=[uuid1, uuid2])
     enum_string: str = ormar.String(max_length=100, choices=list(EnumTest))
+    blob_col: bytes = ormar.LargeBinary(max_length=100000, choices=[blob, blob2])
 
 
 @app.on_event("startup")
@@ -111,6 +117,7 @@ def test_all_endpoints():
                 "random_json": '{"aa":"bb"}',
                 "random_uuid": str(uuid1),
                 "enum_string": EnumTest.val1.value,
+                "blob_col": blob.decode("utf-8"),
             },
         )
 

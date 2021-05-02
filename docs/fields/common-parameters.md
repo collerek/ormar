@@ -98,7 +98,11 @@ Sets the unique constraint on a table's column.
 
 Used in sql only.
 
-## pydantic_only
+## pydantic_only (**DEPRECATED**)
+
+**This parameter is deprecated and will be removed in one of next releases!**
+
+**To check how to declare pydantic only fields that are not saved into database see [pydantic fields section](pydantic-fields.md)** 
 
 `pydantic_only`: `bool` = `False` 
 
