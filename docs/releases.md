@@ -1,3 +1,15 @@
+# 0.10.7
+
+## ✨ Features
+
+* Add `exclude_primary_keys` flag to `dict()` method that allows to exclude all primary key columns in the resulting dictionaru.
+* Add `exclude_through_models` flag to `dict()` that allows excluding all through models from `ManyToMany` relations
+
+## 🐛 Fixes
+
+* Remove default `None` option for `max_length` for `LargeBinary` field
+* Remove default `None` option for `max_length` for `String` field
+
 # 0.10.6
 
 ## ✨ Features

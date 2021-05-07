@@ -562,6 +562,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         models: MutableSequence,
         include: Union[Set, Dict, None],
         exclude: Union[Set, Dict, None],
+        exclude_primary_keys: bool,
+        exclude_through_models: bool,
     ) -> List:
         """
         Converts list of models into list of dictionaries.
@@ -580,7 +582,11 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             try:
                 result.append(
                     model.dict(
-                        relation_map=relation_map, include=include, exclude=exclude,
+                        relation_map=relation_map,
+                        include=include,
+                        exclude=exclude,
+                        exclude_primary_keys=exclude_primary_keys,
+                        exclude_through_models=exclude_through_models,
                     )
                 )
             except ReferenceError:  # pragma no cover
@@ -623,6 +629,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         dict_instance: Dict,
         include: Optional[Dict],
         exclude: Optional[Dict],
+        exclude_primary_keys: bool,
+        exclude_through_models: bool,
     ) -> Dict:
         """
         Traverse nested models and converts them into dictionaries.
@@ -655,6 +663,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                         models=nested_model,
                         include=self._convert_all(self._skip_ellipsis(include, field)),
                         exclude=self._convert_all(self._skip_ellipsis(exclude, field)),
+                        exclude_primary_keys=exclude_primary_keys,
+                        exclude_through_models=exclude_through_models,
                     )
                 elif nested_model is not None:
 
@@ -664,6 +674,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                         ),
                         include=self._convert_all(self._skip_ellipsis(include, field)),
                         exclude=self._convert_all(self._skip_ellipsis(exclude, field)),
+                        exclude_primary_keys=exclude_primary_keys,
+                        exclude_through_models=exclude_through_models,
                     )
                 else:
                     dict_instance[field] = None
@@ -681,6 +693,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         exclude_none: bool = False,
+        exclude_primary_keys: bool = False,
+        exclude_through_models: bool = False,
         relation_map: Dict = None,
     ) -> "DictStrAny":  # noqa: A003'
         """
@@ -692,6 +706,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         Additionally fields decorated with @property_field are also added.
 
+        :param exclude_through_models: flag to exclude through models from dict
+        :type exclude_through_models: bool
+        :param exclude_primary_keys: flag to exclude primary keys from dict
+        :type exclude_primary_keys: bool
         :param include: fields to include
         :type include: Union[Set, Dict, None]
         :param exclude: fields to exclude
@@ -711,9 +729,15 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return:
         :rtype:
         """
+        pydantic_exclude = self._update_excluded_with_related(exclude)
+        pydantic_exclude = self._update_excluded_with_pks_and_through(
+            exclude=pydantic_exclude,
+            exclude_primary_keys=exclude_primary_keys,
+            exclude_through_models=exclude_through_models,
+        )
         dict_instance = super().dict(
             include=include,
-            exclude=self._update_excluded_with_related(exclude),
+            exclude=pydantic_exclude,
             by_alias=by_alias,
             skip_defaults=skip_defaults,
             exclude_unset=exclude_unset,
@@ -738,6 +762,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 dict_instance=dict_instance,
                 include=include,  # type: ignore
                 exclude=exclude,  # type: ignore
+                exclude_primary_keys=exclude_primary_keys,
+                exclude_through_models=exclude_through_models,
             )
 
         # include model properties as fields in dict

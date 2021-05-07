@@ -893,7 +893,7 @@ class QuerySet(Generic[T]):
         """
         Returns all rows from a database for given model for set filter options.
 
-        Passing args and/or kwargs is a shortcut and equals to calling 
+        Passing args and/or kwargs is a shortcut and equals to calling
         `filter(*args, **kwargs).all()`.
 
         If there are no rows meeting the criteria an empty list is returned.

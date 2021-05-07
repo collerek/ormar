@@ -151,7 +151,7 @@ class ExcludableMixin(RelationMixin):
         :return: set or dict with excluded fields added.
         :rtype: Union[Set, Dict]
         """
-        exclude = exclude or {}
+        exclude = exclude or set()
         related_set = cls.extract_related_names()
         if isinstance(exclude, set):
             exclude = {s for s in exclude}
@@ -160,6 +160,26 @@ class ExcludableMixin(RelationMixin):
             # relations are handled in ormar - take only own fields (ellipsis in dict)
             exclude = {k for k, v in exclude.items() if v is Ellipsis}
             exclude = exclude.union(related_set)
+        return exclude
+
+    @classmethod
+    def _update_excluded_with_pks_and_through(
+        cls, exclude: Set, exclude_primary_keys: bool, exclude_through_models: bool
+    ) -> Set:
+        """
+        Updates excluded names with name of pk column if exclude flag is set.
+
+        :param exclude: set of names to exclude
+        :type exclude: Set
+        :param exclude_primary_keys: flag if the primary keys should be excluded
+        :type exclude_primary_keys: bool
+        :return: set updated with pk if flag is set
+        :rtype: Set
+        """
+        if exclude_primary_keys:
+            exclude.add(cls.Meta.pkname)
+        if exclude_through_models:
+            exclude = exclude.union(cls.extract_through_names())
         return exclude
 
     @classmethod

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 import databases
 import pytest
@@ -11,16 +11,28 @@ metadata = sqlalchemy.MetaData()
 database = databases.Database(DATABASE_URL, force_rollback=True)
 
 
+class MainMeta(ormar.ModelMeta):
+    metadata = metadata
+    database = database
+
+
+class Role(ormar.Model):
+    class Meta(MainMeta):
+        pass
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=255, nullable=False)
+
+
 class User(ormar.Model):
-    class Meta:
+    class Meta(MainMeta):
         tablename: str = "users"
-        metadata = metadata
-        database = database
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255, nullable=False)
     password: str = ormar.String(max_length=255, nullable=True)
     first_name: str = ormar.String(max_length=255, nullable=False)
+    roles: List[Role] = ormar.ManyToMany(Role)
 
 
 class Tier(ormar.Model):
@@ -58,12 +70,20 @@ class Item(ormar.Model):
 
 @pytest.fixture(autouse=True, scope="module")
 def sample_data():
-    user = User(email="test@test.com", password="ijacids7^*&", first_name="Anna")
-    tier = Tier(name="Tier I")
-    category1 = Category(name="Toys", tier=tier)
-    category2 = Category(name="Weapons", tier=tier)
-    item1 = Item(name="Teddy Bear", category=category1, created_by=user)
-    item2 = Item(name="M16", category=category2, created_by=user)
+    role = Role(name="User", id=1)
+    role2 = Role(name="Admin", id=2)
+    user = User(
+        id=1,
+        email="test@test.com",
+        password="ijacids7^*&",
+        first_name="Anna",
+        roles=[role, role2],
+    )
+    tier = Tier(id=1, name="Tier I")
+    category1 = Category(id=1, name="Toys", tier=tier)
+    category2 = Category(id=2, name="Weapons", tier=tier)
+    item1 = Item(id=1, name="Teddy Bear", category=category1, created_by=user)
+    item2 = Item(id=2, name="M16", category=category2, created_by=user)
     return item1, item2
 
 
@@ -139,4 +159,30 @@ def test_dumping_to_dict_exclude_and_include_nested_dict(sample_data):
     assert dict2["category"]["name"] == "Toys"
     assert "created_by" not in dict1
     assert dict1["category"]["tier"].get("name") is None
-    assert dict1["category"]["tier"]["id"] is None
+    assert dict1["category"]["tier"]["id"] == 1
+
+
+def test_dumping_dict_without_primary_keys(sample_data):
+    item1, item2 = sample_data
+    dict1 = item2.dict(exclude_primary_keys=True)
+    assert dict1 == {
+        "category": {"name": "Weapons", "tier": {"name": "Tier I"}},
+        "created_by": {
+            "email": "test@test.com",
+            "first_name": "Anna",
+            "password": "ijacids7^*&",
+            "roles": [{"name": "User"}, {"name": "Admin"}],
+        },
+        "name": "M16",
+    }
+    dict2 = item1.dict(exclude_primary_keys=True)
+    assert dict2 == {
+        "category": {"name": "Toys", "tier": {"name": "Tier I"}},
+        "created_by": {
+            "email": "test@test.com",
+            "first_name": "Anna",
+            "password": "ijacids7^*&",
+            "roles": [{"name": "User"}, {"name": "Admin"}],
+        },
+        "name": "Teddy Bear",
+    }

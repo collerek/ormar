@@ -68,13 +68,24 @@ Ormar is built with:
   * [`pydantic`][pydantic] for data validation.
   * `typing_extensions` for python 3.6 - 3.7
 
-### Migrating from `sqlalchemy`
+### License
+
+`ormar` is built as an open-sorce software and remain completely free (MIT license).
+
+As I write open-source code to solve everyday problems in my work or to promote and build strong python 
+community you can say thank you and buy me a coffee or sponsor me with a monthly amount to help me ensure my work remains free and maintained.
+
+<iframe src="https://github.com/sponsors/collerek/button" title="Sponsor collerek" height="35" width="116" style="border: 0;"></iframe>
+
+### Migrating from `sqlalchemy` and existing databases
 
 If you currently use `sqlalchemy` and would like to switch to `ormar` check out the auto-translation
 tool that can help you with translating existing sqlalchemy orm models so you do not have to do it manually.
 
 **Beta** versions available at github: [`sqlalchemy-to-ormar`](https://github.com/collerek/sqlalchemy-to-ormar)
 or simply `pip install sqlalchemy-to-ormar`
+
+`sqlalchemy-to-ormar` can be used in pair with `sqlacodegen` to auto-map/ generate `ormar` models from existing database, even if you don't use the `sqlalchemy` for your project.
 
 ### Migrations & Database creation
 
