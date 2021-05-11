@@ -35,6 +35,10 @@ Ormar - apart form obvious ORM in name - get it's name from ormar in swedish whi
 
 And what's a better name for python ORM than snakes cabinet :)
 
+**If you like ormar remember to star the repository in [github](https://github.com/collerek/ormar)!**
+
+The bigger community we build, the easier it will be to catch bugs and attract contributors ;)
+
 ### Documentation
 
 Check out the [documentation][documentation] for details.
@@ -73,7 +77,7 @@ Ormar is built with:
 `ormar` is built as an open-sorce software and remain completely free (MIT license).
 
 As I write open-source code to solve everyday problems in my work or to promote and build strong python 
-community you can say thank you and buy me a coffee or sponsor me with a monthly amount to help me ensure my work remains free and maintained.
+community you can say thank you and buy me a coffee or sponsor me with a monthly amount to help ensure my work remains free and maintained.
 
 <iframe src="https://github.com/sponsors/collerek/button" title="Sponsor collerek" height="35" width="116" style="border: 0;"></iframe>
 

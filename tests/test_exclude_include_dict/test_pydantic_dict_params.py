@@ -69,29 +69,67 @@ async def test_exclude_default():
 @pytest.mark.asyncio
 async def test_exclude_none():
     async with database:
-        category = Category(name=None)
+        category = Category(id=2, name=None)
         assert category.dict() == {
-            "id": None,
+            "id": 2,
             "items": [],
             "name": None,
             "visibility": True,
         }
-        assert category.dict(exclude_none=True) == {"items": [], "visibility": True}
+        assert category.dict(exclude_none=True) == {
+            "id": 2,
+            "items": [],
+            "visibility": True,
+        }
 
         await category.save()
         category2 = await Category.objects.get()
         assert category2.dict() == {
-            "id": 1,
+            "id": 2,
             "items": [],
             "name": None,
             "visibility": True,
         }
         assert category2.dict(exclude_none=True) == {
-            "id": 1,
+            "id": 2,
             "items": [],
             "visibility": True,
         }
         assert (
             category2.json(exclude_none=True)
-            == '{"id": 1, "visibility": true, "items": []}'
+            == '{"id": 2, "visibility": true, "items": []}'
         )
+
+
+@pytest.mark.asyncio
+async def test_exclude_unset():
+    async with database:
+        category = Category(id=3, name="Test 2")
+        assert category.dict() == {
+            "id": 3,
+            "items": [],
+            "name": "Test 2",
+            "visibility": True,
+        }
+        assert category.dict(exclude_unset=True) == {
+            "id": 3,
+            "items": [],
+            "name": "Test 2",
+        }
+
+        await category.save()
+        category2 = await Category.objects.get()
+        assert category2.dict() == {
+            "id": 3,
+            "items": [],
+            "name": "Test 2",
+            "visibility": True,
+        }
+        # NOTE how after loading from db all fields are set explicitly
+        # as this is what happens when you populate a model from db
+        assert category2.dict(exclude_unset=True) == {
+            "id": 3,
+            "items": [],
+            "name": "Test 2",
+            "visibility": True,
+        }
