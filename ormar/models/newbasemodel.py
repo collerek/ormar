@@ -1,4 +1,5 @@
 import sys
+import warnings
 from typing import (
     AbstractSet,
     Any,
@@ -773,6 +774,50 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 dict_instance.update({prop: getattr(self, prop) for prop in props})
 
         return dict_instance
+
+    def json(  # type: ignore # noqa A003
+        self,
+        *,
+        include: Union[Set, Dict] = None,
+        exclude: Union[Set, Dict] = None,
+        by_alias: bool = False,
+        skip_defaults: bool = None,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+        encoder: Optional[Callable[[Any], Any]] = None,
+        exclude_primary_keys: bool = False,
+        exclude_through_models: bool = False,
+        **dumps_kwargs: Any,
+    ) -> str:
+        """
+        Generate a JSON representation of the model, `include` and `exclude`
+        arguments as per `dict()`.
+
+        `encoder` is an optional function to supply as `default` to json.dumps(),
+        other arguments as per `json.dumps()`.
+        """
+        if skip_defaults is not None:  # pragma: no cover
+            warnings.warn(
+                f'{self.__class__.__name__}.json(): "skip_defaults" is deprecated '
+                f'and replaced by "exclude_unset"',
+                DeprecationWarning,
+            )
+            exclude_unset = skip_defaults
+        encoder = cast(Callable[[Any], Any], encoder or self.__json_encoder__)
+        data = self.dict(
+            include=include,
+            exclude=exclude,
+            by_alias=by_alias,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
+            exclude_primary_keys=exclude_primary_keys,
+            exclude_through_models=exclude_through_models,
+        )
+        if self.__custom_root_type__:  # pragma: no cover
+            data = data["__root__"]
+        return self.__config__.json_dumps(data, default=encoder, **dumps_kwargs)
 
     def update_from_dict(self, value_dict: Dict) -> "NewBaseModel":
         """

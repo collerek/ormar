@@ -2,13 +2,17 @@
 
 ## ✨ Features
 
-* Add `exclude_primary_keys` flag to `dict()` method that allows to exclude all primary key columns in the resulting dictionaru.
-* Add `exclude_through_models` flag to `dict()` that allows excluding all through models from `ManyToMany` relations
+* Add `exclude_primary_keys` flag to `dict()` method that allows to exclude all primary key columns in the resulting dictionaru. [#164](https://github.com/collerek/ormar/issues/164)
+* Add `exclude_through_models` flag to `dict()` that allows excluding all through models from `ManyToMany` relations [#164](https://github.com/collerek/ormar/issues/164)
 
 ## 🐛 Fixes
 
-* Remove default `None` option for `max_length` for `LargeBinary` field
+* Remove default `None` option for `max_length` for `LargeBinary` field [#186](https://github.com/collerek/ormar/issues/186)
 * Remove default `None` option for `max_length` for `String` field
+
+## 💬 Other
+
+* Provide a guide and samples of `dict()` parameters in the [docs](https://collerek.github.io/ormar/models/methods/)
 
 # 0.10.6
 
