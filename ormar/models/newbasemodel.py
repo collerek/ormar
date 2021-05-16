@@ -1,3 +1,4 @@
+import base64
 import sys
 import warnings
 from typing import (
@@ -185,7 +186,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             object.__setattr__(self, name, value)
         elif name == "pk":
             object.__setattr__(self, self.Meta.pkname, value)
-            self.set_save_status(False)
+            object.__getattribute__(self, "set_save_status")(False)
         elif name in object.__getattribute__(self, "_orm"):
             model = (
                 object.__getattribute__(self, "Meta")
@@ -200,65 +201,68 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             else:
                 # foreign key relation
                 object.__getattribute__(self, "__dict__")[name] = model
-                self.set_save_status(False)
+                object.__getattribute__(self, "set_save_status")(False)
         else:
             if name in object.__getattribute__(self, "_choices_fields"):
                 validate_choices(field=self.Meta.model_fields[name], value=value)
-            super().__setattr__(name, self._convert_json(name, value, op="dumps"))
-            self.set_save_status(False)
+            value = object.__getattribute__(self, '_convert_bytes')(name, value, op="write")
+            value = object.__getattribute__(self, '_convert_json')(name, value, op="dumps")
+            super().__setattr__(name, value)
+            object.__getattribute__(self, "set_save_status")(False)
 
-    def __getattribute__(self, item: str) -> Any:  # noqa: CCR001
-        """
-        Because we need to overwrite getting the attribute by ormar instead of pydantic
-        as well as returning related models and not the value stored on the model the
-        __getattribute__ needs to be used not __getattr__.
-
-        It's used to access all attributes so it can be a big overhead that's why a
-        number of short circuits is used.
-
-        To short circuit all checks and expansions the set of attribute names present
-        on each model is gathered into _quick_access_fields that is looked first and
-        if field is in this set the object setattr is called directly.
-
-        To avoid recursion object's getattribute is used to actually get the attribute
-        value from the model after the checks.
-
-        Even the function calls are constructed with objects functions.
-
-        Parameter "pk" is translated into actual primary key field name.
-
-        Relations are returned so the actual related model is returned and not current
-        model's field. The related models are handled by RelationshipManager exposed
-        at _orm param.
-
-        Json fields are converted if needed.
-
-        :param item: name of the attribute to retrieve
-        :type item: str
-        :return: value of the attribute
-        :rtype: Any
-        """
-        if item in object.__getattribute__(self, "_quick_access_fields"):
-            return object.__getattribute__(self, item)
-        if item == "pk":
-            return object.__getattribute__(self, "__dict__").get(self.Meta.pkname, None)
-        if item in object.__getattribute__(self, "extract_related_names")():
-            return object.__getattribute__(
-                self, "_extract_related_model_instead_of_field"
-            )(item)
-        if item in object.__getattribute__(self, "extract_through_names")():
-            return object.__getattribute__(
-                self, "_extract_related_model_instead_of_field"
-            )(item)
-        if item in object.__getattribute__(self, "Meta").property_fields:
-            value = object.__getattribute__(self, item)
-            return value() if callable(value) else value
-        if item in object.__getattribute__(self, "_pydantic_fields"):
-            value = object.__getattribute__(self, "__dict__").get(item, None)
-            value = object.__getattribute__(self, "_convert_json")(item, value, "loads")
-            return value
-
-        return object.__getattribute__(self, item)  # pragma: no cover
+    # def __getattribute__(self, item: str) -> Any:  # noqa: CCR001
+    #     """
+    #     Because we need to overwrite getting the attribute by ormar instead of pydantic
+    #     as well as returning related models and not the value stored on the model the
+    #     __getattribute__ needs to be used not __getattr__.
+    #
+    #     It's used to access all attributes so it can be a big overhead that's why a
+    #     number of short circuits is used.
+    #
+    #     To short circuit all checks and expansions the set of attribute names present
+    #     on each model is gathered into _quick_access_fields that is looked first and
+    #     if field is in this set the object setattr is called directly.
+    #
+    #     To avoid recursion object's getattribute is used to actually get the attribute
+    #     value from the model after the checks.
+    #
+    #     Even the function calls are constructed with objects functions.
+    #
+    #     Parameter "pk" is translated into actual primary key field name.
+    #
+    #     Relations are returned so the actual related model is returned and not current
+    #     model's field. The related models are handled by RelationshipManager exposed
+    #     at _orm param.
+    #
+    #     Json fields are converted if needed.
+    #
+    #     :param item: name of the attribute to retrieve
+    #     :type item: str
+    #     :return: value of the attribute
+    #     :rtype: Any
+    #     """
+    #     if item in object.__getattribute__(self, "_quick_access_fields"):
+    #         return object.__getattribute__(self, item)
+    #     # if item == "pk":
+    #     #     return object.__getattribute__(self, "__dict__").get(self.Meta.pkname, None)
+    #     # if item in object.__getattribute__(self, "extract_related_names")():
+    #     #     return object.__getattribute__(
+    #     #         self, "_extract_related_model_instead_of_field"
+    #     #     )(item)
+    #     # if item in object.__getattribute__(self, "extract_through_names")():
+    #     #     return object.__getattribute__(
+    #     #         self, "_extract_related_model_instead_of_field"
+    #     #     )(item)
+    #     # if item in object.__getattribute__(self, "Meta").property_fields:
+    #     #     value = object.__getattribute__(self, item)
+    #     #     return value() if callable(value) else value
+    #     # if item in object.__getattribute__(self, "_pydantic_fields"):
+    #     #     value = object.__getattribute__(self, "__dict__").get(item, None)
+    #     #     value = object.__getattribute__(self, "_convert_json")(item, value, "loads")
+    #     #     value = object.__getattribute__(self, "_convert_bytes")(item, value, "read")
+    #     #     return value
+    #
+    #     return object.__getattribute__(self, item)  # pragma: no cover
 
     def _verify_model_can_be_initialized(self) -> None:
         """
@@ -297,6 +301,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         property_fields = meta.property_fields
         model_fields = meta.model_fields
         pydantic_fields = object.__getattribute__(self, "__fields__")
+        bytes_fields = object.__getattribute__(self, '_bytes_fields')
 
         # remove property fields
         for prop_filed in property_fields:
@@ -831,6 +836,39 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         for key, value in value_dict.items():
             setattr(self, key, value)
         return self
+
+    def _convert_bytes(self, column_name: str, value: Any, op: str) -> Union[str, Dict]:
+        """
+        Converts value to/from json if needed (for Json columns).
+
+        :param column_name: name of the field
+        :type column_name: str
+        :param value: value fo the field
+        :type value: Any
+        :param op: operator on json
+        :type op: str
+        :return: converted value if needed, else original value
+        :rtype: Any
+        """
+        if column_name not in object.__getattribute__(self, "_bytes_fields"):
+            return value
+        field = self.Meta.model_fields[column_name]
+        condition = (
+            isinstance(value, bytes) if op == "read" else not isinstance(value, bytes)
+        )
+        if op == "read" and condition:
+            if field.use_base64:
+                value = base64.b64encode(value)
+            elif field.represent_as_base64_str:
+                value = base64.b64encode(value).decode()
+            else:
+                value = value.decode("utf-8")
+        elif condition:
+            if field.use_base64 or field.represent_as_base64_str:
+                value = base64.b64decode(value)
+            else:
+                value = value.encode("utf-8")
+        return value
 
     def _convert_json(self, column_name: str, value: Any, op: str) -> Union[str, Dict]:
         """

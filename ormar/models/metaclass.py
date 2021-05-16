@@ -22,6 +22,9 @@ from ormar.exceptions import ModelError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
+from ormar.models.descriptors import PkDescriptor, PropertyDescriptor, \
+    PydanticDescriptor, \
+    RelationDescriptor
 from ormar.models.helpers import (
     alias_manager,
     check_required_meta_parameters,
@@ -95,6 +98,7 @@ def add_cached_properties(new_model: Type["Model"]) -> None:
     new_model._pydantic_fields = {name for name in new_model.__fields__}
     new_model._choices_fields = set()
     new_model._json_fields = set()
+    new_model._bytes_fields = set()
 
 
 def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa: CCR001
@@ -150,7 +154,7 @@ def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
 
 
 def verify_constraint_names(
-    base_class: "Model", model_fields: Dict, parent_value: List
+        base_class: "Model", model_fields: Dict, parent_value: List
 ) -> None:
     """
     Verifies if redefined fields that are overwritten in subclasses did not remove
@@ -181,7 +185,7 @@ def verify_constraint_names(
 
 
 def update_attrs_from_base_meta(  # noqa: CCR001
-    base_class: "Model", attrs: Dict, model_fields: Dict
+        base_class: "Model", attrs: Dict, model_fields: Dict
 ) -> None:
     """
     Updates Meta parameters in child from parent if needed.
@@ -217,13 +221,13 @@ def update_attrs_from_base_meta(  # noqa: CCR001
 
 
 def copy_and_replace_m2m_through_model(  # noqa: CFQ002
-    field: ManyToManyField,
-    field_name: str,
-    table_name: str,
-    parent_fields: Dict,
-    attrs: Dict,
-    meta: ModelMeta,
-    base_class: Type["Model"],
+        field: ManyToManyField,
+        field_name: str,
+        table_name: str,
+        parent_fields: Dict,
+        attrs: Dict,
+        meta: ModelMeta,
+        base_class: Type["Model"],
 ) -> None:
     """
     Clones class with Through model for m2m relations, appends child name to the name
@@ -293,10 +297,10 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
 
 
 def copy_data_from_parent_model(  # noqa: CCR001
-    base_class: Type["Model"],
-    curr_class: type,
-    attrs: Dict,
-    model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
+        base_class: Type["Model"],
+        curr_class: type,
+        attrs: Dict,
+        model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
 ) -> Tuple[Dict, Dict]:
     """
     Copy the key parameters [databse, metadata, property_fields and constraints]
@@ -371,10 +375,10 @@ def copy_data_from_parent_model(  # noqa: CCR001
 
 
 def extract_from_parents_definition(  # noqa: CCR001
-    base_class: type,
-    curr_class: type,
-    attrs: Dict,
-    model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
+        base_class: type,
+        curr_class: type,
+        attrs: Dict,
+        model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
 ) -> Tuple[Dict, Dict]:
     """
     Extracts fields from base classes if they have valid oramr fields.
@@ -448,11 +452,11 @@ def extract_from_parents_definition(  # noqa: CCR001
 
 
 def update_attrs_and_fields(
-    attrs: Dict,
-    new_attrs: Dict,
-    model_fields: Dict,
-    new_model_fields: Dict,
-    new_fields: Set,
+        attrs: Dict,
+        new_attrs: Dict,
+        model_fields: Dict,
+        new_model_fields: Dict,
+        new_fields: Set,
 ) -> Dict:
     """
     Updates __annotations__, values of model fields (so pydantic FieldInfos)
@@ -479,7 +483,7 @@ def update_attrs_and_fields(
 
 class ModelMetaclass(pydantic.main.ModelMetaclass):
     def __new__(  # type: ignore # noqa: CCR001
-        mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
+            mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
     ) -> "ModelMetaclass":
         """
         Metaclass used by ormar Models that performs configuration
@@ -539,8 +543,12 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 populate_meta_sqlalchemy_table_if_required(new_model.Meta)
                 expand_reverse_relationships(new_model)
                 # TODO: iterate only related fields
-                for field in new_model.Meta.model_fields.values():
+                for name, field in new_model.Meta.model_fields.items():
                     register_relation_in_alias_manager(field=field)
+                    if field.is_relation:
+                        setattr(new_model, name, RelationDescriptor(name=name))
+                    else:
+                        setattr(new_model, name, PydanticDescriptor(name=name))
 
                 if new_model.Meta.pkname not in attrs["__annotations__"]:
                     field_name = new_model.Meta.pkname
@@ -550,6 +558,13 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                         field_name=field_name, model=new_model
                     )
                 new_model.Meta.alias_manager = alias_manager
+
+                for item in new_model.Meta.property_fields:
+                    function = getattr(new_model, item)
+                    setattr(new_model, item, PropertyDescriptor(name=item,
+                                                                function=function))
+
+                setattr(new_model, 'pk', PkDescriptor(name=new_model.Meta.pkname))
 
         return new_model
 
@@ -564,6 +579,17 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         return QuerySet(model_cls=cls)
 
     def __getattr__(self, item: str) -> Any:
+        """
+        Returns FieldAccessors on access to model fields from a class,
+        that way it can be used in python style filters and order_by.
+
+        :param item: name of the field
+        :type item: str
+        :return: FieldAccessor for given field
+        :rtype: FieldAccessor
+        """
+        if item == "pk":
+            item = self.Meta.pkname
         if item in object.__getattribute__(self, "Meta").model_fields:
             field = self.Meta.model_fields.get(item)
             if field.is_relation:

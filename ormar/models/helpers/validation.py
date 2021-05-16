@@ -1,3 +1,4 @@
+import base64
 import datetime
 import decimal
 import numbers
@@ -77,7 +78,10 @@ def convert_choices_if_needed(  # noqa: CCR001
         )
         choices = [round(float(o), precision) for o in choices]
     elif field.__type__ == bytes:
-        value = value if isinstance(value, bytes) else value.encode("utf-8")
+        if field.represent_as_base64_str:
+            value = value if isinstance(value, bytes) else base64.b64decode(value)
+        else:
+            value = value if isinstance(value, bytes) else value.encode("utf-8")
 
     return value, choices
 

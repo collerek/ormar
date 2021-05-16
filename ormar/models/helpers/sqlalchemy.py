@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 import sqlalchemy
 
 import ormar  # noqa: I100, I202
+from ormar.models.descriptors import RelationDescriptor
 from ormar.models.helpers.pydantic import create_pydantic_field
 from ormar.models.helpers.related_names_validation import (
     validate_related_names_in_relations,
@@ -33,6 +34,7 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
         ondelete="CASCADE",
         owner=model_field.through,
     )
+
     model_fields[child_name] = ormar.ForeignKey(  # type: ignore
         model_field.owner,
         real_name=child_name,
@@ -49,6 +51,9 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
 
     create_pydantic_field(parent_name, model_field.to, model_field)
     create_pydantic_field(child_name, model_field.owner, model_field)
+
+    setattr(model_field.through, parent_name, RelationDescriptor(name=parent_name))
+    setattr(model_field.through, child_name, RelationDescriptor(name=child_name))
 
 
 def create_and_append_m2m_fk(
