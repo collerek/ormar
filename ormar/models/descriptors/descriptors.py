@@ -23,7 +23,7 @@ class PydanticDescriptor:
                                                                     op="write")
         value = object.__getattribute__(instance, '_convert_json')(self.name, value,
                                                                    op="dumps")
-        super(instance.__class__, instance).__setattr__(self.name, value)
+        instance._internal_set(self.name, value)
         object.__getattribute__(instance, "set_save_status")(False)
 
 
@@ -47,7 +47,7 @@ class PkDescriptor:
                                                                     op="write")
         value = object.__getattribute__(instance, '_convert_json')(self.name, value,
                                                                    op="dumps")
-        super(instance.__class__, instance).__setattr__(self.name, value)
+        instance._internal_set(self.name, value)
         object.__getattribute__(instance, "set_save_status")(False)
 
 

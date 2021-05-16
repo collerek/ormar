@@ -182,34 +182,41 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: None
         :rtype: None
         """
-        if name in object.__getattribute__(self, "_quick_access_fields"):
+        if hasattr(self, name):
             object.__setattr__(self, name, value)
-        elif name == "pk":
-            object.__setattr__(self, self.Meta.pkname, value)
-            object.__getattribute__(self, "set_save_status")(False)
-        elif name in object.__getattribute__(self, "_orm"):
-            model = (
-                object.__getattribute__(self, "Meta")
-                .model_fields[name]
-                .expand_relationship(value=value, child=self)
-            )
-            if isinstance(object.__getattribute__(self, "__dict__").get(name), list):
-                # virtual foreign key or many to many
-                # TODO: Fix double items in dict, no effect on real action ugly repr
-                # if model.pk not in [x.pk for  x in related_list]:
-                object.__getattribute__(self, "__dict__")[name].append(model)
-            else:
-                # foreign key relation
-                object.__getattribute__(self, "__dict__")[name] = model
-                object.__getattribute__(self, "set_save_status")(False)
         else:
-            if name in object.__getattribute__(self, "_choices_fields"):
-                validate_choices(field=self.Meta.model_fields[name], value=value)
-            value = object.__getattribute__(self, '_convert_bytes')(name, value, op="write")
-            value = object.__getattribute__(self, '_convert_json')(name, value, op="dumps")
+            # let pydantic handle errors for unknown fields
             super().__setattr__(name, value)
-            object.__getattribute__(self, "set_save_status")(False)
+        # if name in object.__getattribute__(self, "_quick_access_fields"):
+        #     object.__setattr__(self, name, value)
+        # elif name == "pk":
+        #     object.__setattr__(self, self.Meta.pkname, value)
+        #     object.__getattribute__(self, "set_save_status")(False)
+        # elif name in object.__getattribute__(self, "_orm"):
+        #     model = (
+        #         object.__getattribute__(self, "Meta")
+        #         .model_fields[name]
+        #         .expand_relationship(value=value, child=self)
+        #     )
+        #     if isinstance(object.__getattribute__(self, "__dict__").get(name), list):
+        #         # virtual foreign key or many to many
+        #         # TODO: Fix double items in dict, no effect on real action ugly repr
+        #         # if model.pk not in [x.pk for  x in related_list]:
+        #         object.__getattribute__(self, "__dict__")[name].append(model)
+        #     else:
+        #         # foreign key relation
+        #         object.__getattribute__(self, "__dict__")[name] = model
+        #         object.__getattribute__(self, "set_save_status")(False)
+        # else:
+        #     if name in object.__getattribute__(self, "_choices_fields"):
+        #         validate_choices(field=self.Meta.model_fields[name], value=value)
+        #     value = object.__getattribute__(self, '_convert_bytes')(name, value, op="write")
+        #     value = object.__getattribute__(self, '_convert_json')(name, value, op="dumps")
+        #     super().__setattr__(name, value)
+        #     object.__getattribute__(self, "set_save_status")(False)
 
+    def _internal_set(self, name, value):
+        super().__setattr__(name, value)
     # def __getattribute__(self, item: str) -> Any:  # noqa: CCR001
     #     """
     #     Because we need to overwrite getting the attribute by ormar instead of pydantic
