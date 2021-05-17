@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import datetime
 import os
 import uuid
@@ -53,7 +54,7 @@ class LargeBinaryStr(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     test_binary: str = ormar.LargeBinary(
-        max_length=100000, choices=[blob3, blob4], represent_as_base64=True
+        max_length=100000, choices=[blob3, blob4], represent_as_base64_str=True
     )
 
 
@@ -174,6 +175,9 @@ async def test_json_column():
             assert items[0].test_json == dict(aa=12)
             assert items[1].test_json == dict(aa=12)
 
+            items[0].test_json = "[1, 2, 3]"
+            assert items[0].test_json == [1, 2, 3]
+
 
 @pytest.mark.asyncio
 async def test_binary_column():
@@ -187,6 +191,9 @@ async def test_binary_column():
             assert items[0].test_binary == blob
             assert items[1].test_binary == blob2
 
+            items[0].test_binary = "test2icac89uc98"
+            assert items[0].test_binary == b"test2icac89uc98"
+
 
 @pytest.mark.asyncio
 async def test_binary_str_column():
@@ -197,8 +204,11 @@ async def test_binary_str_column():
 
             items = await LargeBinaryStr.objects.all()
             assert len(items) == 2
-            assert items[0].test_binary == blob3
-            assert items[1].test_binary == blob4
+            assert items[0].test_binary == base64.b64encode(blob3).decode()
+            items[0].test_binary = base64.b64encode(blob4).decode()
+            assert items[0].test_binary == base64.b64encode(blob4).decode()
+            assert items[1].test_binary == base64.b64encode(blob4).decode()
+            assert items[1].__dict__["test_binary"] == blob4
 
 
 @pytest.mark.asyncio

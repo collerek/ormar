@@ -22,9 +22,14 @@ from ormar.exceptions import ModelError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
-from ormar.models.descriptors import PkDescriptor, PropertyDescriptor, \
-    PydanticDescriptor, \
-    RelationDescriptor
+from ormar.models.descriptors import (
+    JsonDescriptor,
+    PkDescriptor,
+    PropertyDescriptor,
+    PydanticDescriptor,
+    RelationDescriptor,
+)
+from ormar.models.descriptors.descriptors import BytesDescriptor
 from ormar.models.helpers import (
     alias_manager,
     check_required_meta_parameters,
@@ -154,7 +159,7 @@ def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
 
 
 def verify_constraint_names(
-        base_class: "Model", model_fields: Dict, parent_value: List
+    base_class: "Model", model_fields: Dict, parent_value: List
 ) -> None:
     """
     Verifies if redefined fields that are overwritten in subclasses did not remove
@@ -185,7 +190,7 @@ def verify_constraint_names(
 
 
 def update_attrs_from_base_meta(  # noqa: CCR001
-        base_class: "Model", attrs: Dict, model_fields: Dict
+    base_class: "Model", attrs: Dict, model_fields: Dict
 ) -> None:
     """
     Updates Meta parameters in child from parent if needed.
@@ -221,13 +226,13 @@ def update_attrs_from_base_meta(  # noqa: CCR001
 
 
 def copy_and_replace_m2m_through_model(  # noqa: CFQ002
-        field: ManyToManyField,
-        field_name: str,
-        table_name: str,
-        parent_fields: Dict,
-        attrs: Dict,
-        meta: ModelMeta,
-        base_class: Type["Model"],
+    field: ManyToManyField,
+    field_name: str,
+    table_name: str,
+    parent_fields: Dict,
+    attrs: Dict,
+    meta: ModelMeta,
+    base_class: Type["Model"],
 ) -> None:
     """
     Clones class with Through model for m2m relations, appends child name to the name
@@ -297,10 +302,10 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
 
 
 def copy_data_from_parent_model(  # noqa: CCR001
-        base_class: Type["Model"],
-        curr_class: type,
-        attrs: Dict,
-        model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
+    base_class: Type["Model"],
+    curr_class: type,
+    attrs: Dict,
+    model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
 ) -> Tuple[Dict, Dict]:
     """
     Copy the key parameters [databse, metadata, property_fields and constraints]
@@ -375,10 +380,10 @@ def copy_data_from_parent_model(  # noqa: CCR001
 
 
 def extract_from_parents_definition(  # noqa: CCR001
-        base_class: type,
-        curr_class: type,
-        attrs: Dict,
-        model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
+    base_class: type,
+    curr_class: type,
+    attrs: Dict,
+    model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
 ) -> Tuple[Dict, Dict]:
     """
     Extracts fields from base classes if they have valid oramr fields.
@@ -452,11 +457,11 @@ def extract_from_parents_definition(  # noqa: CCR001
 
 
 def update_attrs_and_fields(
-        attrs: Dict,
-        new_attrs: Dict,
-        model_fields: Dict,
-        new_model_fields: Dict,
-        new_fields: Set,
+    attrs: Dict,
+    new_attrs: Dict,
+    model_fields: Dict,
+    new_model_fields: Dict,
+    new_fields: Set,
 ) -> Dict:
     """
     Updates __annotations__, values of model fields (so pydantic FieldInfos)
@@ -481,9 +486,34 @@ def update_attrs_and_fields(
     return updated_model_fields
 
 
+def add_field_descriptor(
+    name: str, field: "BaseField", new_model: Type["Model"]
+) -> None:
+    """
+    Sets appropriate descriptor for each model field.
+    There are 5 main types of descriptors, for bytes, json, pure pydantic fields,
+    and 2 ormar ones - one for relation and one for pk shortcut
+
+    :param name: name of the field
+    :type name: str
+    :param field: model field to add descriptor for
+    :type field: BaseField
+    :param new_model: model with fields
+    :type new_model: Type["Model]
+    """
+    if field.is_relation:
+        setattr(new_model, name, RelationDescriptor(name=name))
+    elif field.__type__ == pydantic.Json:
+        setattr(new_model, name, JsonDescriptor(name=name))
+    elif field.__type__ == bytes:
+        setattr(new_model, name, BytesDescriptor(name=name))
+    else:
+        setattr(new_model, name, PydanticDescriptor(name=name))
+
+
 class ModelMetaclass(pydantic.main.ModelMetaclass):
     def __new__(  # type: ignore # noqa: CCR001
-            mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
+        mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
     ) -> "ModelMetaclass":
         """
         Metaclass used by ormar Models that performs configuration
@@ -545,10 +575,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 # TODO: iterate only related fields
                 for name, field in new_model.Meta.model_fields.items():
                     register_relation_in_alias_manager(field=field)
-                    if field.is_relation:
-                        setattr(new_model, name, RelationDescriptor(name=name))
-                    else:
-                        setattr(new_model, name, PydanticDescriptor(name=name))
+                    add_field_descriptor(name=name, field=field, new_model=new_model)
 
                 if new_model.Meta.pkname not in attrs["__annotations__"]:
                     field_name = new_model.Meta.pkname
@@ -561,10 +588,13 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
 
                 for item in new_model.Meta.property_fields:
                     function = getattr(new_model, item)
-                    setattr(new_model, item, PropertyDescriptor(name=item,
-                                                                function=function))
+                    setattr(
+                        new_model,
+                        item,
+                        PropertyDescriptor(name=item, function=function),
+                    )
 
-                setattr(new_model, 'pk', PkDescriptor(name=new_model.Meta.pkname))
+                new_model.pk = PkDescriptor(name=new_model.Meta.pkname)
 
         return new_model
 

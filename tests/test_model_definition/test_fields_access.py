@@ -55,6 +55,7 @@ def test_fields_access():
     # basic access
     assert Product.id._field == Product.Meta.model_fields["id"]
     assert Product.id.id == Product.Meta.model_fields["id"]
+    assert Product.pk.id == Product.id.id
     assert isinstance(Product.id._field, BaseField)
     assert Product.id._access_chain == "id"
     assert Product.id._source_model == Product

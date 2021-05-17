@@ -55,7 +55,7 @@ class BinaryThing(ormar.Model):
     bt: bytes = ormar.LargeBinary(
         max_length=1000,
         choices=[blob3, blob4, blob5, blob6],
-        represent_as_base64_str=True
+        represent_as_base64_str=True,
     )
 
 
@@ -84,5 +84,8 @@ def test_read_main():
         response = client.post(
             "/things", data=json.dumps({"bt": base64.b64encode(blob3).decode()})
         )
-        print(response.content)
         assert response.status_code == 200
+        response = client.get("/things")
+        assert response.json()[0]["bt"] == base64.b64encode(blob3).decode()
+        thing = BinaryThing(**response.json()[0])
+        assert thing.__dict__["bt"] == blob3

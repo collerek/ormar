@@ -76,6 +76,11 @@ renderer:
             - title: Save Prepare Mixin
               contents:
                 - models.mixins.save_mixin.*
+        - title: Descriptors
+            children:
+              - title: descriptors
+                contents:
+                  - models.descriptors.descriptors.*
     - title: Fields
       children:
         - title: Base Field

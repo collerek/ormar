@@ -435,12 +435,7 @@ class LargeBinary(ModelFieldFactory, bytes):
     _sample = "bytes"
 
     def __new__(  # type: ignore # noqa CFQ002
-        cls,
-        *,
-        max_length: int,
-        use_base64: bool = False,
-        represent_as_base64_str: bool = False,
-        **kwargs: Any
+        cls, *, max_length: int, represent_as_base64_str: bool = False, **kwargs: Any
     ) -> BaseField:  # type: ignore
         kwargs = {
             **kwargs,
