@@ -1,3 +1,23 @@
+# 0.10.7
+
+## ✨ Features
+
+* Add `exclude_primary_keys: bool = False` flag to `dict()` method that allows to exclude all primary key columns in the resulting dictionaru. [#164](https://github.com/collerek/ormar/issues/164)
+* Add `exclude_through_models: bool = False` flag to `dict()` that allows excluding all through models from `ManyToMany` relations [#164](https://github.com/collerek/ormar/issues/164)
+* Add `represent_as_base64_str: bool = False` parameter that allows conversion of bytes `LargeBinary` field to base64 encoded string. String is returned in `dict()`, 
+  on access to attribute and string is converted to bytes on setting. Data in database is stored as bytes. [#187](https://github.com/collerek/ormar/issues/187)
+* Add `pk` alias to allow field access by `Model.pk` in filters and order by clauses (python style)
+
+## 🐛 Fixes
+
+* Remove default `None` option for `max_length` for `LargeBinary` field [#186](https://github.com/collerek/ormar/issues/186)
+* Remove default `None` option for `max_length` for `String` field
+
+## 💬 Other
+
+* Provide a guide and samples of `dict()` parameters in the [docs](https://collerek.github.io/ormar/models/methods/)
+* Major refactor of getting/setting attributes from magic methods into descriptors -> noticeable performance improvement
+
 # 0.10.6
 
 ## ✨ Features

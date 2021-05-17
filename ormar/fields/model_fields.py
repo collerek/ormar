@@ -136,10 +136,10 @@ class String(ModelFieldFactory, str):
     def __new__(  # type: ignore # noqa CFQ002
         cls,
         *,
+        max_length: int,
         allow_blank: bool = True,
         strip_whitespace: bool = False,
         min_length: int = None,
-        max_length: int = None,
         curtail_length: int = None,
         regex: str = None,
         **kwargs: Any
@@ -176,7 +176,7 @@ class String(ModelFieldFactory, str):
         :type kwargs: Any
         """
         max_length = kwargs.get("max_length", None)
-        if max_length is None or max_length <= 0:
+        if max_length <= 0:
             raise ModelDefinitionError(
                 "Parameter max_length is required for field String"
             )
@@ -435,7 +435,7 @@ class LargeBinary(ModelFieldFactory, bytes):
     _sample = "bytes"
 
     def __new__(  # type: ignore # noqa CFQ002
-        cls, *, max_length: int = None, **kwargs: Any
+        cls, *, max_length: int, represent_as_base64_str: bool = False, **kwargs: Any
     ) -> BaseField:  # type: ignore
         kwargs = {
             **kwargs,
@@ -468,7 +468,7 @@ class LargeBinary(ModelFieldFactory, bytes):
         :type kwargs: Any
         """
         max_length = kwargs.get("max_length", None)
-        if max_length is None or max_length <= 0:
+        if max_length <= 0:
             raise ModelDefinitionError(
                 "Parameter max_length is required for field LargeBinary"
             )

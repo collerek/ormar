@@ -17,6 +17,273 @@ especially `dict()` and `json()` methods that can also accept `exclude`, `includ
 
 To read more check [pydantic][pydantic] documentation
 
+## dict
+
+`dict` is a method inherited from `pydantic`, yet `ormar` adds its own parameters and has some nuances when working with default values,
+therefore it's listed here for clarity.
+
+`dict` as the name suggests export data from model tree to dictionary.
+
+Explanation of dict parameters:
+
+### include (`ormar` modifed)
+
+`include: Union[Set, Dict] = None`
+
+Set or dictionary of field names to include in returned dictionary.
+
+Note that `pydantic` has an uncommon pattern of including/ excluding fields in lists (so also nested models) by an index.
+And if you want to exclude the field in all children you need to pass a `__all__` key to dictionary. 
+
+You cannot exclude nested models in `Set`s in `pydantic` but you can in `ormar` 
+(by adding double underscore on relation name i.e. to exclude name of category for a book you cen use `exclude={"book__category__name"}`)
+
+`ormar` does not support by index exclusion/ inclusions and accepts a simplified and more user-friendly notation.
+
+To check how you can include/exclude fields, including nested fields check out [fields](../queries/select-columns.md#fields) section that has an explanation and a lot of samples.
+
+!!!note
+        The fact that in `ormar` you can exclude nested models in sets, you can exclude from a whole model tree in `response_model_exclude` and `response_model_include` in fastapi!
+
+### exclude (`ormar` modified)
+
+`exclude: Union[Set, Dict] = None`
+
+Set or dictionary of field names to exclude in returned dictionary.
+
+Note that `pydantic` has an uncommon pattern of including/ excluding fields in lists (so also nested models) by an index.
+And if you want to exclude the field in all children you need to pass a `__all__` key to dictionary. 
+
+You cannot exclude nested models in `Set`s in `pydantic` but you can in `ormar` 
+(by adding double underscore on relation name i.e. to exclude name of category for a book you cen use `exclude={"book__category__name"}`)
+
+`ormar` does not support by index exclusion/ inclusions and accepts a simplified and more user-friendly notation.
+
+To check how you can include/exclude fields, including nested fields check out [fields](../queries/select-columns.md#fields) section that has an explanation and a lot of samples.
+
+!!!note
+        The fact that in `ormar` you can exclude nested models in sets, you can exclude from a whole model tree in `response_model_exclude` and `response_model_include` in fastapi!
+
+### exclude_unset
+
+`exclude_unset: bool = False`
+
+Flag indicates whether fields which were not explicitly set when creating the model should be excluded from the returned dictionary.
+
+!!!warning
+        Note that after you save data into database each field has its own value -> either provided by you, default, or `None`.
+        
+        That means that when you load the data from database, **all** fields are set, and this flag basically stop working! 
+
+```python
+class Category(ormar.Model):
+    class Meta:
+        tablename = "categories"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, default="Test")
+    visibility: bool = ormar.Boolean(default=True)
+
+
+class Item(ormar.Model):
+    class Meta:
+        tablename = "items"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    price: float = ormar.Float(default=9.99)
+    categories: List[Category] = ormar.ManyToMany(Category)
+
+category = Category(name="Test 2")
+assert category.dict() == {'id': None, 'items': [], 'name': 'Test 2',
+                           'visibility': True}
+assert category.dict(exclude_unset=True) == {'items': [], 'name': 'Test 2'}
+
+await category.save()
+category2 = await Category.objects.get()
+assert category2.dict() == {'id': 1, 'items': [], 'name': 'Test 2',
+                            'visibility': True}
+# NOTE how after loading from db all fields are set explicitly
+# as this is what happens when you populate a model from db
+assert category2.dict(exclude_unset=True) == {'id': 1, 'items': [],
+                                              'name': 'Test 2', 'visibility': True}
+```
+
+### exclude_defaults
+
+`exclude_defaults: bool = False`
+
+Flag indicates are equal to their default values (whether set or otherwise) should be excluded from the returned dictionary
+
+```python
+class Category(ormar.Model):
+    class Meta:
+        tablename = "categories"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, default="Test")
+    visibility: bool = ormar.Boolean(default=True)
+
+class Item(ormar.Model):
+    class Meta:
+        tablename = "items"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    price: float = ormar.Float(default=9.99)
+    categories: List[Category] = ormar.ManyToMany(Category)
+    
+category = Category()
+# note that Integer pk is by default autoincrement so optional
+assert category.dict() == {'id': None, 'items': [], 'name': 'Test', 'visibility': True}
+assert category.dict(exclude_defaults=True) == {'items': []}
+
+# save and reload the data
+await category.save()
+category2 = await Category.objects.get()
+
+assert category2.dict() == {'id': 1, 'items': [], 'name': 'Test', 'visibility': True}
+assert category2.dict(exclude_defaults=True) == {'id': 1, 'items': []}
+```
+
+### exclude_none
+
+`exclude_none: bool = False`
+
+Flag indicates whether fields which are equal to `None` should be excluded from the returned dictionary.
+
+```python
+class Category(ormar.Model):
+    class Meta:
+        tablename = "categories"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, default="Test", nullable=True)
+    visibility: bool = ormar.Boolean(default=True)
+
+
+class Item(ormar.Model):
+    class Meta:
+        tablename = "items"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    price: float = ormar.Float(default=9.99)
+    categories: List[Category] = ormar.ManyToMany(Category)
+
+
+category = Category(name=None)
+assert category.dict() == {'id': None, 'items': [], 'name': None,
+                           'visibility': True}
+# note the id is not set yet so None and excluded
+assert category.dict(exclude_none=True) == {'items': [], 'visibility': True}
+
+await category.save()
+category2 = await Category.objects.get()
+assert category2.dict() == {'id': 1, 'items': [], 'name': None,
+                            'visibility': True}
+assert category2.dict(exclude_none=True) == {'id': 1, 'items': [],
+                                             'visibility': True}
+
+```
+
+### exclude_primary_keys (`ormar` only)
+
+`exclude_primary_keys: bool = False`
+
+Setting flag to `True` will exclude all primary key columns in a tree, including nested models.
+
+```python
+class Item(ormar.Model):
+    class Meta:
+        tablename = "items"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+item1 = Item(id=1, name="Test Item")
+assert item1.dict() == {"id": 1, "name": "Test Item"}
+assert item1.dict(exclude_primary_keys=True) == {"name": "Test Item"}
+```
+
+### exclude_through_models (`ormar` only)
+
+`exclude_through_models: bool = False`
+
+`Through` models are auto added for every `ManyToMany` relation, and they hold additional parameters on linking model/table.
+
+Setting the `exclude_through_models=True` will exclude all through models, including Through models of submodels.
+
+```python
+class Category(ormar.Model):
+    class Meta:
+        tablename = "categories"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
+class Item(ormar.Model):
+    class Meta:
+        tablename = "items"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    categories: List[Category] = ormar.ManyToMany(Category)
+
+# tree defining the models
+item_dict = {
+            "name": "test",
+            "categories": [{"name": "test cat"}, {"name": "test cat2"}],
+        }
+# save whole tree
+await Item(**item_dict).save_related(follow=True, save_all=True)
+
+# get the saved values
+item = await Item.objects.select_related("categories").get()
+
+# by default you can see the through models (itemcategory)
+assert item.dict() == {'id': 1, 'name': 'test', 
+                       'categories': [
+                           {'id': 1, 'name': 'test cat', 
+                            'itemcategory': {'id': 1, 'category': None, 'item': None}}, 
+                           {'id': 2, 'name': 'test cat2', 
+                            'itemcategory': {'id': 2, 'category': None, 'item': None}}
+                       ]}
+
+# you can exclude those fields/ models
+assert item.dict(exclude_through_models=True) == {
+                       'id': 1, 'name': 'test', 
+                       'categories': [
+                           {'id': 1, 'name': 'test cat'}, 
+                           {'id': 2, 'name': 'test cat2'}
+                       ]}
+```
+
+## json
+
+`json()` has exactly the same parameters as `dict()` so check above.
+
+Of course the end result is a string with json representation and not a dictionary.
+
 ## load
 
 By default when you query a table without prefetching related models, the ormar will still construct

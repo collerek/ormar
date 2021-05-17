@@ -22,6 +22,14 @@ from ormar.exceptions import ModelError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
+from ormar.models.descriptors import (
+    JsonDescriptor,
+    PkDescriptor,
+    PropertyDescriptor,
+    PydanticDescriptor,
+    RelationDescriptor,
+)
+from ormar.models.descriptors.descriptors import BytesDescriptor
 from ormar.models.helpers import (
     alias_manager,
     check_required_meta_parameters,
@@ -95,6 +103,7 @@ def add_cached_properties(new_model: Type["Model"]) -> None:
     new_model._pydantic_fields = {name for name in new_model.__fields__}
     new_model._choices_fields = set()
     new_model._json_fields = set()
+    new_model._bytes_fields = set()
 
 
 def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa: CCR001
@@ -477,6 +486,31 @@ def update_attrs_and_fields(
     return updated_model_fields
 
 
+def add_field_descriptor(
+    name: str, field: "BaseField", new_model: Type["Model"]
+) -> None:
+    """
+    Sets appropriate descriptor for each model field.
+    There are 5 main types of descriptors, for bytes, json, pure pydantic fields,
+    and 2 ormar ones - one for relation and one for pk shortcut
+
+    :param name: name of the field
+    :type name: str
+    :param field: model field to add descriptor for
+    :type field: BaseField
+    :param new_model: model with fields
+    :type new_model: Type["Model]
+    """
+    if field.is_relation:
+        setattr(new_model, name, RelationDescriptor(name=name))
+    elif field.__type__ == pydantic.Json:
+        setattr(new_model, name, JsonDescriptor(name=name))
+    elif field.__type__ == bytes:
+        setattr(new_model, name, BytesDescriptor(name=name))
+    else:
+        setattr(new_model, name, PydanticDescriptor(name=name))
+
+
 class ModelMetaclass(pydantic.main.ModelMetaclass):
     def __new__(  # type: ignore # noqa: CCR001
         mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
@@ -539,8 +573,9 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 populate_meta_sqlalchemy_table_if_required(new_model.Meta)
                 expand_reverse_relationships(new_model)
                 # TODO: iterate only related fields
-                for field in new_model.Meta.model_fields.values():
+                for name, field in new_model.Meta.model_fields.items():
                     register_relation_in_alias_manager(field=field)
+                    add_field_descriptor(name=name, field=field, new_model=new_model)
 
                 if new_model.Meta.pkname not in attrs["__annotations__"]:
                     field_name = new_model.Meta.pkname
@@ -550,6 +585,16 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                         field_name=field_name, model=new_model
                     )
                 new_model.Meta.alias_manager = alias_manager
+
+                for item in new_model.Meta.property_fields:
+                    function = getattr(new_model, item)
+                    setattr(
+                        new_model,
+                        item,
+                        PropertyDescriptor(name=item, function=function),
+                    )
+
+                new_model.pk = PkDescriptor(name=new_model.Meta.pkname)
 
         return new_model
 
@@ -564,6 +609,17 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         return QuerySet(model_cls=cls)
 
     def __getattr__(self, item: str) -> Any:
+        """
+        Returns FieldAccessors on access to model fields from a class,
+        that way it can be used in python style filters and order_by.
+
+        :param item: name of the field
+        :type item: str
+        :return: FieldAccessor for given field
+        :rtype: FieldAccessor
+        """
+        if item == "pk":
+            item = self.Meta.pkname
         if item in object.__getattribute__(self, "Meta").model_fields:
             field = self.Meta.model_fields.get(item)
             if field.is_relation:

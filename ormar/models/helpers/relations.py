@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Type, cast
 import ormar
 from ormar import ForeignKey, ManyToMany
 from ormar.fields import Through
+from ormar.models.descriptors import RelationDescriptor
 from ormar.models.helpers.sqlalchemy import adjust_through_many_to_many_model
 from ormar.relations import AliasManager
 
@@ -130,6 +131,8 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
             orders_by=model_field.related_orders_by,
             skip_field=model_field.skip_reverse,
         )
+    if not model_field.skip_reverse:
+        setattr(model_field.to, related_name, RelationDescriptor(name=related_name))
 
 
 def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:
@@ -160,6 +163,8 @@ def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:
         owner=model_field.to,
         nullable=True,
     )
+    setattr(model_field.owner, through_name, RelationDescriptor(name=through_name))
+    setattr(model_field.to, through_name, RelationDescriptor(name=through_name))
 
 
 def register_relation_in_alias_manager(field: "ForeignKeyField") -> None:

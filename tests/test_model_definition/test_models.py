@@ -1,5 +1,7 @@
 import asyncio
+import base64
 import datetime
+import os
 import uuid
 from typing import List
 
@@ -37,7 +39,23 @@ class LargeBinarySample(ormar.Model):
         database = database
 
     id: int = ormar.Integer(primary_key=True)
-    test_binary = ormar.LargeBinary(max_length=100000, choices=[blob, blob2])
+    test_binary: bytes = ormar.LargeBinary(max_length=100000, choices=[blob, blob2])
+
+
+blob3 = os.urandom(64)
+blob4 = os.urandom(100)
+
+
+class LargeBinaryStr(ormar.Model):
+    class Meta:
+        tablename = "my_str_blobs"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    test_binary: str = ormar.LargeBinary(
+        max_length=100000, choices=[blob3, blob4], represent_as_base64_str=True
+    )
 
 
 class UUIDSample(ormar.Model):
@@ -157,6 +175,9 @@ async def test_json_column():
             assert items[0].test_json == dict(aa=12)
             assert items[1].test_json == dict(aa=12)
 
+            items[0].test_json = "[1, 2, 3]"
+            assert items[0].test_json == [1, 2, 3]
+
 
 @pytest.mark.asyncio
 async def test_binary_column():
@@ -169,6 +190,25 @@ async def test_binary_column():
             assert len(items) == 2
             assert items[0].test_binary == blob
             assert items[1].test_binary == blob2
+
+            items[0].test_binary = "test2icac89uc98"
+            assert items[0].test_binary == b"test2icac89uc98"
+
+
+@pytest.mark.asyncio
+async def test_binary_str_column():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            await LargeBinaryStr.objects.create(test_binary=blob3)
+            await LargeBinaryStr.objects.create(test_binary=blob4)
+
+            items = await LargeBinaryStr.objects.all()
+            assert len(items) == 2
+            assert items[0].test_binary == base64.b64encode(blob3).decode()
+            items[0].test_binary = base64.b64encode(blob4).decode()
+            assert items[0].test_binary == base64.b64encode(blob4).decode()
+            assert items[1].test_binary == base64.b64encode(blob4).decode()
+            assert items[1].__dict__["test_binary"] == blob4
 
 
 @pytest.mark.asyncio

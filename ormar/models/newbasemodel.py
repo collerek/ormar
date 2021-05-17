@@ -1,4 +1,6 @@
+import base64
 import sys
+import warnings
 from typing import (
     AbstractSet,
     Any,
@@ -8,7 +10,6 @@ from typing import (
     Mapping,
     MutableSequence,
     Optional,
-    Sequence,
     Set,
     TYPE_CHECKING,
     Tuple,
@@ -37,7 +38,6 @@ from ormar.models.helpers.sqlalchemy import (
     populate_meta_sqlalchemy_table_if_required,
     update_column_definition,
 )
-from ormar.models.helpers.validation import validate_choices
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
 from ormar.queryset.utils import translate_list_to_dict
@@ -87,6 +87,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         _pydantic_fields: Set
         _quick_access_fields: Set
         _json_fields: Set
+        _bytes_fields: Set
         Meta: ModelMeta
 
     # noinspection PyMissingConstructor
@@ -155,23 +156,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
         """
-        Overwrites setattr in object to allow for special behaviour of certain params.
-
-        Parameter "pk" is translated into actual primary key field name.
-
-        Relations are expanded (child model constructed if needed) and registered on
-        both ends of the relation. The related models are handled by RelationshipManager
-        exposed at _orm param.
-
-        Json fields converted if needed.
-
-        Setting pk, foreign key value or any other field value sets Model save status
-        to False. Setting a reverse relation or many to many relation does not as it
-        does not modify the state of the model (but related model or through model).
-
-        To short circuit all checks and expansions the set of attribute names present
-        on each model is gathered into _quick_access_fields that is looked first and
-        if field is in this set the object setattr is called directly.
+        Overwrites setattr in pydantic parent as otherwise descriptors are not called.
 
         :param name: name of the attribute to set
         :type name: str
@@ -180,84 +165,35 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: None
         :rtype: None
         """
-        if name in object.__getattribute__(self, "_quick_access_fields"):
+        if hasattr(self, name):
             object.__setattr__(self, name, value)
-        elif name == "pk":
-            object.__setattr__(self, self.Meta.pkname, value)
-            self.set_save_status(False)
-        elif name in object.__getattribute__(self, "_orm"):
-            model = (
-                object.__getattribute__(self, "Meta")
-                .model_fields[name]
-                .expand_relationship(value=value, child=self)
-            )
-            if isinstance(object.__getattribute__(self, "__dict__").get(name), list):
-                # virtual foreign key or many to many
-                # TODO: Fix double items in dict, no effect on real action ugly repr
-                # if model.pk not in [x.pk for  x in related_list]:
-                object.__getattribute__(self, "__dict__")[name].append(model)
-            else:
-                # foreign key relation
-                object.__getattribute__(self, "__dict__")[name] = model
-                self.set_save_status(False)
         else:
-            if name in object.__getattribute__(self, "_choices_fields"):
-                validate_choices(field=self.Meta.model_fields[name], value=value)
-            super().__setattr__(name, self._convert_json(name, value, op="dumps"))
-            self.set_save_status(False)
+            # let pydantic handle errors for unknown fields
+            super().__setattr__(name, value)
 
-    def __getattribute__(self, item: str) -> Any:  # noqa: CCR001
+    def __getattr__(self, item: str) -> Any:
         """
-        Because we need to overwrite getting the attribute by ormar instead of pydantic
-        as well as returning related models and not the value stored on the model the
-        __getattribute__ needs to be used not __getattr__.
+        Used only to silence mypy errors for Through models and reverse relations.
+        Not used in real life as in practice calls are intercepted
+        by RelationDescriptors
 
-        It's used to access all attributes so it can be a big overhead that's why a
-        number of short circuits is used.
-
-        To short circuit all checks and expansions the set of attribute names present
-        on each model is gathered into _quick_access_fields that is looked first and
-        if field is in this set the object setattr is called directly.
-
-        To avoid recursion object's getattribute is used to actually get the attribute
-        value from the model after the checks.
-
-        Even the function calls are constructed with objects functions.
-
-        Parameter "pk" is translated into actual primary key field name.
-
-        Relations are returned so the actual related model is returned and not current
-        model's field. The related models are handled by RelationshipManager exposed
-        at _orm param.
-
-        Json fields are converted if needed.
-
-        :param item: name of the attribute to retrieve
+        :param item: name of attribute
         :type item: str
-        :return: value of the attribute
+        :return: Any
         :rtype: Any
         """
-        if item in object.__getattribute__(self, "_quick_access_fields"):
-            return object.__getattribute__(self, item)
-        if item == "pk":
-            return object.__getattribute__(self, "__dict__").get(self.Meta.pkname, None)
-        if item in object.__getattribute__(self, "extract_related_names")():
-            return object.__getattribute__(
-                self, "_extract_related_model_instead_of_field"
-            )(item)
-        if item in object.__getattribute__(self, "extract_through_names")():
-            return object.__getattribute__(
-                self, "_extract_related_model_instead_of_field"
-            )(item)
-        if item in object.__getattribute__(self, "Meta").property_fields:
-            value = object.__getattribute__(self, item)
-            return value() if callable(value) else value
-        if item in object.__getattribute__(self, "_pydantic_fields"):
-            value = object.__getattribute__(self, "__dict__").get(item, None)
-            value = object.__getattribute__(self, "_convert_json")(item, value, "loads")
-            return value
+        return super().__getattribute__(item)
 
-        return object.__getattribute__(self, item)  # pragma: no cover
+    def _internal_set(self, name: str, value: Any) -> None:
+        """
+        Delegates call to pydantic.
+
+        :param name: name of param
+        :type name: str
+        :param value: value to set
+        :type value: Any
+        """
+        super().__setattr__(name, value)
 
     def _verify_model_can_be_initialized(self) -> None:
         """
@@ -266,9 +202,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: None
         :rtype: None
         """
-        if object.__getattribute__(self, "Meta").abstract:
+        if self.Meta.abstract:
             raise ModelError(f"You cannot initialize abstract model {self.get_name()}")
-        if object.__getattribute__(self, "Meta").requires_ref_update:
+        if self.Meta.requires_ref_update:
             raise ModelError(
                 f"Model {self.get_name()} has not updated "
                 f"ForwardRefs. \nBefore using the model you "
@@ -292,10 +228,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: modified kwargs
         :rtype: Tuple[Dict, Dict]
         """
-        meta = object.__getattribute__(self, "Meta")
-        property_fields = meta.property_fields
-        model_fields = meta.model_fields
-        pydantic_fields = object.__getattribute__(self, "__fields__")
+        property_fields = self.Meta.property_fields
+        model_fields = self.Meta.model_fields
+        pydantic_fields = set(self.__fields__.keys())
 
         # remove property fields
         for prop_filed in property_fields:
@@ -303,7 +238,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         excluded: Set[str] = kwargs.pop("__excluded__", set())
         if "pk" in kwargs:
-            kwargs[meta.pkname] = kwargs.pop("pk")
+            kwargs[self.Meta.pkname] = kwargs.pop("pk")
 
         # extract through fields
         through_tmp_dict = dict()
@@ -312,12 +247,14 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         try:
             new_kwargs: Dict[str, Any] = {
-                k: self._convert_json(
+                k: self._convert_to_bytes(
                     k,
-                    model_fields[k].expand_relationship(v, self, to_register=False,)
-                    if k in model_fields
-                    else (v if k in pydantic_fields else model_fields[k]),
-                    "dumps",
+                    self._convert_json(
+                        k,
+                        model_fields[k].expand_relationship(v, self, to_register=False,)
+                        if k in model_fields
+                        else (v if k in pydantic_fields else model_fields[k]),
+                    ),
                 )
                 for k, v in kwargs.items()
             }
@@ -348,21 +285,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 related_fields=self.extract_related_fields(), owner=cast("Model", self),
             ),
         )
-
-    def _extract_related_model_instead_of_field(
-        self, item: str
-    ) -> Optional[Union["Model", Sequence["Model"]]]:
-        """
-        Retrieves the related model/models from RelationshipManager.
-
-        :param item: name of the relation
-        :type item: str
-        :return: related model, list of related models or None
-        :rtype: Optional[Union[Model, List[Model]]]
-        """
-        if item in self._orm:
-            return self._orm.get(item)  # type: ignore
-        return None  # pragma no cover
 
     def __eq__(self, other: object) -> bool:
         """
@@ -562,6 +484,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         models: MutableSequence,
         include: Union[Set, Dict, None],
         exclude: Union[Set, Dict, None],
+        exclude_primary_keys: bool,
+        exclude_through_models: bool,
     ) -> List:
         """
         Converts list of models into list of dictionaries.
@@ -580,7 +504,11 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             try:
                 result.append(
                     model.dict(
-                        relation_map=relation_map, include=include, exclude=exclude,
+                        relation_map=relation_map,
+                        include=include,
+                        exclude=exclude,
+                        exclude_primary_keys=exclude_primary_keys,
+                        exclude_through_models=exclude_through_models,
                     )
                 )
             except ReferenceError:  # pragma no cover
@@ -623,6 +551,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         dict_instance: Dict,
         include: Optional[Dict],
         exclude: Optional[Dict],
+        exclude_primary_keys: bool,
+        exclude_through_models: bool,
     ) -> Dict:
         """
         Traverse nested models and converts them into dictionaries.
@@ -655,6 +585,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                         models=nested_model,
                         include=self._convert_all(self._skip_ellipsis(include, field)),
                         exclude=self._convert_all(self._skip_ellipsis(exclude, field)),
+                        exclude_primary_keys=exclude_primary_keys,
+                        exclude_through_models=exclude_through_models,
                     )
                 elif nested_model is not None:
 
@@ -664,6 +596,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                         ),
                         include=self._convert_all(self._skip_ellipsis(include, field)),
                         exclude=self._convert_all(self._skip_ellipsis(exclude, field)),
+                        exclude_primary_keys=exclude_primary_keys,
+                        exclude_through_models=exclude_through_models,
                     )
                 else:
                     dict_instance[field] = None
@@ -681,6 +615,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         exclude_none: bool = False,
+        exclude_primary_keys: bool = False,
+        exclude_through_models: bool = False,
         relation_map: Dict = None,
     ) -> "DictStrAny":  # noqa: A003'
         """
@@ -692,6 +628,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         Additionally fields decorated with @property_field are also added.
 
+        :param exclude_through_models: flag to exclude through models from dict
+        :type exclude_through_models: bool
+        :param exclude_primary_keys: flag to exclude primary keys from dict
+        :type exclude_primary_keys: bool
         :param include: fields to include
         :type include: Union[Set, Dict, None]
         :param exclude: fields to exclude
@@ -711,15 +651,26 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return:
         :rtype:
         """
+        pydantic_exclude = self._update_excluded_with_related(exclude)
+        pydantic_exclude = self._update_excluded_with_pks_and_through(
+            exclude=pydantic_exclude,
+            exclude_primary_keys=exclude_primary_keys,
+            exclude_through_models=exclude_through_models,
+        )
         dict_instance = super().dict(
             include=include,
-            exclude=self._update_excluded_with_related(exclude),
+            exclude=pydantic_exclude,
             by_alias=by_alias,
             skip_defaults=skip_defaults,
             exclude_unset=exclude_unset,
             exclude_defaults=exclude_defaults,
             exclude_none=exclude_none,
         )
+
+        dict_instance = {
+            k: self._convert_bytes_to_str(column_name=k, value=v)
+            for k, v in dict_instance.items()
+        }
 
         if include and isinstance(include, Set):
             include = translate_list_to_dict(include)
@@ -738,6 +689,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 dict_instance=dict_instance,
                 include=include,  # type: ignore
                 exclude=exclude,  # type: ignore
+                exclude_primary_keys=exclude_primary_keys,
+                exclude_through_models=exclude_through_models,
             )
 
         # include model properties as fields in dict
@@ -747,6 +700,50 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 dict_instance.update({prop: getattr(self, prop) for prop in props})
 
         return dict_instance
+
+    def json(  # type: ignore # noqa A003
+        self,
+        *,
+        include: Union[Set, Dict] = None,
+        exclude: Union[Set, Dict] = None,
+        by_alias: bool = False,
+        skip_defaults: bool = None,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+        encoder: Optional[Callable[[Any], Any]] = None,
+        exclude_primary_keys: bool = False,
+        exclude_through_models: bool = False,
+        **dumps_kwargs: Any,
+    ) -> str:
+        """
+        Generate a JSON representation of the model, `include` and `exclude`
+        arguments as per `dict()`.
+
+        `encoder` is an optional function to supply as `default` to json.dumps(),
+        other arguments as per `json.dumps()`.
+        """
+        if skip_defaults is not None:  # pragma: no cover
+            warnings.warn(
+                f'{self.__class__.__name__}.json(): "skip_defaults" is deprecated '
+                f'and replaced by "exclude_unset"',
+                DeprecationWarning,
+            )
+            exclude_unset = skip_defaults
+        encoder = cast(Callable[[Any], Any], encoder or self.__json_encoder__)
+        data = self.dict(
+            include=include,
+            exclude=exclude,
+            by_alias=by_alias,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
+            exclude_primary_keys=exclude_primary_keys,
+            exclude_through_models=exclude_through_models,
+        )
+        if self.__custom_root_type__:  # pragma: no cover
+            data = data["__root__"]
+        return self.__config__.json_dumps(data, default=encoder, **dumps_kwargs)
 
     def update_from_dict(self, value_dict: Dict) -> "NewBaseModel":
         """
@@ -761,7 +758,46 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             setattr(self, key, value)
         return self
 
-    def _convert_json(self, column_name: str, value: Any, op: str) -> Union[str, Dict]:
+    def _convert_to_bytes(self, column_name: str, value: Any) -> Union[str, Dict]:
+        """
+        Converts value to bytes from string
+
+        :param column_name: name of the field
+        :type column_name: str
+        :param value: value fo the field
+        :type value: Any
+        :return: converted value if needed, else original value
+        :rtype: Any
+        """
+        if column_name not in self._bytes_fields:
+            return value
+        field = self.Meta.model_fields[column_name]
+        if not isinstance(value, bytes):
+            if field.represent_as_base64_str:
+                value = base64.b64decode(value)
+            else:
+                value = value.encode("utf-8")
+        return value
+
+    def _convert_bytes_to_str(self, column_name: str, value: Any) -> Union[str, Dict]:
+        """
+        Converts value to str from bytes for represent_as_base64_str columns.
+
+        :param column_name: name of the field
+        :type column_name: str
+        :param value: value fo the field
+        :type value: Any
+        :return: converted value if needed, else original value
+        :rtype: Any
+        """
+        if column_name not in self._bytes_fields:
+            return value
+        field = self.Meta.model_fields[column_name]
+        if not isinstance(value, str) and field.represent_as_base64_str:
+            return base64.b64encode(value).decode()
+        return value
+
+    def _convert_json(self, column_name: str, value: Any) -> Union[str, Dict]:
         """
         Converts value to/from json if needed (for Json columns).
 
@@ -769,24 +805,14 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :type column_name: str
         :param value: value fo the field
         :type value: Any
-        :param op: operator on json
-        :type op: str
         :return: converted value if needed, else original value
         :rtype: Any
         """
-        if column_name not in object.__getattribute__(self, "_json_fields"):
+        if column_name not in self._json_fields:
             return value
-
-        condition = (
-            isinstance(value, str) if op == "loads" else not isinstance(value, str)
-        )
-        operand: Callable[[Any], Any] = (
-            json.loads if op == "loads" else json.dumps  # type: ignore
-        )
-
-        if condition:
+        if not isinstance(value, str):
             try:
-                value = operand(value)
+                value = json.dumps(value)
             except TypeError:  # pragma no cover
                 pass
         return value.decode("utf-8") if isinstance(value, bytes) else value

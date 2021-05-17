@@ -282,6 +282,9 @@ class QuerysetProxy(Generic[T]):
 
         Actual call delegated to QuerySet.
 
+        Passing args and/or kwargs is a shortcut and equals to calling
+        `filter(*args, **kwargs).first()`.
+
         List of related models is cleared before the call.
 
         :param kwargs:
@@ -300,7 +303,8 @@ class QuerysetProxy(Generic[T]):
 
         If no criteria set it will return the last row in db sorted by pk.
 
-        Passing a criteria is actually calling filter(**kwargs) method described below.
+        Passing args and/or kwargs is a shortcut and equals to calling
+        `filter(*args, **kwargs).get_or_none()`.
 
         If not match is found None will be returned.
 
@@ -324,7 +328,8 @@ class QuerysetProxy(Generic[T]):
 
         If no criteria set it will return the last row in db sorted by pk.
 
-        Passing a criteria is actually calling filter(**kwargs) method described below.
+        Passing args and/or kwargs is a shortcut and equals to calling
+        `filter(*args, **kwargs).get()`.
 
         Actual call delegated to QuerySet.
 
@@ -346,7 +351,8 @@ class QuerysetProxy(Generic[T]):
         """
         Returns all rows from a database for given model for set filter options.
 
-        Passing kwargs is a shortcut and equals to calling `filter(**kwrags).all()`.
+        Passing args and/or kwargs is a shortcut and equals to calling
+        `filter(*args, **kwargs).all()`.
 
         If there are no rows meeting the criteria an empty list is returned.
 

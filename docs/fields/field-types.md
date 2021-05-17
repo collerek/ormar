@@ -138,6 +138,35 @@ LargeBinary length is used in some backend (i.e. mysql) to determine the size of
 in other backends it's simply ignored yet in ormar it's always required. It should be max
 size of the file/bytes in bytes.
 
+`LargeBinary` has also optional `represent_as_base64_str: bool = False` flag. 
+When set to `True` `ormar` will auto-convert bytes value to base64 decoded string, 
+you can also set value by passing a base64 encoded string. 
+
+That way you can i.e. set the value by API, even if value is not `utf-8` compatible and would otherwise fail during json conversion.
+
+```python
+import base64
+... # other imports skipped for brevity 
+class LargeBinaryStr(ormar.Model):
+    class Meta:
+        tablename = "my_str_blobs"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    test_binary: str = ormar.LargeBinary(
+        max_length=100000, represent_as_base64_str=True
+    )
+
+# set non utf-8 compliant value - note this can be passed by api (i.e. fastapi) in json
+item = LargeBinaryStr(test_binary=base64.b64encode(b"\xc3\x28").decode())
+
+assert item.test_binary == base64.b64encode(b"\xc3\x28").decode()
+
+# technical note that underlying value is still bytes and will be saved as so
+assert item.__dict__["test_binary"] == b"\xc3\x28"
+```
+
 ### UUID
 
 `UUID(uuid_format: str = 'hex')` has no required parameters.  

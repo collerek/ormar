@@ -67,6 +67,11 @@ def populate_default_options_values(
         for name, field in new_model.Meta.model_fields.items()
         if field.__type__ == pydantic.Json
     }
+    new_model._bytes_fields = {
+        name
+        for name, field in new_model.Meta.model_fields.items()
+        if field.__type__ == bytes
+    }
 
 
 class Connection(sqlite3.Connection):

@@ -95,6 +95,10 @@ class BaseField(FieldInfo):
         self.ormar_default: Any = kwargs.pop("default", None)
         self.server_default: Any = kwargs.pop("server_default", None)
 
+        self.represent_as_base64_str: bool = kwargs.pop(
+            "represent_as_base64_str", False
+        )
+
         for name, value in kwargs.items():
             setattr(self, name, value)
 
