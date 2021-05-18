@@ -1,3 +1,12 @@
+# 0.10.8
+
+## 🐛 Fixes
+
+* Fix populating default values in pk_only child models [#202](https://github.com/collerek/ormar/issues/202)
+* Fix mypy for LargeBinary fields with base64 str representation [#199](https://github.com/collerek/ormar/issues/199)
+* Fix OpenAPI schema format for LargeBinary fields with base64 str representation [#199](https://github.com/collerek/ormar/issues/199)
+* Fix OpenAPI choices encoding for LargeBinary fields with base64 str representation
+
 # 0.10.7
 
 ## ✨ Features

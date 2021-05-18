@@ -142,7 +142,8 @@ def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> D
     )
     for name, field in model.Meta.model_fields.items():
         if not field.is_relation:
-            example[name] = field.__sample__
+            is_bytes_str = field.__type__ == bytes and field.represent_as_base64_str
+            example[name] = field.__sample__ if not is_bytes_str else "string"
         elif isinstance(relation_map, dict) and name in relation_map:
             example[name] = get_nested_model_example(
                 name=name, field=field, relation_map=relation_map
@@ -217,6 +218,44 @@ def get_pydantic_example_repr(type_: Any) -> Any:
         return "string"
 
 
+def overwrite_example_and_description(
+    schema: Dict[str, Any], model: Type["Model"]
+) -> None:
+    """
+    Overwrites the example with properly nested children models.
+    Overwrites the description if it's taken from ormar.Model.
+
+    :param schema: schema of current model
+    :type schema: Dict[str, Any]
+    :param model: model class
+    :type model: Type["Model"]
+    """
+    schema["example"] = generate_model_example(model=model)
+    if "Main base class of ormar Model." in schema.get("description", ""):
+        schema["description"] = f"{model.__name__}"
+
+
+def overwrite_binary_format(schema: Dict[str, Any], model: Type["Model"]) -> None:
+    """
+    Overwrites format of the field if it's a LargeBinary field with
+    a flag to represent the field as base64 encoded string.
+
+    :param schema: schema of current model
+    :type schema: Dict[str, Any]
+    :param model: model class
+    :type model: Type["Model"]
+    """
+    for field_id, prop in schema.get("properties", {}).items():
+        if (
+            field_id in model._bytes_fields
+            and model.Meta.model_fields[field_id].represent_as_base64_str
+        ):
+            prop["format"] = "base64"
+            prop["enum"] = [
+                base64.b64encode(choice).decode() for choice in prop["enum"]
+            ]
+
+
 def construct_modify_schema_function(fields_with_choices: List) -> SchemaExtraCallable:
     """
     Modifies the schema to include fields with choices validator.
@@ -237,9 +276,8 @@ def construct_modify_schema_function(fields_with_choices: List) -> SchemaExtraCa
             if field_id in fields_with_choices:
                 prop["enum"] = list(model.Meta.model_fields[field_id].choices)
                 prop["description"] = prop.get("description", "") + "An enumeration."
-        schema["example"] = generate_model_example(model=model)
-        if "Main base class of ormar Model." in schema.get("description", ""):
-            schema["description"] = f"{model.__name__}"
+        overwrite_example_and_description(schema=schema, model=model)
+        overwrite_binary_format(schema=schema, model=model)
 
     return staticmethod(schema_extra)  # type: ignore
 
@@ -256,9 +294,8 @@ def construct_schema_function_without_choices() -> SchemaExtraCallable:
     """
 
     def schema_extra(schema: Dict[str, Any], model: Type["Model"]) -> None:
-        schema["example"] = generate_model_example(model=model)
-        if "Main base class of ormar Model." in schema.get("description", ""):
-            schema["description"] = f"{model.__name__}"
+        overwrite_example_and_description(schema=schema, model=model)
+        overwrite_binary_format(schema=schema, model=model)
 
     return staticmethod(schema_extra)  # type: ignore
 

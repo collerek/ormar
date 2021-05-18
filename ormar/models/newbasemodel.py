@@ -132,11 +132,15 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         new_kwargs, through_tmp_dict = self._process_kwargs(kwargs)
 
-        values, fields_set, validation_error = pydantic.validate_model(
-            self, new_kwargs  # type: ignore
-        )
-        if validation_error and not pk_only:
-            raise validation_error
+        if not pk_only:
+            values, fields_set, validation_error = pydantic.validate_model(
+                self, new_kwargs  # type: ignore
+            )
+            if validation_error:
+                raise validation_error
+        else:
+            fields_set = {self.Meta.pkname}
+            values = new_kwargs
 
         object.__setattr__(self, "__dict__", values)
         object.__setattr__(self, "__fields_set__", fields_set)
