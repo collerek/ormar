@@ -52,7 +52,7 @@ class BinaryThing(ormar.Model):
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     name: str = ormar.Text(default="")
-    bt: bytes = ormar.LargeBinary(
+    bt: str = ormar.LargeBinary(
         max_length=1000,
         choices=[blob3, blob4, blob5, blob6],
         represent_as_base64_str=True,
@@ -89,3 +89,14 @@ def test_read_main():
         assert response.json()[0]["bt"] == base64.b64encode(blob3).decode()
         thing = BinaryThing(**response.json()[0])
         assert thing.__dict__["bt"] == blob3
+
+
+def test_schema():
+    schema = BinaryThing.schema()
+    assert schema["properties"]["bt"]["format"] == "base64"
+    converted_choices = ["7g==", "/w==", "8CiMKA==", "wyg="]
+    assert len(schema["properties"]["bt"]["enum"]) == 4
+    assert all(
+        choice in schema["properties"]["bt"]["enum"] for choice in converted_choices
+    )
+    assert schema["example"]["bt"] == "string"
