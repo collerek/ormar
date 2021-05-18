@@ -76,7 +76,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.10.7"
+__version__ = "0.10.8"
 __all__ = [
     "Integer",
     "BigInteger",

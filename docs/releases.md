@@ -1,3 +1,9 @@
+# 0.10.8
+
+## 🐛 Fixes
+
+* Fix populating default values in pk_only child models [#202](https://github.com/collerek/ormar/issues/202)
+
 # 0.10.7
 
 ## ✨ Features
