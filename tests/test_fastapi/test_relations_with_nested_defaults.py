@@ -73,11 +73,12 @@ def create_test_database():
 
 @pytest.fixture()
 async def sample_data():
-    country = await Country(id=1, name="USA").save()
-    author = await Author(id=1, name="bug", rating=5, country=country).save()
-    await Book(
-        id=1, author=author, title="Bug caused by default value", year=2021
-    ).save()
+    async with database:
+        country = await Country(id=1, name="USA").save()
+        author = await Author(id=1, name="bug", rating=5, country=country).save()
+        await Book(
+            id=1, author=author, title="Bug caused by default value", year=2021
+        ).save()
 
 
 @app.get("/books/{book_id}", response_model=Book)
