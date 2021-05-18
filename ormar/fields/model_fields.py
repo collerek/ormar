@@ -1,7 +1,7 @@
 import datetime
 import decimal
 import uuid
-from typing import Any, List, Literal, Optional, TYPE_CHECKING, Union, overload
+from typing import Any, Optional, TYPE_CHECKING, Union, overload
 
 import pydantic
 import sqlalchemy
@@ -10,6 +10,11 @@ from ormar import ModelDefinitionError  # noqa I101
 from ormar.fields import sqlalchemy_uuid
 from ormar.fields.base import BaseField  # noqa I101
 from ormar.fields.sqlalchemy_encrypted import EncryptBackends
+
+try:
+    from typing import Literal
+except ImportError:  # pragma: no cover
+    from typing_extensions import Literal  # type: ignore
 
 
 def is_field_nullable(
@@ -426,23 +431,23 @@ class JSON(ModelFieldFactory, pydantic.Json):
         return sqlalchemy.JSON()
 
 
-if TYPE_CHECKING:  # pragma: nocover
+if TYPE_CHECKING:  # pragma: nocover # noqa: C901
 
     @overload
     def LargeBinary(
-        max_length: int, *, represent_as_base64_str: Literal[True], **kwargs
+        max_length: int, *, represent_as_base64_str: Literal[True], **kwargs: Any
     ) -> str:
         ...
 
     @overload
     def LargeBinary(
-        max_length: int, *, represent_as_base64_str: Literal[False], **kwargs
+        max_length: int, *, represent_as_base64_str: Literal[False], **kwargs: Any
     ) -> bytes:
         ...
 
     @overload
     def LargeBinary(
-        max_length: int, represent_as_base64_str: Literal[False] = ..., **kwargs
+        max_length: int, represent_as_base64_str: Literal[False] = ..., **kwargs: Any
     ) -> bytes:
         ...
 
@@ -456,7 +461,8 @@ else:
 
     class LargeBinary(ModelFieldFactory, bytes):
         """
-        LargeBinary field factory that construct Field classes and populated their values.
+        LargeBinary field factory that construct Field classes
+        and populated their values.
         """
 
         _type = bytes

@@ -142,10 +142,8 @@ def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> D
     )
     for name, field in model.Meta.model_fields.items():
         if not field.is_relation:
-            if field.__type__ == bytes and field.represent_as_base64_str:
-                example[name] = "string"
-            else:
-                example[name] = field.__sample__
+            is_bytes_str = field.__type__ == bytes and field.represent_as_base64_str
+            example[name] = field.__sample__ if not is_bytes_str else "string"
         elif isinstance(relation_map, dict) and name in relation_map:
             example[name] = get_nested_model_example(
                 name=name, field=field, relation_map=relation_map
