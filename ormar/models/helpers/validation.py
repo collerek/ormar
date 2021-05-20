@@ -251,9 +251,10 @@ def overwrite_binary_format(schema: Dict[str, Any], model: Type["Model"]) -> Non
             and model.Meta.model_fields[field_id].represent_as_base64_str
         ):
             prop["format"] = "base64"
-            prop["enum"] = [
-                base64.b64encode(choice).decode() for choice in prop["enum"]
-            ]
+            if prop.get("enum"):
+                prop["enum"] = [
+                    base64.b64encode(choice).decode() for choice in prop.get("enum", [])
+                ]
 
 
 def construct_modify_schema_function(fields_with_choices: List) -> SchemaExtraCallable:
