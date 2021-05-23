@@ -26,7 +26,7 @@ quick_access_set = {
     "_extract_nested_models_from_list",
     "_extract_own_model_fields",
     "_extract_related_model_instead_of_field",
-    "_get_related_not_excluded_fields",
+    "_get_not_excluded_fields",
     "_get_value",
     "_init_private_attributes",
     "_is_conversion_to_json_needed",
