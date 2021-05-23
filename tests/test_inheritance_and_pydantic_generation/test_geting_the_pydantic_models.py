@@ -44,7 +44,7 @@ def test_getting_pydantic_model():
 
     assert PydanticCategory.__fields__["name"].required
     assert issubclass(PydanticCategory.__fields__["name"].outer_type_, ConstrainedStr)
-    assert PydanticCategory.__fields__["name"].default is None
+    assert PydanticCategory.__fields__["name"].default in [None, Ellipsis]
 
     PydanticItem = PydanticCategory.__fields__["items"].type_
     assert PydanticCategory.__fields__["items"].outer_type_ == List[PydanticItem]
