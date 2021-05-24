@@ -4,6 +4,7 @@ import databases
 import pydantic
 import sqlalchemy
 from pydantic import ConstrainedStr
+from pydantic.typing import ForwardRef
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -12,21 +13,34 @@ metadata = sqlalchemy.MetaData()
 database = databases.Database(DATABASE_URL, force_rollback=True)
 
 
+class BaseMeta(ormar.ModelMeta):
+    metadata = metadata
+    database = database
+
+
+class SelfRef(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "self_refs"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    parent = ormar.ForeignKey(ForwardRef("SelfRef"), related_name="children")
+
+
+SelfRef.update_forward_refs()
+
+
 class Category(ormar.Model):
-    class Meta:
+    class Meta(BaseMeta):
         tablename = "categories"
-        metadata = metadata
-        database = database
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    class Meta(BaseMeta):
+        pass
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="test")
@@ -53,6 +67,17 @@ def test_getting_pydantic_model():
     assert PydanticItem.__fields__["name"].default == "test"
     assert issubclass(PydanticItem.__fields__["name"].outer_type_, ConstrainedStr)
     assert "category" not in PydanticItem.__fields__
+
+
+def test_initializing_pydantic_model():
+    data = {
+        "id": 1,
+        "name": "test",
+        "items": [{"id": 1, "name": "test_i1"}, {"id": 2, "name": "test_i2"}],
+    }
+    PydanticCategory = Category.get_pydantic()
+    cat = PydanticCategory(**data)
+    assert cat.dict() == data
 
 
 def test_getting_pydantic_model_include():
@@ -116,3 +141,17 @@ def test_getting_pydantic_model_exclude_dict():
     PydanticCategory = PydanticItem.__fields__["category"].type_
     assert len(PydanticCategory.__fields__) == 1
     assert "name" not in PydanticCategory.__fields__
+
+
+def test_getting_pydantic_model_self_ref():
+    PydanticSelfRef = SelfRef.get_pydantic()
+    assert len(PydanticSelfRef.__fields__) == 4
+    assert set(PydanticSelfRef.__fields__.keys()) == {
+        "id",
+        "name",
+        "parent",
+        "children",
+    }
+    InnerSelf = PydanticSelfRef.__fields__["parent"].type_
+    assert len(InnerSelf.__fields__) == 2
+    assert set(InnerSelf.__fields__.keys()) == {"id", "name"}
