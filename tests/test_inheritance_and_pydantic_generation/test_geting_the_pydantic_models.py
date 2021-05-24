@@ -23,7 +23,7 @@ class SelfRef(ormar.Model):
         tablename = "self_refs"
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=100)
+    name: str = ormar.String(max_length=100, default="selfref")
     parent = ormar.ForeignKey(ForwardRef("SelfRef"), related_name="children")
 
 
@@ -45,6 +45,25 @@ class Item(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="test")
     category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
+
+
+class MutualA(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "mutual_a"
+
+    id: int = ormar.Integer(primary_key=True)
+    mutual_b = ormar.ForeignKey(ForwardRef("MutualB"), related_name="mutuals_a")
+
+
+class MutualB(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "mutual_b"
+
+    id: int = ormar.Integer(primary_key=True)
+    mutual_a = ormar.ForeignKey(MutualA, related_name="mutuals_b")
+
+
+MutualA.update_forward_refs()
 
 
 def test_getting_pydantic_model():
@@ -78,6 +97,10 @@ def test_initializing_pydantic_model():
     PydanticCategory = Category.get_pydantic()
     cat = PydanticCategory(**data)
     assert cat.dict() == data
+
+    data = {"id": 1, "name": "test"}
+    cat = PydanticCategory(**data)
+    assert cat.dict() == {**data, "items": None}
 
 
 def test_getting_pydantic_model_include():
@@ -155,3 +178,25 @@ def test_getting_pydantic_model_self_ref():
     InnerSelf = PydanticSelfRef.__fields__["parent"].type_
     assert len(InnerSelf.__fields__) == 2
     assert set(InnerSelf.__fields__.keys()) == {"id", "name"}
+
+    InnerSelf2 = PydanticSelfRef.__fields__["children"].type_
+    assert len(InnerSelf2.__fields__) == 2
+    assert set(InnerSelf2.__fields__.keys()) == {"id", "name"}
+
+    assert InnerSelf2 != InnerSelf
+
+
+def test_getting_pydantic_model_mutual_rels():
+    MutualAPydantic = MutualA.get_pydantic()
+    assert len(MutualAPydantic.__fields__) == 3
+    assert set(MutualAPydantic.__fields__.keys()) == {"id", "mutual_b", "mutuals_b"}
+
+    MutualB1 = MutualAPydantic.__fields__["mutual_b"].type_
+    MutualB2 = MutualAPydantic.__fields__["mutuals_b"].type_
+    assert MutualB1 != MutualB2
+
+    assert len(MutualB1.__fields__) == 1
+    assert "id" in MutualB1.__fields__
+
+    assert len(MutualB2.__fields__) == 1
+    assert "id" in MutualB2.__fields__

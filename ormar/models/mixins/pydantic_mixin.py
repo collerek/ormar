@@ -1,4 +1,15 @@
-from typing import Any, Callable, Dict, List, Set, TYPE_CHECKING, Type, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Type,
+    Union,
+    cast,
+)
 
 import pydantic
 from pydantic.fields import ModelField
@@ -78,6 +89,7 @@ class PydanticMixin(RelationMixin):
         relation_map: Dict[str, Any],
     ) -> Any:
         field = cls.Meta.model_fields[name]
+        target: Any = None
         if field.is_relation and name in relation_map:  # type: ignore
             target = field.to._convert_ormar_to_pydantic(
                 include=cls._skip_ellipsis(include, name),
@@ -87,9 +99,10 @@ class PydanticMixin(RelationMixin):
                 ),
             )
             if field.is_multi or field.virtual:
-                return List[target]  # type: ignore
-            return target
+                target = List[target]  # type: ignore
         elif not field.is_relation:
             defaults[name] = cls.__fields__[name].field_info
-            return field.__type__
-        return None
+            target = field.__type__
+        if target is not None and field.nullable:
+            target = Optional[target]
+        return target
