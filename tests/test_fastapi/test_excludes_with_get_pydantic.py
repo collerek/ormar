@@ -43,16 +43,21 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-@app.post("/categories/", response_model=Category)
-async def create_category(category: Category.get_pydantic(exclude={"id"})):  # type: ignore
+async def create_category(category: Category):
     return await Category(**category.dict()).save()
+
+
+create_category.__annotations__["category"] = Category.get_pydantic(exclude={"id"})
+app.post("/categories/", response_model=Category)(create_category)
 
 
 @app.post(
     "/selfrefs/",
     response_model=SelfRef.get_pydantic(exclude={"parent", "children__name"}),
 )
-async def create_selfref(selfref: SelfRef.get_pydantic(exclude={"children__name"})):  # type: ignore
+async def create_selfref(
+    selfref: SelfRef.get_pydantic(exclude={"children__name"}),  # type: ignore
+):
     selfr = SelfRef(**selfref.dict())
     await selfr.save()
     if selfr.children:
@@ -80,7 +85,7 @@ def test_read_main():
 
         test_selfref = dict(id=1, name="test")
         test_selfref2 = dict(id=2, name="test2", parent={"id": 1})
-        test_selfref3 = dict(id=3, name="test3", children=[{"id": 1}])
+        test_selfref3 = dict(id=3, name="test3", children=[{"name": "aaa"}])
 
         response = client.post("/selfrefs/", json=test_selfref)
         assert response.status_code == 200
@@ -104,14 +109,24 @@ def test_read_main():
         assert self_ref.id == 3
         assert self_ref.name == "test3"
         assert self_ref.parent is None
-        assert self_ref.children[0].dict() == {"id": 1}
+        assert self_ref.children[0].dict() == {"id": 4}
 
         response = client.get("/selfrefs/3/")
         assert response.status_code == 200
         check_children = SelfRef(**response.json())
         assert check_children.children[0].dict() == {
             "children": [],
-            "id": 1,
-            "name": "test",
+            "id": 4,
+            "name": "selfref",
             "parent": {"id": 3, "name": "test3"},
+        }
+
+        response = client.get("/selfrefs/2/")
+        assert response.status_code == 200
+        check_children = SelfRef(**response.json())
+        assert check_children.dict() == {
+            "children": [],
+            "id": 2,
+            "name": "test2",
+            "parent": {"id": 1},
         }
