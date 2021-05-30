@@ -1,3 +1,16 @@
+# 0.10.9
+
+## Important security fix
+
+*  Update pin for pydantic to fix security vulnerability [CVE-2021-29510](https://github.com/samuelcolvin/pydantic/security/advisories/GHSA-5jqp-qgf6-3pvh)
+
+You are advised to update to version of pydantic that was patched. 
+In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies. 
+
+## 🐛 Fixes
+
+* Fix OpenAPi schema for LargeBinary [#204](https://github.com/collerek/ormar/issues/204)
+
 # 0.10.8
 
 ## 🐛 Fixes
