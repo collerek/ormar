@@ -1,21 +1,11 @@
-from typing import Type, TypeVar
-
 import pytest
 import sqlalchemy
 from fastapi import FastAPI
-from pydantic import BaseModel
 from starlette.testclient import TestClient
 
 from tests.settings import DATABASE_URL
-from tests.test_inheritance_and_pydantic_generation.test_geting_the_pydantic_models import (  # type: ignore
-    Category,
-    Item,
-    SelfRef,
-    MutualA,
-    MutualB,
-    database,
-    metadata,
-)
+from tests.test_inheritance_and_pydantic_generation.test_geting_the_pydantic_models import (
+    Category, Item, MutualA, MutualB, SelfRef, database, metadata)  # type: ignore
 
 app = FastAPI()
 app.state.database = database

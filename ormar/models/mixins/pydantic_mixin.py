@@ -1,3 +1,5 @@
+import string
+from random import choices
 from typing import (
     Any,
     Callable,
@@ -73,7 +75,7 @@ class PydanticMixin(RelationMixin):
             if field is not None:
                 fields_dict[name] = field
         model = type(
-            cls.__name__,
+            f"{cls.__name__}_{''.join(choices(string.ascii_uppercase, k=3))}",
             (pydantic.BaseModel,),
             {"__annotations__": fields_dict, **defaults},
         )

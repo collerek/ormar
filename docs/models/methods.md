@@ -284,6 +284,21 @@ assert item.dict(exclude_through_models=True) == {
 
 Of course the end result is a string with json representation and not a dictionary.
 
+## get_pydantic
+
+`get_pydantic(include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None)`
+
+This method allows you to generate `pydantic` models from your ormar models without you needing to retype all the fields.
+
+Note that if you have nested models, it **will generate whole tree of pydantic models for you!**
+
+Moreover, you can pass `exclude` and/or `include` parameters to keep only the fields that you want to, including in nested models.
+
+That means that this way you can effortlessly create pydantic models for requests and responses in `fastapi`.
+
+!!!Note
+        To read more about possible excludes/includes and how to structure your exclude dictionary or set visit [fields](../queries/select-columns.md#fields) section of documentation
+
 ## load
 
 By default when you query a table without prefetching related models, the ormar will still construct
