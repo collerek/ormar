@@ -80,9 +80,9 @@ def test_read_main():
         assert cat.id == 1
         assert cat.items == []
 
-        test_selfref = dict(id=1, name="test")
-        test_selfref2 = dict(id=2, name="test2", parent={"id": 1})
-        test_selfref3 = dict(id=3, name="test3", children=[{"id": 4, "name": "aaa"}])
+        test_selfref = dict(name="test")
+        test_selfref2 = dict(name="test2", parent={"id": 1})
+        test_selfref3 = dict(name="test3", children=[{"name": "aaa"}])
 
         response = client.post("/selfrefs/", json=test_selfref)
         assert response.status_code == 200
