@@ -299,6 +299,74 @@ That means that this way you can effortlessly create pydantic models for request
 !!!Note
         To read more about possible excludes/includes and how to structure your exclude dictionary or set visit [fields](../queries/select-columns.md#fields) section of documentation
 
+Given sample ormar models like follows:
+
+```python
+metadata = sqlalchemy.MetaData()
+database = databases.Database(DATABASE_URL, force_rollback=True)
+
+
+class BaseMeta(ormar.ModelMeta):
+    metadata = metadata
+    database = database
+
+class Category(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "categories"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
+class Item(ormar.Model):
+    class Meta(BaseMeta):
+        pass
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, default="test")
+    category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
+```
+
+You can generate pydantic models out of it with a one simple call.
+
+```python
+PydanticCategory = Category.get_pydantic(include={"id", "name"}
+```
+
+Which will generate model equivalent of:
+
+```python
+class Category(BaseModel):
+    id: Optional[int]
+    name: Optional[str] = "test"
+```
+
+!!!warning
+        Note that it's not a good practice to have several classes with same name in one module, as well as it would break `fastapi` docs.
+        Thats's why ormar adds random 3 uppercase letters to the class name. In example above it means that in reality class would be named i.e. `Category_XIP(BaseModel)`.
+
+To exclude or include nested fields you can use dict or double underscores.
+
+```python
+# both calls are equivalent
+PydanticCategory = Category.get_pydantic(include={"id", "items__id"})
+PydanticCategory = Category.get_pydantic(include={"id": ..., "items": {"id"}})
+```
+
+and results in a generated structure as follows:
+```python
+class Item(BaseModel):
+    id: Optional[int]
+    
+class Category(BaseModel):
+    id: Optional[int]
+    items: Optional[List[Item]]
+```
+
+Of course you can use also deeply nested structures and ormar will generate it pydantic equivalent you (in a way that exclude loops).
+
+Note how `Item` model above does not have a reference to `Category` although in ormar the relation is bidirectional (and `ormar.Item` has `categories` field).
+
 ## load
 
 By default when you query a table without prefetching related models, the ormar will still construct

@@ -1,3 +1,13 @@
+# 0.10.10
+
+## ✨ Features
+
+* Add `get_pydantic` flag that allows you to auto generate equivalent pydantic models tree from ormar.Model. This newly generated model tree can be used in requests and responses to exclude fields you do not want to include in the data.
+
+## 💬 Other
+
+* Expand fastapi part of the documentation to show samples of using ormar in requests and responses in fastapi.
+
 # 0.10.9
 
 ## Important security fix

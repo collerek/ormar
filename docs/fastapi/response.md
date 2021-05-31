@@ -212,9 +212,22 @@ async def create_user3(user: User):
 !!!Note
         To see more examples and read more visit [get_pydantic](../models/methods.md#get_pydantic) part of the documentation.
 
+!!!Warning
+        The `get_pydantic` method generates all models in a tree of nested models according to an algorithm that allows to avoid loops in models (same algorithm that is used in `dict()`, `select_all()` etc.)
+        
+        That means that nested models won't have reference to parent model (by default ormar relation is biderectional).
+        
+        Note also that if given model exists in a tree more than once it will be doubled in pydantic models (each occurance will have separate own model). That way you can exclude/include different fields on different leafs of the tree.
 
 ### Separate `pydantic` model
+
+The final solution is to just create separate pydantic model manually. 
+That works exactly the same as with normal fastapi application so you can have different models for response and requests etc.
+
+Sample:
 ```python
+import pydantic
+
 class UserBase(pydantic.BaseModel):
     class Config:
         orm_mode = True
@@ -223,8 +236,8 @@ class UserBase(pydantic.BaseModel):
     first_name: str
     last_name: str
 
-# note that it's now can use ormar Model User2 with required password
+
 @app.post("/users3/", response_model=UserBase) # use pydantic model here
-async def create_user3(user: User): #use ormar model here
+async def create_user3(user: User): #use ormar model here (but of course you CAN use pydantic also here)
     return await user.save()
 ```

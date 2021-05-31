@@ -1,3 +1,4 @@
+# Fastapi
 
 The use of ormar with fastapi is quite simple.
 
@@ -14,7 +15,14 @@ Here you can find a very simple sample application code.
     
     It's divided into subsections for clarity.
 
+!!!note
+        If you want to read more on how you can use ormar models in fastapi requests and 
+        responses check the [responses](response.md) and [requests](requests.md) documentation.
+
 ## Quick Start
+
+!!!note
+        Note that you can find the full quick start script in the [github](https://github.com/collerek/ormar) repo under examples.
 
 ### Imports and initialization 
 
@@ -210,6 +218,6 @@ def test_all_endpoints():
     You can read more on testing fastapi in [fastapi][fastapi] docs. 
 
 [fastapi]: https://fastapi.tiangolo.com/
-[models]: ./models/index.md
-[database initialization]:  ./models/migrations.md
+[models]: ../models/index.md
+[database initialization]:  ../models/migrations.md
 [tests]: https://github.com/collerek/ormar/tree/master/tests

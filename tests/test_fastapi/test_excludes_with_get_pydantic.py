@@ -5,7 +5,14 @@ from starlette.testclient import TestClient
 
 from tests.settings import DATABASE_URL
 from tests.test_inheritance_and_pydantic_generation.test_geting_the_pydantic_models import (
-    Category, Item, MutualA, MutualB, SelfRef, database, metadata)  # type: ignore
+    Category,
+    Item,
+    MutualA,
+    MutualB,
+    SelfRef,
+    database,
+    metadata,
+)  # type: ignore
 
 app = FastAPI()
 app.state.database = database
@@ -75,7 +82,7 @@ def test_read_main():
 
         test_selfref = dict(id=1, name="test")
         test_selfref2 = dict(id=2, name="test2", parent={"id": 1})
-        test_selfref3 = dict(id=3, name="test3", children=[{"name": "aaa"}])
+        test_selfref3 = dict(id=3, name="test3", children=[{"id": 4, "name": "aaa"}])
 
         response = client.post("/selfrefs/", json=test_selfref)
         assert response.status_code == 200
