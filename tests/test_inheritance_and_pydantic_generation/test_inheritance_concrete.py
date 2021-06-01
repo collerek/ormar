@@ -121,13 +121,6 @@ class Bus(Car):
     max_persons: int = ormar.Integer()
 
 
-# class PersonsCar(ormar.Model):
-#     class Meta:
-#         tablename = "cars_x_persons"
-#         metadata = metadata
-#         database = db
-
-
 class Car2(ormar.Model):
     class Meta:
         abstract = True
@@ -138,9 +131,7 @@ class Car2(ormar.Model):
     name: str = ormar.String(max_length=50)
     owner: Person = ormar.ForeignKey(Person, related_name="owned")
     co_owners: List[Person] = ormar.ManyToMany(
-        Person,
-        # through=PersonsCar,
-        related_name="coowned",
+        Person, related_name="coowned",
     )
     created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
 

@@ -117,3 +117,17 @@ def get_potential_fields(attrs: Dict) -> Dict:
         for k, v in attrs.items()
         if (lenient_issubclass(v, BaseField) or isinstance(v, BaseField))
     }
+
+
+def remove_excluded_parent_fields(model: Type["Model"]):
+    """
+    Removes pydantic fields that should be excluded from parent models
+
+    :param model:
+    :type model: Type["Model"]
+    """
+    excludes = {*model.Meta.exclude_parent_fields} - {*model.Meta.model_fields.keys()}
+    if excludes:
+        model.__fields__ = {
+            k: v for k, v in model.__fields__.items() if k not in excludes
+        }
