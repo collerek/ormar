@@ -341,11 +341,11 @@ Calls the pydantic method to evaluate pydantic fields.
 
 `(None)`: None
 
-<a name="models.newbasemodel.NewBaseModel._get_related_not_excluded_fields"></a>
+<a name="models.newbasemodel.NewBaseModel._get_not_excluded_fields"></a>
 #### \_get\_related\_not\_excluded\_fields
 
 ```python
- | _get_related_not_excluded_fields(include: Optional[Dict], exclude: Optional[Dict]) -> List
+ | _get_not_excluded_fields(include: Optional[Dict], exclude: Optional[Dict]) -> List
 ```
 
 Returns related field names applying on them include and exclude set.

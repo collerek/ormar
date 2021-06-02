@@ -33,7 +33,10 @@ nav:
     - queries/aggregations.md
   - Signals: signals.md
   - Transactions: transactions.md
-  - Use with Fastapi: fastapi.md
+  - Use with Fastapi:
+    - Quick Start: fastapi/index.md
+    - Using ormar in responses: fastapi/response.md
+    - Using ormar in requests: fastapi/requests.md
   - Use with mypy: mypy.md
   - PyCharm plugin: plugin.md
   - Contributing: contributing.md

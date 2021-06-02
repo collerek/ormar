@@ -44,6 +44,7 @@ from ormar.models.helpers import (
     populate_meta_sqlalchemy_table_if_required,
     populate_meta_tablename_columns_and_pk,
     register_relation_in_alias_manager,
+    remove_excluded_parent_fields,
     sqlalchemy_columns_from_model_fields,
 )
 from ormar.models.quick_access_views import quick_access_set
@@ -80,6 +81,7 @@ class ModelMeta:
     abstract: bool
     requires_ref_update: bool
     orders_by: List[str]
+    exclude_parent_fields: List[str]
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:
@@ -308,7 +310,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
     model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
 ) -> Tuple[Dict, Dict]:
     """
-    Copy the key parameters [databse, metadata, property_fields and constraints]
+    Copy the key parameters [database, metadata, property_fields and constraints]
     and fields from parent models. Overwrites them if needed.
 
     Only abstract classes can be subclassed.
@@ -351,6 +353,11 @@ def copy_data_from_parent_model(  # noqa: CCR001
             else attrs.get("__name__", "").lower() + "s"
         )
         for field_name, field in base_class.Meta.model_fields.items():
+            if (
+                hasattr(meta, "exclude_parent_fields")
+                and field_name in meta.exclude_parent_fields
+            ):
+                continue
             if field.is_multi:
                 field = cast(ManyToManyField, field)
                 copy_and_replace_m2m_through_model(
@@ -386,7 +393,7 @@ def extract_from_parents_definition(  # noqa: CCR001
     model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
 ) -> Tuple[Dict, Dict]:
     """
-    Extracts fields from base classes if they have valid oramr fields.
+    Extracts fields from base classes if they have valid ormar fields.
 
     If model was already parsed -> fields definitions need to be removed from class
     cause pydantic complains about field re-definition so after first child
@@ -595,6 +602,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                     )
 
                 new_model.pk = PkDescriptor(name=new_model.Meta.pkname)
+                remove_excluded_parent_fields(new_model)
 
         return new_model
 

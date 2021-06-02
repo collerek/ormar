@@ -68,8 +68,10 @@ async def test_is_null():
         assert tolkien.books[0].year is None
         assert tolkien.books[0].title == "The Hobbit"
 
-        tolkien = await Author.objects.select_related("books").paginate(1, 10).get(
-            books__year__isnull=True
+        tolkien = (
+            await Author.objects.select_related("books")
+            .paginate(1, 10)
+            .get(books__year__isnull=True)
         )
         assert len(tolkien.books) == 1
         assert tolkien.books[0].year is None

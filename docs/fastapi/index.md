@@ -1,3 +1,4 @@
+# Fastapi
 
 The use of ormar with fastapi is quite simple.
 
@@ -14,7 +15,16 @@ Here you can find a very simple sample application code.
     
     It's divided into subsections for clarity.
 
-## Imports and initialization 
+!!!note
+        If you want to read more on how you can use ormar models in fastapi requests and 
+        responses check the [responses](response.md) and [requests](requests.md) documentation.
+
+## Quick Start
+
+!!!note
+        Note that you can find the full quick start script in the [github](https://github.com/collerek/ormar) repo under examples.
+
+### Imports and initialization 
 
 First take care of the imports and initialization 
 ```python
@@ -32,7 +42,7 @@ database = databases.Database("sqlite:///test.db")
 app.state.database = database
 ```
 
-## Database connection 
+### Database connection 
 
 Next define startup and shutdown events (or use middleware)
 - note that this is `databases` specific setting not the ormar one
@@ -54,7 +64,7 @@ async def shutdown() -> None:
 !!!info
     You can read more on connecting to databases in [fastapi][fastapi] documentation
 
-## Models definition 
+### Models definition 
 
 Define ormar models with appropriate fields. 
 
@@ -85,7 +95,7 @@ class Item(ormar.Model):
 !!!tip
     You can read more on defining `Models` in [models][models] section.
 
-## Fastapi endpoints definition
+### Fastapi endpoints definition
 
 Define your desired endpoints, note how `ormar` models are used both 
 as `response_model` and as a requests parameters.
@@ -130,9 +140,9 @@ async def delete_item(item_id: int, item: Item = None):
 !!!note
     Note that you can return a `Model` (or list of `Models`) directly - fastapi will jsonize it for you
 
-## Test the application
+### Test the application
 
-### Run fastapi
+#### Run fastapi
 
 If you want to run this script and play with fastapi swagger install uvicorn first
 
@@ -147,7 +157,7 @@ Now you can navigate to your browser (by default fastapi address is `127.0.0.1:8
 !!!info
     You can read more about running fastapi in [fastapi][fastapi] docs. 
 
-### Test with pytest
+#### Test with pytest
 
 Here you have a sample test that will prove that everything works as intended.
 
@@ -208,6 +218,6 @@ def test_all_endpoints():
     You can read more on testing fastapi in [fastapi][fastapi] docs. 
 
 [fastapi]: https://fastapi.tiangolo.com/
-[models]: ./models/index.md
-[database initialization]:  ./models/migrations.md
+[models]: ../models/index.md
+[database initialization]:  ../models/migrations.md
 [tests]: https://github.com/collerek/ormar/tree/master/tests

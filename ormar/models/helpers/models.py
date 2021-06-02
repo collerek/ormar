@@ -54,6 +54,8 @@ def populate_default_options_values(
         new_model.Meta.abstract = False
     if not hasattr(new_model.Meta, "orders_by"):
         new_model.Meta.orders_by = []
+    if not hasattr(new_model.Meta, "exclude_parent_fields"):
+        new_model.Meta.exclude_parent_fields = []
 
     if any(
         is_field_an_forward_ref(field) for field in new_model.Meta.model_fields.values()

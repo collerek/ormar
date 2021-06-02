@@ -461,3 +461,113 @@ abstract parent model you may lose your data on through table if not careful.
 
     That means that each time you define a Child model you need to either manually create
     the table in the database, or run a migration (with alembic).
+
+## exclude_parent_fields
+
+Ormar allows you to skip certain fields in inherited model that are coming from a parent model.
+
+!!!Note
+    Note that the same behaviour can be achieved by splitting the model into more abstract models and mixins - which is a preferred way in normal circumstances.
+
+To skip certain fields from a child model, list all fields that you want to skip in `model.Meta.exclude_parent_fields` parameter like follows:
+
+```python
+metadata = sa.MetaData()
+db = databases.Database(DATABASE_URL)
+
+
+class AuditModel(ormar.Model):
+    class Meta:
+        abstract = True
+
+    created_by: str = ormar.String(max_length=100)
+    updated_by: str = ormar.String(max_length=100, default="Sam")
+
+
+class DateFieldsModel(ormar.Model):
+    class Meta(ormar.ModelMeta):
+        abstract = True
+        metadata = metadata
+        database = db
+
+    created_date: datetime.datetime = ormar.DateTime(
+        default=datetime.datetime.now, name="creation_date"
+    )
+    updated_date: datetime.datetime = ormar.DateTime(
+        default=datetime.datetime.now, name="modification_date"
+    )
+
+
+class Category(DateFieldsModel, AuditModel):
+    class Meta(ormar.ModelMeta):
+        tablename = "categories"
+        # set fields that should be skipped
+        exclude_parent_fields = ["updated_by", "updated_date"]
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=50, unique=True, index=True)
+    code: int = ormar.Integer()
+
+# Note that now the update fields in Category are gone in all places -> ormar fields, pydantic fields and sqlachemy table columns
+# so full list of available fileds in Category is: ["created_by", "created_date", "id", "name", "code"]
+```
+
+Note how you simply need to provide field names and it will exclude the parent field regardless of from which parent model the field is coming from.
+
+!!!Note
+    Note that if you want to overwrite a field in child model you do not have to exclude it, simpy overwrite the field declaration in child model with same field name.
+
+!!!Warning
+    Note that this kind of behavior can confuse mypy and static type checkers, yet accessing the non existing fields will fail at runtime. That's why splitting the base classes is preferred.
+
+The same effect can be achieved by splitting base classes like:
+
+```python
+metadata = sa.MetaData()
+db = databases.Database(DATABASE_URL)
+
+
+class AuditCreateModel(ormar.Model):
+    class Meta:
+        abstract = True
+
+    created_by: str = ormar.String(max_length=100)
+    
+
+class AuditUpdateModel(ormar.Model):
+    class Meta:
+        abstract = True
+
+    updated_by: str = ormar.String(max_length=100, default="Sam")
+
+class CreateDateFieldsModel(ormar.Model):
+    class Meta(ormar.ModelMeta):
+        abstract = True
+        metadata = metadata
+        database = db
+
+    created_date: datetime.datetime = ormar.DateTime(
+        default=datetime.datetime.now, name="creation_date"
+    )
+    
+class UpdateDateFieldsModel(ormar.Model):
+    class Meta(ormar.ModelMeta):
+        abstract = True
+        metadata = metadata
+        database = db
+
+    updated_date: datetime.datetime = ormar.DateTime(
+        default=datetime.datetime.now, name="modification_date"
+    )
+
+
+class Category(CreateDateFieldsModel, AuditCreateModel):
+    class Meta(ormar.ModelMeta):
+        tablename = "categories"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=50, unique=True, index=True)
+    code: int = ormar.Integer()
+```
+
+That way you can inherit from both create and update classes if needed, and only one of them otherwise.

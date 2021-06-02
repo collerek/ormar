@@ -107,7 +107,7 @@ class Model(ModelRow):
         await self.signals.post_save.send(sender=self.__class__, instance=self)
         return self
 
-    async def save_related(  # noqa: CCR001
+    async def save_related(  # noqa: CCR001, CFQ002
         self,
         follow: bool = False,
         save_all: bool = False,

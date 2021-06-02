@@ -131,7 +131,7 @@ def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> D
     :type model: Type["Model"]
     :param relation_map: dict with relations to follow
     :type relation_map: Optional[Dict]
-    :return:
+    :return: dict with example values
     :rtype: Dict[str, int]
     """
     example: Dict[str, Any] = dict()
@@ -141,18 +141,38 @@ def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> D
         else translate_list_to_dict(model._iterate_related_models())
     )
     for name, field in model.Meta.model_fields.items():
-        if not field.is_relation:
-            is_bytes_str = field.__type__ == bytes and field.represent_as_base64_str
-            example[name] = field.__sample__ if not is_bytes_str else "string"
-        elif isinstance(relation_map, dict) and name in relation_map:
-            example[name] = get_nested_model_example(
-                name=name, field=field, relation_map=relation_map
-            )
+        populates_sample_fields_values(
+            example=example, name=name, field=field, relation_map=relation_map
+        )
     to_exclude = {name for name in model.Meta.model_fields}
     pydantic_repr = generate_pydantic_example(pydantic_model=model, exclude=to_exclude)
     example.update(pydantic_repr)
 
     return example
+
+
+def populates_sample_fields_values(
+    example: Dict[str, Any], name: str, field: BaseField, relation_map: Dict = None
+) -> None:
+    """
+    Iterates the field and sets fields to sample values
+
+    :param field: ormar field
+    :type field: BaseField
+    :param name: name of the field
+    :type name: str
+    :param example: example dict
+    :type example: Dict[str, Any]
+    :param relation_map: dict with relations to follow
+    :type relation_map: Optional[Dict]
+    """
+    if not field.is_relation:
+        is_bytes_str = field.__type__ == bytes and field.represent_as_base64_str
+        example[name] = field.__sample__ if not is_bytes_str else "string"
+    elif isinstance(relation_map, dict) and name in relation_map:
+        example[name] = get_nested_model_example(
+            name=name, field=field, relation_map=relation_map
+        )
 
 
 def get_nested_model_example(

@@ -50,6 +50,26 @@ You can pass a static value or a Callable (function etc.)
 
 Used both in sql and pydantic.
 
+Sample usage:
+
+```python
+# note the distinction between passing a value and Callable pointer
+
+# value
+name: str = ormar.String(max_length=200, default="Name")
+
+# note that when you call a function it's not a pointer to Callable
+# a definition like this will call the function at startup and assign
+# the result of the function to the default, so it will be constant value for all instances
+created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now())
+
+# if you want to pass Callable reference (note that it cannot have arguments)
+# note lack of the parenthesis -> ormar will call this function for you on each model
+created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
+
+# Callable can be a function, builtin, class etc.
+```
+
 ## server default
 
 `server_default`: `Any` = `None`  -> defaults to None. 

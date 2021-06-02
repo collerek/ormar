@@ -1,3 +1,21 @@
+# 0.10.10
+
+## ✨ Features
+
+* Add [`get_pydantic`](https://collerek.github.io/ormar/models/methods/#get_pydantic) flag that allows you to auto generate equivalent pydantic models tree from ormar.Model. This newly generated model tree can be used in requests and responses to exclude fields you do not want to include in the data.
+* Add [`exclude_parent_fields`](https://collerek.github.io/ormar/models/inheritance/#exclude_parent_fields) parameter to model Meta that allows you to exclude fields from parent models during inheritance. Note that best practice is to combine models and mixins but if you have many similar models and just one that differs it might be useful tool to achieve that. 
+
+## 🐛 Fixes
+
+* Fix is null filter with pagination and relations (by @erichaydel) [#214](https://github.com/collerek/ormar/issues/214)
+* Fix not saving child object on reverse side of the relation if not saved before [#216](https://github.com/collerek/ormar/issues/216)
+
+
+## 💬 Other
+
+* Expand [fastapi](https://collerek.github.io/ormar/fastapi) part of the documentation to show samples of using ormar in requests and responses in fastapi.
+* Improve the docs in regard of `default`, `ForeignKey.add` etc. 
+
 # 0.10.9
 
 ## Important security fix

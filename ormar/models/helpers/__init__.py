@@ -8,6 +8,7 @@ from ormar.models.helpers.pydantic import (
     get_potential_fields,
     get_pydantic_base_orm_config,
     get_pydantic_field,
+    remove_excluded_parent_fields,
 )
 from ormar.models.helpers.relations import (
     alias_manager,
@@ -36,4 +37,5 @@ __all__ = [
     "sqlalchemy_columns_from_model_fields",
     "populate_choices_validators",
     "meta_field_not_set",
+    "remove_excluded_parent_fields",
 ]

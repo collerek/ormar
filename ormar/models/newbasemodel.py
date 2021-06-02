@@ -454,8 +454,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         super().update_forward_refs(**localns)
         cls.Meta.requires_ref_update = False
 
-    def _get_related_not_excluded_fields(
-        self, include: Optional[Dict], exclude: Optional[Dict],
+    @staticmethod
+    def _get_not_excluded_fields(
+        fields: Union[List, Set], include: Optional[Dict], exclude: Optional[Dict],
     ) -> List:
         """
         Returns related field names applying on them include and exclude set.
@@ -467,7 +468,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return:
         :rtype: List of fields with relations that is not excluded
         """
-        fields = [field for field in self.extract_related_names()]
+        fields = [*fields] if not isinstance(fields, list) else fields
         if include:
             fields = [field for field in fields if field in include]
         if exclude:
@@ -519,8 +520,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 continue
         return result
 
+    @classmethod
     def _skip_ellipsis(
-        self, items: Union[Set, Dict, None], key: str, default_return: Any = None
+        cls, items: Union[Set, Dict, None], key: str, default_return: Any = None
     ) -> Union[Set, Dict, None]:
         """
         Helper to traverse the include/exclude dictionaries.
@@ -534,10 +536,11 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: nested value of the items
         :rtype: Union[Set, Dict, None]
         """
-        result = self.get_child(items, key)
+        result = cls.get_child(items, key)
         return result if result is not Ellipsis else default_return
 
-    def _convert_all(self, items: Union[Set, Dict, None]) -> Union[Set, Dict, None]:
+    @staticmethod
+    def _convert_all(items: Union[Set, Dict, None]) -> Union[Set, Dict, None]:
         """
         Helper to convert __all__ pydantic special index to ormar which does not
         support index based exclusions.
@@ -549,7 +552,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             return items.get("__all__")
         return items
 
-    def _extract_nested_models(  # noqa: CCR001
+    def _extract_nested_models(  # noqa: CCR001, CFQ002
         self,
         relation_map: Dict,
         dict_instance: Dict,
@@ -573,8 +576,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: current model dict with child models converted to dictionaries
         :rtype: Dict
         """
-
-        fields = self._get_related_not_excluded_fields(include=include, exclude=exclude)
+        fields = self._get_not_excluded_fields(
+            fields=self.extract_related_names(), include=include, exclude=exclude
+        )
 
         for field in fields:
             if not relation_map or field not in relation_map:
