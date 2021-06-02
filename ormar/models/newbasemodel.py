@@ -552,7 +552,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             return items.get("__all__")
         return items
 
-    def _extract_nested_models(  # noqa: CCR001
+    def _extract_nested_models(  # noqa: CCR001, CFQ002
         self,
         relation_map: Dict,
         dict_instance: Dict,

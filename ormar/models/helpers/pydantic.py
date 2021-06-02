@@ -119,7 +119,7 @@ def get_potential_fields(attrs: Dict) -> Dict:
     }
 
 
-def remove_excluded_parent_fields(model: Type["Model"]):
+def remove_excluded_parent_fields(model: Type["Model"]) -> None:
     """
     Removes pydantic fields that should be excluded from parent models
 

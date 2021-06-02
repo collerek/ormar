@@ -1,5 +1,5 @@
 import uuid
-from typing import Callable, Collection, Dict, Optional, Set, TYPE_CHECKING, cast
+from typing import Callable, Collection, Dict, List, Optional, Set, TYPE_CHECKING, cast
 
 import ormar
 from ormar.exceptions import ModelPersistenceError
@@ -275,9 +275,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :rtype: int
         """
         for field in fields_list:
-            values = getattr(self, field.name) or []
-            if not isinstance(values, list):
-                values = [values]
+            values = self._get_field_values(name=field.name)
             for value in values:
                 if follow:
                     update_count = await value.save_related(
@@ -299,3 +297,17 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
                         update_count=update_count,
                     )
         return update_count
+
+    def _get_field_values(self, name: str) -> List:
+        """
+        Extract field values and ensures it is a list.
+
+        :param name: name of the field
+        :type name: str
+        :return: list of values
+        :rtype: List
+        """
+        values = getattr(self, name) or []
+        if not isinstance(values, list):
+            values = [values]
+        return values
