@@ -141,8 +141,10 @@ class FilterAction(QueryAction):
         op_attr = FILTER_OPERATORS[self.operator]
         if self.operator == "isnull":
             op_attr = "is_" if self.filter_value else "isnot"
-            self.filter_value = None
-        clause = getattr(self.column, op_attr)(self.filter_value)
+            filter_value = None
+        else:
+            filter_value = self.filter_value
+        clause = getattr(self.column, op_attr)(filter_value)
         clause = self._compile_clause(
             clause, modifiers={"escape": "\\" if self.has_escaped_character else None},
         )
