@@ -135,7 +135,7 @@ async def test_exclude_with_redefinition():
 async def test_exclude_with_relation():
     async with db:
         async with db.transaction(force_rollback=True):
-            user = await User(name="Michaił Kałasznikow").save()
+            user = await User(name="Michail Kalasznikow").save()
             test = await Gun(name="AK47", created_by=user).save()
             assert test.created_date is not None
 
@@ -144,4 +144,4 @@ async def test_exclude_with_relation():
 
             test2 = await Gun.objects.select_related("created_by").get(pk=test.pk)
             assert test2.name == "AK47"
-            assert test2.created_by.name == "Michaił Kałasznikow"
+            assert test2.created_by.name == "Michail Kalasznikow"
