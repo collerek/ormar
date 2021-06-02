@@ -214,7 +214,7 @@ class RelationProxy(Generic[T], list):
             setattr(self._owner, self.field_name, item)
         else:
             setattr(item, relation_name, self._owner)
-            await item.update()
+            await item.upsert()
         await self._owner.signals.post_relation_add.send(
             sender=self._owner.__class__,
             instance=self._owner,

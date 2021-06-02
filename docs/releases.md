@@ -8,10 +8,13 @@
 ## 🐛 Fixes
 
 * Fix is null filter with pagination and relations (by @erichaydel) [#214](https://github.com/collerek/ormar/issues/214)
+* Fix not saving child object on reverse side of the relation if not saved before [#216](https://github.com/collerek/ormar/issues/216)
+
 
 ## 💬 Other
 
 * Expand [fastapi](https://collerek.github.io/ormar/fastapi) part of the documentation to show samples of using ormar in requests and responses in fastapi.
+* Improve the docs in regard of `default`, `ForeignKey.add` etc. 
 
 # 0.10.9
 

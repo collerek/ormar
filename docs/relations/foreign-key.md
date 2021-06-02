@@ -99,7 +99,7 @@ course = Course(name="Math", completed=False) # note - not saved
 await department.courses.add(course)
 assert course.pk is not None # child model was saved
 # relation on child model is set and FK column saved in db
-assert courses.department == department
+assert course.department == department
 # relation on parent model is also set
 assert department.courses[0] == course 
 ```
@@ -111,6 +111,10 @@ assert department.courses[0] == course
     if parent model has no primary key value.
     
     That means that in example above the department has to be saved before you can call `department.courses.add()`.
+
+!!!warning
+    This method will not work on `ManyToMany` relations - there, both sides of the relation have to be saved before adding to relation.
+    
 
 ### remove
 
