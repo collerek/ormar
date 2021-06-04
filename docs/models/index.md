@@ -368,6 +368,11 @@ You can set this parameter by providing `Meta` class `constraints` argument.
 --8<-- "../docs_src/models/docs006.py"
 ```
 
+!!!note
+        Note that constraints are meant for combination of columns that should be unique. 
+        To set one column as unique use [`unique`](../fields/common-parameters.md#unique) common parameter. 
+        Of course you can set many columns as unique with this param but each of them will be checked separately.
+
 ## Model sort order
 
 When querying the database with given model by default the Model is ordered by the `primary_key`

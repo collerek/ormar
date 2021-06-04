@@ -23,9 +23,10 @@ from ormar import MultipleMatches, NoMatch
 from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
 from ormar.queryset import FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
-from ormar.queryset.clause import FilterGroup, QueryClause
+from ormar.queryset.clause import FilterGroup, Prefix, QueryClause
 from ormar.queryset.prefetch_query import PrefetchQuery
 from ormar.queryset.query import Query
+from ormar.queryset.utils import get_relationship_alias_model_and_str
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -301,6 +302,8 @@ class QuerySet(Generic[T]):
         *  endswith - like `album__name__endswith='ibu'` (exact end match)
         *  iendswith - like `album__name__iendswith='IBU'` (case insensitive)
 
+        Note that you can also use python style filters - check the docs!
+
         :param _exclude: flag if it should be exclude or filter
         :type _exclude: bool
         :param kwargs: fields names and proper value types
@@ -552,6 +555,119 @@ class QuerySet(Generic[T]):
 
         order_bys = self.order_bys + [x for x in orders_by if x not in self.order_bys]
         return self.rebuild_self(order_bys=order_bys,)
+
+    async def values(
+        self,
+        fields: Union[List, str, Set, Dict] = None,
+        _as_dict: bool = True,
+        _flatten: bool = False,
+    ) -> List:
+        """
+        Return a list of dictionaries with column values in order of the fields
+        passed or all fields from queried models.
+
+        To filter for given row use filter/exclude methods before values,
+        to limit number of rows use limit/offset or paginate before values.
+
+        Note that it always return a list even for one row from database.
+
+        :param _flatten: internal parameter to flatten one element tuples
+        :type _flatten: bool
+        :param _as_dict: internal parameter if return dict or tuples
+        :type _as_dict: bool
+        :param fields: field name or list of field names to extract from db
+        :type fields:  Union[List, str, Set, Dict]
+        """
+        if fields:
+            return await self.fields(columns=fields).values(
+                _as_dict=_as_dict, _flatten=_flatten
+            )
+        expr = self.build_select_expression()
+        rows = await self.database.fetch_all(expr)
+        if not rows:
+            return []
+        column_names = list(rows[0].keys())
+        column_map = self._resolve_data_prefix_to_relation_str(
+            column_names=column_names
+        )
+        result = [
+            {column_map.get(k): v for k, v in dict(x).items() if k in column_map}
+            for x in rows
+        ]
+        if _as_dict:
+            return result
+        if _flatten and not self._excludable.include_entry_count() == 1:
+            raise QueryDefinitionError(
+                "You cannot flatten values_list if more than " "one field is selected!"
+            )
+        tuple_result = [tuple(x.values()) for x in result]
+        return tuple_result if not _flatten else [x[0] for x in tuple_result]
+
+    async def values_list(
+        self, fields: Union[List, str, Set, Dict] = None, flatten: bool = False
+    ) -> List:
+        """
+        Return a list of tuples with column values in order of the fields passed or
+        all fields from queried models.
+
+        When one field is passed you can flatten the list of tuples into list of values
+        of that single field.
+
+        To filter for given row use filter/exclude methods before values,
+        to limit number of rows use limit/offset or paginate before values.
+
+        Note that it always return a list even for one row from database.
+
+        :param fields: field name or list of field names to extract from db
+        :type fields: Union[str, List[str]]
+        :param flatten: when one field is passed you can flatten the list of tuples
+        :type flatten: bool
+        """
+        return await self.values(fields=fields, _as_dict=False, _flatten=flatten)
+
+    def _resolve_data_prefix_to_relation_str(self, column_names: List[str]) -> Dict:
+        resolved_names = dict()
+        for column_name in column_names:
+            prefixes_map = self._create_prefixes_map()
+            column_parts = column_name.split("_")
+            potential_prefix = column_parts[0]
+            if potential_prefix in prefixes_map:
+                prefix = prefixes_map[potential_prefix]
+                allowed_columns = prefix.model_cls.own_table_columns(
+                    model=prefix.model_cls,
+                    excludable=self._excludable,
+                    alias=prefix.table_prefix,
+                    add_pk_columns=False,
+                )
+                new_column_name = "_".join(column_parts[1:])
+                if new_column_name in allowed_columns:
+                    resolved_names[column_name] = f"{prefix.relation_str}__" + "_".join(
+                        column_name.split("_")[1:]
+                    )
+            else:
+                assert self.model_cls
+                allowed_columns = self.model_cls.own_table_columns(
+                    model=self.model_cls,
+                    excludable=self._excludable,
+                    add_pk_columns=False,
+                )
+                if column_name in allowed_columns:
+                    resolved_names[column_name] = column_name
+        return resolved_names
+
+    def _create_prefixes_map(self) -> Dict[str, Prefix]:
+        prefixes: List[Prefix] = []
+        for related in self._select_related:
+            related_split = related.split("__")
+            for index in range(len(related_split)):
+                prefix = Prefix(
+                    self.model_cls,  # type: ignore
+                    *get_relationship_alias_model_and_str(
+                        self.model_cls, related_split[0 : (index + 1)]  # type: ignore
+                    ),
+                )
+                prefixes.append(prefix)
+        return {x.table_prefix: x for x in prefixes}
 
     async def exists(self) -> bool:
         """
