@@ -1,3 +1,13 @@
+# 0.10.11
+
+## ✨ Features
+
+* 
+
+## 🐛 Fixes
+
+* Fix creation of auto through model for m2m relation with ForwardRef [#226](https://github.com/collerek/ormar/issues/226)
+
 # 0.10.10
 
 ## ✨ Features

@@ -1,4 +1,5 @@
 # type: ignore
+from typing import List, Optional
 
 import databases
 import pytest
@@ -17,10 +18,14 @@ engine = create_engine(DATABASE_URL)
 TeacherRef = ForwardRef("Teacher")
 
 
+class BaseMeta(ormar.ModelMeta):
+    metadata = metadata
+    database = db
+
+
 class Student(ormar.Model):
-    class Meta(ModelMeta):
-        metadata = metadata
-        database = db
+    class Meta(BaseMeta):
+        pass
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -30,10 +35,8 @@ class Student(ormar.Model):
 
 
 class StudentTeacher(ormar.Model):
-    class Meta(ModelMeta):
+    class Meta(BaseMeta):
         tablename = "students_x_teachers"
-        metadata = metadata
-        database = db
 
 
 class Teacher(ormar.Model):
@@ -49,6 +52,35 @@ class Teacher(ormar.Model):
 
 
 Student.update_forward_refs()
+
+CityRef = ForwardRef("City")
+CountryRef = ForwardRef("Country")
+
+
+class Country(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "countries"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=128)
+    capital: Optional[CityRef] = ormar.ForeignKey(
+        CityRef, related_name="capital_city", nullable=True
+    )
+    borders: Optional[List[CountryRef]] = ormar.ManyToMany(CountryRef)
+
+
+class City(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "cities"
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=128)
+    country: Country = ormar.ForeignKey(
+        Country, related_name="cities", skip_reverse=True
+    )
+
+
+Country.update_forward_refs()
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -114,3 +146,23 @@ async def test_double_relations():
             assert len(quibble.own_students) == 2
             assert quibble.own_students[1].name == "John"
             assert quibble.own_students[0].name == "Anna"
+
+
+@pytest.mark.asyncio
+async def test_auto_through_model():
+    async with db:
+        async with db.transaction(force_rollback=True):
+            england = await Country(name="England").save()
+            france = await Country(name="France").save()
+            london = await City(name="London", country=england).save()
+            england.capital = london
+            await england.update()
+            await england.borders.add(france)
+
+            check = await Country.objects.select_related(["capital", "borders"]).get(
+                name="England"
+            )
+            assert check.name == "England"
+            assert check.capital.name == "London"
+            assert check.capital.country.pk == check.pk
+            assert check.borders[0] == france
