@@ -26,6 +26,7 @@ from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, Prefix, QueryClause
 from ormar.queryset.prefetch_query import PrefetchQuery
 from ormar.queryset.query import Query
+from ormar.queryset.reverse_alias_resolver import ReverseAliasResolver
 from ormar.queryset.utils import get_relationship_alias_model_and_str
 
 if TYPE_CHECKING:  # pragma no cover
@@ -586,10 +587,12 @@ class QuerySet(Generic[T]):
         rows = await self.database.fetch_all(expr)
         if not rows:
             return []
-        column_names = list(rows[0].keys())
-        column_map = self._resolve_data_prefix_to_relation_str(
-            column_names=column_names
+        alias_resolver = ReverseAliasResolver(
+            select_related=self._select_related,
+            excludable=self._excludable,
+            model_cls=self.model_cls,
         )
+        column_map = alias_resolver.resolve_columns(columns_names=list(rows[0].keys()))
         result = [
             {column_map.get(k): v for k, v in dict(x).items() if k in column_map}
             for x in rows
@@ -598,7 +601,7 @@ class QuerySet(Generic[T]):
             return result
         if _flatten and not self._excludable.include_entry_count() == 1:
             raise QueryDefinitionError(
-                "You cannot flatten values_list if more than " "one field is selected!"
+                "You cannot flatten values_list if more than one field is selected!"
             )
         tuple_result = [tuple(x.values()) for x in result]
         return tuple_result if not _flatten else [x[0] for x in tuple_result]
@@ -624,50 +627,6 @@ class QuerySet(Generic[T]):
         :type flatten: bool
         """
         return await self.values(fields=fields, _as_dict=False, _flatten=flatten)
-
-    def _resolve_data_prefix_to_relation_str(self, column_names: List[str]) -> Dict:
-        resolved_names = dict()
-        for column_name in column_names:
-            prefixes_map = self._create_prefixes_map()
-            column_parts = column_name.split("_")
-            potential_prefix = column_parts[0]
-            if potential_prefix in prefixes_map:
-                prefix = prefixes_map[potential_prefix]
-                allowed_columns = prefix.model_cls.own_table_columns(
-                    model=prefix.model_cls,
-                    excludable=self._excludable,
-                    alias=prefix.table_prefix,
-                    add_pk_columns=False,
-                )
-                new_column_name = "_".join(column_parts[1:])
-                if new_column_name in allowed_columns:
-                    resolved_names[column_name] = f"{prefix.relation_str}__" + "_".join(
-                        column_name.split("_")[1:]
-                    )
-            else:
-                assert self.model_cls
-                allowed_columns = self.model_cls.own_table_columns(
-                    model=self.model_cls,
-                    excludable=self._excludable,
-                    add_pk_columns=False,
-                )
-                if column_name in allowed_columns:
-                    resolved_names[column_name] = column_name
-        return resolved_names
-
-    def _create_prefixes_map(self) -> Dict[str, Prefix]:
-        prefixes: List[Prefix] = []
-        for related in self._select_related:
-            related_split = related.split("__")
-            for index in range(len(related_split)):
-                prefix = Prefix(
-                    self.model_cls,  # type: ignore
-                    *get_relationship_alias_model_and_str(
-                        self.model_cls, related_split[0 : (index + 1)]  # type: ignore
-                    ),
-                )
-                prefixes.append(prefix)
-        return {x.table_prefix: x for x in prefixes}
 
     async def exists(self) -> bool:
         """

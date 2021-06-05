@@ -1,3 +1,4 @@
+import asyncio
 import itertools
 from typing import Optional, List
 
@@ -9,7 +10,7 @@ import sqlalchemy
 import ormar
 from tests.settings import DATABASE_URL
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
+database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
@@ -78,43 +79,54 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
+@pytest.yield_fixture(scope="module")
+def event_loop():
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(autouse=True, scope="module")
+async def sample_data(event_loop, create_test_database):
+    async with database:
+        nick1 = await NickNames.objects.create(name="Nippon", is_lame=False)
+        nick2 = await NickNames.objects.create(name="EroCherry", is_lame=True)
+        hq = await HQ.objects.create(name="Japan")
+        await hq.nicks.add(nick1)
+        await hq.nicks.add(nick2)
+
+        toyota = await Company.objects.create(name="Toyota", founded=1937, hq=hq)
+
+        await Car.objects.create(
+            manufacturer=toyota,
+            name="Corolla",
+            year=2020,
+            gearbox_type="Manual",
+            gears=5,
+            aircon_type="Manual",
+        )
+        await Car.objects.create(
+            manufacturer=toyota,
+            name="Yaris",
+            year=2019,
+            gearbox_type="Manual",
+            gears=5,
+            aircon_type="Manual",
+        )
+        await Car.objects.create(
+            manufacturer=toyota,
+            name="Supreme",
+            year=2020,
+            gearbox_type="Auto",
+            gears=6,
+            aircon_type="Auto",
+        )
+
+
 @pytest.mark.asyncio
 async def test_selecting_subset():
     async with database:
         async with database.transaction(force_rollback=True):
-            nick1 = await NickNames.objects.create(name="Nippon", is_lame=False)
-            nick2 = await NickNames.objects.create(name="EroCherry", is_lame=True)
-            hq = await HQ.objects.create(name="Japan")
-            await hq.nicks.add(nick1)
-            await hq.nicks.add(nick2)
-
-            toyota = await Company.objects.create(name="Toyota", founded=1937, hq=hq)
-
-            await Car.objects.create(
-                manufacturer=toyota,
-                name="Corolla",
-                year=2020,
-                gearbox_type="Manual",
-                gears=5,
-                aircon_type="Manual",
-            )
-            await Car.objects.create(
-                manufacturer=toyota,
-                name="Yaris",
-                year=2019,
-                gearbox_type="Manual",
-                gears=5,
-                aircon_type="Manual",
-            )
-            await Car.objects.create(
-                manufacturer=toyota,
-                name="Supreme",
-                year=2020,
-                gearbox_type="Auto",
-                gears=6,
-                aircon_type="Auto",
-            )
-
             all_cars = (
                 await Car.objects.select_related(["manufacturer__hq__nicks"])
                 .fields(
