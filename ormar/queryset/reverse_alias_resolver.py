@@ -1,8 +1,5 @@
 from typing import Dict, List, TYPE_CHECKING, Tuple, Type
 
-from ormar.queryset.clause import Prefix
-from ormar.queryset.utils import get_relationship_alias_model_and_str
-
 if TYPE_CHECKING:
     from ormar import Model
     from ormar.models.excludable import ExcludableItems

@@ -43,7 +43,13 @@ class AliasManager:
         return self._aliases_new.__getitem__(key)
 
     @property
-    def reversed_aliases(self):
+    def reversed_aliases(self) -> Dict:
+        """
+        Returns swapped key-value pairs from aliases where alias is the key.
+
+        :return: dictionary of prefix to relation
+        :rtype: Dict
+        """
         if self._reversed_aliases:
             return self._reversed_aliases
         reversed_aliases = {v: k for k, v in self._aliases_new.items()}

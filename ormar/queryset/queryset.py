@@ -23,11 +23,10 @@ from ormar import MultipleMatches, NoMatch
 from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
 from ormar.queryset import FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
-from ormar.queryset.clause import FilterGroup, Prefix, QueryClause
+from ormar.queryset.clause import FilterGroup, QueryClause
 from ormar.queryset.prefetch_query import PrefetchQuery
 from ormar.queryset.query import Query
 from ormar.queryset.reverse_alias_resolver import ReverseAliasResolver
-from ormar.queryset.utils import get_relationship_alias_model_and_str
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
