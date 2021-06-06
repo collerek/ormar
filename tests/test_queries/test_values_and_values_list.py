@@ -261,7 +261,8 @@ async def test_nested_m2m_values_subset_of_fields():
         user = (
             await Role.objects.select_related("users__categories")
             .filter(name="admin")
-            .fields({"name": ..., "users": {"name": ...}})
+            .fields({"name": ..., "users": {"name": ..., "categories": {"name"}}})
+            .exclude_fields("users__roleuser")
             .values()
         )
         assert user == [

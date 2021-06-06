@@ -230,3 +230,58 @@ async def test_selecting_subset():
                 await Car.objects.select_related("manufacturer").fields(
                     ["id", "name", "manufacturer__founded"]
                 ).all()
+
+
+@pytest.mark.asyncio
+async def test_selecting_subset_of_through_model():
+    async with database:
+        car = (
+            await Car.objects.select_related(["manufacturer__hq__nicks"])
+            .fields(
+                {
+                    "id": ...,
+                    "name": ...,
+                    "manufacturer": {
+                        "name": ...,
+                        "hq": {"name": ..., "nicks": {"name": ...}},
+                    },
+                }
+            )
+            .exclude_fields("manufacturer__hq__nickshq")
+            .get()
+        )
+        assert car.manufacturer.hq.nicks[0].nickshq is None
+
+        car = (
+            await Car.objects.select_related(["manufacturer__hq__nicks"])
+            .fields(
+                {
+                    "id": ...,
+                    "name": ...,
+                    "manufacturer": {
+                        "name": ...,
+                        "hq": {"name": ..., "nicks": {"name": ...}},
+                    },
+                }
+            )
+            .exclude_fields({"manufacturer": {"hq": {"nickshq": ...}}})
+            .get()
+        )
+        assert car.manufacturer.hq.nicks[0].nickshq is None
+
+        car = (
+            await Car.objects.select_related(["manufacturer__hq__nicks"])
+            .fields(
+                {
+                    "id": ...,
+                    "name": ...,
+                    "manufacturer": {
+                        "name": ...,
+                        "hq": {"name": ..., "nicks": {"name": ...}},
+                    },
+                }
+            )
+            .exclude_fields("manufacturer__hq__nickshq__nick")
+            .get()
+        )
+        assert car.manufacturer.hq.nicks[0].nickshq is not None
