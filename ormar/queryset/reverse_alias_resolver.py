@@ -6,6 +6,11 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class ReverseAliasResolver:
+    """
+    Class is used to reverse resolve table aliases into relation strings
+    to parse raw data columns and replace table prefixes with full relation string
+    """
+
     def __init__(
         self,
         model_cls: Type["Model"],
@@ -25,6 +30,15 @@ class ReverseAliasResolver:
         self._resolved_names: Dict[str, str] = dict()
 
     def resolve_columns(self, columns_names: List[str]) -> Dict:
+        """
+        Takes raw query prefixed column and resolves the prefixes to
+        relation strings (relation names connected with dunders).
+
+        :param columns_names: list of column names with prefixes from query
+        :type columns_names: List[str]
+        :return: dictionary of prefix: resolved names
+        :rtype: Union[None, Dict[str, str]]
+        """
         self._create_prefixes_map()
         for column_name in columns_names:
             column_parts = column_name.split("_")
@@ -45,6 +59,17 @@ class ReverseAliasResolver:
         return self._resolved_names
 
     def _resolve_column_with_prefix(self, column_name: str, prefix: str) -> None:
+        """
+        Takes the prefixed column, checks if field should be excluded, and if not
+        it proceeds to replace prefix of a table with full relation string.
+
+        Sample: translates: "xsd12df_name" -> into: "posts__user__name"
+
+        :param column_name: prefixed name of the column
+        :type column_name: str
+        :param prefix: extracted prefix
+        :type prefix: str
+        """
         relation = self.reversed_aliases.get(prefix, None)
         relation_str = self._prefixes.get(relation, None)
         field = self._fields.get(relation, None)
@@ -72,6 +97,30 @@ class ReverseAliasResolver:
     def _check_if_field_is_excluded(
         self, prefix: str, field: "ForeignKeyField", is_through: bool
     ) -> bool:
+        """
+        Checks if given relation is excluded in current query.
+
+        Note that in contrary to other queryset methods here you can exclude the
+        in-between models but keep the end columns, which does not make sense
+        when parsing the raw data into models.
+
+        So in relation category -> category_x_post -> post -> user you can exclude
+        category_x_post and post models but can keep the user one. (in ormar model
+        context that is not possible as if you would exclude through and post model
+        there would be no way to reach user model).
+
+        Exclusions happen on a model before the current one, so we need to move back
+        in chain of model by one or by two (m2m relations have through model in between)
+
+        :param prefix: table alias
+        :type prefix: str
+        :param field: field with relation
+        :type field: ForeignKeyField
+        :param is_through: flag if current table is a through table
+        :type is_through: bool
+        :return: result of the check
+        :rtype: bool
+        """
         shift, field_name = 1, field.name
         if is_through:
             field_name = field.through.get_name()
@@ -85,6 +134,19 @@ class ReverseAliasResolver:
     def _get_previous_excludable(
         self, prefix: str, field: "ForeignKeyField", shift: int = 1
     ) -> "Excludable":
+        """
+        Returns excludable related to model previous in chain of models.
+        Used to check if current model should be excluded.
+
+        :param prefix: prefix of a current table
+        :type prefix: str
+        :param field: field with relation
+        :type field: ForeignKeyField
+        :param shift: how many model back to go - for m2m it's 2 due to through models
+        :type shift: int
+        :return: excludable for previous model
+        :rtype: Excludable
+        """
         if prefix not in self._previous_prefixes:
             self._previous_prefixes.append(prefix)
         previous_prefix_ind = self._previous_prefixes.index(prefix)
@@ -96,6 +158,17 @@ class ReverseAliasResolver:
         return self.excludable.get(field.owner, alias=previous_prefix)
 
     def _create_prefixes_map(self) -> None:
+        """
+        Creates a map of alias manager aliases keys to relation strings.
+        I.e in alias manager you can have alias user_roles: xas12ad
+
+        This method will create entry user_roles: roles, where roles is a name of
+        relation on user model.
+
+        Will also keep the relation field in separate dictionary so we can later
+        extract field names and owner models.
+
+        """
         for related in self.select_related:
             model_cls = self.model_cls
             related_split = related.split("__")
@@ -124,6 +197,24 @@ class ReverseAliasResolver:
         previous_related_str: str,
         relation: str,
     ) -> str:
+        """
+        Registers through models for m2m relations and switches prefix for
+        the one linking from through model to target model.
+
+        For other relations returns current model name + relation name as prefix.
+        Nested relations are a chain of relation names with __ in between.
+
+        :param model_cls: model of current relation
+        :type model_cls: Type["Model"]
+        :param field: field with relation
+        :type field: ForeignKeyField
+        :param previous_related_str: concatenated chain linked with "__"
+        :type previous_related_str: str
+        :param relation: name of the current relation in chain
+        :type relation: str
+        :return: name of prefix to populate
+        :rtype: str
+        """
         prefix_name = f"{model_cls.get_name()}_{relation}"
         if field.is_multi:
             through_name = field.through.get_name()
