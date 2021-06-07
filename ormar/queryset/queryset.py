@@ -559,6 +559,7 @@ class QuerySet(Generic[T]):
     async def values(
         self,
         fields: Union[List, str, Set, Dict] = None,
+        exclude_through: bool = False,
         _as_dict: bool = True,
         _flatten: bool = False,
     ) -> List:
@@ -571,6 +572,8 @@ class QuerySet(Generic[T]):
 
         Note that it always return a list even for one row from database.
 
+        :param exclude_through: flag if through models should be excluded
+        :type exclude_through: bool
         :param _flatten: internal parameter to flatten one element tuples
         :type _flatten: bool
         :param _as_dict: internal parameter if return dict or tuples
@@ -580,7 +583,7 @@ class QuerySet(Generic[T]):
         """
         if fields:
             return await self.fields(columns=fields).values(
-                _as_dict=_as_dict, _flatten=_flatten
+                _as_dict=_as_dict, _flatten=_flatten, exclude_through=exclude_through
             )
         expr = self.build_select_expression()
         rows = await self.database.fetch_all(expr)
@@ -589,7 +592,8 @@ class QuerySet(Generic[T]):
         alias_resolver = ReverseAliasResolver(
             select_related=self._select_related,
             excludable=self._excludable,
-            model_cls=self.model_cls,
+            model_cls=self.model_cls,  # type: ignore
+            exclude_through=exclude_through,
         )
         column_map = alias_resolver.resolve_columns(columns_names=list(rows[0].keys()))
         result = [
@@ -606,7 +610,10 @@ class QuerySet(Generic[T]):
         return tuple_result if not _flatten else [x[0] for x in tuple_result]
 
     async def values_list(
-        self, fields: Union[List, str, Set, Dict] = None, flatten: bool = False
+        self,
+        fields: Union[List, str, Set, Dict] = None,
+        flatten: bool = False,
+        exclude_through: bool = False,
     ) -> List:
         """
         Return a list of tuples with column values in order of the fields passed or
@@ -620,12 +627,19 @@ class QuerySet(Generic[T]):
 
         Note that it always return a list even for one row from database.
 
+        :param exclude_through: flag if through models should be excluded
+        :type exclude_through: bool
         :param fields: field name or list of field names to extract from db
         :type fields: Union[str, List[str]]
         :param flatten: when one field is passed you can flatten the list of tuples
         :type flatten: bool
         """
-        return await self.values(fields=fields, _as_dict=False, _flatten=flatten)
+        return await self.values(
+            fields=fields,
+            exclude_through=exclude_through,
+            _as_dict=False,
+            _flatten=flatten,
+        )
 
     async def exists(self) -> bool:
         """

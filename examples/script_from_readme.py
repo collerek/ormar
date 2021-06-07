@@ -28,6 +28,7 @@ class BaseMeta(ormar.ModelMeta):
 #     id = ormar.Integer(primary_key=True) # <= notice no field types
 #     name = ormar.String(max_length=100)
 
+
 class Author(ormar.Model):
     class Meta(BaseMeta):
         tablename = "authors"
@@ -62,15 +63,9 @@ async def create():
     # Create some records to work with through QuerySet.create method.
     # Note that queryset is exposed on each Model's class as objects
     tolkien = await Author.objects.create(name="J.R.R. Tolkien")
-    await Book.objects.create(author=tolkien,
-                              title="The Hobbit",
-                              year=1937)
-    await Book.objects.create(author=tolkien,
-                              title="The Lord of the Rings",
-                              year=1955)
-    await Book.objects.create(author=tolkien,
-                              title="The Silmarillion",
-                              year=1977)
+    await Book.objects.create(author=tolkien, title="The Hobbit", year=1937)
+    await Book.objects.create(author=tolkien, title="The Lord of the Rings", year=1955)
+    await Book.objects.create(author=tolkien, title="The Silmarillion", year=1977)
 
     # alternative creation of object divided into 2 steps
     sapkowski = Author(name="Andrzej Sapkowski")
@@ -169,9 +164,7 @@ async def delete():
     # note that despite the fact that record no longer exists in database
     # the object above is still accessible and you can use it (and i.e. save()) again.
     tolkien = silmarillion.author
-    await Book.objects.create(author=tolkien,
-                              title="The Silmarillion",
-                              year=1977)
+    await Book.objects.create(author=tolkien, title="The Silmarillion", year=1977)
 
 
 async def joins():
@@ -223,11 +216,17 @@ async def filter_and_sort():
     # to sort decreasing use hyphen before the field name
     # same as with filter you can use double underscores to access related fields
     # Django style
-    books = await Book.objects.filter(author__name__icontains="tolkien").order_by(
-        "-year").all()
+    books = (
+        await Book.objects.filter(author__name__icontains="tolkien")
+        .order_by("-year")
+        .all()
+    )
     # python style
-    books = await Book.objects.filter(Book.author.name.icontains("tolkien")).order_by(
-        Book.year.desc()).all()
+    books = (
+        await Book.objects.filter(Book.author.name.icontains("tolkien"))
+        .order_by(Book.year.desc())
+        .all()
+    )
     assert len(books) == 3
     assert books[0].title == "The Silmarillion"
     assert books[2].title == "The Hobbit"
@@ -329,15 +328,24 @@ async def with_connect(function):
     # in your endpoints but have a global connection pool
     # check https://collerek.github.io/ormar/fastapi/ and section with db connection
 
+
 # gather and execute all functions
 # note - normally import should be at the beginning of the file
 import asyncio
 
 # note that normally you use gather() function to run several functions
 # concurrently but we actually modify the data and we rely on the order of functions
-for func in [create, read, update, delete, joins,
-             filter_and_sort, subset_of_columns,
-             pagination, aggregations]:
+for func in [
+    create,
+    read,
+    update,
+    delete,
+    joins,
+    filter_and_sort,
+    subset_of_columns,
+    pagination,
+    aggregations,
+]:
     print(f"Executing: {func.__name__}")
     asyncio.run(with_connect(func))
 

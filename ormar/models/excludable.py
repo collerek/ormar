@@ -92,8 +92,6 @@ class ExcludableItems:
         Returns count of include items inside
         """
         count = 0
-        if not self.items:
-            return count
         for key in self.items.keys():
             count += len(self.items[key].include)
         return count

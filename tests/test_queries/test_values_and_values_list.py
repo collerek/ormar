@@ -6,6 +6,7 @@ import pytest
 import sqlalchemy
 
 import ormar
+from ormar.exceptions import QueryDefinitionError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -61,7 +62,7 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
@@ -256,13 +257,13 @@ async def test_nested_m2m_values():
 
 
 @pytest.mark.asyncio
-async def test_nested_m2m_values_subset_of_fields():
+async def test_nested_m2m_values_without_through_explicit():
     async with database:
         user = (
             await Role.objects.select_related("users__categories")
             .filter(name="admin")
             .fields({"name": ..., "users": {"name": ..., "categories": {"name"}}})
-            .exclude_fields("users__roleuser")
+            .exclude_fields("roleuser")
             .values()
         )
         assert user == [
@@ -271,4 +272,86 @@ async def test_nested_m2m_values_subset_of_fields():
                 "users__name": "Anonymous",
                 "users__categories__name": "News",
             }
+        ]
+
+
+@pytest.mark.asyncio
+async def test_nested_m2m_values_without_through_param():
+    async with database:
+        user = (
+            await Role.objects.select_related("users__categories")
+            .filter(name="admin")
+            .fields({"name": ..., "users": {"name": ..., "categories": {"name"}}})
+            .values(exclude_through=True)
+        )
+        assert user == [
+            {
+                "name": "admin",
+                "users__name": "Anonymous",
+                "users__categories__name": "News",
+            }
+        ]
+
+
+@pytest.mark.asyncio
+async def test_nested_m2m_values_no_through_and_m2m_models_but_keep_end_model():
+    async with database:
+        user = (
+            await Role.objects.select_related("users__categories")
+            .filter(name="admin")
+            .fields({"name": ..., "users": {"name": ..., "categories": {"name"}}})
+            .exclude_fields(["roleuser", "users"])
+            .values()
+        )
+        assert user == [{"name": "admin", "users__categories__name": "News"}]
+
+
+@pytest.mark.asyncio
+async def test_nested_flatten_and_exception():
+    async with database:
+        with pytest.raises(QueryDefinitionError):
+            (await Role.objects.fields({"name", "id"}).values_list(flatten=True))
+
+        roles = await Role.objects.fields("name").values_list(flatten=True)
+        assert roles == ["admin", "editor"]
+
+
+@pytest.mark.asyncio
+async def test_empty_result():
+    async with database:
+        roles = await Role.objects.filter(Role.name == "test").values_list()
+        roles2 = await Role.objects.filter(Role.name == "test").values()
+        assert roles == roles2 == []
+
+
+@pytest.mark.asyncio
+async def test_queryset_values_multiple_select_related():
+    async with database:
+        posts = (
+            await Category.objects.select_related(["created_by__roles", "posts"])
+            .filter(Category.created_by.roles.name == "editor")
+            .values(
+                ["name", "posts__name", "created_by__name", "created_by__roles__name"],
+                exclude_through=True,
+            )
+        )
+        assert posts == [
+            {
+                "name": "News",
+                "created_by__name": "Anonymous",
+                "created_by__roles__name": "editor",
+                "posts__name": "Ormar strikes again!",
+            },
+            {
+                "name": "News",
+                "created_by__name": "Anonymous",
+                "created_by__roles__name": "editor",
+                "posts__name": "Why don't you use ormar yet?",
+            },
+            {
+                "name": "News",
+                "created_by__name": "Anonymous",
+                "created_by__roles__name": "editor",
+                "posts__name": "Check this out, ormar now for free",
+            },
         ]
