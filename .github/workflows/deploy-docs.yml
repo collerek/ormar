@@ -12,13 +12,12 @@ jobs:
       - name: Set up Python 3.7
         uses: actions/setup-python@v2
         with:
-          python-version: '3.7'
+          python-version: '3.x'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install mkdocs-material pydoc-markdown
-      - name: Build Api docs
-        run: python -m pydoc-markdown --build --site-dir=api
+          pydoc-markdown --build --site-dir=api
       - name: Copy APi docs
         run: cp -Tavr ./build/docs/content/ ./docs/api/
       - name: Deploy
