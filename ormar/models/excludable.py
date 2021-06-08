@@ -87,6 +87,15 @@ class ExcludableItems:
             new_excludable.items[key] = value.get_copy()
         return new_excludable
 
+    def include_entry_count(self) -> int:
+        """
+        Returns count of include items inside
+        """
+        count = 0
+        for key in self.items.keys():
+            count += len(self.items[key].include)
+        return count
+
     def get(self, model_cls: Type["Model"], alias: str = "") -> Excludable:
         """
         Return Excludable for given model and alias.

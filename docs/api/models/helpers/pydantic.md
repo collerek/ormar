@@ -15,9 +15,9 @@ Through model is fetched from through attributed on passed model_field.
 
 **Arguments**:
 
-- `field_name (str)`: field name to register
-- `model (Model class)`: type of field to register
-- `model_field (ManyToManyField class)`: relation field from which through model is extracted
+- `field_name` (`str`): field name to register
+- `model` (`Model class`): type of field to register
+- `model_field` (`ManyToManyField class`): relation field from which through model is extracted
 
 <a name="models.helpers.pydantic.get_pydantic_field"></a>
 #### get\_pydantic\_field
@@ -31,12 +31,12 @@ field_name. Returns a pydantic field with type of field_name field type.
 
 **Arguments**:
 
-- `field_name (str)`: field name to fetch from Model and name of pydantic field
-- `model (Model class)`: type of field to register
+- `field_name` (`str`): field name to fetch from Model and name of pydantic field
+- `model` (`Model class`): type of field to register
 
 **Returns**:
 
-`(pydantic.ModelField)`: newly created pydantic field
+`pydantic.ModelField`: newly created pydantic field
 
 <a name="models.helpers.pydantic.populate_pydantic_default_values"></a>
 #### populate\_pydantic\_default\_values
@@ -58,11 +58,11 @@ Those annotations are later used by pydantic to construct it's own fields.
 
 **Arguments**:
 
-- `attrs (Dict)`: current class namespace
+- `attrs` (`Dict`): current class namespace
 
 **Returns**:
 
-`(Tuple[Dict, Dict])`: namespace of the class updated, dict of extracted model_fields
+`Tuple[Dict, Dict]`: namespace of the class updated, dict of extracted model_fields
 
 <a name="models.helpers.pydantic.get_pydantic_base_orm_config"></a>
 #### get\_pydantic\_base\_orm\_config
@@ -75,7 +75,7 @@ Returns empty pydantic Config with orm_mode set to True.
 
 **Returns**:
 
-`(pydantic Config)`: empty default config with orm_mode set.
+`pydantic Config`: empty default config with orm_mode set.
 
 <a name="models.helpers.pydantic.get_potential_fields"></a>
 #### get\_potential\_fields
@@ -88,9 +88,22 @@ Gets all the fields in current class namespace that are Fields.
 
 **Arguments**:
 
-- `attrs (Dict)`: current class namespace
+- `attrs` (`Dict`): current class namespace
 
 **Returns**:
 
-`(Dict)`: extracted fields that are ormar Fields
+`Dict`: extracted fields that are ormar Fields
+
+<a name="models.helpers.pydantic.remove_excluded_parent_fields"></a>
+#### remove\_excluded\_parent\_fields
+
+```python
+remove_excluded_parent_fields(model: Type["Model"]) -> None
+```
+
+Removes pydantic fields that should be excluded from parent models
+
+**Arguments**:
+
+- `model` (`Type["Model"]`): 
 

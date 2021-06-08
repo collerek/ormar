@@ -33,7 +33,7 @@ Model columns only.
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="fields.base.BaseField.get_alias"></a>
 #### get\_alias
@@ -46,8 +46,7 @@ Used to translate Model column names to database column names during db queries.
 
 **Returns**:
 
-`(str)`: returns custom database column name if defined by user,
-otherwise field name in ormar/pydantic
+`str`: returns custom database column name if defined by user,
 
 <a name="fields.base.BaseField.get_pydantic_default"></a>
 #### get\_pydantic\_default
@@ -62,7 +61,7 @@ Used in an ormar Model Metaclass.
 
 **Returns**:
 
-`(pydantic.FieldInfo)`: instance of base pydantic.FieldInfo
+`pydantic.FieldInfo`: instance of base pydantic.FieldInfo
 
 <a name="fields.base.BaseField.default_value"></a>
 #### default\_value
@@ -82,13 +81,12 @@ Used in converting to pydantic FieldInfo.
 
 **Arguments**:
 
-- `use_server (bool)`: flag marking if server_default should be
 treated as default value, default False
+- `use_server` (`bool`): flag marking if server_default should be
 
 **Returns**:
 
-`(Optional[pydantic.FieldInfo])`: returns a call to pydantic.Field
-which is returning a FieldInfo instance
+`Optional[pydantic.FieldInfo]`: returns a call to pydantic.Field
 
 <a name="fields.base.BaseField.get_default"></a>
 #### get\_default
@@ -103,12 +101,12 @@ Used to populate default_values for pydantic Model in ormar Model Metaclass.
 
 **Arguments**:
 
-- `use_server (bool)`: flag marking if server_default should be
 treated as default value, default False
+- `use_server` (`bool`): flag marking if server_default should be
 
 **Returns**:
 
-`(Any)`: default value for the field if set, otherwise implicit None
+`Any`: default value for the field if set, otherwise implicit None
 
 <a name="fields.base.BaseField.has_default"></a>
 #### has\_default
@@ -121,12 +119,12 @@ Checks if the field has default value set.
 
 **Arguments**:
 
-- `use_server (bool)`: flag marking if server_default should be
 treated as default value, default False
+- `use_server` (`bool`): flag marking if server_default should be
 
 **Returns**:
 
-`(bool)`: result of the check if default value is set
+`bool`: result of the check if default value is set
 
 <a name="fields.base.BaseField.is_auto_primary_key"></a>
 #### is\_auto\_primary\_key
@@ -141,7 +139,7 @@ Autoincrement primary_key is nullable/optional.
 
 **Returns**:
 
-`(bool)`: result of the check for primary key and autoincrement
+`bool`: result of the check for primary key and autoincrement
 
 <a name="fields.base.BaseField.construct_constraints"></a>
 #### construct\_constraints
@@ -156,7 +154,7 @@ And we need a new ForeignKey for subclasses of current model
 
 **Returns**:
 
-`(List[sqlalchemy.schema.ForeignKey])`: List of sqlalchemy foreign keys - by default one.
+`List[sqlalchemy.schema.ForeignKey]`: List of sqlalchemy foreign keys - by default one.
 
 <a name="fields.base.BaseField.get_column"></a>
 #### get\_column
@@ -171,11 +169,11 @@ primary_key, index, unique, nullable, default and server_default.
 
 **Arguments**:
 
-- `name (str)`: name of the db column - used if alias is not set
+- `name` (`str`): name of the db column - used if alias is not set
 
 **Returns**:
 
-`(sqlalchemy.Column)`: actual definition of the database column as sqlalchemy requires.
+`sqlalchemy.Column`: actual definition of the database column as sqlalchemy requires.
 
 <a name="fields.base.BaseField._get_encrypted_column"></a>
 #### \_get\_encrypted\_column
@@ -188,11 +186,11 @@ Returns EncryptedString column type instead of actual column.
 
 **Arguments**:
 
-- `name (str)`: column name
+- `name` (`str`): column name
 
 **Returns**:
 
-`(sqlalchemy.Column)`: newly defined column
+`sqlalchemy.Column`: newly defined column
 
 <a name="fields.base.BaseField.expand_relationship"></a>
 #### expand\_relationship
@@ -209,13 +207,13 @@ dict (from Model) or actual instance/list of a "Model".
 
 **Arguments**:
 
-- `value (Any)`: a Model field value, returned untouched for non relation fields.
-- `child (Union["Model", "NewBaseModel"])`: a child Model to register
-- `to_register (bool)`: flag if the relation should be set in RelationshipManager
+- `value` (`Any`): a Model field value, returned untouched for non relation fields.
+- `child` (`Union["Model", "NewBaseModel"]`): a child Model to register
+- `to_register` (`bool`): flag if the relation should be set in RelationshipManager
 
 **Returns**:
 
-`(Any)`: returns untouched value for normal fields, expands only for relations
+`Any`: returns untouched value for normal fields, expands only for relations
 
 <a name="fields.base.BaseField.set_self_reference_flag"></a>
 #### set\_self\_reference\_flag
@@ -228,7 +226,7 @@ Sets `self_reference` to True if field to and owner are same model.
 
 **Returns**:
 
-`(None)`: None
+`None`: None
 
 <a name="fields.base.BaseField.has_unresolved_forward_refs"></a>
 #### has\_unresolved\_forward\_refs
@@ -242,7 +240,7 @@ model can be used.
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="fields.base.BaseField.evaluate_forward_ref"></a>
 #### evaluate\_forward\_ref
@@ -255,12 +253,12 @@ Evaluates the ForwardRef to actual Field based on global and local namespaces
 
 **Arguments**:
 
-- `globalns (Any)`: global namespace
-- `localns (Any)`: local namespace
+- `globalns` (`Any`): global namespace
+- `localns` (`Any`): local namespace
 
 **Returns**:
 
-`(None)`: None
+`None`: None
 
 <a name="fields.base.BaseField.get_related_name"></a>
 #### get\_related\_name
@@ -274,5 +272,5 @@ It's either set as `related_name` or by default it's owner model. get_name + 's'
 
 **Returns**:
 
-`(str)`: name of the related_name or default related name.
+`str`: name of the related_name or default related name.
 

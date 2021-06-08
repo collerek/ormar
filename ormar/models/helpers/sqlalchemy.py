@@ -2,6 +2,7 @@ import logging
 from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import sqlalchemy
+from pydantic.typing import ForwardRef
 
 import ormar  # noqa: I100, I202
 from ormar.models.descriptors import RelationDescriptor
@@ -203,7 +204,7 @@ def _is_through_model_not_set(field: "BaseField") -> bool:
     :return: result of the check
     :rtype: bool
     """
-    return field.is_multi and not field.through
+    return field.is_multi and not field.through and not field.to.__class__ == ForwardRef
 
 
 def _is_db_field(field: "BaseField") -> bool:

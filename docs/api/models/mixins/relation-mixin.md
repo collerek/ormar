@@ -23,7 +23,7 @@ related fields.
 
 **Returns**:
 
-`(Set)`: set of model fields with relation fields excluded
+`Set`: set of model fields with relation fields excluded
 
 <a name="models.mixins.relation_mixin.RelationMixin.extract_related_fields"></a>
 #### extract\_related\_fields
@@ -38,7 +38,7 @@ List is cached in cls._related_fields for quicker access.
 
 **Returns**:
 
-`(List)`: list of related fields
+`List`: list of related fields
 
 <a name="models.mixins.relation_mixin.RelationMixin.extract_through_names"></a>
 #### extract\_through\_names
@@ -52,7 +52,7 @@ Extracts related fields through names which are shortcuts to through models.
 
 **Returns**:
 
-`(Set)`: set of related through fields names
+`Set`: set of related through fields names
 
 <a name="models.mixins.relation_mixin.RelationMixin.extract_related_names"></a>
 #### extract\_related\_names
@@ -67,7 +67,7 @@ List is cached in cls._related_names for quicker access.
 
 **Returns**:
 
-`(Set)`: set of related fields names
+`Set`: set of related fields names
 
 <a name="models.mixins.relation_mixin.RelationMixin._extract_db_related_names"></a>
 #### \_extract\_db\_related\_names
@@ -82,7 +82,7 @@ related fields that are not stored as foreign keys on given model.
 
 **Returns**:
 
-`(Set)`: set of model fields with non fk relation fields excluded
+`Set`: set of model fields with non fk relation fields excluded
 
 <a name="models.mixins.relation_mixin.RelationMixin._iterate_related_models"></a>
 #### \_iterate\_related\_models
@@ -97,7 +97,7 @@ nested not visited models.
 
 **Returns**:
 
-`(List[str])`: list of relation strings to be passed to select_related
+`List[str]`: list of relation strings to be passed to select_related
 
 <a name="models.mixins.relation_mixin.RelationMixin._get_final_relations"></a>
 #### \_get\_final\_relations
@@ -111,10 +111,10 @@ Helper method to prefix nested relation strings with current source relation
 
 **Arguments**:
 
-- `processed_relations (List[str])`: list of already processed relation str
-- `source_relation (str)`: name of the current relation
+- `processed_relations` (`List[str]`): list of already processed relation str
+- `source_relation` (`str`): name of the current relation
 
 **Returns**:
 
-`(List[str])`: list of relation strings to be passed to select_related
+`List[str]`: list of relation strings to be passed to select_related
 

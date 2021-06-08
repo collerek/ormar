@@ -53,8 +53,8 @@ that has not been updated or unknown field is passed
 
 **Arguments**:
 
-- `args (Any)`: ignored args
-- `kwargs (Any)`: keyword arguments - all fields values and some special params
+- `args` (`Any`): ignored args
+- `kwargs` (`Any`): keyword arguments - all fields values and some special params
 
 <a name="models.newbasemodel.NewBaseModel.__setattr__"></a>
 #### \_\_setattr\_\_
@@ -63,71 +63,49 @@ that has not been updated or unknown field is passed
  | __setattr__(name: str, value: Any) -> None
 ```
 
-Overwrites setattr in object to allow for special behaviour of certain params.
-
-Parameter "pk" is translated into actual primary key field name.
-
-Relations are expanded (child model constructed if needed) and registered on
-both ends of the relation. The related models are handled by RelationshipManager
-exposed at _orm param.
-
-Json fields converted if needed.
-
-Setting pk, foreign key value or any other field value sets Model save status
-to False. Setting a reverse relation or many to many relation does not as it
-does not modify the state of the model (but related model or through model).
-
-To short circuit all checks and expansions the set of attribute names present
-on each model is gathered into _quick_access_fields that is looked first and
-if field is in this set the object setattr is called directly.
+Overwrites setattr in pydantic parent as otherwise descriptors are not called.
 
 **Arguments**:
 
-- `name (str)`: name of the attribute to set
-- `value (Any)`: value of the attribute to set
+- `name` (`str`): name of the attribute to set
+- `value` (`Any`): value of the attribute to set
 
 **Returns**:
 
-`(None)`: None
+`None`: None
 
-<a name="models.newbasemodel.NewBaseModel.__getattribute__"></a>
-#### \_\_getattribute\_\_
+<a name="models.newbasemodel.NewBaseModel.__getattr__"></a>
+#### \_\_getattr\_\_
 
 ```python
- | __getattribute__(item: str) -> Any
+ | __getattr__(item: str) -> Any
 ```
 
-Because we need to overwrite getting the attribute by ormar instead of pydantic
-as well as returning related models and not the value stored on the model the
-__getattribute__ needs to be used not __getattr__.
-
-It's used to access all attributes so it can be a big overhead that's why a
-number of short circuits is used.
-
-To short circuit all checks and expansions the set of attribute names present
-on each model is gathered into _quick_access_fields that is looked first and
-if field is in this set the object setattr is called directly.
-
-To avoid recursion object's getattribute is used to actually get the attribute
-value from the model after the checks.
-
-Even the function calls are constructed with objects functions.
-
-Parameter "pk" is translated into actual primary key field name.
-
-Relations are returned so the actual related model is returned and not current
-model's field. The related models are handled by RelationshipManager exposed
-at _orm param.
-
-Json fields are converted if needed.
+Used only to silence mypy errors for Through models and reverse relations.
+Not used in real life as in practice calls are intercepted
+by RelationDescriptors
 
 **Arguments**:
 
-- `item (str)`: name of the attribute to retrieve
+- `item` (`str`): name of attribute
 
 **Returns**:
 
-`(Any)`: value of the attribute
+`Any`: Any
+
+<a name="models.newbasemodel.NewBaseModel._internal_set"></a>
+#### \_internal\_set
+
+```python
+ | _internal_set(name: str, value: Any) -> None
+```
+
+Delegates call to pydantic.
+
+**Arguments**:
+
+- `name` (`str`): name of param
+- `value` (`Any`): value to set
 
 <a name="models.newbasemodel.NewBaseModel._verify_model_can_be_initialized"></a>
 #### \_verify\_model\_can\_be\_initialized
@@ -140,24 +118,45 @@ Raises exception if model is abstract or has ForwardRefs in relation fields.
 
 **Returns**:
 
-`(None)`: None
+`None`: None
 
-<a name="models.newbasemodel.NewBaseModel._extract_related_model_instead_of_field"></a>
-#### \_extract\_related\_model\_instead\_of\_field
+<a name="models.newbasemodel.NewBaseModel._process_kwargs"></a>
+#### \_process\_kwargs
 
 ```python
- | _extract_related_model_instead_of_field(item: str) -> Optional[Union["Model", Sequence["Model"]]]
+ | _process_kwargs(kwargs: Dict) -> Tuple[Dict, Dict]
 ```
 
-Retrieves the related model/models from RelationshipManager.
+Initializes nested models.
+
+Removes property_fields
+
+Checks if field is in the model fields or pydatnic fields.
+
+Nullifies fields that should be excluded.
+
+Extracts through models from kwargs into temporary dict.
 
 **Arguments**:
 
-- `item (str)`: name of the relation
+- `kwargs` (`Dict`): passed to init keyword arguments
 
 **Returns**:
 
-`(Optional[Union[Model, List[Model]]])`: related model, list of related models or None
+`Tuple[Dict, Dict]`: modified kwargs
+
+<a name="models.newbasemodel.NewBaseModel._initialize_internal_attributes"></a>
+#### \_initialize\_internal\_attributes
+
+```python
+ | _initialize_internal_attributes() -> None
+```
+
+Initializes internal attributes during __init__()
+
+**Returns**:
+
+`None`: 
 
 <a name="models.newbasemodel.NewBaseModel.__eq__"></a>
 #### \_\_eq\_\_
@@ -170,11 +169,11 @@ Compares other model to this model. when == is called.
 
 **Arguments**:
 
-- `other (object)`: other model to compare
+- `other` (`object`): other model to compare
 
 **Returns**:
 
-`(bool)`: result of comparison
+`bool`: result of comparison
 
 <a name="models.newbasemodel.NewBaseModel.__same__"></a>
 #### \_\_same\_\_
@@ -191,11 +190,11 @@ Compares:
 
 **Arguments**:
 
-- `other (NewBaseModel)`: model to compare to
+- `other` (`NewBaseModel`): model to compare to
 
 **Returns**:
 
-`(bool)`: result of comparison
+`bool`: result of comparison
 
 <a name="models.newbasemodel.NewBaseModel.get_name"></a>
 #### get\_name
@@ -209,11 +208,11 @@ Returns name of the Model class, by default lowercase.
 
 **Arguments**:
 
-- `lower (bool)`: flag if name should be set to lowercase
+- `lower` (`bool`): flag if name should be set to lowercase
 
 **Returns**:
 
-`(str)`: name of the model
+`str`: name of the model
 
 <a name="models.newbasemodel.NewBaseModel.pk_column"></a>
 #### pk\_column
@@ -229,7 +228,7 @@ Only one primary key column is allowed.
 
 **Returns**:
 
-`(sqlalchemy.Column)`: primary key sqlalchemy column
+`sqlalchemy.Column`: primary key sqlalchemy column
 
 <a name="models.newbasemodel.NewBaseModel.saved"></a>
 #### saved
@@ -306,12 +305,12 @@ present in fastapi responses.
 
 **Arguments**:
 
-- `include (Union[Set, Dict, None])`: fields to include
-- `exclude (Union[Set, Dict, None])`: fields to exclude
+- `include` (`Union[Set, Dict, None]`): fields to include
+- `exclude` (`Union[Set, Dict, None]`): fields to exclude
 
 **Returns**:
 
-`(Set[str])`: set of property fields names
+`Set[str]`: set of property fields names
 
 <a name="models.newbasemodel.NewBaseModel.update_forward_refs"></a>
 #### update\_forward\_refs
@@ -335,55 +334,57 @@ Calls the pydantic method to evaluate pydantic fields.
 
 **Arguments**:
 
-- `localns (Any)`: local namespace
+- `localns` (`Any`): local namespace
 
 **Returns**:
 
-`(None)`: None
+`None`: None
 
 <a name="models.newbasemodel.NewBaseModel._get_not_excluded_fields"></a>
-#### \_get\_related\_not\_excluded\_fields
+#### \_get\_not\_excluded\_fields
 
 ```python
- | _get_not_excluded_fields(include: Optional[Dict], exclude: Optional[Dict]) -> List
+ | @staticmethod
+ | _get_not_excluded_fields(fields: Union[List, Set], include: Optional[Dict], exclude: Optional[Dict]) -> List
 ```
 
 Returns related field names applying on them include and exclude set.
 
 **Arguments**:
 
-- `include (Union[Set, Dict, None])`: fields to include
-- `exclude (Union[Set, Dict, None])`: fields to exclude
+- `include` (`Union[Set, Dict, None]`): fields to include
+- `exclude` (`Union[Set, Dict, None]`): fields to exclude
 
 **Returns**:
 
-`(List of fields with relations that is not excluded)`: 
+`List of fields with relations that is not excluded`: 
 
 <a name="models.newbasemodel.NewBaseModel._extract_nested_models_from_list"></a>
 #### \_extract\_nested\_models\_from\_list
 
 ```python
  | @staticmethod
- | _extract_nested_models_from_list(relation_map: Dict, models: MutableSequence, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None]) -> List
+ | _extract_nested_models_from_list(relation_map: Dict, models: MutableSequence, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None], exclude_primary_keys: bool, exclude_through_models: bool) -> List
 ```
 
 Converts list of models into list of dictionaries.
 
 **Arguments**:
 
-- `models (List)`: List of models
-- `include (Union[Set, Dict, None])`: fields to include
-- `exclude (Union[Set, Dict, None])`: fields to exclude
+- `models` (`List`): List of models
+- `include` (`Union[Set, Dict, None]`): fields to include
+- `exclude` (`Union[Set, Dict, None]`): fields to exclude
 
 **Returns**:
 
-`(List[Dict])`: list of models converted to dictionaries
+`List[Dict]`: list of models converted to dictionaries
 
 <a name="models.newbasemodel.NewBaseModel._skip_ellipsis"></a>
 #### \_skip\_ellipsis
 
 ```python
- | _skip_ellipsis(items: Union[Set, Dict, None], key: str, default_return: Any = None) -> Union[Set, Dict, None]
+ | @classmethod
+ | _skip_ellipsis(cls, items: Union[Set, Dict, None], key: str, default_return: Any = None) -> Union[Set, Dict, None]
 ```
 
 Helper to traverse the include/exclude dictionaries.
@@ -392,17 +393,18 @@ and not the actual set/dict with fields names.
 
 **Arguments**:
 
-- `items (Union[Set, Dict, None])`: current include/exclude value
-- `key (str)`: key for nested relations to check
+- `items` (`Union[Set, Dict, None]`): current include/exclude value
+- `key` (`str`): key for nested relations to check
 
 **Returns**:
 
-`(Union[Set, Dict, None])`: nested value of the items
+`Union[Set, Dict, None]`: nested value of the items
 
 <a name="models.newbasemodel.NewBaseModel._convert_all"></a>
 #### \_convert\_all
 
 ```python
+ | @staticmethod
  | _convert_all(items: Union[Set, Dict, None]) -> Union[Set, Dict, None]
 ```
 
@@ -411,13 +413,13 @@ support index based exclusions.
 
 **Arguments**:
 
-- `items (Union[Set, Dict, None])`: current include/exclude value
+- `items` (`Union[Set, Dict, None]`): current include/exclude value
 
 <a name="models.newbasemodel.NewBaseModel._extract_nested_models"></a>
 #### \_extract\_nested\_models
 
 ```python
- | _extract_nested_models(relation_map: Dict, dict_instance: Dict, include: Optional[Dict], exclude: Optional[Dict]) -> Dict
+ | _extract_nested_models(relation_map: Dict, dict_instance: Dict, include: Optional[Dict], exclude: Optional[Dict], exclude_primary_keys: bool, exclude_through_models: bool) -> Dict
 ```
 
 Traverse nested models and converts them into dictionaries.
@@ -425,20 +427,20 @@ Calls itself recursively if needed.
 
 **Arguments**:
 
-- `nested (bool)`: flag if current instance is nested
-- `dict_instance (Dict)`: current instance dict
-- `include (Optional[Dict])`: fields to include
-- `exclude (Optional[Dict])`: fields to exclude
+- `nested` (`bool`): flag if current instance is nested
+- `dict_instance` (`Dict`): current instance dict
+- `include` (`Optional[Dict]`): fields to include
+- `exclude` (`Optional[Dict]`): fields to exclude
 
 **Returns**:
 
-`(Dict)`: current model dict with child models converted to dictionaries
+`Dict`: current model dict with child models converted to dictionaries
 
 <a name="models.newbasemodel.NewBaseModel.dict"></a>
 #### dict
 
 ```python
- | dict(*, include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None, by_alias: bool = False, skip_defaults: bool = None, exclude_unset: bool = False, exclude_defaults: bool = False, exclude_none: bool = False, relation_map: Dict = None) -> "DictStrAny"
+ | dict(*, include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None, by_alias: bool = False, skip_defaults: bool = None, exclude_unset: bool = False, exclude_defaults: bool = False, exclude_none: bool = False, exclude_primary_keys: bool = False, exclude_through_models: bool = False, relation_map: Dict = None) -> "DictStrAny"
 ```
 
 Generate a dictionary representation of the model,
@@ -450,18 +452,33 @@ Additionally fields decorated with @property_field are also added.
 
 **Arguments**:
 
-- `include (Union[Set, Dict, None])`: fields to include
-- `exclude (Union[Set, Dict, None])`: fields to exclude
-- `by_alias (bool)`: flag to get values by alias - passed to pydantic
-- `skip_defaults (bool)`: flag to not set values - passed to pydantic
-- `exclude_unset (bool)`: flag to exclude not set values - passed to pydantic
-- `exclude_defaults (bool)`: flag to exclude default values - passed to pydantic
-- `exclude_none (bool)`: flag to exclude None values - passed to pydantic
-- `relation_map (Dict)`: map of the relations to follow to avoid circural deps
+- `exclude_through_models` (`bool`): flag to exclude through models from dict
+- `exclude_primary_keys` (`bool`): flag to exclude primary keys from dict
+- `include` (`Union[Set, Dict, None]`): fields to include
+- `exclude` (`Union[Set, Dict, None]`): fields to exclude
+- `by_alias` (`bool`): flag to get values by alias - passed to pydantic
+- `skip_defaults` (`bool`): flag to not set values - passed to pydantic
+- `exclude_unset` (`bool`): flag to exclude not set values - passed to pydantic
+- `exclude_defaults` (`bool`): flag to exclude default values - passed to pydantic
+- `exclude_none` (`bool`): flag to exclude None values - passed to pydantic
+- `relation_map` (`Dict`): map of the relations to follow to avoid circural deps
 
 **Returns**:
 
-`()`: 
+
+
+<a name="models.newbasemodel.NewBaseModel.json"></a>
+#### json
+
+```python
+ | json(*, include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None, by_alias: bool = False, skip_defaults: bool = None, exclude_unset: bool = False, exclude_defaults: bool = False, exclude_none: bool = False, encoder: Optional[Callable[[Any], Any]] = None, exclude_primary_keys: bool = False, exclude_through_models: bool = False, **dumps_kwargs: Any, ,) -> str
+```
+
+Generate a JSON representation of the model, `include` and `exclude`
+arguments as per `dict()`.
+
+`encoder` is an optional function to supply as `default` to json.dumps(),
+other arguments as per `json.dumps()`.
 
 <a name="models.newbasemodel.NewBaseModel.update_from_dict"></a>
 #### update\_from\_dict
@@ -474,47 +491,65 @@ Updates self with values of fields passed in the dictionary.
 
 **Arguments**:
 
-- `value_dict (Dict)`: dictionary of fields names and values
+- `value_dict` (`Dict`): dictionary of fields names and values
 
 **Returns**:
 
-`(NewBaseModel)`: self
+`NewBaseModel`: self
+
+<a name="models.newbasemodel.NewBaseModel._convert_to_bytes"></a>
+#### \_convert\_to\_bytes
+
+```python
+ | _convert_to_bytes(column_name: str, value: Any) -> Union[str, Dict]
+```
+
+Converts value to bytes from string
+
+**Arguments**:
+
+- `column_name` (`str`): name of the field
+- `value` (`Any`): value fo the field
+
+**Returns**:
+
+`Any`: converted value if needed, else original value
+
+<a name="models.newbasemodel.NewBaseModel._convert_bytes_to_str"></a>
+#### \_convert\_bytes\_to\_str
+
+```python
+ | _convert_bytes_to_str(column_name: str, value: Any) -> Union[str, Dict]
+```
+
+Converts value to str from bytes for represent_as_base64_str columns.
+
+**Arguments**:
+
+- `column_name` (`str`): name of the field
+- `value` (`Any`): value fo the field
+
+**Returns**:
+
+`Any`: converted value if needed, else original value
 
 <a name="models.newbasemodel.NewBaseModel._convert_json"></a>
 #### \_convert\_json
 
 ```python
- | _convert_json(column_name: str, value: Any, op: str) -> Union[str, Dict]
+ | _convert_json(column_name: str, value: Any) -> Union[str, Dict]
 ```
 
 Converts value to/from json if needed (for Json columns).
 
 **Arguments**:
 
-- `column_name (str)`: name of the field
-- `value (Any)`: value fo the field
-- `op (str)`: operator on json
+- `column_name` (`str`): name of the field
+- `value` (`Any`): value fo the field
 
 **Returns**:
 
-`(Any)`: converted value if needed, else original value
-
-<a name="models.newbasemodel.NewBaseModel._is_conversion_to_json_needed"></a>
-#### \_is\_conversion\_to\_json\_needed
-
-```python
- | _is_conversion_to_json_needed(column_name: str) -> bool
-```
-
-Checks if given column name is related to JSON field.
-
-**Arguments**:
-
-- `column_name (str)`: name of the field
-
-**Returns**:
-
-`(bool)`: result of the check
+`Any`: converted value if needed, else original value
 
 <a name="models.newbasemodel.NewBaseModel._extract_own_model_fields"></a>
 #### \_extract\_own\_model\_fields
@@ -528,7 +563,7 @@ relations fields (ForeignKey, ManyToMany etc.)
 
 **Returns**:
 
-`(Dict)`: dictionary of fields names and values.
+`Dict`: dictionary of fields names and values.
 
 <a name="models.newbasemodel.NewBaseModel._extract_model_db_fields"></a>
 #### \_extract\_model\_db\_fields
@@ -544,7 +579,7 @@ That includes own non-relational fields ang foreign key fields.
 
 **Returns**:
 
-`(Dict)`: dictionary of fields names and values.
+`Dict`: dictionary of fields names and values.
 
 <a name="models.newbasemodel.NewBaseModel.get_relation_model_id"></a>
 #### get\_relation\_model\_id
@@ -557,9 +592,9 @@ Returns an id of the relation side model to use in prefetch query.
 
 **Arguments**:
 
-- `target_field ("BaseField")`: field with relation definition
+- `target_field` (`"BaseField"`): field with relation definition
 
 **Returns**:
 
-`(Optional[int])`: value of pk if set
+`Optional[int]`: value of pk if set
 

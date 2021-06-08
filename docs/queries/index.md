@@ -66,6 +66,21 @@ To read more about any specific section or function please refer to the details 
 !!!tip
     To read more about any or all of those functions visit [read](./read.md) section.
 
+### [Read raw data from database](./raw-data.md)
+
+Instead of ormar models return raw data in form list of dictionaries or tuples.
+
+* `values(fields = None, exclude_through = False) -> List[Dict]`
+* `values_list(fields = None, exclude_through = False, flatten = False) -> List`
+
+
+* `QuerysetProxy`
+    * `QuerysetProxy.values(fields = None, exclude_through = False)` method
+    * `QuerysetProxy.values_list(fields = None, exclude_through= False, flatten = False)` method
+
+!!!tip
+    To read more about any or all of those functions visit [raw data](./raw-data.md) section.
+
 ### [Update data in database](./update.md)
 
 * `update(each: bool = False, **kwargs) -> int`

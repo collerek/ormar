@@ -51,7 +51,7 @@ at the end of whole query.
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="queryset.query.Query.build_select_expression"></a>
 #### build\_select\_expression
@@ -70,7 +70,7 @@ Returns ready to run query with all joins and clauses.
 
 **Returns**:
 
-`(sqlalchemy.sql.selectable.Select)`: ready to run query with all joins and clauses.
+`sqlalchemy.sql.selectable.Select`: ready to run query with all joins and clauses.
 
 <a name="queryset.query.Query._build_pagination_condition"></a>
 #### \_build\_pagination\_condition
@@ -111,11 +111,11 @@ Returns complete ready to run query.
 
 **Arguments**:
 
-- `expr (sqlalchemy.sql.selectable.Select)`: select expression before clauses
+- `expr` (`sqlalchemy.sql.selectable.Select`): select expression before clauses
 
 **Returns**:
 
-`(sqlalchemy.sql.selectable.Select)`: expresion with all present clauses applied
+`sqlalchemy.sql.selectable.Select`: expresion with all present clauses applied
 
 <a name="queryset.query.Query._reset_query_parameters"></a>
 #### \_reset\_query\_parameters

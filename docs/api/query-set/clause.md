@@ -23,13 +23,13 @@ complex relation prefixes if needed and nested groups also resolved.
 
 **Arguments**:
 
-- `model_cls (Type["Model"])`: model from which the query is run
-- `select_related (List[str])`: list of models to join
-- `filter_clauses (List[FilterAction])`: list of filter conditions
+- `model_cls` (`Type["Model"]`): model from which the query is run
+- `select_related` (`List[str]`): list of models to join
+- `filter_clauses` (`List[FilterAction]`): list of filter conditions
 
 **Returns**:
 
-`(Tuple[List[FilterAction], List[str]])`: list of filter conditions and select_related list
+`Tuple[List[FilterAction], List[str]]`: list of filter conditions and select_related list
 
 <a name="queryset.clause.FilterGroup._iter"></a>
 #### \_iter
@@ -42,7 +42,7 @@ Iterates all actions in a tree
 
 **Returns**:
 
-`(Generator)`: generator yielding from own actions and nested groups
+`Generator`: generator yielding from own actions and nested groups
 
 <a name="queryset.clause.FilterGroup._get_text_clauses"></a>
 #### \_get\_text\_clauses
@@ -55,7 +55,7 @@ Helper to return list of text queries from actions and nested groups
 
 **Returns**:
 
-`(List[sqlalchemy.sql.elements.TextClause])`: list of text queries from actions and nested groups
+`List[sqlalchemy.sql.elements.TextClause]`: list of text queries from actions and nested groups
 
 <a name="queryset.clause.FilterGroup.get_text_clause"></a>
 #### get\_text\_clause
@@ -72,7 +72,7 @@ Compiles the clause.
 
 **Returns**:
 
-`(sqlalchemy.sql.elements.TextClause)`: complied and escaped clause
+`sqlalchemy.sql.elements.TextClause`: complied and escaped clause
 
 <a name="queryset.clause.or_"></a>
 #### or\_
@@ -85,12 +85,12 @@ Construct or filter from nested groups and keyword arguments
 
 **Arguments**:
 
-- `args (Tuple[FilterGroup])`: nested filter groups
-- `kwargs (Any)`: fields names and proper value types
+- `args` (`Tuple[FilterGroup]`): nested filter groups
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup ready to be resolved
+`ormar.queryset.clause.FilterGroup`: FilterGroup ready to be resolved
 
 <a name="queryset.clause.and_"></a>
 #### and\_
@@ -103,12 +103,12 @@ Construct and filter from nested groups and keyword arguments
 
 **Arguments**:
 
-- `args (Tuple[FilterGroup])`: nested filter groups
-- `kwargs (Any)`: fields names and proper value types
+- `args` (`Tuple[FilterGroup]`): nested filter groups
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup ready to be resolved
+`ormar.queryset.clause.FilterGroup`: FilterGroup ready to be resolved
 
 <a name="queryset.clause.QueryClause"></a>
 ## QueryClause Objects
@@ -132,12 +132,12 @@ mentioned in select_related strings but not included in select_related.
 
 **Arguments**:
 
-- `_own_only ()`: 
-- `kwargs (Any)`: key, value pair with column names and values
+- `_own_only`: 
+- `kwargs` (`Any`): key, value pair with column names and values
 
 **Returns**:
 
-`(Tuple[List[sqlalchemy.sql.elements.TextClause], List[str]])`: Tuple with list of where clauses and updated select_related list
+`Tuple[List[sqlalchemy.sql.elements.TextClause], List[str]]`: Tuple with list of where clauses and updated select_related list
 
 <a name="queryset.clause.QueryClause._populate_filter_clauses"></a>
 #### \_populate\_filter\_clauses
@@ -152,11 +152,11 @@ is determined and the final clause is escaped if needed and compiled.
 
 **Arguments**:
 
-- `kwargs (Any)`: key, value pair with column names and values
+- `kwargs` (`Any`): key, value pair with column names and values
 
 **Returns**:
 
-`(Tuple[List[sqlalchemy.sql.elements.TextClause], List[str]])`: Tuple with list of where clauses and updated select_related list
+`Tuple[List[sqlalchemy.sql.elements.TextClause], List[str]]`: Tuple with list of where clauses and updated select_related list
 
 <a name="queryset.clause.QueryClause._register_complex_duplicates"></a>
 #### \_register\_complex\_duplicates
@@ -173,11 +173,11 @@ model and whole relation key (not just last relation name).
 
 **Arguments**:
 
-- `select_related (List[str])`: list of relation strings
+- `select_related` (`List[str]`): list of relation strings
 
 **Returns**:
 
-`(None)`: None
+`None`: None
 
 <a name="queryset.clause.QueryClause._parse_related_prefixes"></a>
 #### \_parse\_related\_prefixes
@@ -190,11 +190,11 @@ Walks all relation strings and parses the target models and prefixes.
 
 **Arguments**:
 
-- `select_related (List[str])`: list of relation strings
+- `select_related` (`List[str]`): list of relation strings
 
 **Returns**:
 
-`(List[Prefix])`: list of parsed prefixes
+`List[Prefix]`: list of parsed prefixes
 
 <a name="queryset.clause.QueryClause._switch_filter_action_prefixes"></a>
 #### \_switch\_filter\_action\_prefixes
@@ -208,11 +208,11 @@ present in alias_manager.
 
 **Arguments**:
 
-- `filter_clauses (List[FilterAction])`: raw list of actions
+- `filter_clauses` (`List[FilterAction]`): raw list of actions
 
 **Returns**:
 
-`(List[FilterAction])`: list of actions with aliases changed if needed
+`List[FilterAction]`: list of actions with aliases changed if needed
 
 <a name="queryset.clause.QueryClause._verify_prefix_and_switch"></a>
 #### \_verify\_prefix\_and\_switch
@@ -225,5 +225,5 @@ Helper to switch prefix to complex relation one if required
 
 **Arguments**:
 
-- `action (ormar.queryset.actions.filter_action.FilterAction)`: action to switch prefix in
+- `action` (`ormar.queryset.actions.filter_action.FilterAction`): action to switch prefix in
 

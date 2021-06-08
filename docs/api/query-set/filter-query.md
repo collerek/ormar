@@ -21,9 +21,9 @@ Applies all filter clauses if set.
 
 **Arguments**:
 
-- `expr (sqlalchemy.sql.selectable.Select)`: query to modify
+- `expr` (`sqlalchemy.sql.selectable.Select`): query to modify
 
 **Returns**:
 
-`(sqlalchemy.sql.selectable.Select)`: modified query
+`sqlalchemy.sql.selectable.Select`: modified query
 

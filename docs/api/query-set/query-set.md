@@ -22,7 +22,7 @@ Shortcut to model class Meta set on QuerySet model.
 
 **Returns**:
 
-`(model Meta class)`: Meta class of the model
+`model Meta class`: Meta class of the model
 
 <a name="queryset.queryset.QuerySet.model"></a>
 #### model
@@ -36,7 +36,7 @@ Shortcut to model class set on QuerySet.
 
 **Returns**:
 
-`(Type[Model])`: model class
+`Type[Model]`: model class
 
 <a name="queryset.queryset.QuerySet.rebuild_self"></a>
 #### rebuild\_self
@@ -52,36 +52,36 @@ all not passed params are taken from current values.
 #### \_prefetch\_related\_models
 
 ```python
- | async _prefetch_related_models(models: List[Optional["T"]], rows: List) -> List[Optional["T"]]
+ | async _prefetch_related_models(models: List["T"], rows: List) -> List["T"]
 ```
 
 Performs prefetch query for selected models names.
 
 **Arguments**:
 
-- `models (List[Model])`: list of already parsed main Models from main query
-- `rows (List[sqlalchemy.engine.result.RowProxy])`: database rows from main query
+- `models` (`List[Model]`): list of already parsed main Models from main query
+- `rows` (`List[sqlalchemy.engine.result.RowProxy]`): database rows from main query
 
 **Returns**:
 
-`(List[Model])`: list of models with prefetch models populated
+`List[Model]`: list of models with prefetch models populated
 
 <a name="queryset.queryset.QuerySet._process_query_result_rows"></a>
 #### \_process\_query\_result\_rows
 
 ```python
- | _process_query_result_rows(rows: List) -> List[Optional["T"]]
+ | _process_query_result_rows(rows: List) -> List["T"]
 ```
 
 Process database rows and initialize ormar Model from each of the rows.
 
 **Arguments**:
 
-- `rows (List[sqlalchemy.engine.result.RowProxy])`: list of database rows from query result
+- `rows` (`List[sqlalchemy.engine.result.RowProxy]`): list of database rows from query result
 
 **Returns**:
 
-`(List[Model])`: list of models
+`List[Model]`: list of models
 
 <a name="queryset.queryset.QuerySet._resolve_filter_groups"></a>
 #### \_resolve\_filter\_groups
@@ -94,11 +94,11 @@ Resolves filter groups to populate FilterAction params in group tree.
 
 **Arguments**:
 
-- `groups (Any)`: tuple of FilterGroups
+- `groups` (`Any`): tuple of FilterGroups
 
 **Returns**:
 
-`(Tuple[List[FilterGroup], List[str]])`: list of resolver groups
+`Tuple[List[FilterGroup], List[str]]`: list of resolver groups
 
 <a name="queryset.queryset.QuerySet.check_single_result_rows_count"></a>
 #### check\_single\_result\_rows\_count
@@ -112,7 +112,7 @@ Verifies if the result has one and only one row.
 
 **Arguments**:
 
-- `rows (List[Model])`: one element list of Models
+- `rows` (`List[Model]`): one element list of Models
 
 <a name="queryset.queryset.QuerySet.database"></a>
 #### database
@@ -126,7 +126,7 @@ Shortcut to models database from Meta class.
 
 **Returns**:
 
-`(databases.Database)`: database
+`databases.Database`: database
 
 <a name="queryset.queryset.QuerySet.table"></a>
 #### table
@@ -140,7 +140,7 @@ Shortcut to models table from Meta class.
 
 **Returns**:
 
-`(sqlalchemy.Table)`: database table
+`sqlalchemy.Table`: database table
 
 <a name="queryset.queryset.QuerySet.build_select_expression"></a>
 #### build\_select\_expression
@@ -154,13 +154,13 @@ If any of the params is not passed the QuerySet own value is used.
 
 **Arguments**:
 
-- `limit (int)`: number to limit the query
-- `offset (int)`: number to offset by
-- `order_bys (List)`: list of order-by fields names
+- `limit` (`int`): number to limit the query
+- `offset` (`int`): number to offset by
+- `order_bys` (`List`): list of order-by fields names
 
 **Returns**:
 
-`(sqlalchemy.sql.selectable.Select)`: built sqlalchemy select expression
+`sqlalchemy.sql.selectable.Select`: built sqlalchemy select expression
 
 <a name="queryset.queryset.QuerySet.filter"></a>
 #### filter
@@ -190,14 +190,16 @@ You can use special filter suffix to change the filter operands:
 *  endswith - like `album__name__endswith='ibu'` (exact end match)
 *  iendswith - like `album__name__iendswith='IBU'` (case insensitive)
 
+Note that you can also use python style filters - check the docs!
+
 **Arguments**:
 
-- `_exclude (bool)`: flag if it should be exclude or filter
-- `kwargs (Any)`: fields names and proper value types
+- `_exclude` (`bool`): flag if it should be exclude or filter
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(QuerySet)`: filtered QuerySet
+`QuerySet`: filtered QuerySet
 
 <a name="queryset.queryset.QuerySet.exclude"></a>
 #### exclude
@@ -220,11 +222,11 @@ becomes a union of conditions.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(QuerySet)`: filtered QuerySet
+`QuerySet`: filtered QuerySet
 
 <a name="queryset.queryset.QuerySet.select_related"></a>
 #### select\_related
@@ -245,11 +247,11 @@ To chain related `Models` relation use double underscores between names.
 
 **Arguments**:
 
-- `related (Union[List, str])`: list of relation field names, can be linked by '__' to nest
+- `related` (`Union[List, str]`): list of relation field names, can be linked by '__' to nest
 
 **Returns**:
 
-`(QuerySet)`: QuerySet
+`QuerySet`: QuerySet
 
 <a name="queryset.queryset.QuerySet.select_all"></a>
 #### select\_all
@@ -272,13 +274,13 @@ Nested relations of those kind need to be loaded manually.
 
 **Arguments**:
 
-- `follow (bool)`: flag to trigger deep save -
 by default only directly related models are saved
 with follow=True also related models of related models are saved
+- `follow` (`bool`): flag to trigger deep save -
 
 **Returns**:
 
-`(Model)`: reloaded Model
+`Model`: reloaded Model
 
 <a name="queryset.queryset.QuerySet.prefetch_related"></a>
 #### prefetch\_related
@@ -300,11 +302,11 @@ To chain related `Models` relation use double underscores between names.
 
 **Arguments**:
 
-- `related (Union[List, str])`: list of relation field names, can be linked by '__' to nest
+- `related` (`Union[List, str]`): list of relation field names, can be linked by '__' to nest
 
 **Returns**:
 
-`(QuerySet)`: QuerySet
+`QuerySet`: QuerySet
 
 <a name="queryset.queryset.QuerySet.fields"></a>
 #### fields
@@ -351,12 +353,12 @@ To include whole nested model specify model related field name and ellipsis.
 
 **Arguments**:
 
-- `_is_exclude (bool)`: flag if it's exclude or include operation
-- `columns (Union[List, str, Set, Dict])`: columns to include
+- `_is_exclude` (`bool`): flag if it's exclude or include operation
+- `columns` (`Union[List, str, Set, Dict]`): columns to include
 
 **Returns**:
 
-`(QuerySet)`: QuerySet
+`QuerySet`: QuerySet
 
 <a name="queryset.queryset.QuerySet.exclude_fields"></a>
 #### exclude\_fields
@@ -387,11 +389,11 @@ if explicitly excluded.
 
 **Arguments**:
 
-- `columns (Union[List, str, Set, Dict])`: columns to exclude
+- `columns` (`Union[List, str, Set, Dict]`): columns to exclude
 
 **Returns**:
 
-`(QuerySet)`: QuerySet
+`QuerySet`: QuerySet
 
 <a name="queryset.queryset.QuerySet.order_by"></a>
 #### order\_by
@@ -427,11 +429,57 @@ To sort in descending order provide a hyphen in front of the field name
 
 **Arguments**:
 
-- `columns (Union[List, str])`: columns by which models should be sorted
+- `columns` (`Union[List, str]`): columns by which models should be sorted
 
 **Returns**:
 
-`(QuerySet)`: QuerySet
+`QuerySet`: QuerySet
+
+<a name="queryset.queryset.QuerySet.values"></a>
+#### values
+
+```python
+ | async values(fields: Union[List, str, Set, Dict] = None, exclude_through: bool = False, _as_dict: bool = True, _flatten: bool = False) -> List
+```
+
+Return a list of dictionaries with column values in order of the fields
+passed or all fields from queried models.
+
+To filter for given row use filter/exclude methods before values,
+to limit number of rows use limit/offset or paginate before values.
+
+Note that it always return a list even for one row from database.
+
+**Arguments**:
+
+- `exclude_through` (`bool`): flag if through models should be excluded
+- `_flatten` (`bool`): internal parameter to flatten one element tuples
+- `_as_dict` (`bool`): internal parameter if return dict or tuples
+- `fields` (`Union[List, str, Set, Dict]`): field name or list of field names to extract from db
+
+<a name="queryset.queryset.QuerySet.values_list"></a>
+#### values\_list
+
+```python
+ | async values_list(fields: Union[List, str, Set, Dict] = None, flatten: bool = False, exclude_through: bool = False) -> List
+```
+
+Return a list of tuples with column values in order of the fields passed or
+all fields from queried models.
+
+When one field is passed you can flatten the list of tuples into list of values
+of that single field.
+
+To filter for given row use filter/exclude methods before values,
+to limit number of rows use limit/offset or paginate before values.
+
+Note that it always return a list even for one row from database.
+
+**Arguments**:
+
+- `exclude_through` (`bool`): flag if through models should be excluded
+- `fields` (`Union[str, List[str]]`): field name or list of field names to extract from db
+- `flatten` (`bool`): when one field is passed you can flatten the list of tuples
 
 <a name="queryset.queryset.QuerySet.exists"></a>
 #### exists
@@ -445,7 +493,7 @@ Returns a bool value to confirm if there are rows matching the given criteria
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="queryset.queryset.QuerySet.count"></a>
 #### count
@@ -459,7 +507,7 @@ Returns number of rows matching the given criteria
 
 **Returns**:
 
-`(int)`: number of rows
+`int`: number of rows
 
 <a name="queryset.queryset.QuerySet.max"></a>
 #### max
@@ -473,7 +521,7 @@ Returns max value of columns for rows matching the given criteria
 
 **Returns**:
 
-`(Any)`: max value of column(s)
+`Any`: max value of column(s)
 
 <a name="queryset.queryset.QuerySet.min"></a>
 #### min
@@ -487,7 +535,7 @@ Returns min value of columns for rows matching the given criteria
 
 **Returns**:
 
-`(Any)`: min value of column(s)
+`Any`: min value of column(s)
 
 <a name="queryset.queryset.QuerySet.sum"></a>
 #### sum
@@ -501,7 +549,7 @@ Returns sum value of columns for rows matching the given criteria
 
 **Returns**:
 
-`(int)`: sum value of columns
+`int`: sum value of columns
 
 <a name="queryset.queryset.QuerySet.avg"></a>
 #### avg
@@ -515,7 +563,7 @@ Returns avg value of columns for rows matching the given criteria
 
 **Returns**:
 
-`(Union[int, float, List])`: avg value of columns
+`Union[int, float, List]`: avg value of columns
 
 <a name="queryset.queryset.QuerySet.update"></a>
 #### update
@@ -531,12 +579,12 @@ each=True flag to affect whole table.
 
 **Arguments**:
 
-- `each (bool)`: flag if whole table should be affected if no filter is passed
-- `kwargs (Any)`: fields names and proper value types
+- `each` (`bool`): flag if whole table should be affected if no filter is passed
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(int)`: number of updated rows
+`int`: number of updated rows
 
 <a name="queryset.queryset.QuerySet.delete"></a>
 #### delete
@@ -552,12 +600,12 @@ each=True flag to affect whole table.
 
 **Arguments**:
 
-- `each (bool)`: flag if whole table should be affected if no filter is passed
-- `kwargs (Any)`: fields names and proper value types
+- `each` (`bool`): flag if whole table should be affected if no filter is passed
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(int)`: number of deleted rows
+`int`: number of deleted rows
 
 <a name="queryset.queryset.QuerySet.paginate"></a>
 #### paginate
@@ -571,12 +619,12 @@ Limit is set to page size and offset is set to (page-1) * page_size.
 
 **Arguments**:
 
-- `page_size (int)`: numbers of items per page
-- `page (int)`: page number
+- `page_size` (`int`): numbers of items per page
+- `page` (`int`): page number
 
 **Returns**:
 
-`(QuerySet)`: QuerySet
+`QuerySet`: QuerySet
 
 <a name="queryset.queryset.QuerySet.limit"></a>
 #### limit
@@ -592,12 +640,12 @@ models use the `limit_raw_sql` parameter flag, and set it to `True`.
 
 **Arguments**:
 
-- `limit_raw_sql (bool)`: flag if raw sql should be limited
-- `limit_count (int)`: number of models to limit
+- `limit_raw_sql` (`bool`): flag if raw sql should be limited
+- `limit_count` (`int`): number of models to limit
 
 **Returns**:
 
-`(QuerySet)`: QuerySet
+`QuerySet`: QuerySet
 
 <a name="queryset.queryset.QuerySet.offset"></a>
 #### offset
@@ -613,12 +661,12 @@ models use the `limit_raw_sql` parameter flag, and set it to `True`.
 
 **Arguments**:
 
-- `limit_raw_sql (bool)`: flag if raw sql should be offset
-- `offset (int)`: numbers of models to offset
+- `limit_raw_sql` (`bool`): flag if raw sql should be offset
+- `offset` (`int`): numbers of models to offset
 
 **Returns**:
 
-`(QuerySet)`: QuerySet
+`QuerySet`: QuerySet
 
 <a name="queryset.queryset.QuerySet.first"></a>
 #### first
@@ -636,11 +684,11 @@ Gets the first row from the db ordered by primary key column ascending.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(Model)`: returned model
+`Model`: returned model
 
 <a name="queryset.queryset.QuerySet.get_or_none"></a>
 #### get\_or\_none
@@ -653,17 +701,18 @@ Get's the first row from the db meeting the criteria set by kwargs.
 
 If no criteria set it will return the last row in db sorted by pk.
 
-Passing a criteria is actually calling filter(**kwargs) method described below.
+Passing a criteria is actually calling filter(*args, **kwargs) method described
+below.
 
 If not match is found None will be returned.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(Model)`: returned model
+`Model`: returned model
 
 <a name="queryset.queryset.QuerySet.get"></a>
 #### get
@@ -676,7 +725,8 @@ Get's the first row from the db meeting the criteria set by kwargs.
 
 If no criteria set it will return the last row in db sorted by pk.
 
-Passing a criteria is actually calling filter(**kwargs) method described below.
+Passing a criteria is actually calling filter(*args, **kwargs) method described
+below.
 
 **Raises**:
 
@@ -685,11 +735,11 @@ Passing a criteria is actually calling filter(**kwargs) method described below.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(Model)`: returned model
+`Model`: returned model
 
 <a name="queryset.queryset.QuerySet.get_or_create"></a>
 #### get\_or\_create
@@ -700,17 +750,20 @@ Passing a criteria is actually calling filter(**kwargs) method described below.
 
 Combination of create and get methods.
 
-Tries to get a row meeting the criteria fro kwargs
+Tries to get a row meeting the criteria for kwargs
 and if `NoMatch` exception is raised
 it creates a new one with given kwargs.
 
+Passing a criteria is actually calling filter(*args, **kwargs) method described
+below.
+
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(Model)`: returned or created Model
+`Model`: returned or created Model
 
 <a name="queryset.queryset.QuerySet.update_or_create"></a>
 #### update\_or\_create
@@ -723,32 +776,33 @@ Updates the model, or in case there is no match in database creates a new one.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(Model)`: updated or created model
+`Model`: updated or created model
 
 <a name="queryset.queryset.QuerySet.all"></a>
 #### all
 
 ```python
- | async all(*args: Any, **kwargs: Any) -> List[Optional["T"]]
+ | async all(*args: Any, **kwargs: Any) -> List["T"]
 ```
 
 Returns all rows from a database for given model for set filter options.
 
-Passing kwargs is a shortcut and equals to calling `filter(**kwrags).all()`.
+Passing args and/or kwargs is a shortcut and equals to calling
+`filter(*args, **kwargs).all()`.
 
 If there are no rows meeting the criteria an empty list is returned.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(List[Model])`: list of returned models
+`List[Model]`: list of returned models
 
 <a name="queryset.queryset.QuerySet.create"></a>
 #### create
@@ -764,11 +818,11 @@ The allowed kwargs are `Model` fields names and proper value types.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(Model)`: created model
+`Model`: created model
 
 <a name="queryset.queryset.QuerySet.bulk_create"></a>
 #### bulk\_create
@@ -787,7 +841,7 @@ Bulk operations do not send signals.
 
 **Arguments**:
 
-- `objects (List[Model])`: list of ormar models already initialized and ready to save.
+- `objects` (`List[Model]`): list of ormar models already initialized and ready to save.
 
 <a name="queryset.queryset.QuerySet.bulk_update"></a>
 #### bulk\_update
@@ -809,6 +863,6 @@ Bulk operations do not send signals.
 
 **Arguments**:
 
-- `objects (List[Model])`: list of ormar models
-- `columns (List[str])`: list of columns to update
+- `objects` (`List[Model]`): list of ormar models
+- `columns` (`List[str]`): list of columns to update
 

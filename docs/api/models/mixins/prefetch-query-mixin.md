@@ -22,14 +22,14 @@ Returns Model on which query clause should be performed and name of the column.
 
 **Arguments**:
 
-- `parent_model (Type[Model])`: related model that the relation lead to
-- `target_model (Type[Model])`: model on which query should be perfomed
-- `reverse (bool)`: flag if the relation is reverse
-- `related (str)`: name of the relation field
+- `parent_model` (`Type[Model]`): related model that the relation lead to
+- `target_model` (`Type[Model]`): model on which query should be perfomed
+- `reverse` (`bool`): flag if the relation is reverse
+- `related` (`str`): name of the relation field
 
 **Returns**:
 
-`(Tuple[Type[Model], str])`: Model on which query clause should be performed and name of the column
+`Tuple[Type[Model], str]`: Model on which query clause should be performed and name of the column
 
 <a name="models.mixins.prefetch_mixin.PrefetchQueryMixin.get_column_name_for_id_extraction"></a>
 #### get\_column\_name\_for\_id\_extraction
@@ -45,14 +45,14 @@ or field name specified by related parameter.
 
 **Arguments**:
 
-- `parent_model (Type[Model])`: model from which id column should be extracted
-- `reverse (bool)`: flag if the relation is reverse
-- `related (str)`: name of the relation field
-- `use_raw (bool)`: flag if aliases or field names should be used
+- `parent_model` (`Type[Model]`): model from which id column should be extracted
+- `reverse` (`bool`): flag if the relation is reverse
+- `related` (`str`): name of the relation field
+- `use_raw` (`bool`): flag if aliases or field names should be used
 
 **Returns**:
 
-`()`: 
+
 
 <a name="models.mixins.prefetch_mixin.PrefetchQueryMixin.get_related_field_name"></a>
 #### get\_related\_field\_name
@@ -68,11 +68,11 @@ populate relations dict, and populate nested model in prefetch query.
 
 **Arguments**:
 
-- `target_field (Type[BaseField])`: relation field that should be used in prefetch
+- `target_field` (`Type[BaseField]`): relation field that should be used in prefetch
 
 **Returns**:
 
-`(str)`: name of the field
+`str`: name of the field
 
 <a name="models.mixins.prefetch_mixin.PrefetchQueryMixin.get_filtered_names_to_extract"></a>
 #### get\_filtered\_names\_to\_extract
@@ -92,9 +92,9 @@ Only relations from current model are returned.
 
 **Arguments**:
 
-- `prefetch_dict (Dict)`: dictionary of fields to extract
+- `prefetch_dict` (`Dict`): dictionary of fields to extract
 
 **Returns**:
 
-`(List)`: list of fields names to extract
+`List`: list of fields names to extract
 

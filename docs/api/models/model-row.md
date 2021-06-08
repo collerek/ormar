@@ -30,19 +30,19 @@ nested models in result.
 
 **Arguments**:
 
-- `used_prefixes (List[str])`: list of already extracted prefixes
-- `proxy_source_model (Optional[Type["ModelRow"]])`: source model from which querysetproxy is constructed
-- `excludable (ExcludableItems)`: structure of fields to include and exclude
-- `current_relation_str (str)`: name of the relation field
-- `source_model (Type[Model])`: model on which relation was defined
-- `row (sqlalchemy.engine.result.ResultProxy)`: raw result row from the database
-- `select_related (List)`: list of names of related models fetched from database
-- `related_models (Union[List, Dict])`: list or dict of related models
-- `related_field (ForeignKeyField)`: field with relation declaration
+- `used_prefixes` (`List[str]`): list of already extracted prefixes
+- `proxy_source_model` (`Optional[Type["ModelRow"]]`): source model from which querysetproxy is constructed
+- `excludable` (`ExcludableItems`): structure of fields to include and exclude
+- `current_relation_str` (`str`): name of the relation field
+- `source_model` (`Type[Model]`): model on which relation was defined
+- `row` (`sqlalchemy.engine.result.ResultProxy`): raw result row from the database
+- `select_related` (`List`): list of names of related models fetched from database
+- `related_models` (`Union[List, Dict]`): list or dict of related models
+- `related_field` (`ForeignKeyField`): field with relation declaration
 
 **Returns**:
 
-`(Optional[Model])`: returns model if model is populated from database
+`Optional[Model]`: returns model if model is populated from database
 
 <a name="models.model_row.ModelRow._process_table_prefix"></a>
 #### \_process\_table\_prefix
@@ -54,14 +54,14 @@ nested models in result.
 
 **Arguments**:
 
-- `source_model (Type[Model])`: model on which relation was defined
-- `current_relation_str (str)`: current relation string
-- `related_field ("ForeignKeyField")`: field with relation declaration
-- `used_prefixes (List[str])`: list of already extracted prefixes
+- `source_model` (`Type[Model]`): model on which relation was defined
+- `current_relation_str` (`str`): current relation string
+- `related_field` (`"ForeignKeyField"`): field with relation declaration
+- `used_prefixes` (`List[str]`): list of already extracted prefixes
 
 **Returns**:
 
-`(str)`: table_prefix to use
+`str`: table_prefix to use
 
 <a name="models.model_row.ModelRow._populate_nested_models_from_row"></a>
 #### \_populate\_nested\_models\_from\_row
@@ -82,18 +82,17 @@ instances. In the end those instances are added to the final model dictionary.
 
 **Arguments**:
 
-- `proxy_source_model (Optional[Type["ModelRow"]])`: source model from which querysetproxy is constructed
-- `excludable (ExcludableItems)`: structure of fields to include and exclude
-- `source_model (Type[Model])`: source model from which relation started
-- `current_relation_str (str)`: joined related parts into one string
-- `item (Dict)`: dictionary of already populated nested models, otherwise empty dict
-- `row (sqlalchemy.engine.result.ResultProxy)`: raw result row from the database
-- `related_models (Union[Dict, List])`: list or dict of related models
+- `proxy_source_model` (`Optional[Type["ModelRow"]]`): source model from which querysetproxy is constructed
+- `excludable` (`ExcludableItems`): structure of fields to include and exclude
+- `source_model` (`Type[Model]`): source model from which relation started
+- `current_relation_str` (`str`): joined related parts into one string
+- `item` (`Dict`): dictionary of already populated nested models, otherwise empty dict
+- `row` (`sqlalchemy.engine.result.ResultProxy`): raw result row from the database
+- `related_models` (`Union[Dict, List]`): list or dict of related models
 
 **Returns**:
 
-`(Dict)`: dictionary with keys corresponding to model fields names
-and values are database values
+`Dict`: dictionary with keys corresponding to model fields names
 
 <a name="models.model_row.ModelRow._process_remainder_and_relation_string"></a>
 #### \_process\_remainder\_and\_relation\_string
@@ -107,9 +106,9 @@ Process remainder models and relation string
 
 **Arguments**:
 
-- `related_models (Union[Dict, List])`: list or dict of related models
-- `current_relation_str (Optional[str])`: current relation string
-- `related (str)`: name of the relation
+- `related_models` (`Union[Dict, List]`): list or dict of related models
+- `current_relation_str` (`Optional[str]`): current relation string
+- `related` (`str`): name of the relation
 
 <a name="models.model_row.ModelRow._populate_through_instance"></a>
 #### \_populate\_through\_instance
@@ -124,12 +123,12 @@ Normally it's child class, unless the query is from queryset.
 
 **Arguments**:
 
-- `row (sqlalchemy.engine.ResultProxy)`: row from db result
-- `item (Dict)`: parent item dict
-- `related (str)`: current relation name
-- `excludable (ExcludableItems)`: structure of fields to include and exclude
-- `child ("Model")`: child item of parent
-- `proxy_source_model (Type["Model"])`: source model from which querysetproxy is constructed
+- `row` (`sqlalchemy.engine.ResultProxy`): row from db result
+- `item` (`Dict`): parent item dict
+- `related` (`str`): current relation name
+- `excludable` (`ExcludableItems`): structure of fields to include and exclude
+- `child` (`"Model"`): child item of parent
+- `proxy_source_model` (`Type["Model"]`): source model from which querysetproxy is constructed
 
 <a name="models.model_row.ModelRow._create_through_instance"></a>
 #### \_create\_through\_instance
@@ -144,14 +143,14 @@ Excluded all relation fields and other exclude/include set in excludable.
 
 **Arguments**:
 
-- `row (sqlalchemy.engine.ResultProxy)`: loaded row from database
-- `through_name (str)`: name of the through field
-- `related (str)`: name of the relation
-- `excludable (ExcludableItems)`: structure of fields to include and exclude
+- `row` (`sqlalchemy.engine.ResultProxy`): loaded row from database
+- `through_name` (`str`): name of the through field
+- `related` (`str`): name of the relation
+- `excludable` (`ExcludableItems`): structure of fields to include and exclude
 
 **Returns**:
 
-`("ModelRow")`: initialized through model without relation
+`"ModelRow"`: initialized through model without relation
 
 <a name="models.model_row.ModelRow.extract_prefixed_table_columns"></a>
 #### extract\_prefixed\_table\_columns
@@ -174,15 +173,14 @@ Used in Model.from_row and PrefetchQuery._populate_rows methods.
 
 **Arguments**:
 
-- `excludable (ExcludableItems)`: structure of fields to include and exclude
-- `item (Dict)`: dictionary of already populated nested models, otherwise empty dict
-- `row (sqlalchemy.engine.result.ResultProxy)`: raw result row from the database
-- `table_prefix (str)`: prefix of the table from AliasManager
 each pair of tables have own prefix (two of them depending on direction) -
 used in joins to allow multiple joins to the same table.
+- `excludable` (`ExcludableItems`): structure of fields to include and exclude
+- `item` (`Dict`): dictionary of already populated nested models, otherwise empty dict
+- `row` (`sqlalchemy.engine.result.ResultProxy`): raw result row from the database
+- `table_prefix` (`str`): prefix of the table from AliasManager
 
 **Returns**:
 
-`(Dict)`: dictionary with keys corresponding to model fields names
-and values are database values
+`Dict`: dictionary with keys corresponding to model fields names
 

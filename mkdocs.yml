@@ -31,6 +31,7 @@ nav:
     - queries/select-columns.md
     - queries/pagination-and-rows-number.md
     - queries/aggregations.md
+    - Return raw data: queries/raw-data.md
   - Signals: signals.md
   - Transactions: transactions.md
   - Use with Fastapi:
@@ -44,6 +45,8 @@ nav:
   - Api (BETA):
       - Index: api/index.md
       - Models:
+        - Helpers:
+            - api/models/descriptors/descriptors.md
         - Helpers:
             - api/models/helpers/models.md
             - api/models/helpers/pydantic.md
@@ -82,6 +85,7 @@ nav:
           - Limit Query: api/query-set/limit-query.md
           - Offset Query: api/query-set/offset-query.md
           - Field Accessor: api/query-set/field-accessor.md
+          - Reverse Alias Resolver: api/query-set/reverse-alias-resolver.md
           - api/query-set/utils.md
       - Relations:
           - Relation Manager: api/relations/relation-manager.md

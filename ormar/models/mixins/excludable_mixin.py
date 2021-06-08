@@ -86,6 +86,7 @@ class ExcludableMixin(RelationMixin):
         excludable: ExcludableItems,
         alias: str = "",
         use_alias: bool = False,
+        add_pk_columns: bool = True,
     ) -> List[str]:
         """
         Returns list of aliases or field names for given model.
@@ -96,6 +97,8 @@ class ExcludableMixin(RelationMixin):
 
         Primary key field is always added and cannot be excluded (will be added anyway).
 
+        :param add_pk_columns: flag if add primary key - always yes if ormar parses data
+        :type add_pk_columns: bool
         :param alias: relation prefix
         :type alias: str
         :param excludable: structure of fields to include and exclude
@@ -130,9 +133,10 @@ class ExcludableMixin(RelationMixin):
             ]
 
         # always has to return pk column for ormar to work
-        columns = cls._populate_pk_column(
-            model=model, columns=columns, use_alias=use_alias
-        )
+        if add_pk_columns:
+            columns = cls._populate_pk_column(
+                model=model, columns=columns, use_alias=use_alias
+            )
 
         return columns
 

@@ -1,3 +1,17 @@
+# 0.10.11
+
+## ✨ Features
+
+* Add `values` and `values_list` to `QuerySet` and `QuerysetProxy` that allows to return raw data from query [#223](https://github.com/collerek/ormar/issues/223).
+  * Allow returning list of tuples or list of dictionaries from a query
+  * Skips parsing the data to ormar model so skips also the validation
+  * Allow excluding models in between in chain of relations, so you can extract only needed columns
+  * `values_list` allows you to flatten the result if you extract only one column.
+
+## 🐛 Fixes
+
+* Fix creation of auto through model for m2m relation with ForwardRef [#226](https://github.com/collerek/ormar/issues/226)
+
 # 0.10.10
 
 ## ✨ Features

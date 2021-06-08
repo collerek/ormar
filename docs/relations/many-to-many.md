@@ -168,7 +168,7 @@ By default `Through` model relation names default to related model name in lower
 
 So in example like this:
 ```python
-... # course declaration ommited
+... # course declaration omitted
 class Student(ormar.Model):
     class Meta:
         database = database

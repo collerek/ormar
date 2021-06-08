@@ -12,7 +12,7 @@ Verifies if the through model does not have relations.
 
 **Arguments**:
 
-- `through (Type['Model])`: through Model to be checked
+- `through` (`Type['Model]`): through Model to be checked
 
 <a name="fields.many_to_many.populate_m2m_params_based_on_to_model"></a>
 #### populate\_m2m\_params\_based\_on\_to\_model
@@ -26,12 +26,12 @@ pydantic field to use and type of the target column field.
 
 **Arguments**:
 
-- `to (Model class)`: target related ormar Model
-- `nullable (bool)`: marks field as optional/ required
+- `to` (`Model class`): target related ormar Model
+- `nullable` (`bool`): marks field as optional/ required
 
 **Returns**:
 
-`(tuple with target pydantic type and target col type)`: Tuple[List, Any]
+`tuple with target pydantic type and target col type`: Tuple[List, Any]
 
 <a name="fields.many_to_many.ManyToMany"></a>
 #### ManyToMany
@@ -48,17 +48,17 @@ Accepts number of relation setting parameters as well as all BaseField ones.
 
 **Arguments**:
 
-- `to (Model class)`: target related ormar Model
-- `through (Model class)`: through model for m2m relation
-- `name (str)`: name of the database field - later called alias
-- `unique (bool)`: parameter passed to sqlalchemy.ForeignKey, unique flag
-- `virtual (bool)`: marks if relation is virtual.
 It is for reversed FK and auto generated FK on through model in Many2Many relations.
-- `kwargs (Any)`: all other args to be populated by BaseField
+- `to` (`Model class`): target related ormar Model
+- `through` (`Model class`): through model for m2m relation
+- `name` (`str`): name of the database field - later called alias
+- `unique` (`bool`): parameter passed to sqlalchemy.ForeignKey, unique flag
+- `virtual` (`bool`): marks if relation is virtual.
+- `kwargs` (`Any`): all other args to be populated by BaseField
 
 **Returns**:
 
-`(ManyToManyField)`: ormar ManyToManyField with m2m relation to selected model
+`ManyToManyField`: ormar ManyToManyField with m2m relation to selected model
 
 <a name="fields.many_to_many.ManyToManyField"></a>
 ## ManyToManyField Objects
@@ -82,7 +82,7 @@ It's either set as `related_name` or by default it's field name.
 
 **Returns**:
 
-`(str)`: name of the related_name or default related name.
+`str`: name of the related_name or default related name.
 
 <a name="fields.many_to_many.ManyToManyField.has_unresolved_forward_refs"></a>
 #### has\_unresolved\_forward\_refs
@@ -96,7 +96,7 @@ model can be used.
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="fields.many_to_many.ManyToManyField.evaluate_forward_ref"></a>
 #### evaluate\_forward\_ref
@@ -109,12 +109,12 @@ Evaluates the ForwardRef to actual Field based on global and local namespaces
 
 **Arguments**:
 
-- `globalns (Any)`: global namespace
-- `localns (Any)`: local namespace
+- `globalns` (`Any`): global namespace
+- `localns` (`Any`): local namespace
 
 **Returns**:
 
-`(None)`: None
+`None`: None
 
 <a name="fields.many_to_many.ManyToManyField.get_relation_name"></a>
 #### get\_relation\_name
@@ -128,7 +128,7 @@ names for m2m models
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="fields.many_to_many.ManyToManyField.get_source_model"></a>
 #### get\_source\_model
@@ -141,7 +141,7 @@ Returns model from which the relation comes -> either owner or through model
 
 **Returns**:
 
-`(Type["Model"])`: source model
+`Type["Model"]`: source model
 
 <a name="fields.many_to_many.ManyToManyField.create_default_through_model"></a>
 #### create\_default\_through\_model

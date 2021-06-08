@@ -447,6 +447,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 field = cast(ForeignKeyField, field)
                 field.evaluate_forward_ref(globalns=globalns, localns=localns)
                 field.set_self_reference_flag()
+                if field.is_multi and not field.through:
+                    field = cast(ormar.ManyToManyField, field)
+                    field.create_default_through_model()
                 expand_reverse_relationship(model_field=field)
                 register_relation_in_alias_manager(field=field)
                 update_column_definition(model=cls, field=field)

@@ -27,11 +27,11 @@ Translate columns into aliases (db names).
 
 **Arguments**:
 
-- `new_kwargs (Dict[str, str])`: dictionary of model that is about to be saved
+- `new_kwargs` (`Dict[str, str]`): dictionary of model that is about to be saved
 
 **Returns**:
 
-`(Dict[str, str])`: dictionary of model that is about to be saved
+`Dict[str, str]`: dictionary of model that is about to be saved
 
 <a name="models.mixins.save_mixin.SavePrepareMixin._remove_not_ormar_fields"></a>
 #### \_remove\_not\_ormar\_fields
@@ -46,11 +46,11 @@ and it's set to None.
 
 **Arguments**:
 
-- `new_kwargs (Dict[str, str])`: dictionary of model that is about to be saved
+- `new_kwargs` (`Dict[str, str]`): dictionary of model that is about to be saved
 
 **Returns**:
 
-`(Dict[str, str])`: dictionary of model that is about to be saved
+`Dict[str, str]`: dictionary of model that is about to be saved
 
 <a name="models.mixins.save_mixin.SavePrepareMixin._remove_pk_from_kwargs"></a>
 #### \_remove\_pk\_from\_kwargs
@@ -65,11 +65,11 @@ and it's set to None.
 
 **Arguments**:
 
-- `new_kwargs (Dict[str, str])`: dictionary of model that is about to be saved
+- `new_kwargs` (`Dict[str, str]`): dictionary of model that is about to be saved
 
 **Returns**:
 
-`(Dict[str, str])`: dictionary of model that is about to be saved
+`Dict[str, str]`: dictionary of model that is about to be saved
 
 <a name="models.mixins.save_mixin.SavePrepareMixin.parse_non_db_fields"></a>
 #### parse\_non\_db\_fields
@@ -84,11 +84,11 @@ to strings in bulk_update.
 
 **Arguments**:
 
-- `model_dict (Dict)`: dictionary of model that is about to be saved
+- `model_dict` (`Dict`): dictionary of model that is about to be saved
 
 **Returns**:
 
-`(Dict)`: dictionary of model that is about to be saved
+`Dict`: dictionary of model that is about to be saved
 
 <a name="models.mixins.save_mixin.SavePrepareMixin.substitute_models_with_pks"></a>
 #### substitute\_models\_with\_pks
@@ -103,11 +103,11 @@ models that are stored as foreign keys to their fk value.
 
 **Arguments**:
 
-- `model_dict (Dict)`: dictionary of model that is about to be saved
+- `model_dict` (`Dict`): dictionary of model that is about to be saved
 
 **Returns**:
 
-`(Dict)`: dictionary of model that is about to be saved
+`Dict`: dictionary of model that is about to be saved
 
 <a name="models.mixins.save_mixin.SavePrepareMixin.populate_default_values"></a>
 #### populate\_default\_values
@@ -123,11 +123,11 @@ passed by the user.
 
 **Arguments**:
 
-- `new_kwargs (Dict)`: dictionary of model that is about to be saved
+- `new_kwargs` (`Dict`): dictionary of model that is about to be saved
 
 **Returns**:
 
-`(Dict)`: dictionary of model that is about to be saved
+`Dict`: dictionary of model that is about to be saved
 
 <a name="models.mixins.save_mixin.SavePrepareMixin.validate_choices"></a>
 #### validate\_choices
@@ -142,11 +142,11 @@ fields with choices set to see if the value is allowed.
 
 **Arguments**:
 
-- `new_kwargs (Dict)`: dictionary of model that is about to be saved
+- `new_kwargs` (`Dict`): dictionary of model that is about to be saved
 
 **Returns**:
 
-`(Dict)`: dictionary of model that is about to be saved
+`Dict`: dictionary of model that is about to be saved
 
 <a name="models.mixins.save_mixin.SavePrepareMixin._upsert_model"></a>
 #### \_upsert\_model
@@ -168,15 +168,15 @@ If relation leading to instance is a ManyToMany also the through model is saved
 
 **Arguments**:
 
-- `instance (Model)`: current model to upsert
-- `save_all (bool)`: flag if all models should be saved or only not saved ones
-- `relation_field (Optional[ForeignKeyField])`: field with relation
-- `previous_model (Model)`: previous model from which method came
-- `update_count (int)`: no of updated models
+- `instance` (`Model`): current model to upsert
+- `save_all` (`bool`): flag if all models should be saved or only not saved ones
+- `relation_field` (`Optional[ForeignKeyField]`): field with relation
+- `previous_model` (`Model`): previous model from which method came
+- `update_count` (`int`): no of updated models
 
 **Returns**:
 
-`(int)`: no of updated models
+`int`: no of updated models
 
 <a name="models.mixins.save_mixin.SavePrepareMixin._upsert_through_model"></a>
 #### \_upsert\_through\_model
@@ -190,9 +190,9 @@ Upsert through model for m2m relation.
 
 **Arguments**:
 
-- `instance (Model)`: current model to upsert
-- `relation_field (Optional[ForeignKeyField])`: field with relation
-- `previous_model (Model)`: previous model from which method came
+- `instance` (`Model`): current model to upsert
+- `relation_field` (`Optional[ForeignKeyField]`): field with relation
+- `previous_model` (`Model`): previous model from which method came
 
 <a name="models.mixins.save_mixin.SavePrepareMixin._update_relation_list"></a>
 #### \_update\_relation\_list
@@ -206,15 +206,33 @@ related models and update numbers of updated related instances.
 
 **Arguments**:
 
-- `fields_list (Collection["ForeignKeyField"])`: list of ormar fields to follow and save
-- `relation_map (Dict)`: map of relations to follow
-- `follow (bool)`: flag to trigger deep save -
 by default only directly related models are saved
 with follow=True also related models of related models are saved
-- `update_count (int)`: internal parameter for recursive calls -
 number of updated instances
+- `save_all` (`bool`): 
+- `fields_list` (`Collection["ForeignKeyField"]`): list of ormar fields to follow and save
+- `relation_map` (`Dict`): map of relations to follow
+- `follow` (`bool`): flag to trigger deep save -
+- `update_count` (`int`): internal parameter for recursive calls -
 
 **Returns**:
 
-`(int)`: tuple of update count and visited
+`int`: tuple of update count and visited
+
+<a name="models.mixins.save_mixin.SavePrepareMixin._get_field_values"></a>
+#### \_get\_field\_values
+
+```python
+ | _get_field_values(name: str) -> List
+```
+
+Extract field values and ensures it is a list.
+
+**Arguments**:
+
+- `name` (`str`): name of the field
+
+**Returns**:
+
+`List`: list of values
 

@@ -15,7 +15,7 @@ multiple different models in one join.
 
 **Returns**:
 
-`(str)`: randomly generated alias
+`str`: randomly generated alias
 
 <a name="relations.alias_manager.AliasManager"></a>
 ## AliasManager Objects
@@ -26,6 +26,20 @@ class AliasManager()
 
 Keep all aliases of relations between different tables.
 One global instance is shared between all models.
+
+<a name="relations.alias_manager.AliasManager.reversed_aliases"></a>
+#### reversed\_aliases
+
+```python
+ | @property
+ | reversed_aliases() -> Dict
+```
+
+Returns swapped key-value pairs from aliases where alias is the key.
+
+**Returns**:
+
+`Dict`: dictionary of prefix to relation
 
 <a name="relations.alias_manager.AliasManager.prefixed_columns"></a>
 #### prefixed\_columns
@@ -43,13 +57,13 @@ List has to have sqlalchemy names of columns (ormar aliases) not the ormar ones.
 
 **Arguments**:
 
-- `alias (str)`: alias of given table
-- `table (sqlalchemy.Table)`: table from which fields should be aliased
-- `fields (Optional[List[str]])`: fields to include
+- `alias` (`str`): alias of given table
+- `table` (`sqlalchemy.Table`): table from which fields should be aliased
+- `fields` (`Optional[List[str]]`): fields to include
 
 **Returns**:
 
-`(List[text])`: list of sqlalchemy text clauses with "column name as aliased name"
+`List[text]`: list of sqlalchemy text clauses with "column name as aliased name"
 
 <a name="relations.alias_manager.AliasManager.prefixed_table_name"></a>
 #### prefixed\_table\_name
@@ -63,12 +77,12 @@ Creates text clause with table name with aliased name.
 
 **Arguments**:
 
-- `alias (str)`: alias of given table
-- `table (sqlalchemy.Table)`: table
+- `alias` (`str`): alias of given table
+- `table` (`sqlalchemy.Table`): table
 
 **Returns**:
 
-`(sqlalchemy text clause)`: sqlalchemy text clause as "table_name aliased_name"
+`sqlalchemy text clause`: sqlalchemy text clause as "table_name aliased_name"
 
 <a name="relations.alias_manager.AliasManager.add_relation_type"></a>
 #### add\_relation\_type
@@ -91,13 +105,13 @@ on one model as well as from multiple different models in one join.
 
 **Arguments**:
 
-- `source_model (source Model)`: model with relation defined
-- `relation_name (str)`: name of the relation to define
-- `reverse_name (Optional[str])`: name of related_name fo given relation for m2m relations
+- `source_model` (`source Model`): model with relation defined
+- `relation_name` (`str`): name of the relation to define
+- `reverse_name` (`Optional[str]`): name of related_name fo given relation for m2m relations
 
 **Returns**:
 
-`(None)`: none
+`None`: none
 
 <a name="relations.alias_manager.AliasManager.add_alias"></a>
 #### add\_alias
@@ -110,11 +124,11 @@ Adds alias to the dictionary of aliases under given key.
 
 **Arguments**:
 
-- `alias_key (str)`: key of relation to generate alias for
+- `alias_key` (`str`): key of relation to generate alias for
 
 **Returns**:
 
-`(str)`: generated alias
+`str`: generated alias
 
 <a name="relations.alias_manager.AliasManager.resolve_relation_alias"></a>
 #### resolve\_relation\_alias
@@ -127,12 +141,12 @@ Given model and relation name returns the alias for this relation.
 
 **Arguments**:
 
-- `from_model (source Model)`: model with relation defined
-- `relation_name (str)`: name of the relation field
+- `from_model` (`source Model`): model with relation defined
+- `relation_name` (`str`): name of the relation field
 
 **Returns**:
 
-`(str)`: alias of the relation
+`str`: alias of the relation
 
 <a name="relations.alias_manager.AliasManager.resolve_relation_alias_after_complex"></a>
 #### resolve\_relation\_alias\_after\_complex
@@ -147,11 +161,11 @@ field definition.
 
 **Arguments**:
 
-- `relation_field ("ForeignKeyField")`: field with direct relation definition
-- `source_model (source Model)`: model with query starts
-- `relation_str (str)`: string with relation joins defined
+- `relation_field` (`"ForeignKeyField"`): field with direct relation definition
+- `source_model` (`source Model`): model with query starts
+- `relation_str` (`str`): string with relation joins defined
 
 **Returns**:
 
-`(str)`: alias of the relation
+`str`: alias of the relation
 

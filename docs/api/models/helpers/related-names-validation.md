@@ -20,6 +20,6 @@ Also related_names have to be unique for given related model.
 
 **Arguments**:
 
-- `model_fields (Dict[str, ormar.Field])`: dictionary of declared ormar model fields
-- `new_model (Model class)`: 
+- `model_fields` (`Dict[str, ormar.Field]`): dictionary of declared ormar model fields
+- `new_model` (`Model class`): 
 

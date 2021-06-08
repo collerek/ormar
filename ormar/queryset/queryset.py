@@ -26,6 +26,7 @@ from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
 from ormar.queryset.prefetch_query import PrefetchQuery
 from ormar.queryset.query import Query
+from ormar.queryset.reverse_alias_resolver import ReverseAliasResolver
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -301,6 +302,8 @@ class QuerySet(Generic[T]):
         *  endswith - like `album__name__endswith='ibu'` (exact end match)
         *  iendswith - like `album__name__iendswith='IBU'` (case insensitive)
 
+        Note that you can also use python style filters - check the docs!
+
         :param _exclude: flag if it should be exclude or filter
         :type _exclude: bool
         :param kwargs: fields names and proper value types
@@ -552,6 +555,91 @@ class QuerySet(Generic[T]):
 
         order_bys = self.order_bys + [x for x in orders_by if x not in self.order_bys]
         return self.rebuild_self(order_bys=order_bys,)
+
+    async def values(
+        self,
+        fields: Union[List, str, Set, Dict] = None,
+        exclude_through: bool = False,
+        _as_dict: bool = True,
+        _flatten: bool = False,
+    ) -> List:
+        """
+        Return a list of dictionaries with column values in order of the fields
+        passed or all fields from queried models.
+
+        To filter for given row use filter/exclude methods before values,
+        to limit number of rows use limit/offset or paginate before values.
+
+        Note that it always return a list even for one row from database.
+
+        :param exclude_through: flag if through models should be excluded
+        :type exclude_through: bool
+        :param _flatten: internal parameter to flatten one element tuples
+        :type _flatten: bool
+        :param _as_dict: internal parameter if return dict or tuples
+        :type _as_dict: bool
+        :param fields: field name or list of field names to extract from db
+        :type fields:  Union[List, str, Set, Dict]
+        """
+        if fields:
+            return await self.fields(columns=fields).values(
+                _as_dict=_as_dict, _flatten=_flatten, exclude_through=exclude_through
+            )
+        expr = self.build_select_expression()
+        rows = await self.database.fetch_all(expr)
+        if not rows:
+            return []
+        alias_resolver = ReverseAliasResolver(
+            select_related=self._select_related,
+            excludable=self._excludable,
+            model_cls=self.model_cls,  # type: ignore
+            exclude_through=exclude_through,
+        )
+        column_map = alias_resolver.resolve_columns(columns_names=list(rows[0].keys()))
+        result = [
+            {column_map.get(k): v for k, v in dict(x).items() if k in column_map}
+            for x in rows
+        ]
+        if _as_dict:
+            return result
+        if _flatten and not self._excludable.include_entry_count() == 1:
+            raise QueryDefinitionError(
+                "You cannot flatten values_list if more than one field is selected!"
+            )
+        tuple_result = [tuple(x.values()) for x in result]
+        return tuple_result if not _flatten else [x[0] for x in tuple_result]
+
+    async def values_list(
+        self,
+        fields: Union[List, str, Set, Dict] = None,
+        flatten: bool = False,
+        exclude_through: bool = False,
+    ) -> List:
+        """
+        Return a list of tuples with column values in order of the fields passed or
+        all fields from queried models.
+
+        When one field is passed you can flatten the list of tuples into list of values
+        of that single field.
+
+        To filter for given row use filter/exclude methods before values,
+        to limit number of rows use limit/offset or paginate before values.
+
+        Note that it always return a list even for one row from database.
+
+        :param exclude_through: flag if through models should be excluded
+        :type exclude_through: bool
+        :param fields: field name or list of field names to extract from db
+        :type fields: Union[str, List[str]]
+        :param flatten: when one field is passed you can flatten the list of tuples
+        :type flatten: bool
+        """
+        return await self.values(
+            fields=fields,
+            exclude_through=exclude_through,
+            _as_dict=False,
+            _flatten=flatten,
+        )
 
     async def exists(self) -> bool:
         """

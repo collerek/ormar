@@ -37,11 +37,11 @@ related models already pre filtered by parent model.
 
 **Arguments**:
 
-- `manager (RelationsManager)`: reference to relation manager
-- `type_ (RelationType)`: type of the relation
-- `field_name (str)`: name of the relation field
-- `to (Type[Model])`: model to which relation leads to
-- `through (Type[Model])`: model through which relation goes for m2m relations
+- `manager` (`RelationsManager`): reference to relation manager
+- `type_` (`RelationType`): type of the relation
+- `field_name` (`str`): name of the relation field
+- `to` (`Type[Model]`): model to which relation leads to
+- `through` (`Type[Model]`): model through which relation goes for m2m relations
 
 <a name="relations.relation.Relation._clean_related"></a>
 #### \_clean\_related
@@ -63,11 +63,11 @@ Find child model in RelationProxy if exists.
 
 **Arguments**:
 
-- `child (Model)`: child model to find
+- `child` (`Model`): child model to find
 
 **Returns**:
 
-`(Optional[ind])`: index of child in RelationProxy
+`Optional[ind]`: index of child in RelationProxy
 
 <a name="relations.relation.Relation.add"></a>
 #### add
@@ -81,7 +81,7 @@ it to the list in RelationProxy depending on relation type.
 
 **Arguments**:
 
-- `child (Model)`: model to add to relation
+- `child` (`Model`): model to add to relation
 
 <a name="relations.relation.Relation.remove"></a>
 #### remove
@@ -95,7 +95,7 @@ it from the list in RelationProxy depending on relation type.
 
 **Arguments**:
 
-- `child (Model)`: model to remove from relation
+- `child` (`Model`): model to remove from relation
 
 <a name="relations.relation.Relation.get"></a>
 #### get
@@ -108,5 +108,5 @@ Return the related model or models from RelationProxy.
 
 **Returns**:
 
-`(Optional[Union[List[Model], Model]])`: related model/models if set
+`Optional[Union[List[Model], Model]]`: related model/models if set
 

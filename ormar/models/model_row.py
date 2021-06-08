@@ -217,7 +217,11 @@ class ModelRow(NewBaseModel):
                 used_prefixes=used_prefixes,
             )
             item[model_cls.get_column_name_from_alias(related)] = child
-            if field.is_multi and child:
+            if (
+                field.is_multi
+                and child
+                and not model_excludable.is_excluded(field.through.get_name())
+            ):
                 cls._populate_through_instance(
                     row=row,
                     item=item,
