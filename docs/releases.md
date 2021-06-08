@@ -2,7 +2,11 @@
 
 ## ✨ Features
 
-* 
+* Add `values` and `values_list` to `QuerySet` and `QuerysetProxy` that allows to return raw data from query [#223](https://github.com/collerek/ormar/issues/223).
+  * Allow returning list of tuples or list of dictionaries from a query
+  * Skips parsing the data to ormar model so skips also the validation
+  * Allow excluding models in between in chain of relations, so you can extract only needed columns
+  * `values_list` allows you to flatten the result if you extract only one column.
 
 ## 🐛 Fixes
 
