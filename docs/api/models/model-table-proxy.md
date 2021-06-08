@@ -6,7 +6,11 @@
 
 ```python
 class ModelTableProxy(
-    PrefetchQueryMixin,  MergeModelMixin,  SavePrepareMixin,  ExcludableMixin)
+    PrefetchQueryMixin, 
+    MergeModelMixin, 
+    SavePrepareMixin, 
+    ExcludableMixin, 
+    PydanticMixin)
 ```
 
 Used to combine all mixins with different set of functionalities.

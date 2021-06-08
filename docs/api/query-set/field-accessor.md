@@ -22,7 +22,7 @@ Hack to avoid pydantic name check from parent model, returns false
 
 **Returns**:
 
-`(bool)`: False
+`bool`: False
 
 <a name="queryset.field_accessor.FieldAccessor.__getattr__"></a>
 #### \_\_getattr\_\_
@@ -36,11 +36,11 @@ Thanks to that operator overload is possible to use in filter.
 
 **Arguments**:
 
-- `item (str)`: attribute name
+- `item` (`str`): attribute name
 
 **Returns**:
 
-`(ormar.queryset.field_accessor.FieldAccessor)`: FieldAccessor for field or nested model
+`ormar.queryset.field_accessor.FieldAccessor`: FieldAccessor for field or nested model
 
 <a name="queryset.field_accessor.FieldAccessor.__eq__"></a>
 #### \_\_eq\_\_
@@ -53,11 +53,11 @@ overloaded to work as sql `column = <VALUE>`
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.__ge__"></a>
 #### \_\_ge\_\_
@@ -70,11 +70,11 @@ overloaded to work as sql `column >= <VALUE>`
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.__gt__"></a>
 #### \_\_gt\_\_
@@ -87,11 +87,11 @@ overloaded to work as sql `column > <VALUE>`
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.__le__"></a>
 #### \_\_le\_\_
@@ -104,11 +104,11 @@ overloaded to work as sql `column <= <VALUE>`
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.__lt__"></a>
 #### \_\_lt\_\_
@@ -121,11 +121,11 @@ overloaded to work as sql `column < <VALUE>`
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.__mod__"></a>
 #### \_\_mod\_\_
@@ -138,11 +138,11 @@ overloaded to work as sql `column LIKE '%<VALUE>%'`
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.__lshift__"></a>
 #### \_\_lshift\_\_
@@ -155,11 +155,11 @@ overloaded to work as sql `column IN (<VALUE1>, <VALUE2>,...)`
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.__rshift__"></a>
 #### \_\_rshift\_\_
@@ -172,11 +172,11 @@ overloaded to work as sql `column IS NULL`
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.in_"></a>
 #### in\_
@@ -189,11 +189,11 @@ works as sql `column IN (<VALUE1>, <VALUE2>,...)`
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.iexact"></a>
 #### iexact
@@ -206,11 +206,11 @@ works as sql `column = <VALUE>` case-insensitive
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.contains"></a>
 #### contains
@@ -223,11 +223,11 @@ works as sql `column LIKE '%<VALUE>%'`
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.icontains"></a>
 #### icontains
@@ -240,11 +240,11 @@ works as sql `column LIKE '%<VALUE>%'` case-insensitive
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.startswith"></a>
 #### startswith
@@ -257,11 +257,11 @@ works as sql `column LIKE '<VALUE>%'`
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.istartswith"></a>
 #### istartswith
@@ -274,11 +274,11 @@ works as sql `column LIKE '%<VALUE>'` case-insensitive
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.endswith"></a>
 #### endswith
@@ -291,11 +291,11 @@ works as sql `column LIKE '%<VALUE>'`
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.iendswith"></a>
 #### iendswith
@@ -308,11 +308,11 @@ works as sql `column LIKE '%<VALUE>'` case-insensitive
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.isnull"></a>
 #### isnull
@@ -325,11 +325,11 @@ works as sql `column IS NULL` or `IS NOT NULL`
 
 **Arguments**:
 
-- `other (str)`: value to check agains operator
+- `other` (`str`): value to check agains operator
 
 **Returns**:
 
-`(ormar.queryset.clause.FilterGroup)`: FilterGroup for operator
+`ormar.queryset.clause.FilterGroup`: FilterGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.asc"></a>
 #### asc
@@ -342,7 +342,7 @@ works as sql `column asc`
 
 **Returns**:
 
-`(ormar.queryset.actions.OrderGroup)`: OrderGroup for operator
+`ormar.queryset.actions.OrderGroup`: OrderGroup for operator
 
 <a name="queryset.field_accessor.FieldAccessor.desc"></a>
 #### desc
@@ -355,5 +355,5 @@ works as sql `column desc`
 
 **Returns**:
 
-`(ormar.queryset.actions.OrderGroup)`: OrderGroup for operator
+`ormar.queryset.actions.OrderGroup`: OrderGroup for operator
 

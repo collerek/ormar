@@ -30,7 +30,7 @@ All properties here are used as "cache" to not recalculate them constantly.
 
 **Arguments**:
 
-- `new_model (Model class)`: newly constructed Model
+- `new_model` (`Model class`): newly constructed Model
 
 <a name="models.metaclass.add_property_fields"></a>
 #### add\_property\_fields
@@ -47,8 +47,8 @@ Names of property fields are cached for quicker access / extraction.
 
 **Arguments**:
 
-- `new_model (Model class)`: newly constructed model
-- `attrs (Dict[str, str])`: 
+- `new_model` (`Model class`): newly constructed model
+- `attrs` (`Dict[str, str]`): 
 
 <a name="models.metaclass.register_signals"></a>
 #### register\_signals
@@ -64,7 +64,7 @@ Signals are emitted in both model own methods and in selected queryset ones.
 
 **Arguments**:
 
-- `new_model (Model class)`: newly constructed model
+- `new_model` (`Model class`): newly constructed model
 
 <a name="models.metaclass.verify_constraint_names"></a>
 #### verify\_constraint\_names
@@ -79,9 +79,9 @@ Table creation.
 
 **Arguments**:
 
-- `base_class (Model or model parent class)`: one of the parent classes
-- `model_fields (Dict[str, BaseField])`: ormar fields in defined in current class
-- `parent_value (List)`: list of base class constraints
+- `base_class` (`Model or model parent class`): one of the parent classes
+- `model_fields` (`Dict[str, BaseField]`): ormar fields in defined in current class
+- `parent_value` (`List`): list of base class constraints
 
 <a name="models.metaclass.update_attrs_from_base_meta"></a>
 #### update\_attrs\_from\_base\_meta
@@ -94,9 +94,9 @@ Updates Meta parameters in child from parent if needed.
 
 **Arguments**:
 
-- `base_class (Model or model parent class)`: one of the parent classes
-- `attrs (Dict)`: new namespace for class being constructed
-- `model_fields (Dict[str, BaseField])`: ormar fields in defined in current class
+- `base_class` (`Model or model parent class`): one of the parent classes
+- `attrs` (`Dict`): new namespace for class being constructed
+- `model_fields` (`Dict[str, BaseField]`): ormar fields in defined in current class
 
 <a name="models.metaclass.copy_and_replace_m2m_through_model"></a>
 #### copy\_and\_replace\_m2m\_through\_model
@@ -118,13 +118,13 @@ Removes the original sqlalchemy table from metadata if it was not removed.
 
 **Arguments**:
 
-- `base_class (Type["Model"])`: base class model
-- `field (ManyToManyField)`: field with relations definition
-- `field_name (str)`: name of the relation field
-- `table_name (str)`: name of the table
-- `parent_fields (Dict)`: dictionary of fields to copy to new models from parent
-- `attrs (Dict)`: new namespace for class being constructed
-- `meta (ModelMeta)`: metaclass of currently created model
+- `base_class` (`Type["Model"]`): base class model
+- `field` (`ManyToManyField`): field with relations definition
+- `field_name` (`str`): name of the relation field
+- `table_name` (`str`): name of the table
+- `parent_fields` (`Dict`): dictionary of fields to copy to new models from parent
+- `attrs` (`Dict`): new namespace for class being constructed
+- `meta` (`ModelMeta`): metaclass of currently created model
 
 <a name="models.metaclass.copy_data_from_parent_model"></a>
 #### copy\_data\_from\_parent\_model
@@ -133,7 +133,7 @@ Removes the original sqlalchemy table from metadata if it was not removed.
 copy_data_from_parent_model(base_class: Type["Model"], curr_class: type, attrs: Dict, model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]]) -> Tuple[Dict, Dict]
 ```
 
-Copy the key parameters [databse, metadata, property_fields and constraints]
+Copy the key parameters [database, metadata, property_fields and constraints]
 and fields from parent models. Overwrites them if needed.
 
 Only abstract classes can be subclassed.
@@ -147,14 +147,14 @@ Since relation fields requires different related_name for different children
 
 **Arguments**:
 
-- `base_class (Model or model parent class)`: one of the parent classes
-- `curr_class (Model or model parent class)`: current constructed class
-- `attrs (Dict)`: new namespace for class being constructed
-- `model_fields (Dict[str, BaseField])`: ormar fields in defined in current class
+- `base_class` (`Model or model parent class`): one of the parent classes
+- `curr_class` (`Model or model parent class`): current constructed class
+- `attrs` (`Dict`): new namespace for class being constructed
+- `model_fields` (`Dict[str, BaseField]`): ormar fields in defined in current class
 
 **Returns**:
 
-`(Tuple[Dict, Dict])`: updated attrs and model_fields
+`Tuple[Dict, Dict]`: updated attrs and model_fields
 
 <a name="models.metaclass.extract_from_parents_definition"></a>
 #### extract\_from\_parents\_definition
@@ -163,7 +163,7 @@ Since relation fields requires different related_name for different children
 extract_from_parents_definition(base_class: type, curr_class: type, attrs: Dict, model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]]) -> Tuple[Dict, Dict]
 ```
 
-Extracts fields from base classes if they have valid oramr fields.
+Extracts fields from base classes if they have valid ormar fields.
 
 If model was already parsed -> fields definitions need to be removed from class
 cause pydantic complains about field re-definition so after first child
@@ -176,14 +176,14 @@ If the class is a ormar.Model it is skipped.
 
 **Arguments**:
 
-- `base_class (Model or model parent class)`: one of the parent classes
-- `curr_class (Model or model parent class)`: current constructed class
-- `attrs (Dict)`: new namespace for class being constructed
-- `model_fields (Dict[str, BaseField])`: ormar fields in defined in current class
+- `base_class` (`Model or model parent class`): one of the parent classes
+- `curr_class` (`Model or model parent class`): current constructed class
+- `attrs` (`Dict`): new namespace for class being constructed
+- `model_fields` (`Dict[str, BaseField]`): ormar fields in defined in current class
 
 **Returns**:
 
-`(Tuple[Dict, Dict])`: updated attrs and model_fields
+`Tuple[Dict, Dict]`: updated attrs and model_fields
 
 <a name="models.metaclass.update_attrs_and_fields"></a>
 #### update\_attrs\_and\_fields
@@ -197,11 +197,28 @@ as well as model.Meta.model_fields definitions from parents.
 
 **Arguments**:
 
-- `attrs (Dict)`: new namespace for class being constructed
-- `new_attrs (Dict)`: related of the namespace extracted from parent class
-- `model_fields (Dict[str, BaseField])`: ormar fields in defined in current class
-- `new_model_fields (Dict[str, BaseField])`: ormar fields defined in parent classes
-- `new_fields (Set[str])`: set of new fields names
+- `attrs` (`Dict`): new namespace for class being constructed
+- `new_attrs` (`Dict`): related of the namespace extracted from parent class
+- `model_fields` (`Dict[str, BaseField]`): ormar fields in defined in current class
+- `new_model_fields` (`Dict[str, BaseField]`): ormar fields defined in parent classes
+- `new_fields` (`Set[str]`): set of new fields names
+
+<a name="models.metaclass.add_field_descriptor"></a>
+#### add\_field\_descriptor
+
+```python
+add_field_descriptor(name: str, field: "BaseField", new_model: Type["Model"]) -> None
+```
+
+Sets appropriate descriptor for each model field.
+There are 5 main types of descriptors, for bytes, json, pure pydantic fields,
+and 2 ormar ones - one for relation and one for pk shortcut
+
+**Arguments**:
+
+- `name` (`str`): name of the field
+- `field` (`BaseField`): model field to add descriptor for
+- `new_model` (`Type["Model]`): model with fields
 
 <a name="models.metaclass.ModelMetaclass"></a>
 ## ModelMetaclass Objects
@@ -241,7 +258,25 @@ If class has Meta class declared (so actual ormar Models) it also:
 
 **Arguments**:
 
-- `name (str)`: name of current class
-- `bases (Tuple)`: base classes
-- `attrs (Dict)`: class namespace
+- `name` (`str`): name of current class
+- `bases` (`Tuple`): base classes
+- `attrs` (`Dict`): class namespace
+
+<a name="models.metaclass.ModelMetaclass.__getattr__"></a>
+#### \_\_getattr\_\_
+
+```python
+ | __getattr__(item: str) -> Any
+```
+
+Returns FieldAccessors on access to model fields from a class,
+that way it can be used in python style filters and order_by.
+
+**Arguments**:
+
+- `item` (`str`): name of the field
+
+**Returns**:
+
+`FieldAccessor`: FieldAccessor for given field
 

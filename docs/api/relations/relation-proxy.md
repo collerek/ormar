@@ -23,7 +23,7 @@ _related_field_name property.
 
 **Returns**:
 
-`(str)`: name of the related field
+`str`: name of the related field
 
 <a name="relations.relation_proxy.RelationProxy.__getattribute__"></a>
 #### \_\_getattribute\_\_
@@ -37,11 +37,11 @@ catch calls to them and delegate it to QuerySetProxy instead.
 
 **Arguments**:
 
-- `item (str)`: name of attribute
+- `item` (`str`): name of attribute
 
 **Returns**:
 
-`(Any)`: value of attribute
+`Any`: value of attribute
 
 <a name="relations.relation_proxy.RelationProxy.__getattr__"></a>
 #### \_\_getattr\_\_
@@ -54,11 +54,11 @@ Delegates calls for non existing attributes to QuerySetProxy.
 
 **Arguments**:
 
-- `item (str)`: name of attribute/method
+- `item` (`str`): name of attribute/method
 
 **Returns**:
 
-`(method)`: method from QuerySetProxy if exists
+`method`: method from QuerySetProxy if exists
 
 <a name="relations.relation_proxy.RelationProxy._initialize_queryset"></a>
 #### \_initialize\_queryset
@@ -80,7 +80,7 @@ Checks if the QuerySetProxy is already set and ready.
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="relations.relation_proxy.RelationProxy._check_if_model_saved"></a>
 #### \_check\_if\_model\_saved
@@ -105,7 +105,7 @@ to the parent model only, without need for user to filter them.
 
 **Returns**:
 
-`(QuerySet)`: initialized QuerySet
+`QuerySet`: initialized QuerySet
 
 <a name="relations.relation_proxy.RelationProxy.remove"></a>
 #### remove
@@ -124,8 +124,8 @@ will be deleted, and not only removed from relation).
 
 **Arguments**:
 
-- `item (Model)`: child to remove from relation
-- `keep_reversed (bool)`: flag if the reversed model should be kept or deleted too
+- `item` (`Model`): child to remove from relation
+- `keep_reversed` (`bool`): flag if the reversed model should be kept or deleted too
 
 <a name="relations.relation_proxy.RelationProxy.add"></a>
 #### add
@@ -140,6 +140,6 @@ For ManyToMany relations through instance is automatically created.
 
 **Arguments**:
 
-- `kwargs (Any)`: dict of additional keyword arguments for through instance
-- `item (Model)`: child to add to relation
+- `kwargs` (`Any`): dict of additional keyword arguments for through instance
+- `item` (`Model`): child to add to relation
 

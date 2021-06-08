@@ -20,12 +20,12 @@ If the nested related Models are required they are set with -1 as pk value.
 
 **Arguments**:
 
-- `fk (Model class)`: class of the related Model to which instance should be constructed
-- `pk (Any)`: value of the primary_key column
+- `fk` (`Model class`): class of the related Model to which instance should be constructed
+- `pk` (`Any`): value of the primary_key column
 
 **Returns**:
 
-`(Model)`: Model instance populated with only pk
+`Model`: Model instance populated with only pk
 
 <a name="fields.foreign_key.create_dummy_model"></a>
 #### create\_dummy\_model
@@ -39,12 +39,12 @@ Populates only pk field and set it to desired type.
 
 **Arguments**:
 
-- `base_model (Model class)`: class of target dummy model
-- `pk_field (Union[BaseField, "ForeignKeyField", "ManyToManyField"])`: ormar Field to be set on pydantic Model
+- `base_model` (`Model class`): class of target dummy model
+- `pk_field` (`Union[BaseField, "ForeignKeyField", "ManyToManyField"]`): ormar Field to be set on pydantic Model
 
 **Returns**:
 
-`(pydantic.BaseModel)`: constructed dummy model
+`pydantic.BaseModel`: constructed dummy model
 
 <a name="fields.foreign_key.populate_fk_params_based_on_to_model"></a>
 #### populate\_fk\_params\_based\_on\_to\_model
@@ -58,16 +58,16 @@ pydantic field to use, ForeignKey constraint and type of the target column field
 
 **Arguments**:
 
-- `to (Model class)`: target related ormar Model
-- `nullable (bool)`: marks field as optional/ required
-- `onupdate (str)`: parameter passed to sqlalchemy.ForeignKey.
 How to treat child rows on update of parent (the one where FK is defined) model.
-- `ondelete (str)`: parameter passed to sqlalchemy.ForeignKey.
 How to treat child rows on delete of parent (the one where FK is defined) model.
+- `to` (`Model class`): target related ormar Model
+- `nullable` (`bool`): marks field as optional/ required
+- `onupdate` (`str`): parameter passed to sqlalchemy.ForeignKey.
+- `ondelete` (`str`): parameter passed to sqlalchemy.ForeignKey.
 
 **Returns**:
 
-`(Tuple[Any, List, Any])`: tuple with target pydantic type, list of fk constraints and target col type
+`Tuple[Any, List, Any]`: tuple with target pydantic type, list of fk constraints and target col type
 
 <a name="fields.foreign_key.validate_not_allowed_fields"></a>
 #### validate\_not\_allowed\_fields
@@ -86,7 +86,7 @@ notify the user that it's not allowed/ supported.
 
 **Arguments**:
 
-- `kwargs (Dict)`: dict of kwargs to verify passed to relation field
+- `kwargs` (`Dict`): dict of kwargs to verify passed to relation field
 
 <a name="fields.foreign_key.UniqueColumns"></a>
 ## UniqueColumns Objects
@@ -123,22 +123,22 @@ Accepts number of relation setting parameters as well as all BaseField ones.
 
 **Arguments**:
 
-- `to (Model class)`: target related ormar Model
-- `name (str)`: name of the database field - later called alias
-- `unique (bool)`: parameter passed to sqlalchemy.ForeignKey, unique flag
-- `nullable (bool)`: marks field as optional/ required
-- `related_name (str)`: name of reversed FK relation populated for you on to model
-- `virtual (bool)`: marks if relation is virtual.
 It is for reversed FK and auto generated FK on through model in Many2Many relations.
-- `onupdate (str)`: parameter passed to sqlalchemy.ForeignKey.
 How to treat child rows on update of parent (the one where FK is defined) model.
-- `ondelete (str)`: parameter passed to sqlalchemy.ForeignKey.
 How to treat child rows on delete of parent (the one where FK is defined) model.
-- `kwargs (Any)`: all other args to be populated by BaseField
+- `to` (`Model class`): target related ormar Model
+- `name` (`str`): name of the database field - later called alias
+- `unique` (`bool`): parameter passed to sqlalchemy.ForeignKey, unique flag
+- `nullable` (`bool`): marks field as optional/ required
+- `related_name` (`str`): name of reversed FK relation populated for you on to model
+- `virtual` (`bool`): marks if relation is virtual.
+- `onupdate` (`str`): parameter passed to sqlalchemy.ForeignKey.
+- `ondelete` (`str`): parameter passed to sqlalchemy.ForeignKey.
+- `kwargs` (`Any`): all other args to be populated by BaseField
 
 **Returns**:
 
-`(ForeignKeyField)`: ormar ForeignKeyField with relation to selected model
+`ForeignKeyField`: ormar ForeignKeyField with relation to selected model
 
 <a name="fields.foreign_key.ForeignKeyField"></a>
 ## ForeignKeyField Objects
@@ -162,7 +162,7 @@ It's either set as `related_name` or by default it's owner model. get_name + 's'
 
 **Returns**:
 
-`(str)`: name of the related_name or default related name.
+`str`: name of the related_name or default related name.
 
 <a name="fields.foreign_key.ForeignKeyField.get_related_name"></a>
 #### get\_related\_name
@@ -176,7 +176,7 @@ It's either set as `related_name` or by default it's owner model. get_name + 's'
 
 **Returns**:
 
-`(str)`: name of the related_name or default related name.
+`str`: name of the related_name or default related name.
 
 <a name="fields.foreign_key.ForeignKeyField.default_target_field_name"></a>
 #### default\_target\_field\_name
@@ -189,7 +189,7 @@ Returns default target model name on through model.
 
 **Returns**:
 
-`(str)`: name of the field
+`str`: name of the field
 
 <a name="fields.foreign_key.ForeignKeyField.default_source_field_name"></a>
 #### default\_source\_field\_name
@@ -202,7 +202,7 @@ Returns default target model name on through model.
 
 **Returns**:
 
-`(str)`: name of the field
+`str`: name of the field
 
 <a name="fields.foreign_key.ForeignKeyField.evaluate_forward_ref"></a>
 #### evaluate\_forward\_ref
@@ -215,12 +215,12 @@ Evaluates the ForwardRef to actual Field based on global and local namespaces
 
 **Arguments**:
 
-- `globalns (Any)`: global namespace
-- `localns (Any)`: local namespace
+- `globalns` (`Any`): global namespace
+- `localns` (`Any`): local namespace
 
 **Returns**:
 
-`(None)`: None
+`None`: None
 
 <a name="fields.foreign_key.ForeignKeyField._extract_model_from_sequence"></a>
 #### \_extract\_model\_from\_sequence
@@ -236,13 +236,13 @@ Used in reverse FK relations.
 
 **Arguments**:
 
-- `value (List)`: list of Model
-- `child (Model)`: child/ related Model
-- `to_register (bool)`: flag if the relation should be set in RelationshipManager
+- `value` (`List`): list of Model
+- `child` (`Model`): child/ related Model
+- `to_register` (`bool`): flag if the relation should be set in RelationshipManager
 
 **Returns**:
 
-`(List["Model"])`: list (if needed) registered Models
+`List["Model"]`: list (if needed) registered Models
 
 <a name="fields.foreign_key.ForeignKeyField._register_existing_model"></a>
 #### \_register\_existing\_model
@@ -258,13 +258,13 @@ Used in reverse FK relations and normal FK for single models.
 
 **Arguments**:
 
-- `value (Model)`: already instantiated Model
-- `child (Model)`: child/ related Model
-- `to_register (bool)`: flag if the relation should be set in RelationshipManager
+- `value` (`Model`): already instantiated Model
+- `child` (`Model`): child/ related Model
+- `to_register` (`bool`): flag if the relation should be set in RelationshipManager
 
 **Returns**:
 
-`(Model)`: (if needed) registered Model
+`Model`: (if needed) registered Model
 
 <a name="fields.foreign_key.ForeignKeyField._construct_model_from_dict"></a>
 #### \_construct\_model\_from\_dict
@@ -281,13 +281,13 @@ Used in normal FK for dictionaries.
 
 **Arguments**:
 
-- `value (dict)`: dictionary of a Model
-- `child (Model)`: child/ related Model
-- `to_register (bool)`: flag if the relation should be set in RelationshipManager
+- `value` (`dict`): dictionary of a Model
+- `child` (`Model`): child/ related Model
+- `to_register` (`bool`): flag if the relation should be set in RelationshipManager
 
 **Returns**:
 
-`(Model)`: (if needed) registered Model
+`Model`: (if needed) registered Model
 
 <a name="fields.foreign_key.ForeignKeyField._construct_model_from_pk"></a>
 #### \_construct\_model\_from\_pk
@@ -303,13 +303,13 @@ Used in normal FK for dictionaries.
 
 **Arguments**:
 
-- `value (Any)`: value of a related pk / fk column
-- `child (Model)`: child/ related Model
-- `to_register (bool)`: flag if the relation should be set in RelationshipManager
+- `value` (`Any`): value of a related pk / fk column
+- `child` (`Model`): child/ related Model
+- `to_register` (`bool`): flag if the relation should be set in RelationshipManager
 
 **Returns**:
 
-`(Model)`: (if needed) registered Model
+`Model`: (if needed) registered Model
 
 <a name="fields.foreign_key.ForeignKeyField.register_relation"></a>
 #### register\_relation
@@ -326,8 +326,8 @@ Used in Metaclass and sometimes some relations are missing
 
 **Arguments**:
 
-- `model (Model class)`: parent model (with relation definition)
-- `child (Model class)`: child model
+- `model` (`Model class`): parent model (with relation definition)
+- `child` (`Model class`): child model
 
 <a name="fields.foreign_key.ForeignKeyField.has_unresolved_forward_refs"></a>
 #### has\_unresolved\_forward\_refs
@@ -341,7 +341,7 @@ model can be used.
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="fields.foreign_key.ForeignKeyField.expand_relationship"></a>
 #### expand\_relationship
@@ -359,13 +359,13 @@ Selects the appropriate constructor based on a passed value.
 
 **Arguments**:
 
-- `value (Any)`: a Model field value, returned untouched for non relation fields.
-- `child (Union["Model", "NewBaseModel"])`: a child Model to register
-- `to_register (bool)`: flag if the relation should be set in RelationshipManager
+- `value` (`Any`): a Model field value, returned untouched for non relation fields.
+- `child` (`Union["Model", "NewBaseModel"]`): a child Model to register
+- `to_register` (`bool`): flag if the relation should be set in RelationshipManager
 
 **Returns**:
 
-`(Optional[Union["Model", List["Model"]]])`: returns a Model or a list of Models
+`Optional[Union["Model", List["Model"]]]`: returns a Model or a list of Models
 
 <a name="fields.foreign_key.ForeignKeyField.get_relation_name"></a>
 #### get\_relation\_name
@@ -379,7 +379,7 @@ names for m2m models
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="fields.foreign_key.ForeignKeyField.get_source_model"></a>
 #### get\_source\_model
@@ -392,5 +392,5 @@ Returns model from which the relation comes -> either owner or through model
 
 **Returns**:
 
-`(Type["Model"])`: source model
+`Type["Model"]`: source model
 

@@ -20,7 +20,7 @@ Shortcut for ormar's model AliasManager stored on Meta.
 
 **Returns**:
 
-`(AliasManager)`: alias manager from model's Meta
+`AliasManager`: alias manager from model's Meta
 
 <a name="queryset.join.SqlJoin.to_table"></a>
 #### to\_table
@@ -34,7 +34,7 @@ Shortcut to table name of the next model
 
 **Returns**:
 
-`(str)`: name of the target table
+`str`: name of the target table
 
 <a name="queryset.join.SqlJoin._on_clause"></a>
 #### \_on\_clause
@@ -48,13 +48,13 @@ into one text clause used in joins.
 
 **Arguments**:
 
-- `previous_alias (str)`: alias of previous table
-- `from_clause (str)`: from table name
-- `to_clause (str)`: to table name
+- `previous_alias` (`str`): alias of previous table
+- `from_clause` (`str`): from table name
+- `to_clause` (`str`): to table name
 
 **Returns**:
 
-`(sqlalchemy.text)`: clause combining all strings
+`sqlalchemy.text`: clause combining all strings
 
 <a name="queryset.join.SqlJoin.build_join"></a>
 #### build\_join
@@ -70,7 +70,7 @@ used_aliases and sort_orders.
 
 **Returns**:
 
-`(Tuple[List[str], Join, List[TextClause], collections.OrderedDict])`: list of used aliases, select from, list of aliased columns, sort orders
+`Tuple[List[str], Join, List[TextClause], collections.OrderedDict]`: list of used aliases, select from, list of aliased columns, sort orders
 
 <a name="queryset.join.SqlJoin._forward_join"></a>
 #### \_forward\_join
@@ -110,8 +110,8 @@ Updated are:
 
 **Arguments**:
 
-- `related_name (str)`: name of the relation to follow
-- `remainder (Any)`: deeper tables if there are more nested joins
+- `related_name` (`str`): name of the relation to follow
+- `remainder` (`Any`): deeper tables if there are more nested joins
 
 <a name="queryset.join.SqlJoin._process_m2m_through_table"></a>
 #### \_process\_m2m\_through\_table
@@ -147,11 +147,11 @@ Changes the same names in order_by queries if they are present.
 
 **Arguments**:
 
-- `reverse (bool)`: flag if it's on_clause lookup - use reverse fields
+- `reverse` (`bool`): flag if it's on_clause lookup - use reverse fields
 
 **Returns**:
 
-`(str)`: new relation name switched to through model field
+`str`: new relation name switched to through model field
 
 <a name="queryset.join.SqlJoin._process_join"></a>
 #### \_process\_join
@@ -183,7 +183,7 @@ Verifies if proper field string is used.
 
 **Arguments**:
 
-- `order_by (str)`: string with order by definition
+- `order_by` (`str`): string with order by definition
 
 <a name="queryset.join.SqlJoin._get_alias_and_model"></a>
 #### \_get\_alias\_and\_model
@@ -196,11 +196,11 @@ Returns proper model and alias to be applied in the clause.
 
 **Arguments**:
 
-- `order_by (str)`: string with order by definition
+- `order_by` (`str`): string with order by definition
 
 **Returns**:
 
-`(Tuple[str, Type["Model"]])`: alias and model to be used in clause
+`Tuple[str, Type["Model"]]`: alias and model to be used in clause
 
 <a name="queryset.join.SqlJoin._get_order_bys"></a>
 #### \_get\_order\_bys
@@ -225,5 +225,5 @@ different for ManyToMany relation, ForeignKey and reverse related of relations.
 
 **Returns**:
 
-`(Tuple[str, str])`: to key and from key
+`Tuple[str, str]`: to key and from key
 

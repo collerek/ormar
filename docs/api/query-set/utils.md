@@ -16,13 +16,13 @@ All those checks verify if there is a need for deeper traversal.
 
 **Arguments**:
 
-- `part (str)`: 
-- `parts (List[str])`: 
-- `current_level (Any)`: current level of the traversed structure
+- `part` (`str`): 
+- `parts` (`List[str]`): 
+- `current_level` (`Any`): current level of the traversed structure
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="queryset.utils.translate_list_to_dict"></a>
 #### translate\_list\_to\_dict
@@ -39,13 +39,13 @@ Default required key ise Ellipsis like in pydantic.
 
 **Arguments**:
 
-- `list_to_trans (set)`: input list
-- `is_order (bool)`: flag if change affects order_by clauses are they require special
 default value with sort order.
+- `list_to_trans` (`set`): input list
+- `is_order` (`bool`): flag if change affects order_by clauses are they require special
 
 **Returns**:
 
-`(Dict)`: converted to dictionary input list
+`Dict`: converted to dictionary input list
 
 <a name="queryset.utils.convert_set_to_required_dict"></a>
 #### convert\_set\_to\_required\_dict
@@ -59,11 +59,11 @@ Required key is Ellipsis.
 
 **Arguments**:
 
-- `set_to_convert (set)`: set to convert to dict
+- `set_to_convert` (`set`): set to convert to dict
 
 **Returns**:
 
-`(Dict)`: set converted to dict of ellipsis
+`Dict`: set converted to dict of ellipsis
 
 <a name="queryset.utils.update"></a>
 #### update
@@ -79,12 +79,12 @@ only other values are overwritten.
 
 **Arguments**:
 
-- `current_dict (Dict[str, ellipsis])`: dict to update
-- `updating_dict (Dict)`: dict with values to update
+- `current_dict` (`Dict[str, ellipsis]`): dict to update
+- `updating_dict` (`Dict`): dict with values to update
 
 **Returns**:
 
-`(Dict)`: combination of both dicts
+`Dict`: combination of both dicts
 
 <a name="queryset.utils.subtract_dict"></a>
 #### subtract\_dict
@@ -100,12 +100,12 @@ only other values are overwritten.
 
 **Arguments**:
 
-- `current_dict (Dict[str, ellipsis])`: dict to update
-- `updating_dict (Dict)`: dict with values to update
+- `current_dict` (`Dict[str, ellipsis]`): dict to update
+- `updating_dict` (`Dict`): dict with values to update
 
 **Returns**:
 
-`(Dict)`: combination of both dicts
+`Dict`: combination of both dicts
 
 <a name="queryset.utils.update_dict_from_list"></a>
 #### update\_dict\_from\_list
@@ -119,12 +119,12 @@ nested keys that are sets or dicts are combined and not overwritten.
 
 **Arguments**:
 
-- `curr_dict (Dict)`: dict to update
-- `list_to_update (List[str])`: list with values to update the dict
+- `curr_dict` (`Dict`): dict to update
+- `list_to_update` (`List[str]`): list with values to update the dict
 
 **Returns**:
 
-`(Dict)`: updated dict
+`Dict`: updated dict
 
 <a name="queryset.utils.extract_nested_models"></a>
 #### extract\_nested\_models
@@ -144,10 +144,10 @@ Goes also into nested relations if needed (specified in select_dict).
 
 **Arguments**:
 
-- `model (Model)`: parent Model
-- `model_type (Type[Model])`: parent model class
-- `select_dict (Dict)`: dictionary of related models from select_related
-- `extracted (Dict)`: dictionary with already extracted models
+- `model` (`Model`): parent Model
+- `model_type` (`Type[Model]`): parent model class
+- `select_dict` (`Dict`): dictionary of related models from select_related
+- `extracted` (`Dict`): dictionary with already extracted models
 
 <a name="queryset.utils.extract_models_to_dict_of_lists"></a>
 #### extract\_models\_to\_dict\_of\_lists
@@ -162,14 +162,14 @@ with all children models under their relation keys.
 
 **Arguments**:
 
-- `model_type (Type[Model])`: parent model class
-- `models (List[Model])`: list of models from which related models should be extracted.
-- `select_dict (Dict)`: dictionary of related models from select_related
-- `extracted (Dict)`: dictionary with already extracted models
+- `model_type` (`Type[Model]`): parent model class
+- `models` (`List[Model]`): list of models from which related models should be extracted.
+- `select_dict` (`Dict`): dictionary of related models from select_related
+- `extracted` (`Dict`): dictionary with already extracted models
 
 **Returns**:
 
-`(Dict)`: dictionary of lists f related models
+`Dict`: dictionary of lists f related models
 
 <a name="queryset.utils.get_relationship_alias_model_and_str"></a>
 #### get\_relationship\_alias\_model\_and\_str
@@ -183,12 +183,12 @@ constructed, extracts alias based on last relation leading to target model.
 
 **Arguments**:
 
-- `related_parts (Union[List, List[str]])`: list of related names extracted from string
-- `source_model (Type[Model])`: model from which relation starts
+- `related_parts` (`Union[List, List[str]]`): list of related names extracted from string
+- `source_model` (`Type[Model]`): model from which relation starts
 
 **Returns**:
 
-`(Tuple[str, Type["Model"], str])`: table prefix, target model and relation string
+`Tuple[str, Type["Model"], str]`: table prefix, target model and relation string
 
 <a name="queryset.utils._process_through_field"></a>
 #### \_process\_through\_field
@@ -201,13 +201,13 @@ Helper processing through models as they need to be treated differently.
 
 **Arguments**:
 
-- `related_parts (List[str])`: split relation string
-- `relation (str)`: relation name
-- `related_field ("ForeignKeyField")`: field with relation declaration
-- `previous_model (Type["Model"])`: model from which relation is coming
-- `previous_models (List[Type["Model"]])`: list of already visited models in relation chain
+- `related_parts` (`List[str]`): split relation string
+- `relation` (`str`): relation name
+- `related_field` (`"ForeignKeyField"`): field with relation declaration
+- `previous_model` (`Type["Model"]`): model from which relation is coming
+- `previous_models` (`List[Type["Model"]]`): list of already visited models in relation chain
 
 **Returns**:
 
-`(Tuple[Type["Model"], str, bool])`: previous_model, relation, is_through
+`Tuple[Type["Model"], str, bool]`: previous_model, relation, is_through
 

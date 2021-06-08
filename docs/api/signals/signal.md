@@ -12,11 +12,11 @@ Checks if function accepts **kwargs.
 
 **Arguments**:
 
-- `func (function)`: function which signature needs to be checked
+- `func` (`function`): function which signature needs to be checked
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="signals.signal.make_id"></a>
 #### make\_id
@@ -29,11 +29,11 @@ Creates id of a function or method to be used as key to store signal
 
 **Arguments**:
 
-- `target (Any)`: target which id we want
+- `target` (`Any`): target which id we want
 
 **Returns**:
 
-`(int)`: id of the target
+`int`: id of the target
 
 <a name="signals.signal.Signal"></a>
 ## Signal Objects
@@ -61,7 +61,7 @@ or not accept **kwargs
 
 **Arguments**:
 
-- `receiver (Callable)`: receiver function
+- `receiver` (`Callable`): receiver function
 
 <a name="signals.signal.Signal.disconnect"></a>
 #### disconnect
@@ -74,11 +74,11 @@ Removes the receiver function from the signal.
 
 **Arguments**:
 
-- `receiver (Callable)`: receiver function
+- `receiver` (`Callable`): receiver function
 
 **Returns**:
 
-`(bool)`: flag if receiver was removed
+`bool`: flag if receiver was removed
 
 <a name="signals.signal.Signal.send"></a>
 #### send
@@ -91,8 +91,8 @@ Notifies all receiver functions with given kwargs
 
 **Arguments**:
 
-- `sender (Type["Model"])`: model that sends the signal
-- `kwargs (Any)`: arguments passed to receivers
+- `sender` (`Type["Model"]`): model that sends the signal
+- `kwargs` (`Any`): arguments passed to receivers
 
 <a name="signals.signal.SignalEmitter"></a>
 ## SignalEmitter Objects

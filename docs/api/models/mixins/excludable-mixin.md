@@ -23,12 +23,12 @@ passed items.
 
 **Arguments**:
 
-- `items (Union[Set, Dict, None])`: bag of items to include or exclude
-- `key (str)`: name of the child to extract
+- `items` (`Union[Set, Dict, None]`): bag of items to include or exclude
+- `key` (`str`): name of the child to extract
 
 **Returns**:
 
-`(Union[Set, Dict, None])`: child extracted from items if exists
+`Union[Set, Dict, None]`: child extracted from items if exists
 
 <a name="models.mixins.excludable_mixin.ExcludableMixin._populate_pk_column"></a>
 #### \_populate\_pk\_column
@@ -43,20 +43,20 @@ column names that are selected.
 
 **Arguments**:
 
-- `model (Type["Model"])`: model on columns are selected
-- `columns (List[str])`: list of columns names
-- `use_alias (bool)`: flag to set if aliases or field names should be used
+- `model` (`Type["Model"]`): model on columns are selected
+- `columns` (`List[str]`): list of columns names
+- `use_alias` (`bool`): flag to set if aliases or field names should be used
 
 **Returns**:
 
-`(List[str])`: list of columns names with pk column in it
+`List[str]`: list of columns names with pk column in it
 
 <a name="models.mixins.excludable_mixin.ExcludableMixin.own_table_columns"></a>
 #### own\_table\_columns
 
 ```python
  | @classmethod
- | own_table_columns(cls, model: Union[Type["Model"], Type["ModelRow"]], excludable: ExcludableItems, alias: str = "", use_alias: bool = False) -> List[str]
+ | own_table_columns(cls, model: Union[Type["Model"], Type["ModelRow"]], excludable: ExcludableItems, alias: str = "", use_alias: bool = False, add_pk_columns: bool = True) -> List[str]
 ```
 
 Returns list of aliases or field names for given model.
@@ -69,14 +69,15 @@ Primary key field is always added and cannot be excluded (will be added anyway).
 
 **Arguments**:
 
-- `alias (str)`: relation prefix
-- `excludable (ExcludableItems)`: structure of fields to include and exclude
-- `model (Type["Model"])`: model on columns are selected
-- `use_alias (bool)`: flag if aliases or field names should be used
+- `add_pk_columns` (`bool`): flag if add primary key - always yes if ormar parses data
+- `alias` (`str`): relation prefix
+- `excludable` (`ExcludableItems`): structure of fields to include and exclude
+- `model` (`Type["Model"]`): model on columns are selected
+- `use_alias` (`bool`): flag if aliases or field names should be used
 
 **Returns**:
 
-`(List[str])`: list of column field names or aliases
+`List[str]`: list of column field names or aliases
 
 <a name="models.mixins.excludable_mixin.ExcludableMixin._update_excluded_with_related"></a>
 #### \_update\_excluded\_with\_related
@@ -95,11 +96,30 @@ exclusion, for nested models all related models are excluded.
 
 **Arguments**:
 
-- `exclude (Union[Set, Dict, None])`: set/dict with fields to exclude
+- `exclude` (`Union[Set, Dict, None]`): set/dict with fields to exclude
 
 **Returns**:
 
-`(Union[Set, Dict])`: set or dict with excluded fields added.
+`Union[Set, Dict]`: set or dict with excluded fields added.
+
+<a name="models.mixins.excludable_mixin.ExcludableMixin._update_excluded_with_pks_and_through"></a>
+#### \_update\_excluded\_with\_pks\_and\_through
+
+```python
+ | @classmethod
+ | _update_excluded_with_pks_and_through(cls, exclude: Set, exclude_primary_keys: bool, exclude_through_models: bool) -> Set
+```
+
+Updates excluded names with name of pk column if exclude flag is set.
+
+**Arguments**:
+
+- `exclude` (`Set`): set of names to exclude
+- `exclude_primary_keys` (`bool`): flag if the primary keys should be excluded
+
+**Returns**:
+
+`Set`: set updated with pk if flag is set
 
 <a name="models.mixins.excludable_mixin.ExcludableMixin.get_names_to_exclude"></a>
 #### get\_names\_to\_exclude
@@ -120,10 +140,10 @@ them with dicts constructed from those db rows.
 
 **Arguments**:
 
-- `alias (str)`: alias of current relation
-- `excludable (ExcludableItems)`: structure of fields to include and exclude
+- `alias` (`str`): alias of current relation
+- `excludable` (`ExcludableItems`): structure of fields to include and exclude
 
 **Returns**:
 
-`(Set)`: set of field names that should be excluded
+`Set`: set of field names that should be excluded
 

@@ -12,14 +12,14 @@ Checks if the given field should be nullable/ optional based on parameters given
 
 **Arguments**:
 
-- `nullable (Optional[bool])`: flag explicit setting a column as nullable
-- `default (Any)`: value or function to be called as default in python
-- `server_default (Any)`: function to be called as default by sql server
-- `pydantic_only (Optional[bool])`: flag if fields should not be included in the sql table
+- `nullable` (`Optional[bool]`): flag explicit setting a column as nullable
+- `default` (`Any`): value or function to be called as default in python
+- `server_default` (`Any`): function to be called as default by sql server
+- `pydantic_only` (`Optional[bool]`): flag if fields should not be included in the sql table
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="fields.model_fields.is_auto_primary_key"></a>
 #### is\_auto\_primary\_key
@@ -32,12 +32,12 @@ Checks if field is an autoincrement pk -> if yes it's optional.
 
 **Arguments**:
 
-- `primary_key (bool)`: flag if field is a pk field
-- `autoincrement (bool)`: flag if field should be autoincrement
+- `primary_key` (`bool`): flag if field is a pk field
+- `autoincrement` (`bool`): flag if field should be autoincrement
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="fields.model_fields.ModelFieldFactory"></a>
 ## ModelFieldFactory Objects
@@ -61,11 +61,11 @@ Accepts required and optional parameters that each column type accepts.
 
 **Arguments**:
 
-- `kwargs (Any)`: key, value pairs of sqlalchemy options
+- `kwargs` (`Any`): key, value pairs of sqlalchemy options
 
 **Returns**:
 
-`(sqlalchemy Column)`: initialized column with proper options
+`sqlalchemy Column`: initialized column with proper options
 
 <a name="fields.model_fields.ModelFieldFactory.validate"></a>
 #### validate
@@ -79,7 +79,7 @@ Used to validate if all required parameters on a given field type are set.
 
 **Arguments**:
 
-- `kwargs (Any)`: all params passed during construction
+- `kwargs` (`Any`): all params passed during construction
 
 <a name="fields.model_fields.String"></a>
 ## String Objects
@@ -103,11 +103,11 @@ Accepts required and optional parameters that each column type accepts.
 
 **Arguments**:
 
-- `kwargs (Any)`: key, value pairs of sqlalchemy options
+- `kwargs` (`Any`): key, value pairs of sqlalchemy options
 
 **Returns**:
 
-`(sqlalchemy Column)`: initialized column with proper options
+`sqlalchemy Column`: initialized column with proper options
 
 <a name="fields.model_fields.String.validate"></a>
 #### validate
@@ -121,7 +121,7 @@ Used to validate if all required parameters on a given field type are set.
 
 **Arguments**:
 
-- `kwargs (Any)`: all params passed during construction
+- `kwargs` (`Any`): all params passed during construction
 
 <a name="fields.model_fields.Integer"></a>
 ## Integer Objects
@@ -145,11 +145,11 @@ Accepts required and optional parameters that each column type accepts.
 
 **Arguments**:
 
-- `kwargs (Any)`: key, value pairs of sqlalchemy options
+- `kwargs` (`Any`): key, value pairs of sqlalchemy options
 
 **Returns**:
 
-`(sqlalchemy Column)`: initialized column with proper options
+`sqlalchemy Column`: initialized column with proper options
 
 <a name="fields.model_fields.Text"></a>
 ## Text Objects
@@ -173,11 +173,11 @@ Accepts required and optional parameters that each column type accepts.
 
 **Arguments**:
 
-- `kwargs (Any)`: key, value pairs of sqlalchemy options
+- `kwargs` (`Any`): key, value pairs of sqlalchemy options
 
 **Returns**:
 
-`(sqlalchemy Column)`: initialized column with proper options
+`sqlalchemy Column`: initialized column with proper options
 
 <a name="fields.model_fields.Float"></a>
 ## Float Objects
@@ -201,11 +201,11 @@ Accepts required and optional parameters that each column type accepts.
 
 **Arguments**:
 
-- `kwargs (Any)`: key, value pairs of sqlalchemy options
+- `kwargs` (`Any`): key, value pairs of sqlalchemy options
 
 **Returns**:
 
-`(sqlalchemy Column)`: initialized column with proper options
+`sqlalchemy Column`: initialized column with proper options
 
 <a name="fields.model_fields.DateTime"></a>
 ## DateTime Objects
@@ -229,11 +229,11 @@ Accepts required and optional parameters that each column type accepts.
 
 **Arguments**:
 
-- `kwargs (Any)`: key, value pairs of sqlalchemy options
+- `kwargs` (`Any`): key, value pairs of sqlalchemy options
 
 **Returns**:
 
-`(sqlalchemy Column)`: initialized column with proper options
+`sqlalchemy Column`: initialized column with proper options
 
 <a name="fields.model_fields.Date"></a>
 ## Date Objects
@@ -257,11 +257,11 @@ Accepts required and optional parameters that each column type accepts.
 
 **Arguments**:
 
-- `kwargs (Any)`: key, value pairs of sqlalchemy options
+- `kwargs` (`Any`): key, value pairs of sqlalchemy options
 
 **Returns**:
 
-`(sqlalchemy Column)`: initialized column with proper options
+`sqlalchemy Column`: initialized column with proper options
 
 <a name="fields.model_fields.Time"></a>
 ## Time Objects
@@ -285,11 +285,11 @@ Accepts required and optional parameters that each column type accepts.
 
 **Arguments**:
 
-- `kwargs (Any)`: key, value pairs of sqlalchemy options
+- `kwargs` (`Any`): key, value pairs of sqlalchemy options
 
 **Returns**:
 
-`(sqlalchemy Column)`: initialized column with proper options
+`sqlalchemy Column`: initialized column with proper options
 
 <a name="fields.model_fields.JSON"></a>
 ## JSON Objects
@@ -313,11 +313,11 @@ Accepts required and optional parameters that each column type accepts.
 
 **Arguments**:
 
-- `kwargs (Any)`: key, value pairs of sqlalchemy options
+- `kwargs` (`Any`): key, value pairs of sqlalchemy options
 
 **Returns**:
 
-`(sqlalchemy Column)`: initialized column with proper options
+`sqlalchemy Column`: initialized column with proper options
 
 <a name="fields.model_fields.BigInteger"></a>
 ## BigInteger Objects
@@ -341,11 +341,11 @@ Accepts required and optional parameters that each column type accepts.
 
 **Arguments**:
 
-- `kwargs (Any)`: key, value pairs of sqlalchemy options
+- `kwargs` (`Any`): key, value pairs of sqlalchemy options
 
 **Returns**:
 
-`(sqlalchemy Column)`: initialized column with proper options
+`sqlalchemy Column`: initialized column with proper options
 
 <a name="fields.model_fields.Decimal"></a>
 ## Decimal Objects
@@ -369,11 +369,11 @@ Accepts required and optional parameters that each column type accepts.
 
 **Arguments**:
 
-- `kwargs (Any)`: key, value pairs of sqlalchemy options
+- `kwargs` (`Any`): key, value pairs of sqlalchemy options
 
 **Returns**:
 
-`(sqlalchemy Column)`: initialized column with proper options
+`sqlalchemy Column`: initialized column with proper options
 
 <a name="fields.model_fields.Decimal.validate"></a>
 #### validate
@@ -387,7 +387,7 @@ Used to validate if all required parameters on a given field type are set.
 
 **Arguments**:
 
-- `kwargs (Any)`: all params passed during construction
+- `kwargs` (`Any`): all params passed during construction
 
 <a name="fields.model_fields.UUID"></a>
 ## UUID Objects
@@ -411,9 +411,9 @@ Accepts required and optional parameters that each column type accepts.
 
 **Arguments**:
 
-- `kwargs (Any)`: key, value pairs of sqlalchemy options
+- `kwargs` (`Any`): key, value pairs of sqlalchemy options
 
 **Returns**:
 
-`(sqlalchemy Column)`: initialized column with proper options
+`sqlalchemy Column`: initialized column with proper options
 

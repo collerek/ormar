@@ -21,13 +21,13 @@ Adds new Node or returns the existing one
 
 **Arguments**:
 
-- `node_class (ormar.models.metaclass.ModelMetaclass)`: Model in current node
-- `relation_name (str)`: name of the current relation
-- `parent_node (Optional[Node])`: parent node
+- `node_class` (`ormar.models.metaclass.ModelMetaclass`): Model in current node
+- `relation_name` (`str`): name of the current relation
+- `parent_node` (`Optional[Node]`): parent node
 
 **Returns**:
 
-`(Node)`: returns new or already existing node
+`Node`: returns new or already existing node
 
 <a name="models.traversible.NodeList.find"></a>
 #### find
@@ -40,13 +40,13 @@ Searches for existing node with given parameters
 
 **Arguments**:
 
-- `node_class (ormar.models.metaclass.ModelMetaclass)`: Model in current node
-- `relation_name (str)`: name of the current relation
-- `parent_node (Optional[Node])`: parent node
+- `node_class` (`ormar.models.metaclass.ModelMetaclass`): Model in current node
+- `relation_name` (`str`): name of the current relation
+- `parent_node` (`Optional[Node]`): parent node
 
 **Returns**:
 
-`(Optional[Node])`: returns already existing node or None
+`Optional[Node]`: returns already existing node or None
 
 <a name="models.traversible.Node"></a>
 ## Node Objects
@@ -70,9 +70,9 @@ Relation was visited if one of the parent node had the same Model class
 
 **Arguments**:
 
-- `relation_name (str)`: name of relation
+- `relation_name` (`str`): name of relation
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 

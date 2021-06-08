@@ -21,11 +21,11 @@ For save kwargs are ignored, used only in update if provided.
 
 **Arguments**:
 
-- `kwargs (Any)`: list of fields to update
+- `kwargs` (`Any`): list of fields to update
 
 **Returns**:
 
-`(Model)`: saved Model
+`Model`: saved Model
 
 <a name="models.model.Model.save"></a>
 #### save
@@ -54,7 +54,7 @@ Sets model save status to True.
 
 **Returns**:
 
-`(Model)`: saved Model
+`Model`: saved Model
 
 <a name="models.model.Model.save_related"></a>
 #### save\_related
@@ -79,20 +79,20 @@ Nested relations of those kind need to be persisted manually.
 
 **Arguments**:
 
-- `relation_field (Optional[ForeignKeyField])`: field with relation leading to this model
-- `previous_model (Model)`: previous model from which method came
-- `exclude (Union[Set, Dict])`: items to exclude during saving of relations
-- `relation_map (Dict)`: map of relations to follow
-- `save_all (bool)`: flag if all models should be saved or only not saved ones
-- `follow (bool)`: flag to trigger deep save -
 by default only directly related models are saved
 with follow=True also related models of related models are saved
-- `update_count (int)`: internal parameter for recursive calls -
 number of updated instances
+- `relation_field` (`Optional[ForeignKeyField]`): field with relation leading to this model
+- `previous_model` (`Model`): previous model from which method came
+- `exclude` (`Union[Set, Dict]`): items to exclude during saving of relations
+- `relation_map` (`Dict`): map of relations to follow
+- `save_all` (`bool`): flag if all models should be saved or only not saved ones
+- `follow` (`bool`): flag to trigger deep save -
+- `update_count` (`int`): internal parameter for recursive calls -
 
 **Returns**:
 
-`(int)`: number of updated/saved models
+`int`: number of updated/saved models
 
 <a name="models.model.Model.update"></a>
 #### update
@@ -110,8 +110,8 @@ Sets model save status to True.
 
 **Arguments**:
 
-- `_columns (List)`: list of columns to update, if None all are updated
-- `kwargs (Any)`: list of fields to update as field=value pairs
+- `_columns` (`List`): list of columns to update, if None all are updated
+- `kwargs` (`Any`): list of fields to update as field=value pairs
 
 **Raises**:
 
@@ -119,7 +119,7 @@ Sets model save status to True.
 
 **Returns**:
 
-`(Model)`: updated Model
+`Model`: updated Model
 
 <a name="models.model.Model.delete"></a>
 #### delete
@@ -140,7 +140,7 @@ or update and the Model will be saved in database again.
 
 **Returns**:
 
-`(int)`: number of deleted rows (for some backends)
+`int`: number of deleted rows (for some backends)
 
 <a name="models.model.Model.load"></a>
 #### load
@@ -159,7 +159,7 @@ Does NOT refresh the related models fields if they were loaded before.
 
 **Returns**:
 
-`(Model)`: reloaded Model
+`Model`: reloaded Model
 
 <a name="models.model.Model.load_all"></a>
 #### load\_all
@@ -185,11 +185,11 @@ Nested relations of those kind need to be loaded manually.
 
 **Arguments**:
 
-- `order_by (Union[List, str])`: columns by which models should be sorted
-- `exclude (Union[List, str, Set, Dict])`: related models to exclude
-- `follow (bool)`: flag to trigger deep save -
 by default only directly related models are saved
 with follow=True also related models of related models are saved
+- `order_by` (`Union[List, str]`): columns by which models should be sorted
+- `exclude` (`Union[List, str, Set, Dict]`): related models to exclude
+- `follow` (`bool`): flag to trigger deep save -
 
 **Raises**:
 
@@ -197,5 +197,5 @@ with follow=True also related models of related models are saved
 
 **Returns**:
 
-`(Model)`: reloaded Model
+`Model`: reloaded Model
 

@@ -13,11 +13,11 @@ are ForwardRefs that needs to be updated before proceeding.
 
 **Arguments**:
 
-- `field (Type[BaseField])`: model field to verify
+- `field` (`Type[BaseField]`): model field to verify
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="models.helpers.models.populate_default_options_values"></a>
 #### populate\_default\_options\_values
@@ -37,8 +37,8 @@ Current options are:
 
 **Arguments**:
 
-- `new_model (Model class)`: newly constructed Model
-- `model_fields (Union[Dict[str, type], Dict])`: dict of model fields
+- `new_model` (`Model class`): newly constructed Model
+- `model_fields` (`Union[Dict[str, type], Dict]`): dict of model fields
 
 <a name="models.helpers.models.substitue_backend_pool_for_sqlite"></a>
 #### substitue\_backend\_pool\_for\_sqlite
@@ -52,7 +52,7 @@ executes "PRAGMA foreign_keys=1; on initialization to enable foreign keys.
 
 **Arguments**:
 
-- `new_model (Model class)`: newly declared ormar Model
+- `new_model` (`Model class`): newly declared ormar Model
 
 <a name="models.helpers.models.check_required_meta_parameters"></a>
 #### check\_required\_meta\_parameters
@@ -67,7 +67,7 @@ Recreates Connection pool for sqlite3
 
 **Arguments**:
 
-- `new_model (Model class)`: newly declared ormar Model
+- `new_model` (`Model class`): newly declared ormar Model
 
 <a name="models.helpers.models.extract_annotations_and_default_vals"></a>
 #### extract\_annotations\_and\_default\_vals
@@ -81,11 +81,11 @@ extraction of ormar model_fields.
 
 **Arguments**:
 
-- `attrs (Dict)`: namespace of the class created
+- `attrs` (`Dict`): namespace of the class created
 
 **Returns**:
 
-`(Tuple[Dict, Dict])`: namespace of the class updated, dict of extracted model_fields
+`Tuple[Dict, Dict]`: namespace of the class updated, dict of extracted model_fields
 
 <a name="models.helpers.models.group_related_list"></a>
 #### group\_related\_list
@@ -106,11 +106,11 @@ Result dictionary is sorted by length of the values and by key
 
 **Arguments**:
 
-- `list_ (List[str])`: list of related models used in select related
+- `list_` (`List[str]`): list of related models used in select related
 
 **Returns**:
 
-`(Dict[str, List])`: list converted to dictionary to avoid repetition and group nested models
+`Dict[str, List]`: list converted to dictionary to avoid repetition and group nested models
 
 <a name="models.helpers.models.meta_field_not_set"></a>
 #### meta\_field\_not\_set
@@ -125,10 +125,10 @@ Then check if it's set to something truthful
 
 **Arguments**:
 
-- `model (Model class)`: newly constructed model
-- `field_name (str)`: name of the ormar field
+- `model` (`Model class`): newly constructed model
+- `field_name` (`str`): name of the ormar field
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 

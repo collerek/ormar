@@ -13,11 +13,11 @@ changes one of the sides of the relation into weakref.proxy to model.
 
 **Arguments**:
 
-- `to_field (ForeignKeyField)`: field with relation definition
-- `parent (Model)`: parent model
-- `child (Model)`: child model
+- `to_field` (`ForeignKeyField`): field with relation definition
+- `parent` (`Model`): parent model
+- `child` (`Model`): child model
 
 **Returns**:
 
-`(Tuple["Model", "Model", str, str])`: parent, child, child_name, to_name
+`Tuple["Model", "Model", str, str]`: parent, child, child_name, to_name
 

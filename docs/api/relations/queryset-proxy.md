@@ -23,7 +23,7 @@ Returns queryset if it's set, AttributeError otherwise.
 
 **Returns**:
 
-`(QuerySet)`: QuerySet
+`QuerySet`: QuerySet
 
 <a name="relations.querysetproxy.QuerysetProxy.queryset"></a>
 #### queryset
@@ -37,7 +37,7 @@ Set's the queryset. Initialized in RelationProxy.
 
 **Arguments**:
 
-- `value (QuerySet)`: QuerySet
+- `value` (`QuerySet`): QuerySet
 
 <a name="relations.querysetproxy.QuerysetProxy._assign_child_to_parent"></a>
 #### \_assign\_child\_to\_parent
@@ -50,7 +50,7 @@ Registers child in parents RelationManager.
 
 **Arguments**:
 
-- `child (Model)`: child to register on parent side.
+- `child` (`Model`): child to register on parent side.
 
 <a name="relations.querysetproxy.QuerysetProxy._register_related"></a>
 #### \_register\_related
@@ -63,7 +63,7 @@ Registers child/ children in parents RelationManager.
 
 **Arguments**:
 
-- `child (Union[Model,List[Model]])`: child or list of children models to register.
+- `child` (`Union[Model,List[Model]]`): child or list of children models to register.
 
 <a name="relations.querysetproxy.QuerysetProxy._clean_items_on_load"></a>
 #### \_clean\_items\_on\_load
@@ -85,8 +85,8 @@ Crete a through model instance in the database for m2m relations.
 
 **Arguments**:
 
-- `kwargs (Any)`: dict of additional keyword arguments for through instance
-- `child (Model)`: child model instance
+- `kwargs` (`Any`): dict of additional keyword arguments for through instance
+- `child` (`Model`): child model instance
 
 <a name="relations.querysetproxy.QuerysetProxy.update_through_instance"></a>
 #### update\_through\_instance
@@ -99,8 +99,8 @@ Updates a through model instance in the database for m2m relations.
 
 **Arguments**:
 
-- `kwargs (Any)`: dict of additional keyword arguments for through instance
-- `child (Model)`: child model instance
+- `kwargs` (`Any`): dict of additional keyword arguments for through instance
+- `child` (`Model`): child model instance
 
 <a name="relations.querysetproxy.QuerysetProxy.upsert_through_instance"></a>
 #### upsert\_through\_instance
@@ -114,8 +114,8 @@ it already exists, else creates one.
 
 **Arguments**:
 
-- `kwargs (Any)`: dict of additional keyword arguments for through instance
-- `child (Model)`: child model instance
+- `kwargs` (`Any`): dict of additional keyword arguments for through instance
+- `child` (`Model`): child model instance
 
 <a name="relations.querysetproxy.QuerysetProxy.delete_through_instance"></a>
 #### delete\_through\_instance
@@ -128,7 +128,7 @@ Removes through model instance from the database for m2m relations.
 
 **Arguments**:
 
-- `child (Model)`: child model instance
+- `child` (`Model`): child model instance
 
 <a name="relations.querysetproxy.QuerysetProxy.exists"></a>
 #### exists
@@ -144,7 +144,7 @@ Actual call delegated to QuerySet.
 
 **Returns**:
 
-`(bool)`: result of the check
+`bool`: result of the check
 
 <a name="relations.querysetproxy.QuerysetProxy.count"></a>
 #### count
@@ -160,7 +160,7 @@ Actual call delegated to QuerySet.
 
 **Returns**:
 
-`(int)`: number of rows
+`int`: number of rows
 
 <a name="relations.querysetproxy.QuerysetProxy.max"></a>
 #### max
@@ -174,7 +174,7 @@ Returns max value of columns for rows matching the given criteria
 
 **Returns**:
 
-`(Any)`: max value of column(s)
+`Any`: max value of column(s)
 
 <a name="relations.querysetproxy.QuerysetProxy.min"></a>
 #### min
@@ -188,7 +188,7 @@ Returns min value of columns for rows matching the given criteria
 
 **Returns**:
 
-`(Any)`: min value of column(s)
+`Any`: min value of column(s)
 
 <a name="relations.querysetproxy.QuerysetProxy.sum"></a>
 #### sum
@@ -202,7 +202,7 @@ Returns sum value of columns for rows matching the given criteria
 
 **Returns**:
 
-`(int)`: sum value of columns
+`int`: sum value of columns
 
 <a name="relations.querysetproxy.QuerysetProxy.avg"></a>
 #### avg
@@ -216,7 +216,7 @@ Returns avg value of columns for rows matching the given criteria
 
 **Returns**:
 
-`(Union[int, float, List])`: avg value of columns
+`Union[int, float, List]`: avg value of columns
 
 <a name="relations.querysetproxy.QuerysetProxy.clear"></a>
 #### clear
@@ -235,12 +235,12 @@ will be deleted, and not only removed from relation).
 
 **Arguments**:
 
-- `keep_reversed (bool)`: flag if reverse models in reverse FK should be deleted
 or not, keep_reversed=False deletes them from database.
+- `keep_reversed` (`bool`): flag if reverse models in reverse FK should be deleted
 
 **Returns**:
 
-`(int)`: number of deleted models
+`int`: number of deleted models
 
 <a name="relations.querysetproxy.QuerysetProxy.first"></a>
 #### first
@@ -253,15 +253,18 @@ Gets the first row from the db ordered by primary key column ascending.
 
 Actual call delegated to QuerySet.
 
+Passing args and/or kwargs is a shortcut and equals to calling
+`filter(*args, **kwargs).first()`.
+
 List of related models is cleared before the call.
 
 **Arguments**:
 
-- `kwargs ()`: 
+- `kwargs`: 
 
 **Returns**:
 
-`(_asyncio.Future)`: 
+`_asyncio.Future`: 
 
 <a name="relations.querysetproxy.QuerysetProxy.get_or_none"></a>
 #### get\_or\_none
@@ -274,17 +277,18 @@ Get's the first row from the db meeting the criteria set by kwargs.
 
 If no criteria set it will return the last row in db sorted by pk.
 
-Passing a criteria is actually calling filter(**kwargs) method described below.
+Passing args and/or kwargs is a shortcut and equals to calling
+`filter(*args, **kwargs).get_or_none()`.
 
 If not match is found None will be returned.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(Model)`: returned model
+`Model`: returned model
 
 <a name="relations.querysetproxy.QuerysetProxy.get"></a>
 #### get
@@ -297,7 +301,8 @@ Get's the first row from the db meeting the criteria set by kwargs.
 
 If no criteria set it will return the last row in db sorted by pk.
 
-Passing a criteria is actually calling filter(**kwargs) method described below.
+Passing args and/or kwargs is a shortcut and equals to calling
+`filter(*args, **kwargs).get()`.
 
 Actual call delegated to QuerySet.
 
@@ -310,22 +315,23 @@ List of related models is cleared before the call.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(Model)`: returned model
+`Model`: returned model
 
 <a name="relations.querysetproxy.QuerysetProxy.all"></a>
 #### all
 
 ```python
- | async all(*args: Any, **kwargs: Any) -> List[Optional["T"]]
+ | async all(*args: Any, **kwargs: Any) -> List["T"]
 ```
 
 Returns all rows from a database for given model for set filter options.
 
-Passing kwargs is a shortcut and equals to calling `filter(**kwrags).all()`.
+Passing args and/or kwargs is a shortcut and equals to calling
+`filter(*args, **kwargs).all()`.
 
 If there are no rows meeting the criteria an empty list is returned.
 
@@ -335,11 +341,11 @@ List of related models is cleared before the call.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(List[Model])`: list of returned models
+`List[Model]`: list of returned models
 
 <a name="relations.querysetproxy.QuerysetProxy.create"></a>
 #### create
@@ -359,11 +365,11 @@ Actual call delegated to QuerySet.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(Model)`: created model
+`Model`: created model
 
 <a name="relations.querysetproxy.QuerysetProxy.update"></a>
 #### update
@@ -379,12 +385,12 @@ each=True flag to affect whole table.
 
 **Arguments**:
 
-- `each (bool)`: flag if whole table should be affected if no filter is passed
-- `kwargs (Any)`: fields names and proper value types
+- `each` (`bool`): flag if whole table should be affected if no filter is passed
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(int)`: number of updated rows
+`int`: number of updated rows
 
 <a name="relations.querysetproxy.QuerysetProxy.get_or_create"></a>
 #### get\_or\_create
@@ -401,11 +407,11 @@ it creates a new one with given kwargs.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(Model)`: returned or created Model
+`Model`: returned or created Model
 
 <a name="relations.querysetproxy.QuerysetProxy.update_or_create"></a>
 #### update\_or\_create
@@ -420,11 +426,11 @@ Actual call delegated to QuerySet.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(Model)`: updated or created model
+`Model`: updated or created model
 
 <a name="relations.querysetproxy.QuerysetProxy.filter"></a>
 #### filter
@@ -458,11 +464,11 @@ Actual call delegated to QuerySet.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(QuerysetProxy)`: filtered QuerysetProxy
+`QuerysetProxy`: filtered QuerysetProxy
 
 <a name="relations.querysetproxy.QuerysetProxy.exclude"></a>
 #### exclude
@@ -487,11 +493,11 @@ Actual call delegated to QuerySet.
 
 **Arguments**:
 
-- `kwargs (Any)`: fields names and proper value types
+- `kwargs` (`Any`): fields names and proper value types
 
 **Returns**:
 
-`(QuerysetProxy)`: filtered QuerysetProxy
+`QuerysetProxy`: filtered QuerysetProxy
 
 <a name="relations.querysetproxy.QuerysetProxy.select_all"></a>
 #### select\_all
@@ -514,13 +520,13 @@ Nested relations of those kind need to be loaded manually.
 
 **Arguments**:
 
-- `follow (bool)`: flag to trigger deep save -
 by default only directly related models are saved
 with follow=True also related models of related models are saved
+- `follow` (`bool`): flag to trigger deep save -
 
 **Returns**:
 
-`(Model)`: reloaded Model
+`Model`: reloaded Model
 
 <a name="relations.querysetproxy.QuerysetProxy.select_related"></a>
 #### select\_related
@@ -543,11 +549,11 @@ Actual call delegated to QuerySet.
 
 **Arguments**:
 
-- `related (Union[List, str])`: list of relation field names, can be linked by '__' to nest
+- `related` (`Union[List, str]`): list of relation field names, can be linked by '__' to nest
 
 **Returns**:
 
-`(QuerysetProxy)`: QuerysetProxy
+`QuerysetProxy`: QuerysetProxy
 
 <a name="relations.querysetproxy.QuerysetProxy.prefetch_related"></a>
 #### prefetch\_related
@@ -571,11 +577,11 @@ Actual call delegated to QuerySet.
 
 **Arguments**:
 
-- `related (Union[List, str])`: list of relation field names, can be linked by '__' to nest
+- `related` (`Union[List, str]`): list of relation field names, can be linked by '__' to nest
 
 **Returns**:
 
-`(QuerysetProxy)`: QuerysetProxy
+`QuerysetProxy`: QuerysetProxy
 
 <a name="relations.querysetproxy.QuerysetProxy.paginate"></a>
 #### paginate
@@ -591,12 +597,12 @@ Actual call delegated to QuerySet.
 
 **Arguments**:
 
-- `page_size (int)`: numbers of items per page
-- `page (int)`: page number
+- `page_size` (`int`): numbers of items per page
+- `page` (`int`): page number
 
 **Returns**:
 
-`(QuerySet)`: QuerySet
+`QuerySet`: QuerySet
 
 <a name="relations.querysetproxy.QuerysetProxy.limit"></a>
 #### limit
@@ -611,11 +617,11 @@ Actual call delegated to QuerySet.
 
 **Arguments**:
 
-- `limit_count (int)`: number of models to limit
+- `limit_count` (`int`): number of models to limit
 
 **Returns**:
 
-`(QuerysetProxy)`: QuerysetProxy
+`QuerysetProxy`: QuerysetProxy
 
 <a name="relations.querysetproxy.QuerysetProxy.offset"></a>
 #### offset
@@ -630,11 +636,11 @@ Actual call delegated to QuerySet.
 
 **Arguments**:
 
-- `offset (int)`: numbers of models to offset
+- `offset` (`int`): numbers of models to offset
 
 **Returns**:
 
-`(QuerysetProxy)`: QuerysetProxy
+`QuerysetProxy`: QuerysetProxy
 
 <a name="relations.querysetproxy.QuerysetProxy.fields"></a>
 #### fields
@@ -683,11 +689,11 @@ Actual call delegated to QuerySet.
 
 **Arguments**:
 
-- `columns (Union[List, str, Set, Dict])`: columns to include
+- `columns` (`Union[List, str, Set, Dict]`): columns to include
 
 **Returns**:
 
-`(QuerysetProxy)`: QuerysetProxy
+`QuerysetProxy`: QuerysetProxy
 
 <a name="relations.querysetproxy.QuerysetProxy.exclude_fields"></a>
 #### exclude\_fields
@@ -720,11 +726,11 @@ Actual call delegated to QuerySet.
 
 **Arguments**:
 
-- `columns (Union[List, str, Set, Dict])`: columns to exclude
+- `columns` (`Union[List, str, Set, Dict]`): columns to exclude
 
 **Returns**:
 
-`(QuerysetProxy)`: QuerysetProxy
+`QuerysetProxy`: QuerysetProxy
 
 <a name="relations.querysetproxy.QuerysetProxy.order_by"></a>
 #### order\_by
@@ -762,9 +768,9 @@ Actual call delegated to QuerySet.
 
 **Arguments**:
 
-- `columns (Union[List, str])`: columns by which models should be sorted
+- `columns` (`Union[List, str]`): columns by which models should be sorted
 
 **Returns**:
 
-`(QuerysetProxy)`: QuerysetProxy
+`QuerysetProxy`: QuerysetProxy
 

@@ -20,9 +20,9 @@ Note that "fields" exposed like this do not go through validation.
 
 **Arguments**:
 
-- `func (Callable)`: decorated function to be exposed
+- `func` (`Callable`): decorated function to be exposed
 
 **Returns**:
 
-`(Union[property, Callable])`: decorated function passed in func param, with set __property_field__ = True
+`Union[property, Callable]`: decorated function passed in func param, with set __property_field__ = True
 
