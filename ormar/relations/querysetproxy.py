@@ -276,6 +276,59 @@ class QuerysetProxy(Generic[T]):
             )
         return await queryset.delete(**kwargs)  # type: ignore
 
+    async def values(
+        self, fields: Union[List, str, Set, Dict] = None, exclude_through: bool = False
+    ) -> List:
+        """
+        Return a list of dictionaries with column values in order of the fields
+        passed or all fields from queried models.
+
+        To filter for given row use filter/exclude methods before values,
+        to limit number of rows use limit/offset or paginate before values.
+
+        Note that it always return a list even for one row from database.
+
+        :param exclude_through: flag if through models should be excluded
+        :type exclude_through: bool
+        :param fields: field name or list of field names to extract from db
+        :type fields:  Union[List, str, Set, Dict]
+        """
+        return await self.queryset.values(
+            fields=fields, exclude_through=exclude_through,
+        )
+
+    async def values_list(
+        self,
+        fields: Union[List, str, Set, Dict] = None,
+        flatten: bool = False,
+        exclude_through: bool = False,
+    ) -> List:
+        """
+        Return a list of tuples with column values in order of the fields passed or
+        all fields from queried models.
+
+        When one field is passed you can flatten the list of tuples into list of values
+        of that single field.
+
+        To filter for given row use filter/exclude methods before values,
+        to limit number of rows use limit/offset or paginate before values.
+
+        Note that it always return a list even for one row from database.
+
+        :param exclude_through: flag if through models should be excluded
+        :type exclude_through: bool
+        :param fields: field name or list of field names to extract from db
+        :type fields: Union[str, List[str]]
+        :param flatten: when one field is passed you can flatten the list of tuples
+        :type flatten: bool
+        """
+        return await self.queryset.values(
+            fields=fields,
+            exclude_through=exclude_through,
+            _as_dict=False,
+            _flatten=flatten,
+        )
+
     async def first(self, *args: Any, **kwargs: Any) -> "T":
         """
         Gets the first row from the db ordered by primary key column ascending.

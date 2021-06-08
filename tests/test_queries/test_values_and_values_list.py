@@ -355,3 +355,87 @@ async def test_queryset_values_multiple_select_related():
                 "posts__name": "Check this out, ormar now for free",
             },
         ]
+
+
+@pytest.mark.asyncio
+async def test_querysetproxy_values():
+    async with database:
+        role = (
+            await Role.objects.select_related("users__categories")
+            .filter(name="admin")
+            .get()
+        )
+        user = await role.users.values()
+        assert user == [
+            {
+                "id": 1,
+                "name": "Anonymous",
+                "roles__id": 1,
+                "roles__name": "admin",
+                "roleuser__id": 1,
+                "roleuser__role": 1,
+                "roleuser__user": 1,
+            }
+        ]
+
+        user = (
+            await role.users.filter(name="Anonymous")
+            .select_related("categories")
+            .fields({"name": ..., "categories": {"name"}})
+            .values(exclude_through=True)
+        )
+        assert user == [
+            {
+                "name": "Anonymous",
+                "roles__id": 1,
+                "roles__name": "admin",
+                "categories__name": "News",
+            }
+        ]
+
+        user = (
+            await role.users.filter(name="Anonymous")
+            .select_related("categories")
+            .fields({"name": ..., "categories": {"name"}})
+            .exclude_fields("roles")
+            .values(exclude_through=True)
+        )
+        assert user == [{"name": "Anonymous", "categories__name": "News"}]
+
+
+@pytest.mark.asyncio
+async def test_querysetproxy_values_list():
+    async with database:
+        role = (
+            await Role.objects.select_related("users__categories")
+            .filter(name="admin")
+            .get()
+        )
+        user = await role.users.values_list()
+        assert user == [(1, "Anonymous", 1, 1, 1, 1, "admin")]
+
+        user = (
+            await role.users.filter(name="Anonymous")
+            .select_related("categories")
+            .fields({"name": ..., "categories": {"name"}})
+            .values_list(exclude_through=True)
+        )
+        assert user == [("Anonymous", "News", 1, "admin")]
+
+        user = (
+            await role.users.filter(name="Anonymous")
+            .select_related("categories")
+            .fields({"name": ..., "categories": {"name"}})
+            .exclude_fields("roles")
+            .values_list(exclude_through=True)
+        )
+        assert user == [("Anonymous", "News")]
+
+        user = (
+            await role.users.filter(name="Anonymous")
+            .select_related("categories")
+            .fields({"name"})
+            .exclude_fields("roles")
+            .values_list(exclude_through=True, flatten=True)
+        )
+        assert user == ["Anonymous"]
