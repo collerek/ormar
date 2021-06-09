@@ -24,7 +24,7 @@ pytest
 pytest-cov
 codecov
 pytest-asyncio
-fastapi
+fastapi<=0.65.1
 flake8
 flake8-black
 flake8-bugbear
