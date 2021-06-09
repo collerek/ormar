@@ -15,6 +15,8 @@ metadata = sqlalchemy.MetaData()
 database = databases.Database(DATABASE_URL, force_rollback=True)
 app.state.database = database
 
+headers = {"content-type": "application/json"}
+
 
 @app.on_event("startup")
 async def startup() -> None:
@@ -106,7 +108,9 @@ def test_queries():
         wrong_category = {"name": "Test category2", "posts": [{"title": "Test Post"}]}
 
         # cannot add posts if skipped, will be ignored (with extra=ignore by default)
-        response = client.post("/categories/", data=json.dumps(wrong_category))
+        response = client.post(
+            "/categories/", data=json.dumps(wrong_category), headers=headers
+        )
         assert response.status_code == 200
         response = client.get("/categories/")
         assert response.status_code == 200
@@ -115,7 +119,9 @@ def test_queries():
         assert categories[0] is not None
         assert categories[0].name == "Test category2"
 
-        response = client.post("/categories/", data=json.dumps(right_category))
+        response = client.post(
+            "/categories/", data=json.dumps(right_category), headers=headers
+        )
         assert response.status_code == 200
 
         response = client.get("/categories/")
@@ -129,7 +135,7 @@ def test_queries():
             "author": {"first_name": "John", "last_name": "Smith"},
             "categories": [{"name": "New cat"}],
         }
-        response = client.post("/posts/", data=json.dumps(right_post))
+        response = client.post("/posts/", data=json.dumps(right_post), headers=headers)
         assert response.status_code == 200
 
         Category.__config__.extra = "allow"

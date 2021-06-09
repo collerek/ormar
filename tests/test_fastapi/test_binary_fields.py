@@ -20,6 +20,8 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 app.state.database = database
 
+headers = {"content-type": "application/json"}
+
 
 @app.on_event("startup")
 async def startup() -> None:
@@ -82,7 +84,9 @@ def test_read_main():
     client = TestClient(app)
     with client as client:
         response = client.post(
-            "/things", data=json.dumps({"bt": base64.b64encode(blob3).decode()})
+            "/things",
+            data=json.dumps({"bt": base64.b64encode(blob3).decode()}),
+            headers=headers,
         )
         assert response.status_code == 200
         response = client.get("/things")

@@ -16,6 +16,8 @@ metadata = sqlalchemy.MetaData()
 database = databases.Database(DATABASE_URL, force_rollback=True)
 app.state.database = database
 
+headers = {"content-type": "application/json"}
+
 
 @app.on_event("startup")
 async def startup() -> None:
@@ -151,7 +153,9 @@ def test_saving_related_in_fastapi():
                 },
             ],
         }
-        response = client.post("/departments/", data=json.dumps(payload))
+        response = client.post(
+            "/departments/", data=json.dumps(payload), headers=headers
+        )
         department = Department(**response.json())
 
         assert department.id is not None
