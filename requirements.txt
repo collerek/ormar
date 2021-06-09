@@ -19,7 +19,6 @@ psycopg2-binary
 mysqlclient
 
 # Testing
-mypy
 pytest
 pytest-cov
 codecov
@@ -36,6 +35,15 @@ flake8-variables-names
 flake8-cognitive-complexity
 flake8-functions
 flake8-expression-complexity
+
+# types
+mypy
+types-ujson
+types-PyMySQL
+types-ipaddress
+types-enum34
+types-cryptography
+types-orjson
 
 # Documantation
 mkdocs

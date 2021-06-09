@@ -64,7 +64,7 @@ jobs:
       env:
         DATABASE_URL: "sqlite:///testsuite"
       run: bash scripts/test.sh
-    - run: mypy --config-file mypy.ini ormar tests
+    - run: mypy --config-file mypy.ini --install-types ormar tests mypy
     - name: Upload coverage
       uses: codecov/codecov-action@v1
     - name: Test & publish code coverage
