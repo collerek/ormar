@@ -28,4 +28,4 @@ black:
 	black ormar tests
 
 mypy:
-	mypy --config-file mypy.ini --install-types ormar tests
+	mypy --config-file mypy.ini ormar tests

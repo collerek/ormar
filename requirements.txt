@@ -44,6 +44,10 @@ types-ipaddress
 types-enum34
 types-cryptography
 types-orjson
+types-aiofiles
+types-pkg_resources
+types-requests
+types-toml
 
 # Documantation
 mkdocs
