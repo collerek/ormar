@@ -82,6 +82,7 @@ class ModelMeta:
     requires_ref_update: bool
     orders_by: List[str]
     exclude_parent_fields: List[str]
+    has_compound_pk: bool
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:
@@ -576,7 +577,9 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             populate_choices_validators(new_model)
 
             if not new_model.Meta.abstract:
-                new_model = populate_meta_tablename_columns_and_pk(name, new_model)
+                new_model = populate_meta_tablename_columns_and_pk(
+                    name=name, new_model=new_model, attrs=attrs
+                )
                 populate_meta_sqlalchemy_table_if_required(new_model.Meta)
                 expand_reverse_relationships(new_model)
                 # TODO: iterate only related fields
@@ -584,13 +587,6 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                     register_relation_in_alias_manager(field=field)
                     add_field_descriptor(name=name, field=field, new_model=new_model)
 
-                if new_model.Meta.pkname not in attrs["__annotations__"]:
-                    field_name = new_model.Meta.pkname
-                    attrs["__annotations__"][field_name] = Optional[int]  # type: ignore
-                    attrs[field_name] = None
-                    new_model.__fields__[field_name] = get_pydantic_field(
-                        field_name=field_name, model=new_model
-                    )
                 new_model.Meta.alias_manager = alias_manager
 
                 for item in new_model.Meta.property_fields:
@@ -601,7 +597,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                         PropertyDescriptor(name=item, function=function),
                     )
 
-                new_model.pk = PkDescriptor(name=new_model.Meta.pkname)
+                new_model.pk = PkDescriptor(name=new_model.pk_name)
                 remove_excluded_parent_fields(new_model)
 
         return new_model
@@ -615,6 +611,34 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 f"need to call update_forward_refs()."
             )
         return QuerySet(model_cls=cls)
+
+    @property
+    def pk_type(cls: Type["T"]) -> Any:
+        """Shortcut to models primary key field type"""
+        # TODO: handle multi pk
+        return cls.Meta.model_fields[cls.pk_name].__type__
+
+    @property
+    def pk_name(cls: Type["T"]) -> Union[str, List[str]]:
+        """Shortcut to models primary key name"""
+        # TODO: handle multi pk
+        return cls.Meta.pkname
+
+    @property
+    def has_pk_constraint(cls: Type["T"]) -> bool:
+        """Checks if model has pk constraint"""
+        if not cls.Meta.constraints:
+            return False
+        return any(
+            isinstance(const, ormar.PrimaryKeyConstraint)
+            for const in cls.Meta.constraints
+        )
+
+    @property
+    def pk_name_str(cls: Type["T"]) -> str:
+        """Shortcut to models primary key name"""
+        pks = cls.pk_name if isinstance(cls.pk_name, list) else [cls.pk_name]
+        return "__".join(pks)
 
     def __getattr__(self, item: str) -> Any:
         """

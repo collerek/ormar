@@ -92,7 +92,7 @@ class Model(ModelRow):
         expr = expr.values(**self_fields)
 
         pk = await self.Meta.database.execute(expr)
-        if pk and isinstance(pk, self.pk_type()):
+        if pk and isinstance(pk, self.__class__.pk_type):
             setattr(self, self.Meta.pkname, pk)
 
         self.set_save_status(True)

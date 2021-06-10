@@ -6,7 +6,7 @@ from pydantic.typing import ForwardRef
 
 import ormar  # noqa: I100, I202
 from ormar.models.descriptors import RelationDescriptor
-from ormar.models.helpers.pydantic import create_pydantic_field
+from ormar.models.helpers.pydantic import create_pydantic_field, get_pydantic_field
 from ormar.models.helpers.related_names_validation import (
     validate_related_names_in_relations,
 )
@@ -219,7 +219,7 @@ def _is_db_field(field: "BaseField") -> bool:
 
 
 def populate_meta_tablename_columns_and_pk(
-    name: str, new_model: Type["Model"]
+    name: str, new_model: Type["Model"], attrs: Dict
 ) -> Type["Model"]:
     """
     Sets Model tablename if it's not already set in Meta.
@@ -243,24 +243,34 @@ def populate_meta_tablename_columns_and_pk(
     new_model.Meta.tablename = (
         new_model.Meta.tablename if hasattr(new_model.Meta, "tablename") else tablename
     )
-    pkname: Optional[str]
 
-    if hasattr(new_model.Meta, "columns"):
-        columns = new_model.Meta.columns
-        pkname = new_model.Meta.pkname
-    else:
+    if not hasattr(new_model.Meta, "columns"):
         pkname, columns = sqlalchemy_columns_from_model_fields(
             new_model.Meta.model_fields, new_model
         )
+        new_model.Meta.columns = columns
+        new_model.Meta.pkname = pkname
 
-    if pkname is None:
+    if new_model.pk_name is None and not new_model.has_pk_constraint:
         raise ormar.ModelDefinitionError("Table has to have a primary key.")
 
-    new_model.Meta.columns = columns
-    new_model.Meta.pkname = pkname
+    if (
+        not new_model.has_pk_constraint
+        and new_model.pk_name not in attrs["__annotations__"]
+    ):
+        field_name = new_model.pk_name
+        attrs["__annotations__"][field_name] = Optional[int]  # type: ignore
+        attrs[field_name] = None
+        new_model.__fields__[field_name] = get_pydantic_field(
+            field_name=field_name, model=new_model
+        )
+
     if not new_model.Meta.orders_by:
-        # by default we sort by pk name if other option not provided
-        new_model.Meta.orders_by.append(pkname)
+        # by default we sort by pk name(s) if other option not provided
+        if isinstance(new_model.pk_name, list):
+            new_model.Meta.orders_by.extend(new_model.pk_name)
+        else:
+            new_model.Meta.orders_by.append(new_model.pk_name)
     return new_model
 
 

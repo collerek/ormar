@@ -241,7 +241,7 @@ class BaseField(FieldInfo):
                 ondelete=con.ondelete,
                 onupdate=con.onupdate,
                 name=f"fk_{self.owner.Meta.tablename}_{self.to.Meta.tablename}"
-                f"_{self.to.get_column_alias(self.to.Meta.pkname)}_{self.name}",
+                f"_{self.to.get_column_alias(self.to.pk_name_str)}_{self.name}",
             )
             for con in self.constraints
         ]

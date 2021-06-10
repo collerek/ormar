@@ -1029,7 +1029,7 @@ class QuerySet(Generic[T]):
         pk_name = self.model.get_column_alias(self.model_meta.pkname)
         if pk_name not in kwargs and pk_name in new_kwargs:
             instance.pk = new_kwargs[self.model_meta.pkname]
-        if pk and isinstance(pk, self.model.pk_type()):
+        if pk and isinstance(pk, self.model.pk_type):
             instance.pk = pk
 
         # refresh server side defaults

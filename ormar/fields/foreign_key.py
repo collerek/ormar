@@ -121,7 +121,7 @@ def populate_fk_params_based_on_to_model(
         else Optional[Union[to_field.__type__, to, pk_only_model]]
     )
     constraints = [
-        ForeignKeyConstraint(
+        ForeignKeyConstraintData(
             reference=fk_string, ondelete=ondelete, onupdate=onupdate, name=None
         )
     ]
@@ -166,7 +166,7 @@ class UniqueColumns(UniqueConstraint):
 
 
 @dataclass
-class ForeignKeyConstraint:
+class ForeignKeyConstraintData:
     """
     Internal container to store ForeignKey definitions used later
     to produce sqlalchemy.ForeignKeys
@@ -455,9 +455,9 @@ class ForeignKeyField(BaseField):
         :return: (if needed) registered Model
         :rtype: Model
         """
-        if self.to.pk_type() == uuid.UUID and isinstance(value, str):  # pragma: nocover
+        if self.to.pk_type == uuid.UUID and isinstance(value, str):  # pragma: nocover
             value = uuid.UUID(value)
-        if not isinstance(value, self.to.pk_type()):
+        if not isinstance(value, self.to.pk_type):
             raise RelationshipInstanceError(
                 f"Relationship error - ForeignKey {self.to.__name__} "
                 f"is of type {self.to.pk_type()} "

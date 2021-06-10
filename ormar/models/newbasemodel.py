@@ -375,11 +375,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         return self.Meta.signals
 
     @classmethod
-    def pk_type(cls) -> Any:
-        """Shortcut to models primary key field type"""
-        return cls.Meta.model_fields[cls.Meta.pkname].__type__
-
-    @classmethod
     def db_backend_name(cls) -> str:
         """Shortcut to database dialect,
         cause some dialect require different treatment"""
