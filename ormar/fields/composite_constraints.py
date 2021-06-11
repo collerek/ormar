@@ -24,7 +24,7 @@ class ForeignKeyConstraint(ForeignKeyConstraint):
         **kwargs: Any,
     ):
         self.to = to
-        self.columns = columns
+        self.ormar_columns = columns
         self.related_columns = related_columns
         self.name = name
         self.related_name = related_name

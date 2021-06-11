@@ -63,6 +63,7 @@ class BaseField(FieldInfo):
             "is_relation", None
         )  # ForeignKeyField + subclasses
         self.is_through: bool = kwargs.pop("is_through", False)  # ThroughFields
+        self.is_compound: bool = kwargs.pop("is_compound", False)
 
         self.through_relation_name = kwargs.pop("through_relation_name", None)
         self.through_reverse_relation_name = kwargs.pop(

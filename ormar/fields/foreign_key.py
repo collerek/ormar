@@ -66,7 +66,7 @@ def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
 
 def create_dummy_model(
     base_model: Type["T"],
-    pk_field: Union[BaseField, "ForeignKeyField", "ManyToManyField"],
+    pk_fields: List[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
 ) -> Type["BaseModel"]:
     """
     Used to construct a dummy pydantic model for type hints and pydantic validation.
@@ -74,15 +74,15 @@ def create_dummy_model(
 
     :param base_model: class of target dummy model
     :type base_model: Model class
-    :param pk_field: ormar Field to be set on pydantic Model
-    :type pk_field: Union[BaseField, "ForeignKeyField", "ManyToManyField"]
+    :param pk_fields: ormar Fields to be set on pydantic Model
+    :type pk_fields: List[Union[BaseField, "ForeignKeyField", "ManyToManyField"]]
     :return: constructed dummy model
     :rtype: pydantic.BaseModel
     """
     alias = (
         "".join(choices(string.ascii_uppercase, k=6))  # + uuid.uuid4().hex[:4]
     ).lower()
-    fields = {f"{pk_field.name}": (pk_field.__type__, None)}
+    fields = {f"{pk_field.name}": (pk_field.__type__, None) for pk_field in pk_fields}
 
     dummy_model = create_model(  # type: ignore
         f"PkOnly{base_model.get_name(lower=False)}{alias}",
@@ -93,12 +93,22 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-    to: Type["T"], nullable: bool, onupdate: str = None, ondelete: str = None,
+    to: Type["T"],
+    nullable: bool,
+    onupdate: str = None,
+    ondelete: str = None,
+    name: str = None,
+    related_name: str = None,
 ) -> Tuple[Any, List, Any]:
+    # TODO: finish docstring
     """
     Based on target to model to which relation leads to populates the type of the
     pydantic field to use, ForeignKey constraint and type of the target column field.
 
+    :param related_name:
+    :type related_name:
+    :param name:
+    :type name:
     :param to: target related ormar Model
     :type to: Model class
     :param nullable: marks field as optional/ required
@@ -112,20 +122,42 @@ def populate_fk_params_based_on_to_model(
     :return: tuple with target pydantic type, list of fk constraints and target col type
     :rtype: Tuple[Any, List, Any]
     """
-    fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
-    to_field = to.Meta.model_fields[to.Meta.pkname]
-    pk_only_model = create_dummy_model(to, to_field)
-    __type__ = (
-        Union[to_field.__type__, to, pk_only_model]
-        if not nullable
-        else Optional[Union[to_field.__type__, to, pk_only_model]]
-    )
-    constraints = [
-        ForeignKeyConstraintData(
-            reference=fk_string, ondelete=ondelete, onupdate=onupdate, name=None
+    if to.has_pk_constraint:
+        to_fields = [to.Meta.model_fields[pk_name] for pk_name in to.pk_name]
+        pk_only_model = create_dummy_model(to, to_fields)
+        __type__ = (
+            Union[to, pk_only_model]
+            if not nullable
+            else Optional[Union[to, pk_only_model]]
         )
-    ]
-    column_type = to_field.column_type
+        # table_name = to.Meta.tablename
+        # TODO: Check backref columns on virtual fk?
+        constraints = [
+            # ormar.ForeignKeyConstraint(
+            #     to=to,
+            #     columns=[], # there may be no columns for back ref
+            #     related_columns=[f"{table_name}.{field.name}" for field in to_fields],
+            #     name=name,
+            #     related_name=related_name,
+            #     ondelete=ondelete, onupdate=onupdate, db_name=None
+            # )
+        ]
+        column_type = None
+    else:
+        fk_string = to.Meta.tablename + "." + to.get_column_alias(to.pk_name)
+        to_field = to.Meta.model_fields[to.pk_name]
+        pk_only_model = create_dummy_model(to, [to_field])
+        __type__ = (
+            Union[to_field.__type__, to, pk_only_model]
+            if not nullable
+            else Optional[Union[to_field.__type__, to, pk_only_model]]
+        )
+        constraints = [
+            ForeignKeyConstraintData(
+                reference=fk_string, ondelete=ondelete, onupdate=onupdate, name=None
+            )
+        ]
+        column_type = to_field.column_type
     return __type__, constraints, column_type
 
 
@@ -240,6 +272,8 @@ def ForeignKey(  # noqa CFQ002
     skip_reverse = kwargs.pop("skip_reverse", False)
     skip_field = kwargs.pop("skip_field", False)
 
+    real_name = kwargs.pop("real_name", None)
+
     validate_not_allowed_fields(kwargs)
 
     if to.__class__ == ForwardRef:
@@ -252,6 +286,8 @@ def ForeignKey(  # noqa CFQ002
             nullable=nullable,
             ondelete=ondelete,
             onupdate=onupdate,
+            name=real_name,
+            related_name=related_name,
         )
 
     namespace = dict(
@@ -259,7 +295,7 @@ def ForeignKey(  # noqa CFQ002
         to=to,
         through=None,
         alias=name,
-        name=kwargs.pop("real_name", None),
+        name=real_name,
         nullable=nullable,
         constraints=constraints,
         unique=unique,
@@ -430,7 +466,7 @@ class ForeignKeyField(BaseField):
         :return: (if needed) registered Model
         :rtype: Model
         """
-        if len(value.keys()) == 1 and list(value.keys())[0] == self.to.Meta.pkname:
+        if len(value.keys()) == 1 and list(value.keys())[0] == self.to.pk_name:
             value["__pk_only__"] = True
         model = self.to(**value)
         if to_register:

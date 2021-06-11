@@ -45,11 +45,11 @@ class Tag(ormar.Model):
         constraints = [
             ormar.PrimaryKeyConstraint("id", "owner", "project_id"),
             ormar.ForeignKeyConstraint(
-                Project, ["owner", "project_id"], ["owner", "id"], name="tag_project",
+                Project, ["owner", "project_id"], ["owner_id", "id"], name="tag_project"
             ),
         ]
 
-    id: int = ormar.Integer(primary_key=True)
+    id: int = ormar.Integer()
     owner: User = ormar.ForeignKey(User)
     project_id: int = ormar.Integer()
     name: str = ormar.String(nullable=False, max_length=100)
@@ -80,7 +80,7 @@ class Task(ormar.Model):
             ),
         ]
 
-    id: int = ormar.Integer(primary_key=True)
+    id: int = ormar.Integer()
     owner_id: uuid.UUID = ormar.UUID()
     project_id: int = ormar.Integer()
     description: str = ormar.String(nullable=False, max_length=200)

@@ -15,7 +15,11 @@ from pydantic.typing import ForwardRef, evaluate_forwardref
 import ormar  # noqa: I100
 from ormar import ModelDefinitionError
 from ormar.fields import BaseField
-from ormar.fields.foreign_key import ForeignKeyField, validate_not_allowed_fields
+from ormar.fields.foreign_key import (
+    ForeignKeyField,
+    create_dummy_model,
+    validate_not_allowed_fields,
+)
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, T
@@ -58,13 +62,23 @@ def populate_m2m_params_based_on_to_model(
     :return: Tuple[List, Any]
     :rtype: tuple with target pydantic type and target col type
     """
-    to_field = to.Meta.model_fields[to.Meta.pkname]
-    __type__ = (
-        Union[to_field.__type__, to, List[to]]  # type: ignore
-        if not nullable
-        else Optional[Union[to_field.__type__, to, List[to]]]  # type: ignore
-    )
-    column_type = to_field.column_type
+    if to.has_pk_constraint:
+        to_fields = [to.Meta.model_fields[pk_name] for pk_name in to.pk_name]
+        pk_only_model = create_dummy_model(to, to_fields)
+        __type__ = (
+            Union[pk_only_model, to, List[to]]
+            if not nullable
+            else Optional[Union[pk_only_model, to, List[to]]]
+        )
+        column_type = None
+    else:
+        to_field = to.Meta.model_fields[to.Meta.pkname]
+        __type__ = (
+            Union[to_field.__type__, to, List[to]]  # type: ignore
+            if not nullable
+            else Optional[Union[to_field.__type__, to, List[to]]]  # type: ignore
+        )
+        column_type = to_field.column_type
     return __type__, column_type
 
 

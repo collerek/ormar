@@ -37,7 +37,6 @@ from ormar.models.helpers import (
     extract_annotations_and_default_vals,
     get_potential_fields,
     get_pydantic_base_orm_config,
-    get_pydantic_field,
     meta_field_not_set,
     populate_choices_validators,
     populate_default_options_values,
@@ -83,6 +82,7 @@ class ModelMeta:
     orders_by: List[str]
     exclude_parent_fields: List[str]
     has_compound_pk: bool
+    pk_constraint: Optional[ormar.PrimaryKeyConstraint]
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:
@@ -615,24 +615,21 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
     @property
     def pk_type(cls: Type["T"]) -> Any:
         """Shortcut to models primary key field type"""
-        # TODO: handle multi pk
-        return cls.Meta.model_fields[cls.pk_name].__type__
+        if not cls.has_pk_constraint:
+            return cls.Meta.model_fields[cls.pk_name].__type__
+        return tuple(cls.Meta.model_fields[pk_name].__type__ for pk_name in cls.pk_name)
 
     @property
-    def pk_name(cls: Type["T"]) -> Union[str, List[str]]:
+    def pk_name(cls: Type["T"]) -> Union[str, Tuple[str]]:
         """Shortcut to models primary key name"""
-        # TODO: handle multi pk
-        return cls.Meta.pkname
+        if not cls.has_pk_constraint:
+            return cls.Meta.pkname
+        return cls.Meta.pk_constraint.column_names
 
     @property
     def has_pk_constraint(cls: Type["T"]) -> bool:
         """Checks if model has pk constraint"""
-        if not cls.Meta.constraints:
-            return False
-        return any(
-            isinstance(const, ormar.PrimaryKeyConstraint)
-            for const in cls.Meta.constraints
-        )
+        return cls.Meta.has_compound_pk
 
     @property
     def pk_name_str(cls: Type["T"]) -> str:

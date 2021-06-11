@@ -48,6 +48,20 @@ def populate_default_options_values(
     """
     if not hasattr(new_model.Meta, "constraints"):
         new_model.Meta.constraints = []
+
+    if any(
+        isinstance(const, ormar.PrimaryKeyConstraint)
+        for const in new_model.Meta.constraints
+    ):
+        new_model.Meta.has_compound_pk = True
+        new_model.Meta.pk_constraint = next(
+            const
+            for const in new_model.Meta.constraints
+            if isinstance(const, ormar.PrimaryKeyConstraint)
+        )
+    else:
+        new_model.Meta.has_compound_pk = False
+
     if not hasattr(new_model.Meta, "model_fields"):
         new_model.Meta.model_fields = model_fields
     if not hasattr(new_model.Meta, "abstract"):
