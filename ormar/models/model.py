@@ -76,8 +76,13 @@ class Model(ModelRow):
         await self.signals.pre_save.send(sender=self.__class__, instance=self)
         self_fields = self._extract_model_db_fields()
 
-        if not self.pk and self.Meta.model_fields[self.Meta.pkname].autoincrement:
-            self_fields.pop(self.Meta.pkname, None)
+        pk_names = self.__class__.pk_names_list
+        for pk_name in pk_names:
+            if (
+                not getattr(self, pk_name, None)
+                and self.Meta.model_fields[pk_name].autoincrement
+            ):
+                self_fields.pop(pk_name, None)
         self_fields = self.populate_default_values(self_fields)
         self.update_from_dict(
             {
@@ -92,7 +97,7 @@ class Model(ModelRow):
         expr = expr.values(**self_fields)
 
         pk = await self.Meta.database.execute(expr)
-        if pk and isinstance(pk, self.__class__.pk_type):
+        if pk and self.__class__.pk_len == 1 and isinstance(pk, self.__class__.pk_type):
             setattr(self, self.Meta.pkname, pk)
 
         self.set_save_status(True)

@@ -123,7 +123,10 @@ def populate_fk_params_based_on_to_model(
     :rtype: Tuple[Any, List, Any]
     """
     if to.has_pk_constraint:
-        to_fields = [to.Meta.model_fields[pk_name] for pk_name in to.pk_name]
+        to_fields = [
+            to.Meta.model_fields[to.get_column_name_from_alias(pk_name)]
+            for pk_name in to.pk_name
+        ]
         pk_only_model = create_dummy_model(to, to_fields)
         __type__ = (
             Union[to, pk_only_model]
@@ -280,6 +283,7 @@ def ForeignKey(  # noqa CFQ002
         __type__ = to if not nullable else Optional[to]
         constraints: List = []
         column_type = None
+        is_compound = False
     else:
         __type__, constraints, column_type = populate_fk_params_based_on_to_model(
             to=to,  # type: ignore
@@ -289,6 +293,7 @@ def ForeignKey(  # noqa CFQ002
             name=real_name,
             related_name=related_name,
         )
+        is_compound = to.has_pk_constraint
 
     namespace = dict(
         __type__=__type__,
@@ -316,6 +321,7 @@ def ForeignKey(  # noqa CFQ002
         related_orders_by=related_orders_by,
         skip_reverse=skip_reverse,
         skip_field=skip_field,
+        is_compound=is_compound,
     )
 
     Field = type("ForeignKey", (ForeignKeyField, BaseField), {})
@@ -554,6 +560,7 @@ class ForeignKeyField(BaseField):
         :return: returns a Model or a list of Models
         :rtype: Optional[Union["Model", List["Model"]]]
         """
+        # TODO: Change None to setting relation model to None / removing rel?
         if value is None:
             return None if not self.virtual else []
         constructors = {

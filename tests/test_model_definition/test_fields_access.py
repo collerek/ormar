@@ -183,27 +183,3 @@ def test_combining_groups_together():
         f"OR ( ( {price_list_prefix}_price_lists.name LIKE 'Aa%' ) "
         f"OR ( {category_prefix}_categories.name IN ('Toys', 'Books') ) ) )"
     )
-
-
-# @pytest.mark.asyncio
-# async def test_filtering_by_field_access():
-#     async with database:
-#         async with database.transaction(force_rollback=True):
-#             category = await Category(name='Toys').save()
-#             product1 = await Product(name="G.I Joe",
-#                                      rating=4.7,
-#                                      category=category).save()
-#             product2 = await Product(name="My Little Pony",
-#                                      rating=3.8,
-#                                      category=category).save()
-#
-#             check = Product.object.get(Product.name == "My Little Pony")
-#             assert check == product2
-
-# TODO: Finish implementation
-# * overload operators and add missing functions that return FilterAction (V)
-# * return OrderAction for desc() and asc() (V)
-# * create filter groups for & and | (and ~ - NOT?) (V)
-# * accept args in all functions that accept filters? or only filter and exclude? (V)
-# all functions: delete, first, get, get_or_none, get_or_create, all, filter, exclude
-# * accept OrderActions in order_by (V)

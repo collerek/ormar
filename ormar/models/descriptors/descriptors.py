@@ -1,5 +1,8 @@
 import base64
-from typing import Any, TYPE_CHECKING, Type
+import collections
+from typing import Any, TYPE_CHECKING, Tuple, Type, Union
+
+import ormar
 
 try:
     import orjson as json
@@ -80,15 +83,27 @@ class PkDescriptor:
     change in the future with multi column primary keys
     """
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: Union[str, Tuple[str]]) -> None:
         self.name = name
+        self.is_compound = isinstance(name, tuple)
 
     def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
+        if self.is_compound:
+            return {name: instance.__dict__.get(name, None) for name in self.name}
         value = instance.__dict__.get(self.name, None)
         return value
 
     def __set__(self, instance: "Model", value: Any) -> None:
-        instance._internal_set(self.name, value)
+        if self.is_compound:
+            if isinstance(value, collections.Mapping):
+                for key, val in value.items():
+                    instance._internal_set(key, value)
+            else:
+                raise ormar.ModelDefinitionError(
+                    "Compound primary key can be set only with dictionary"
+                )
+        else:
+            instance._internal_set(self.name, value)
         instance.set_save_status(False)
 
 

@@ -4,6 +4,7 @@ import ormar
 from ormar import ForeignKey, ManyToMany
 from ormar.fields import Through
 from ormar.models.descriptors import RelationDescriptor
+from ormar.models.helpers.pydantic import create_pydantic_field, get_pydantic_field
 from ormar.models.helpers.sqlalchemy import adjust_through_many_to_many_model
 from ormar.relations import AliasManager
 
@@ -87,6 +88,51 @@ def expand_reverse_relationships(model: Type["Model"]) -> None:
         if model_field.is_relation and not model_field.has_unresolved_forward_refs():
             model_field = cast("ForeignKeyField", model_field)
             expand_reverse_relationship(model_field=model_field)
+
+
+def process_compound_foreign_keys(new_model: Type["Model"]):
+    """
+    Processes ForeignKeyConstraint into ForeignKeyFields.
+    Registers new relation name, removes parts of ForeignKey column from model fields
+    if they are not in primary key? TODO: Check this
+
+    :param new_model: Model class
+    :type new_model: Type["Model"]
+    """
+    compound_fk_constraints = [
+        x
+        for x in new_model.Meta.constraints
+        if isinstance(x, ormar.ForeignKeyConstraint)
+    ]
+    for constraint in compound_fk_constraints:
+        constraint.owner = new_model
+        constraint.related_name = constraint.related_name or new_model.get_name() + "s"
+        constraint.name = (
+            f"fk_{new_model.Meta.tablename}_{constraint.to.Meta.tablename}"
+            f"_{constraint.ormar_name}_{constraint.to.pk_name_str}"
+        )
+        new_model.Meta.model_fields[constraint.ormar_name] = ForeignKey(  # type: ignore
+            constraint.to,
+            name=constraint.ormar_columns[0]
+            if len(constraint.ormar_columns) == 1
+            else None,
+            real_name=constraint.ormar_name,
+            related_name=constraint.related_name,
+            owner=new_model,
+            self_reference=constraint.self_reference,
+            orders_by=constraint.related_orders_by,
+            skip_field=constraint.skip_reverse,
+        )
+        new_model.__fields__[constraint.ormar_name] = get_pydantic_field(
+            field_name=constraint.ormar_name, model=new_model
+        )
+
+        if not constraint.skip_reverse:
+            setattr(
+                constraint.to,
+                constraint.related_name,
+                RelationDescriptor(name=constraint.related_name),
+            )
 
 
 def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:

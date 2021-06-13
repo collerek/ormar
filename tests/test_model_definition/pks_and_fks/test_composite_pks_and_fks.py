@@ -31,8 +31,10 @@ class User(ormar.Model):
 class Project(ormar.Model):
     class Meta(BaseMeta):
         constraints = [
-            ormar.PrimaryKeyConstraint("id", "owner_id"),
-            ormar.ForeignKeyConstraint(User, ["owner_id"], ["id"], "owner"),
+            ormar.PrimaryKeyConstraint("id", "owner"),
+            ormar.ForeignKeyConstraint(
+                User, columns=["owner_id"], related_columns=["id"], name="owner"
+            ),
         ]
 
     id: int = ormar.Integer()
@@ -45,7 +47,10 @@ class Tag(ormar.Model):
         constraints = [
             ormar.PrimaryKeyConstraint("id", "owner", "project_id"),
             ormar.ForeignKeyConstraint(
-                Project, ["owner", "project_id"], ["owner_id", "id"], name="tag_project"
+                Project,
+                columns=["owner", "project_id"],
+                related_columns=["owner_id", "id"],
+                name="tag_project",
             ),
         ]
 
@@ -109,7 +114,7 @@ async def test_composite_pk_crud():
             user_beth = User(email="beth@example.com")
             await user_beth.save()
             project_bedroom = await Project.objects.create(
-                owner=user_beth, name="Clean up the bedroom"
+                id=1, owner=user_beth, name="Clean up the bedroom"
             )
 
             tag_urgent = Tag(tag_project=project_bedroom, name="URGENT!")
@@ -213,7 +218,7 @@ async def test_error_when_setting_part_of_pk_none():
         async with database.transaction(force_rollback=True):
             user = User(email="tom@example.com")
             await user.save()
-            project = Project(owner=user, name="Doom impending")
+            project = Project(id=2, owner=user, name="Doom impending")
             await project.save()
 
             with pytest.raises(ValueError):
@@ -244,7 +249,7 @@ async def test_set_fk_column_directly_fails():
             user_2 = User(email="tam@example.com")
             await user_1.save()
             await user_2.save()
-            project = Project(owner=user_1, name="So far so good")
+            project = Project(owner=user_1, name="So far so good", id=4)
             await project.save()
 
             with pytest.raises(ValueError):
@@ -257,7 +262,7 @@ async def test_get_fk_column_directly_fails():
         async with database.transaction(force_rollback=True):
             user = User(email="tom@example.com")
             await user.save()
-            project = Project(owner=user, name="Doom impending")
+            project = Project(id=12, owner=user, name="Doom impending")
             await project.save()
 
             with pytest.raises(ValueError):
@@ -313,7 +318,7 @@ async def test_correct_pydantic_dict_with_composite_keys():
         async with database.transaction(force_rollback=True):
             user = User(email="juan@example.com")
             await user.save()
-            project = Project(owner=user, name="Get rich fast")
+            project = Project(id=15, owner=user, name="Get rich fast")
             await project.save()
             task = Task(
                 project=project, description="Buy lots of Bitcoin", completed=False,
@@ -369,7 +374,7 @@ async def test_get_composite_pk_property():
         async with database.transaction(force_rollback=True):
             user = await User.objects.create(email="ai@example.com")
 
-            project = await Project.objects.create(owner=user, name="Gardening",)
+            project = await Project.objects.create(owner=user, name="Gardening", id=5)
             assert isinstance(project.pk, dict)
             assert len(project.pk) == 2
             assert set(project.pk.keys()) == {"id", "owner"}

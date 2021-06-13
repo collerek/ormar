@@ -70,12 +70,13 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict[str, str]
         """
-        pkname = cls.Meta.pkname
-        pk = cls.Meta.model_fields[pkname]
-        if new_kwargs.get(pkname, ormar.Undefined) is None and (
-            pk.nullable or pk.autoincrement
-        ):
-            del new_kwargs[pkname]
+        pknames = cls.pk_names_list
+        for pkname in pknames:
+            pk = cls.Meta.model_fields[pkname]
+            if new_kwargs.get(pkname, ormar.Undefined) is None and (
+                pk.nullable or pk.autoincrement
+            ):
+                del new_kwargs[pkname]
         return new_kwargs
 
     @classmethod
@@ -112,22 +113,45 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
             field_value = model_dict.get(field, None)
             if field_value is not None:
                 target_field = cls.Meta.model_fields[field]
-                target_pkname = target_field.to.Meta.pkname
+                target_pknames = target_field.to.pk_names_list
                 if isinstance(field_value, ormar.Model):
-                    pk_value = getattr(field_value, target_pkname)
-                    if not pk_value:
+                    pk_values = [
+                        getattr(field_value, pkname) for pkname in target_pknames
+                    ]
+                    if not all(pk_values):
                         raise ModelPersistenceError(
                             f"You cannot save {field_value.get_name()} "
                             f"model without pk set!"
                         )
-                    model_dict[field] = pk_value
+                    model_dict[field] = (
+                        dict(zip(target_pknames, pk_values))
+                        if len(pk_values) > 1
+                        else pk_values[0]
+                    )
                 elif field_value:  # nested dict
                     if isinstance(field_value, list):
-                        model_dict[field] = [
-                            target.get(target_pkname) for target in field_value
-                        ]
+                        if len(target_pknames) > 1:
+                            model_dict[field] = [
+                                {
+                                    pkname: target.get(pkname)
+                                    for pkname in target_pknames
+                                }
+                                for target in field_value
+                            ]
+                        else:
+                            model_dict[field] = [
+                                target.get(target_pknames[0]) for target in field_value
+                            ]
                     else:
-                        model_dict[field] = field_value.get(target_pkname)
+                        if len(target_pknames) > 1:
+                            model_dict.update(
+                                {
+                                    pkname: field_value.get(pkname)
+                                    for pkname in target_pknames
+                                }
+                            )
+                        else:
+                            model_dict[field] = field_value.get(target_pknames[0])
                 else:
                     model_dict.pop(field, None)
         return model_dict

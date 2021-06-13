@@ -42,10 +42,12 @@ from ormar.models.helpers import (
     populate_default_options_values,
     populate_meta_sqlalchemy_table_if_required,
     populate_meta_tablename_columns_and_pk,
+    process_compound_foreign_keys,
     register_relation_in_alias_manager,
     remove_excluded_parent_fields,
     sqlalchemy_columns_from_model_fields,
 )
+from ormar.models.helpers.sqlalchemy import resolve_primary_key
 from ormar.models.quick_access_views import quick_access_set
 from ormar.queryset import FieldAccessor, QuerySet
 from ormar.relations.alias_manager import AliasManager
@@ -577,9 +579,12 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             populate_choices_validators(new_model)
 
             if not new_model.Meta.abstract:
+
                 new_model = populate_meta_tablename_columns_and_pk(
-                    name=name, new_model=new_model, attrs=attrs
+                    name=name, new_model=new_model
                 )
+                process_compound_foreign_keys(new_model)
+                resolve_primary_key(new_model=new_model, attrs=attrs)
                 populate_meta_sqlalchemy_table_if_required(new_model.Meta)
                 expand_reverse_relationships(new_model)
                 # TODO: iterate only related fields
@@ -620,11 +625,45 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         return tuple(cls.Meta.model_fields[pk_name].__type__ for pk_name in cls.pk_name)
 
     @property
+    def pk_columns(cls: Type["T"]) -> Union[sqlalchemy.Column, List[sqlalchemy.Column]]:
+        """
+        Retrieves primary key sqlalchemy column from models Meta.table.
+        Each model has to have primary key.
+        Only one primary key column is allowed.
+
+        :return: primary key sqlalchemy column
+        :rtype: Union[sqlalchemy.Column, List[sqlalchemy.Column]]
+        """
+        pk_names = cls.pk_name if isinstance(cls.pk_name, tuple) else [cls.pk_name]
+        pk_columns = []
+        for pk_name in pk_names:
+            pk_alias = cls.get_column_alias(pk_name)
+            pk_column = next(
+                (col for col in cls.Meta.columns if col.name == pk_alias), None
+            )
+            pk_columns.append(pk_column)
+        return pk_columns[0] if len(pk_columns) == 1 else pk_columns
+
+    @property
     def pk_name(cls: Type["T"]) -> Union[str, Tuple[str]]:
         """Shortcut to models primary key name"""
         if not cls.has_pk_constraint:
             return cls.Meta.pkname
         return cls.Meta.pk_constraint.column_names
+
+    @property
+    def pk_len(cls: Type["T"]) -> int:
+        """Shortcut to models primary key name"""
+        if not cls.has_pk_constraint:
+            return 1
+        return len(cls.Meta.pk_constraint.column_names)
+
+    @property
+    def pk_names_list(cls: Type["T"]) -> List[str]:
+        """Shortcut to models primary key name"""
+        if not cls.has_pk_constraint:
+            return [cls.Meta.pkname]
+        return [*cls.Meta.pk_constraint.column_names]
 
     @property
     def has_pk_constraint(cls: Type["T"]) -> bool:
@@ -634,8 +673,8 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
     @property
     def pk_name_str(cls: Type["T"]) -> str:
         """Shortcut to models primary key name"""
-        pks = cls.pk_name if isinstance(cls.pk_name, list) else [cls.pk_name]
-        return "__".join(pks)
+        pks = cls.pk_name if isinstance(cls.pk_name, tuple) else [cls.pk_name]
+        return "__".join(pks) if len(pks) > 1 else pks[0]
 
     def __getattr__(self, item: str) -> Any:
         """

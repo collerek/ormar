@@ -13,11 +13,13 @@ from ormar.models.helpers.pydantic import (
 from ormar.models.helpers.relations import (
     alias_manager,
     register_relation_in_alias_manager,
+    process_compound_foreign_keys,
 )
 from ormar.models.helpers.relations import expand_reverse_relationships
 from ormar.models.helpers.sqlalchemy import (
     populate_meta_sqlalchemy_table_if_required,
     populate_meta_tablename_columns_and_pk,
+    resolve_primary_key,
     sqlalchemy_columns_from_model_fields,
 )
 from ormar.models.helpers.validation import populate_choices_validators
@@ -38,4 +40,6 @@ __all__ = [
     "populate_choices_validators",
     "meta_field_not_set",
     "remove_excluded_parent_fields",
+    "process_compound_foreign_keys",
+    "resolve_primary_key",
 ]

@@ -29,45 +29,15 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
     parent_name = model_field.default_target_field_name()
     child_name = model_field.default_source_field_name()
 
-    if not model_field.to.has_pk_constraint:
-        create_simple_relation(
-            model_field=model_field, target_model=model_field.to, field_name=parent_name
-        )
-    else:
-        create_compound_relation(
-            model_field=model_field, target_model=model_field.to, field_name=parent_name
-        )
-
-    if not model_field.owner.has_pk_constraint:
-        create_simple_relation(
-            model_field=model_field,
-            target_model=model_field.owner,
-            field_name=child_name,
-        )
-    else:
-        create_compound_relation(
-            model_field=model_field,
-            target_model=model_field.owner,
-            field_name=child_name,
-        )
-
-
-def create_compound_relation(
-    model_field: "ManyToManyField", target_model: Type["Model"], field_name: str
-):
-    model_fields = model_field.through.Meta.model_fields
-    model_fields[field_name] = ormar.ForeignKey(  # type: ignore
-        target_model,
-        real_name=field_name,
-        ondelete="CASCADE",
-        owner=model_field.through,
+    create_through_relation_fields(
+        model_field=model_field, target_model=model_field.to, field_name=parent_name
     )
-    # TODO: Add compound relations
-    create_pydantic_field(field_name, model_field.to, model_field)
-    setattr(model_field.through, field_name, RelationDescriptor(name=field_name))
+    create_through_relation_fields(
+        model_field=model_field, target_model=model_field.owner, field_name=child_name,
+    )
 
 
-def create_simple_relation(
+def create_through_relation_fields(
     model_field: "ManyToManyField", target_model: Type["Model"], field_name: str
 ):
     model_fields = model_field.through.Meta.model_fields
@@ -99,25 +69,39 @@ def create_and_append_m2m_fk(
     :param model_field: field with ManyToMany relation
     :type model_field: ManyToManyField field
     """
-    pk_alias = model.get_column_alias(model.Meta.pkname)
-    pk_column = next((col for col in model.Meta.columns if col.name == pk_alias), None)
-    if pk_column is None:  # pragma: no cover
-        raise ormar.ModelDefinitionError(
-            "ManyToMany relation cannot lead to Model without pk"
+    pk_columns = model.pk_columns
+    target_table = model.Meta.tablename
+    if not isinstance(pk_columns, list):
+        pk_column = pk_columns
+        column = sqlalchemy.Column(
+            field_name,
+            pk_column.type,
+            sqlalchemy.schema.ForeignKey(
+                f"{target_table}.{pk_column.name}",
+                ondelete="CASCADE",
+                onupdate="CASCADE",
+                name=f"fk_{model_field.through.Meta.tablename}_{target_table}"
+                f"_{field_name}_{pk_column.name}",
+            ),
         )
-    column = sqlalchemy.Column(
-        field_name,
-        pk_column.type,
-        sqlalchemy.schema.ForeignKey(
-            model.Meta.tablename + "." + pk_alias,
-            ondelete="CASCADE",
-            onupdate="CASCADE",
-            name=f"fk_{model_field.through.Meta.tablename}_{model.Meta.tablename}"
-            f"_{field_name}_{pk_alias}",
-        ),
-    )
-    model_field.through.Meta.columns.append(column)
-    model_field.through.Meta.table.append_column(column)
+        model_field.through.Meta.columns.append(column)
+        model_field.through.Meta.table.append_column(column)
+    else:
+        relation_columns = []
+        for pk_column in pk_columns:
+            col_name = f"{field_name}_{pk_column.name}"
+            relation_columns.append(col_name)
+            column = sqlalchemy.Column(col_name, pk_column.type,)
+            model_field.through.Meta.columns.append(column)
+            model_field.through.Meta.table.append_column(column)
+        fk_constraint = ormar.ForeignKeyConstraint(
+            to=model,
+            columns=relation_columns,
+            related_columns=[f"{pk_column.name}" for pk_column in pk_columns],
+            db_name=f"fk_{model_field.through.Meta.tablename}_{target_table}"
+            f"_{field_name}_{model.pk_name_str}",
+        )
+        model_field.through.Meta.table.append_constraint(fk_constraint)
 
 
 def check_pk_column_validity(
@@ -242,11 +226,16 @@ def _is_db_field(field: "BaseField") -> bool:
     :return: result of the check
     :rtype: bool
     """
-    return not field.pydantic_only and not field.virtual and not field.is_multi
+    return (
+        not field.pydantic_only
+        and not field.virtual
+        and not field.is_multi
+        and not field.is_compound
+    )
 
 
 def populate_meta_tablename_columns_and_pk(
-    name: str, new_model: Type["Model"], attrs: Dict
+    name: str, new_model: Type["Model"]
 ) -> Type["Model"]:
     """
     Sets Model tablename if it's not already set in Meta.
@@ -271,7 +260,6 @@ def populate_meta_tablename_columns_and_pk(
         new_model.Meta.tablename if hasattr(new_model.Meta, "tablename") else tablename
     )
 
-    pkname: Optional[str] = None
     if not hasattr(new_model.Meta, "columns"):
         pkname, columns = sqlalchemy_columns_from_model_fields(
             new_model.Meta.model_fields, new_model
@@ -282,11 +270,24 @@ def populate_meta_tablename_columns_and_pk(
     if not new_model.pk_name and not new_model.has_pk_constraint:
         raise ormar.ModelDefinitionError("Table has to have a primary key.")
 
-    if new_model.has_pk_constraint and pkname:
-        raise ormar.ModelDefinitionError(
-            "Table can only have one primary key!"
-            "Primary key column and Constraint detected."
-        )
+    if not new_model.Meta.orders_by:
+        # by default we sort by pk name(s) if other option not provided
+        if isinstance(new_model.pk_name, tuple):
+            new_model.Meta.orders_by.extend(new_model.pk_name)
+        else:
+            new_model.Meta.orders_by.append(new_model.pk_name)
+    return new_model
+
+
+def resolve_primary_key(new_model: Type["Model"], attrs: Dict) -> None:
+    if new_model.has_pk_constraint:
+        if new_model.Meta.pkname:
+            raise ormar.ModelDefinitionError(
+                "Table can only have one primary key!"
+                "Primary key column and Constraint detected."
+            )
+        new_model.Meta.pk_constraint.owner = new_model
+        new_model.Meta.pk_constraint._resolve_column_aliases()
 
     if (
         not new_model.has_pk_constraint
@@ -298,14 +299,6 @@ def populate_meta_tablename_columns_and_pk(
         new_model.__fields__[field_name] = get_pydantic_field(
             field_name=field_name, model=new_model
         )
-
-    if not new_model.Meta.orders_by:
-        # by default we sort by pk name(s) if other option not provided
-        if isinstance(new_model.pk_name, list):
-            new_model.Meta.orders_by.extend(new_model.pk_name)
-        else:
-            new_model.Meta.orders_by.append(new_model.pk_name)
-    return new_model
 
 
 def check_for_null_type_columns_from_forward_refs(meta: "ModelMeta") -> bool:
