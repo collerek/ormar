@@ -245,12 +245,17 @@ class Model(ModelRow):
             sender=self.__class__, instance=self, passed_args=kwargs
         )
         self_fields = self._extract_model_db_fields()
-        self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
+        for pk_name in self.__class__.pk_names_list:
+            self_fields.pop(self.get_column_name_from_alias(pk_name))
         if _columns:
             self_fields = {k: v for k, v in self_fields.items() if k in _columns}
         self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.update().values(**self_fields)
-        expr = expr.where(self.pk_column == getattr(self, self.Meta.pkname))
+        for pk_name in self.__class__.pk_names_list:
+            expr = expr.where(
+                self.Meta.table.c.get(self.get_column_alias(pk_name))
+                == getattr(self, pk_name)
+            )
 
         await self.Meta.database.execute(expr)
         self.set_save_status(True)

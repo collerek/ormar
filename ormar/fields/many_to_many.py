@@ -63,12 +63,15 @@ def populate_m2m_params_based_on_to_model(
     :rtype: tuple with target pydantic type and target col type
     """
     if to.has_pk_constraint:
-        to_fields = [to.Meta.model_fields[pk_name] for pk_name in to.pk_name]
+        to_fields = [
+            to.Meta.model_fields[to.get_column_name_from_alias(pk_name)]
+            for pk_name in to.pk_name
+        ]
         pk_only_model = create_dummy_model(to, to_fields)
         __type__ = (
-            Union[pk_only_model, to, List[to]]
+            Union[pk_only_model, to, List[to]]  # type: ignore
             if not nullable
-            else Optional[Union[pk_only_model, to, List[to]]]
+            else Optional[Union[pk_only_model, to, List[to]]]  # type: ignore
         )
         column_type = None
     else:

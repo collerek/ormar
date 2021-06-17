@@ -560,8 +560,9 @@ class ForeignKeyField(BaseField):
         :return: returns a Model or a list of Models
         :rtype: Optional[Union["Model", List["Model"]]]
         """
-        # TODO: Change None to setting relation model to None / removing rel?
         if value is None:
+            if not self.skip_field and child._orm.get(self.name):
+                child._orm._get(self.name).clear()
             return None if not self.virtual else []
         constructors = {
             f"{self.to.__name__}": self._register_existing_model,

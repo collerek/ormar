@@ -83,11 +83,13 @@ class Relation(Generic[T]):
     def clear(self) -> None:
         if self._type in (RelationType.PRIMARY, RelationType.THROUGH):
             self.related_models = None
-            self._owner.__dict__[self.field_name] = None
+            if self.field_name in self._owner.__dict__:
+                self._owner.__dict__[self.field_name] = None
         elif self.related_models is not None:
             related_models = cast("RelationProxy", self.related_models)
             related_models._clear()
-            self._owner.__dict__[self.field_name] = None
+            if self.field_name in self._owner.__dict__:
+                self._owner.__dict__[self.field_name] = None
 
     @property
     def through(self) -> Type["Model"]:

@@ -1,8 +1,5 @@
-from typing import (
-    List,
-    Optional,
-)
 import uuid
+from typing import List, Optional
 
 import databases
 import pytest
@@ -31,7 +28,7 @@ class User(ormar.Model):
 class Project(ormar.Model):
     class Meta(BaseMeta):
         constraints = [
-            ormar.PrimaryKeyConstraint("id", "owner"),
+            ormar.PrimaryKeyConstraint("id", "owner_id"),
             ormar.ForeignKeyConstraint(
                 User, columns=["owner_id"], related_columns=["id"], name="owner"
             ),
@@ -45,17 +42,17 @@ class Project(ormar.Model):
 class Tag(ormar.Model):
     class Meta(BaseMeta):
         constraints = [
-            ormar.PrimaryKeyConstraint("id", "owner", "project_id"),
+            ormar.PrimaryKeyConstraint("id", "owner_id", "project_id"),
             ormar.ForeignKeyConstraint(
                 Project,
-                columns=["owner", "project_id"],
+                columns=["owner_id", "project_id"],
                 related_columns=["owner_id", "id"],
                 name="tag_project",
             ),
         ]
 
     id: int = ormar.Integer()
-    owner: User = ormar.ForeignKey(User)
+    owner: User = ormar.ForeignKey(User, name="owner_id")
     project_id: int = ormar.Integer()
     name: str = ormar.String(nullable=False, max_length=100)
 
@@ -221,8 +218,9 @@ async def test_error_when_setting_part_of_pk_none():
             project = Project(id=2, owner=user, name="Doom impending")
             await project.save()
 
-            with pytest.raises(ValueError):
-                project.owner = None
+            raise Exception  # temporary fail as the test should fail question is when :)
+            project.owner = None
+            await project.update()
 
 
 ################
@@ -301,7 +299,6 @@ async def test_composite_fk_reverse_relation_created():
                 project=project, description="Meditate 25 hours a day", completed=True,
             )
             await task.save()
-
             assert len(project.tasks) == 1
             assert isinstance(project.tasks[0], ormar.Model)
             assert project.tasks[0].pk == task.pk
