@@ -37,6 +37,7 @@ class BaseField(FieldInfo):
         self.column_type: sqlalchemy.Column = kwargs.pop("column_type", None)
         self.constraints: List = kwargs.pop("constraints", list())
         self.name: str = kwargs.pop("name", None)
+        self.names: Dict = kwargs.pop("names", None)
         self.db_alias: str = kwargs.pop("alias", None)
 
         self.primary_key: bool = kwargs.pop("primary_key", False)

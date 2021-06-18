@@ -97,8 +97,7 @@ def populate_fk_params_based_on_to_model(
     nullable: bool,
     onupdate: str = None,
     ondelete: str = None,
-    name: str = None,
-    related_name: str = None,
+    relation_fields: Dict = None,
 ) -> Tuple[Any, List, Any]:
     # TODO: finish docstring
     """
@@ -135,15 +134,15 @@ def populate_fk_params_based_on_to_model(
         )
         # table_name = to.Meta.tablename
         # TODO: Check backref columns on virtual fk?
+        # TODO: Delay instantiation like in simple fk for inheritance
         constraints = [
-            # ormar.ForeignKeyConstraint(
-            #     to=to,
-            #     columns=[], # there may be no columns for back ref
-            #     related_columns=[f"{table_name}.{field.name}" for field in to_fields],
-            #     name=name,
-            #     related_name=related_name,
-            #     ondelete=ondelete, onupdate=onupdate, db_name=None
-            # )
+            ormar.ForeignKeyConstraint(
+                to=to,
+                columns=list(relation_fields.values()),
+                ondelete=ondelete,
+                onupdate=onupdate,
+                name=None,
+            )
         ]
         column_type = None
     else:
@@ -191,6 +190,12 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
             f"is not supported "
             "on relation fields!"
         )
+
+
+def generate_relation_fields_if_required(to: Type["Model"], names: Dict):
+    if not names:
+        return {pk_name: f"{to.get_name()}_{pk_name}" for pk_name in to.pk_aliases_list}
+    return names
 
 
 class UniqueColumns(UniqueConstraint):
@@ -276,6 +281,7 @@ def ForeignKey(  # noqa CFQ002
     skip_field = kwargs.pop("skip_field", False)
 
     real_name = kwargs.pop("real_name", None)
+    names = kwargs.pop("names", None)
 
     validate_not_allowed_fields(kwargs)
 
@@ -290,8 +296,7 @@ def ForeignKey(  # noqa CFQ002
             nullable=nullable,
             ondelete=ondelete,
             onupdate=onupdate,
-            name=real_name,
-            related_name=related_name,
+            relation_fields=generate_relation_fields_if_required(to=to, names=names),
         )
         is_compound = to.has_pk_constraint
 
@@ -322,6 +327,7 @@ def ForeignKey(  # noqa CFQ002
         skip_reverse=skip_reverse,
         skip_field=skip_field,
         is_compound=is_compound,
+        names=names,
     )
 
     Field = type("ForeignKey", (ForeignKeyField, BaseField), {})

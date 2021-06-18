@@ -1,3 +1,5 @@
+import copy
+import token
 from typing import TYPE_CHECKING, Type, cast
 
 import ormar
@@ -99,40 +101,23 @@ def process_compound_foreign_keys(new_model: Type["Model"]):
     :param new_model: Model class
     :type new_model: Type["Model"]
     """
-    compound_fk_constraints = [
-        x
-        for x in new_model.Meta.constraints
-        if isinstance(x, ormar.ForeignKeyConstraint)
-    ]
-    for constraint in compound_fk_constraints:
-        constraint.owner = new_model
-        constraint.related_name = constraint.related_name or new_model.get_name() + "s"
-        constraint.name = (
-            f"fk_{new_model.Meta.tablename}_{constraint.to.Meta.tablename}"
-            f"_{constraint.ormar_name}_{constraint.to.pk_name_str}"
-        )
-        new_model.Meta.model_fields[constraint.ormar_name] = ForeignKey(  # type: ignore
-            constraint.to,
-            name=constraint.ormar_columns[0]
-            if len(constraint.ormar_columns) == 1
-            else None,
-            real_name=constraint.ormar_name,
-            related_name=constraint.related_name,
-            owner=new_model,
-            self_reference=constraint.self_reference,
-            orders_by=constraint.related_orders_by,
-            skip_field=constraint.skip_reverse,
-        )
-        new_model.__fields__[constraint.ormar_name] = get_pydantic_field(
-            field_name=constraint.ormar_name, model=new_model
-        )
-
-        if not constraint.skip_reverse:
-            setattr(
-                constraint.to,
-                constraint.related_name,
-                RelationDescriptor(name=constraint.related_name),
-            )
+    model_fields = new_model.Meta.model_fields
+    iterate_fields = list(model_fields.values())
+    for field in iterate_fields:
+        if field.is_relation and field.is_compound:
+            for related_name, name in field.names.items():
+                if new_model.get_column_name_from_alias(name) not in model_fields:
+                    target_field = field.to.Meta.model_fields[related_name]
+                    copied_field = copy.deepcopy(target_field)
+                    copied_field.name = name
+                    copied_field.db_alias = name
+                    copied_field.owner = new_model
+                    model_fields[name] = copied_field
+                    target_pydantic_field = field.to.__fields__[related_name]
+                    new_model.__fields__[name] = copy.deepcopy(target_pydantic_field)
+                    new_model.Meta.columns.append(
+                        copied_field.get_column(copied_field.get_alias())
+                    )
 
 
 def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:

@@ -27,33 +27,22 @@ class User(ormar.Model):
 
 class Project(ormar.Model):
     class Meta(BaseMeta):
-        constraints = [
-            ormar.PrimaryKeyConstraint("id", "owner_id"),
-            ormar.ForeignKeyConstraint(
-                User, columns=["owner_id"], related_columns=["id"], name="owner"
-            ),
-        ]
+        constraints = [ormar.PrimaryKeyConstraint("id", "owner_id")]
 
     id: int = ormar.Integer()
-    owner_id: uuid.UUID = ormar.UUID(default=uuid.uuid4)
+    owner: User = ormar.ForeignKey(User, name="owner_id")
     name: str = ormar.String(nullable=False, max_length=100)
 
 
 class Tag(ormar.Model):
     class Meta(BaseMeta):
-        constraints = [
-            ormar.PrimaryKeyConstraint("id", "owner_id", "project_id"),
-            ormar.ForeignKeyConstraint(
-                Project,
-                columns=["owner_id", "project_id"],
-                related_columns=["owner_id", "id"],
-                name="tag_project",
-            ),
-        ]
+        constraints = [ormar.PrimaryKeyConstraint("id", "owner_id", "project_id")]
 
     id: int = ormar.Integer()
     owner: User = ormar.ForeignKey(User, name="owner_id")
-    project_id: int = ormar.Integer()
+    tag_project: Project = ormar.ForeignKey(
+        Project, names={"owner_id": "owner_id", "id": "project_id"}
+    )
     name: str = ormar.String(nullable=False, max_length=100)
 
 
@@ -67,24 +56,13 @@ class TaskTag(ormar.Model):
 class Task(ormar.Model):
     class Meta(BaseMeta):
         tablename = "tasks"
-        constraints = [
-            ormar.PrimaryKeyConstraint("id", "owner_id", "project_id"),
-            ormar.ForeignKeyConstraint(
-                User,
-                ["owner_id"],
-                ["id"],
-                name="owner",
-                related_name="owners",
-                db_name="owner_fk",
-            ),
-            ormar.ForeignKeyConstraint(
-                Project, ["owner_id", "project_id"], ["owner_id", "id"],
-            ),
-        ]
+        constraints = [ormar.PrimaryKeyConstraint("id", "owner", "project_id")]
 
     id: int = ormar.Integer()
-    owner_id: uuid.UUID = ormar.UUID()
-    project_id: int = ormar.Integer()
+    owner: User = ormar.ForeignKey(User)
+    project: Project = ormar.ForeignKey(
+        Project, names={"owner_id": "owner", "id": "project_id"}
+    )
     description: str = ormar.String(nullable=False, max_length=200)
     completed: bool = ormar.Boolean(nullable=False, default=False)
     tags: Optional[List[Tag]] = ormar.ManyToMany(Tag, through=TaskTag)
@@ -401,3 +379,16 @@ async def test_set_composite_pk_property():
             assert project.id == 4
             assert project.owner == user_josie
             await project.update()
+
+
+# TODO:
+# Register Foreign Key to field with multi column pk
+#   -> Reuse the same ForeignKey function, instead of name pass names dict (new class?)
+#   -> In names dict in fk always use real columns names (aliases) not ormar names
+#   -> During registration check if model already have all fields mentioned in names
+#   -> If not all fields are already present
+#       -> create missing fields based on to pk type of target model
+#   -> Names are optional and if not provided all fields are created
+# Resolve complex fks before complex pks as fks might create needed fields
+# Allow for nested fields in relation?
+# New method to resolve fields instead of direct model_fields access?

@@ -38,31 +38,9 @@ class PrimaryKeyConstraint(sqlalchemy.PrimaryKeyConstraint):
 
 class ForeignKeyConstraint(sqlalchemy.ForeignKeyConstraint):
     def __init__(
-        self,
-        to: Type["T"],
-        columns: List[str],
-        related_columns: List[str],
-        name: str = None,
-        related_name: str = None,
-        db_name: str = None,
-        self_reference: bool = False,
-        related_orders_by: List[str] = None,
-        skip_reverse: bool = False,
-        **kwargs: Any,
+        self, to: Type["T"], columns: List[str], **kwargs: Any,
     ):
-        self.to = to
-        self.owner = None
-        self.ormar_columns = columns
-        self.related_columns = related_columns
-        self.ormar_name = name or to.get_name()
-        self.related_name = related_name
-        self.name = db_name
-        self.self_reference = self_reference
-        self.related_orders_by = related_orders_by
-        self.skip_reverse = skip_reverse
         # TODO: Handle ForwardRefs?
         target_table_name = to.Meta.tablename
-        related_columns = [f"{target_table_name}.{x}" for x in related_columns]
-        super().__init__(
-            columns=tuple(columns), refcolumns=related_columns, name=db_name, **kwargs
-        )
+        related_columns = [f"{target_table_name}.{x}" for x in to.pk_aliases_list]
+        super().__init__(columns=tuple(columns), refcolumns=related_columns, **kwargs)
