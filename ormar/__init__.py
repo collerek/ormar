@@ -37,6 +37,7 @@ from ormar.exceptions import (  # noqa: I100
     ModelDefinitionError,
     MultipleMatches,
     NoMatch,
+    ModelError,
 )
 from ormar.fields import (
     BaseField,
@@ -129,5 +130,5 @@ __all__ = [
     "DECODERS_MAP",
     "LargeBinary",
     "PrimaryKeyConstraint",
-    "ForeignKeyConstraint",
+    "ModelError",
 ]

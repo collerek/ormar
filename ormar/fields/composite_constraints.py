@@ -23,15 +23,18 @@ class PrimaryKeyConstraint(sqlalchemy.PrimaryKeyConstraint):
             raise ormar.ModelDefinitionError("Cannot resolve aliases without owner")
         for column in self.column_names:
             column_name = self.owner.get_column_name_from_alias(column)
-            # self.owner.__fields__.pop(column_name).required = True
             if (
                 self.owner.Meta.model_fields.get(column_name)
                 and self.owner.Meta.model_fields.get(column_name).is_relation
             ):
+                self.owner.Meta.model_fields[column_name].nullable = False
+                self.owner.__fields__[column_name].required = True
                 self.column_aliases.extend(
                     self.owner.Meta.model_fields[column_name].to.pk_names_list
                 )
             else:
+                self.owner.Meta.model_fields[column_name].nullable = False
+                self.owner.__fields__[column_name].required = True
                 self.column_aliases.append(column)
         super().__init__(*self.column_aliases, **self._kwargs)
 

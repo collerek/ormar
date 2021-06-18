@@ -6,6 +6,7 @@ import pytest
 import sqlalchemy
 
 import ormar
+from ormar.exceptions import ModelError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -166,28 +167,6 @@ async def test_error_mixed_pk_declarations():
 
 
 @pytest.mark.asyncio
-async def test_error_pk_using_fk_column_directly():
-    """
-    In order to prevent direct access to fk columns, we need to disallow
-    pk declarations that use columns that are part of an fk directly.
-    Otherwise the fk columns would become directly accessible through
-    model.pk.
-    Instead, pk declarations should use the corresponding fk relations.
-    """
-    with pytest.raises(ormar.ModelDefinitionError):
-
-        class DirectPk(ormar.Model):
-            class Meta:
-                constraints = [
-                    ormar.PrimaryKeyConstraint("id", "user_id"),
-                    ormar.ForeignKeyConstraint(User, ["user_id"], ["id"]),
-                ]
-
-            id: int = ormar.Integer()
-            user_id: uuid.UUID = ormar.UUID(default=uuid.uuid4)
-
-
-@pytest.mark.asyncio
 async def test_error_when_setting_part_of_pk_none():
     async with database:
         async with database.transaction(force_rollback=True):
@@ -196,9 +175,9 @@ async def test_error_when_setting_part_of_pk_none():
             project = Project(id=2, owner=user, name="Doom impending")
             await project.save()
 
-            raise Exception  # temporary fail as the test should fail question is when :)
             project.owner = None
-            await project.update()
+            with pytest.raises(ormar.exceptions.ModelPersistenceError) as exc:
+                await project.update()
 
 
 ################
@@ -213,8 +192,12 @@ async def test_init_fk_column_directly_fails():
             user = User(email="tom@example.com")
             await user.save()
 
-            with pytest.raises(ValueError):
+            with pytest.raises(ModelError):
                 Project(owner_id=user.id, name="A failed endeavour")
+
+            with pytest.raises(ModelError) as exc:
+                Tag(project_id=1, id=10, owner=user, name="TestTag")
+            assert str(exc.value) == "You cannot set field project_id directly."
 
 
 @pytest.mark.asyncio

@@ -1,5 +1,6 @@
 from ormar.models.descriptors.descriptors import (
     BytesDescriptor,
+    DeniedDescriptor,
     JsonDescriptor,
     PkDescriptor,
     PropertyDescriptor,
@@ -14,4 +15,5 @@ __all__ = [
     "PkDescriptor",
     "JsonDescriptor",
     "BytesDescriptor",
+    "DeniedDescriptor",
 ]

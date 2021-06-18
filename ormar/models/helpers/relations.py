@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Type, cast
 import ormar
 from ormar import ForeignKey, ManyToMany
 from ormar.fields import Through
-from ormar.models.descriptors import RelationDescriptor
+from ormar.models.descriptors import DeniedDescriptor, RelationDescriptor
 from ormar.models.helpers.pydantic import create_pydantic_field, get_pydantic_field
 from ormar.models.helpers.sqlalchemy import adjust_through_many_to_many_model
 from ormar.relations import AliasManager
@@ -118,6 +118,12 @@ def process_compound_foreign_keys(new_model: Type["Model"]):
                     new_model.Meta.columns.append(
                         copied_field.get_column(copied_field.get_alias())
                     )
+                    setattr(
+                        new_model,
+                        name,
+                        DeniedDescriptor(name=name, relation_name=field.name),
+                    )
+                    new_model.Meta.denied_fields.add(name)
 
 
 def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:

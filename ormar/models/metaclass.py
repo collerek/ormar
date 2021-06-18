@@ -85,6 +85,7 @@ class ModelMeta:
     exclude_parent_fields: List[str]
     has_compound_pk: bool
     pk_constraint: Optional[ormar.PrimaryKeyConstraint]
+    denied_fields: Set[str]
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:

@@ -156,3 +156,25 @@ class PropertyDescriptor:
     def __set__(self, instance: "Model", value: Any) -> None:  # pragma: no cover
         # kept here so it's a data-descriptor and precedes __dict__ lookup
         pass
+
+
+class DeniedDescriptor:
+    """
+    Multi column foreign key descriptor for fields that are part of the fk
+    """
+
+    def __init__(self, name: str, relation_name: str) -> None:
+        self.name = name
+        self.relation_name = relation_name
+
+    def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
+        raise ormar.ModelError(
+            f"You cannot access field {self.name} directly. "
+            f"Use {self.relation_name} relation to get the field"
+        )
+
+    def __set__(self, instance: "Model", value: Any) -> None:
+        raise ormar.ModelError(
+            f"You cannot set field {self.name} directly. "
+            f"Use {self.relation_name} relation to set the field"
+        )

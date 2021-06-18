@@ -131,6 +131,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         object.__setattr__(self, "__pk_only__", pk_only)
 
         new_kwargs, through_tmp_dict = self._process_kwargs(kwargs)
+        self._check_denied_fields(kwargs=new_kwargs)
 
         if not pk_only:
             values, fields_set, validation_error = pydantic.validate_model(
@@ -289,6 +290,13 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 related_fields=self.extract_related_fields(), owner=cast("Model", self),
             ),
         )
+
+    def _check_denied_fields(self, kwargs: Dict):
+        if not self.Meta.denied_fields:
+            return
+        for field_name in self.Meta.denied_fields:
+            if field_name in kwargs:
+                raise ormar.ModelError(f"You cannot set field {field_name} directly.")
 
     def __eq__(self, other: object) -> bool:
         """
@@ -853,14 +861,15 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         }
         for field in self._extract_db_related_names():
             relation_field = self.Meta.model_fields[field]
-            target_pk_name = relation_field.to.Meta.pkname
+            target_pk_names = relation_field.to.pk_names_list
             target_field = getattr(self, field)
-            self_fields[field] = getattr(target_field, target_pk_name, None)
-            if not relation_field.nullable and not self_fields[field]:
-                raise ModelPersistenceError(
-                    f"You cannot save {relation_field.to.get_name()} "
-                    f"model without pk set!"
-                )
+            for target_pk_name in target_pk_names:
+                self_fields[field] = getattr(target_field, target_pk_name, None)
+                if not relation_field.nullable and not self_fields[field]:
+                    raise ModelPersistenceError(
+                        f"You cannot save {relation_field.to.get_name()} "
+                        f"model without pk set!"
+                    )
         return self_fields
 
     def get_relation_model_id(self, target_field: "BaseField") -> Optional[int]:

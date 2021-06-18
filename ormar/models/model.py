@@ -80,7 +80,9 @@ class Model(ModelRow):
         for pk_name in pk_names:
             if (
                 not getattr(self, pk_name, None)
-                and self.Meta.model_fields[pk_name].autoincrement
+                and self.Meta.model_fields[
+                    self.get_column_name_from_alias(pk_name)
+                ].autoincrement
             ):
                 self_fields.pop(pk_name, None)
         self_fields = self.populate_default_values(self_fields)
@@ -254,7 +256,7 @@ class Model(ModelRow):
         for pk_name in self.__class__.pk_names_list:
             expr = expr.where(
                 self.Meta.table.c.get(self.get_column_alias(pk_name))
-                == getattr(self, pk_name)
+                == getattr(self, self.get_column_name_from_alias(pk_name))
             )
 
         await self.Meta.database.execute(expr)
