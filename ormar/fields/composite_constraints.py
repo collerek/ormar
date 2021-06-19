@@ -29,9 +29,7 @@ class PrimaryKeyConstraint(sqlalchemy.PrimaryKeyConstraint):
             ):
                 self.owner.Meta.model_fields[column_name].nullable = False
                 self.owner.__fields__[column_name].required = True
-                self.column_aliases.extend(
-                    self.owner.Meta.model_fields[column_name].to.pk_names_list
-                )
+                self.column_aliases.append(column)
             else:
                 self.owner.Meta.model_fields[column_name].nullable = False
                 self.owner.__fields__[column_name].required = True

@@ -78,11 +78,10 @@ class Model(ModelRow):
 
         pk_names = self.__class__.pk_names_list
         for pk_name in pk_names:
+            pk_alias = self.get_column_name_from_alias(pk_name)
             if (
-                not getattr(self, pk_name, None)
-                and self.Meta.model_fields[
-                    self.get_column_name_from_alias(pk_name)
-                ].autoincrement
+                not getattr(self, pk_alias, None)
+                and self.Meta.model_fields[pk_alias].autoincrement
             ):
                 self_fields.pop(pk_name, None)
         self_fields = self.populate_default_values(self_fields)

@@ -34,10 +34,16 @@ class AliasMixin:
         :return: field name if set, otherwise passed alias (db name)
         :rtype: str
         """
+        aliases_dict = {}
         for field_name, field in cls.Meta.model_fields.items():
-            if field.get_alias() == alias:
-                return field_name
-        return alias  # if not found it's not an alias but actual name
+            if field.is_denied:
+                continue
+            aliases_dict[field.get_alias()] = field_name
+            if field.is_compound and field.names:
+                for name in field.names.values():
+                    if name not in aliases_dict:
+                        aliases_dict[name] = field_name
+        return aliases_dict.get(alias, alias)  # if not found it's already a name
 
     @classmethod
     def translate_columns_to_aliases(cls, new_kwargs: Dict) -> Dict:

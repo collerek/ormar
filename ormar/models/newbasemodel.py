@@ -860,9 +860,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             if self.get_column_alias(k) in self.Meta.table.columns
         }
         for field in self._extract_db_related_names():
-            relation_field = self.Meta.model_fields[field]
+            relation_field: "ForeignKeyField" = self.Meta.model_fields[field]
             target_pk_names = relation_field.to.pk_names_list
-            target_field = getattr(self, field)
+            target_field: "Model" = getattr(self, field)
             for target_pk_name in target_pk_names:
                 self_fields[field] = getattr(target_field, target_pk_name, None)
                 if not relation_field.nullable and not self_fields[field]:
@@ -871,6 +871,15 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                         f"model without pk set!"
                     )
         return self_fields
+
+    def _verify_primary_key(
+        self, relation_field: "ForeignKeyField", value: "Any"
+    ) -> None:
+        if not relation_field.nullable and not value is not None:
+            raise ModelPersistenceError(
+                f"You cannot save {relation_field.to.get_name()} "
+                f"model without pk set!"
+            )
 
     def get_relation_model_id(self, target_field: "BaseField") -> Optional[int]:
         """

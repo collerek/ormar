@@ -79,6 +79,52 @@ def create_test_database():
 
 
 ################
+# Models internals tests
+################
+
+
+def test_models_have_all_expected_fields():
+    assert len(Project.Meta.model_fields) == 5
+    # own fields
+    assert "id" in Project.Meta.model_fields
+    assert "name" in Project.Meta.model_fields
+    # relations
+    assert "owner" in Project.Meta.model_fields
+    assert "tags" in Project.Meta.model_fields
+    assert "tasks" in Project.Meta.model_fields
+
+    assert len(Tag.Meta.model_fields) == 7
+    assert "id" in Tag.Meta.model_fields
+    assert "name" in Tag.Meta.model_fields
+
+    # TODO: verify if project_id is needed in model_fields and __fields__
+    assert "tag_project" in Tag.Meta.model_fields
+    assert "project_id" in Tag.Meta.model_fields
+
+    assert "owner" in Tag.Meta.model_fields
+    assert "tasks" in Tag.Meta.model_fields
+    assert "tasktag" in Tag.Meta.model_fields
+
+    assert len(Task.Meta.model_fields) == 8
+    assert "id" in Task.Meta.model_fields
+    assert "description" in Task.Meta.model_fields
+    assert "completed" in Task.Meta.model_fields
+
+    # TODO: verify if project_id is needed in model_fields and __fields__
+    assert "project" in Task.Meta.model_fields
+    assert "project_id" in Task.Meta.model_fields
+
+    assert "owner" in Task.Meta.model_fields
+    assert "tags" in Task.Meta.model_fields
+    assert "tasktag" in Task.Meta.model_fields
+
+    assert len(TaskTag.Meta.model_fields) == 3
+    assert "id" in TaskTag.Meta.model_fields
+    assert "tag" in TaskTag.Meta.model_fields
+    assert "task" in TaskTag.Meta.model_fields
+
+
+################
 # PK tests
 ################
 
@@ -93,8 +139,11 @@ async def test_composite_pk_crud():
                 id=1, owner=user_beth, name="Clean up the bedroom"
             )
 
-            tag_urgent = Tag(tag_project=project_bedroom, name="URGENT!")
+            tag_urgent = Tag(
+                id=12, owner=user_beth, tag_project=project_bedroom, name="URGENT!"
+            )
             tag_medium = Tag(
+                id=13,
                 owner=user_beth,
                 tag_project=project_bedroom,
                 name="Fine if mum can't smell it",
@@ -103,12 +152,15 @@ async def test_composite_pk_crud():
             await tag_medium.save()
 
             task_underwear = Task(
+                id=14,
+                owner=user_beth,
                 project=project_bedroom,
                 description="Collect underwear",
                 completed=False,
                 tags=[tag_medium],
             )
             task_monster = Task(
+                id=15,
                 owner=user_beth,
                 project=project_bedroom,
                 description="Feed the monster under the bed",
@@ -178,6 +230,7 @@ async def test_error_when_setting_part_of_pk_none():
             project.owner = None
             with pytest.raises(ormar.exceptions.ModelPersistenceError) as exc:
                 await project.update()
+            # TODO: text exc message
 
 
 ################
@@ -223,29 +276,14 @@ async def test_get_fk_column_directly_fails():
             await user.save()
             project = Project(id=12, owner=user, name="Doom impending")
             await project.save()
+            tag = Tag(tag_project=project, id=10, owner=user, name="TestTag")
 
-            with pytest.raises(ValueError):
+            with pytest.raises(AttributeError):
                 project.owner_id
 
-
-@pytest.mark.asyncio
-async def test_define_fk_field_to_composite_pk_model_fails():
-    """
-    Defining a FK to a model with composite PK would implicitly create
-    multiple columns to store the key and we want to prevent this
-    implicit behaviour. Instead, a ForeignKeyConstraint should be used.
-    """
-    async with database:
-        with pytest.raises(ormar.ModelDefinitionError):
-
-            class ProjectStatus(ormar.Model):
-                class Meta:
-                    tablename = "project_states"
-                    metadata = metadata
-                    database = database
-
-                id: int = ormar.Integer(primary_key=True)
-                project: Optional[Project] = ormar.ForeignKey(Project)
+            with pytest.raises(ormar.ModelError) as exc:
+                tag.project_id
+            assert "You cannot access field project_id directly" in str(exc.value)
 
 
 @pytest.mark.asyncio
@@ -254,10 +292,14 @@ async def test_composite_fk_reverse_relation_created():
         async with database.transaction(force_rollback=True):
             user = User(email="tom@example.com")
             await user.save()
-            project = Project(owner=user, name="Find inner peace")
+            project = Project(id=124, owner=user, name="Find inner peace")
             await project.save()
             task = Task(
-                project=project, description="Meditate 25 hours a day", completed=True,
+                id=125,
+                owner=user,
+                project=project,
+                description="Meditate 25 hours a day",
+                completed=True,
             )
             await task.save()
             assert len(project.tasks) == 1

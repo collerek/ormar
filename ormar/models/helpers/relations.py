@@ -106,14 +106,16 @@ def process_compound_foreign_keys(new_model: Type["Model"]):
     for field in iterate_fields:
         if field.is_relation and field.is_compound:
             for related_name, name in field.names.items():
-                if new_model.get_column_name_from_alias(name) not in model_fields:
-                    target_field = field.to.Meta.model_fields[related_name]
+                if name not in [x.name for x in new_model.Meta.columns]:
+                    field_name = field.to.get_column_name_from_alias(related_name)
+                    target_field = field.to.Meta.model_fields[field_name]
                     copied_field = copy.deepcopy(target_field)
                     copied_field.name = name
                     copied_field.db_alias = name
                     copied_field.owner = new_model
+                    copied_field.is_denied = True
                     model_fields[name] = copied_field
-                    target_pydantic_field = field.to.__fields__[related_name]
+                    target_pydantic_field = field.to.__fields__[field_name]
                     new_model.__fields__[name] = copy.deepcopy(target_pydantic_field)
                     new_model.Meta.columns.append(
                         copied_field.get_column(copied_field.get_alias())

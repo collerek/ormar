@@ -286,17 +286,19 @@ def ForeignKey(  # noqa CFQ002
     validate_not_allowed_fields(kwargs)
 
     if to.__class__ == ForwardRef:
+        # TODO: Handle names dict in forward ref update
         __type__ = to if not nullable else Optional[to]
         constraints: List = []
         column_type = None
         is_compound = False
     else:
+        names = generate_relation_fields_if_required(to=to, names=names)
         __type__, constraints, column_type = populate_fk_params_based_on_to_model(
             to=to,  # type: ignore
             nullable=nullable,
             ondelete=ondelete,
             onupdate=onupdate,
-            relation_fields=generate_relation_fields_if_required(to=to, names=names),
+            relation_fields=names,
         )
         is_compound = to.has_pk_constraint
 

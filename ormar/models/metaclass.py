@@ -591,7 +591,10 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 # TODO: iterate only related fields
                 for name, field in new_model.Meta.model_fields.items():
                     register_relation_in_alias_manager(field=field)
-                    add_field_descriptor(name=name, field=field, new_model=new_model)
+                    if name not in new_model.__dict__:
+                        add_field_descriptor(
+                            name=name, field=field, new_model=new_model
+                        )
 
                 new_model.Meta.alias_manager = alias_manager
 

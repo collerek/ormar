@@ -72,7 +72,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         """
         pknames = cls.pk_names_list
         for pkname in pknames:
-            pk = cls.Meta.model_fields[pkname]
+            pk = cls.Meta.model_fields[cls.get_column_name_from_alias(pkname)]
             if new_kwargs.get(pkname, ormar.Undefined) is None and (
                 pk.nullable or pk.autoincrement
             ):
