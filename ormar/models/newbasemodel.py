@@ -170,7 +170,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: None
         :rtype: None
         """
-        if hasattr(self, name):
+        if hasattr(self.__class__, name):
             object.__setattr__(self, name, value)
         else:
             # let pydantic handle errors for unknown fields
@@ -863,19 +863,30 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             relation_field: "ForeignKeyField" = self.Meta.model_fields[field]
             target_pk_names = relation_field.to.pk_names_list
             target_field: "Model" = getattr(self, field)
+            # TODO: Extract pk fields for compound relation fields
             for target_pk_name in target_pk_names:
-                self_fields[field] = getattr(target_field, target_pk_name, None)
-                if not relation_field.nullable and not self_fields[field]:
-                    raise ModelPersistenceError(
-                        f"You cannot save {relation_field.to.get_name()} "
-                        f"model without pk set!"
+                if relation_field.is_compound:
+                    target_pk_name = target_field.get_column_name_from_alias(
+                        target_pk_name
                     )
+                    target_value = getattr(target_field, target_pk_name, None)
+                    if isinstance(target_value, ormar.Model):
+                        target_value = target_value.pk
+                    parent_pk_alias = relation_field.names.get(
+                        target_pk_name, target_pk_name
+                    )
+                    self._verify_primary_key(relation_field, target_value)
+                    self_fields[parent_pk_alias] = target_value
+                else:
+                    target_value = getattr(target_field, target_pk_name, None)
+                    self._verify_primary_key(relation_field, target_value)
+                    self_fields[field] = target_value
         return self_fields
 
     def _verify_primary_key(
         self, relation_field: "ForeignKeyField", value: "Any"
     ) -> None:
-        if not relation_field.nullable and not value is not None:
+        if not relation_field.nullable and value is None:
             raise ModelPersistenceError(
                 f"You cannot save {relation_field.to.get_name()} "
                 f"model without pk set!"

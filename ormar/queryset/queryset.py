@@ -1091,6 +1091,7 @@ class QuerySet(Generic[T]):
         :type columns: List[str]
         """
         ready_objects = []
+        # TODO: Adjust for multi pk
         pk_name = self.model_meta.pkname
         if not columns:
             columns = list(
@@ -1103,23 +1104,26 @@ class QuerySet(Generic[T]):
             columns.append(pk_name)
 
         columns = [self.model.get_column_alias(k) for k in columns]
-
+        kwargs = dict()
         for objt in objects:
-            new_kwargs = objt.dict()
-            if pk_name not in new_kwargs or new_kwargs.get(pk_name) is None:
+            kwargs = objt.dict()
+            if pk_name not in kwargs or kwargs.get(pk_name) is None:
                 raise ModelPersistenceError(
                     "You cannot update unsaved objects. "
                     f"{self.model.__name__} has to have {pk_name} filled."
                 )
-            new_kwargs = self.model.parse_non_db_fields(new_kwargs)
-            new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
-            new_kwargs = self.model.translate_columns_to_aliases(new_kwargs)
-            new_kwargs = {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
+            kwargs = self.model.parse_non_db_fields(kwargs)
+            kwargs = self.model.substitute_models_with_pks(kwargs)
+            kwargs = self.model.translate_columns_to_aliases(kwargs)
+            new_kwargs = {"new_" + k: v for k, v in kwargs.items() if k in columns}
             ready_objects.append(new_kwargs)
 
         pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
         pk_column_name = self.model.get_column_alias(pk_name)
-        table_columns = [c.name for c in self.model_meta.table.c]
+        used_columns = [self.model.get_column_alias(k) for k in kwargs]
+        table_columns = [
+            c.name for c in self.model_meta.table.c if c.name in used_columns
+        ]
         expr = self.table.update().where(
             pk_column == bindparam("new_" + pk_column_name)
         )

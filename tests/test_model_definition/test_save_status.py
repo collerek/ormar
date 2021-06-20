@@ -218,8 +218,9 @@ async def test_queryset_methods():
 async def test_bulk_methods():
     async with database:
         async with database.transaction(force_rollback=True):
-            c1 = Company(name="Banzai", founded=1988)
-            c2 = Company(name="Yuhu", founded=1989)
+            hq = await HQ(name="test HQ").save()
+            c1 = Company(name="Banzai", founded=1988, hq=hq)
+            c2 = Company(name="Yuhu", founded=1989, hq=hq)
 
             await Company.objects.bulk_create([c1, c2])
             assert c1.saved
@@ -227,6 +228,7 @@ async def test_bulk_methods():
 
             c1, c2 = await Company.objects.all()
             c1.name = "Banzai2"
+            c1.hq = None
             c2.name = "Yuhu2"
 
             assert not c1.saved
@@ -235,6 +237,8 @@ async def test_bulk_methods():
             await Company.objects.bulk_update([c1, c2])
             assert c1.saved
             assert c2.saved
+
+            assert c1.hq is None
 
             c3 = Company(name="Cobra", founded=2088)
             assert not c3.saved

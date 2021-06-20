@@ -90,6 +90,7 @@ class Model(ModelRow):
                 k: v
                 for k, v in self_fields.items()
                 if k not in self.extract_related_names()
+                and not self.Meta.model_fields[k].is_denied
             }
         )
 

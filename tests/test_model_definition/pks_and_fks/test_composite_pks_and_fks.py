@@ -51,6 +51,7 @@ class TaskTag(ormar.Model):
     class Meta(BaseMeta):
         tablename = "task_tags"
 
+    # TODO: Generate partial model fields deniable?
     id: int = ormar.Integer(primary_key=True)
 
 
@@ -122,6 +123,35 @@ def test_models_have_all_expected_fields():
     assert "id" in TaskTag.Meta.model_fields
     assert "tag" in TaskTag.Meta.model_fields
     assert "task" in TaskTag.Meta.model_fields
+
+
+def test_models_have_expected_db_columns():
+    assert len(Project.Meta.table.columns) == 3
+    assert "id" in Project.Meta.table.columns
+    assert "owner_id" in Project.Meta.table.columns
+    assert "name" in Project.Meta.table.columns
+
+    assert len(Tag.Meta.table.columns) == 4
+    assert "id" in Tag.Meta.table.columns
+    assert "owner_id" in Tag.Meta.table.columns
+    assert "project_id" in Tag.Meta.table.columns
+    assert "name" in Tag.Meta.table.columns
+
+    assert len(Task.Meta.table.columns) == 5
+    assert "id" in Task.Meta.table.columns
+    assert "owner" in Task.Meta.table.columns
+    assert "project_id" in Task.Meta.table.columns
+    assert "description" in Task.Meta.table.columns
+    assert "completed" in Task.Meta.table.columns
+
+    assert len(TaskTag.Meta.table.columns) == 7
+    assert "id" in TaskTag.Meta.table.columns
+    assert "task_owner" in TaskTag.Meta.table.columns
+    assert "task_project_id" in TaskTag.Meta.table.columns
+    assert "task_id" in TaskTag.Meta.table.columns
+    assert "tag_owner_id" in TaskTag.Meta.table.columns
+    assert "tag_project_id" in TaskTag.Meta.table.columns
+    assert "tag_id" in TaskTag.Meta.table.columns
 
 
 ################
@@ -321,7 +351,11 @@ async def test_correct_pydantic_dict_with_composite_keys():
             project = Project(id=15, owner=user, name="Get rich fast")
             await project.save()
             task = Task(
-                project=project, description="Buy lots of Bitcoin", completed=False,
+                id=23,
+                owner=user,
+                project=project,
+                description="Buy lots of Bitcoin",
+                completed=False,
             )
             await task.save()
 
@@ -377,17 +411,21 @@ async def test_get_composite_pk_property():
             project = await Project.objects.create(owner=user, name="Gardening", id=5)
             assert isinstance(project.pk, dict)
             assert len(project.pk) == 2
-            assert set(project.pk.keys()) == {"id", "owner"}
-            assert project.pk["owner"] == user
+            assert set(project.pk.keys()) == {"id", "owner_id"}
+            assert project.pk["owner_id"] == user
 
             task = await Task.objects.create(
-                project=project, description="Down with the weeds!", completed=False,
+                id=234,
+                owner=user,
+                project=project,
+                description="Down with the weeds!",
+                completed=False,
             )
             assert isinstance(task.pk, dict)
             assert len(task.pk) == 3
-            assert set(task.pk.keys()) == {"id", "owner", "project"}
-            assert task.pk["owner"] == user.id
-            assert task.pk["project"] == project.pk["id"]
+            assert set(task.pk.keys()) == {"id", "owner", "project_id"}
+            assert task.pk["owner"] == user
+            assert task.pk["project_id"] == project
 
 
 @pytest.mark.asyncio
@@ -398,11 +436,17 @@ async def test_set_composite_pk_property():
             user_josie = await User(email="josie@example.com").save()
 
             project = await Project(
-                owner=user_tian, name="Become an influencer",
+                id=345, owner=user_tian, name="Become an influencer",
             ).save()
-            project.pk = {"id": 4, "owner": user_josie}
-            assert project.id == 4
+            project.pk = {"id": 445, "owner": user_josie}
+            assert project.id == 445
             assert project.owner == user_josie
+            await project.save()
+
+            project = await Project.objects.get(id=445, owner=user_josie.pk)
+            assert project.id == 445
+            assert project.owner.pk == user_josie.pk
+            project.name = "Become an entrepreneur"
             await project.update()
 
 

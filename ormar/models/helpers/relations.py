@@ -115,8 +115,13 @@ def process_compound_foreign_keys(new_model: Type["Model"]):
                     copied_field.owner = new_model
                     copied_field.is_denied = True
                     model_fields[name] = copied_field
-                    target_pydantic_field = field.to.__fields__[field_name]
-                    new_model.__fields__[name] = copy.deepcopy(target_pydantic_field)
+                    target_pydantic_field = copy.deepcopy(
+                        field.to.__fields__[field_name]
+                    )
+                    target_pydantic_field.name = name
+                    target_pydantic_field.alias = name
+                    target_pydantic_field.required = False
+                    new_model.__fields__[name] = target_pydantic_field
                     new_model.Meta.columns.append(
                         copied_field.get_column(copied_field.get_alias())
                     )

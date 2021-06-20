@@ -89,7 +89,12 @@ class PkDescriptor:
 
     def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
         if self.is_compound:
-            return {name: instance.__dict__.get(name, None) for name in self.name}
+            return {
+                name: instance.__dict__.get(
+                    owner.get_column_name_from_alias(name), None
+                )
+                for name in self.name
+            }
         value = instance.__dict__.get(self.name, None)
         return value
 
@@ -97,7 +102,10 @@ class PkDescriptor:
         if self.is_compound:
             if isinstance(value, collections.Mapping):
                 for key, val in value.items():
-                    instance._internal_set(key, value)
+                    if key in instance.extract_related_names():
+                        setattr(instance, key, val)
+                    else:
+                        instance._internal_set(key, val)
             else:
                 raise ormar.ModelDefinitionError(
                     "Compound primary key can be set only with dictionary"
@@ -168,6 +176,8 @@ class DeniedDescriptor:
         self.relation_name = relation_name
 
     def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
+        if instance is None:
+            return self
         raise ormar.ModelError(
             f"You cannot access field {self.name} directly. "
             f"Use {self.relation_name} relation to get the field"

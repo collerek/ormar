@@ -112,6 +112,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         for field in cls.extract_related_names():
             field_value = model_dict.get(field, None)
             if field_value is not None:
+                model_dict.pop(field, None)
                 target_field = cls.Meta.model_fields[field]
                 target_pknames = target_field.to.pk_names_list
                 if isinstance(field_value, ormar.Model):
@@ -123,11 +124,16 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
                             f"You cannot save {field_value.get_name()} "
                             f"model without pk set!"
                         )
-                    model_dict[field] = (
-                        dict(zip(target_pknames, pk_values))
-                        if len(pk_values) > 1
-                        else pk_values[0]
-                    )
+                    if target_field.is_compound:
+                        fields_to_set = dict(zip(target_pknames, pk_values))
+                        for k, v in fields_to_set.items():
+                            own_pk_alias = target_field.names.get(k, k)
+                            if own_pk_alias not in model_dict:
+                                model_dict[own_pk_alias] = (
+                                    v if not isinstance(v, ormar.Model) else v.pk
+                                )
+                    else:
+                        model_dict[field] = pk_values[0]
                 elif field_value:  # nested dict
                     if isinstance(field_value, list):
                         if len(target_pknames) > 1:
