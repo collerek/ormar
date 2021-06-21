@@ -678,7 +678,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
     def pk_aliases_list(cls: Type["T"]) -> List[str]:
         """Shortcut to models primary key name"""
         if not cls.has_pk_constraint:
-            return [cls.Meta.pkname]
+            return [cls.get_column_alias(cls.Meta.pkname)]
         return [cls.get_column_alias(x) for x in cls.Meta.pk_constraint.column_names]
 
     @property

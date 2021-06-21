@@ -35,7 +35,11 @@ class MergeModelMixin:
         grouped_instances: OrderedDict = OrderedDict()
 
         for model in result_rows:
-            grouped_instances.setdefault(model.__class__.pk_name_str, []).append(model)
+            if model.__class__.has_pk_constraint:
+                key = tuple(model.pk.values())
+            else:
+                key = model.pk
+            grouped_instances.setdefault(key, []).append(model)
 
         for group in grouped_instances.values():
             model = group.pop(0)

@@ -478,7 +478,7 @@ async def test_get_composite_pk_property():
             assert isinstance(project.pk, dict)
             assert len(project.pk) == 2
             assert set(project.pk.keys()) == {"id", "owner_id"}
-            assert project.pk["owner_id"] == user
+            assert project.pk["owner_id"] == user.pk
 
             task = await Task.objects.create(
                 id=234,
@@ -490,8 +490,8 @@ async def test_get_composite_pk_property():
             assert isinstance(task.pk, dict)
             assert len(task.pk) == 3
             assert set(task.pk.keys()) == {"id", "owner", "project_id"}
-            assert task.pk["owner"] == user
-            assert task.pk["project_id"] == project
+            assert task.pk["owner"] == user.pk
+            assert task.pk["project_id"] == project.pk.get("id")
 
 
 @pytest.mark.asyncio

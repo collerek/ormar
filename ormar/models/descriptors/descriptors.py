@@ -89,12 +89,21 @@ class PkDescriptor:
 
     def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
         if self.is_compound:
-            return {
-                name: instance.__dict__.get(
-                    owner.get_column_name_from_alias(name), None
-                )
-                for name in self.name
-            }
+            pk_dict = dict()
+            for name in self.name:
+                target_field_name = owner.get_column_name_from_alias(name)
+                target_value = instance.__dict__.get(target_field_name, None)
+                if isinstance(target_value, ormar.Model):
+                    target_value = target_value.pk
+                if isinstance(target_value, dict):
+                    target_field = owner.Meta.model_fields[target_field_name]
+                    names = target_field.names
+                    for target_name, own_name in names.items():
+                        if own_name not in pk_dict:
+                            pk_dict[own_name] = target_value.get(target_name)
+                else:
+                    pk_dict[name] = target_value
+            return pk_dict
         value = instance.__dict__.get(self.name, None)
         return value
 
