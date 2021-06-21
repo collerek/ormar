@@ -67,7 +67,7 @@ class Task(ormar.Model):
     )
     description: str = ormar.String(nullable=False, max_length=200)
     completed: bool = ormar.Boolean(nullable=False, default=False)
-    tags: Optional[List[Tag]] = ormar.ManyToMany(Tag, through=TaskTag)
+    tags: List[Tag] = ormar.ManyToMany(Tag, through=TaskTag)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -168,6 +168,37 @@ async def test_composite_pk_crud():
             project_bedroom = await Project.objects.create(
                 id=1, owner=user_beth, name="Clean up the bedroom"
             )
+            task_underwear = Task(
+                id=14,
+                owner=user_beth,
+                project=project_bedroom,
+                description="Collect underwear",
+                completed=False,
+            )
+            await task_underwear.save()
+
+            task = await Task.objects.get(description="Collect underwear")
+            assert task.pk == task_underwear.pk
+            assert isinstance(task.project, ormar.Model)
+            await task.project.load()
+            assert task.project.name == "Clean up the bedroom"
+
+            task.project.name = "Make bedroom appear clean"
+            await task.project.update()
+            project = await Project.objects.get(name="Make bedroom appear clean")
+            assert project.pk == project_bedroom.pk
+            assert isinstance(project, ormar.Model)
+
+
+@pytest.mark.asyncio
+async def test_many_to_many_basic_crud():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            user_beth = User(email="beth@example.com")
+            await user_beth.save()
+            project_bedroom = await Project.objects.create(
+                id=1, owner=user_beth, name="Clean up the bedroom"
+            )
 
             tag_urgent = Tag(
                 id=12, owner=user_beth, tag_project=project_bedroom, name="URGENT!"
@@ -181,13 +212,32 @@ async def test_composite_pk_crud():
             await tag_urgent.save()
             await tag_medium.save()
 
-            task_underwear = Task(
-                id=14,
+            task_monster = Task(
+                id=15,
                 owner=user_beth,
                 project=project_bedroom,
-                description="Collect underwear",
+                description="Feed the monster under the bed",
                 completed=False,
-                tags=[tag_medium],
+            )
+            await task_monster.save()
+            await task_monster.tags.add(tag_medium)
+            await task_monster.tags.add(tag_urgent)
+
+            await task_monster.tags.all()
+            assert task_monster.tags is not None and len(task_monster.tags) == 2
+            await task_monster.tags.remove(tag_medium)
+            all_tags = await task_monster.tags.all()
+            assert len(all_tags) == 1
+
+
+@pytest.mark.asyncio
+async def test_reverse_relation_basic_crud():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            user_beth = User(email="beth@example.com")
+            await user_beth.save()
+            project_bedroom = await Project.objects.create(
+                id=1, owner=user_beth, name="Clean up the bedroom"
             )
             task_monster = Task(
                 id=15,
@@ -195,27 +245,43 @@ async def test_composite_pk_crud():
                 project=project_bedroom,
                 description="Feed the monster under the bed",
                 completed=False,
-                tags=[tag_urgent],
             )
-            await task_underwear.save()
             await task_monster.save()
 
-            task = await Task.objects.get(description="Collect underwear")
-            assert task.pk == task_underwear.pk
-            assert isinstance(task.project, ormar.Model)
-            assert task.project.description == "Clean up the bedroom"
-            await task.project.load()
-            task.project.name = "Make bedroom appear clean"
-            await task.project.save()
-            project = await Project.objects.get(name="Make bedroom appear clean")
-            assert project.pk == project_bedroom.pk
-            assert isinstance(project, ormar.Model)
+            await user_beth.tasks.all()
+            assert len(user_beth.tasks) == 1
+            assert user_beth.tasks[0] == task_monster
 
-            assert task.tags is not None and len(task.tags) == 1
-            await task.tags[0].delete()
-            all_tags = await Tag.objects.all()
-            assert len(all_tags) == 1
-            assert all_tags[0].project.owner.email == "beth@example.com"
+            user_check = await User.objects.select_related("tasks").get(
+                email="beth@example.com"
+            )
+            assert len(user_check.tasks) == 1
+            assert user_check.tasks[0] == task_monster
+
+
+@pytest.mark.asyncio
+async def test_reverse_relation_compound_crud():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            user = await User(email="timmy@example.com").save()
+            project_mount_doom = await Project.objects.create(
+                id=90, owner=user, name="Destroy the ring"
+            )
+            task_adventure = await Task(
+                id=178,
+                owner=user,
+                project=project_mount_doom,
+                description="Go on an adventure!",
+                completed=False,
+            ).save()
+
+            project_check = await Project.objects.select_related("tasks").get(
+                name="Destroy the ring"
+            )
+            assert project_check.tasks[0] == task_adventure
+            assert len(project_check.tasks)
+            assert project_check.owner.pk == user.pk
+            assert project_check.owner.email is None
 
 
 @pytest.mark.asyncio
@@ -452,12 +518,22 @@ async def test_set_composite_pk_property():
 
 # TODO:
 # Register Foreign Key to field with multi column pk
-#   -> Reuse the same ForeignKey function, instead of name pass names dict (new class?)
-#   -> In names dict in fk always use real columns names (aliases) not ormar names
-#   -> During registration check if model already have all fields mentioned in names
-#   -> If not all fields are already present
-#       -> create missing fields based on to pk type of target model
+# (V)   -> Reuse the same ForeignKey function, instead of name pass names dict
+# (V)   -> In names dict in fk always use real columns names (aliases) not ormar names
+# (V)   -> During registration check if model already have all fields mentioned in names
+# (V) -> If not all fields are already present
+# (V)       -> create missing fields based on to pk type of target model
 #   -> Names are optional and if not provided all fields are created
-# Resolve complex fks before complex pks as fks might create needed fields
+# (V) Resolve complex fks before complex pks as fks might create needed fields
 # Allow for nested fields in relation?
 # New method to resolve fields instead of direct model_fields access?
+# Add to relation
+# remove from relation
+# select related
+#   -> normal,
+#   -> reverse,
+#   -> many to many
+# prefetch related
+#   -> normal,
+#   -> reverse,
+#   -> many to many

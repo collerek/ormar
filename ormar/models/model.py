@@ -254,9 +254,11 @@ class Model(ModelRow):
         self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.update().values(**self_fields)
         for pk_name in self.__class__.pk_names_list:
+            target_value = getattr(self, self.get_column_name_from_alias(pk_name))
+            if isinstance(target_value, ormar.Model):
+                target_value = target_value.pk
             expr = expr.where(
-                self.Meta.table.c.get(self.get_column_alias(pk_name))
-                == getattr(self, self.get_column_name_from_alias(pk_name))
+                self.Meta.table.c.get(self.get_column_alias(pk_name)) == target_value
             )
 
         await self.Meta.database.execute(expr)
@@ -298,7 +300,14 @@ class Model(ModelRow):
         :return: reloaded Model
         :rtype: Model
         """
-        expr = self.Meta.table.select().where(self.pk_column == self.pk)
+        expr = self.Meta.table.select()
+        for pk_name in self.__class__.pk_names_list:
+            target_value = getattr(self, self.get_column_name_from_alias(pk_name))
+            if isinstance(target_value, ormar.Model):
+                target_value = target_value.pk
+            expr = expr.where(
+                self.Meta.table.c.get(self.get_column_alias(pk_name)) == target_value
+            )
         row = await self.Meta.database.fetch_one(expr)
         if not row:  # pragma nocover
             raise NoMatch("Instance was deleted from database and cannot be refreshed")

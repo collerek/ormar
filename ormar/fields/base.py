@@ -59,9 +59,9 @@ class BaseField(FieldInfo):
         self.virtual: bool = kwargs.pop(
             "virtual", None
         )  # ManyToManyFields and reverse ForeignKeyFields
-        self.is_multi: bool = kwargs.pop("is_multi", None)  # ManyToManyField
+        self.is_multi: bool = kwargs.pop("is_multi", False)  # ManyToManyField
         self.is_relation: bool = kwargs.pop(
-            "is_relation", None
+            "is_relation", False
         )  # ForeignKeyField + subclasses
         self.is_through: bool = kwargs.pop("is_through", False)  # ThroughFields
         self.is_compound: bool = kwargs.pop("is_compound", False)
@@ -132,6 +132,16 @@ class BaseField(FieldInfo):
         :rtype: str
         """
         return self.db_alias if self.db_alias else self.name
+
+    def get_reversed_names(self) -> Optional[Dict]:
+        """
+        Returns compound names reversed so local_column: to.pk_column
+        :return: Dict of value, key reversed compound column names
+        :rtype: Optional[Dict]
+        """
+        if not self.names:
+            return None
+        return {v: k for k, v in self.names.items()}
 
     def get_pydantic_default(self) -> Dict:
         """

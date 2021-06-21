@@ -103,7 +103,8 @@ class ModelRow(NewBaseModel):
         )
 
         instance: Optional["Model"] = None
-        if item.get(cls.Meta.pkname, None) is not None:
+        pk_fields = cls.pk_names_list
+        if all(item.get(pk_name, None) for pk_name in pk_fields):
             item["__excluded__"] = cls.get_names_to_exclude(
                 excludable=excludable, alias=table_prefix
             )
@@ -381,7 +382,19 @@ class ModelRow(NewBaseModel):
         for column in cls.Meta.table.columns:
             alias = cls.get_column_name_from_alias(column.name)
             if alias not in item and alias in selected_columns:
-                prefixed_name = f"{column_prefix}{column.name}"
-                item[alias] = row[prefixed_name]
+                model_field = cls.Meta.model_fields[alias]
+                if model_field.is_compound:
+                    reversed_names = model_field.get_reversed_names()
+                    related_dict = {}
+                    for name, pk_name in reversed_names.items():
+                        prefixed_name = f"{column_prefix}{name}"
+                        related_dict[
+                            model_field.to.get_column_name_from_alias(pk_name)
+                        ] = row[prefixed_name]
+                    related_dict["__pk_only__"] = True
+                    item[alias] = related_dict
+                else:
+                    prefixed_name = f"{column_prefix}{column.name}"
+                    item[alias] = row[prefixed_name]
 
         return item

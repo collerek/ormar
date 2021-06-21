@@ -626,7 +626,9 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         """Shortcut to models primary key field type"""
         if not cls.has_pk_constraint:
             return cls.Meta.model_fields[cls.pk_name].__type__
-        return tuple(cls.Meta.model_fields[pk_name].__type__ for pk_name in cls.pk_name)
+        return tuple(
+            cls.Meta.model_fields[pk_name].__type__ for pk_name in cls.pk_names_list
+        )
 
     @property
     def pk_columns(cls: Type["T"]) -> Union[sqlalchemy.Column, List[sqlalchemy.Column]]:
@@ -666,7 +668,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
     def pk_names_list(cls: Type["T"]) -> List[str]:
         """Shortcut to models primary key name"""
         if not cls.has_pk_constraint:
-            return [cls.Meta.pkname]
+            return [cls.get_column_name_from_alias(cls.Meta.pkname)]
         return [
             cls.get_column_name_from_alias(x)
             for x in cls.Meta.pk_constraint.column_names

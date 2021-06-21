@@ -70,13 +70,10 @@ class ExcludableMixin(RelationMixin):
         :return: list of columns names with pk column in it
         :rtype: List[str]
         """
-        pk_alias = (
-            model.get_column_alias(model.Meta.pkname)
-            if use_alias
-            else model.Meta.pkname
-        )
-        if pk_alias not in columns:
-            columns.append(pk_alias)
+        pk_aliases = model.pk_aliases_list if use_alias else model.pk_names_list
+        for alias in pk_aliases:
+            if alias not in columns:
+                columns.append(alias)
         return columns
 
     @classmethod

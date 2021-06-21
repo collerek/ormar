@@ -150,6 +150,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
             model_field.owner,
             through=model_field.through,
             name=related_name,
+            names=model_field.get_reversed_names(),
             virtual=True,
             related_name=model_field.name,
             owner=model_field.to,
@@ -168,6 +169,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
         model_field.to.Meta.model_fields[related_name] = ForeignKey(  # type: ignore
             model_field.owner,
             real_name=related_name,
+            names=model_field.get_reversed_names(),
             virtual=True,
             related_name=model_field.name,
             owner=model_field.to,

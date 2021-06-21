@@ -102,6 +102,24 @@ class SqlJoin:
         """
         return self.next_model.Meta.table
 
+    def generate_on_clause(self, to_key: str, from_key: str) -> text:
+        # if not self.target_field.owner.has_pk_constraint:
+        on_clause = self._on_clause(
+            previous_alias=self.own_alias,
+            from_clause=f"{self.target_field.owner.Meta.tablename}.{from_key}",
+            to_clause=f"{self.to_table.name}.{to_key}",
+        )
+        # else:
+        #     names = self.target_field.names
+        #     on_clause = sqlalchemy.sql.and_(
+        #         *[self._on_clause(
+        #             previous_alias=self.own_alias,
+        #             from_clause=f"{self.target_field.owner.Meta.tablename}.{own_name}",
+        #             to_clause=f"{self.to_table.name}.{target_name}",
+        #         ) for target_name, own_name in names.items()]
+        #     )
+        return on_clause
+
     def _on_clause(
         self, previous_alias: str, from_clause: str, to_clause: str,
     ) -> text:
@@ -285,12 +303,7 @@ class SqlJoin:
 
         """
         to_key, from_key = self._get_to_and_from_keys()
-
-        on_clause = self._on_clause(
-            previous_alias=self.own_alias,
-            from_clause=f"{self.target_field.owner.Meta.tablename}.{from_key}",
-            to_clause=f"{self.to_table.name}.{to_key}",
-        )
+        on_clause = self.generate_on_clause(to_key=to_key, from_key=from_key)
         target_table = self.alias_manager.prefixed_table_name(
             self.next_alias, self.to_table
         )
