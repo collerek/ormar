@@ -91,6 +91,7 @@ class PkDescriptor:
         if self.is_compound:
             pk_dict = dict()
             for name in self.name:
+                # TODO: Change to OrderedDict
                 target_field_name = owner.get_column_name_from_alias(name)
                 target_value = instance.__dict__.get(target_field_name, None)
                 if isinstance(target_value, ormar.Model):
