@@ -602,7 +602,7 @@ class QuerySet(Generic[T]):
         ]
         if _as_dict:
             return result
-        if _flatten and not self._excludable.include_entry_count() == 1:
+        if _flatten and self._excludable.include_entry_count() != 1:
             raise QueryDefinitionError(
                 "You cannot flatten values_list if more than one field is selected!"
             )

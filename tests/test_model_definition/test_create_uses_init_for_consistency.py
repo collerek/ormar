@@ -43,8 +43,8 @@ class Mol(ormar.Model):
 
     @classmethod
     def uuid(cls, smiles):
-        id = uuid.uuid5(cls._UUID_NAMESPACE, smiles)
-        return id, smiles
+        id_ = uuid.uuid5(cls._UUID_NAMESPACE, smiles)
+        return id_, smiles
 
 
 @pytest.fixture(autouse=True, scope="module")
