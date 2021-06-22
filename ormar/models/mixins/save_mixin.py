@@ -113,7 +113,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
             if field_value is not None:
                 target_field = cls.Meta.model_fields[field]
                 target_pkname = target_field.to.Meta.pkname
-                if isinstance(field_value, ormar.Model):
+                if isinstance(field_value, ormar.Model):  # pragma: no cover
                     pk_value = getattr(field_value, target_pkname)
                     if not pk_value:
                         raise ModelPersistenceError(

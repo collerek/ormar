@@ -1,3 +1,11 @@
+# 0.10.12
+
+## 🐛 Fixes
+
+* Fix `QuerySet.create` method not using init (if custom provided) [#245](https://github.com/collerek/ormar/issues/245)
+* Fix `ForwardRef` `ManyToMany` relation setting wrong pydantic type [#250](https://github.com/collerek/ormar/issues/250)
+
+
 # 0.10.11
 
 ## ✨ Features

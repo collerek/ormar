@@ -195,7 +195,7 @@ class BaseField(FieldInfo):
                 if self.ormar_default is not None
                 else (self.server_default if use_server else None)
             )
-            if callable(default):
+            if callable(default):  # pragma: no cover
                 default = default()
             return default
 
