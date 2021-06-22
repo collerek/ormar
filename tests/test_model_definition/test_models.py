@@ -199,7 +199,7 @@ async def test_binary_column():
 async def test_binary_str_column():
     async with database:
         async with database.transaction(force_rollback=True):
-            await LargeBinaryStr.objects.create(test_binary=blob3)
+            await LargeBinaryStr(test_binary=blob3).save()
             await LargeBinaryStr.objects.create(test_binary=blob4)
 
             items = await LargeBinaryStr.objects.all()

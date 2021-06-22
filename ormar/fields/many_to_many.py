@@ -148,7 +148,11 @@ def ManyToMany(
     validate_not_allowed_fields(kwargs)
 
     if to.__class__ == ForwardRef:
-        __type__ = to if not nullable else Optional[to]
+        __type__ = (
+            Union[to, List[to]]  # type: ignore
+            if not nullable
+            else Optional[Union[to, List[to]]]  # type: ignore
+        )
         column_type = None
     else:
         __type__, column_type = populate_m2m_params_based_on_to_model(
