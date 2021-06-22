@@ -1014,35 +1014,8 @@ class QuerySet(Generic[T]):
         :return: created model
         :rtype: Model
         """
-        new_kwargs = dict(**kwargs)
-        new_kwargs = self.model.prepare_model_to_save(new_kwargs)
-
-        expr = self.table.insert()
-        expr = expr.values(**new_kwargs)
-
         instance = self.model(**kwargs)
-        await self.model.Meta.signals.pre_save.send(
-            sender=self.model, instance=instance
-        )
-        pk = await self.database.execute(expr)
-
-        pk_name = self.model.get_column_alias(self.model_meta.pkname)
-        if pk_name not in kwargs and pk_name in new_kwargs:
-            instance.pk = new_kwargs[self.model_meta.pkname]
-        if pk and isinstance(pk, self.model.pk_type()):
-            instance.pk = pk
-
-        # refresh server side defaults
-        if any(
-            field.server_default is not None
-            for name, field in self.model.Meta.model_fields.items()
-            if name not in kwargs
-        ):
-            instance = await instance.load()
-        instance.set_save_status(True)
-        await self.model.Meta.signals.post_save.send(
-            sender=self.model, instance=instance
-        )
+        instance = await instance.save()
         return instance
 
     async def bulk_create(self, objects: List["T"]) -> None:
