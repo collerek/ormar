@@ -112,11 +112,14 @@ class SqlJoin:
         else:
             names = self.target_field.names
             on_clause = sqlalchemy.sql.and_(
-                *[self._on_clause(
-                    previous_alias=self.own_alias,
-                    from_clause=f"{self.target_field.owner.Meta.tablename}.{own_name}",
-                    to_clause=f"{self.to_table.name}.{target_name}",
-                ) for target_name, own_name in names.items()]
+                *[
+                    self._on_clause(
+                        previous_alias=self.own_alias,
+                        from_clause=f"{self.target_field.owner.Meta.tablename}.{own_name}",
+                        to_clause=f"{self.to_table.name}.{target_name}",
+                    )
+                    for target_name, own_name in names.items()
+                ]
             )
         return on_clause
 

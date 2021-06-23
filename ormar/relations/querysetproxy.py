@@ -126,7 +126,7 @@ class QuerysetProxy(Generic[T]):
         model_cls = self.relation.through
         owner_column = self.related_field.default_target_field_name()  # type: ignore
         child_column = self.related_field.default_source_field_name()  # type: ignore
-        rel_kwargs = {owner_column: self._owner.pk, child_column: child.pk}
+        rel_kwargs = {owner_column: self._owner, child_column: child}
         final_kwargs = {**rel_kwargs, **kwargs}
         if child.pk is None:
             raise ModelPersistenceError(

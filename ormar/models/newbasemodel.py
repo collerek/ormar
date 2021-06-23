@@ -861,26 +861,24 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         }
         for field in self._extract_db_related_names():
             relation_field: "ForeignKeyField" = self.Meta.model_fields[field]
-            target_pk_names = relation_field.to.pk_names_list
-            target_field: "Model" = getattr(self, field)
-            # TODO: Extract pk fields for compound relation fields
-            for target_pk_name in target_pk_names:
-                if relation_field.is_compound:
-                    target_pk_name = target_field.get_column_name_from_alias(
-                        target_pk_name
-                    )
-                    target_value = getattr(target_field, target_pk_name, None)
-                    if isinstance(target_value, ormar.Model):
-                        target_value = target_value.pk
-                    parent_pk_alias = relation_field.names.get(
-                        target_pk_name, target_pk_name
-                    )
-                    self._verify_primary_key(relation_field, target_value)
-                    self_fields[parent_pk_alias] = target_value
+            target_field: "Model" = getattr(self, field, None)
+            if target_field is not None:
+                target_value = target_field.pk
+                if isinstance(target_value, dict):
+                    for target_name, own_name in relation_field.names.items():
+                        self._verify_primary_key(
+                            relation_field, target_value.get(target_name)
+                        )
+                        self_fields[own_name] = target_value.get(target_name)
                 else:
-                    target_value = getattr(target_field, target_pk_name, None)
                     self._verify_primary_key(relation_field, target_value)
-                    self_fields[field] = target_value
+                    self_alias = self.get_column_alias(field)
+                    self_fields[self_alias] = target_value
+            else:
+                if field in self.__class__.pk_names_list:
+                    self._verify_primary_key(relation_field, None)
+                self_alias = self.get_column_alias(field)
+                self_fields[self_alias] = None
         return self_fields
 
     def _verify_primary_key(

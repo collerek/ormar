@@ -31,7 +31,7 @@ class Model(ModelRow):
         _repr = {
             k: getattr(self, k)
             for k, v in self.Meta.model_fields.items()
-            if not v.skip_field
+            if not v.skip_field and not v.is_denied
         }
         return f"{self.__class__.__name__}({str(_repr)})"
 
@@ -90,6 +90,7 @@ class Model(ModelRow):
                 k: v
                 for k, v in self_fields.items()
                 if k not in self.extract_related_names()
+                and k in self.Meta.model_fields
                 and not self.Meta.model_fields[k].is_denied
             }
         )
@@ -248,7 +249,7 @@ class Model(ModelRow):
         )
         self_fields = self._extract_model_db_fields()
         for pk_name in self.__class__.pk_names_list:
-            self_fields.pop(self.get_column_name_from_alias(pk_name))
+            self_fields.pop(pk_name, None)
         if _columns:
             self_fields = {k: v for k, v in self_fields.items() if k in _columns}
         self_fields = self.translate_columns_to_aliases(self_fields)
