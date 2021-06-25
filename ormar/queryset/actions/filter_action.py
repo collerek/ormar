@@ -125,6 +125,12 @@ class FilterAction(QueryAction):
         sufix = "%" if "end" not in self.operator else ""
         self.filter_value = f"{prefix}{self.filter_value}{sufix}"
 
+    def _get_composite_pk_column(self, column_name: str) -> sqlalchemy.Column:
+        """Shortcut to sqlalchemy column of filtered target model"""
+        relation_field = self.target_model.Meta.model_fields[self.field_name]
+        aliased_name = relation_field.names.get(column_name)
+        return self.target_model.Meta.table.columns[aliased_name]
+
     def get_text_clause(self) -> sqlalchemy.sql.expression.TextClause:
         """
         Escapes characters if it's required.
@@ -144,10 +150,31 @@ class FilterAction(QueryAction):
             filter_value = None
         else:
             filter_value = self.filter_value
-        clause = getattr(self.column, op_attr)(filter_value)
-        clause = self._compile_clause(
-            clause, modifiers={"escape": "\\" if self.has_escaped_character else None},
-        )
+        # TODO: Adjust for composite pks -> there is no column with this name in db
+        if isinstance(filter_value, dict):
+            # composite model
+            if op_attr != "__eq__":
+                raise QueryDefinitionError(
+                    "You cannot use ormar.Model in filters " "different than equals!"
+                )
+            clauses = [
+                getattr(self._get_composite_pk_column(key), op_attr)(filter_value[key])
+                for key in filter_value.keys()
+            ]
+            clauses = [
+                self._compile_clause(
+                    clause,
+                    modifiers={"escape": "\\" if self.has_escaped_character else None},
+                )
+                for clause in clauses
+            ]
+            clause = sqlalchemy.sql.and_(*clauses)
+        else:
+            clause = getattr(self.column, op_attr)(filter_value)
+            clause = self._compile_clause(
+                clause,
+                modifiers={"escape": "\\" if self.has_escaped_character else None},
+            )
         return clause
 
     def _compile_clause(
@@ -167,6 +194,7 @@ class FilterAction(QueryAction):
         for modifier, modifier_value in modifiers.items():
             clause.modifiers[modifier] = modifier_value
 
+        column = clause.left
         clause_text = str(
             clause.compile(
                 dialect=self.target_model.Meta.database._backend._dialect,
@@ -174,9 +202,9 @@ class FilterAction(QueryAction):
             )
         )
         alias = f"{self.table_prefix}_" if self.table_prefix else ""
-        aliased_name = f"{alias}{self.table.name}.{self.column.name}"
+        aliased_name = f"{alias}{self.table.name}.{column.name}"
         clause_text = clause_text.replace(
-            f"{self.table.name}.{self.column.name}", aliased_name
+            f"{self.table.name}.{column.name}", aliased_name
         )
         dialect_name = self.target_model.Meta.database._backend._dialect.name
         if dialect_name != "sqlite":  # pragma: no cover

@@ -103,7 +103,7 @@ class SqlJoin:
         return self.next_model.Meta.table
 
     def generate_on_clause(self, to_key: str, from_key: str) -> text:
-        if not self.target_field.is_compound or not self.target_field.owner.pk_len > 1:
+        if not self.target_field.is_compound or len(self.target_field.names) == 1:
             on_clause = self._on_clause(
                 previous_alias=self.own_alias,
                 from_clause=f"{self.target_field.owner.Meta.tablename}.{from_key}",

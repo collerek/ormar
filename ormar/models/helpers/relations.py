@@ -104,7 +104,7 @@ def process_compound_foreign_keys(new_model: Type["Model"]):
     model_fields = new_model.Meta.model_fields
     iterate_fields = list(model_fields.values())
     for field in iterate_fields:
-        if field.is_relation and field.is_compound:
+        if field.is_relation and field.is_compound and not field.is_multi:
             for related_name, name in field.names.items():
                 if name not in [x.name for x in new_model.Meta.columns]:
                     field_name = field.to.get_column_name_from_alias(related_name)

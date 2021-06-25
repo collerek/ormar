@@ -18,6 +18,7 @@ from ormar.fields import BaseField
 from ormar.fields.foreign_key import (
     ForeignKeyField,
     create_dummy_model,
+    generate_relation_fields_if_required,
     validate_not_allowed_fields,
 )
 
@@ -142,6 +143,8 @@ def ManyToMany(
     through_relation_name = kwargs.pop("through_relation_name", None)
     through_reverse_relation_name = kwargs.pop("through_reverse_relation_name", None)
 
+    names = kwargs.pop("names", None)
+
     if through is not None and through.__class__ != ForwardRef:
         forbid_through_relations(cast(Type["Model"], through))
 
@@ -154,10 +157,15 @@ def ManyToMany(
             else Optional[Union[to, List[to]]]  # type: ignore
         )
         column_type = None
+        is_compound = False
     else:
+        names = generate_relation_fields_if_required(
+            to=to, names=names, virtual=virtual
+        )
         __type__, column_type = populate_m2m_params_based_on_to_model(
             to=to, nullable=nullable  # type: ignore
         )
+        is_compound = to.has_pk_constraint
     namespace = dict(
         __type__=__type__,
         to=to,
@@ -184,6 +192,8 @@ def ManyToMany(
         skip_field=skip_field,
         through_relation_name=through_relation_name,
         through_reverse_relation_name=through_reverse_relation_name,
+        is_compound=is_compound,
+        names=names,
     )
 
     Field = type("ManyToMany", (ManyToManyField, BaseField), {})

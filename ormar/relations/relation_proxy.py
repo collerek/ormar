@@ -108,6 +108,7 @@ class RelationProxy(Generic[T], list):
         Verifies if the parent model of the relation has been already saved.
         Otherwise QuerySetProxy cannot filter by parent primary key.
         """
+        # TODO - check also parts of composite pks
         pk_value = self._owner.pk
         if not pk_value:
             raise RelationshipInstanceError(
@@ -124,9 +125,16 @@ class RelationProxy(Generic[T], list):
         :rtype: QuerySet
         """
         related_field_name = self.related_field_name
-        pkname = self._owner.get_column_alias(self._owner.Meta.pkname)
         self._check_if_model_saved()
-        kwargs = {f"{related_field_name}__{pkname}": self._owner.pk}
+        pknames = self._owner.__class__.pk_aliases_list
+        pk_value = self._owner.pk
+        if len(pknames) > 1:
+            kwargs = {
+                f"{related_field_name}__{pkname}": pk_value[pkname]
+                for pkname in pknames
+            }
+        else:
+            kwargs = {f"{related_field_name}__{pknames[0]}": pk_value}
         queryset = (
             ormar.QuerySet(
                 model_cls=self.relation.to, proxy_source_model=self._owner.__class__

@@ -203,14 +203,14 @@ async def test_many_to_many_basic_crud():
             tag_urgent = Tag(
                 id=12, owner=user_beth, tag_project=project_bedroom, name="URGENT!"
             )
-            # tag_medium = Tag(
-            #     id=13,
-            #     owner=user_beth,
-            #     tag_project=project_bedroom,
-            #     name="Fine if mum can't smell it",
-            # )
+            tag_medium = Tag(
+                id=13,
+                owner=user_beth,
+                tag_project=project_bedroom,
+                name="Fine if mum can't smell it",
+            )
             await tag_urgent.save()
-            # await tag_medium.save()
+            await tag_medium.save()
 
             task_monster = Task(
                 id=15,
@@ -220,12 +220,12 @@ async def test_many_to_many_basic_crud():
                 completed=False,
             )
             await task_monster.save()
-            # await task_monster.tags.add(tag_medium)
+            await task_monster.tags.add(tag_medium)
             await task_monster.tags.add(tag_urgent)
 
             await task_monster.tags.all()
             assert task_monster.tags is not None and len(task_monster.tags) == 2
-            # await task_monster.tags.remove(tag_medium)
+            await task_monster.tags.remove(tag_medium)
             all_tags = await task_monster.tags.all()
             assert len(all_tags) == 1
 
