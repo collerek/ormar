@@ -584,7 +584,11 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                     register_relation_in_alias_manager(field=field)
                     add_field_descriptor(name=name, field=field, new_model=new_model)
 
-                if new_model.Meta.pkname not in attrs["__annotations__"]:
+                if (
+                    new_model.Meta.pkname
+                    and new_model.Meta.pkname not in attrs["__annotations__"]
+                    and new_model.Meta.pkname not in new_model.__fields__
+                ):
                     field_name = new_model.Meta.pkname
                     attrs["__annotations__"][field_name] = Optional[int]  # type: ignore
                     attrs[field_name] = None
