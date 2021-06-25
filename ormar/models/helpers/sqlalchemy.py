@@ -292,6 +292,7 @@ def resolve_primary_key(new_model: Type["Model"], attrs: Dict) -> None:
     if (
         not new_model.has_pk_constraint
         and new_model.pk_name not in attrs["__annotations__"]
+        and new_model.Meta.pkname not in new_model.__fields__
     ):
         field_name = new_model.pk_name
         attrs["__annotations__"][field_name] = Optional[int]  # type: ignore

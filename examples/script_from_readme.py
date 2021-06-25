@@ -169,20 +169,37 @@ async def delete():
 
 async def joins():
     # Tho join two models use select_related
+
+    # Django style
     book = await Book.objects.select_related("author").get(title="The Hobbit")
+    # Python style
+    book = await Book.objects.select_related(Book.author).get(
+        Book.title == "The Hobbit"
+    )
+
     # now the author is already prefetched
     assert book.author.name == "J.R.R. Tolkien"
 
     # By default you also get a second side of the relation
     # constructed as lowercase source model name +'s' (books in this case)
     # you can also provide custom name with parameter related_name
+    # Django style
     author = await Author.objects.select_related("books").all(name="J.R.R. Tolkien")
+    # Python style
+    author = await Author.objects.select_related(Author.books).all(
+        Author.name == "J.R.R. Tolkien"
+    )
     assert len(author[0].books) == 3
 
     # for reverse and many to many relations you can also prefetch_related
     # that executes a separate query for each of related models
 
+    # Django style
     author = await Author.objects.prefetch_related("books").get(name="J.R.R. Tolkien")
+    # Python style
+    author = await Author.objects.prefetch_related(Author.books).get(
+        Author.name == "J.R.R. Tolkien"
+    )
     assert len(author.books) == 3
 
     # to read more about relations
@@ -302,19 +319,62 @@ async def aggregations():
     # exists
     assert await Book.objects.filter(title="The Hobbit").exists()
 
-    # max
+    # maximum
     assert 1990 == await Book.objects.max(columns=["year"])
 
-    # min
+    # minimum
     assert 1937 == await Book.objects.min(columns=["year"])
 
-    # avg
+    # average
     assert 1964.75 == await Book.objects.avg(columns=["year"])
 
     # sum
     assert 7859 == await Book.objects.sum(columns=["year"])
 
     # to read more about aggregated functions
+    # visit: https://collerek.github.io/ormar/queries/aggregations/
+
+
+async def raw_data():
+    # extract raw data in a form of dicts or tuples
+    # note that this skips the validation(!) as models are
+    # not created from parsed data
+
+    # get list of objects as dicts
+    assert await Book.objects.values() == [
+        {"id": 1, "author": 1, "title": "The Hobbit", "year": 1937},
+        {"id": 2, "author": 1, "title": "The Lord of the Rings", "year": 1955},
+        {"id": 4, "author": 2, "title": "The Witcher", "year": 1990},
+        {"id": 5, "author": 1, "title": "The Silmarillion", "year": 1977},
+    ]
+
+    # get list of objects as tuples
+    assert await Book.objects.values_list() == [
+        (1, 1, "The Hobbit", 1937),
+        (2, 1, "The Lord of the Rings", 1955),
+        (4, 2, "The Witcher", 1990),
+        (5, 1, "The Silmarillion", 1977),
+    ]
+
+    # filter data - note how you always get a list
+    assert await Book.objects.filter(title="The Hobbit").values() == [
+        {"id": 1, "author": 1, "title": "The Hobbit", "year": 1937}
+    ]
+
+    # select only wanted fields
+    assert await Book.objects.filter(title="The Hobbit").values(["id", "title"]) == [
+        {"id": 1, "title": "The Hobbit"}
+    ]
+
+    # if you select only one column you could flatten it with values_list
+    assert await Book.objects.values_list("title", flatten=True) == [
+        "The Hobbit",
+        "The Lord of the Rings",
+        "The Witcher",
+        "The Silmarillion",
+    ]
+
+    # to read more about extracting raw values
     # visit: https://collerek.github.io/ormar/queries/aggregations/
 
 
@@ -345,6 +405,7 @@ for func in [
     subset_of_columns,
     pagination,
     aggregations,
+    raw_data,
 ]:
     print(f"Executing: {func.__name__}")
     asyncio.run(with_connect(func))

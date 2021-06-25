@@ -69,11 +69,16 @@ class Track(ormar.Model):
 ```
 
 ```python
+# Django style
 album = await Album.objects.select_related("tracks").all()
+
+# Python style
+album = await Album.objects.select_related(Album.tracks).all()
+
 # will return album will all columns tracks
 ```
 
-You can provide a string or a list of strings
+You can provide a string or a list of strings (or a field/ list of fields)
 
 ```python
 class SchoolClass(ormar.Model):
@@ -122,8 +127,14 @@ class Teacher(ormar.Model):
 ```
 
 ```python
+# Django style
 classes = await SchoolClass.objects.select_related(
     ["teachers__category", "students"]).all()
+
+# Python style
+classes = await SchoolClass.objects.select_related(
+    [SchoolClass.teachers.category, SchoolClass.students]).all()
+
 # will return classes with teachers and teachers categories
 # as well as classes students
 ```
@@ -276,7 +287,13 @@ class Track(ormar.Model):
 ```
 
 ```python
+# Django style
 album = await Album.objects.prefetch_related("tracks").all()
+
+# Python style
+album = await Album.objects.prefetch_related(Album.tracks).all()
+
+
 # will return album will all columns tracks
 ```
 
@@ -329,8 +346,13 @@ class Teacher(ormar.Model):
 ```
 
 ```python
+# Django style
 classes = await SchoolClass.objects.prefetch_related(
     ["teachers__category", "students"]).all()
+
+# Python style
+classes = await SchoolClass.objects.prefetch_related(
+    [SchoolClass.teachers.category, SchoolClass.students]).all()
 # will return classes with teachers and teachers categories
 # as well as classes students
 ```

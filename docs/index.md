@@ -79,7 +79,27 @@ Ormar is built with:
 As I write open-source code to solve everyday problems in my work or to promote and build strong python 
 community you can say thank you and buy me a coffee or sponsor me with a monthly amount to help ensure my work remains free and maintained.
 
-<iframe src="https://github.com/sponsors/collerek/button" title="Sponsor collerek" height="35" width="116" style="border: 0;"></iframe>
+<a aria-label="Sponsor collerek" href="https://github.com/sponsors/collerek" style="text-decoration: none; color: #c9d1d9 !important;">
+<div style="
+    background-color: #21262d;
+    border-color: #30363d;
+    box-shadow:  0 0 transparent, 0 0 transparent;
+    color: #c9d1d9 !important;
+    border: 1px solid;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    padding: 10px;
+    line-height: 0px;
+    height: 40px;
+">  
+<svg aria-hidden="true" viewBox="0 0 16 16" height="16" width="16" style="fill: #db61a2">
+    <path fill-rule="evenodd" d="M4.25 2.5c-1.336 0-2.75 1.164-2.75 3 0 2.15 1.58 4.144 3.365 5.682A20.565 20.565 0 008 13.393a20.561 20.561 0 003.135-2.211C12.92 9.644 14.5 7.65 14.5 5.5c0-1.836-1.414-3-2.75-3-1.373 0-2.609.986-3.029 2.456a.75.75 0 01-1.442 0C6.859 3.486 5.623 2.5 4.25 2.5zM8 14.25l-.345.666-.002-.001-.006-.003-.018-.01a7.643 7.643 0 01-.31-.17 22.075 22.075 0 01-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.08 22.08 0 01-3.744 2.584l-.018.01-.006.003h-.002L8 14.25zm0 0l.345.666a.752.752 0 01-.69 0L8 14.25z"></path>
+</svg>
+<span style="color: #c9d1d9 !important;">Sponsor</span>
+</div>
+</a>
 
 ### Migrating from `sqlalchemy` and existing databases
 
@@ -176,6 +196,7 @@ class BaseMeta(ormar.ModelMeta):
 #     id = ormar.Integer(primary_key=True) # <= notice no field types
 #     name = ormar.String(max_length=100)
 
+
 class Author(ormar.Model):
     class Meta(BaseMeta):
         tablename = "authors"
@@ -210,15 +231,9 @@ async def create():
     # Create some records to work with through QuerySet.create method.
     # Note that queryset is exposed on each Model's class as objects
     tolkien = await Author.objects.create(name="J.R.R. Tolkien")
-    await Book.objects.create(author=tolkien,
-                              title="The Hobbit",
-                              year=1937)
-    await Book.objects.create(author=tolkien,
-                              title="The Lord of the Rings",
-                              year=1955)
-    await Book.objects.create(author=tolkien,
-                              title="The Silmarillion",
-                              year=1977)
+    await Book.objects.create(author=tolkien, title="The Hobbit", year=1937)
+    await Book.objects.create(author=tolkien, title="The Lord of the Rings", year=1955)
+    await Book.objects.create(author=tolkien, title="The Silmarillion", year=1977)
 
     # alternative creation of object divided into 2 steps
     sapkowski = Author(name="Andrzej Sapkowski")
@@ -317,27 +332,43 @@ async def delete():
     # note that despite the fact that record no longer exists in database
     # the object above is still accessible and you can use it (and i.e. save()) again.
     tolkien = silmarillion.author
-    await Book.objects.create(author=tolkien,
-                              title="The Silmarillion",
-                              year=1977)
+    await Book.objects.create(author=tolkien, title="The Silmarillion", year=1977)
 
 
 async def joins():
     # Tho join two models use select_related
+    
+    # Django style
     book = await Book.objects.select_related("author").get(title="The Hobbit")
+    # Python style
+    book = await Book.objects.select_related(Book.author).get(
+        Book.title == "The Hobbit"
+    )
+
     # now the author is already prefetched
     assert book.author.name == "J.R.R. Tolkien"
 
     # By default you also get a second side of the relation
     # constructed as lowercase source model name +'s' (books in this case)
     # you can also provide custom name with parameter related_name
+    
+    # Django style
     author = await Author.objects.select_related("books").all(name="J.R.R. Tolkien")
+    # Python style
+    author = await Author.objects.select_related(Author.books).all(
+        Author.name == "J.R.R. Tolkien"
+    )
     assert len(author[0].books) == 3
 
     # for reverse and many to many relations you can also prefetch_related
     # that executes a separate query for each of related models
 
+    # Django style
     author = await Author.objects.prefetch_related("books").get(name="J.R.R. Tolkien")
+    # Python style
+    author = await Author.objects.prefetch_related(Author.books).get(
+        Author.name == "J.R.R. Tolkien"
+    )
     assert len(author.books) == 3
 
     # to read more about relations
@@ -371,11 +402,17 @@ async def filter_and_sort():
     # to sort decreasing use hyphen before the field name
     # same as with filter you can use double underscores to access related fields
     # Django style
-    books = await Book.objects.filter(author__name__icontains="tolkien").order_by(
-        "-year").all()
+    books = (
+        await Book.objects.filter(author__name__icontains="tolkien")
+        .order_by("-year")
+        .all()
+    )
     # python style
-    books = await Book.objects.filter(Book.author.name.icontains("tolkien")).order_by(
-        Book.year.desc()).all()
+    books = (
+        await Book.objects.filter(Book.author.name.icontains("tolkien"))
+        .order_by(Book.year.desc())
+        .all()
+    )
     assert len(books) == 3
     assert books[0].title == "The Silmarillion"
     assert books[2].title == "The Hobbit"
@@ -448,25 +485,68 @@ async def aggregations():
     # count:
     assert 2 == await Author.objects.count()
 
-    # exists:
+    # exists
     assert await Book.objects.filter(title="The Hobbit").exists()
 
-    # max:
+    # maximum
     assert 1990 == await Book.objects.max(columns=["year"])
 
-    # min:
+    # minimum
     assert 1937 == await Book.objects.min(columns=["year"])
 
-    # avg:
+    # average
     assert 1964.75 == await Book.objects.avg(columns=["year"])
 
-    # sum:
+    # sum
     assert 7859 == await Book.objects.sum(columns=["year"])
 
     # to read more about aggregated functions
     # visit: https://collerek.github.io/ormar/queries/aggregations/
 
-    
+
+async def raw_data():
+    # extract raw data in a form of dicts or tuples
+    # note that this skips the validation(!) as models are
+    # not created from parsed data
+
+    # get list of objects as dicts
+    assert await Book.objects.values() == [
+        {"id": 1, "author": 1, "title": "The Hobbit", "year": 1937},
+        {"id": 2, "author": 1, "title": "The Lord of the Rings", "year": 1955},
+        {"id": 4, "author": 2, "title": "The Witcher", "year": 1990},
+        {"id": 5, "author": 1, "title": "The Silmarillion", "year": 1977},
+    ]
+
+    # get list of objects as tuples
+    assert await Book.objects.values_list() == [
+        (1, 1, "The Hobbit", 1937),
+        (2, 1, "The Lord of the Rings", 1955),
+        (4, 2, "The Witcher", 1990),
+        (5, 1, "The Silmarillion", 1977),
+    ]
+
+    # filter data - note how you always get a list
+    assert await Book.objects.filter(title="The Hobbit").values() == [
+        {"id": 1, "author": 1, "title": "The Hobbit", "year": 1937}
+    ]
+
+    # select only wanted fields
+    assert await Book.objects.filter(title="The Hobbit").values(["id", "title"]) == [
+        {"id": 1, "title": "The Hobbit"}
+    ]
+
+    # if you select only one column you could flatten it with values_list
+    assert await Book.objects.values_list("title", flatten=True) == [
+        "The Hobbit",
+        "The Lord of the Rings",
+        "The Witcher",
+        "The Silmarillion",
+    ]
+
+    # to read more about extracting raw values
+    # visit: https://collerek.github.io/ormar/queries/aggregations/
+
+
 async def with_connect(function):
     # note that for any other backend than sqlite you actually need to
     # connect to the database to perform db operations
@@ -477,15 +557,25 @@ async def with_connect(function):
     # in your endpoints but have a global connection pool
     # check https://collerek.github.io/ormar/fastapi/ and section with db connection
 
+
 # gather and execute all functions
 # note - normally import should be at the beginning of the file
 import asyncio
 
 # note that normally you use gather() function to run several functions
 # concurrently but we actually modify the data and we rely on the order of functions
-for func in [create, read, update, delete, joins,
-             filter_and_sort, subset_of_columns,
-             pagination, aggregations]:
+for func in [
+    create,
+    read,
+    update,
+    delete,
+    joins,
+    filter_and_sort,
+    subset_of_columns,
+    pagination,
+    aggregations,
+    raw_data,
+]:
     print(f"Executing: {func.__name__}")
     asyncio.run(with_connect(func))
 
@@ -523,6 +613,8 @@ metadata.drop_all(engine)
 *  `fields(columns: Union[List, str, set, dict]) -> QuerySet`
 *  `exclude_fields(columns: Union[List, str, set, dict]) -> QuerySet`
 *  `order_by(columns:Union[List, str]) -> QuerySet`
+*  `values(fields: Union[List, str, Set, Dict])`
+*  `values_list(fields: Union[List, str, Set, Dict])`
 
 
 #### Relation types
@@ -584,6 +676,10 @@ Signals allow to trigger your function for a given event on a given Model.
   * `post_update`
   * `pre_delete`
   * `post_delete`
+  * `pre_relation_add`
+  * `post_relation_add`
+  * `pre_relation_remove`
+  * `post_relation_remove`
 
 
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/

@@ -21,7 +21,7 @@ from sqlalchemy import bindparam
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
 from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
-from ormar.queryset import FilterQuery, SelectAction
+from ormar.queryset import FieldAccessor, FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
 from ormar.queryset.prefetch_query import PrefetchQuery
@@ -353,7 +353,7 @@ class QuerySet(Generic[T]):
         """
         return self.filter(_exclude=True, *args, **kwargs)
 
-    def select_related(self, related: Union[List, str]) -> "QuerySet[T]":
+    def select_related(self, related: Union[List, str, FieldAccessor]) -> "QuerySet[T]":
         """
         Allows to prefetch related models during the same query.
 
@@ -372,6 +372,10 @@ class QuerySet(Generic[T]):
         """
         if not isinstance(related, list):
             related = [related]
+        related = [
+            rel._access_chain if isinstance(rel, FieldAccessor) else rel
+            for rel in related
+        ]
 
         related = sorted(list(set(list(self._select_related) + related)))
         return self.rebuild_self(select_related=related,)
@@ -402,7 +406,9 @@ class QuerySet(Generic[T]):
             relations = self.model._iterate_related_models()
         return self.rebuild_self(select_related=relations,)
 
-    def prefetch_related(self, related: Union[List, str]) -> "QuerySet[T]":
+    def prefetch_related(
+        self, related: Union[List, str, FieldAccessor]
+    ) -> "QuerySet[T]":
         """
         Allows to prefetch related models during query - but opposite to
         `select_related` each subsequent model is fetched in a separate database query.
@@ -422,6 +428,10 @@ class QuerySet(Generic[T]):
         """
         if not isinstance(related, list):
             related = [related]
+        related = [
+            rel._access_chain if isinstance(rel, FieldAccessor) else rel
+            for rel in related
+        ]
 
         related = list(set(list(self._prefetch_related) + related))
         return self.rebuild_self(prefetch_related=related,)
