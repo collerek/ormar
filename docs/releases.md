@@ -1,3 +1,23 @@
+# 0.10.13
+
+## ✨ Features
+
+* Allow passing field accessors in `select_related` and `prefetch_related` aka. python style `select_related` [#225](https://github.com/collerek/ormar/issues/225).
+  *  Previously: 
+  ```python
+    await Post.objects.select_related(["author", "categories"]).get()
+    await Author.objects.prefetch_related("posts__categories").get()
+  ```
+  * Now also:
+  ```python
+    await Post.objects.select_related([Post.author, Post.categories]).get()
+    await Author.objects.prefetch_related(Author.posts.categories).get()
+  ```
+
+## 🐛 Fixes
+
+* Fix overwriting default value for inherited primary key [#253](https://github.com/collerek/ormar/issues/253)
+
 # 0.10.12
 
 ## 🐛 Fixes
