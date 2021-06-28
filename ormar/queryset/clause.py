@@ -10,7 +10,7 @@ from ormar.queryset.actions.filter_action import FilterAction
 from ormar.queryset.utils import get_relationship_alias_model_and_str
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
+    from ormar import BaseField, Model
 
 
 class FilterType(Enum):
@@ -172,6 +172,7 @@ class Prefix:
     model_cls: Type["Model"]
     relation_str: str
     is_through: bool
+    relation_field: "BaseField"
 
     @property
     def alias_key(self) -> str:
@@ -210,8 +211,16 @@ class QueryClause:
         :rtype: Tuple[List[sqlalchemy.sql.elements.TextClause], List[str]]
         """
         if kwargs.get("pk"):
-            pk_name = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
-            kwargs[pk_name] = kwargs.pop("pk")
+            if self.model_cls.has_pk_constraint:
+                value = kwargs.pop("pk")
+                if isinstance(value, ormar.Model):
+                    value = value.pk
+                for key, val in value.items():
+                    kwargs[key] = val
+
+            else:
+                pk_name = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
+                kwargs[pk_name] = kwargs.pop("pk")
 
         filter_clauses, select_related = self._populate_filter_clauses(
             _own_only=_own_only, **kwargs
@@ -278,6 +287,8 @@ class QueryClause:
             )
             for prefix in sorted_group[:-1]:
                 if prefix.alias_key not in manager:
+                    if prefix.relation_field.is_multi:
+                        manager.add_alias(alias_key=prefix.alias_key + "__multi")
                     manager.add_alias(alias_key=prefix.alias_key)
 
     def _parse_related_prefixes(self, select_related: List[str]) -> List[Prefix]:
@@ -296,9 +307,22 @@ class QueryClause:
                 *get_relationship_alias_model_and_str(
                     self.model_cls, related.split("__")
                 ),
+                relation_field=self._get_related_field_from_relation_str(
+                    related=related
+                ),
             )
             prefixes.append(prefix)
         return prefixes
+
+    def _get_related_field_from_relation_str(self, related: str):
+        source_model = self.model_cls
+        related_parts = related.split("__")
+        field = None
+        for part in related_parts:
+            field = source_model.Meta.model_fields[part]
+            if field.is_relation:
+                source_model = field.to
+        return field
 
     def _switch_filter_action_prefixes(
         self, filter_clauses: List[FilterAction]

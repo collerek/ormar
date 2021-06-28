@@ -111,6 +111,11 @@ class SqlJoin:
             )
         else:
             names = self.target_field.names
+            if self.target_field.is_multi:
+                through_field = self.target_field.through
+                names = through_field.Meta.model_fields[
+                    through_field.get_column_name_from_alias(to_key)
+                ].get_reversed_names()
             on_clause = sqlalchemy.sql.and_(
                 *[
                     self._on_clause(
@@ -181,6 +186,8 @@ class SqlJoin:
         else:
             if "__" in self.relation_str and self.source_model:
                 relation_key = f"{self.source_model.get_name()}_{self.relation_str}"
+                if self.target_field.is_multi:
+                    relation_key += "__multi"
                 if relation_key not in self.alias_manager:
                     self.next_alias = self.alias_manager.add_alias(
                         alias_key=relation_key

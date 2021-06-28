@@ -501,7 +501,7 @@ class ForeignKeyField(BaseField):
                     for other_name, own_name in field.names.items():
                         nested_dict[
                             field.to.get_column_name_from_alias(other_name)
-                        ] = value.get(own_name)
+                        ] = value.get(name, {}).get(other_name, value.get(own_name))
                         if (
                             own_name not in self.to.Meta.model_fields
                             or self.to.Meta.model_fields[own_name].is_denied

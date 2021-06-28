@@ -588,6 +588,14 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         for field in fields:
             if not relation_map or field not in relation_map:
+                nested_model = getattr(self, field, None)
+                if nested_model and not self.Meta.model_fields[field].nullable:
+                    if isinstance(nested_model, MutableSequence):
+                        dict_instance[field] = [
+                            submodel.pk for submodel in nested_model
+                        ]
+                    else:
+                        dict_instance[field] = nested_model.pk
                 continue
             try:
                 nested_model = getattr(self, field)

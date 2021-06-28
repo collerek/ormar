@@ -86,7 +86,6 @@ class ModelRow(NewBaseModel):
                 related_field=related_field,
                 used_prefixes=used_prefixes,
             )
-
         item = cls._populate_nested_models_from_row(
             item=item,
             row=row,
@@ -142,9 +141,10 @@ class ModelRow(NewBaseModel):
         )
         if not table_prefix or table_prefix in used_prefixes:
             manager = cls.Meta.alias_manager
+            relation_str = current_relation_str
             table_prefix = manager.resolve_relation_alias_after_complex(
                 source_model=source_model,
-                relation_str=current_relation_str,
+                relation_str=relation_str,
                 relation_field=related_field,
             )
         used_prefixes.append(table_prefix)

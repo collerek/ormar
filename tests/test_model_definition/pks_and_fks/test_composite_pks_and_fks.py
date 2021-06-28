@@ -428,30 +428,78 @@ async def test_correct_pydantic_dict_with_composite_keys():
             loaded_user = await User.objects.get(email="juan@example.com")
             await loaded_user.load_all(follow=True)
             expected_user_dict = {
-                "id": user.id,
                 "email": user.email,
+                "id": user.id,
+                "projects": [
+                    {
+                        "id": 15,
+                        "name": "Get rich fast",
+                        "owner": user.id,
+                        "tags": [],
+                        "tasks": [
+                            {
+                                "completed": False,
+                                "description": "Buy lots of Bitcoin",
+                                "id": 23,
+                                "owner": user.id,
+                                "project": {"id": 15, "owner_id": user.id},
+                                "project_id": None,
+                                "tags": [],
+                            }
+                        ],
+                    }
+                ],
+                "tags": [],
+                "tasks": [
+                    {
+                        "completed": False,
+                        "description": "Buy lots of Bitcoin",
+                        "id": 23,
+                        "owner": user.id,
+                        "project": {"id": 15, "owner": user.id},
+                        "project_id": None,
+                        "tags": [],
+                    }
+                ],
             }
             assert loaded_user.dict() == expected_user_dict
 
-            assert len(loaded_user.projects) == 1
-            loaded_project = loaded_user.projects[0]
+            loaded_project = await Project.objects.get(name="Get rich fast")
+            await loaded_project.load_all(follow=True)
             expected_project_dict = {
-                "id": project.id,
-                "name": project.name,
-                "owner": expected_user_dict,
+                "id": 15,
+                "name": "Get rich fast",
+                "owner": {
+                    "email": "juan@example.com",
+                    "id": loaded_user.id,
+                    "tags": [],
+                    "tasks": [
+                        {
+                            "completed": False,
+                            "description": "Buy lots of Bitcoin",
+                            "id": 23,
+                            "project_id": None,
+                            "tags": [],
+                        }
+                    ],
+                },
+                "tags": [],
+                "tasks": [
+                    {
+                        "completed": False,
+                        "description": "Buy lots of Bitcoin",
+                        "id": 23,
+                        "owner": {
+                            "email": "juan@example.com",
+                            "id": loaded_user.id,
+                            "tags": [],
+                        },
+                        "project_id": None,
+                        "tags": [],
+                    }
+                ],
             }
             assert loaded_project.dict() == expected_project_dict
-
-            assert len(loaded_project.tasks) == 1
-            loaded_task = loaded_project.tasks[0]
-            assert loaded_task.dict() == {
-                "id": task.id,
-                "owner": expected_user_dict,
-                "project": expected_project_dict,
-                "description": task.description,
-                "completed": task.completed,
-                "tags": None,
-            }
 
 
 ################
