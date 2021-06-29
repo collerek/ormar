@@ -1,6 +1,6 @@
 import base64
 import collections
-from typing import Any, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, TYPE_CHECKING, Tuple, Type, Union, cast
 
 import ormar
 
@@ -105,7 +105,7 @@ class PkDescriptor:
                 else:
                     pk_dict[name] = target_value
             return pk_dict
-        value = instance.__dict__.get(self.name, None)
+        value = instance.__dict__.get(cast(str, self.name), None)
         return value
 
     def __set__(self, instance: "Model", value: Any) -> None:
@@ -121,7 +121,7 @@ class PkDescriptor:
                     "Compound primary key can be set only with dictionary"
                 )
         else:
-            instance._internal_set(self.name, value)
+            instance._internal_set(cast(str, self.name), value)
         instance.set_save_status(False)
 
 

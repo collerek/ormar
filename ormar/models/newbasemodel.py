@@ -868,7 +868,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             if self.get_column_alias(k) in self.Meta.table.columns
         }
         for field in self._extract_db_related_names():
-            relation_field: "ForeignKeyField" = self.Meta.model_fields[field]
+            relation_field = cast("ForeignKeyField", self.Meta.model_fields[field])
             target_field: "Model" = getattr(self, field, None)
             if target_field is not None:
                 target_value = target_field.pk

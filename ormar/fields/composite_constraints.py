@@ -5,16 +5,16 @@ import sqlalchemy
 import ormar
 
 if TYPE_CHECKING:
-    from ormar.models.model import T
+    from ormar.models.model import Model
 
 
 class PrimaryKeyConstraint(sqlalchemy.PrimaryKeyConstraint):
     def __init__(self, *args: str, db_name: str = None, **kwargs: Any):
         # TODO: Resolve names to aliases if ormar names allowed
         self.column_names = args
-        self.column_aliases = []
+        self.column_aliases: List[str] = []
         self.db_name = db_name
-        self.owner: Optional[Type["T"]] = None
+        self.owner: Optional[Type["Model"]] = None
         self._kwargs = kwargs
         super().__init__(*args, **kwargs)
 
@@ -39,7 +39,7 @@ class PrimaryKeyConstraint(sqlalchemy.PrimaryKeyConstraint):
 
 class ForeignKeyConstraint(sqlalchemy.ForeignKeyConstraint):
     def __init__(
-        self, to: Type["T"], columns: List[str], **kwargs: Any,
+        self, to: Type["Model"], columns: List[str], **kwargs: Any,
     ):
         # TODO: Handle ForwardRefs?
         target_table_name = to.Meta.tablename

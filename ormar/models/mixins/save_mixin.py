@@ -19,6 +19,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
     if TYPE_CHECKING:  # pragma: nocover
         _choices_fields: Optional[Set]
         _skip_ellipsis: Callable
+        pk_names_list: List[str]
 
     @classmethod
     def prepare_model_to_save(cls, new_kwargs: dict) -> dict:

@@ -1,5 +1,6 @@
+# type: ignore
 import uuid
-from typing import List, Optional
+from typing import List
 
 import databases
 import pytest

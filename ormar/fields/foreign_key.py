@@ -12,6 +12,7 @@ from typing import (
     Tuple,
     Type,
     Union,
+    cast,
     overload,
 )
 
@@ -26,7 +27,7 @@ from ormar.fields.base import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, NewBaseModel, T
-    from ormar.fields import ManyToManyField
+    from ormar.fields import ForeignKeyConstraint, ManyToManyField
 
     if sys.version_info < (3, 7):
         ToType = Type["T"]
@@ -99,7 +100,7 @@ def populate_fk_params_based_on_to_model(
     ondelete: str = None,
     relation_fields: Dict = None,
     virtual: bool = False,
-) -> Tuple[Any, List, Any]:
+) -> Tuple[Any, List[Union["ForeignKeyConstraint", "ForeignKeyConstraintData"]], Any]:
     # TODO: finish docstring
     """
     Based on target to model to which relation leads to populates the type of the
@@ -123,6 +124,7 @@ def populate_fk_params_based_on_to_model(
     :rtype: Tuple[Any, List, Any]
     """
     if to.has_pk_constraint:
+        relation_fields = cast(Dict[str, str], relation_fields)
         to_fields = [
             to.Meta.model_fields[to.get_column_name_from_alias(pk_name)]
             for pk_name in to.pk_name
@@ -136,7 +138,9 @@ def populate_fk_params_based_on_to_model(
         # table_name = to.Meta.tablename
         # TODO: Check backref columns on virtual fk?
         # TODO: Delay instantiation like in simple fk for inheritance
-        constraints = (
+        constraints: List[
+            Union[ormar.ForeignKeyConstraint, "ForeignKeyConstraintData"]
+        ] = (
             [
                 ormar.ForeignKeyConstraint(
                     to=to,
@@ -151,8 +155,9 @@ def populate_fk_params_based_on_to_model(
         )
         column_type = None
     else:
-        fk_string = to.Meta.tablename + "." + to.get_column_alias(to.pk_name)
-        to_field = to.Meta.model_fields[to.pk_name]
+        pk_name = cast(str, to.pk_name)
+        fk_string = to.Meta.tablename + "." + to.get_column_alias(pk_name)
+        to_field = to.Meta.model_fields[pk_name]
         pk_only_model = create_dummy_model(to, [to_field])
         __type__ = (
             Union[to_field.__type__, to, pk_only_model]
@@ -197,7 +202,7 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
         )
 
 
-def generate_relation_fields_if_required(to: Type["Model"], names: Dict, virtual: bool):
+def generate_relation_fields_if_required(to: Type["Model"], names: Dict):
     if not names:
         return {pk_name: f"{to.get_name()}_{pk_name}" for pk_name in to.pk_aliases_list}
     return names
@@ -298,7 +303,7 @@ def ForeignKey(  # noqa CFQ002
         is_compound = False
     else:
         names = generate_relation_fields_if_required(
-            to=to, names=names, virtual=virtual
+            to=to, names=names  # type: ignore
         )
         __type__, constraints, column_type = populate_fk_params_based_on_to_model(
             to=to,  # type: ignore
@@ -308,7 +313,7 @@ def ForeignKey(  # noqa CFQ002
             relation_fields=names,
             virtual=virtual,
         )
-        is_compound = to.has_pk_constraint
+        is_compound = to.has_pk_constraint  # type: ignore
 
     namespace = dict(
         __type__=__type__,
@@ -604,7 +609,7 @@ class ForeignKeyField(BaseField):
         """
         if value is None:
             if not self.skip_field and child._orm.get(self.name):
-                child._orm._get(self.name).clear()
+                cast("Relation", child._orm._get(self.name)).clear()
             return None if not self.virtual else []
         constructors = {
             f"{self.to.__name__}": self._register_existing_model,

@@ -160,12 +160,12 @@ def ManyToMany(
         is_compound = False
     else:
         names = generate_relation_fields_if_required(
-            to=to, names=names, virtual=virtual
+            to=to, names=names  # type: ignore
         )
         __type__, column_type = populate_m2m_params_based_on_to_model(
             to=to, nullable=nullable  # type: ignore
         )
-        is_compound = to.has_pk_constraint
+        is_compound = to.has_pk_constraint  # type: ignore
     namespace = dict(
         __type__=__type__,
         to=to,

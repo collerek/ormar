@@ -623,7 +623,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         return QuerySet(model_cls=cls)
 
     @property
-    def pk_type(cls: Type["T"]) -> Any:
+    def pk_type(cls) -> Any:
         """Shortcut to models primary key field type"""
         if not cls.has_pk_constraint:
             return cls.Meta.model_fields[cls.pk_name].__type__
@@ -632,7 +632,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         )
 
     @property
-    def pk_columns(cls: Type["T"]) -> Union[sqlalchemy.Column, List[sqlalchemy.Column]]:
+    def pk_columns(cls) -> Union[sqlalchemy.Column, List[sqlalchemy.Column]]:
         """
         Retrieves primary key sqlalchemy column from models Meta.table.
         Each model has to have primary key.
@@ -652,21 +652,21 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         return pk_columns[0] if len(pk_columns) == 1 else pk_columns
 
     @property
-    def pk_name(cls: Type["T"]) -> Union[str, Tuple[str]]:
+    def pk_name(cls) -> Union[str, Tuple[str]]:
         """Shortcut to models primary key name"""
         if not cls.has_pk_constraint:
             return cls.Meta.pkname
         return cls.Meta.pk_constraint.column_names
 
     @property
-    def pk_len(cls: Type["T"]) -> int:
+    def pk_len(cls) -> int:
         """Shortcut to models primary key name"""
         if not cls.has_pk_constraint:
             return 1
         return len(cls.Meta.pk_constraint.column_names)
 
     @property
-    def pk_names_list(cls: Type["T"]) -> List[str]:
+    def pk_names_list(cls) -> List[str]:
         """Shortcut to models primary key name"""
         if not cls.has_pk_constraint:
             return [cls.get_column_name_from_alias(cls.Meta.pkname)]
@@ -676,25 +676,25 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         ]
 
     @property
-    def pk_aliases_list(cls: Type["T"]) -> List[str]:
+    def pk_aliases_list(cls) -> List[str]:
         """Shortcut to models primary key name"""
         if not cls.has_pk_constraint:
             return [cls.get_column_alias(cls.Meta.pkname)]
         return [cls.get_column_alias(x) for x in cls.Meta.pk_constraint.column_names]
 
     @property
-    def has_pk_constraint(cls: Type["T"]) -> bool:
+    def has_pk_constraint(cls) -> bool:
         """Checks if model has pk constraint"""
         return cls.Meta.has_compound_pk
 
     @property
-    def has_relation_pk(cls: Type["T"]) -> bool:
+    def has_relation_pk(cls) -> bool:
         """Checks if model has relation in pk constraint"""
         pk_names = cls.pk_names_list
         return any(cls.Meta.model_fields[pkname].is_relation for pkname in pk_names)
 
     @property
-    def pk_name_str(cls: Type["T"]) -> str:
+    def pk_name_str(cls) -> str:
         """Shortcut to models primary key name"""
         pks = cls.pk_name if isinstance(cls.pk_name, tuple) else [cls.pk_name]
         return "__".join(pks) if len(pks) > 1 else pks[0]

@@ -384,8 +384,10 @@ class ModelRow(NewBaseModel):
             if alias not in item and alias in selected_columns:
                 model_field = cls.Meta.model_fields[alias]
                 if model_field.is_compound:
-                    reversed_names = model_field.get_reversed_names()
-                    related_dict = {}
+                    reversed_names = cast(
+                        Dict[str, str], model_field.get_reversed_names()
+                    )
+                    related_dict: Dict[str, Any] = {}
                     for name, pk_name in reversed_names.items():
                         prefixed_name = f"{column_prefix}{name}"
                         target_name = model_field.to.get_column_name_from_alias(pk_name)

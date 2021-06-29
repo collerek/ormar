@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union, cast
 
 import sqlalchemy
 from pydantic.typing import ForwardRef
@@ -12,7 +12,14 @@ from ormar.models.helpers.related_names_validation import (
 )
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model, ModelMeta, ManyToManyField, BaseField, ForeignKeyField
+    from ormar import (
+        Model,
+        ModelMeta,
+        ManyToManyField,
+        BaseField,
+        ForeignKeyField,
+        PrimaryKeyConstraint,
+    )
     from ormar.models import NewBaseModel
 
 
@@ -265,7 +272,7 @@ def populate_meta_tablename_columns_and_pk(
             new_model.Meta.model_fields, new_model
         )
         new_model.Meta.columns = columns
-        new_model.Meta.pkname = pkname
+        new_model.Meta.pkname = pkname  # type: ignore
 
     if not new_model.pk_name and not new_model.has_pk_constraint:
         raise ormar.ModelDefinitionError("Table has to have a primary key.")
@@ -286,15 +293,16 @@ def resolve_primary_key(new_model: Type["Model"], attrs: Dict) -> None:
                 "Table can only have one primary key!"
                 "Primary key column and Constraint detected."
             )
-        new_model.Meta.pk_constraint.owner = new_model
-        new_model.Meta.pk_constraint._resolve_column_aliases()
+        constraint = cast("PrimaryKeyConstraint", new_model.Meta.pk_constraint)
+        constraint.owner = new_model
+        constraint._resolve_column_aliases()
 
     if (
         not new_model.has_pk_constraint
         and new_model.pk_name not in attrs["__annotations__"]
         and new_model.Meta.pkname not in new_model.__fields__
     ):
-        field_name = new_model.pk_name
+        field_name = cast(str, new_model.pk_name)
         attrs["__annotations__"][field_name] = Optional[int]  # type: ignore
         attrs[field_name] = None
         new_model.__fields__[field_name] = get_pydantic_field(

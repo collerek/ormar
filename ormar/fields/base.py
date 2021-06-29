@@ -37,7 +37,7 @@ class BaseField(FieldInfo):
         self.column_type: sqlalchemy.Column = kwargs.pop("column_type", None)
         self.constraints: List = kwargs.pop("constraints", list())
         self.name: str = kwargs.pop("name", None)
-        self.names: Dict = kwargs.pop("names", None)
+        self.names: Dict[str, str] = kwargs.pop("names", None)
         self.db_alias: str = kwargs.pop("alias", None)
 
         self.primary_key: bool = kwargs.pop("primary_key", False)
@@ -133,7 +133,7 @@ class BaseField(FieldInfo):
         """
         return self.db_alias if self.db_alias else self.name
 
-    def get_reversed_names(self) -> Optional[Dict]:
+    def get_reversed_names(self) -> Optional[Dict[str, str]]:
         """
         Returns compound names reversed so local_column: to.pk_column
         :return: Dict of value, key reversed compound column names

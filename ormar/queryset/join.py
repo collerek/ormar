@@ -110,12 +110,18 @@ class SqlJoin:
                 to_clause=f"{self.to_table.name}.{to_key}",
             )
         else:
-            names = self.target_field.names
+            names: Optional[Dict[str, str]] = self.target_field.names
             if self.target_field.is_multi:
                 through_field = self.target_field.through
                 names = through_field.Meta.model_fields[
                     through_field.get_column_name_from_alias(to_key)
                 ].get_reversed_names()
+            if not names:
+                raise ModelDefinitionError(
+                    "Compound relation key has to have "
+                    "names of related columns defined"
+                )
+            names = cast(Dict[str, str], names)
             on_clause = sqlalchemy.sql.and_(
                 *[
                     self._on_clause(
