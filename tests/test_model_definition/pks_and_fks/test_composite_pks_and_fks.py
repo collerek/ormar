@@ -52,7 +52,6 @@ class TaskTag(ormar.Model):
     class Meta(BaseMeta):
         tablename = "task_tags"
 
-    # TODO: Generate partial model fields deniable?
     id: int = ormar.Integer(primary_key=True)
 
 
@@ -189,6 +188,33 @@ async def test_composite_pk_crud():
             project = await Project.objects.get(name="Make bedroom appear clean")
             assert project.pk == project_bedroom.pk
             assert isinstance(project, ormar.Model)
+
+
+@pytest.mark.asyncio
+async def test_composite_fk_crud_from_dict():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            user_beth = User(email="beth@example.com")
+            await user_beth.save()
+            project_bedroom = await Project.objects.create(
+                id=1, owner=user_beth, name="Clean up the bedroom"
+            )
+            # TODO: Check if this should be owner or owner_id?
+            task_underwear = await Task(
+                id=14,
+                owner=user_beth,
+                project=dict(id=project_bedroom.id, owner=user_beth.id),
+                description="Collect underwear",
+                completed=False,
+            ).save()
+
+            task = await Task.objects.select_related(Task.project).get(
+                description="Collect underwear"
+            )
+            assert task.pk == task_underwear.pk
+            assert isinstance(task.project, ormar.Model)
+            assert task.project == project_bedroom
+            assert task.project.name == "Clean up the bedroom"
 
 
 @pytest.mark.asyncio
@@ -363,6 +389,40 @@ async def test_set_fk_column_directly_fails():
 
             with pytest.raises(ValueError):
                 project.owner_id = user_2.id
+
+
+@pytest.mark.asyncio
+async def test_set_fk_existing_technical_column_directly_fails():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            user_1 = await User(email="tim@example.com").save()
+            project = await Project(owner=user_1, name="So far so good", id=4).save()
+            tag = await Tag(
+                tag_project=project, id=10, owner=user_1, name="TestTag"
+            ).save()
+
+            with pytest.raises(ormar.ModelError) as exc:
+                tag.project_id = 123
+            assert (
+                "You cannot set field project_id directly. "
+                "Use tag_project relation to set the field"
+            ) in str(exc.value)
+
+
+@pytest.mark.asyncio
+async def test_set_compound_pk_wo_dict_fails():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            user_1 = User(email="tim@example.com")
+            await user_1.save()
+            project = Project(owner=user_1, name="So far so good", id=4)
+            await project.save()
+
+            with pytest.raises(ormar.ModelDefinitionError) as exc:
+                project.pk = 12
+            assert "Compound primary key can be set only with dictionary" in str(
+                exc.value
+            )
 
 
 @pytest.mark.asyncio
@@ -566,6 +626,32 @@ async def test_set_composite_pk_property():
             assert project.owner.pk == user_josie.pk
             project.name = "Become an entrepreneur"
             await project.update()
+
+
+@pytest.mark.asyncio
+async def test_bulk_create_and_update():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            user = await User(email="tom@example.com").save()
+            project = await Project(id=12, owner=user, name="Doom impending").save()
+            tags = [
+                Tag(tag_project=project, id=k + 1, owner=user, name=f"TestTag{k+1}")
+                for k in range(5)
+            ]
+            await Tag.objects.bulk_create(tags)
+
+            check = await Tag.objects.all()
+            assert len(check) == 5
+            assert [f"TestTag{k+1}" for k in range(5)] == [inst.name for inst in check]
+
+            for tag in check:
+                tag.name = "NewTag"
+
+            await Tag.objects.bulk_update(check)
+
+            check2 = await Tag.objects.select_related(Tag.tag_project).all()
+            assert len(check2) == 5
+            assert all(x.name == "NewTag" for x in check2)
 
 
 # TODO:

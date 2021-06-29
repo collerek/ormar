@@ -4,7 +4,7 @@ import sqlalchemy
 
 import ormar
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from ormar.models.model import Model
 
 
@@ -19,7 +19,7 @@ class PrimaryKeyConstraint(sqlalchemy.PrimaryKeyConstraint):
         super().__init__(*args, **kwargs)
 
     def _resolve_column_aliases(self):
-        if not self.owner:
+        if not self.owner:  # pragma: no cover
             raise ormar.ModelDefinitionError("Cannot resolve aliases without owner")
         for column in self.column_names:
             column_name = self.owner.get_column_name_from_alias(column)

@@ -1075,7 +1075,7 @@ class QuerySet(Generic[T]):
         """
         ready_objects = []
         # TODO: Adjust for multi pk
-        pk_name = self.model_meta.pkname
+        pk_names = self.model.pk_names_list
         if not columns:
             columns = list(
                 self.model.extract_db_own_fields().union(
@@ -1083,38 +1083,40 @@ class QuerySet(Generic[T]):
                 )
             )
 
-        if pk_name not in columns:
-            columns.append(pk_name)
+        for pk_name in pk_names:
+            if pk_name not in columns:
+                columns.append(pk_name)
 
         columns = [self.model.get_column_alias(k) for k in columns]
         kwargs = dict()
         for objt in objects:
             kwargs = objt.dict()
-            if pk_name not in kwargs or kwargs.get(pk_name) is None:
-                raise ModelPersistenceError(
-                    "You cannot update unsaved objects. "
-                    f"{self.model.__name__} has to have {pk_name} filled."
-                )
-            kwargs = self.model.parse_non_db_fields(kwargs)
+            for pk_name in pk_names:
+                if pk_name not in kwargs or kwargs.get(pk_name) is None:
+                    raise ModelPersistenceError(
+                        "You cannot update unsaved objects. "
+                        f"{self.model.__name__} has to have {pk_name} filled."
+                    )
+            kwargs = self.model.populate_compound_pk(kwargs)
             kwargs = self.model.substitute_models_with_pks(kwargs)
+            kwargs = self.model.parse_non_db_fields(kwargs)
             kwargs = self.model.translate_columns_to_aliases(kwargs)
             new_kwargs = {"new_" + k: v for k, v in kwargs.items() if k in columns}
             ready_objects.append(new_kwargs)
 
-        pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
-        pk_column_name = self.model.get_column_alias(pk_name)
         used_columns = [self.model.get_column_alias(k) for k in kwargs]
         table_columns = [
             c.name for c in self.model_meta.table.c if c.name in used_columns
         ]
-        expr = self.table.update().where(
-            pk_column == bindparam("new_" + pk_column_name)
-        )
+        expr = self.table.update()
+        for pk_alias in self.model.pk_aliases_list:
+            pk_column = self.model_meta.table.c.get(pk_alias)
+            expr = expr.where(pk_column == bindparam("new_" + pk_alias))
         expr = expr.values(
             **{
                 k: bindparam("new_" + k)
                 for k in columns
-                if k != pk_column_name and k in table_columns
+                if k not in self.model.pk_aliases_list and k in table_columns
             }
         )
         # databases bind params only where query is passed as string

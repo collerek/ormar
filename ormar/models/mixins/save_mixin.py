@@ -20,6 +20,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         _choices_fields: Optional[Set]
         _skip_ellipsis: Callable
         pk_names_list: List[str]
+        pk_aliases_list: List[str]
 
     @classmethod
     def prepare_model_to_save(cls, new_kwargs: dict) -> dict:
@@ -36,11 +37,31 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict[str, str]
         """
+        new_kwargs = cls.populate_compound_pk(new_kwargs)
         new_kwargs = cls._remove_pk_from_kwargs(new_kwargs)
         new_kwargs = cls._remove_not_ormar_fields(new_kwargs)
         new_kwargs = cls.substitute_models_with_pks(new_kwargs)
         new_kwargs = cls.populate_default_values(new_kwargs)
         new_kwargs = cls.translate_columns_to_aliases(new_kwargs)
+        return new_kwargs
+
+    @classmethod
+    def populate_compound_pk(cls, new_kwargs: dict) -> dict:
+        pk_names = cls.pk_names_list
+        for name in pk_names:
+            if (
+                cls.Meta.model_fields[name].is_relation
+                and cls.Meta.model_fields[name].is_compound
+            ):
+                names = cls.Meta.model_fields[name].names
+                for own_name, parent_name in names.items():
+                    target_name = cls.Meta.model_fields[
+                        name
+                    ].to.get_column_name_from_alias(own_name)
+                    target_value = new_kwargs[name].get(target_name)
+                    if parent_name in new_kwargs:
+                        new_kwargs[parent_name] = target_value
+                new_kwargs.pop(name)
         return new_kwargs
 
     @classmethod
@@ -78,6 +99,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
                 pk.nullable or pk.autoincrement
             ):
                 del new_kwargs[pkname]
+
         return new_kwargs
 
     @classmethod
@@ -92,7 +114,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :rtype: Dict
         """
         for name, field in cls.Meta.model_fields.items():
-            if field.__type__ == uuid.UUID and name in model_dict:
+            if hasattr(field.column_type, "uuid_format") and name in model_dict:
                 parsers = {"string": lambda x: str(x), "hex": lambda x: "%.32x" % x.int}
                 uuid_format = field.column_type.uuid_format
                 parser = parsers.get(uuid_format, lambda x: x)
@@ -114,51 +136,29 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
             field_value = model_dict.get(field, None)
             if field_value is not None:
                 model_dict.pop(field, None)
-                target_field = cls.Meta.model_fields[field]
-                target_pknames = target_field.to.pk_names_list
                 if isinstance(field_value, ormar.Model):
-                    pk_values = [
-                        getattr(field_value, pkname) for pkname in target_pknames
-                    ]
-                    if not all(pk_values):
-                        raise ModelPersistenceError(
-                            f"You cannot save {field_value.get_name()} "
-                            f"model without pk set!"
-                        )
-                    if target_field.is_compound:
-                        fields_to_set = dict(zip(target_pknames, pk_values))
-                        for k, v in fields_to_set.items():
-                            own_pk_alias = target_field.names.get(k, k)
-                            if own_pk_alias not in model_dict:
-                                model_dict[own_pk_alias] = (
-                                    v if not isinstance(v, ormar.Model) else v.pk
-                                )
-                    else:
-                        model_dict[field] = pk_values[0]
-                elif field_value:  # nested dict
+                    target_value = field_value.pk
+                    model_dict[field] = target_value
+                elif isinstance(field_value, dict):  # nested dict
+                    target_field = cls.Meta.model_fields[field]
+                    target_names = target_field.names
                     if isinstance(field_value, list):
-                        if len(target_pknames) > 1:
+                        if len(target_names) > 1:
                             model_dict[field] = [
-                                {
-                                    pkname: target.get(pkname)
-                                    for pkname in target_pknames
-                                }
-                                for target in field_value
+                                target_field.to(**target).pk for target in field_value
                             ]
                         else:
                             model_dict[field] = [
-                                target.get(target_pknames[0]) for target in field_value
+                                field_val.get(target_field.to.pk_names_list[0])
+                                for field_val in field_value
                             ]
                     else:
-                        if len(target_pknames) > 1:
-                            model_dict.update(
-                                {
-                                    pkname: field_value.get(pkname)
-                                    for pkname in target_pknames
-                                }
-                            )
+                        if len(target_names) > 1:
+                            model_dict[field] = target_field.to(**field_value).pk
                         else:
-                            model_dict[field] = field_value.get(target_pknames[0])
+                            model_dict[field] = field_value.get(
+                                target_field.to.pk_names_list[0]
+                            )
                 else:
                     model_dict.pop(field, None)
         return model_dict
