@@ -388,9 +388,19 @@ class ModelRow(NewBaseModel):
                     related_dict = {}
                     for name, pk_name in reversed_names.items():
                         prefixed_name = f"{column_prefix}{name}"
+                        target_name = model_field.to.get_column_name_from_alias(pk_name)
+                        sub_field = model_field.to.Meta.model_fields[target_name]
+                        if sub_field.is_compound:
+                            target_value = dict()
+                            for sub_own_name, sub_other_name in sub_field.names.items():
+                                target_value[sub_own_name] = row[
+                                    f"{column_prefix}{model_field.names.get(sub_other_name)}"
+                                ]
+                        else:
+                            target_value = row[prefixed_name]
                         related_dict[
                             model_field.to.get_column_name_from_alias(pk_name)
-                        ] = row[prefixed_name]
+                        ] = target_value
                     related_dict["__pk_only__"] = True
                     item[alias] = related_dict
                 else:

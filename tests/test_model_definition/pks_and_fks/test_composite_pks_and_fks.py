@@ -456,14 +456,14 @@ async def test_correct_pydantic_dict_with_composite_keys():
                         "description": "Buy lots of Bitcoin",
                         "id": 23,
                         "owner": user.id,
-                        "project": {"id": 15, "owner": user.id},
+                        "project": {"id": 15, "owner": user.id, "tags": []},
                         "project_id": None,
                         "tags": [],
                     }
                 ],
             }
             assert loaded_user.dict() == expected_user_dict
-
+            # TODO: Remove project_id (is_denied fields)
             loaded_project = await Project.objects.get(name="Get rich fast")
             await loaded_project.load_all(follow=True)
             expected_project_dict = {
@@ -478,6 +478,8 @@ async def test_correct_pydantic_dict_with_composite_keys():
                             "completed": False,
                             "description": "Buy lots of Bitcoin",
                             "id": 23,
+                            "owner": user.id,
+                            "project": {"id": 15, "owner_id": user.id},
                             "project_id": None,
                             "tags": [],
                         }
@@ -494,6 +496,7 @@ async def test_correct_pydantic_dict_with_composite_keys():
                             "id": loaded_user.id,
                             "tags": [],
                         },
+                        "project": {"id": 15, "owner_id": user.id},
                         "project_id": None,
                         "tags": [],
                     }

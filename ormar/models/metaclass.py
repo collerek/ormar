@@ -688,6 +688,12 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         return cls.Meta.has_compound_pk
 
     @property
+    def has_relation_pk(cls: Type["T"]) -> bool:
+        """Checks if model has relation in pk constraint"""
+        pk_names = cls.pk_names_list
+        return any(cls.Meta.model_fields[pkname].is_relation for pkname in pk_names)
+
+    @property
     def pk_name_str(cls: Type["T"]) -> str:
         """Shortcut to models primary key name"""
         pks = cls.pk_name if isinstance(cls.pk_name, tuple) else [cls.pk_name]

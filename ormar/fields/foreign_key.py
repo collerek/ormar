@@ -499,14 +499,20 @@ class ForeignKeyField(BaseField):
                 if field.names and len(field.names) > 1:
                     nested_dict = dict()
                     for other_name, own_name in field.names.items():
-                        nested_dict[
-                            field.to.get_column_name_from_alias(other_name)
-                        ] = value.get(name, {}).get(other_name, value.get(own_name))
+                        target_value = value.get(name, {})
+                        if isinstance(target_value, dict):
+                            nested_dict[
+                                field.to.get_column_name_from_alias(other_name)
+                            ] = target_value.get(other_name, value.get(own_name))
+                        else:
+                            nested_dict[
+                                field.to.get_column_name_from_alias(other_name)
+                            ] = target_value
                         if (
                             own_name not in self.to.Meta.model_fields
                             or self.to.Meta.model_fields[own_name].is_denied
                         ):
-                            value.pop(own_name)
+                            value.pop(own_name, None)
                     if set(nested_dict.keys()) == set(field.to.pk_names_list):
                         nested_dict["__pk_only__"] = True
                     value[name] = nested_dict

@@ -705,7 +705,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             else translate_list_to_dict(self._iterate_related_models())
         )
         pk_only = getattr(self, "__pk_only__", False)
-        if relation_map and not pk_only:
+        if relation_map and (not pk_only or self.__class__.has_relation_pk):
             dict_instance = self._extract_nested_models(
                 relation_map=relation_map,
                 dict_instance=dict_instance,
