@@ -70,6 +70,16 @@ class Task(ormar.Model):
     tags: List[Tag] = ormar.ManyToMany(Tag, through=TaskTag)
 
 
+class SimpleComposite(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "simple_composites"
+        constraints = [ormar.PrimaryKeyConstraint("id", "sort_order")]
+
+    id: int = ormar.Integer()
+    sort_order: int = ormar.Integer()
+    name: int = ormar.String(max_length=100)
+
+
 @pytest.fixture(autouse=True, scope="module")
 def create_test_database():
     engine = sqlalchemy.create_engine(DATABASE_URL)
@@ -157,6 +167,22 @@ def test_models_have_expected_db_columns():
 ################
 # PK tests
 ################
+
+
+@pytest.mark.asyncio
+async def test_simple_composite_pk_crud():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            simple = await SimpleComposite(id=1, sort_order=1, name="Test1").save()
+            simple2 = await SimpleComposite(id=1, sort_order=2, name="Test2").save()
+
+            check = await SimpleComposite.objects.order_by(
+                SimpleComposite.sort_order.desc()
+            ).all()
+            assert check[0].name == "Test2"
+            assert check[1].name == "Test1"
+
+            assert SimpleComposite.pk_type == (int, int)
 
 
 @pytest.mark.asyncio
@@ -524,7 +550,7 @@ async def test_correct_pydantic_dict_with_composite_keys():
                 ],
             }
             assert loaded_user.dict() == expected_user_dict
-            # TODO: Remove project_id (is_denied fields)
+            # TODO: Remove project_id (is_denied fields)?
             loaded_project = await Project.objects.get(name="Get rich fast")
             await loaded_project.load_all(follow=True)
             expected_project_dict = {
@@ -541,6 +567,7 @@ async def test_correct_pydantic_dict_with_composite_keys():
                             "id": 23,
                             "owner": user.id,
                             "project": {"id": 15, "owner_id": user.id},
+                            # TODO: Populate project_id if not removed?
                             "project_id": None,
                             "tags": [],
                         }
@@ -578,6 +605,20 @@ async def test_scalar_pk_property():
             user = await User.objects.create(email="torben@example.com")
             assert isinstance(user.pk, uuid.UUID)
             assert user.pk == user.id
+
+
+@pytest.mark.asyncio
+async def test_filter_by_pk_with_instance():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            user = await User.objects.create(email="ai@example.com")
+            project = await Project.objects.create(owner=user, name="Gardening", id=5)
+
+            check = await Project.objects.get(pk=project)
+            assert check.pk == project.pk
+
+            check2 = await Project.objects.get(pk=project.pk)
+            assert check2.pk == project.pk
 
 
 @pytest.mark.asyncio
@@ -635,14 +676,16 @@ async def test_bulk_create_and_update():
             user = await User(email="tom@example.com").save()
             project = await Project(id=12, owner=user, name="Doom impending").save()
             tags = [
-                Tag(tag_project=project, id=k + 1, owner=user, name=f"TestTag{k+1}")
+                Tag(tag_project=project, id=k + 1, owner=user, name=f"TestTag{k + 1}")
                 for k in range(5)
             ]
             await Tag.objects.bulk_create(tags)
 
             check = await Tag.objects.all()
             assert len(check) == 5
-            assert [f"TestTag{k+1}" for k in range(5)] == [inst.name for inst in check]
+            assert [f"TestTag{k + 1}" for k in range(5)] == [
+                inst.name for inst in check
+            ]
 
             for tag in check:
                 tag.name = "NewTag"

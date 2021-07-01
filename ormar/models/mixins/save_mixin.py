@@ -136,29 +136,18 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
             field_value = model_dict.get(field, None)
             if field_value is not None:
                 model_dict.pop(field, None)
-                if isinstance(field_value, ormar.Model):
-                    target_value = field_value.pk
-                    model_dict[field] = target_value
-                elif isinstance(field_value, dict):  # nested dict
+                if field_value:  # nested dict
                     target_field = cls.Meta.model_fields[field]
-                    target_names = target_field.names
                     if isinstance(field_value, list):
-                        if len(target_names) > 1:
-                            model_dict[field] = [
-                                target_field.to(**target).pk for target in field_value
-                            ]
-                        else:
-                            model_dict[field] = [
-                                field_val.get(target_field.to.pk_names_list[0])
-                                for field_val in field_value
-                            ]
+                        model_dict[field] = [
+                            field_val.get(target_field.to.pk_names_list[0])
+                            for field_val in field_value
+                        ]
                     else:
-                        if len(target_names) > 1:
-                            model_dict[field] = target_field.to(**field_value).pk
-                        else:
-                            model_dict[field] = field_value.get(
-                                target_field.to.pk_names_list[0]
-                            )
+                        field_value = cast(Dict, field_value)
+                        model_dict[field] = field_value.get(
+                            target_field.to.pk_names_list[0]
+                        )
                 else:
                     model_dict.pop(field, None)
         return model_dict

@@ -540,12 +540,12 @@ class ForeignKeyField(BaseField):
         :return: (if needed) registered Model
         :rtype: Model
         """
-        if self.to.pk_type == uuid.UUID and isinstance(value, str):  # pragma: nocover
+        if self.__type__ == uuid.UUID and isinstance(value, str):  # pragma: nocover
             value = uuid.UUID(value)
         if not isinstance(value, self.to.pk_type):
             raise RelationshipInstanceError(
                 f"Relationship error - ForeignKey {self.to.__name__} "
-                f"is of type {self.to.pk_type()} "
+                f"is of type {self.__type__} "
                 f"while {type(value)} passed as a parameter."
             )
         model = create_dummy_instance(fk=self.to, pk=value)
