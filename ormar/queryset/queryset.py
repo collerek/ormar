@@ -875,9 +875,9 @@ class QuerySet(Generic[T]):
             limit=1,
             order_bys=[
                 OrderAction(
-                    order_str=f"{self.model.Meta.pkname}",
-                    model_cls=self.model_cls,  # type: ignore
+                    order_str=f"{pkname}", model_cls=self.model_cls,  # type: ignore
                 )
+                for pkname in self.model_cls.pk_names_list  # type: ignore
             ]
             + self.order_bys,
         )
@@ -933,9 +933,10 @@ class QuerySet(Generic[T]):
                 limit=1,
                 order_bys=[
                     OrderAction(
-                        order_str=f"-{self.model.Meta.pkname}",
+                        order_str=f"-{pkname}",
                         model_cls=self.model_cls,  # type: ignore
                     )
+                    for pkname in self.model_cls.pk_names_list  # type: ignore
                 ]
                 + self.order_bys,
             )

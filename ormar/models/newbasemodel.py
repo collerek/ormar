@@ -140,7 +140,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             if validation_error:
                 raise validation_error
         else:
-            fields_set = {self.Meta.pkname}
+            fields_set = {*self.__class__.pk_names_list}
             values = new_kwargs
 
         object.__setattr__(self, "__dict__", values)
@@ -243,7 +243,26 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         excluded: Set[str] = kwargs.pop("__excluded__", set())
         if "pk" in kwargs:
-            kwargs[self.Meta.pkname] = kwargs.pop("pk")
+            value = kwargs.pop("pk")
+            if self.__class__.has_pk_constraint:
+                for key, val in value.items():
+                    alias = self.get_column_name_from_alias(key)
+                    model_field = self.Meta.model_fields[alias]
+                    if model_field.is_compound:
+                        reversed_names = cast(
+                            Dict[str, str], model_field.get_reversed_names()
+                        )
+                        related_dict: Dict[str, Any] = {}
+                        for name, pk_name in reversed_names.items():
+                            related_dict[
+                                model_field.to.get_column_name_from_alias(pk_name)
+                            ] = value[name]
+                        related_dict["__pk_only__"] = True
+                        kwargs[alias] = related_dict
+                    else:
+                        kwargs[alias] = val
+            else:
+                kwargs[self.Meta.pkname] = value
 
         # extract through fields
         through_tmp_dict = dict()
@@ -354,23 +373,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if lower:
             name = name.lower()
         return name
-
-    @property
-    def pk_column(self) -> sqlalchemy.Column:
-        """
-        Retrieves primary key sqlalchemy column from models Meta.table.
-        Each model has to have primary key.
-        Only one primary key column is allowed.
-
-        :return: primary key sqlalchemy column
-        :rtype: sqlalchemy.Column
-        """
-        if object.__getattribute__(self, "_pk_column") is not None:
-            return object.__getattribute__(self, "_pk_column")
-        pk_columns = self.Meta.table.primary_key.columns.values()
-        pk_col = pk_columns[0]
-        object.__setattr__(self, "_pk_column", pk_col)
-        return pk_col
 
     @property
     def saved(self) -> bool:
@@ -571,8 +573,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         Traverse nested models and converts them into dictionaries.
         Calls itself recursively if needed.
 
-        :param nested: flag if current instance is nested
-        :type nested: bool
         :param dict_instance: current instance dict
         :type dict_instance: Dict
         :param include: fields to include
@@ -590,7 +590,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             if not relation_map or field not in relation_map:
                 nested_model = getattr(self, field, None)
                 if nested_model and not self.Meta.model_fields[field].nullable:
-                    if isinstance(nested_model, MutableSequence):
+                    if isinstance(nested_model, MutableSequence):  # pragma no cover
                         dict_instance[field] = [
                             submodel.pk for submodel in nested_model
                         ]

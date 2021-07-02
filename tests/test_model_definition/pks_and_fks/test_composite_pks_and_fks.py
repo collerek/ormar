@@ -7,7 +7,7 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar.exceptions import ModelError
+from ormar.exceptions import ModelError, QueryDefinitionError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -77,6 +77,16 @@ class SimpleComposite(ormar.Model):
 
     id: int = ormar.Integer()
     sort_order: int = ormar.Integer()
+    name: int = ormar.String(max_length=100)
+
+
+class SimpleCompositeAlias(ormar.Model):
+    class Meta(BaseMeta):
+        tablename = "simple_composites_alias"
+        constraints = [ormar.PrimaryKeyConstraint("id", "order_no")]
+
+    id: int = ormar.Integer()
+    sort_order: int = ormar.Integer(name="order_no")
     name: int = ormar.String(max_length=100)
 
 
@@ -173,8 +183,8 @@ def test_models_have_expected_db_columns():
 async def test_simple_composite_pk_crud():
     async with database:
         async with database.transaction(force_rollback=True):
-            simple = await SimpleComposite(id=1, sort_order=1, name="Test1").save()
-            simple2 = await SimpleComposite(id=1, sort_order=2, name="Test2").save()
+            await SimpleComposite(id=1, sort_order=1, name="Test1").save()
+            await SimpleComposite(id=1, sort_order=2, name="Test2").save()
 
             check = await SimpleComposite.objects.order_by(
                 SimpleComposite.sort_order.desc()
@@ -183,6 +193,42 @@ async def test_simple_composite_pk_crud():
             assert check[1].name == "Test1"
 
             assert SimpleComposite.pk_type == (int, int)
+
+            await check[0].delete()
+            await check[1].delete()
+            with pytest.raises(ormar.NoMatch):
+                await SimpleComposite.objects.get()
+
+
+@pytest.mark.asyncio
+async def test_simple_composite_pk_crud_alias():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            simple = await SimpleCompositeAlias(id=1, sort_order=1, name="Test3").save()
+            simple2 = await SimpleCompositeAlias(
+                id=1, sort_order=2, name="Test4"
+            ).save()
+
+            await SimpleCompositeAlias(
+                pk={"id": 3, "sort_order": 3}, name="Test5"
+            ).save()
+
+            check = await SimpleCompositeAlias.objects.order_by(
+                SimpleCompositeAlias.sort_order.desc()
+            ).all()
+            assert check[0].name == "Test5"
+            assert check[1].name == "Test4"
+            assert check[2].name == "Test3"
+
+            assert SimpleCompositeAlias.pk_type == (int, int)
+
+            check2 = await SimpleCompositeAlias.objects.get(pk=simple)
+            assert check2.name == "Test3"
+
+            check3 = await SimpleCompositeAlias.objects.get(
+                id=simple2.id, sort_order=simple2.sort_order
+            )
+            assert check3.name == "Test4"
 
 
 @pytest.mark.asyncio
@@ -593,6 +639,88 @@ async def test_correct_pydantic_dict_with_composite_keys():
             assert loaded_project.dict() == expected_project_dict
 
 
+@pytest.mark.asyncio
+async def test_manual_complex_prefix_for_duplicated_relations():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            user = await User(email="juanita@example.com").save()
+            project = await Project(id=15, owner=user, name="Get rich fast").save()
+            task = Task(
+                id=23,
+                owner=user,
+                project=project,
+                description="Buy lots of Bitcoin",
+                completed=False,
+            )
+            await task.save()
+            tag_urgent = await Tag(
+                id=12, owner=user, tag_project=project, name="URGENT!"
+            ).save()
+            await task.tags.add(tag_urgent)
+
+            loaded_user = (
+                await User.objects.select_related(
+                    [User.projects.tasks.tags, User.tasks.project.tasks.tags]
+                )
+                .filter(User.tasks.project.tasks.tags.name == "URGENT!")
+                .get(email="juanita@example.com")
+            )
+            assert loaded_user.projects[0].name == "Get rich fast"
+            assert (
+                loaded_user.tasks[0].project.tasks[0].description
+                == "Buy lots of Bitcoin"
+            )
+            assert loaded_user.tasks[0].project.tasks[0].tags[0].name == "URGENT!"
+
+            assert loaded_user.dict() == {
+                "email": "juanita@example.com",
+                "id": user.id,
+                "projects": [
+                    {
+                        "id": 15,
+                        "name": "Get rich fast",
+                        "owner": user.id,
+                        "tags": [],
+                        "tasks": [
+                            {
+                                "completed": False,
+                                "description": "Buy lots of Bitcoin",
+                                "id": 23,
+                                "owner": user.id,
+                                "project": {"id": 15, "owner_id": user.id},
+                                "project_id": None,
+                                "tags": [
+                                    {
+                                        "id": 12,
+                                        "name": "URGENT!",
+                                        "project_id": None,
+                                        "tasktag": {"id": 1, "tag": None, "task": None},
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+                "tags": [],
+                "tasks": [
+                    {
+                        "completed": False,
+                        "description": "Buy lots of Bitcoin",
+                        "id": 23,
+                        "owner": user.id,
+                        "project": {
+                            "id": 15,
+                            "name": "Get rich fast",
+                            "owner": user.id,
+                            "tags": [],
+                        },
+                        "project_id": None,
+                        "tags": [],
+                    }
+                ],
+            }
+
+
 ################
 # pk property working correctly
 ################
@@ -619,6 +747,13 @@ async def test_filter_by_pk_with_instance():
 
             check2 = await Project.objects.get(pk=project.pk)
             assert check2.pk == project.pk
+
+            with pytest.raises(QueryDefinitionError) as exc:
+                await Project.objects.filter(pk__lte=project).get()
+            assert (
+                "You cannot use ormar.Model in filters different than equals!"
+                in str(exc.value)
+            )
 
 
 @pytest.mark.asyncio
@@ -667,6 +802,26 @@ async def test_set_composite_pk_property():
             assert project.owner.pk == user_josie.pk
             project.name = "Become an entrepreneur"
             await project.update()
+
+            await Project(
+                pk=dict(id=346, owner=user_tian), name="Become an insta model",
+            ).save()
+            project2 = await Project.objects.get(id=346, owner=user_tian.pk)
+            assert project2.name == "Become an insta model"
+
+            await Project(pk=project2.pk, name="Become an CoD soldier",).update()
+            project3 = await Project.objects.get(id=346, owner=user_tian.pk)
+            assert project3.name == "Become an CoD soldier"
+
+            tag1 = await Tag(
+                pk=dict(project_id=project.id, id=1112, owner_id=user_tian.id),
+                name="TestTag",
+            ).save()
+            tag2 = Tag(pk=tag1.pk, name="TestTag2")
+            assert tag1.pk == tag2.pk
+            await tag2.update()
+            check = await Tag.objects.get(pk=tag2.pk)
+            assert check.name == "TestTag2"
 
 
 @pytest.mark.asyncio

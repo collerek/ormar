@@ -7,6 +7,7 @@ from typing import (
     TYPE_CHECKING,
     TypeVar,
     Union,
+    cast,
 )
 
 import ormar.queryset  # noqa I100
@@ -254,14 +255,7 @@ class Model(ModelRow):
             self_fields = {k: v for k, v in self_fields.items() if k in _columns}
         self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.update().values(**self_fields)
-        for pk_name in self.__class__.pk_names_list:
-            target_value = getattr(self, self.get_column_name_from_alias(pk_name))
-            if isinstance(target_value, ormar.Model):
-                target_value = target_value.pk
-            expr = expr.where(
-                self.Meta.table.c.get(self.get_column_alias(pk_name)) == target_value
-            )
-
+        expr = self._handle_primary_key_where(expr)
         await self.Meta.database.execute(expr)
         self.set_save_status(True)
         await self.signals.post_update.send(sender=self.__class__, instance=self)
@@ -284,7 +278,7 @@ class Model(ModelRow):
         """
         await self.signals.pre_delete.send(sender=self.__class__, instance=self)
         expr = self.Meta.table.delete()
-        expr = expr.where(self.pk_column == (getattr(self, self.Meta.pkname)))
+        expr = self._handle_primary_key_where(expr)
         result = await self.Meta.database.execute(expr)
         self.set_save_status(False)
         await self.signals.post_delete.send(sender=self.__class__, instance=self)
@@ -302,13 +296,7 @@ class Model(ModelRow):
         :rtype: Model
         """
         expr = self.Meta.table.select()
-        for pk_name in self.__class__.pk_names_list:
-            target_value = getattr(self, self.get_column_name_from_alias(pk_name))
-            if isinstance(target_value, ormar.Model):
-                target_value = target_value.pk
-            expr = expr.where(
-                self.Meta.table.c.get(self.get_column_alias(pk_name)) == target_value
-            )
+        expr = self._handle_primary_key_where(expr)
         row = await self.Meta.database.fetch_one(expr)
         if not row:  # pragma nocover
             raise NoMatch("Instance was deleted from database and cannot be refreshed")
@@ -366,3 +354,22 @@ class Model(ModelRow):
         instance_dict = instance.dict()
         self.update_from_dict(instance_dict)
         return self
+
+    def _handle_primary_key_where(self, expr: Any) -> Any:
+        for pk_name in self.__class__.pk_names_list:
+            target_value = getattr(self, pk_name)
+            if isinstance(target_value, ormar.Model):
+                target_value = target_value.pk
+            if isinstance(target_value, dict):
+                target_field = self.Meta.model_fields[pk_name]
+                reversed_names = cast(Dict[str, str], target_field.get_reversed_names())
+                for own_name, remote_name in reversed_names.items():
+                    expr = expr.where(
+                        self.Meta.table.c.get(own_name) == target_value[remote_name]
+                    )
+            else:
+                expr = expr.where(
+                    self.Meta.table.c.get(self.get_column_alias(pk_name))
+                    == target_value
+                )
+        return expr
