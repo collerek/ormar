@@ -110,7 +110,7 @@ class PkDescriptor:
 
     def __set__(self, instance: "Model", value: Any) -> None:
         if self.is_compound:
-            if isinstance(value, collections.Mapping):
+            if isinstance(value, collections.abc.Mapping):
                 for key, val in value.items():
                     if key in instance.extract_related_names():
                         setattr(instance, key, val)

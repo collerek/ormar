@@ -694,7 +694,14 @@ async def test_manual_complex_prefix_for_duplicated_relations():
                                         "id": 12,
                                         "name": "URGENT!",
                                         "project_id": None,
-                                        "tasktag": {"id": 1, "tag": None, "task": None},
+                                        "tasktag": {
+                                            "id": loaded_user.projects[0]
+                                            .tasks[0]
+                                            .tags[0]
+                                            .tasktag.id,
+                                            "tag": None,
+                                            "task": None,
+                                        },
                                     }
                                 ],
                             }
@@ -780,6 +787,8 @@ async def test_get_composite_pk_property():
             assert set(task.pk.keys()) == {"id", "owner", "project_id"}
             assert task.pk["owner"] == user.pk
             assert task.pk["project_id"] == project.pk.get("id")
+
+            assert Task.pk_len == 3
 
 
 @pytest.mark.asyncio
