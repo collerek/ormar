@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, TYPE_CHECKING, Tuple, Type, cast
+from typing import Callable, Dict, List, TYPE_CHECKING, Tuple, Type, Union, cast
 
 from ormar.models.mixins.relation_mixin import RelationMixin
 
@@ -22,7 +22,7 @@ class PrefetchQueryMixin(RelationMixin):
         target_model: Type["Model"],
         reverse: bool,
         related: str,
-    ) -> Tuple[Type["Model"], str]:
+    ) -> Tuple[Type["Model"], Union[str, Dict]]:
         """
         Returns Model on which query clause should be performed and name of the column.
 
@@ -44,15 +44,22 @@ class PrefetchQueryMixin(RelationMixin):
                 field = cast("ManyToManyField", field)
                 field_name = field.default_target_field_name()
                 sub_field = field.through.Meta.model_fields[field_name]
+                if sub_field.is_compound:
+                    return field.through, sub_field.get_reversed_names()
                 return field.through, sub_field.get_alias()
+            if field.is_compound:
+                return target_model, field.get_reversed_names()
             return target_model, field.get_alias()
+        if target_model.has_pk_constraint:
+            field = parent_model.Meta.model_fields[related]
+            return target_model, field.names
         target_field = target_model.get_column_alias(target_model.Meta.pkname)
         return target_model, target_field
 
     @staticmethod
     def get_column_name_for_id_extraction(
         parent_model: Type["Model"], reverse: bool, related: str, use_raw: bool,
-    ) -> str:
+    ) -> Union[str, List]:
         """
         Returns name of the column that should be used to extract ids from model.
         Depending on the relation side it's either primary key column of parent model
@@ -70,11 +77,14 @@ class PrefetchQueryMixin(RelationMixin):
         :rtype:
         """
         if reverse:
-            column_name = parent_model.Meta.pkname
-            return (
-                parent_model.get_column_alias(column_name) if use_raw else column_name
+            result = (
+                parent_model.pk_aliases_list if use_raw else parent_model.pk_names_list
             )
+            return result[0] if len(result) == 1 else result
         column = parent_model.Meta.model_fields[related]
+        if column.is_compound:
+            aliases = list(column.names.values())
+            return aliases if use_raw else [parent_model.get_column_name_from_alias(col) for col in aliases]
         return column.get_alias() if use_raw else column.name
 
     @classmethod
@@ -93,7 +103,7 @@ class PrefetchQueryMixin(RelationMixin):
             return cls.get_name()
         if target_field.virtual:
             return target_field.get_related_name()
-        return target_field.to.Meta.pkname
+        return target_field.to.pk_name_str
 
     @classmethod
     def get_filtered_names_to_extract(cls, prefetch_dict: Dict) -> List:

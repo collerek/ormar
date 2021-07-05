@@ -386,7 +386,6 @@ async def test_reverse_relation_compound_crud():
 @pytest.mark.asyncio
 async def test_error_multiple_pk_declarations():
     with pytest.raises(ormar.ModelDefinitionError):
-
         class MultiPk(ormar.Model):
             class Meta:
                 database = database
@@ -402,7 +401,6 @@ async def test_error_multiple_pk_declarations():
 @pytest.mark.asyncio
 async def test_error_mixed_pk_declarations():
     with pytest.raises(ormar.ModelDefinitionError):
-
         class MixedPk(ormar.Model):
             class Meta:
                 constraints = [
@@ -476,9 +474,9 @@ async def test_set_fk_existing_technical_column_directly_fails():
             with pytest.raises(ormar.ModelError) as exc:
                 tag.project_id = 123
             assert (
-                "You cannot set field project_id directly. "
-                "Use tag_project relation to set the field"
-            ) in str(exc.value)
+                       "You cannot set field project_id directly. "
+                       "Use tag_project relation to set the field"
+                   ) in str(exc.value)
 
 
 @pytest.mark.asyncio
@@ -662,13 +660,13 @@ async def test_manual_complex_prefix_for_duplicated_relations():
                 await User.objects.select_related(
                     [User.projects.tasks.tags, User.tasks.project.tasks.tags]
                 )
-                .filter(User.tasks.project.tasks.tags.name == "URGENT!")
-                .get(email="juanita@example.com")
+                    .filter(User.tasks.project.tasks.tags.name == "URGENT!")
+                    .get(email="juanita@example.com")
             )
             assert loaded_user.projects[0].name == "Get rich fast"
             assert (
-                loaded_user.tasks[0].project.tasks[0].description
-                == "Buy lots of Bitcoin"
+                    loaded_user.tasks[0].project.tasks[0].description
+                    == "Buy lots of Bitcoin"
             )
             assert loaded_user.tasks[0].project.tasks[0].tags[0].name == "URGENT!"
 
@@ -696,9 +694,9 @@ async def test_manual_complex_prefix_for_duplicated_relations():
                                         "project_id": None,
                                         "tasktag": {
                                             "id": loaded_user.projects[0]
-                                            .tasks[0]
-                                            .tags[0]
-                                            .tasktag.id,
+                                                .tasks[0]
+                                                .tags[0]
+                                                .tasktag.id,
                                             "tag": None,
                                             "task": None,
                                         },
@@ -726,6 +724,90 @@ async def test_manual_complex_prefix_for_duplicated_relations():
                     }
                 ],
             }
+
+
+@pytest.mark.asyncio
+async def test_saving_related():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            user = await User(email="carlos@example.com").save()
+            project = await Project(id=18, owner=user,
+                                    name="Live fast, die slow").save()
+            task = Task(
+                id=123,
+                owner=user,
+                project=project,
+                description="Party hard",
+                completed=False,
+            )
+            await task.save()
+            tag_urgent = await Tag(
+                id=19, owner=user, tag_project=project, name="URGENT!"
+            ).save()
+            await task.tags.add(tag_urgent)
+
+            user.projects[0].name = "Hakuna Matata"
+            user.projects[0].tasks[0].description = "Do more yoga"
+            user.projects[0].tasks[0].tags[0].name = "Don't worry"
+
+            await user.save_related(follow=True, save_all=True)
+            check = await User.objects.prefetch_related(User.projects.tasks.tags).get(
+                email="carlos@example.com")
+            assert check.projects[0].name == "Hakuna Matata"
+            assert check.projects[0].tasks[0].description == "Do more yoga"
+            assert check.projects[0].tasks[0].tags[0].name == "Don't worry"
+
+
+@pytest.mark.asyncio
+async def test_prefetch_related():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            user = await User(email="sparrow@example.com").save()
+            project = await Project(id=99, owner=user, name="Release the kraken").save()
+            task = await Task(
+                id=321,
+                owner=user,
+                project=project,
+                description="Get a ship",
+                completed=False,
+            ).save()
+            task2 = await Task(
+                id=322,
+                owner=user,
+                project=project,
+                description="Find a crew",
+                completed=False,
+            ).save()
+            tag_urgent = await Tag(
+                id=21, owner=user, tag_project=project, name="URGENT!"
+            ).save()
+            tag_location = await Tag(
+                id=23, owner=user, tag_project=project, name="South See"
+            ).save()
+            await task.tags.add(tag_urgent)
+            await task2.tags.add(tag_urgent)
+            await task.tags.add(tag_location)
+            await task2.tags.add(tag_location)
+
+            # check = await User.objects.select_related(
+            #     [User.tags, User.projects]).prefetch_related(
+            #     User.projects.tasks.tags).order_by(
+            #     [User.projects.tasks.description.asc(),
+            #      User.projects.tasks.tags.name.asc()]).get(email="sparrow@example.com")
+            # assert check.projects[0].name == "Release the kraken"
+            # assert check.projects[0].tasks[0].description == "Find a crew"
+            # assert check.projects[0].tasks[1].description == "Get a ship"
+            # assert check.projects[0].tasks[0].tags[1].name == "URGENT!"
+            # assert check.projects[0].tasks[0].tags[0].name == "South See"
+            # assert check.projects[0].tasks[1].tags[1].name == "URGENT!"
+            # assert check.projects[0].tasks[1].tags[0].name == "South See"
+            # assert check.tags[0].name == "URGENT!"
+            # assert check.tags[1].name == "South See"
+
+            check2 = await Task.objects.prefetch_related(Task.project).all()
+            assert len(check2) == 2
+            assert check2[0].project.name == "Release the kraken"
+            assert check2[1].project.name == "Release the kraken"
 
 
 ################
@@ -758,8 +840,8 @@ async def test_filter_by_pk_with_instance():
             with pytest.raises(QueryDefinitionError) as exc:
                 await Project.objects.filter(pk__lte=project).get()
             assert (
-                "You cannot use ormar.Model in filters different than equals!"
-                in str(exc.value)
+                    "You cannot use ormar.Model in filters different than equals!"
+                    in str(exc.value)
             )
 
 
@@ -818,7 +900,7 @@ async def test_set_composite_pk_property():
             project2 = await Project.objects.get(id=346, owner=user_tian.pk)
             assert project2.name == "Become an insta model"
 
-            await Project(pk=project2.pk, name="Become an CoD soldier",).update()
+            await Project(pk=project2.pk, name="Become an CoD soldier", ).update()
             project3 = await Project.objects.get(id=346, owner=user_tian.pk)
             assert project3.name == "Become an CoD soldier"
 
@@ -860,7 +942,6 @@ async def test_bulk_create_and_update():
             assert len(check2) == 5
             assert all(x.name == "NewTag" for x in check2)
 
-
 # TODO:
 # Register Foreign Key to field with multi column pk
 # (V)   -> Reuse the same ForeignKey function, instead of name pass names dict
@@ -868,19 +949,35 @@ async def test_bulk_create_and_update():
 # (V)   -> During registration check if model already have all fields mentioned in names
 # (V) -> If not all fields are already present
 # (V)       -> create missing fields based on to pk type of target model
-#   -> Names are optional and if not provided all fields are created
+# (V)  -> Names are optional and if not provided all fields are created
 # (V) Resolve complex fks before complex pks as fks might create needed fields
 # Allow for nested fields in relation?
 # New method to resolve fields instead of direct model_fields access?
-# Add to relation
-# remove from relation
-# select related
-#   -> normal,
-#   -> reverse,
-#   -> many to many
+# (V) Add to relation
+# (V) remove from relation
+# (V) select related
+# (V)  -> normal,
+# (V)  -> reverse,
+# (V)  -> many to many
 # prefetch related
 #   -> normal,
 #   -> reverse,
 #   -> many to many
-# fix dict()
+# (V/X) fix dict() - what about the "technical columns"
 # fix __repr__ for denied fields
+# defaults
+# self reference models
+# forward refs on fk
+# forward refs on m2m
+# default through models
+# exclude/include
+# ordering by
+# choices?
+# MODEL METHODS:
+# (V) load
+# (V) load_all
+# (V) save
+# (V) update
+# (V) delete
+# save_related
+# json

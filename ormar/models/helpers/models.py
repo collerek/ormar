@@ -62,6 +62,9 @@ def populate_default_options_values(
     else:
         new_model.Meta.has_compound_pk = False
 
+    if not hasattr(new_model.Meta, "aliases_dict"):
+        new_model.Meta.aliases_dict = None
+
     if not hasattr(new_model.Meta, "model_fields"):
         new_model.Meta.model_fields = model_fields
     if not hasattr(new_model.Meta, "abstract"):

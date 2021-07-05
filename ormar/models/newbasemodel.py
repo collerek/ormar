@@ -898,7 +898,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 f"model without pk set!"
             )
 
-    def get_relation_model_id(self, target_field: "BaseField") -> Optional[int]:
+    def get_relation_model_id(self, target_field: "BaseField") -> Any:
         """
         Returns an id of the relation side model to use in prefetch query.
 

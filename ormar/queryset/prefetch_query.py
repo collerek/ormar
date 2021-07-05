@@ -1,12 +1,13 @@
+from dataclasses import dataclass, field
 from typing import (
-    Dict,
+    Any, Dict,
     List,
     Sequence,
     Set,
     TYPE_CHECKING,
     Tuple,
     Type,
-    cast,
+    Union, cast,
 )
 
 import ormar
@@ -78,6 +79,8 @@ def set_children_on_model(  # noqa: CCR001
     :param orders_by: order_by dictionary
     :type orders_by: Dict
     """
+    if isinstance(model_id, dict):
+        model_id = tuple(sorted((k, v) for k, v in model_id.items()))
     for key, child_models in children.items():
         if key == model_id:
             models_to_set = [models[child] for child in sorted(child_models)]
@@ -88,6 +91,37 @@ def set_children_on_model(  # noqa: CCR001
                     )
                 for child in models_to_set:
                     setattr(model, related, child)
+
+
+class UniqueList(list):
+
+    def append(self, item: Any) -> None:
+        if item not in self:
+            super().append(item)
+
+
+@dataclass
+class ExtractedEntity:
+    prefix: str = ""
+    models: Dict = field(default_factory=dict)
+    pk_models: Dict = field(default_factory=dict)
+    raw: List = field(default_factory=list)
+
+    def get(self, name: str):
+        if name not in self.models:
+            self.models[name] = dict()
+        return self.models[name]
+
+
+class EntityExtractor:
+
+    def __init__(self):
+        self.entities = dict()
+
+    def get(self, name: str):
+        if name not in self.entities:
+            self.entities[name] = ExtractedEntity()
+        return self.entities[name]
 
 
 class PrefetchQuery:
@@ -111,7 +145,7 @@ class PrefetchQuery:
         self._prefetch_related = prefetch_related
         self._select_related = select_related
         self.excludable = excludable
-        self.already_extracted: Dict = dict()
+        self.already_extracted: EntityExtractor = EntityExtractor()
         self.models: Dict = {}
         self.select_dict = translate_list_to_dict(self._select_related)
         self.orders_by = orders_by or []
@@ -146,31 +180,38 @@ class PrefetchQuery:
         return await self._prefetch_related_models(models=models, rows=rows)
 
     def _extract_ids_from_raw_data(
-        self, parent_model: Type["Model"], column_name: str
-    ) -> Set:
+        self, parent_model: Type["Model"], column_names: Union[str, List[str]]
+    ) -> List:
         """
         Iterates over raw rows and extract id values of relation columns by using
         prefixed column name.
 
         :param parent_model: ormar model class
         :type parent_model: Type[Model]
-        :param column_name: name of the relation column which is a key column
-        :type column_name: str
+        :param column_names: name of the relation column which is a key column
+        :type column_names: str
         :return: set of ids of related model that should be extracted
         :rtype: set
         """
-        list_of_ids = set()
-        current_data = self.already_extracted.get(parent_model.get_name(), {})
-        table_prefix = current_data.get("prefix", "")
-        column_name = (f"{table_prefix}_" if table_prefix else "") + column_name
-        for row in current_data.get("raw", []):
-            if row[column_name]:
-                list_of_ids.add(row[column_name])
+        if not isinstance(column_names, list):
+            column_names = [column_names]
+        list_of_ids = UniqueList()
+        current_data = self.already_extracted.get(parent_model.get_name())
+        table_prefix = current_data.prefix
+
+        column_names = [(f"{table_prefix}_" if table_prefix else "") + column_name
+                        for column_name in column_names]
+        for row in current_data.raw:
+            if all(row[column_name] for column_name in column_names):
+                if len(column_names) > 1:
+                    list_of_ids.append({column_name: row[column_name] for column_name in column_names})
+                else:
+                    list_of_ids.append(row[column_names[0]])
         return list_of_ids
 
     def _extract_ids_from_preloaded_models(
-        self, parent_model: Type["Model"], column_name: str
-    ) -> Set:
+        self, parent_model: Type["Model"], column_name: Union[str, List[str]]
+    ) -> List:
         """
         Extracts relation ids from already populated models if they were included
         in the original query before.
@@ -182,18 +223,32 @@ class PrefetchQuery:
         :return: set of ids of related model that should be extracted
         :rtype: set
         """
-        list_of_ids = set()
+        list_of_ids = UniqueList()
         for model in self.models.get(parent_model.get_name(), []):
-            child = getattr(model, column_name)
-            if isinstance(child, ormar.Model):
-                list_of_ids.add(child.pk)
+            if isinstance(column_name, list):
+                current_id = dict()
+                for column in column_name:
+                    child = getattr(model, column)
+                    if isinstance(child, ormar.Model):
+                        child = child.pk
+                    if isinstance(child, dict):
+                        field = parent_model.Meta.model_fields[column]
+                        for target_name, own_name in field.names.items():
+                            current_id[own_name] = child.get(target_name)
+                    else:
+                        current_id[model.get_column_alias(column)] = child
+                list_of_ids.append(current_id)
             else:
-                list_of_ids.add(child)
+                child = getattr(model, column_name)
+                if isinstance(child, ormar.Model):
+                    list_of_ids.append(child.pk)
+                else:
+                    list_of_ids.append(child)
         return list_of_ids
 
     def _extract_required_ids(
         self, parent_model: Type["Model"], reverse: bool, related: str,
-    ) -> Set:
+    ) -> List:
         """
         Delegates extraction of the fields to either get ids from raw sql response
         or from already populated models.
@@ -209,7 +264,7 @@ class PrefetchQuery:
         """
         use_raw = parent_model.get_name() not in self.models
 
-        column_name = parent_model.get_column_name_for_id_extraction(
+        column_names = parent_model.get_column_name_for_id_extraction(
             parent_model=parent_model,
             reverse=reverse,
             related=related,
@@ -218,11 +273,11 @@ class PrefetchQuery:
 
         if use_raw:
             return self._extract_ids_from_raw_data(
-                parent_model=parent_model, column_name=column_name
+                parent_model=parent_model, column_names=column_names
             )
 
         return self._extract_ids_from_preloaded_models(
-            parent_model=parent_model, column_name=column_name
+            parent_model=parent_model, column_name=column_names
         )
 
     def _get_filter_for_prefetch(
@@ -265,7 +320,12 @@ class PrefetchQuery:
             qryclause = QueryClause(
                 model_cls=clause_target, select_related=[], filter_clauses=[],
             )
-            kwargs = {f"{filter_column}__in": ids}
+            if isinstance(filter_column, dict):
+                kwargs = dict()
+                for own_name, target_name in filter_column.items():
+                    kwargs[f"{own_name}__in"] = set(x.get(target_name) for x in ids)
+            else:
+                kwargs = {f"{filter_column}__in": ids}
             filter_clauses, _ = qryclause.prepare_filter(_own_only=False, **kwargs)
             return filter_clauses
         return []
@@ -301,8 +361,8 @@ class PrefetchQuery:
 
             field_name = model.get_related_field_name(target_field=target_field)
 
-            children = self.already_extracted.get(target_model, {}).get(field_name, {})
-            models = self.already_extracted.get(target_model, {}).get("pk_models", {})
+            children = self.already_extracted.get(target_model).get(field_name)
+            models = self.already_extracted.get(target_model).pk_models
             set_children_on_model(
                 model=model,
                 related=related,
@@ -335,7 +395,7 @@ class PrefetchQuery:
         :return: list of models with prefetch children populated
         :rtype: List[Model]
         """
-        self.already_extracted = {self.model.get_name(): {"raw": rows}}
+        self.already_extracted.get(self.model.get_name()).raw = rows
         select_dict = translate_list_to_dict(self._select_related)
         prefetch_dict = translate_list_to_dict(self._prefetch_related)
         target_model = self.model
@@ -495,7 +555,7 @@ class PrefetchQuery:
                 from_model=query_target, relation_name=target_name
             )
             exclude_prefix = table_prefix
-            self.already_extracted.setdefault(target_name, {})["prefix"] = table_prefix
+            self.already_extracted.get(target_name).prefix = table_prefix
 
         model_excludable = excludable.get(model_cls=target_model, alias=exclude_prefix)
         if model_excludable.include and not model_excludable.is_included(
@@ -517,7 +577,7 @@ class PrefetchQuery:
         expr = qry.build_select_expression()
         # print(expr.compile(compile_kwargs={"literal_binds": True}))
         rows = await self.database.fetch_all(expr)
-        self.already_extracted.setdefault(target_name, {}).update({"raw": rows})
+        self.already_extracted.get(target_name).raw = rows
         return table_prefix, exclude_prefix, rows
 
     @staticmethod
@@ -607,12 +667,21 @@ class PrefetchQuery:
             instance = self._populate_nested_related(
                 model=instance, prefetch_dict=prefetch_dict, orders_by=orders_by
             )
-            field_db_name = target_model.get_column_alias(field_name)
-            models = self.already_extracted[target_model.get_name()].setdefault(
-                "pk_models", {}
-            )
-            if instance.pk not in models:
-                models[instance.pk] = instance
-            self.already_extracted[target_model.get_name()].setdefault(
-                field_name, dict()
-            ).setdefault(row[field_db_name], set()).add(instance.pk)
+            models = self.already_extracted.get(target_model.get_name()).pk_models
+            pk_to_check = instance.pk
+            if isinstance(pk_to_check, dict):
+                pk_to_check = tuple((k, v) for k, v in pk_to_check.items())
+            if pk_to_check not in models:
+                models[pk_to_check] = instance
+
+            if target_field.is_compound and parent_model.pk_len > 1:
+                if target_field.is_multi:
+                    related_field = target_field.through.Meta.model_fields[field_name]
+                else:
+                    related_field = target_model.Meta.model_fields[field_name]
+                names = related_field.names
+                key = tuple(sorted((own_name, row[target_name]) for own_name, target_name in names.items()))
+            else:
+                field_db_name = target_model.get_column_alias(field_name)
+                key = row[field_db_name]
+            self.already_extracted.get(target_model.get_name()).get(field_name).setdefault(key, UniqueList()).append(pk_to_check)

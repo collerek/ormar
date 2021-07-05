@@ -34,15 +34,19 @@ class AliasMixin:
         :return: field name if set, otherwise passed alias (db name)
         :rtype: str
         """
-        aliases_dict = {}
-        for field_name, field in cls.Meta.model_fields.items():
-            if field.is_denied:
-                continue
-            aliases_dict[field.get_alias()] = field_name
-            if field.is_compound and field.names:
-                for name in field.names.values():
-                    if name not in aliases_dict:
-                        aliases_dict[name] = field_name
+        if not cls.Meta.aliases_dict:
+            aliases_dict = {}
+            for field_name, field in cls.Meta.model_fields.items():
+                if field.is_denied:
+                    continue
+                aliases_dict[field.get_alias()] = field_name
+                if field.is_compound and field.names:
+                    for name in field.names.values():
+                        if name not in aliases_dict:
+                            aliases_dict[name] = field_name
+            cls.Meta.aliases_dict = aliases_dict
+        else:
+            aliases_dict = cls.Meta.aliases_dict
         return aliases_dict.get(alias, alias)  # if not found it's already a name
 
     @classmethod
