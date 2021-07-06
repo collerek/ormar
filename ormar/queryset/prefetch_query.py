@@ -1,13 +1,15 @@
 from dataclasses import dataclass, field
 from typing import (
-    Any, Dict,
+    Any,
+    Dict,
     List,
     Sequence,
     Set,
     TYPE_CHECKING,
     Tuple,
     Type,
-    Union, cast,
+    Union,
+    cast,
 )
 
 import ormar
@@ -94,7 +96,6 @@ def set_children_on_model(  # noqa: CCR001
 
 
 class UniqueList(list):
-
     def append(self, item: Any) -> None:
         if item not in self:
             super().append(item)
@@ -114,7 +115,6 @@ class ExtractedEntity:
 
 
 class EntityExtractor:
-
     def __init__(self):
         self.entities = dict()
 
@@ -199,12 +199,16 @@ class PrefetchQuery:
         current_data = self.already_extracted.get(parent_model.get_name())
         table_prefix = current_data.prefix
 
-        column_names = [(f"{table_prefix}_" if table_prefix else "") + column_name
-                        for column_name in column_names]
+        column_names = [
+            (f"{table_prefix}_" if table_prefix else "") + column_name
+            for column_name in column_names
+        ]
         for row in current_data.raw:
             if all(row[column_name] for column_name in column_names):
                 if len(column_names) > 1:
-                    list_of_ids.append({column_name: row[column_name] for column_name in column_names})
+                    list_of_ids.append(
+                        {column_name: row[column_name] for column_name in column_names}
+                    )
                 else:
                     list_of_ids.append(row[column_names[0]])
         return list_of_ids
@@ -321,11 +325,11 @@ class PrefetchQuery:
                 model_cls=clause_target, select_related=[], filter_clauses=[],
             )
             if isinstance(filter_column, dict):
-                kwargs = dict()
+                kwargs: Dict[str, Union[List, Set]] = dict()
                 for own_name, target_name in filter_column.items():
                     kwargs[f"{own_name}__in"] = set(x.get(target_name) for x in ids)
             else:
-                kwargs = {f"{filter_column}__in": ids}
+                kwargs = {f"{cast(str, filter_column)}__in": ids}
             filter_clauses, _ = qryclause.prepare_filter(_own_only=False, **kwargs)
             return filter_clauses
         return []
@@ -359,8 +363,11 @@ class PrefetchQuery:
             if model_id is None:  # pragma: no cover
                 continue
 
-            field_name = model.get_related_field_name(target_field=target_field)
-
+            field_name: Union[str, List, Tuple] = model.get_related_field_name(
+                target_field=target_field
+            )
+            if isinstance(field_name, list):
+                field_name = tuple(x for x in field_name)
             children = self.already_extracted.get(target_model).get(field_name)
             models = self.already_extracted.get(target_model).pk_models
             set_children_on_model(
@@ -524,7 +531,7 @@ class PrefetchQuery:
         target_field: "BaseField",
         excludable: "ExcludableItems",
         filter_clauses: List,
-        related_field_name: str,
+        related_field_name: Union[str, List[str]],
     ) -> Tuple[str, str, List]:
         """
         Actually runs the queries against the database and populates the raw response
@@ -540,6 +547,8 @@ class PrefetchQuery:
         :return: table prefix and raw rows from sql response
         :rtype: Tuple[str, List]
         """
+        if not isinstance(related_field_name, list):
+            related_field_name = [related_field_name]
         target_model = target_field.to
         target_name = target_model.get_name()
         select_related = []
@@ -558,10 +567,12 @@ class PrefetchQuery:
             self.already_extracted.get(target_name).prefix = table_prefix
 
         model_excludable = excludable.get(model_cls=target_model, alias=exclude_prefix)
-        if model_excludable.include and not model_excludable.is_included(
-            related_field_name
-        ):
-            model_excludable.set_values({related_field_name}, is_exclude=False)
+        # includes nested pks if not included already
+        for related_name in related_field_name:
+            if model_excludable.include and not model_excludable.is_included(
+                related_name
+            ):
+                model_excludable.set_values({related_name}, is_exclude=False)
 
         qry = Query(
             model_cls=query_target,
@@ -656,7 +667,9 @@ class PrefetchQuery:
         """
         target_model = target_field.to
         for row in rows:
-            field_name = parent_model.get_related_field_name(target_field=target_field)
+            field_name: Union[str, List, Tuple] = parent_model.get_related_field_name(
+                target_field=target_field
+            )
             item = target_model.extract_prefixed_table_columns(
                 item={}, row=row, table_prefix=table_prefix, excludable=excludable,
             )
@@ -674,14 +687,30 @@ class PrefetchQuery:
             if pk_to_check not in models:
                 models[pk_to_check] = instance
 
-            if target_field.is_compound and parent_model.pk_len > 1:
+            if target_field.is_compound and len(target_field.names) > 1:
                 if target_field.is_multi:
-                    related_field = target_field.through.Meta.model_fields[field_name]
+                    related_field = target_field.through.Meta.model_fields[
+                        cast(str, field_name)
+                    ]
+                    names = related_field.names
+                elif target_field.virtual:
+                    related_field = target_model.Meta.model_fields[
+                        cast(str, field_name)
+                    ]
+                    names = related_field.names
                 else:
-                    related_field = target_model.Meta.model_fields[field_name]
-                names = related_field.names
-                key = tuple(sorted((own_name, row[target_name]) for own_name, target_name in names.items()))
+                    related_field = target_field
+                    names = {x: x for x in related_field.names.keys()}
+                    field_name = tuple(x for x in field_name)
+                key = tuple(
+                    sorted(
+                        (own_name, row[target_name])
+                        for own_name, target_name in names.items()
+                    )
+                )
             else:
-                field_db_name = target_model.get_column_alias(field_name)
+                field_db_name = target_model.get_column_alias(cast(str, field_name))
                 key = row[field_db_name]
-            self.already_extracted.get(target_model.get_name()).get(field_name).setdefault(key, UniqueList()).append(pk_to_check)
+            self.already_extracted.get(target_model.get_name()).get(
+                field_name
+            ).setdefault(key, UniqueList()).append(pk_to_check)

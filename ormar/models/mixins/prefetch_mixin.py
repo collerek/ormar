@@ -45,10 +45,13 @@ class PrefetchQueryMixin(RelationMixin):
                 field_name = field.default_target_field_name()
                 sub_field = field.through.Meta.model_fields[field_name]
                 if sub_field.is_compound:
-                    return field.through, sub_field.get_reversed_names()
+                    return (
+                        field.through,
+                        cast(Dict[str, str], sub_field.get_reversed_names()),
+                    )
                 return field.through, sub_field.get_alias()
             if field.is_compound:
-                return target_model, field.get_reversed_names()
+                return target_model, cast(Dict[str, str], field.get_reversed_names())
             return target_model, field.get_alias()
         if target_model.has_pk_constraint:
             field = parent_model.Meta.model_fields[related]
@@ -84,11 +87,17 @@ class PrefetchQueryMixin(RelationMixin):
         column = parent_model.Meta.model_fields[related]
         if column.is_compound:
             aliases = list(column.names.values())
-            return aliases if use_raw else [parent_model.get_column_name_from_alias(col) for col in aliases]
+            return (
+                aliases
+                if use_raw
+                else [parent_model.get_column_name_from_alias(col) for col in aliases]
+            )
         return column.get_alias() if use_raw else column.name
 
     @classmethod
-    def get_related_field_name(cls, target_field: "ForeignKeyField") -> str:
+    def get_related_field_name(
+        cls, target_field: "ForeignKeyField"
+    ) -> Union[str, List[str]]:
         """
         Returns name of the relation field that should be used in prefetch query.
         This field is later used to register relation in prefetch query,
@@ -103,7 +112,11 @@ class PrefetchQueryMixin(RelationMixin):
             return cls.get_name()
         if target_field.virtual:
             return target_field.get_related_name()
-        return target_field.to.pk_name_str
+        return (
+            target_field.to.Meta.pkname
+            if not target_field.is_compound
+            else target_field.to.pk_aliases_list
+        )
 
     @classmethod
     def get_filtered_names_to_extract(cls, prefetch_dict: Dict) -> List:
