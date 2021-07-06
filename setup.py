@@ -69,7 +69,7 @@ setup(
         "typing_extensions>=3.7,<=3.7.4.3",
     ],
     extras_require={
-        "postgresql": ["asyncpg", "psycopg2"],
+        "postgresql": ["asyncpg", "psycopg2-binary"],
         "mysql": ["aiomysql", "pymysql"],
         "sqlite": ["aiosqlite"],
         "orjson": ["orjson"],

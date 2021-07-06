@@ -1,3 +1,4 @@
+import datetime
 from typing import Any, Dict, TYPE_CHECKING, Type
 
 import sqlalchemy
@@ -137,6 +138,19 @@ class FilterAction(QueryAction):
 
         if isinstance(self.filter_value, ormar.Model):
             self.filter_value = self.filter_value.pk
+
+        if isinstance(
+            self.filter_value, (datetime.date, datetime.time, datetime.datetime)
+        ):
+            self.filter_value = self.filter_value.isoformat()
+
+        if isinstance(self.filter_value, (list, tuple, set)):
+            self.filter_value = [
+                x.isoformat()
+                if isinstance(x, (datetime.date, datetime.time, datetime.datetime))
+                else x
+                for x in self.filter_value
+            ]
 
         op_attr = FILTER_OPERATORS[self.operator]
         if self.operator == "isnull":
