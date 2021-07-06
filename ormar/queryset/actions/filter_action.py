@@ -135,22 +135,10 @@ class FilterAction(QueryAction):
         :return: complied and escaped clause
         :rtype: sqlalchemy.sql.elements.TextClause
         """
-
         if isinstance(self.filter_value, ormar.Model):
             self.filter_value = self.filter_value.pk
 
-        if isinstance(
-            self.filter_value, (datetime.date, datetime.time, datetime.datetime)
-        ):
-            self.filter_value = self.filter_value.isoformat()
-
-        if isinstance(self.filter_value, (list, tuple, set)):
-            self.filter_value = [
-                x.isoformat()
-                if isinstance(x, (datetime.date, datetime.time, datetime.datetime))
-                else x
-                for x in self.filter_value
-            ]
+        self._convert_dates_if_required()
 
         op_attr = FILTER_OPERATORS[self.operator]
         if self.operator == "isnull":
@@ -163,6 +151,23 @@ class FilterAction(QueryAction):
             clause, modifiers={"escape": "\\" if self.has_escaped_character else None},
         )
         return clause
+
+    def _convert_dates_if_required(self) -> None:
+        """
+        Converts dates, time and datetime to isoformat
+        """
+        if isinstance(
+            self.filter_value, (datetime.date, datetime.time, datetime.datetime)
+        ):
+            self.filter_value = self.filter_value.isoformat()
+
+        if isinstance(self.filter_value, (list, tuple, set)):
+            self.filter_value = [
+                x.isoformat()
+                if isinstance(x, (datetime.date, datetime.time, datetime.datetime))
+                else x
+                for x in self.filter_value
+            ]
 
     def _compile_clause(
         self, clause: sqlalchemy.sql.expression.BinaryExpression, modifiers: Dict,
