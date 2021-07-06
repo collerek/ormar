@@ -351,6 +351,19 @@ class DateTime(ModelFieldFactory, datetime.datetime):
     _type = datetime.datetime
     _sample = "datetime"
 
+    def __new__(  # type: ignore # noqa CFQ002
+        cls, *, timezone: bool = False, **kwargs: Any
+    ) -> BaseField:  # type: ignore
+        kwargs = {
+            **kwargs,
+            **{
+                k: v
+                for k, v in locals().items()
+                if k not in ["cls", "__class__", "kwargs"]
+            },
+        }
+        return super().__new__(cls, **kwargs)
+
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
         """
@@ -362,7 +375,7 @@ class DateTime(ModelFieldFactory, datetime.datetime):
         :return: initialized column with proper options
         :rtype: sqlalchemy Column
         """
-        return sqlalchemy.DateTime()
+        return sqlalchemy.DateTime(timezone=kwargs.get("timezone", False))
 
 
 class Date(ModelFieldFactory, datetime.date):
@@ -395,6 +408,19 @@ class Time(ModelFieldFactory, datetime.time):
     _type = datetime.time
     _sample = "time"
 
+    def __new__(  # type: ignore # noqa CFQ002
+        cls, *, timezone: bool = False, **kwargs: Any
+    ) -> BaseField:  # type: ignore
+        kwargs = {
+            **kwargs,
+            **{
+                k: v
+                for k, v in locals().items()
+                if k not in ["cls", "__class__", "kwargs"]
+            },
+        }
+        return super().__new__(cls, **kwargs)
+
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
         """
@@ -406,7 +432,7 @@ class Time(ModelFieldFactory, datetime.time):
         :return: initialized column with proper options
         :rtype: sqlalchemy Column
         """
-        return sqlalchemy.Time()
+        return sqlalchemy.Time(timezone=kwargs.get("timezone", False))
 
 
 class JSON(ModelFieldFactory, pydantic.Json):

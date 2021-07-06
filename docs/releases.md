@@ -1,3 +1,15 @@
+# 0.10.14
+
+## ✨ Features
+
+* Allow passing `timezone:bool = False` parameter to `DateTime` and `Time` fields for timezone aware database columns [#264](https://github.com/collerek/ormar/issues/264)
+* Allow passing datetime, date and time for filter on `DateTime`, `Time` and `Date` fields to allow filtering by datetimes instead of converting the value to string [#79](https://github.com/collerek/ormar/issues/79)
+
+## 🐛 Fixes
+
+* Fix dependencies from `psycopg2` to `psycopg2-binary` [#255](https://github.com/collerek/ormar/issues/255)
+
+
 # 0.10.13
 
 ## ✨ Features

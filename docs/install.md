@@ -44,6 +44,22 @@ pip install ormar[sqlite]
 
 Will install also `aiosqlite`.
 
+### Orjson
+
+```py
+pip install ormar[orjson]
+```
+
+Will install also `orjson` that is much faster than builtin json parser.
+
+### Crypto
+
+```py
+pip install ormar[crypto]
+```
+
+Will install also `cryptography` that is required to work with encrypted columns.
+
 ### Manual installation of dependencies
 
 Of course, you can also install these requirements manually with `pip install asyncpg` etc.

@@ -108,14 +108,18 @@ You can use either `length` and `precision` parameters or `max_digits` and `deci
 
 ### Time
 
-`Time()` has no required parameters.  
+`Time(timezone: bool = False)` has no required parameters.  
+
+You can pass `timezone=True` for timezone aware database column.
 
 * Sqlalchemy column: `sqlalchemy.Time`  
 * Type (used for pydantic): `datetime.time` 
 
 ### DateTime
 
-`DateTime()` has no required parameters.  
+`DateTime(timezone: bool = False)` has no required parameters.  
+
+You can pass `timezone=True` for timezone aware database column.
 
 * Sqlalchemy column: `sqlalchemy.DateTime`  
 * Type (used for pydantic): `datetime.datetime` 
