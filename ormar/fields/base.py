@@ -257,6 +257,7 @@ class BaseField(FieldInfo):
                 f"_{self.to.get_column_alias(self.to.pk_name_str)}_{self.name}",
             )
             for con in self.constraints
+            if isinstance(con, ormar.fields.foreign_key.ForeignKeyConstraintData)
         ]
         return constraints
 

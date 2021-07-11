@@ -363,8 +363,42 @@ def update_column_definition(
     :rtype: None
     """
     columns = model.Meta.columns
+    fields_to_populate = [field.get_alias()]
+    if field.is_compound:
+        fields_to_populate = list(field.names.values())
     for ind, column in enumerate(columns):
-        if column.name == field.get_alias():
-            new_column = field.get_column(field.get_alias())
-            columns[ind] = new_column
-            break
+        if column.name in fields_to_populate:
+            if not field.is_compound:
+                new_column = field.get_column(column.name)
+                columns[ind] = new_column
+                break
+            else:
+                related_name = (field.get_reversed_names() or dict()).get(column.name)
+                field_name = field.to.get_column_name_from_alias(
+                    cast(str, related_name)
+                )
+                target_field = field.to.Meta.model_fields[field_name]
+                new_column = target_field.get_column(column.name)
+                columns[ind] = new_column
+
+
+def remove_null_column_to_compound_models_fk(
+    model: Union[Type["Model"], Type["NewBaseModel"]]
+) -> None:
+    """
+    Remove nulltype fields if compose keys created all new columns.
+    Nulltype is left if all composite pks are created and the relation field
+    is not used to create actual db column
+
+    :param model: model on which columns needs to be updated
+    :type model: Type["Model"]
+    :param field: field with column definition that requires update
+    :type field: ForeignKeyField
+    :return: None
+    :rtype: None
+    """
+    model.Meta.columns = [
+        col
+        for col in model.Meta.columns
+        if not isinstance(col.type, sqlalchemy.sql.sqltypes.NullType)
+    ]

@@ -107,10 +107,6 @@ def populate_fk_params_based_on_to_model(
     Based on target to model to which relation leads to populates the type of the
     pydantic field to use, ForeignKey constraint and type of the target column field.
 
-    :param related_name:
-    :type related_name:
-    :param name:
-    :type name:
     :param to: target related ormar Model
     :type to: Model class
     :param nullable: marks field as optional/ required
@@ -203,7 +199,9 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
         )
 
 
-def generate_relation_fields_if_required(to: Type["Model"], names: Dict):
+def generate_relation_fields_if_required(
+    to: Type["Model"], names: Dict
+) -> Dict[str, str]:
     if not names:
         return {pk_name: f"{to.get_name()}_{pk_name}" for pk_name in to.pk_aliases_list}
     return names
@@ -417,6 +415,9 @@ class ForeignKeyField(BaseField):
                 globalns,
                 localns or None,
             )
+            self.names: Dict[str, str] = generate_relation_fields_if_required(
+                to=self.to, names=self.names  # type: ignore
+            )
             (
                 self.__type__,
                 self.constraints,
@@ -426,7 +427,10 @@ class ForeignKeyField(BaseField):
                 nullable=self.nullable,
                 ondelete=self.ondelete,
                 onupdate=self.onupdate,
+                relation_fields=self.names,
+                virtual=self.virtual,
             )
+            self.is_compound = self.to.has_pk_constraint  # type: ignore
 
     def _extract_model_from_sequence(
         self, value: List, child: "Model", to_register: bool,

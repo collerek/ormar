@@ -103,7 +103,7 @@ class ModelRow(NewBaseModel):
 
         instance: Optional["Model"] = None
         pk_fields = cls.pk_names_list
-        if all(item.get(pk_name, None) for pk_name in pk_fields):
+        if all(item.get(pk_name, None) is not None for pk_name in pk_fields):
             item["__excluded__"] = cls.get_names_to_exclude(
                 excludable=excludable, alias=table_prefix
             )

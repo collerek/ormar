@@ -990,5 +990,7 @@ async def test_bulk_create_and_update():
 # (V) save
 # (V) update
 # (V) delete
-# save_related
+# (V) save_related
 # json
+# mixins
+# inheritance

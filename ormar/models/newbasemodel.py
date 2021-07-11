@@ -33,9 +33,13 @@ from ormar.exceptions import ModelError, ModelPersistenceError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.models.helpers import register_relation_in_alias_manager
-from ormar.models.helpers.relations import expand_reverse_relationship
+from ormar.models.helpers.relations import (
+    expand_reverse_relationship,
+    process_compound_foreign_keys,
+)
 from ormar.models.helpers.sqlalchemy import (
     populate_meta_sqlalchemy_table_if_required,
+    remove_null_column_to_compound_models_fk,
     update_column_definition,
 )
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
@@ -455,9 +459,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 if field.is_multi and not field.through:
                     field = cast(ormar.ManyToManyField, field)
                     field.create_default_through_model()
+                if field.is_compound:
+                    process_compound_foreign_keys(cast(Type["Model"], cls))
                 expand_reverse_relationship(model_field=field)
                 register_relation_in_alias_manager(field=field)
                 update_column_definition(model=cls, field=field)
+        remove_null_column_to_compound_models_fk(model=cls)
         populate_meta_sqlalchemy_table_if_required(meta=cls.Meta)
         super().update_forward_refs(**localns)
         cls.Meta.requires_ref_update = False

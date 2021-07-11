@@ -21,6 +21,7 @@ from ormar.models.helpers.sqlalchemy import (
     populate_meta_tablename_columns_and_pk,
     resolve_primary_key,
     sqlalchemy_columns_from_model_fields,
+    remove_null_column_to_compound_models_fk,
 )
 from ormar.models.helpers.validation import populate_choices_validators
 
@@ -42,4 +43,5 @@ __all__ = [
     "remove_excluded_parent_fields",
     "process_compound_foreign_keys",
     "resolve_primary_key",
+    "remove_null_column_to_compound_models_fk",
 ]
