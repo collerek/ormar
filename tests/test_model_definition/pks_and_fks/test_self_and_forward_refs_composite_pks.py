@@ -1,9 +1,9 @@
 import uuid
-from typing import ForwardRef, List
 
 import databases
 import pytest
 import sqlalchemy
+from pydantic.typing import ForwardRef
 
 import ormar
 from tests.settings import DATABASE_URL
