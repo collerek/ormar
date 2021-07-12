@@ -200,7 +200,7 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
 
 
 def generate_relation_fields_if_required(
-    to: Type["Model"], names: Dict
+    to: Type["Model"], names: Dict[str, str]
 ) -> Dict[str, str]:
     if not names:
         return {pk_name: f"{to.get_name()}_{pk_name}" for pk_name in to.pk_aliases_list}

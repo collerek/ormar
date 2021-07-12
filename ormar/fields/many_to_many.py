@@ -1,6 +1,7 @@
 import sys
 from typing import (
     Any,
+    Dict,
     List,
     Optional,
     TYPE_CHECKING,
@@ -254,10 +255,14 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
                 globalns,
                 localns or None,
             )
+            self.names: Dict[str, str] = generate_relation_fields_if_required(
+                to=self.to, names=self.names  # type: ignore
+            )
 
             (self.__type__, self.column_type,) = populate_m2m_params_based_on_to_model(
                 to=self.to, nullable=self.nullable,
             )
+            self.is_compound = self.to.has_pk_constraint
 
         if self.through.__class__ == ForwardRef:
             self.through = evaluate_forwardref(
