@@ -211,6 +211,17 @@ async def test_self_relation():
             assert sam_check.name == "Sam"
             assert sam_check.employees[0].name == "Joe"
 
+            joe_check2 = await Person.objects.prefetch_related("supervisor").get(
+                name="Joe"
+            )
+            assert joe_check2.supervisor.name == "Sam"
+
+            sam_check2 = await Person.objects.prefetch_related("employees").get(
+                name="Sam"
+            )
+            assert sam_check2.name == "Sam"
+            assert sam_check2.employees[0].name == "Joe"
+
 
 @pytest.mark.asyncio
 async def test_other_forwardref_relation(cleanup):
@@ -302,3 +313,39 @@ async def test_m2m_self_forwardref_relation(cleanup):
             assert billy_check.friends[0].name == "Kate"
             assert billy_check.friends[0].favourite_game.name == "Checkers"
             assert billy_check.friends[0].least_favourite_game.name == "Uno"
+
+
+# TODO: Check self ref relations
+# @pytest.mark.asyncio
+# async def test_prefetch_query_with_self_related():
+#     async with db:
+#         async with db.transaction(force_rollback=True):
+#             checkers = await Game.objects.create(name="Checkers")
+#             uno = await Game(name="Uno").save()
+#             jenga = await Game(name="Jenga").save()
+#
+#             billy = await Child(
+#                 name="Billy", favourite_game=uno, least_favourite_game=checkers
+#             ).save()
+#             kate = await Child(
+#                 name="Kate", favourite_game=checkers, least_favourite_game=uno
+#             ).save()
+#             steve = await Child(
+#                 name="Steve", favourite_game=jenga, least_favourite_game=uno
+#             ).save()
+#
+#             await billy.friends.add(kate)
+#             await billy.friends.add(steve)
+#             billy_check2 = (
+#                 await Child.objects.select_related("friends__favourite_game")
+#                 .prefetch_related(["friends__least_favourite_game",])
+#                 .filter(friends__favourite_game__name="Checkers")
+#                 .get(name="Billy")
+#             )
+#             assert len(billy_check2.friends) == 2
+#             assert billy_check2.friends[0].name == "Kate"
+#             assert billy_check2.friends[0].favourite_game.name == "Checkers"
+#             assert billy_check2.friends[0].least_favourite_game.name == "Uno"
+#             assert billy_check2.friends[1].name == "Steve"
+#             assert billy_check2.friends[1].favourite_game.name == "Jenga"
+#             assert billy_check2.friends[1].least_favourite_game.name == "Uno"

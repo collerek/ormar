@@ -134,8 +134,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         pk_only = kwargs.pop("__pk_only__", False)
         object.__setattr__(self, "__pk_only__", pk_only)
 
-        new_kwargs, through_tmp_dict = self._process_kwargs(kwargs)
-        self._check_denied_fields(kwargs=new_kwargs)
+        new_kwargs, through_tmp_dict, excluded = self._process_kwargs(kwargs)
+        self._check_denied_fields(kwargs=new_kwargs, excluded=excluded)
 
         if not pk_only:
             values, fields_set, validation_error = pydantic.validate_model(
@@ -220,7 +220,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 f"need to call update_forward_refs()."
             )
 
-    def _process_kwargs(self, kwargs: Dict) -> Tuple[Dict, Dict]:
+    def _process_kwargs(self, kwargs: Dict) -> Tuple[Dict, Dict, Set]:
         """
         Initializes nested models.
 
@@ -296,7 +296,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         for field_to_nullify in excluded:
             new_kwargs[field_to_nullify] = None
 
-        return new_kwargs, through_tmp_dict
+        return new_kwargs, through_tmp_dict, excluded
 
     def _initialize_internal_attributes(self) -> None:
         """
@@ -314,12 +314,17 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             ),
         )
 
-    def _check_denied_fields(self, kwargs: Dict):
+    def _check_denied_fields(self, kwargs: Dict, excluded: Set):
         if not self.Meta.denied_fields:
             return
         for field_name in self.Meta.denied_fields:
             if field_name in kwargs:
-                raise ormar.ModelError(f"You cannot set field {field_name} directly.")
+                if field_name in excluded:
+                    kwargs.pop(field_name, None)
+                else:
+                    raise ormar.ModelError(
+                        f"You cannot set field {field_name} directly."
+                    )
 
     def __eq__(self, other: object) -> bool:
         """
@@ -890,6 +895,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     self_alias = self.get_column_alias(field)
                     self_fields[self_alias] = target_value
             else:
+                if (
+                    relation_field.is_compound
+                    and self.get_column_alias(field)
+                    not in relation_field.get_reversed_names()
+                ):
+                    continue
                 if field in self.__class__.pk_names_list:
                     self._verify_primary_key(relation_field, None)
                 self_alias = self.get_column_alias(field)

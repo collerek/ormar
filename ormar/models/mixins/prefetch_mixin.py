@@ -37,12 +37,16 @@ class PrefetchQueryMixin(RelationMixin):
         :return: Model on which query clause should be performed and name of the column
         :rtype: Tuple[Type[Model], str]
         """
+        # TODO: Include self refs here
         if reverse:
             field_name = parent_model.Meta.model_fields[related].get_related_name()
             field = target_model.Meta.model_fields[field_name]
             if field.is_multi:
                 field = cast("ManyToManyField", field)
-                field_name = field.default_target_field_name()
+                if field.self_reference and field.self_reference_primary == field_name:
+                    field_name = field.default_source_field_name()
+                else:
+                    field_name = field.default_target_field_name()
                 sub_field = field.through.Meta.model_fields[field_name]
                 if sub_field.is_compound:
                     return (
@@ -109,6 +113,10 @@ class PrefetchQueryMixin(RelationMixin):
         :rtype: str
         """
         if target_field.is_multi:
+            if target_field.self_reference:
+                if target_field.self_reference_primary == target_field.name:
+                    return f"from_{cls.get_name()}"
+                return f"to_{cls.get_name()}"
             return cls.get_name()
         if target_field.virtual:
             return target_field.get_related_name()

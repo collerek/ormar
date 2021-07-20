@@ -205,6 +205,7 @@ class ExcludableMixin(RelationMixin):
         model = cast(Type["Model"], cls)
         model_excludable = excludable.get(model_cls=model, alias=alias)
         fields_names = cls.extract_db_own_fields()
+        denied_fields = cls.extract_self_relation_deniable_fields()
         if model_excludable.include:
             fields_to_keep = model_excludable.include.intersection(fields_names)
         else:
@@ -216,6 +217,6 @@ class ExcludableMixin(RelationMixin):
             fields_to_exclude = fields_to_exclude.union(
                 model_excludable.exclude.intersection(fields_names)
             )
-        fields_to_exclude = fields_to_exclude - {cls.Meta.pkname}
+        fields_to_exclude = (fields_to_exclude | denied_fields) - {cls.Meta.pkname}
 
         return fields_to_exclude

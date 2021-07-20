@@ -232,6 +232,7 @@ class PrefetchQuery:
             if isinstance(column_name, list):
                 current_id = dict()
                 for column in column_name:
+                    column = model.get_column_name_from_alias(column)
                     child = getattr(model, column)
                     if isinstance(child, ormar.Model):
                         child = child.pk
@@ -528,7 +529,7 @@ class PrefetchQuery:
 
     async def _run_prefetch_query(
         self,
-        target_field: "BaseField",
+        target_field: "ForeignKeyField",
         excludable: "ExcludableItems",
         filter_clauses: List,
         related_field_name: Union[str, List[str]],
@@ -550,7 +551,14 @@ class PrefetchQuery:
         if not isinstance(related_field_name, list):
             related_field_name = [related_field_name]
         target_model = target_field.to
-        target_name = target_model.get_name()
+        if (
+            target_field.self_reference
+            and target_field.self_reference_primary == target_field.name
+        ):
+            target_name = target_field.default_source_field_name()
+        else:
+            target_name = target_field.default_target_field_name()
+
         select_related = []
         query_target = target_model
         table_prefix = ""

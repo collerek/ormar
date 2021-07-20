@@ -34,6 +34,8 @@ class AliasMixin:
         :return: field name if set, otherwise passed alias (db name)
         :rtype: str
         """
+        # TODO: Verify cache is not created before expanding relations if
+        # expanding relations from ManyToOne side will be allowed
         if not cls.Meta.aliases_dict:
             aliases_dict = {}
             for field_name, field in cls.Meta.model_fields.items():
@@ -44,7 +46,11 @@ class AliasMixin:
                     for name in field.names.values():
                         if name not in aliases_dict:
                             aliases_dict[name] = field_name
-            cls.Meta.aliases_dict = aliases_dict
+            if not any(
+                model_field.has_unresolved_forward_refs()
+                for model_field in cls.Meta.model_fields.values()
+            ):
+                cls.Meta.aliases_dict = aliases_dict
         else:
             aliases_dict = cls.Meta.aliases_dict
         return aliases_dict.get(alias, alias)  # if not found it's already a name

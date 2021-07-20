@@ -48,11 +48,22 @@ def create_through_relation_fields(
     model_field: "ManyToManyField", target_model: Type["Model"], field_name: str
 ):
     model_fields = model_field.through.Meta.model_fields
+    names = None
+    if model_field.self_reference and model_field.is_compound:
+        if field_name == model_field.default_target_field_name():
+            prefix = "from_"
+        else:
+            prefix = "to_"
+        names = {
+            pk_name: f"{prefix}{target_model.get_name()}_{pk_name}"
+            for pk_name in target_model.pk_aliases_list
+        }
     model_fields[field_name] = ormar.ForeignKey(  # type: ignore
         target_model,
         real_name=field_name,
         ondelete="CASCADE",
         owner=model_field.through,
+        names=names,
     )
     create_and_append_m2m_fk(
         model=target_model, model_field=model_field, field_name=field_name
@@ -367,7 +378,9 @@ def update_column_definition(
     if field.is_compound:
         fields_to_populate = list(field.names.values())
     for ind, column in enumerate(columns):
-        if column.name in fields_to_populate:
+        if column.name in fields_to_populate and isinstance(
+            column.type, sqlalchemy.sql.sqltypes.NullType
+        ):
             if not field.is_compound:
                 new_column = field.get_column(column.name)
                 columns[ind] = new_column

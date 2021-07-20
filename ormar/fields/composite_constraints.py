@@ -41,7 +41,6 @@ class ForeignKeyConstraint(sqlalchemy.ForeignKeyConstraint):
     def __init__(
         self, to: Type["Model"], columns: List[str], **kwargs: Any,
     ):
-        # TODO: Handle ForwardRefs?
         target_table_name = to.Meta.tablename
         related_columns = [f"{target_table_name}.{x}" for x in to.pk_aliases_list]
         super().__init__(columns=tuple(columns), refcolumns=related_columns, **kwargs)

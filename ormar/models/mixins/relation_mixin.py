@@ -40,6 +40,19 @@ class RelationMixin:
         return self_fields
 
     @classmethod
+    def extract_self_relation_deniable_fields(cls) -> Set:
+        """
+        Returns only fields that are stored in the own database table, exclude all
+        related fields.
+        :return: set of model fields with relation fields excluded
+        :rtype: Set
+        """
+        self_fields = {
+            name for name, field in cls.Meta.model_fields.items() if field.is_denied
+        }
+        return self_fields
+
+    @classmethod
     def extract_related_fields(cls) -> List["ForeignKeyField"]:
         """
         Returns List of ormar Fields for all relations declared on a model.

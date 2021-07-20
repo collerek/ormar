@@ -978,8 +978,8 @@ async def test_bulk_create_and_update():
 # fix __repr__ for denied fields
 # defaults
 # self reference models
-# forward refs on fk
-# forward refs on m2m
+# (V) forward refs on fk
+# (V) forward refs on m2m
 # default through models
 # exclude/include
 # ordering by
