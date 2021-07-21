@@ -121,7 +121,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
                             f"model without pk set!"
                         )
                     model_dict[field] = pk_value
-                elif field_value:  # nested dict
+                elif isinstance(field_value, (list, dict)) and field_value:
                     if isinstance(field_value, list):
                         model_dict[field] = [
                             target.get(target_pkname) for target in field_value

@@ -97,7 +97,7 @@ class PydanticMixin(RelationMixin):
                 include=cls._skip_ellipsis(include, name),
                 exclude=cls._skip_ellipsis(exclude, name),
                 relation_map=cls._skip_ellipsis(
-                    relation_map, field, default_return=dict()
+                    relation_map, name, default_return=dict()
                 ),
             )
             if field.is_multi or field.virtual:

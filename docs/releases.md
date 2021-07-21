@@ -1,3 +1,12 @@
+# 0.10.15
+
+## 🐛 Fixes
+
+* Fix generating pydantic models tree with nested models (by @pawamoy - thanks!) [#278](https://github.com/collerek/ormar/issues/278)
+* Fix missing f-string in warning about missing primary key field [#274](https://github.com/collerek/ormar/issues/274)
+* Fix passing foreign key value as relation (additional guard, fixed already in the latest release) [#270](https://github.com/collerek/ormar/issues/270)
+
+
 # 0.10.14
 
 ## ✨ Features
