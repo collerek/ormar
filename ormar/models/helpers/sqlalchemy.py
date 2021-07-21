@@ -181,7 +181,7 @@ def sqlalchemy_columns_from_model_fields(
     if len(model_fields.keys()) == 0:
         model_fields["id"] = ormar.Integer(name="id", primary_key=True)
         logging.warning(
-            "Table {table_name} had no fields so auto "
+            f"Table {new_model.Meta.tablename} had no fields so auto "
             "Integer primary key named `id` created."
         )
     validate_related_names_in_relations(model_fields, new_model)

@@ -136,7 +136,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
             field_value = model_dict.get(field, None)
             if field_value is not None:
                 model_dict.pop(field, None)
-                if field_value:  # nested dict
+                if isinstance(field_value, (list, dict)) and field_value:
                     target_field = cls.Meta.model_fields[field]
                     if isinstance(field_value, list):
                         model_dict[field] = [
