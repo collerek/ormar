@@ -31,7 +31,7 @@ The main benefit of using `ormar` are:
 
 The goal was to create a simple ORM that can be **used directly (as request and response models) with [`fastapi`][fastapi]** that bases it's data validation on pydantic.
 
-Ormar - apart form obvious ORM in name - get it's name from ormar in swedish which means snakes, and ormar(e) in italian which means cabinet. 
+Ormar - apart form obvious ORM in name - get it's name from ormar in swedish which means snakes, and ormar(e) in croatian which means cabinet. 
 
 And what's a better name for python ORM than snakes cabinet :)
 
