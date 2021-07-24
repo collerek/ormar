@@ -552,7 +552,13 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         :param attrs: class namespace
         :type attrs: Dict
         """
-        attrs["Config"] = get_pydantic_base_orm_config()
+        if "Config" in attrs:
+            class Config(attrs["Config"], get_pydantic_base_orm_config()):
+                pass
+            attrs["Config"] = Config
+        else:
+            attrs["Config"] = get_pydantic_base_orm_config()
+
         attrs["__name__"] = name
         attrs, model_fields = extract_annotations_and_default_vals(attrs)
         for base in reversed(bases):

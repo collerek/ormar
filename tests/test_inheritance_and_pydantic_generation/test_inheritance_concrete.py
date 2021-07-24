@@ -150,6 +150,12 @@ class Bus2(Car2):
     max_persons: int = ormar.Integer()
 
 
+class ImmutablePerson(Person):
+    class Config:
+        allow_mutation = False
+        validate_assignment = False
+
+
 @pytest.fixture(autouse=True, scope="module")
 def create_test_database():
     metadata.create_all(engine)
@@ -495,3 +501,13 @@ async def test_inheritance_with_multi_relation():
             assert len(unicorns) == 2
             assert unicorns[1].name == "Unicorn 2"
             assert len(unicorns[1].co_owners) == 1
+
+
+def test_custom_config():
+    # Custom config inherits defaults
+    assert getattr(ImmutablePerson.__config__, "orm_mode") == True
+    # Custom config can override defaults
+    assert getattr(ImmutablePerson.__config__, "validate_assignment") == False
+    sam = ImmutablePerson(name="Sam")
+    with pytest.raises(TypeError):
+        sam.name = "Not Sam"
