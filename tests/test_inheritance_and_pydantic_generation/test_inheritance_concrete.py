@@ -505,9 +505,9 @@ async def test_inheritance_with_multi_relation():
 
 def test_custom_config():
     # Custom config inherits defaults
-    assert getattr(ImmutablePerson.__config__, "orm_mode") == True
+    assert getattr(ImmutablePerson.__config__, "orm_mode") is True
     # Custom config can override defaults
-    assert getattr(ImmutablePerson.__config__, "validate_assignment") == False
+    assert getattr(ImmutablePerson.__config__, "validate_assignment") is False
     sam = ImmutablePerson(name="Sam")
     with pytest.raises(TypeError):
         sam.name = "Not Sam"
