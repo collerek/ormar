@@ -595,9 +595,11 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 populate_meta_sqlalchemy_table_if_required(new_model.Meta)
                 expand_reverse_relationships(new_model)
                 # TODO: iterate only related fields
-                for name, field in new_model.Meta.model_fields.items():
+                for field_name, field in new_model.Meta.model_fields.items():
                     register_relation_in_alias_manager(field=field)
-                    add_field_descriptor(name=name, field=field, new_model=new_model)
+                    add_field_descriptor(
+                        name=field_name, field=field, new_model=new_model
+                    )
 
                 if (
                     new_model.Meta.pkname
@@ -655,10 +657,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                     model=field.to,
                     access_chain=item,
                 )
-            else:
-                return FieldAccessor(
-                    source_model=cast(Type["Model"], self),
-                    field=field,
-                    access_chain=item,
-                )
+            return FieldAccessor(
+                source_model=cast(Type["Model"], self), field=field, access_chain=item,
+            )
         return object.__getattribute__(self, item)
