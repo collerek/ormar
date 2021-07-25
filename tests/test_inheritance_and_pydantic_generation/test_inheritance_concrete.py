@@ -179,6 +179,13 @@ def test_duplicated_related_name_on_different_model():
             max_persons: int = ormar.Integer()
 
 
+def test_config_is_not_a_class_raises_error():
+    with pytest.raises(ModelDefinitionError):
+
+        class ImmutablePerson2(Person):
+            Config = dict(allow_mutation=False, validate_assignment=False)
+
+
 def test_field_redefining_in_concrete_models():
     class RedefinedField(DateFieldsModel):
         class Meta(ormar.ModelMeta):
