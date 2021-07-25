@@ -373,6 +373,31 @@ You can set this parameter by providing `Meta` class `constraints` argument.
         To set one column as unique use [`unique`](../fields/common-parameters.md#unique) common parameter. 
         Of course you can set many columns as unique with this param but each of them will be checked separately.
 
+### Pydantic configuration
+
+As each `ormar.Model` is also a `pydantic` model, you might want to tweak the settings of the pydantic configuration.
+
+The way to do this in pydantic is to adjust the settings on the `Config` class provided to your model, and it works exactly the same for ormer.Models.
+
+So in order to set your own preferences you need to provide not only the `Meta` class but also the `Config` class to your model.
+
+!!!note
+        To read more about available settings visit the [pydantic](https://pydantic-docs.helpmanual.io/usage/model_config/) config page.
+
+Note that if you do not provide your own configuration, ormar will do it for you.
+The default config provided is as follows:
+
+```python
+class Config(pydantic.BaseConfig):
+    orm_mode = True
+    validate_assignment = True
+```
+
+So to overwrite setting or provide your own a sample model can look like following:
+```Python hl_lines="15-16"
+--8<-- "../docs_src/models/docs016.py"
+```
+
 ## Model sort order
 
 When querying the database with given model by default the Model is ordered by the `primary_key`
