@@ -343,7 +343,7 @@ class ModelRow(NewBaseModel):
     def extract_prefixed_table_columns(
         cls,
         item: dict,
-        row: sqlalchemy.engine.result.ResultProxy,
+        row: sqlalchemy.engine.ResultProxy,
         table_prefix: str,
         excludable: ExcludableItems,
     ) -> Dict:
