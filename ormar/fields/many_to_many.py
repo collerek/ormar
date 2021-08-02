@@ -293,6 +293,40 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         """
         return self.through
 
+    def get_model_relation_fields(self, use_alias: bool = False) -> Union[str, List[str]]:
+        """
+        Extract names of the database columns or model fields that are connected
+        with given relation based on use_alias switch.
+
+        :param use_alias: use db names aliases or model fields
+        :type use_alias: bool
+        :return: name or names of the related columns/ fields
+        :rtype: Union[str, List[str]]
+        """
+
+        result = self.owner.pk_aliases_list if use_alias else self.owner.pk_names_list
+        return result[0] if len(result) == 1 else result
+
+    def get_related_field_name(self) -> Union[str, Dict[str, str]]:
+        """
+        Extract names of the related database columns or that are connected
+        with given relation based to use as a target in filter clause.
+
+        :return: name or names of the related columns/ fields
+        :rtype: Union[str, Dict[str, str]]
+        """
+        if self.self_reference and self.self_reference_primary == self.name:
+            field_name = self.default_source_field_name()
+        else:
+            field_name = self.default_target_field_name()
+        sub_field = self.through.Meta.model_fields[field_name]
+        if sub_field.is_compound:
+            return cast(Dict[str, str], sub_field.get_reversed_names())
+        return sub_field.get_alias()
+
+    def get_filter_clause_target(self) -> Type["Model"]:
+        return self.through
+
     def create_default_through_model(self) -> None:
         """
         Creates default empty through model if no additional fields are required.

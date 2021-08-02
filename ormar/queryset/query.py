@@ -97,7 +97,7 @@ class Query:
             and self._select_related
         )
 
-    def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
+    def build_select_expression(self) -> sqlalchemy.sql.select:
         """
         Main entry point from outside (after proper initialization).
 

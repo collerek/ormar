@@ -380,6 +380,53 @@ class ForeignKeyField(BaseField):
         """
         return self.related_name or self.owner.get_name() + "s"
 
+    def get_model_relation_fields(self, use_alias: bool = False) -> Union[str, List[str]]:
+        """
+        Extract names of the database columns or model fields that are connected
+        with given relation based on use_alias switch and which side of the relation
+        the current field is - reverse or normal.
+
+        :param use_alias: use db names aliases or model fields
+        :type use_alias: bool
+        :return: name or names of the related columns/ fields
+        :rtype: Union[str, List[str]]
+        """
+        if self.virtual:
+            result = (
+                self.owner.pk_aliases_list if use_alias else self.owner.pk_names_list
+            )
+            return result[0] if len(result) == 1 else result
+        if self.is_compound:
+            aliases = list(self.names.values())
+            return (
+                aliases
+                if use_alias
+                else [self.owner.get_column_name_from_alias(col) for col in aliases]
+            )
+        return self.get_alias() if use_alias else self.name
+
+    def get_related_field_name(self) -> Union[str, Dict[str, str]]:
+        """
+        Extract names of the related database columns or that are connected
+        with given relation based to use as a target in filter clause.
+
+        :return: name or names of the related columns/ fields
+        :rtype: Union[str, Dict[str, str]]
+        """
+        if self.virtual:
+            field_name = self.get_related_name()
+            field = self.to.Meta.model_fields[field_name]
+            if field.is_compound:
+                return cast(Dict[str, str], field.get_reversed_names())
+            return field.get_alias()
+        if self.to.has_pk_constraint:
+            return self.names
+        target_field = self.to.get_column_alias(self.to.Meta.pkname)
+        return target_field
+
+    def get_filter_clause_target(self) -> Type["Model"]:
+        return self.to
+
     def default_target_field_name(self) -> str:
         """
         Returns default target model name on through model.
