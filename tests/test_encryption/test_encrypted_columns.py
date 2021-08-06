@@ -67,6 +67,7 @@ class Author(ormar.Model):
     test_time = ormar.Time(default=datetime.time, **default_fernet)
     test_json = ormar.JSON(default={}, **default_fernet)
     test_bigint: int = ormar.BigInteger(default=0, **default_fernet)
+    test_smallint: int = ormar.SmallInteger(default=0, **default_fernet)
     test_decimal = ormar.Decimal(scale=2, precision=10, **default_fernet)
     test_decimal2 = ormar.Decimal(max_digits=10, decimal_places=2, **default_fernet)
     custom_backend: str = ormar.String(

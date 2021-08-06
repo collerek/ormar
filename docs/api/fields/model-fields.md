@@ -347,6 +347,34 @@ Accepts required and optional parameters that each column type accepts.
 
 `sqlalchemy Column`: initialized column with proper options
 
+<a name="fields.model_fields.SmallInteger"></a>
+## SmallInteger Objects
+
+```python
+class SmallInteger(Integer,  int)
+```
+
+SmallInteger field factory that construct Field classes and populated their values.
+
+<a name="fields.model_fields.SmallInteger.get_column_type"></a>
+#### get\_column\_type
+
+```python
+ | @classmethod
+ | get_column_type(cls, **kwargs: Any) -> Any
+```
+
+Return proper type of db column for given field type.
+Accepts required and optional parameters that each column type accepts.
+
+**Arguments**:
+
+- `kwargs` (`Any`): key, value pairs of sqlalchemy options
+
+**Returns**:
+
+`sqlalchemy Column`: initialized column with proper options
+
 <a name="fields.model_fields.Decimal"></a>
 ## Decimal Objects
 
