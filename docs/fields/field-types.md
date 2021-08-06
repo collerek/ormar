@@ -69,6 +69,19 @@ Each of the `Fields` has assigned both `sqlalchemy` column class and python type
 !!!tip
     For explanation of other parameters check [pydantic][pydantic] documentation.
 
+### SmallInteger
+
+`SmallInteger(minimum: int = None,
+        maximum: int = None,
+        multiple_of: int = None)` has no required parameters.  
+
+* Sqlalchemy column: `sqlalchemy.SmallInteger`  
+* Type (used for pydantic): `int` 
+
+!!!tip
+    For explanation of other parameters check [pydantic][pydantic] documentation.
+
+
 ### Float
 
 `Float(minimum: float = None,
