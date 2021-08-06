@@ -126,7 +126,7 @@ async def test_prefetch_related_with_select_related():
             assert test
 
             album = (
-                await Album.objects.select_related(["tracks", "shops"])
+                await Album.objects.select_related(["tracks"])
                     .filter(name="Malibu")
                     .prefetch_related(["cover_pictures", "shops__division"])
                     .first()

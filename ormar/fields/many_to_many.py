@@ -316,9 +316,9 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :rtype: Union[str, Dict[str, str]]
         """
         if self.self_reference and self.self_reference_primary == self.name:
-            field_name = self.default_source_field_name()
-        else:
             field_name = self.default_target_field_name()
+        else:
+            field_name = self.default_source_field_name()
         sub_field = self.through.Meta.model_fields[field_name]
         if sub_field.is_compound:
             return cast(Dict[str, str], sub_field.get_reversed_names())

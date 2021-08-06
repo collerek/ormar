@@ -187,12 +187,17 @@ class LoadTask(Task):
             relation_field=relation_field,
             parent=parent)
         self.excludable = excludable
+        self.exclude_prefix = None
         self.orders_by = orders_by
         self.use_alias = True
+        self.grouped_models = dict()
 
     def reload_tree(self):
+        self._instantiate_models()
+        self._group_models_by_relation_key()
         for child in self.children:
             child.reload_tree()
+        self._populate_parent_models()
 
     async def load_data(self):
         self._update_excludable_with_related_pks()
@@ -220,6 +225,9 @@ class LoadTask(Task):
         print(expr.compile(compile_kwargs={"literal_binds": True}))
         self.rows = await query_target.Meta.database.fetch_all(expr)
 
+        for child in self.children:
+            await child.load_data()
+
     def extract_related_ids(self, column_names: Union[str, List[str]]) -> List:
         # extract ids from raw data
         if not isinstance(column_names, list):
@@ -242,14 +250,35 @@ class LoadTask(Task):
 
     def _instantiate_models(self):
         for row in self.rows:
-            pass
-            # item = self.relation_field.to.extract_prefixed_table_columns(
-            #     item={}, row=row, table_prefix=self.table_prefix, excludable=excludable,
-            # )
-            # item["__excluded__"] = target_model.get_names_to_exclude(
-            #     excludable=self.excludable, alias=exclude_prefix
-            # )
-            # instance = target_model(**item)
+            item = self.relation_field.to.extract_prefixed_table_columns(
+                item={}, row=row, table_prefix=self.table_prefix,
+                excludable=self.excludable,
+            )
+            item["__excluded__"] = self.relation_field.to.get_names_to_exclude(
+                excludable=self.excludable, alias=self.exclude_prefix
+            )
+            self.models.append(self.relation_field.to(**item))
+
+    def _group_models_by_relation_key(self):
+        relation_keys = self.relation_field.get_related_field_name()
+        if not isinstance(relation_keys, list):
+            relation_keys = [relation_keys]
+        for index, row in enumerate(self.rows):
+            key = tuple(
+                (row[relation_key]) for relation_key in relation_keys)
+            current_group = self.grouped_models.setdefault(key, [])
+            current_group.append(self.models[index])
+        return self.grouped_models
+
+    def _populate_parent_models(self):
+        column_names = self.relation_field.get_model_relation_fields(False)
+        if not isinstance(column_names, list):
+            column_names = [column_names]
+        for model in self.parent.models:
+            key = tuple([getattr(model, column_name) for column_name in column_names])
+            children = self.grouped_models[key]
+            for child in children:
+                setattr(model, self.relation_field.name, child)
 
     def _update_excludable_with_related_pks(self):
         related_field_names = self.relation_field.owner.get_related_field_name(
@@ -262,12 +291,14 @@ class LoadTask(Task):
         else:
             from_model = self.relation_field.owner
             relation_name = self.relation_field.name
-        exclude_prefix = alias_manager.resolve_relation_alias(
+        self.exclude_prefix = alias_manager.resolve_relation_alias(
             from_model=from_model, relation_name=relation_name
         )
+        if self.relation_field.is_multi:
+            self.table_prefix = self.exclude_prefix
         target_model = self.relation_field.to
         model_excludable = self.excludable.get(model_cls=target_model,
-                                               alias=exclude_prefix)
+                                               alias=self.exclude_prefix)
         # includes nested pks if not included already
         for related_name in related_field_names:
             if model_excludable.include and not model_excludable.is_included(
@@ -327,6 +358,7 @@ class PrefetchQuery:
             parent=parent_task
         )
         await parent_task.load_data()
+        parent_task.reload_tree()
         return parent_task.models
 
     def _build_load_tree(
