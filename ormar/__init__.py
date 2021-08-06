@@ -41,6 +41,7 @@ from ormar.exceptions import (  # noqa: I100
 from ormar.fields import (
     BaseField,
     BigInteger,
+    SmallInteger,
     Boolean,
     DECODERS_MAP,
     Date,
@@ -80,6 +81,7 @@ __version__ = "0.10.15"
 __all__ = [
     "Integer",
     "BigInteger",
+    "SmallInteger",
     "Boolean",
     "Time",
     "Text",

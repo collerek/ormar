@@ -614,8 +614,8 @@ Available Model Fields (with required args - optional ones in docs):
 * `Time()`
 * `DateTime()`
 * `JSON()`
-* `SmallInteger()`
 * `BigInteger()`
+* `SmallInteger()`
 * `Decimal(scale, precision)`
 * `UUID()`
 * `LargeBinary(max_length)`

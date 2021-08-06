@@ -9,6 +9,7 @@ from ormar.fields.foreign_key import ForeignKey, ForeignKeyField, UniqueColumns
 from ormar.fields.many_to_many import ManyToMany, ManyToManyField
 from ormar.fields.model_fields import (
     BigInteger,
+    SmallInteger,
     Boolean,
     Date,
     DateTime,
@@ -29,6 +30,7 @@ from ormar.fields.through_field import Through, ThroughField
 __all__ = [
     "Decimal",
     "BigInteger",
+    "SmallInteger",
     "Boolean",
     "Date",
     "DateTime",
