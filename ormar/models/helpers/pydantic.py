@@ -1,3 +1,4 @@
+import inspect
 from typing import Dict, Optional, TYPE_CHECKING, Tuple, Type
 
 import pydantic
@@ -5,6 +6,7 @@ from pydantic.fields import ModelField
 from pydantic.utils import lenient_issubclass
 
 from ormar.fields import BaseField  # noqa: I100, I202
+from ormar.exceptions import ModelDefinitionError
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -86,6 +88,31 @@ def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
             field.__type__ if not field.nullable else Optional[field.__type__]
         )
     return attrs, model_fields
+
+
+def merge_or_generate_pydantic_config(attrs: Dict, name: str) -> None:
+    """
+    Checks if the user provided pydantic Config,
+    and if he did merges it with the default one.
+
+    Updates the attrs in place with a new config.
+
+    :rtype: None
+    """
+    DefaultConfig = get_pydantic_base_orm_config()
+    if "Config" in attrs:
+        ProvidedConfig = attrs["Config"]
+        if not inspect.isclass(ProvidedConfig):
+            raise ModelDefinitionError(
+                f"Config provided for class {name} has to be a class."
+            )
+
+        class Config(ProvidedConfig, DefaultConfig):  # type: ignore
+            pass
+
+        attrs["Config"] = Config
+    else:
+        attrs["Config"] = DefaultConfig
 
 
 def get_pydantic_base_orm_config() -> Type[pydantic.BaseConfig]:
