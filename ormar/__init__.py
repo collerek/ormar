@@ -41,7 +41,6 @@ from ormar.exceptions import (  # noqa: I100
 from ormar.fields import (
     BaseField,
     BigInteger,
-    SmallInteger,
     Boolean,
     DECODERS_MAP,
     Date,
@@ -57,6 +56,7 @@ from ormar.fields import (
     LargeBinary,
     ManyToMany,
     ManyToManyField,
+    SmallInteger,
     String,
     Text,
     Time,
@@ -77,7 +77,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.10.15"
+__version__ = "0.10.16"
 __all__ = [
     "Integer",
     "BigInteger",

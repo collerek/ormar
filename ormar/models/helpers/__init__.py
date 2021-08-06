@@ -8,6 +8,7 @@ from ormar.models.helpers.pydantic import (
     get_potential_fields,
     get_pydantic_base_orm_config,
     get_pydantic_field,
+    merge_or_generate_pydantic_config,
     remove_excluded_parent_fields,
 )
 from ormar.models.helpers.relations import (
@@ -33,6 +34,7 @@ __all__ = [
     "get_pydantic_field",
     "get_potential_fields",
     "get_pydantic_base_orm_config",
+    "merge_or_generate_pydantic_config",
     "check_required_meta_parameters",
     "sqlalchemy_columns_from_model_fields",
     "populate_choices_validators",

@@ -14,23 +14,19 @@ Each of the `Fields` has assigned both `sqlalchemy` column class and python type
 
 ### String
 
-`String(max_length, 
-        allow_blank: bool = True,
-        strip_whitespace: bool = False,
+`String(max_length: int, 
         min_length: int = None,
-        max_length: int = None,
-        curtail_length: int = None,
         regex: str = None,)` has a required `max_length` parameter.  
 
 * Sqlalchemy column: `sqlalchemy.String`  
 * Type (used for pydantic): `str` 
 
 !!!tip
-    For explanation of other parameters check [pydantic][pydantic] documentation.
+    For explanation of other parameters check [pydantic](https://pydantic-docs.helpmanual.io/usage/schema/#field-customisation) documentation.
 
 ### Text
 
-`Text(allow_blank: bool = True, strip_whitespace: bool = False)` has no required parameters.  
+`Text()` has no required parameters.  
 
 * Sqlalchemy column: `sqlalchemy.Text`  
 * Type (used for pydantic): `str` 
@@ -247,5 +243,5 @@ response = client.post(
 
 [relations]: ../relations/index.md
 [queries]: ../queries.md
-[pydantic]: https://pydantic-docs.helpmanual.io/usage/types/#constrained-types
+[pydantic]: https://pydantic-docs.helpmanual.io/usage/schema/#field-customisation
 [server default]: https://docs.sqlalchemy.org/en/13/core/defaults.html#server-invoked-ddl-explicit-default-expressions

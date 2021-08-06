@@ -142,10 +142,7 @@ class String(ModelFieldFactory, str):
         cls,
         *,
         max_length: int,
-        allow_blank: bool = True,
-        strip_whitespace: bool = False,
         min_length: int = None,
-        curtail_length: int = None,
         regex: str = None,
         **kwargs: Any
     ) -> BaseField:  # type: ignore
@@ -157,7 +154,6 @@ class String(ModelFieldFactory, str):
                 if k not in ["cls", "__class__", "kwargs"]
             },
         }
-        kwargs["allow_blank"] = kwargs.get("nullable", True)
         return super().__new__(cls, **kwargs)
 
     @classmethod
@@ -244,7 +240,7 @@ class Text(ModelFieldFactory, str):
     _sample = "text"
 
     def __new__(  # type: ignore
-        cls, *, allow_blank: bool = True, strip_whitespace: bool = False, **kwargs: Any
+        cls, **kwargs: Any
     ) -> BaseField:
         kwargs = {
             **kwargs,
@@ -254,7 +250,6 @@ class Text(ModelFieldFactory, str):
                 if k not in ["cls", "__class__", "kwargs"]
             },
         }
-        kwargs["allow_blank"] = kwargs.get("nullable", True)
         return super().__new__(cls, **kwargs)
 
     @classmethod

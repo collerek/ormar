@@ -595,3 +595,9 @@ async def test_get_and_first():
 
             user = await User2.objects.first()
             assert user.name == "Jane"
+
+
+def test_constraints():
+    with pytest.raises(pydantic.ValidationError) as e:
+        Product(name="T-Shirt", rating=50, in_stock=True)
+    assert "ensure this value is less than or equal to 5" in str(e.value)
