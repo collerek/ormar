@@ -110,6 +110,7 @@ def test_all_endpoints():
                 "ident": "ACME Ltd",
                 "priority": 4,
                 "priority2": 2,
+                "priority3": 1,
                 "expire_date": "2022-05-01",
                 "expire_time": "10:00:00",
                 "expire_datetime": "2022-05-01T12:30:00",
