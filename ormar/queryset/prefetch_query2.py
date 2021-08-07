@@ -150,14 +150,14 @@ class AlreadyLoadedTask(Task):
                         field = model.Meta.model_fields[column]
                         for target_name, own_name in field.names.items():
                             current_id[own_name] = child.get(target_name)
-                    else:
+                    elif child is not None:
                         current_id[model.get_column_alias(column)] = child
                 list_of_ids.append(current_id)
             else:
                 child = getattr(model, column_names)
                 if isinstance(child, ormar.Model):
                     list_of_ids.append(child.pk)
-                else:
+                elif child is not None:
                     list_of_ids.append(child)
         return list_of_ids
 
@@ -180,7 +180,7 @@ class LoadTask(Task):
             self,
             relation_field: "ForeignKeyField",
             excludable: "ExcludableItems",
-            orders_by: Dict,
+            orders_by: List['OrderAction'],
             parent: "Task"
     ) -> None:
         super().__init__(
@@ -193,11 +193,12 @@ class LoadTask(Task):
         self.grouped_models = dict()
 
     def reload_tree(self):
-        self._instantiate_models()
-        self._group_models_by_relation_key()
-        for child in self.children:
-            child.reload_tree()
-        self._populate_parent_models()
+        if self.rows:
+            self._instantiate_models()
+            self._group_models_by_relation_key()
+            for child in self.children:
+                child.reload_tree()
+            self._populate_parent_models()
 
     async def load_data(self):
         self._update_excludable_with_related_pks()
@@ -210,23 +211,24 @@ class LoadTask(Task):
 
         filter_clauses = self.get_filter_for_prefetch()
 
-        qry = Query(
-            model_cls=query_target,
-            select_related=select_related,
-            filter_clauses=filter_clauses,
-            exclude_clauses=[],
-            offset=None,
-            limit_count=None,
-            excludable=self.excludable,
-            order_bys=None,
-            limit_raw_sql=False,
-        )
-        expr = qry.build_select_expression()
-        print(expr.compile(compile_kwargs={"literal_binds": True}))
-        self.rows = await query_target.Meta.database.fetch_all(expr)
+        if filter_clauses:
+            qry = Query(
+                model_cls=query_target,
+                select_related=select_related,
+                filter_clauses=filter_clauses,
+                exclude_clauses=[],
+                offset=None,
+                limit_count=None,
+                excludable=self.excludable,
+                order_bys=self.orders_by,
+                limit_raw_sql=False,
+            )
+            expr = qry.build_select_expression()
+            print(expr.compile(compile_kwargs={"literal_binds": True}))
+            self.rows = await query_target.Meta.database.fetch_all(expr)
 
-        for child in self.children:
-            await child.load_data()
+            for child in self.children:
+                await child.load_data()
 
     def extract_related_ids(self, column_names: Union[str, List[str]]) -> List:
         # extract ids from raw data
@@ -250,6 +252,8 @@ class LoadTask(Task):
 
     def _instantiate_models(self):
         for row in self.rows:
+            # TODO: handle duplicates in models - take already loaded one
+            # try to avoid the repetition of already instantiated models
             item = self.relation_field.to.extract_prefixed_table_columns(
                 item={}, row=row, table_prefix=self.table_prefix,
                 excludable=self.excludable,
@@ -275,7 +279,8 @@ class LoadTask(Task):
         if not isinstance(column_names, list):
             column_names = [column_names]
         for model in self.parent.models:
-            key = tuple([getattr(model, column_name) for column_name in column_names])
+            key = [getattr(model, column_name) for column_name in column_names]
+            key = tuple(x.pk if isinstance(x, ormar.Model) else x for x in key)
             children = self.grouped_models[key]
             for child in children:
                 setattr(model, self.relation_field.name, child)
@@ -326,9 +331,7 @@ class PrefetchQuery:
         self.excludable = excludable
         self.select_dict = translate_list_to_dict(select_related, default={})
         self.prefetch_dict = translate_list_to_dict(prefetch_related, default={})
-        self.order_dict = translate_list_to_dict(
-            [x.query_str for x in orders_by], is_order=True
-        )
+        self.orders_by = orders_by
         self.load_tasks = []
 
     async def prefetch_related(
@@ -354,7 +357,6 @@ class PrefetchQuery:
         self._build_load_tree(
             prefetch_dict=self.prefetch_dict,
             select_dict=self.select_dict,
-            order_dict=self.order_dict,
             parent=parent_task
         )
         await parent_task.load_data()
@@ -365,7 +367,6 @@ class PrefetchQuery:
             self,
             select_dict: Dict,
             prefetch_dict: Dict,
-            order_dict: Dict,
             parent: Task = None,
             model: Type["Model"] = None
     ):
@@ -382,12 +383,11 @@ class PrefetchQuery:
                 task = LoadTask(
                     relation_field=model.Meta.model_fields[related],
                     excludable=self.excludable,
-                    orders_by=order_dict.get(related, {}),
+                    orders_by=self.orders_by,
                     parent=parent
                 )
             if prefetch_dict and prefetch_dict is not Ellipsis:
                 self._build_load_tree(select_dict=select_dict.get(related, {}),
                                       prefetch_dict=prefetch_dict.get(related, {}),
-                                      order_dict=order_dict.get(related, {}),
                                       parent=task,
                                       model=model.Meta.model_fields[related].to)
