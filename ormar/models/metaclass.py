@@ -1,4 +1,3 @@
-import inspect
 from typing import (
     Any,
     Dict,
@@ -37,8 +36,8 @@ from ormar.models.helpers import (
     expand_reverse_relationships,
     extract_annotations_and_default_vals,
     get_potential_fields,
-    get_pydantic_base_orm_config,
     get_pydantic_field,
+    merge_or_generate_pydantic_config,
     meta_field_not_set,
     populate_choices_validators,
     populate_default_options_values,
@@ -559,21 +558,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         :param attrs: class namespace
         :type attrs: Dict
         """
-        DefaultConfig = get_pydantic_base_orm_config()
-        if "Config" in attrs:
-            ProvidedConfig = attrs["Config"]
-            if not inspect.isclass(ProvidedConfig):
-                raise ModelDefinitionError(
-                    f"Config provided for class {name} has to be a class."
-                )
-
-            class Config(ProvidedConfig, DefaultConfig):  # type: ignore
-                pass
-
-            attrs["Config"] = Config
-        else:
-            attrs["Config"] = DefaultConfig
-
+        merge_or_generate_pydantic_config(attrs=attrs, name=name)
         attrs["__name__"] = name
         attrs, model_fields = extract_annotations_and_default_vals(attrs)
         for base in reversed(bases):

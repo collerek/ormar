@@ -21,6 +21,7 @@ from ormar.fields.model_fields import (
     Integer,
     JSON,
     LargeBinary,
+    SmallInteger,
     String,
     Text,
     Time,
@@ -33,6 +34,7 @@ from ormar.fields.through_field import Through, ThroughField
 __all__ = [
     "Decimal",
     "BigInteger",
+    "SmallInteger",
     "Boolean",
     "Date",
     "DateTime",

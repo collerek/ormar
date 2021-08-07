@@ -142,10 +142,7 @@ class String(ModelFieldFactory, str):
         cls,
         *,
         max_length: int,
-        allow_blank: bool = True,
-        strip_whitespace: bool = False,
         min_length: int = None,
-        curtail_length: int = None,
         regex: str = None,
         **kwargs: Any
     ) -> BaseField:  # type: ignore
@@ -157,7 +154,6 @@ class String(ModelFieldFactory, str):
                 if k not in ["cls", "__class__", "kwargs"]
             },
         }
-        kwargs["allow_blank"] = kwargs.get("nullable", True)
         return super().__new__(cls, **kwargs)
 
     @classmethod
@@ -244,7 +240,7 @@ class Text(ModelFieldFactory, str):
     _sample = "text"
 
     def __new__(  # type: ignore
-        cls, *, allow_blank: bool = True, strip_whitespace: bool = False, **kwargs: Any
+        cls, **kwargs: Any
     ) -> BaseField:
         kwargs = {
             **kwargs,
@@ -254,7 +250,6 @@ class Text(ModelFieldFactory, str):
                 if k not in ["cls", "__class__", "kwargs"]
             },
         }
-        kwargs["allow_blank"] = kwargs.get("nullable", True)
         return super().__new__(cls, **kwargs)
 
     @classmethod
@@ -584,6 +579,54 @@ class BigInteger(Integer, int):
         :rtype: sqlalchemy Column
         """
         return sqlalchemy.BigInteger()
+
+
+class SmallInteger(Integer, int):
+    """
+    SmallInteger field factory that construct Field classes and populated their values.
+    """
+
+    _type = int
+    _sample = 0
+
+    def __new__(  # type: ignore
+        cls,
+        *,
+        minimum: int = None,
+        maximum: int = None,
+        multiple_of: int = None,
+        **kwargs: Any
+    ) -> BaseField:
+        autoincrement = kwargs.pop("autoincrement", None)
+        autoincrement = (
+            autoincrement
+            if autoincrement is not None
+            else kwargs.get("primary_key", False)
+        )
+        kwargs = {
+            **kwargs,
+            **{
+                k: v
+                for k, v in locals().items()
+                if k not in ["cls", "__class__", "kwargs"]
+            },
+        }
+        kwargs["ge"] = kwargs["minimum"]
+        kwargs["le"] = kwargs["maximum"]
+        return super().__new__(cls, **kwargs)
+
+    @classmethod
+    def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
+        return sqlalchemy.SmallInteger()
 
 
 class Decimal(ModelFieldFactory, decimal.Decimal):

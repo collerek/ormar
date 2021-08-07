@@ -42,6 +42,7 @@ class Organisation(ormar.Model):
     ident: str = ormar.String(max_length=100, choices=["ACME Ltd", "Other ltd"])
     priority: int = ormar.Integer(choices=[1, 2, 3, 4, 5])
     priority2: int = ormar.BigInteger(choices=[1, 2, 3, 4, 5])
+    priority3: int = ormar.SmallInteger(choices=[1, 2, 3, 4, 5])
     expire_date: datetime.date = ormar.Date(
         choices=[datetime.date(2021, 1, 1), datetime.date(2022, 5, 1)]
     )
@@ -109,6 +110,7 @@ def test_all_endpoints():
                 "ident": "ACME Ltd",
                 "priority": 4,
                 "priority2": 2,
+                "priority3": 1,
                 "expire_date": "2022-05-01",
                 "expire_time": "10:00:00",
                 "expire_datetime": "2022-05-01T12:30:00",

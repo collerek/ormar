@@ -341,5 +341,9 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
             "metadata": self.owner.Meta.metadata,
         }
         new_meta = type("Meta", (), new_meta_namespace)
-        through_model = type(class_name, (ormar.Model,), {"Meta": new_meta})
+        through_model = type(
+            class_name,
+            (ormar.Model,),
+            {"Meta": new_meta, "id": ormar.Integer(name="id", primary_key=True)},
+        )
         self.through = cast(Type["Model"], through_model)

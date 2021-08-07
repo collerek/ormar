@@ -156,13 +156,13 @@ Some samples:
 ```python
 # sql: ( product.name = 'Test'  AND  product.rating >= 3.0 ) 
 Product.objects.filter(
-    (Product.name == 'Test') & (Product.rating >=3.0)
+    (Product.name == 'Test') & (Product.rating >= 3.0)
 ).get()
 
 # sql: ( product.name = 'Test' AND product.rating >= 3.0 ) 
 #       OR (categories.name IN ('Toys', 'Books'))
 Product.objects.filter(
-        ((Product.name='Test') & (Product.rating >= 3.0)) | 
+        ((Product.name == 'Test') & (Product.rating >= 3.0)) | 
         (Product.categories.name << ['Toys', 'Books'])
     ).get()
 ```

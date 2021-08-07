@@ -1,3 +1,18 @@
+# 0.10.16
+
+## ✨ Features
+
+* Allow passing your own pydantic `Config` to `ormar.Model` that will be merged with the default one by @naturalethic (thanks!) [#285](https://github.com/collerek/ormar/issues/285)
+* Add `SmallInteger` field type by @ProgrammerPlus1998 (thanks!) [#297](https://github.com/collerek/ormar/pull/297)
+
+
+## 🐛 Fixes
+
+* Fix generating openapi schema by removing obsolete pydantic field parameters that were directly exposed in schema [#291](https://github.com/collerek/ormar/issues/291)
+* Fix unnecessary warning for auto generated through models [#295](https://github.com/collerek/ormar/issues/295)
+
+
+
 # 0.10.15
 
 ## 🐛 Fixes

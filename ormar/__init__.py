@@ -59,6 +59,7 @@ from ormar.fields import (
     ManyToMany,
     ManyToManyField,
     PrimaryKeyConstraint,
+    SmallInteger,
     String,
     Text,
     Time,
@@ -79,10 +80,11 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.10.15"
+__version__ = "0.10.16"
 __all__ = [
     "Integer",
     "BigInteger",
+    "SmallInteger",
     "Boolean",
     "Time",
     "Text",
