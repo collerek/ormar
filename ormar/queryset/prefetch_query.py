@@ -427,7 +427,7 @@ class PrefetchQuery:
         select_dict: Dict,
         prefetch_dict: Dict,
         parent: Task,
-        model: Type["Model"] = None,
+        model: Type["Model"],
     ) -> None:
         for related in prefetch_dict.keys():
             relation_field = cast("ForeignKeyField", model.Meta.model_fields[related])
