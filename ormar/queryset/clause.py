@@ -1,7 +1,7 @@
 import itertools
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Generator, List, TYPE_CHECKING, Tuple, Type
+from typing import Any, Generator, List, TYPE_CHECKING, Tuple, Type, cast
 
 import sqlalchemy
 
@@ -322,7 +322,7 @@ class QueryClause:
             field = source_model.Meta.model_fields[part]
             if field.is_relation:
                 source_model = field.to
-        return field
+        return cast("BaseField", field)
 
     def _switch_filter_action_prefixes(
         self, filter_clauses: List[FilterAction]

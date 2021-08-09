@@ -24,8 +24,8 @@ class PrimaryKeyConstraint(sqlalchemy.PrimaryKeyConstraint):
         for column in self.column_names:
             column_name = self.owner.get_column_name_from_alias(column)
             if (
-                self.owner.Meta.model_fields.get(column_name)
-                and self.owner.Meta.model_fields.get(column_name).is_relation
+                self.owner.Meta.model_fields[column_name]
+                and self.owner.Meta.model_fields[column_name].is_relation
             ):
                 self.owner.Meta.model_fields[column_name].nullable = False
                 self.owner.__fields__[column_name].required = True
@@ -40,7 +40,7 @@ class PrimaryKeyConstraint(sqlalchemy.PrimaryKeyConstraint):
 class ForeignKeyConstraint(sqlalchemy.ForeignKeyConstraint):
     def __init__(
         self, to: Type["Model"], columns: List[str], **kwargs: Any,
-    ):
+    ) -> None:
         target_table_name = to.Meta.tablename
         related_columns = [f"{target_table_name}.{x}" for x in to.pk_aliases_list]
         super().__init__(columns=tuple(columns), refcolumns=related_columns, **kwargs)

@@ -182,7 +182,7 @@ class LoadTask(Task):
     ) -> None:
         super().__init__(relation_field=relation_field, parent=parent)
         self.excludable = excludable
-        self.exclude_prefix = None
+        self.exclude_prefix: str = ""
         self.orders_by = orders_by
         self.use_alias = True
         self.grouped_models: Dict[Any, List["Model"]] = dict()
@@ -258,7 +258,7 @@ class LoadTask(Task):
         fields_to_exclude = self.relation_field.to.get_names_to_exclude(
             excludable=self.excludable, alias=self.exclude_prefix
         )
-        parsed_rows = {}
+        parsed_rows: Dict[Tuple, "Model"] = {}
         for row in self.rows:
             item = self.relation_field.to.extract_prefixed_table_columns(
                 item={},
@@ -282,7 +282,9 @@ class LoadTask(Task):
         return tuple(result)
 
     def _group_models_by_relation_key(self) -> None:
-        relation_keys = self.relation_field.get_related_field_alias()
+        relation_keys: Union[
+            str, Dict[str, str], List[str]
+        ] = self.relation_field.get_related_field_alias()
         if isinstance(relation_keys, dict):
             relation_tuples = [(k, v) for k, v in relation_keys.items()]
             relation_keys = [
@@ -294,14 +296,13 @@ class LoadTask(Task):
             key = tuple((row[relation_key]) for relation_key in relation_keys)
             current_group = self.grouped_models.setdefault(key, [])
             current_group.append(self.models[index])
-        return self.grouped_models
 
     def _populate_parent_models(self) -> None:
         column_names = self.relation_field.get_model_relation_fields(False)
         column_aliases = self.relation_field.get_model_relation_fields(True)
         if not isinstance(column_names, list):
             column_names = [column_names]
-            column_aliases = [column_aliases]
+            column_aliases = [cast(str, column_aliases)]
         relation_keys = list(zip(column_names, column_aliases))
         for model in self.parent.models:
             key = {
@@ -313,7 +314,7 @@ class LoadTask(Task):
                     pk_value = key[alias].pk
                     if isinstance(pk_value, dict):
                         names = self.relation_field.owner.Meta.model_fields[name].names
-                        new_pk_value = {names.get(k): v for k, v in pk_value.items()}
+                        new_pk_value = {names[k]: v for k, v in pk_value.items()}
                         key.update(new_pk_value)
                     else:
                         key[alias] = pk_value
@@ -389,7 +390,7 @@ class PrefetchQuery:
         :return: list of models with children prefetched
         :rtype: List[Model]
         """
-        parent_task = MasterTask(models=models)
+        parent_task = MasterTask(models=cast(List["Model"], models))
         self._build_load_tree(
             prefetch_dict=self.prefetch_dict,
             select_dict=self.select_dict,

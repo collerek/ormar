@@ -35,9 +35,9 @@ from ormar.decorators import (  # noqa: I100
 )
 from ormar.exceptions import (  # noqa: I100
     ModelDefinitionError,
+    ModelError,
     MultipleMatches,
     NoMatch,
-    ModelError,
 )
 from ormar.fields import (
     BaseField,
