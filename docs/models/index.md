@@ -33,7 +33,7 @@ Only one primary key column is allowed.
 
 By default if you assign primary key to `Integer` field, the `autoincrement` option is set to true.
 
-You can disable by passing `autoincremant=False`.
+You can disable by passing `autoincrement=False`.
 
 ```Python 
 id: int = ormar.Integer(primary_key=True, autoincrement=False)
