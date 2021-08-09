@@ -1,12 +1,10 @@
 import copy
-import token
 from typing import TYPE_CHECKING, Type, cast
 
 import ormar
 from ormar import ForeignKey, ManyToMany
 from ormar.fields import Through
 from ormar.models.descriptors import DeniedDescriptor, RelationDescriptor
-from ormar.models.helpers.pydantic import create_pydantic_field, get_pydantic_field
 from ormar.models.helpers.sqlalchemy import adjust_through_many_to_many_model
 from ormar.relations import AliasManager
 
@@ -92,7 +90,7 @@ def expand_reverse_relationships(model: Type["Model"]) -> None:
             expand_reverse_relationship(model_field=model_field)
 
 
-def process_compound_foreign_keys(new_model: Type["Model"]):
+def process_compound_foreign_keys(new_model: Type["Model"]) -> None:
     """
     Processes ForeignKeyConstraint into ForeignKeyFields.
     Registers new relation name, removes parts of ForeignKey column from model fields

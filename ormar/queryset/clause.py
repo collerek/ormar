@@ -314,7 +314,7 @@ class QueryClause:
             prefixes.append(prefix)
         return prefixes
 
-    def _get_related_field_from_relation_str(self, related: str):
+    def _get_related_field_from_relation_str(self, related: str) -> "BaseField":
         source_model = self.model_cls
         related_parts = related.split("__")
         field = None

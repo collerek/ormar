@@ -2,14 +2,14 @@ from typing import Any, List, Optional, TYPE_CHECKING, Type
 
 import sqlalchemy
 
-import ormar
+import ormar  # noqa: I100, I202
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar.models.model import Model
 
 
 class PrimaryKeyConstraint(sqlalchemy.PrimaryKeyConstraint):
-    def __init__(self, *args: str, db_name: str = None, **kwargs: Any):
+    def __init__(self, *args: str, db_name: str = None, **kwargs: Any) -> None:
         # TODO: Resolve names to aliases if ormar names allowed
         self.column_names = args
         self.column_aliases: List[str] = []
@@ -18,7 +18,7 @@ class PrimaryKeyConstraint(sqlalchemy.PrimaryKeyConstraint):
         self._kwargs = kwargs
         super().__init__(*args, **kwargs)
 
-    def _resolve_column_aliases(self):
+    def _resolve_column_aliases(self) -> None:
         if not self.owner:  # pragma: no cover
             raise ormar.ModelDefinitionError("Cannot resolve aliases without owner")
         for column in self.column_names:

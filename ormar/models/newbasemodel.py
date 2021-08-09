@@ -314,7 +314,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             ),
         )
 
-    def _check_denied_fields(self, kwargs: Dict, excluded: Set):
+    def _check_denied_fields(self, kwargs: Dict, excluded: Set) -> None:
         if not self.Meta.denied_fields:
             return
         for field_name in self.Meta.denied_fields:
@@ -915,18 +915,3 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 f"You cannot save {relation_field.to.get_name()} "
                 f"model without pk set!"
             )
-
-    def get_relation_model_id(self, target_field: "BaseField") -> Any:
-        """
-        Returns an id of the relation side model to use in prefetch query.
-
-        :param target_field: field with relation definition
-        :type target_field: "BaseField"
-        :return: value of pk if set
-        :rtype: Optional[int]
-        """
-        if target_field.virtual or target_field.is_multi:
-            return self.pk
-        related_name = target_field.name
-        related_model = getattr(self, related_name)
-        return None if not related_model else related_model.pk

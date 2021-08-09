@@ -1,8 +1,6 @@
-import uuid
 from typing import Callable, Collection, Dict, List, Optional, Set, TYPE_CHECKING, cast
 
 import ormar
-from ormar.exceptions import ModelPersistenceError
 from ormar.models.helpers.validation import validate_choices
 from ormar.models.mixins import AliasMixin
 from ormar.models.mixins.relation_mixin import RelationMixin

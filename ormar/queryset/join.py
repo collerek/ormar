@@ -117,11 +117,12 @@ class SqlJoin:
                     through_field.get_column_name_from_alias(to_key)
                 ].get_reversed_names()
             names = cast(Dict[str, str], names)
+            owner_table_name = self.target_field.owner.Meta.tablename
             on_clause = sqlalchemy.sql.and_(
                 *[
                     self._on_clause(
                         previous_alias=self.own_alias,
-                        from_clause=f"{self.target_field.owner.Meta.tablename}.{own_name}",
+                        from_clause=f"{owner_table_name}.{own_name}",
                         to_clause=f"{self.to_table.name}.{target_name}",
                     )
                     for target_name, own_name in names.items()

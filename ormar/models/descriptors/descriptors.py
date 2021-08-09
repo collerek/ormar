@@ -111,11 +111,11 @@ class PkDescriptor:
     def __set__(self, instance: "Model", value: Any) -> None:
         if self.is_compound:
             if isinstance(value, collections.abc.Mapping):
-                for key, val in value.items():
+                for key, value_ in value.items():
                     if key in instance.extract_related_names():
-                        setattr(instance, key, val)
+                        setattr(instance, key, value_)
                     else:
-                        instance._internal_set(key, val)
+                        instance._internal_set(key, value_)
             else:
                 raise ormar.ModelDefinitionError(
                     "Compound primary key can be set only with dictionary"

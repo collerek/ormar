@@ -13,16 +13,16 @@ from ormar.models.helpers.pydantic import (
 )
 from ormar.models.helpers.relations import (
     alias_manager,
-    register_relation_in_alias_manager,
     process_compound_foreign_keys,
+    register_relation_in_alias_manager,
 )
 from ormar.models.helpers.relations import expand_reverse_relationships
 from ormar.models.helpers.sqlalchemy import (
     populate_meta_sqlalchemy_table_if_required,
     populate_meta_tablename_columns_and_pk,
+    remove_null_column_to_compound_models_fk,
     resolve_primary_key,
     sqlalchemy_columns_from_model_fields,
-    remove_null_column_to_compound_models_fk,
 )
 from ormar.models.helpers.validation import populate_choices_validators
 

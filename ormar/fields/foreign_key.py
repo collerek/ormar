@@ -380,7 +380,9 @@ class ForeignKeyField(BaseField):
         """
         return self.related_name or self.owner.get_name() + "s"
 
-    def get_model_relation_fields(self, use_alias: bool = False) -> Union[str, List[str]]:
+    def get_model_relation_fields(
+        self, use_alias: bool = False
+    ) -> Union[str, List[str]]:
         """
         Extract names of the database columns or model fields that are connected
         with given relation based on use_alias switch and which side of the relation
@@ -405,7 +407,7 @@ class ForeignKeyField(BaseField):
             )
         return self.get_alias() if use_alias else self.name
 
-    def get_related_field_name(self) -> Union[str, Dict[str, str]]:
+    def get_related_field_alias(self) -> Union[str, Dict[str, str]]:
         """
         Extract names of the related database columns or that are connected
         with given relation based to use as a target in filter clause.
@@ -423,6 +425,19 @@ class ForeignKeyField(BaseField):
             return self.names
         target_field = self.to.get_column_alias(self.to.Meta.pkname)
         return target_field
+
+    def get_related_field_name(self) -> Union[str, List[str]]:
+        """
+        Returns name of the relation field that should be used in prefetch query.
+        This field is later used to register relation in prefetch query,
+        populate relations dict, and populate nested model in prefetch query.
+
+        :return: name(s) of the field
+        :rtype: Union[str, List[str]]
+        """
+        if self.virtual:
+            return self.get_related_name()
+        return self.to.Meta.pkname if not self.is_compound else self.to.pk_aliases_list
 
     def get_filter_clause_target(self) -> Type["Model"]:
         return self.to

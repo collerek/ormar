@@ -94,6 +94,7 @@ __all__ = [
     "Date",
     "Decimal",
     "Float",
+    "ForeignKeyConstraint",
     "ManyToMany",
     "Model",
     "ModelDefinitionError",

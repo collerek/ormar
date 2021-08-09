@@ -58,7 +58,6 @@ nav:
             - Alias Mixin: api/models/mixins/alias-mixin.md
             - Excludable Mixin: api/models/mixins/excludable-mixin.md
             - Merge Model Mixin: api/models/mixins/merge-model-mixin.md
-            - Prefetch Query Mixin: api/models/mixins/prefetch-query-mixin.md
             - Relation Mixin: api/models/mixins/relation-mixin.md
             - Save Prepare Mixin: api/models/mixins/save-prepare-mixin.md
         - api/models/model.md

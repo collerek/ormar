@@ -53,7 +53,7 @@ quick_access_set = {
     "get_filtered_names_to_extract",
     "get_name",
     "get_properties",
-    "get_related_field_name",
+    "get_related_field_alias",
     "get_relation_model_id",
     "json",
     "keys",

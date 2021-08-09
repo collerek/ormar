@@ -54,12 +54,12 @@ or field name specified by related parameter.
 
 
 
-<a name="models.mixins.prefetch_mixin.PrefetchQueryMixin.get_related_field_name"></a>
+<a name="models.mixins.prefetch_mixin.PrefetchQueryMixin.get_related_field_alias"></a>
 #### get\_related\_field\_name
 
 ```python
  | @classmethod
- | get_related_field_name(cls, target_field: "ForeignKeyField") -> str
+ | get_related_field_alias(cls, target_field: "ForeignKeyField") -> str
 ```
 
 Returns name of the relation field that should be used in prefetch query.

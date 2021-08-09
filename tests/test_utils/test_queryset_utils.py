@@ -2,13 +2,12 @@ import databases
 import sqlalchemy
 
 import ormar
-from ormar.models.mixins import ExcludableMixin
 from ormar.queryset.prefetch_query import sort_models
 from ormar.queryset.utils import (
     subtract_dict,
     translate_list_to_dict,
-    update_dict_from_list,
     update,
+    update_dict_from_list,
 )
 from tests.settings import DATABASE_URL
 

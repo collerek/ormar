@@ -36,7 +36,6 @@ from ormar.models.helpers import (
     expand_reverse_relationships,
     extract_annotations_and_default_vals,
     get_potential_fields,
-    get_pydantic_field,
     merge_or_generate_pydantic_config,
     meta_field_not_set,
     populate_choices_validators,

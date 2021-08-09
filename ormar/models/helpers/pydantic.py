@@ -5,8 +5,8 @@ import pydantic
 from pydantic.fields import ModelField
 from pydantic.utils import lenient_issubclass
 
-from ormar.fields import BaseField  # noqa: I100, I202
-from ormar.exceptions import ModelDefinitionError
+from ormar.exceptions import ModelDefinitionError  # noqa: I100, I202
+from ormar.fields import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model

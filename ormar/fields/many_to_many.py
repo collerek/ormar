@@ -293,7 +293,9 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         """
         return self.through
 
-    def get_model_relation_fields(self, use_alias: bool = False) -> Union[str, List[str]]:
+    def get_model_relation_fields(
+        self, use_alias: bool = False
+    ) -> Union[str, List[str]]:
         """
         Extract names of the database columns or model fields that are connected
         with given relation based on use_alias switch.
@@ -307,7 +309,7 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         result = self.owner.pk_aliases_list if use_alias else self.owner.pk_names_list
         return result[0] if len(result) == 1 else result
 
-    def get_related_field_name(self) -> Union[str, Dict[str, str]]:
+    def get_related_field_alias(self) -> Union[str, Dict[str, str]]:
         """
         Extract names of the related database columns or that are connected
         with given relation based to use as a target in filter clause.
@@ -323,6 +325,19 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         if sub_field.is_compound:
             return cast(Dict[str, str], sub_field.get_reversed_names())
         return sub_field.get_alias()
+
+    def get_related_field_name(self) -> Union[str, List[str]]:
+        """
+        Returns name of the relation field that should be used in prefetch query.
+        This field is later used to register relation in prefetch query,
+        populate relations dict, and populate nested model in prefetch query.
+
+        :return: name(s) of the field
+        :rtype: Union[str, List[str]]
+        """
+        if self.self_reference and self.self_reference_primary == self.name:
+            return self.default_target_field_name()
+        return self.default_source_field_name()
 
     def get_filter_clause_target(self) -> Type["Model"]:
         return self.through

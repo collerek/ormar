@@ -46,7 +46,7 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
 
 def create_through_relation_fields(
     model_field: "ManyToManyField", target_model: Type["Model"], field_name: str
-):
+) -> None:
     model_fields = model_field.through.Meta.model_fields
     names = None
     if model_field.self_reference and model_field.is_compound:
