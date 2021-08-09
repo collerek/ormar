@@ -67,8 +67,8 @@ def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
 
 
 def create_dummy_model(
-    base_model: Type["T"],
-    pk_fields: List[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
+        base_model: Type["T"],
+        pk_fields: List[Union[BaseField, "ForeignKeyField", "ManyToManyField"]],
 ) -> Type["BaseModel"]:
     """
     Used to construct a dummy pydantic model for type hints and pydantic validation.
@@ -95,12 +95,12 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-    to: Type["T"],
-    nullable: bool,
-    onupdate: str = None,
-    ondelete: str = None,
-    relation_fields: Dict = None,
-    virtual: bool = False,
+        to: Type["T"],
+        nullable: bool,
+        onupdate: str = None,
+        ondelete: str = None,
+        relation_fields: Dict = None,
+        virtual: bool = False,
 ) -> Tuple[Any, List[Union["ForeignKeyConstraint", "ForeignKeyConstraintData"]], Any]:
     # TODO: finish docstring
     """
@@ -121,36 +121,14 @@ def populate_fk_params_based_on_to_model(
     :rtype: Tuple[Any, List, Any]
     """
     if to.has_pk_constraint:
-        relation_fields = cast(Dict[str, str], relation_fields)
-        to_fields = [
-            to.Meta.model_fields[to.get_column_name_from_alias(pk_name)]
-            for pk_name in to.pk_name
-        ]
-        pk_only_model = create_dummy_model(to, to_fields)
-        __type__ = (
-            Union[to, pk_only_model]
-            if not nullable
-            else Optional[Union[to, pk_only_model]]
+        return _populate_composite_fk_params_based_on_to_model(
+            to=to,
+            nullable=nullable,
+            onupdate=onupdate,
+            ondelete=ondelete,
+            relation_fields=relation_fields,
+            virtual=virtual
         )
-        # table_name = to.Meta.tablename
-        # TODO: Check backref columns on virtual fk?
-        # TODO: Delay instantiation like in simple fk for inheritance
-        constraints: List[
-            Union[ormar.ForeignKeyConstraint, "ForeignKeyConstraintData"]
-        ] = (
-            [
-                ormar.ForeignKeyConstraint(
-                    to=to,
-                    columns=list(relation_fields.values()),
-                    ondelete=ondelete,
-                    onupdate=onupdate,
-                    name=None,
-                )
-            ]
-            if not virtual
-            else []
-        )
-        column_type = None
     else:
         pk_name = cast(str, to.pk_name)
         fk_string = to.Meta.tablename + "." + to.get_column_alias(pk_name)
@@ -167,6 +145,47 @@ def populate_fk_params_based_on_to_model(
             )
         ]
         column_type = to_field.column_type
+    return __type__, constraints, column_type
+
+
+def _populate_composite_fk_params_based_on_to_model(
+        to: Type["T"],
+        nullable: bool,
+        onupdate: str = None,
+        ondelete: str = None,
+        relation_fields: Dict = None,
+        virtual: bool = False,
+) -> Tuple[
+    Any, List[Union["ForeignKeyConstraint", "ForeignKeyConstraintData"]], Any]:
+    relation_fields = cast(Dict[str, str], relation_fields)
+    to_fields = [
+        to.Meta.model_fields[to.get_column_name_from_alias(pk_name)]
+        for pk_name in to.pk_name
+    ]
+    pk_only_model = create_dummy_model(to, to_fields)
+    __type__ = (
+        Union[to, pk_only_model]
+        if not nullable
+        else Optional[Union[to, pk_only_model]]
+    )
+    # TODO: Check backref columns on virtual fk?
+    # TODO: Delay instantiation like in simple fk for inheritance
+    constraints: List[
+        Union[ormar.ForeignKeyConstraint, "ForeignKeyConstraintData"]
+    ] = (
+        [
+            ormar.ForeignKeyConstraint(
+                to=to,
+                columns=list(relation_fields.values()),
+                ondelete=ondelete,
+                onupdate=onupdate,
+                name=None,
+            )
+        ]
+        if not virtual
+        else []
+    )
+    column_type = None
     return __type__, constraints, column_type
 
 
@@ -200,7 +219,7 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
 
 
 def generate_relation_fields_if_required(
-    to: Type["Model"], names: Dict[str, str]
+        to: Type["Model"], names: Dict[str, str]
 ) -> Dict[str, str]:
     if not names:
         return {pk_name: f"{to.get_name()}_{pk_name}" for pk_name in to.pk_aliases_list}
@@ -238,16 +257,16 @@ def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":  # pragma: no cover
 
 
 def ForeignKey(  # noqa CFQ002
-    to: "ToType",
-    *,
-    name: str = None,
-    unique: bool = False,
-    nullable: bool = True,
-    related_name: str = None,
-    virtual: bool = False,
-    onupdate: str = None,
-    ondelete: str = None,
-    **kwargs: Any,
+        to: "ToType",
+        *,
+        name: str = None,
+        unique: bool = False,
+        nullable: bool = True,
+        related_name: str = None,
+        virtual: bool = False,
+        onupdate: str = None,
+        ondelete: str = None,
+        **kwargs: Any,
 ) -> "T":
     """
     Despite a name it's a function that returns constructed ForeignKeyField.
@@ -381,7 +400,7 @@ class ForeignKeyField(BaseField):
         return self.related_name or self.owner.get_name() + "s"
 
     def get_model_relation_fields(
-        self, use_alias: bool = False
+            self, use_alias: bool = False
     ) -> Union[str, List[str]]:
         """
         Extract names of the database columns or model fields that are connected
@@ -393,19 +412,28 @@ class ForeignKeyField(BaseField):
         :return: name or names of the related columns/ fields
         :rtype: Union[str, List[str]]
         """
+        if use_alias:
+            return self._get_model_relation_fields_aliases()
+        return self._get_model_relation_fields_names()
+
+    def _get_model_relation_fields_names(self) -> Union[str, List[str]]:
         if self.virtual:
-            result = (
-                self.owner.pk_aliases_list if use_alias else self.owner.pk_names_list
-            )
+            result = self.owner.pk_names_list
             return result[0] if len(result) == 1 else result
         if self.is_compound:
-            aliases = list(self.names.values())
-            return (
-                aliases
-                if use_alias
-                else [self.owner.get_column_name_from_alias(col) for col in aliases]
-            )
-        return self.get_alias() if use_alias else self.name
+            return [
+                self.owner.get_column_name_from_alias(col)
+                for col in self.names.values()
+            ]
+        return self.name
+
+    def _get_model_relation_fields_aliases(self) -> Union[str, List[str]]:
+        if self.virtual:
+            result = self.owner.pk_aliases_list
+            return result[0] if len(result) == 1 else result
+        if self.is_compound:
+            return list(self.names.values())
+        return self.get_alias()
 
     def get_related_field_alias(self) -> Union[str, Dict[str, str]]:
         """
@@ -495,7 +523,7 @@ class ForeignKeyField(BaseField):
             self.is_compound = self.to.has_pk_constraint  # type: ignore
 
     def _extract_model_from_sequence(
-        self, value: List, child: "Model", to_register: bool,
+            self, value: List, child: "Model", to_register: bool,
     ) -> List["Model"]:
         """
         Takes a list of Models and registers them on parent.
@@ -520,7 +548,7 @@ class ForeignKeyField(BaseField):
         ]
 
     def _register_existing_model(
-        self, value: "Model", child: "Model", to_register: bool,
+            self, value: "Model", child: "Model", to_register: bool,
     ) -> "Model":
         """
         Takes already created instance and registers it for parent.
@@ -542,7 +570,7 @@ class ForeignKeyField(BaseField):
         return value
 
     def _construct_model_from_dict(
-        self, value: dict, child: "Model", to_register: bool
+            self, value: dict, child: "Model", to_register: bool
     ) -> "Model":
         """
         Takes a dictionary, creates a instance and registers it for parent.
@@ -576,8 +604,8 @@ class ForeignKeyField(BaseField):
                             field.to.get_column_name_from_alias(other_name)
                         ] = target_value.get(other_name, value.get(own_name))
                         if (
-                            own_name not in self.to.Meta.model_fields
-                            or self.to.Meta.model_fields[own_name].is_denied
+                                own_name not in self.to.Meta.model_fields
+                                or self.to.Meta.model_fields[own_name].is_denied
                         ):
                             value.pop(own_name, None)
                     if set(nested_dict.keys()) == set(field.to.pk_names_list):
@@ -589,7 +617,7 @@ class ForeignKeyField(BaseField):
         return model
 
     def _construct_model_from_pk(
-        self, value: Any, child: "Model", to_register: bool
+            self, value: Any, child: "Model", to_register: bool
     ) -> "Model":
         """
         Takes a pk value, creates a dummy instance and registers it for parent.
@@ -647,10 +675,10 @@ class ForeignKeyField(BaseField):
         return self.to.__class__ == ForwardRef
 
     def expand_relationship(
-        self,
-        value: Any,
-        child: Union["Model", "NewBaseModel"],
-        to_register: bool = True,
+            self,
+            value: Any,
+            child: Union["Model", "NewBaseModel"],
+            to_register: bool = True,
     ) -> Optional[Union["Model", List["Model"]]]:
         """
         For relations the child model is first constructed (if needed),

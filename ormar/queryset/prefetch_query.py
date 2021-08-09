@@ -26,16 +26,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from ormar.models.excludable import ExcludableItems
 
 
-# get dict of models to load
-# get dict of already loaded models
-# proceed with queries one at a time
-# to proceed with query you need to extract corresponding relation fields
-# then extract unique values of those fields to use them in where condition
-# when loading the next relation
-# after all queries are executed you can proceed back and instantiate
-# models in current leaf and then populate those models back up
-
-
 class UniqueList(list):
     def append(self, item: Any) -> None:
         if item not in self:
@@ -135,29 +125,36 @@ class AlreadyLoadedTask(Task):
             child.reload_tree()
 
     def extract_related_ids(self, column_names: Union[str, List[str]]) -> List:
-        # extract ids from already loaded models
+        if isinstance(column_names, list):
+            return self._extract_composite_relation_keys(column_names=column_names)
+        return self._extract_simple_relation_keys(column_name=column_names)
+
+    def _extract_composite_relation_keys(self, column_names: List[str]) -> List:
+        list_of_ids = UniqueList()
+        current_id = dict()
+        for model in self.models:
+            for column in column_names:
+                column = model.get_column_name_from_alias(column)
+                child = getattr(model, column)
+                if isinstance(child, ormar.Model):
+                    child = child.pk
+                if isinstance(child, dict):
+                    field = model.Meta.model_fields[column]
+                    for target_name, own_name in field.names.items():
+                        current_id[own_name] = child.get(target_name)
+                elif child is not None:
+                    current_id[model.get_column_alias(column)] = child
+            list_of_ids.append(current_id)
+        return list_of_ids
+
+    def _extract_simple_relation_keys(self, column_name: str) -> List:
         list_of_ids = UniqueList()
         for model in self.models:
-            if isinstance(column_names, list):
-                current_id = dict()
-                for column in column_names:
-                    column = model.get_column_name_from_alias(column)
-                    child = getattr(model, column)
-                    if isinstance(child, ormar.Model):
-                        child = child.pk
-                    if isinstance(child, dict):
-                        field = model.Meta.model_fields[column]
-                        for target_name, own_name in field.names.items():
-                            current_id[own_name] = child.get(target_name)
-                    elif child is not None:
-                        current_id[model.get_column_alias(column)] = child
-                list_of_ids.append(current_id)
-            else:
-                child = getattr(model, column_names)
-                if isinstance(child, ormar.Model):
-                    list_of_ids.append(child.pk)
-                elif child is not None:
-                    list_of_ids.append(child)
+            child = getattr(model, column_name)
+            if isinstance(child, ormar.Model):
+                list_of_ids.append(child.pk)
+            elif child is not None:
+                list_of_ids.append(child)
         return list_of_ids
 
 
@@ -186,14 +183,6 @@ class LoadTask(Task):
         self.orders_by = orders_by
         self.use_alias = True
         self.grouped_models: Dict[Any, List["Model"]] = dict()
-
-    def reload_tree(self) -> None:
-        if self.rows:
-            self._instantiate_models()
-            self._group_models_by_relation_key()
-            for child in self.children:
-                child.reload_tree()
-            self._populate_parent_models()
 
     async def load_data(self) -> None:
         self._update_excludable_with_related_pks()
@@ -225,25 +214,30 @@ class LoadTask(Task):
             for child in self.children:
                 await child.load_data()
 
-    def extract_related_ids(self, column_names: Union[str, List[str]]) -> List:
-        # extract ids from raw data
-        if not isinstance(column_names, list):
-            column_names = [column_names]
-        list_of_ids = UniqueList()
-        table_prefix = self.table_prefix
-        column_names = [
-            (f"{table_prefix}_" if table_prefix else "") + column_name
-            for column_name in column_names
-        ]
-        for row in self.rows:
-            if all(row[column_name] for column_name in column_names):
-                if len(column_names) > 1:
-                    list_of_ids.append(
-                        {column_name: row[column_name] for column_name in column_names}
-                    )
-                else:
-                    list_of_ids.append(row[column_names[0]])
-        return list_of_ids
+    def _update_excludable_with_related_pks(self) -> None:
+        related_field_names = self.relation_field.get_related_field_name()
+        alias_manager = self.relation_field.to.Meta.alias_manager
+        if self.relation_field.is_multi:
+            from_model = self.relation_field.through
+            relation_name = self.target_name
+        else:
+            from_model = self.relation_field.owner
+            relation_name = self.relation_field.name
+        self.exclude_prefix = alias_manager.resolve_relation_alias(
+            from_model=from_model, relation_name=relation_name
+        )
+        if self.relation_field.is_multi:
+            self.table_prefix = self.exclude_prefix
+        target_model = self.relation_field.to
+        model_excludable = self.excludable.get(
+            model_cls=target_model, alias=self.exclude_prefix
+        )
+        # includes nested pks if not included already
+        for related_name in related_field_names:
+            if model_excludable.include and not model_excludable.is_included(
+                related_name
+            ):
+                model_excludable.set_values({related_name}, is_exclude=False)
 
     def _extract_own_order_bys(self) -> List["OrderAction"]:
         own_order_bys = []
@@ -253,6 +247,48 @@ class LoadTask(Task):
                 order_by.table_prefix = self.table_prefix
                 own_order_bys.append(order_by)
         return own_order_bys
+
+    def extract_related_ids(self, column_names: Union[str, List[str]]) -> List:
+        column_names = self._prefix_column_names_with_table_prefix(
+            column_names=column_names
+        )
+        if len(column_names) > 1:
+            return self._extract_composite_relation_keys(column_names=column_names)
+        return self._extract_simple_relation_keys(column_name=column_names[0])
+
+    def _prefix_column_names_with_table_prefix(
+        self, column_names: Union[str, List[str]]
+    ) -> List[str]:
+        if not isinstance(column_names, list):
+            column_names = [column_names]
+        return [
+            (f"{self.table_prefix}_" if self.table_prefix else "") + column_name
+            for column_name in column_names
+        ]
+
+    def _extract_composite_relation_keys(self, column_names: List[str]) -> List:
+        list_of_ids = UniqueList()
+        for row in self.rows:
+            if all(row[column_name] for column_name in column_names):
+                list_of_ids.append(
+                    {column_name: row[column_name] for column_name in column_names}
+                )
+        return list_of_ids
+
+    def _extract_simple_relation_keys(self, column_name: str) -> List:
+        list_of_ids = UniqueList()
+        for row in self.rows:
+            if row[column_name]:
+                list_of_ids.append(row[column_name])
+        return list_of_ids
+
+    def reload_tree(self) -> None:
+        if self.rows:
+            self._instantiate_models()
+            self._group_models_by_relation_key()
+            for child in self.children:
+                child.reload_tree()
+            self._populate_parent_models()
 
     def _instantiate_models(self) -> None:
         fields_to_exclude = self.relation_field.to.get_names_to_exclude(
@@ -298,55 +334,40 @@ class LoadTask(Task):
             current_group.append(self.models[index])
 
     def _populate_parent_models(self) -> None:
+        relation_keys = self._get_relation_keys_linking_models()
+        for model in self.parent.models:
+            children = self._get_own_models_related_to_parent(
+                model=model, relation_keys=relation_keys
+            )
+            for child in children:
+                setattr(model, self.relation_field.name, child)
+
+    def _get_relation_keys_linking_models(self) -> List[Tuple]:
         column_names = self.relation_field.get_model_relation_fields(False)
         column_aliases = self.relation_field.get_model_relation_fields(True)
         if not isinstance(column_names, list):
             column_names = [column_names]
             column_aliases = [cast(str, column_aliases)]
-        relation_keys = list(zip(column_names, column_aliases))
-        for model in self.parent.models:
-            key = {
-                column_alias: getattr(model, column_name)
-                for column_name, column_alias in relation_keys
-            }
-            for name, alias in relation_keys:
-                if isinstance(key[alias], ormar.Model):
-                    pk_value = key[alias].pk
-                    if isinstance(pk_value, dict):
-                        names = self.relation_field.owner.Meta.model_fields[name].names
-                        new_pk_value = {names[k]: v for k, v in pk_value.items()}
-                        key.update(new_pk_value)
-                    else:
-                        key[alias] = pk_value
-            final_key = tuple(key[item] for item in sorted(key.keys()))
-            children = self.grouped_models.get(final_key, [])
-            for child in children:
-                setattr(model, self.relation_field.name, child)
+        return list(zip(column_names, column_aliases))
 
-    def _update_excludable_with_related_pks(self) -> None:
-        related_field_names = self.relation_field.get_related_field_name()
-        alias_manager = self.relation_field.to.Meta.alias_manager
-        if self.relation_field.is_multi:
-            from_model = self.relation_field.through
-            relation_name = self.target_name
-        else:
-            from_model = self.relation_field.owner
-            relation_name = self.relation_field.name
-        self.exclude_prefix = alias_manager.resolve_relation_alias(
-            from_model=from_model, relation_name=relation_name
-        )
-        if self.relation_field.is_multi:
-            self.table_prefix = self.exclude_prefix
-        target_model = self.relation_field.to
-        model_excludable = self.excludable.get(
-            model_cls=target_model, alias=self.exclude_prefix
-        )
-        # includes nested pks if not included already
-        for related_name in related_field_names:
-            if model_excludable.include and not model_excludable.is_included(
-                related_name
-            ):
-                model_excludable.set_values({related_name}, is_exclude=False)
+    def _get_own_models_related_to_parent(
+        self, model: "Model", relation_keys: List[Tuple]
+    ) -> List["Model"]:
+        key = {
+            column_alias: getattr(model, column_name)
+            for column_name, column_alias in relation_keys
+        }
+        for name, alias in relation_keys:
+            if isinstance(key[alias], ormar.Model):
+                pk_value = key[alias].pk
+                if isinstance(pk_value, dict):
+                    names = self.relation_field.owner.Meta.model_fields[name].names
+                    new_pk_value = {names[k]: v for k, v in pk_value.items()}
+                    key.update(new_pk_value)
+                else:
+                    key[alias] = pk_value
+        final_key = tuple(key[item] for item in sorted(key.keys()))
+        return self.grouped_models.get(final_key, [])
 
 
 class PrefetchQuery:
@@ -384,7 +405,7 @@ class PrefetchQuery:
         Returns list with related models already prefetched and set.
 
         :param models: list of already instantiated models from main query
-        :type models: List[Model]
+        :type models: Sequence[Model]
         :param rows: row sql result of the main query before the prefetch
         :type rows: List[sqlalchemy.engine.result.RowProxy]
         :return: list of models with children prefetched
@@ -395,6 +416,7 @@ class PrefetchQuery:
             prefetch_dict=self.prefetch_dict,
             select_dict=self.select_dict,
             parent=parent_task,
+            model=self.model,
         )
         await parent_task.load_data()
         parent_task.reload_tree()
@@ -407,12 +429,9 @@ class PrefetchQuery:
         parent: Task,
         model: Type["Model"] = None,
     ) -> None:
-        model = model or self.model
-        if not prefetch_dict or prefetch_dict is Ellipsis:
-            return
         for related in prefetch_dict.keys():
             relation_field = cast("ForeignKeyField", model.Meta.model_fields[related])
-            if isinstance(select_dict, dict) and related in select_dict:
+            if related in select_dict:
                 task: Task = AlreadyLoadedTask(
                     relation_field=relation_field, parent=parent
                 )
@@ -423,7 +442,7 @@ class PrefetchQuery:
                     orders_by=self.orders_by,
                     parent=parent,
                 )
-            if prefetch_dict and prefetch_dict is not Ellipsis:
+            if prefetch_dict:
                 self._build_load_tree(
                     select_dict=select_dict.get(related, {}),
                     prefetch_dict=prefetch_dict.get(related, {}),
