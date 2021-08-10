@@ -27,15 +27,25 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class UniqueList(list):
+    """
+    Simple subclass of list that prevents the duplicates
+    Cannot use set as the order is important
+    """
+
     def append(self, item: Any) -> None:
         if item not in self:
             super().append(item)
 
 
-class Task(abc.ABC):
-    def __init__(self, relation_field: "ForeignKeyField", parent: "Task") -> None:
-        self.parent: "Task" = parent
-        self.children: List["Task"] = []
+class Node(abc.ABC):
+    """
+    Base Node use to build a query tree and divide job into already loaded models
+    and the ones that still need to be fetched from database
+    """
+
+    def __init__(self, relation_field: "ForeignKeyField", parent: "Node") -> None:
+        self.parent = parent
+        self.children: List["Node"] = []
         if self.parent:
             self.parent.children.append(self)
         self.relation_field = relation_field
@@ -46,6 +56,14 @@ class Task(abc.ABC):
 
     @property
     def target_name(self) -> str:
+        """
+        Return the name of the relation that is used to
+        fetch excludes/includes from the excludable mixin
+        as well as specifying the target to join in m2m relations
+
+        :return: name of the relation
+        :rtype: str
+        """
         if (
             self.relation_field.self_reference
             and self.relation_field.self_reference_primary == self.relation_field.name
@@ -87,6 +105,15 @@ class Task(abc.ABC):
         return []
 
     def _prepare_filter_clauses(self, ids: List) -> List["FilterAction"]:
+        """
+        Gets the list of ids and construct a list of filter queries on
+        extracted appropriate column names
+
+        :param ids: list of ids that should be used to fetch data
+        :type ids: List
+        :return: list of filter actions to use in query
+        :rtype: List["FilterAction"]
+        """
         clause_target = self.relation_field.get_filter_clause_target()
         filter_column = self.relation_field.get_related_field_alias()
         qryclause = QueryClause(
@@ -102,13 +129,20 @@ class Task(abc.ABC):
         return filter_clauses
 
 
-class AlreadyLoadedTask(Task):
-    def __init__(self, relation_field: "ForeignKeyField", parent: "Task") -> None:
+class AlreadyLoadedNode(Node):
+    """
+    Node that was already loaded in select statement
+    """
+
+    def __init__(self, relation_field: "ForeignKeyField", parent: "Node") -> None:
         super().__init__(relation_field=relation_field, parent=parent)
         self.use_alias = False
         self._extract_own_models()
 
     def _extract_own_models(self) -> None:
+        """
+        Extract own models that were already fetched and attached to root node
+        """
         for model in self.parent.models:
             child_models = getattr(model, self.relation_field.name)
             if isinstance(child_models, list):
@@ -117,19 +151,43 @@ class AlreadyLoadedTask(Task):
                 self.models.append(child_models)
 
     async def load_data(self) -> None:
+        """
+        Triggers a data load in the child nodes
+        """
         for child in self.children:
             await child.load_data()
 
     def reload_tree(self) -> None:
+        """
+        After data was loaded we reload whole tree from the bottom
+        to include freshly loaded nodes
+        """
         for child in self.children:
             child.reload_tree()
 
     def extract_related_ids(self, column_names: Union[str, List[str]]) -> List:
+        """
+        Extracts the selected column(s) values from own models.
+        Those values are used to construct filter clauses and populate child models.
+
+        :param column_names: names of the column(s) that holds the relation info
+        :type column_names: Union[str, List[str]]
+        :return: List of extracted values of relation columns
+        :rtype: List
+        """
         if isinstance(column_names, list):
             return self._extract_composite_relation_keys(column_names=column_names)
         return self._extract_simple_relation_keys(column_name=column_names)
 
     def _extract_composite_relation_keys(self, column_names: List[str]) -> List:
+        """
+        Extracts composite relation keys values.
+
+        :param column_names: names of the column(s) that holds the relation info
+        :type column_names: List[str]
+        :return: List of extracted values of relation columns
+        :rtype: List
+        """
         list_of_ids = UniqueList()
         current_id = dict()
         for model in self.models:
@@ -148,6 +206,14 @@ class AlreadyLoadedTask(Task):
         return list_of_ids
 
     def _extract_simple_relation_keys(self, column_name: str) -> List:
+        """
+        Extracts simple relation keys values.
+
+        :param column_name: names of the column(s) that holds the relation info
+        :type column_name: str
+        :return: List of extracted values of relation columns
+        :rtype: List
+        """
         list_of_ids = UniqueList()
         for model in self.models:
             child = getattr(model, column_name)
@@ -158,7 +224,11 @@ class AlreadyLoadedTask(Task):
         return list_of_ids
 
 
-class MasterTask(AlreadyLoadedTask):
+class RootNode(AlreadyLoadedNode):
+    """
+    Root model Node from which both main and prefetch query originated
+    """
+
     def __init__(self, models: List["Model"]) -> None:
         self.models = models
         self.use_alias = False
@@ -169,13 +239,17 @@ class MasterTask(AlreadyLoadedTask):
             child.reload_tree()
 
 
-class LoadTask(Task):
+class LoadNode(Node):
+    """
+    Nodes that actually need to be fetched from database in the prefetch query
+    """
+
     def __init__(
         self,
         relation_field: "ForeignKeyField",
         excludable: "ExcludableItems",
         orders_by: List["OrderAction"],
-        parent: "Task",
+        parent: "Node",
     ) -> None:
         super().__init__(relation_field=relation_field, parent=parent)
         self.excludable = excludable
@@ -185,6 +259,14 @@ class LoadTask(Task):
         self.grouped_models: Dict[Any, List["Model"]] = dict()
 
     async def load_data(self) -> None:
+        """
+        Ensures that at least primary key columns from current model are included in
+        the query.
+
+        Gets the filter values from the parent model and runs the query.
+
+        Triggers a data load in child tasks.
+        """
         self._update_excludable_with_related_pks()
         if self.relation_field.is_multi:
             query_target = self.relation_field.through
@@ -208,13 +290,17 @@ class LoadTask(Task):
                 limit_raw_sql=False,
             )
             expr = qry.build_select_expression()
-            print(expr.compile(compile_kwargs={"literal_binds": True}))
+            # print(expr.compile(compile_kwargs={"literal_binds": True}))
             self.rows = await query_target.Meta.database.fetch_all(expr)
 
             for child in self.children:
                 await child.load_data()
 
     def _update_excludable_with_related_pks(self) -> None:
+        """
+        Makes sure that excludable is populated with own model primary keys values
+        if the excludable has the exclude/include clauses
+        """
         related_field_names = self.relation_field.get_related_field_name()
         alias_manager = self.relation_field.to.Meta.alias_manager
         if self.relation_field.is_multi:
@@ -240,15 +326,51 @@ class LoadTask(Task):
                 model_excludable.set_values({related_name}, is_exclude=False)
 
     def _extract_own_order_bys(self) -> List["OrderAction"]:
+        """
+        Extracts list of order actions related to current model.
+        Since same model can happen multiple times in a tree we check not only the
+        match on given model but also that path from relation tree matches the
+        path in order action.
+
+        :return: list of order actions related to current model
+        :rtype: List[OrderAction]
+        """
         own_order_bys = []
+        own_path = self._get_full_tree_path()
         for order_by in self.orders_by:
-            if order_by.target_model == self.relation_field.to:
+            if (
+                order_by.target_model == self.relation_field.to
+                and order_by.related_str.endswith(f"{own_path}")
+            ):
                 order_by.is_source_model_order = True
                 order_by.table_prefix = self.table_prefix
                 own_order_bys.append(order_by)
         return own_order_bys
 
+    def _get_full_tree_path(self) -> str:
+        """
+        Iterates the nodes to extract path from root node.
+
+        :return: path from root node
+        :rtype: str
+        """
+        node: Node = self
+        relation_str = node.relation_field.name
+        while not isinstance(node.parent, RootNode):
+            node = node.parent
+            relation_str = f"{node.relation_field.name}__{relation_str}"
+        return relation_str
+
     def extract_related_ids(self, column_names: Union[str, List[str]]) -> List:
+        """
+        Extracts the selected column(s) values from own models.
+        Those values are used to construct filter clauses and populate child models.
+
+        :param column_names: names of the column(s) that holds the relation info
+        :type column_names: Union[str, List[str]]
+        :return: List of extracted values of relation columns
+        :rtype: List
+        """
         column_names = self._prefix_column_names_with_table_prefix(
             column_names=column_names
         )
@@ -267,6 +389,14 @@ class LoadTask(Task):
         ]
 
     def _extract_composite_relation_keys(self, column_names: List[str]) -> List:
+        """
+        Extracts composite relation keys values.
+
+        :param column_names: names of the column(s) that holds the relation info
+        :type column_names: List[str]
+        :return: List of extracted values of relation columns
+        :rtype: List
+        """
         list_of_ids = UniqueList()
         for row in self.rows:
             if all(row[column_name] for column_name in column_names):
@@ -276,6 +406,14 @@ class LoadTask(Task):
         return list_of_ids
 
     def _extract_simple_relation_keys(self, column_name: str) -> List:
+        """
+        Extracts simple relation keys values.
+
+        :param column_name: names of the column(s) that holds the relation info
+        :type column_name: str
+        :return: List of extracted values of relation columns
+        :rtype: List
+        """
         list_of_ids = UniqueList()
         for row in self.rows:
             if row[column_name]:
@@ -283,6 +421,12 @@ class LoadTask(Task):
         return list_of_ids
 
     def reload_tree(self) -> None:
+        """
+        Instantiates models from loaded database rows.
+        Groups those instances by relation key for easy extract per parent.
+        Triggers same for child nodes and then populates
+        the parent node with own related models
+        """
         if self.rows:
             self._instantiate_models()
             self._group_models_by_relation_key()
@@ -291,6 +435,13 @@ class LoadTask(Task):
             self._populate_parent_models()
 
     def _instantiate_models(self) -> None:
+        """
+        Iterates the rows and initializes instances of ormar.Models.
+        Each model is instantiated only once (they can be duplicates for m2m relation
+        when multiple parent models refer to same child model since the query have to
+        also include the through model - hence full rows are unique, but related
+        models without through models can be not unique).
+        """
         fields_to_exclude = self.relation_field.to.get_names_to_exclude(
             excludable=self.excludable, alias=self.exclude_prefix
         )
@@ -309,7 +460,16 @@ class LoadTask(Task):
             )
             self.models.append(instance)
 
-    def _hash_item(self, item: dict) -> Tuple:
+    def _hash_item(self, item: Dict) -> Tuple:
+        """
+        Converts model dictionary into tuple to make it hashable and allow to use it
+        as a dictionary key - used to ensure unique instances of related models.
+
+        :param item: instance dictionary
+        :type item: Dict
+        :return: tuple out of model dictionary
+        :rtype: Tuple
+        """
         result = []
         for key, value in sorted(item.items()):
             result.append(
@@ -318,6 +478,11 @@ class LoadTask(Task):
         return tuple(result)
 
     def _group_models_by_relation_key(self) -> None:
+        """
+        Groups own models by relation keys so it's easy later to extract those models
+        when iterating parent models. Note that order is important as it reflects
+        order by issued by the user.
+        """
         relation_keys: Union[
             str, Dict[str, str], List[str]
         ] = self.relation_field.get_related_field_alias()
@@ -334,6 +499,9 @@ class LoadTask(Task):
             current_group.append(self.models[index])
 
     def _populate_parent_models(self) -> None:
+        """
+        Populate parent node models with own child models from grouped dictionary
+        """
         relation_keys = self._get_relation_keys_linking_models()
         for model in self.parent.models:
             children = self._get_own_models_related_to_parent(
@@ -342,7 +510,14 @@ class LoadTask(Task):
             for child in children:
                 setattr(model, self.relation_field.name, child)
 
-    def _get_relation_keys_linking_models(self) -> List[Tuple]:
+    def _get_relation_keys_linking_models(self) -> List[Tuple[str, str]]:
+        """
+        Extract names and aliases of relation columns to use
+        in linking between own models and parent models
+
+        :return: tuple of name and alias of relation columns
+        :rtype: List[Tuple[str, str]]
+        """
         column_names = self.relation_field.get_model_relation_fields(False)
         column_aliases = self.relation_field.get_model_relation_fields(True)
         if not isinstance(column_names, list):
@@ -351,8 +526,19 @@ class LoadTask(Task):
         return list(zip(column_names, column_aliases))
 
     def _get_own_models_related_to_parent(
-        self, model: "Model", relation_keys: List[Tuple]
+        self, model: "Model", relation_keys: List[Tuple[str, str]]
     ) -> List["Model"]:
+        """
+        Extracts related column values from parent and based on this key gets the
+        own grouped models.
+
+        :param model: parent model from parent node
+        :type model: Model
+        :param relation_keys: name and aliases linking relations
+        :type relation_keys: List[Tuple[str, str]]
+        :return: list of own models to set on parent
+        :rtype: List[Model]
+        """
         key = {
             column_alias: getattr(model, column_name)
             for column_name, column_alias in relation_keys
@@ -390,11 +576,9 @@ class PrefetchQuery:
         self.select_dict = translate_list_to_dict(select_related, default={})
         self.prefetch_dict = translate_list_to_dict(prefetch_related, default={})
         self.orders_by = orders_by
-        self.load_tasks: List[Task] = []
+        self.load_tasks: List[Node] = []
 
-    async def prefetch_related(
-        self, models: Sequence["Model"], rows: List
-    ) -> Sequence["Model"]:
+    async def prefetch_related(self, models: Sequence["Model"]) -> Sequence["Model"]:
         """
         Main entry point for prefetch_query.
 
@@ -411,7 +595,7 @@ class PrefetchQuery:
         :return: list of models with children prefetched
         :rtype: List[Model]
         """
-        parent_task = MasterTask(models=cast(List["Model"], models))
+        parent_task = RootNode(models=cast(List["Model"], models))
         self._build_load_tree(
             prefetch_dict=self.prefetch_dict,
             select_dict=self.select_dict,
@@ -426,17 +610,30 @@ class PrefetchQuery:
         self,
         select_dict: Dict,
         prefetch_dict: Dict,
-        parent: Task,
+        parent: Node,
         model: Type["Model"],
     ) -> None:
+        """
+        Build a tree of already loaded nodes and nodes that need
+        to be loaded through the prefetch query.
+
+        :param select_dict: dictionary wth select query structure
+        :type select_dict: Dict
+        :param prefetch_dict: dictionary with prefetch query structure
+        :type prefetch_dict: Dict
+        :param parent: parent Node
+        :type parent: Node
+        :param model: currently processed model
+        :type model: Model
+        """
         for related in prefetch_dict.keys():
             relation_field = cast("ForeignKeyField", model.Meta.model_fields[related])
             if related in select_dict:
-                task: Task = AlreadyLoadedTask(
+                task: Node = AlreadyLoadedNode(
                     relation_field=relation_field, parent=parent
                 )
             else:
-                task = LoadTask(
+                task = LoadNode(
                     relation_field=relation_field,
                     excludable=self.excludable,
                     orders_by=self.orders_by,
@@ -449,29 +646,3 @@ class PrefetchQuery:
                     parent=task,
                     model=model.Meta.model_fields[related].to,
                 )
-
-
-def sort_models(models: List["Model"], orders_by: Dict) -> List["Model"]:
-    """
-    Since prefetch query gets all related models by ids the sorting needs to happen in
-    python. Since by default models are already sorted by id here we resort only if
-    order_by parameters was set.
-
-    :param models: list of models already fetched from db
-    :type models: List[tests.test_prefetch_related.Division]
-    :param orders_by: order by dictionary
-    :type orders_by: Dict[str, str]
-    :return: sorted list of models
-    :rtype: List[tests.test_prefetch_related.Division]
-    """
-    sort_criteria = [
-        (key, value) for key, value in orders_by.items() if isinstance(value, str)
-    ]
-    sort_criteria = sort_criteria[::-1]
-    for criteria in sort_criteria:
-        key, value = criteria
-        if value == "desc":
-            models.sort(key=lambda x: getattr(x, key), reverse=True)
-        else:
-            models.sort(key=lambda x: getattr(x, key))
-    return models

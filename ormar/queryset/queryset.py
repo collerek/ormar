@@ -157,7 +157,7 @@ class QuerySet(Generic[T]):
             select_related=self._select_related,
             orders_by=self.order_bys,
         )
-        return await query.prefetch_related(models=models, rows=rows)  # type: ignore
+        return await query.prefetch_related(models=models)  # type: ignore
 
     def _process_query_result_rows(self, rows: List) -> List["T"]:
         """
