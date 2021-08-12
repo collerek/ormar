@@ -46,6 +46,23 @@ def populate_default_options_values(
     :param model_fields: dict of model fields
     :type model_fields: Union[Dict[str, type], Dict]
     """
+    if not hasattr(new_model.Meta, "aliases_dict"):
+        new_model.Meta.aliases_dict = dict()
+    if not hasattr(new_model.Meta, "model_fields"):
+        new_model.Meta.model_fields = model_fields
+    if not hasattr(new_model.Meta, "abstract"):
+        new_model.Meta.abstract = False
+    if not hasattr(new_model.Meta, "orders_by"):
+        new_model.Meta.orders_by = []
+    if not hasattr(new_model.Meta, "exclude_parent_fields"):
+        new_model.Meta.exclude_parent_fields = []
+
+    set_constraints(new_model=new_model)
+    verify_if_model_has_unresolved_forward_references(new_model=new_model)
+    cache_bytes_and_json_fields(new_model=new_model)
+
+
+def set_constraints(new_model: Type["Model"]) -> None:
     if not hasattr(new_model.Meta, "constraints"):
         new_model.Meta.constraints = []
 
@@ -62,21 +79,11 @@ def populate_default_options_values(
     else:
         new_model.Meta.has_compound_pk = False
 
-    if not hasattr(new_model.Meta, "aliases_dict"):
-        new_model.Meta.aliases_dict = dict()
-
-    if not hasattr(new_model.Meta, "model_fields"):
-        new_model.Meta.model_fields = model_fields
-    if not hasattr(new_model.Meta, "abstract"):
-        new_model.Meta.abstract = False
-    if not hasattr(new_model.Meta, "orders_by"):
-        new_model.Meta.orders_by = []
-    if not hasattr(new_model.Meta, "exclude_parent_fields"):
-        new_model.Meta.exclude_parent_fields = []
-
     if not hasattr(new_model.Meta, "denied_fields"):
         new_model.Meta.denied_fields = set()
 
+
+def verify_if_model_has_unresolved_forward_references(new_model: Type["Model"]) -> None:
     if any(
         is_field_an_forward_ref(field) for field in new_model.Meta.model_fields.values()
     ):
@@ -84,6 +91,8 @@ def populate_default_options_values(
     else:
         new_model.Meta.requires_ref_update = False
 
+
+def cache_bytes_and_json_fields(new_model: Type["Model"]) -> None:
     new_model._json_fields = {
         name
         for name, field in new_model.Meta.model_fields.items()

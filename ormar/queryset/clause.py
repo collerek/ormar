@@ -1,7 +1,7 @@
 import itertools
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Generator, List, TYPE_CHECKING, Tuple, Type, cast
+from typing import Any, Dict, Generator, List, TYPE_CHECKING, Tuple, Type, cast
 
 import sqlalchemy
 
@@ -211,22 +211,25 @@ class QueryClause:
         :rtype: Tuple[List[sqlalchemy.sql.elements.TextClause], List[str]]
         """
         if kwargs.get("pk"):
-            if self.model_cls.has_pk_constraint:
-                value = kwargs.pop("pk")
-                if isinstance(value, ormar.Model):
-                    value = value.pk
-                for key, val in value.items():
-                    kwargs[key] = val
-
-            else:
-                pk_name = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
-                kwargs[pk_name] = kwargs.pop("pk")
+            kwargs = self._handle_primary_key_filter(kwargs=kwargs)
 
         filter_clauses, select_related = self._populate_filter_clauses(
             _own_only=_own_only, **kwargs
         )
 
         return filter_clauses, select_related
+
+    def _handle_primary_key_filter(self, kwargs: Dict) -> Dict:
+        if self.model_cls.has_pk_constraint:
+            primary_key_value = kwargs.pop("pk")
+            if isinstance(primary_key_value, ormar.Model):
+                primary_key_value = primary_key_value.pk
+            for key, value in primary_key_value.items():
+                kwargs[key] = value
+        else:
+            pk_name = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
+            kwargs[pk_name] = kwargs.pop("pk")
+        return kwargs
 
     def _populate_filter_clauses(
         self, _own_only: bool, **kwargs: Any

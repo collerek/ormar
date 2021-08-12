@@ -87,13 +87,7 @@ class Model(ModelRow):
                 self_fields.pop(pk_name, None)
         self_fields = self.populate_default_values(self_fields)
         self.update_from_dict(
-            {
-                k: v
-                for k, v in self_fields.items()
-                if k not in self.extract_related_names()
-                and k in self.Meta.model_fields
-                and not self.Meta.model_fields[k].is_denied
-            }
+            {k: v for k, v in self_fields.items() if self._field_should_be_updated(k)}
         )
 
         self_fields = self.translate_columns_to_aliases(self_fields)
@@ -115,6 +109,13 @@ class Model(ModelRow):
 
         await self.signals.post_save.send(sender=self.__class__, instance=self)
         return self
+
+    def _field_should_be_updated(self, field_name: str) -> bool:
+        return (
+            field_name not in self.extract_related_names()
+            and field_name in self.Meta.model_fields
+            and not self.Meta.model_fields[field_name].is_denied
+        )
 
     async def save_related(  # noqa: CCR001, CFQ002
         self,

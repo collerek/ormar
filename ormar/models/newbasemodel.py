@@ -315,8 +315,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         )
 
     def _check_denied_fields(self, kwargs: Dict, excluded: Set) -> None:
-        if not self.Meta.denied_fields:
-            return
         for field_name in self.Meta.denied_fields:
             if field_name in kwargs:
                 if field_name in excluded:

@@ -975,12 +975,12 @@ async def test_bulk_create_and_update():
 # (V)  -> reverse,
 # (V)  -> many to many
 # (V/X) fix dict() - what about the "technical columns"
-# fix __repr__ for denied fields
+# (V) fix __repr__ for denied fields
 # defaults
-# self reference models
+# (V) self reference models
 # (V) forward refs on fk
 # (V) forward refs on m2m
-# default through models
+# (V) default through models
 # exclude/include
 # ordering by
 # choices?
