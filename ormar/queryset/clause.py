@@ -1,7 +1,7 @@
 import itertools
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Generator, List, TYPE_CHECKING, Tuple, Type, cast
+from typing import Any, Dict, Generator, List, Set, TYPE_CHECKING, Tuple, Type, cast
 
 import sqlalchemy
 
@@ -191,6 +191,7 @@ class QueryClause:
 
         self._select_related = select_related[:]
         self.filter_clauses = filter_clauses[:]
+        self.used_aliases: Set[str] = set()
 
         self.model_cls = model_cls
         self.table = self.model_cls.Meta.table
@@ -281,18 +282,33 @@ class QueryClause:
         """
         prefixes = self._parse_related_prefixes(select_related=select_related)
 
-        manager = self.model_cls.Meta.alias_manager
         filtered_prefixes = sorted(prefixes, key=lambda x: x.table_prefix)
         grouped = itertools.groupby(filtered_prefixes, key=lambda x: x.table_prefix)
         for _, group in grouped:
             sorted_group = sorted(
-                group, key=lambda x: len(x.relation_str), reverse=True
+                group, key=lambda x: (len(x.relation_str), x.relation_str), reverse=True
             )
-            for prefix in sorted_group[:-1]:
-                if prefix.alias_key not in manager:
-                    if prefix.relation_field.is_multi:
-                        manager.add_alias(alias_key=prefix.alias_key + "__multi")
-                    manager.add_alias(alias_key=prefix.alias_key)
+            self._register_all_but_shortest_duplicated_by_relation_string(
+                same_prefix_group=sorted_group
+            )
+
+    def _register_all_but_shortest_duplicated_by_relation_string(
+        self, same_prefix_group: List
+    ) -> None:
+        manager = self.model_cls.Meta.alias_manager
+        for prefix in same_prefix_group[:-1]:
+            method = (
+                "add_alias"
+                if prefix.alias_key not in manager
+                else "resolve_complex_relation_alias"
+            )
+            if prefix.relation_field.is_multi:
+                multi_alias = getattr(manager, method)(
+                    alias_key=prefix.alias_key + "__multi"
+                )
+                self.used_aliases.add(multi_alias)
+            alias = getattr(manager, method)(alias_key=prefix.alias_key)
+            self.used_aliases.add(alias)
 
     def _parse_related_prefixes(self, select_related: List[str]) -> List[Prefix]:
         """
@@ -315,6 +331,7 @@ class QueryClause:
                 ),
             )
             prefixes.append(prefix)
+            self.used_aliases.add(prefix.table_prefix)
         return prefixes
 
     def _get_related_field_from_relation_str(self, related: str) -> "BaseField":
@@ -356,5 +373,5 @@ class QueryClause:
         """
         manager = self.model_cls.Meta.alias_manager
         new_alias = manager.resolve_relation_alias(self.model_cls, action.related_str)
-        if "__" in action.related_str and new_alias:
+        if "__" in action.related_str and new_alias and new_alias in self.used_aliases:
             action.table_prefix = new_alias

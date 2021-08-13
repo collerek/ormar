@@ -162,6 +162,18 @@ class AliasManager:
         alias = self._aliases_new.get(f"{from_model.get_name()}_{relation_name}", "")
         return alias
 
+    def resolve_complex_relation_alias(self, alias_key: str) -> str:
+        """
+        Given full complex relation str returns the alias for this relation.
+
+        :param alias_key: name of the relation field
+        :type alias_key: str
+        :return: alias of the relation
+        :rtype: str
+        """
+        alias = self._aliases_new.get(alias_key, "")
+        return alias
+
     def resolve_relation_alias_after_complex(
         self,
         source_model: Union[Type["Model"], Type["ModelRow"]],
