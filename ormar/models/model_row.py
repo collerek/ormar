@@ -25,7 +25,7 @@ class ModelRow(NewBaseModel):
     @classmethod
     def from_row(  # noqa: CFQ002
         cls,
-        row: sqlalchemy.engine.ResultProxy,
+        row: sqlalchemy.engine.RowProxy,
         source_model: Type["Model"],
         select_related: List = None,
         related_models: Any = None,
@@ -154,7 +154,7 @@ class ModelRow(NewBaseModel):
     def _populate_nested_models_from_row(  # noqa: CFQ002
         cls,
         item: dict,
-        row: sqlalchemy.engine.ResultProxy,
+        row: sqlalchemy.engine.RowProxy,
         source_model: Type["Model"],
         related_models: Any,
         excludable: ExcludableItems,
@@ -264,7 +264,7 @@ class ModelRow(NewBaseModel):
     @classmethod
     def _populate_through_instance(  # noqa: CFQ002
         cls,
-        row: sqlalchemy.engine.ResultProxy,
+        row: sqlalchemy.engine.RowProxy,
         item: Dict,
         related: str,
         excludable: ExcludableItems,
@@ -302,7 +302,7 @@ class ModelRow(NewBaseModel):
     @classmethod
     def _create_through_instance(
         cls,
-        row: sqlalchemy.engine.ResultProxy,
+        row: sqlalchemy.engine.RowProxy,
         through_name: str,
         related: str,
         excludable: ExcludableItems,
@@ -344,7 +344,7 @@ class ModelRow(NewBaseModel):
     def extract_prefixed_table_columns(
         cls,
         item: dict,
-        row: sqlalchemy.engine.result.ResultProxy,
+        row: sqlalchemy.engine.result.RowProxy,
         table_prefix: str,
         excludable: ExcludableItems,
     ) -> Dict:
@@ -374,39 +374,90 @@ class ModelRow(NewBaseModel):
         and values are database values
         :rtype: Dict
         """
+        names_to_extract = cls._get_fields_to_extract_from_row(
+            excludable=excludable, table_prefix=table_prefix
+        )
+        column_prefix = table_prefix + "_" if table_prefix else ""
+        for column_name, name in names_to_extract.items():
+            if name in item:
+                continue
+            model_field = cls.Meta.model_fields[name]
+            if model_field.is_compound:
+                item[name] = cls._extract_compound_model_fields(
+                    row=row,
+                    column_prefix=column_prefix,
+                    model_field=cast("ForeignKeyField", model_field),
+                )
+            else:
+                prefixed_name = f"{column_prefix}{column_name}"
+                item[name] = row[prefixed_name]
+
+        return item
+
+    @classmethod
+    def _get_fields_to_extract_from_row(
+        cls, table_prefix: str, excludable: ExcludableItems,
+    ) -> Dict:
+        """
+        Extracts the names of the columns that should be extracted from db row
+
+        :param table_prefix: prefix of the table from AliasManager
+        each pair of tables have own prefix (two of them depending on direction) -
+        used in joins to allow multiple joins to the same table.
+        :type table_prefix: str
+        :param excludable: structure of fields to include and exclude
+        :type excludable: ExcludableItems
+        :return: dictionary of db column names and field names to extract
+        :rtype: Dict
+        """
         selected_columns = cls.own_table_columns(
             model=cls, excludable=excludable, alias=table_prefix, use_alias=False,
         )
 
-        column_prefix = table_prefix + "_" if table_prefix else ""
-        for column in cls.Meta.table.columns:
-            alias = cls.get_column_name_from_alias(column.name)
-            if alias not in item and alias in selected_columns:
-                model_field = cls.Meta.model_fields[alias]
-                if model_field.is_compound:
-                    reversed_names = cast(
-                        Dict[str, str], model_field.get_reversed_names()
-                    )
-                    related_dict: Dict[str, Any] = {}
-                    for name, pk_name in reversed_names.items():
-                        prefixed_name = f"{column_prefix}{name}"
-                        target_name = model_field.to.get_column_name_from_alias(pk_name)
-                        sub_field = model_field.to.Meta.model_fields[target_name]
-                        if sub_field.is_compound:
-                            target_value = dict()
-                            for sub_own_name, sub_other_name in sub_field.names.items():
-                                target_value[sub_own_name] = row[
-                                    f"{column_prefix}{model_field.names.get(sub_other_name)}"
-                                ]
-                        else:
-                            target_value = row[prefixed_name]
-                        related_dict[
-                            model_field.to.get_column_name_from_alias(pk_name)
-                        ] = target_value
-                    related_dict["__pk_only__"] = True
-                    item[alias] = related_dict
-                else:
-                    prefixed_name = f"{column_prefix}{column.name}"
-                    item[alias] = row[prefixed_name]
+        all_names = {
+            column.name: cls.get_column_name_from_alias(column.name)
+            for column in cls.Meta.table.columns
+        }
+        return {
+            column_name: name
+            for column_name, name in all_names.items()
+            if name in selected_columns
+        }
 
-        return item
+    @classmethod
+    def _extract_compound_model_fields(
+        cls,
+        row: sqlalchemy.engine.result.RowProxy,
+        column_prefix: str,
+        model_field: "ForeignKeyField",
+    ) -> Dict:
+        """
+        Extracts the data from rows for multi-column fields (like fk that has 2 column)
+        :param row: raw data coming from database
+        :type row: sqlalchemy.engine.result.RowProxy
+        :param column_prefix: prefix of a column
+        :type column_prefix: str
+        :param model_field: relation field
+        :type model_field: "ForeignKeyField"
+        :return: extracted values dictionary
+        :rtype: Dict
+        """
+        reversed_names = cast(Dict[str, str], model_field.get_reversed_names())
+        related_dict: Dict[str, Any] = {}
+        for name, pk_name in reversed_names.items():
+            prefixed_name = f"{column_prefix}{name}"
+            target_name = model_field.to.get_column_name_from_alias(pk_name)
+            sub_field = model_field.to.Meta.model_fields[target_name]
+            if sub_field.is_compound:
+                target_value = dict()
+                for sub_own_name, sub_other_name in sub_field.names.items():
+                    target_value[sub_own_name] = row[
+                        f"{column_prefix}{model_field.names.get(sub_other_name)}"
+                    ]
+            else:
+                target_value = row[prefixed_name]
+            related_dict[
+                model_field.to.get_column_name_from_alias(pk_name)
+            ] = target_value
+        related_dict["__pk_only__"] = True
+        return related_dict

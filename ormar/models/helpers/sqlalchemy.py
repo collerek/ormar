@@ -290,10 +290,8 @@ def populate_meta_tablename_columns_and_pk(
 
     if not new_model.Meta.orders_by:
         # by default we sort by pk name(s) if other option not provided
-        if isinstance(new_model.pk_name, tuple):
-            new_model.Meta.orders_by.extend(new_model.pk_name)
-        else:
-            new_model.Meta.orders_by.append(new_model.pk_name)
+        new_model.Meta.orders_by.extend(new_model.pk_aliases_list)
+
     return new_model
 
 

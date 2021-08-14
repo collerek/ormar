@@ -186,17 +186,21 @@ class SqlJoin:
         if self.next_alias not in self.used_aliases:
             self._process_join()
         else:
-            if "__" in self.relation_str and self.source_model:
-                relation_key = f"{self.source_model.get_name()}_{self.relation_str}"
-                if self.target_field.is_multi:
-                    relation_key += "__multi"
-                if relation_key not in self.alias_manager:
-                    self.next_alias = self.alias_manager.add_alias(
-                        alias_key=relation_key
-                    )
-                else:
-                    self.next_alias = self.alias_manager[relation_key]
-                self._process_join()
+            self._switch_to_complex_prefix_based_on_relation_str()
+
+    def _switch_to_complex_prefix_based_on_relation_str(self) -> None:
+        """
+        Replace table prefix for duplicate relations in same query
+        """
+        if "__" in self.relation_str and self.source_model:
+            relation_key = f"{self.source_model.get_name()}_{self.relation_str}"
+            if self.target_field.is_multi:
+                relation_key += "__multi"
+            if relation_key not in self.alias_manager:
+                self.next_alias = self.alias_manager.add_alias(alias_key=relation_key)
+            else:
+                self.next_alias = self.alias_manager[relation_key]
+            self._process_join()
 
     def _process_following_joins(self) -> None:
         """

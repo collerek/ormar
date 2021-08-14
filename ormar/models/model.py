@@ -362,15 +362,22 @@ class Model(ModelRow):
             if isinstance(target_value, ormar.Model):
                 target_value = target_value.pk
             if isinstance(target_value, dict):
-                target_field = self.Meta.model_fields[pk_name]
-                reversed_names = cast(Dict[str, str], target_field.get_reversed_names())
-                for own_name, remote_name in reversed_names.items():
-                    expr = expr.where(
-                        self.Meta.table.c.get(own_name) == target_value[remote_name]
-                    )
+                self._process_composite_primary_keys(
+                    target_value=target_value, pk_name=pk_name, expr=expr
+                )
             else:
                 expr = expr.where(
                     self.Meta.table.c.get(self.get_column_alias(pk_name))
                     == target_value
                 )
         return expr
+
+    def _process_composite_primary_keys(
+        self, target_value: Dict, pk_name: str, expr: Any
+    ) -> None:
+        target_field = self.Meta.model_fields[pk_name]
+        reversed_names = cast(Dict[str, str], target_field.get_reversed_names())
+        for own_name, remote_name in reversed_names.items():
+            expr = expr.where(
+                self.Meta.table.c.get(own_name) == target_value[remote_name]
+            )
