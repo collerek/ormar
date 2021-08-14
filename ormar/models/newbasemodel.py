@@ -247,26 +247,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         excluded: Set[str] = kwargs.pop("__excluded__", set())
         if "pk" in kwargs:
-            value = kwargs.pop("pk")
-            if self.__class__.has_pk_constraint:
-                for key, val in value.items():
-                    alias = self.get_column_name_from_alias(key)
-                    model_field = self.Meta.model_fields[alias]
-                    if model_field.is_compound:
-                        reversed_names = cast(
-                            Dict[str, str], model_field.get_reversed_names()
-                        )
-                        related_dict: Dict[str, Any] = {}
-                        for name, pk_name in reversed_names.items():
-                            related_dict[
-                                model_field.to.get_column_name_from_alias(pk_name)
-                            ] = value[name]
-                        related_dict["__pk_only__"] = True
-                        kwargs[alias] = related_dict
-                    else:
-                        kwargs[alias] = val
-            else:
-                kwargs[self.Meta.pkname] = value
+            self._replace_pk_alias_with_actual_pk_fields_value(kwargs=kwargs)
 
         # extract through fields
         through_tmp_dict = dict()
@@ -297,6 +278,32 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             new_kwargs[field_to_nullify] = None
 
         return new_kwargs, through_tmp_dict, excluded
+
+    def _replace_pk_alias_with_actual_pk_fields_value(self, kwargs: Dict) -> None:
+        value = kwargs.pop("pk")
+        if self.__class__.has_pk_constraint:
+            for key, target_value in value.items():
+                name = self.get_column_name_from_alias(key)
+                model_field = self.Meta.model_fields[name]
+                if model_field.is_compound:
+                    target_value = self._extract_compound_field_values_from_kwargs(
+                        model_field=cast("ForeignKeyField", model_field), value=value
+                    )
+                kwargs[name] = target_value
+        else:
+            kwargs[self.Meta.pkname] = value
+
+    def _extract_compound_field_values_from_kwargs(
+        self, model_field: "ForeignKeyField", value: Dict
+    ) -> Dict:
+        reversed_names = cast(Dict[str, str], model_field.get_reversed_names())
+        related_dict: Dict[str, Any] = {}
+        for name, pk_name in reversed_names.items():
+            related_dict[model_field.to.get_column_name_from_alias(pk_name)] = value[
+                name
+            ]
+        related_dict["__pk_only__"] = True
+        return related_dict
 
     def _initialize_internal_attributes(self) -> None:
         """

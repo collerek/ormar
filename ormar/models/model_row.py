@@ -442,6 +442,7 @@ class ModelRow(NewBaseModel):
         :return: extracted values dictionary
         :rtype: Dict
         """
+        # TODO: very similar to handling of the kwargs in newbasemodel
         reversed_names = cast(Dict[str, str], model_field.get_reversed_names())
         related_dict: Dict[str, Any] = {}
         for name, pk_name in reversed_names.items():

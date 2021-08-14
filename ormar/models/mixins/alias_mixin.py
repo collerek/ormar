@@ -42,7 +42,7 @@ class AliasMixin:
                 if field.is_denied:
                     continue
                 aliases_dict[field.get_alias()] = field_name
-                if field.is_compound and field.names:
+                if field.is_compound:
                     for name in field.names.values():
                         if name not in aliases_dict:
                             aliases_dict[name] = field_name
