@@ -44,23 +44,27 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return new_kwargs
 
     @classmethod
-    def populate_compound_pk(cls, new_kwargs: dict) -> dict:
+    def populate_compound_pk(cls, new_kwargs: Dict) -> Dict:
         pk_names = cls.pk_names_list
         for name in pk_names:
-            if (
-                cls.Meta.model_fields[name].is_relation
-                and cls.Meta.model_fields[name].is_compound
-            ):
-                names = cls.Meta.model_fields[name].names
-                for own_name, parent_name in names.items():
-                    target_name = cls.Meta.model_fields[
-                        name
-                    ].to.get_column_name_from_alias(own_name)
-                    target_value = new_kwargs[name].get(target_name)
-                    if parent_name in new_kwargs:
-                        new_kwargs[parent_name] = target_value
+            if cls.Meta.model_fields[name].is_compound:
+                cls._extract_compound_pk_values_from_kwargs(
+                    new_kwargs=new_kwargs, name=name
+                )
                 new_kwargs.pop(name)
         return new_kwargs
+
+    @classmethod
+    def _extract_compound_pk_values_from_kwargs(
+        cls, new_kwargs: Dict, name: str
+    ) -> None:
+        names = cls.Meta.model_fields[name].names
+        for own_name, parent_name in names.items():
+            if parent_name in new_kwargs:
+                target_model = cls.Meta.model_fields[name].to
+                target_name = target_model.get_column_name_from_alias(own_name)
+                target_value = new_kwargs[name].get(target_name)
+                new_kwargs[parent_name] = target_value
 
     @classmethod
     def _remove_not_ormar_fields(cls, new_kwargs: dict) -> dict:

@@ -605,14 +605,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         for field in fields:
             if not relation_map or field not in relation_map:
-                nested_model = getattr(self, field, None)
-                if nested_model and not self.Meta.model_fields[field].nullable:
-                    if isinstance(nested_model, MutableSequence):  # pragma no cover
-                        dict_instance[field] = [
-                            submodel.pk for submodel in nested_model
-                        ]
-                    else:
-                        dict_instance[field] = nested_model.pk
+                self._populate_not_nullable_relation_with_pk_values(
+                    field=field, dict_instance=dict_instance
+                )
                 continue
             try:
                 nested_model = getattr(self, field)
@@ -643,6 +638,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             except ReferenceError:
                 dict_instance[field] = None
         return dict_instance
+
+    def _populate_not_nullable_relation_with_pk_values(
+        self, field: str, dict_instance: Dict
+    ) -> None:
+        nested_model = getattr(self, field, None)
+        if nested_model is not None and not self.Meta.model_fields[field].nullable:
+            if isinstance(nested_model, MutableSequence):  # pragma no cover
+                dict_instance[field] = [submodel.pk for submodel in nested_model]
+            else:
+                dict_instance[field] = nested_model.pk
 
     def dict(  # type: ignore # noqa A003
         self,

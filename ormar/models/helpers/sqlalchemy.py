@@ -372,25 +372,26 @@ def update_column_definition(
     :rtype: None
     """
     columns = model.Meta.columns
-    fields_to_populate = [field.get_alias()]
-    if field.is_compound:
-        fields_to_populate = list(field.names.values())
-    for ind, column in enumerate(columns):
-        if column.name in fields_to_populate and isinstance(
-            column.type, sqlalchemy.sql.sqltypes.NullType
-        ):
-            if not field.is_compound:
-                new_column = field.get_column(column.name)
-                columns[ind] = new_column
-                break
-            else:
-                related_name = (field.get_reversed_names() or dict()).get(column.name)
-                field_name = field.to.get_column_name_from_alias(
-                    cast(str, related_name)
-                )
-                target_field = field.to.Meta.model_fields[field_name]
-                new_column = target_field.get_column(column.name)
-                columns[ind] = new_column
+    fields_to_populate = (
+        [field.get_alias()] if not field.is_compound else list(field.names.values())
+    )
+    columns_to_set = [
+        (ind, column)
+        for ind, column in enumerate(columns)
+        if column.name in fields_to_populate
+        and isinstance(column.type, sqlalchemy.sql.sqltypes.NullType)
+    ]
+    for column_to_set in columns_to_set:
+        ind, column = column_to_set
+        if not field.is_compound:
+            new_column = field.get_column(column.name)
+            columns[ind] = new_column
+        else:
+            related_name = (field.get_reversed_names() or dict()).get(column.name)
+            field_name = field.to.get_column_name_from_alias(cast(str, related_name))
+            target_field = field.to.Meta.model_fields[field_name]
+            new_column = target_field.get_column(column.name)
+            columns[ind] = new_column
 
 
 def remove_null_column_to_compound_models_fk(

@@ -100,37 +100,39 @@ def process_compound_foreign_keys(new_model: Type["Model"]) -> None:
     :type new_model: Type["Model"]
     """
     model_fields = new_model.Meta.model_fields
-    iterate_fields = list(model_fields.values())
+    iterate_fields = [
+        field
+        for field in model_fields.values()
+        if field.is_compound and not field.is_multi
+    ]
+
     for field in iterate_fields:
-        if field.is_relation and field.is_compound and not field.is_multi:
-            for related_name, name in field.names.items():
-                if name not in [x.name for x in new_model.Meta.columns]:
-                    field_name = field.to.get_column_name_from_alias(related_name)
-                    target_field = field.to.Meta.model_fields[field_name]
-                    copied_field = copy.deepcopy(target_field)
-                    copied_field.name = name
-                    copied_field.db_alias = name
-                    copied_field.owner = new_model
-                    copied_field.is_denied = True
-                    copied_field.primary_key = False
-                    copied_field.nullable = True
-                    model_fields[name] = copied_field
-                    target_pydantic_field = copy.deepcopy(
-                        field.to.__fields__[field_name]
-                    )
-                    target_pydantic_field.name = name
-                    target_pydantic_field.alias = name
-                    target_pydantic_field.required = False
-                    new_model.__fields__[name] = target_pydantic_field
-                    new_model.Meta.columns.append(
-                        copied_field.get_column(copied_field.get_alias())
-                    )
-                    setattr(
-                        new_model,
-                        name,
-                        DeniedDescriptor(name=name, relation_name=field.name),
-                    )
-                    new_model.Meta.denied_fields.add(name)
+        for related_name, name in field.names.items():
+            if name not in [x.name for x in new_model.Meta.columns]:
+                field_name = field.to.get_column_name_from_alias(related_name)
+                target_field = field.to.Meta.model_fields[field_name]
+                copied_field = copy.deepcopy(target_field)
+                copied_field.name = name
+                copied_field.db_alias = name
+                copied_field.owner = new_model
+                copied_field.is_denied = True
+                copied_field.primary_key = False
+                copied_field.nullable = True
+                model_fields[name] = copied_field
+                target_pydantic_field = copy.deepcopy(field.to.__fields__[field_name])
+                target_pydantic_field.name = name
+                target_pydantic_field.alias = name
+                target_pydantic_field.required = False
+                new_model.__fields__[name] = target_pydantic_field
+                new_model.Meta.columns.append(
+                    copied_field.get_column(copied_field.get_alias())
+                )
+                setattr(
+                    new_model,
+                    name,
+                    DeniedDescriptor(name=name, relation_name=field.name),
+                )
+                new_model.Meta.denied_fields.add(name)
 
 
 def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
