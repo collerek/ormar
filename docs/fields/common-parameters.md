@@ -101,7 +101,23 @@ Sample usage:
 
 !!!info
     `server_default` is passed straight to sqlalchemy table definition so you can read more in [server default][server default] sqlalchemy documentation
- 
+
+## name
+
+`name`: `Any` = `None` -> Defaults to None
+
+Allows you to specify a column name alias to be used. Useful for existing database structures that use a reserved keyword. 
+
+Take for example the snippet below. `from`, being a reserved word in python, will prevent you from creating a model with that column name. Changing the model name 
+
+to `from_` and adding the parameter `name='from'` will cause ormar to use `from` for the database column name. 
+
+```
+ ...
+ from_: str = ormar.String(max_length=15, name='from')
+ ...
+```
+
 ## index
 
 `index`: `bool` = `False` -> by default False, 
