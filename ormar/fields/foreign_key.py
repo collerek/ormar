@@ -583,33 +583,43 @@ class ForeignKeyField(BaseField):
         :return: (if needed) registered Model
         :rtype: Model
         """
-        if len(value.keys()) == 1 and list(value.keys())[0] == self.to.pk_name:
+        if set(value.keys()) == set(self.to.pk_names_list):
             value["__pk_only__"] = True
         if self.to.has_pk_constraint:
-            if set(value.keys()) == set(self.to.pk_names_list):
-                value["__pk_only__"] = True
-            pk_names = self.to.pk_names_list
-            for name in pk_names:
-                field = self.to.Meta.model_fields[name]
-                if field.names and len(field.names) > 1:
-                    nested_dict = dict()
-                    for other_name, own_name in field.names.items():
-                        target_value = value.get(name, {})
-                        nested_dict[
-                            field.to.get_column_name_from_alias(other_name)
-                        ] = target_value.get(other_name, value.get(own_name))
-                        if (
-                            own_name not in self.to.Meta.model_fields
-                            or self.to.Meta.model_fields[own_name].is_denied
-                        ):
-                            value.pop(own_name, None)
-                    if set(nested_dict.keys()) == set(field.to.pk_names_list):
-                        nested_dict["__pk_only__"] = True
-                    value[name] = nested_dict
+            pk_fields = [
+                self.to.Meta.model_fields[name] for name in self.to.pk_names_list
+            ]
+            compound_pk_fields = [
+                field
+                for field in pk_fields
+                if field.is_compound and len(field.names) > 1
+            ]
+            for field in compound_pk_fields:
+                self._construct_composite_relation_as_nested_dict(
+                    value=value, field=cast("ForeignKeyField", field)
+                )
         model = self.to(**value)
         if to_register:
             self.register_relation(model=model, child=child)
         return model
+
+    def _construct_composite_relation_as_nested_dict(
+        self, value: Dict, field: "ForeignKeyField"
+    ) -> None:
+        nested_dict = dict()
+        for other_name, own_name in field.names.items():
+            target_value = value.get(field.name, {})
+            nested_dict[
+                field.to.get_column_name_from_alias(other_name)
+            ] = target_value.get(other_name, value.get(own_name))
+            if (
+                own_name not in self.to.Meta.model_fields
+                or self.to.Meta.model_fields[own_name].is_denied
+            ):
+                value.pop(own_name, None)
+        if set(nested_dict.keys()) == set(field.to.pk_names_list):
+            nested_dict["__pk_only__"] = True
+        value[field.name] = nested_dict
 
     def _construct_model_from_pk(
         self, value: Any, child: "Model", to_register: bool

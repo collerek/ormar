@@ -1,8 +1,9 @@
 import datetime
-from typing import Any, Dict, TYPE_CHECKING, Type
+from typing import Any, Dict, TYPE_CHECKING, Tuple, Type
 
 import sqlalchemy
 from sqlalchemy import text
+from sqlalchemy.sql.elements import BooleanClauseList
 
 import ormar  # noqa: I100, I202
 from ormar.exceptions import QueryDefinitionError
@@ -144,33 +145,12 @@ class FilterAction(QueryAction):
         if isinstance(self.filter_value, ormar.Model):
             self.filter_value = self.filter_value.pk
 
-        self._convert_dates_if_required()
+        op_attr, filter_value = self._get_operator_attribute_and_filter_value()
 
-        op_attr = FILTER_OPERATORS[self.operator]
-        if self.operator == "isnull":
-            op_attr = "is_" if self.filter_value else "isnot"
-            filter_value = None
-        else:
-            filter_value = self.filter_value
-        # TODO: Adjust for composite pks -> there is no column with this name in db
         if isinstance(filter_value, dict):
-            # composite model
-            if op_attr != "__eq__":
-                raise QueryDefinitionError(
-                    "You cannot use ormar.Model in filters " "different than equals!"
-                )
-            clauses = [
-                getattr(self._get_composite_pk_column(key), op_attr)(filter_value[key])
-                for key in filter_value.keys()
-            ]
-            clauses = [
-                self._compile_clause(
-                    clause,
-                    modifiers={"escape": "\\" if self.has_escaped_character else None},
-                )
-                for clause in clauses
-            ]
-            clause = sqlalchemy.sql.and_(*clauses)
+            clause = self._prepare_composite_primary_keys_filter(
+                op_attr=op_attr, filter_value=filter_value
+            )
         else:
             clause = getattr(self.column, op_attr)(filter_value)
             clause = self._compile_clause(
@@ -178,6 +158,37 @@ class FilterAction(QueryAction):
                 modifiers={"escape": "\\" if self.has_escaped_character else None},
             )
         return clause
+
+    def _get_operator_attribute_and_filter_value(self) -> Tuple[str, Any]:
+        op_attr = FILTER_OPERATORS[self.operator]
+
+        self._convert_dates_if_required()
+        filter_value = self.filter_value
+
+        if self.operator == "isnull":
+            op_attr = "is_" if self.filter_value else "isnot"
+            filter_value = None
+        return op_attr, filter_value
+
+    def _prepare_composite_primary_keys_filter(
+        self, op_attr: str, filter_value: Dict
+    ) -> BooleanClauseList:
+        if op_attr != "__eq__":
+            raise QueryDefinitionError(
+                "You cannot use ormar.Model in filters " "different than equals!"
+            )
+        clauses = [
+            getattr(self._get_composite_pk_column(key), op_attr)(filter_value[key])
+            for key in filter_value.keys()
+        ]
+        clauses = [
+            self._compile_clause(
+                clause,
+                modifiers={"escape": "\\" if self.has_escaped_character else None},
+            )
+            for clause in clauses
+        ]
+        return sqlalchemy.sql.and_(*clauses)
 
     def _convert_dates_if_required(self) -> None:
         """

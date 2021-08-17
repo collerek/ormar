@@ -34,26 +34,40 @@ class AliasMixin:
         :return: field name if set, otherwise passed alias (db name)
         :rtype: str
         """
+        if cls.Meta.aliases_dict:
+            return cls.Meta.aliases_dict.get(alias, alias)
+
+        aliases_dict = {}
+        fields_to_cache = [
+            (field_name, field)
+            for field_name, field in cls.Meta.model_fields.items()
+            if not field.is_denied
+        ]
+        for cacheable_field in fields_to_cache:
+            field_name, field = cacheable_field
+            aliases_dict[field.get_alias()] = field_name
+            if field.is_compound:
+                names_to_set = [
+                    name for name in field.names.values() if name not in aliases_dict
+                ]
+                for name in names_to_set:
+                    aliases_dict[name] = field_name
+        cls._cache_aliases_dict_if_model_doesnt_have_unresolved_references(
+            aliases_dict=aliases_dict
+        )
+        return aliases_dict.get(alias, alias)
+
+    @classmethod
+    def _cache_aliases_dict_if_model_doesnt_have_unresolved_references(
+        cls, aliases_dict: Dict
+    ) -> None:
         # TODO: Verify cache is not created before expanding relations if
         # expanding relations from ManyToOne side will be allowed
-        if not cls.Meta.aliases_dict:
-            aliases_dict = {}
-            for field_name, field in cls.Meta.model_fields.items():
-                if field.is_denied:
-                    continue
-                aliases_dict[field.get_alias()] = field_name
-                if field.is_compound:
-                    for name in field.names.values():
-                        if name not in aliases_dict:
-                            aliases_dict[name] = field_name
-            if not any(
-                model_field.has_unresolved_forward_refs()
-                for model_field in cls.Meta.model_fields.values()
-            ):
-                cls.Meta.aliases_dict = aliases_dict
-        else:
-            aliases_dict = cls.Meta.aliases_dict
-        return aliases_dict.get(alias, alias)  # if not found it's already a name
+        if not any(
+            model_field.has_unresolved_forward_refs()
+            for model_field in cls.Meta.model_fields.values()
+        ):
+            cls.Meta.aliases_dict = aliases_dict
 
     @classmethod
     def translate_columns_to_aliases(cls, new_kwargs: Dict) -> Dict:

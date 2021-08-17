@@ -32,6 +32,19 @@ class MergeModelMixin:
         :rtype: List["Model"]
         """
         merged_rows: List["Model"] = []
+        for group in cls.group_models_by_primary_keys_values(result_rows).values():
+            model = group.pop(0)
+            if group:
+                for next_model in group:
+                    model = cls.merge_two_instances(next_model, model)
+            merged_rows.append(model)
+
+        return merged_rows
+
+    @classmethod
+    def group_models_by_primary_keys_values(
+        cls, result_rows: List["Model"]
+    ) -> OrderedDict:
         grouped_instances: OrderedDict = OrderedDict()
 
         for model in result_rows:
@@ -40,15 +53,7 @@ class MergeModelMixin:
             else:
                 key = model.pk
             grouped_instances.setdefault(key, []).append(model)
-
-        for group in grouped_instances.values():
-            model = group.pop(0)
-            if group:
-                for next_model in group:
-                    model = cls.merge_two_instances(next_model, model)
-            merged_rows.append(model)
-
-        return merged_rows
+        return grouped_instances
 
     @classmethod
     def merge_two_instances(
