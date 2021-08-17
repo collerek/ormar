@@ -104,18 +104,28 @@ Sample usage:
 
 ## name
 
-`name`: `Any` = `None` -> Defaults to None
+`name`: `str` = `None` -> defaults to None
 
-Allows you to specify a column name alias to be used. Useful for existing database structures that use a reserved keyword. 
+Allows you to specify a column name alias to be used. 
 
-Take for example the snippet below. `from`, being a reserved word in python, will prevent you from creating a model with that column name. Changing the model name 
+Useful for existing database structures that use a reserved keyword, or if you would like to use database name that is different from `ormar` field name. 
 
-to `from_` and adding the parameter `name='from'` will cause ormar to use `from` for the database column name. 
+Take for example the snippet below. 
 
-```
- ...
+`from`, being a reserved word in python, will prevent you from creating a model with that column name. 
+
+Changing the model name to `from_` and adding the parameter `name='from'` will cause ormar to use `from` for the database column name. 
+
+```python
+ #... rest of Model cut for brevity
  from_: str = ormar.String(max_length=15, name='from')
- ...
+```
+
+Similarly, you can change the foreign key column names in database, while keeping the desired relation name in ormar:
+
+```python
+ # ... rest of Model cut for brevity
+album: Optional[Album] = ormar.ForeignKey(Album, name="album_id")
 ```
 
 ## index
