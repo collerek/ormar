@@ -189,21 +189,29 @@ class AlreadyLoadedNode(Node):
         :rtype: List
         """
         list_of_ids = UniqueList()
-        current_id = dict()
         for model in self.models:
-            for column in column_names:
-                column = model.get_column_name_from_alias(column)
-                child = getattr(model, column)
-                if isinstance(child, ormar.Model):
-                    child = child.pk
-                if isinstance(child, dict):
-                    field = model.Meta.model_fields[column]
-                    for target_name, own_name in field.names.items():
-                        current_id[own_name] = child.get(target_name)
-                elif child is not None:
-                    current_id[model.get_column_alias(column)] = child
-            list_of_ids.append(current_id)
+            current_id = self._extract_current_primary_keys(
+                model=model, column_names=column_names
+            )
+            if current_id:
+                list_of_ids.append(current_id)
         return list_of_ids
+
+    @staticmethod
+    def _extract_current_primary_keys(model: "Model", column_names: List[str]) -> Dict:
+        current_id = dict()
+        for column in column_names:
+            column = model.get_column_name_from_alias(column)
+            child = getattr(model, column)
+            child = child.pk if isinstance(child, ormar.Model) else child
+            if isinstance(child, dict):
+                field = model.Meta.model_fields[column]
+                for target_name, own_name in field.names.items():
+                    current_id[own_name] = child.get(target_name)
+                continue
+            elif child:
+                current_id[model.get_column_alias(column)] = child
+        return current_id
 
     def _extract_simple_relation_keys(self, column_name: str) -> List:
         """
