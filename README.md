@@ -93,7 +93,6 @@ community you can say thank you and buy me a coffee or sponsor me with a monthly
     padding: 10px;
     line-height: 0px;
     height: 40px;
-">  
 ">
 <span style="color: #c9d1d9 !important;">Sponsor - Github Sponsors</span>
 </div>
