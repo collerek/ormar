@@ -22,16 +22,16 @@
 ### Overview
 
 The `ormar` package is an async mini ORM for Python, with support for **Postgres,
-MySQL**, and **SQLite**. 
+MySQL**, and **SQLite**.
 
-The main benefit of using `ormar` are:
+The main benefits of using `ormar` are:
 
 *  getting an **async ORM that can be used with async frameworks** (fastapi, starlette etc.)
-*  getting just **one model to maintain** - you don't have to maintain pydantic and other orm model (sqlalchemy, peewee, gino etc.)
+*  getting just **one model to maintain** - you don't have to maintain pydantic and other orm models (sqlalchemy, peewee, gino etc.)
 
 The goal was to create a simple ORM that can be **used directly (as request and response models) with [`fastapi`][fastapi]** that bases it's data validation on pydantic.
 
-Ormar - apart form obvious ORM in name - get it's name from ormar in swedish which means snakes, and ormar(e) in croatian which means cabinet. 
+Ormar - apart from the obvious "ORM" in name - gets its name from _ormar_ in Swedish which means _snakes_, and _ormar(e)_ in Croatian which means _cabinet_.
 
 And what's a better name for python ORM than snakes cabinet :)
 
@@ -46,8 +46,8 @@ Check out the [documentation][documentation] for details.
 **Note that for brevity most of the documentation snippets omit the creation of the database
 and scheduling the execution of functions for asynchronous run.**
 
-If you want more real life examples than in the documentation you can see [tests][tests] folder,
-since they actually have to create and connect to database in most of the tests.
+If you want more real life examples than in the documentation you can see the [tests][tests] folder,
+since they actually have to create and connect to a database in most of the tests.
 
 Yet remember that those are - well - tests and not all solutions are suitable to be used in real life applications.
 
@@ -61,22 +61,22 @@ As of now `ormar` is supported by:
 *  [`fastapi-crudrouter`](https://github.com/awtkns/fastapi-crudrouter)
 *  [`fastapi-pagination`](https://github.com/uriyyo/fastapi-pagination)
 
-If you maintain or use different library and would like it to support `ormar` let us know how we can help.
+If you maintain or use a different library and would like it to support `ormar` let us know how we can help.
 
 ### Dependencies
 
 Ormar is built with:
 
-  * [`sqlalchemy core`][sqlalchemy-core] for query building.
-  * [`databases`][databases] for cross-database async support.
-  * [`pydantic`][pydantic] for data validation.
-  * `typing_extensions` for python 3.6 - 3.7
+* [`sqlalchemy core`][sqlalchemy-core] for query building.
+* [`databases`][databases] for cross-database async support.
+* [`pydantic`][pydantic] for data validation.
+* `typing_extensions` for python 3.6 - 3.7
 
 ### License
 
-`ormar` is built as an open-source software and remain completely free (MIT license).
+`ormar` is built as open-sorce software and will remain completely free (MIT license).
 
-As I write open-source code to solve everyday problems in my work or to promote and build strong python 
+As I write open-source code to solve everyday problems in my work or to promote and build strong python
 community you can say thank you and buy me a coffee or sponsor me with a monthly amount to help ensure my work remains free and maintained.
 
 <a aria-label="Sponsor collerek" href="https://github.com/sponsors/collerek" style="text-decoration: none; color: #c9d1d9 !important;">
@@ -93,8 +93,11 @@ community you can say thank you and buy me a coffee or sponsor me with a monthly
     padding: 10px;
     line-height: 0px;
     height: 40px;
-">
-<span style="color: #c9d1d9 !important;">Sponsor - Github Sponsors</span>
+">  
+<svg aria-hidden="true" viewBox="0 0 16 16" height="16" width="16" style="fill: #db61a2">
+    <path fill-rule="evenodd" d="M4.25 2.5c-1.336 0-2.75 1.164-2.75 3 0 2.15 1.58 4.144 3.365 5.682A20.565 20.565 0 008 13.393a20.561 20.561 0 003.135-2.211C12.92 9.644 14.5 7.65 14.5 5.5c0-1.836-1.414-3-2.75-3-1.373 0-2.609.986-3.029 2.456a.75.75 0 01-1.442 0C6.859 3.486 5.623 2.5 4.25 2.5zM8 14.25l-.345.666-.002-.001-.006-.003-.018-.01a7.643 7.643 0 01-.31-.17 22.075 22.075 0 01-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.08 22.08 0 01-3.744 2.584l-.018.01-.006.003h-.002L8 14.25zm0 0l.345.666a.752.752 0 01-.69 0L8 14.25z"></path>
+</svg>
+<span style="color: #c9d1d9 !important;">Sponsor</span>
 </div>
 </a>
 
@@ -106,7 +109,7 @@ tool that can help you with translating existing sqlalchemy orm models so you do
 **Beta** versions available at github: [`sqlalchemy-to-ormar`](https://github.com/collerek/sqlalchemy-to-ormar)
 or simply `pip install sqlalchemy-to-ormar`
 
-**`sqlalchemy-to-ormar` can be used in pair with `sqlacodegen` to auto-map/ generate `ormar` models from existing database, even if you don't use the `sqlalchemy` for your project.**
+`sqlalchemy-to-ormar` can be used in pair with `sqlacodegen` to auto-map/ generate `ormar` models from existing database, even if you don't use `sqlalchemy` for your project.
 
 ### Migrations & Database creation
 
@@ -132,30 +135,30 @@ engine = sqlalchemy.create_engine(DATABASE_URL)
 metadata.create_all(engine)
 ```
 
-For a sample configuration of alembic and more information regarding migrations and 
+For a sample configuration of alembic and more information regarding migrations and
 database creation visit [migrations][migrations] documentation section.
 
 ### Package versions
 **ormar is still under development:**
 We recommend pinning any dependencies (with i.e. `ormar~=0.9.1`)
 
-`ormar` also follows the release numeration that breaking changes bump the major number, 
+`ormar` also follows the release numeration that breaking changes bump the major number,
 while other changes and fixes bump minor number, so with the latter you should be safe to
 update, yet always read the [releases][releases] docs before.
 `example: (0.5.2 -> 0.6.0 - breaking, 0.5.2 -> 0.5.3 - non breaking)`.
 
 ### Asynchronous Python
 
-Note that `ormar` is an asynchronous ORM, which means that you have to `await` the calls to 
+Note that `ormar` is an asynchronous ORM, which means that you have to `await` the calls to
 the methods, that are scheduled for execution in an event loop. Python has a builtin module
 [`asyncio`][asyncio] that allows you to do just that.
 
-Note that most of "normal" python interpreters do not allow execution of `await` 
-outside of a function (cause you actually schedule this function for delayed execution 
+Note that most "normal" python interpreters do not allow execution of `await`
+outside of a function (because you actually schedule this function for delayed execution
 and don't get the result immediately).
 
-In a modern web frameworks (like `fastapi`), the framework will handle this for you, but if
-you plan to do this on your own you need to perform this manually like described in a 
+In a modern web framework (like `fastapi`), the framework will handle this for you, but if
+you plan to do this on your own you need to perform this manually like described in the
 quick start below.
 
 ### Quick Start
@@ -334,20 +337,38 @@ async def delete():
 
 async def joins():
     # Tho join two models use select_related
+    
+    # Django style
     book = await Book.objects.select_related("author").get(title="The Hobbit")
+    # Python style
+    book = await Book.objects.select_related(Book.author).get(
+        Book.title == "The Hobbit"
+    )
+
     # now the author is already prefetched
     assert book.author.name == "J.R.R. Tolkien"
 
     # By default you also get a second side of the relation
     # constructed as lowercase source model name +'s' (books in this case)
     # you can also provide custom name with parameter related_name
+    
+    # Django style
     author = await Author.objects.select_related("books").all(name="J.R.R. Tolkien")
+    # Python style
+    author = await Author.objects.select_related(Author.books).all(
+        Author.name == "J.R.R. Tolkien"
+    )
     assert len(author[0].books) == 3
 
     # for reverse and many to many relations you can also prefetch_related
     # that executes a separate query for each of related models
 
+    # Django style
     author = await Author.objects.prefetch_related("books").get(name="J.R.R. Tolkien")
+    # Python style
+    author = await Author.objects.prefetch_related(Author.books).get(
+        Author.name == "J.R.R. Tolkien"
+    )
     assert len(author.books) == 3
 
     # to read more about relations
@@ -627,39 +648,39 @@ Available Model Fields (with required args - optional ones in docs):
 ### Available fields options
 The following keyword arguments are supported on all field types.
 
-  * `primary_key: bool`
-  * `nullable: bool`
-  * `default: Any`
-  * `server_default: Any`
-  * `index: bool`
-  * `unique: bool`
-  * `choices: typing.Sequence`
-  * `name: str`
-  * `pydantic_only: bool`
+* `primary_key: bool`
+* `nullable: bool`
+* `default: Any`
+* `server_default: Any`
+* `index: bool`
+* `unique: bool`
+* `choices: typing.Sequence`
+* `name: str`
+* `pydantic_only: bool`
 
 All fields are required unless one of the following is set:
 
-  * `nullable` - Creates a nullable column. Sets the default to `None`.
-  * `default` - Set a default value for the field. **Not available for relation fields**
-  * `server_default` - Set a default value for the field on server side (like sqlalchemy's `func.now()`). **Not available for relation fields**
-  * `primary key` with `autoincrement` - When a column is set to primary key and autoincrement is set on this column. 
-Autoincrement is set by default on int primary keys. 
-  * `pydantic_only` - Field is available only as normal pydantic field, not stored in the database.
-  
+* `nullable` - Creates a nullable column. Sets the default to `None`.
+* `default` - Set a default value for the field. **Not available for relation fields**
+* `server_default` - Set a default value for the field on server side (like sqlalchemy's `func.now()`). **Not available for relation fields**
+* `primary key` with `autoincrement` - When a column is set to primary key and autoincrement is set on this column.
+  Autoincrement is set by default on int primary keys.
+* `pydantic_only` - Field is available only as normal pydantic field, not stored in the database.
+
 ### Available signals
 
 Signals allow to trigger your function for a given event on a given Model.
 
-  * `pre_save`
-  * `post_save`
-  * `pre_update`
-  * `post_update`
-  * `pre_delete`
-  * `post_delete`
-  * `pre_relation_add`
-  * `post_relation_add`
-  * `pre_relation_remove`
-  * `post_relation_remove`
+* `pre_save`
+* `post_save`
+* `pre_update`
+* `post_update`
+* `pre_delete`
+* `post_delete`
+* `pre_relation_add`
+* `post_relation_add`
+* `pre_relation_remove`
+* `post_relation_remove`
 
 
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
