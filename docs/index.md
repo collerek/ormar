@@ -24,14 +24,14 @@
 The `ormar` package is an async mini ORM for Python, with support for **Postgres,
 MySQL**, and **SQLite**. 
 
-The main benefit of using `ormar` are:
+The main benefits of using `ormar` are:
 
 *  getting an **async ORM that can be used with async frameworks** (fastapi, starlette etc.)
-*  getting just **one model to maintain** - you don't have to maintain pydantic and other orm model (sqlalchemy, peewee, gino etc.)
+*  getting just **one model to maintain** - you don't have to maintain pydantic and other orm models (sqlalchemy, peewee, gino etc.)
 
 The goal was to create a simple ORM that can be **used directly (as request and response models) with [`fastapi`][fastapi]** that bases it's data validation on pydantic.
 
-Ormar - apart form obvious ORM in name - get it's name from ormar in swedish which means snakes, and ormar(e) in italian which means cabinet. 
+Ormar - apart from the obvious "ORM" in name - gets its name from _ormar_ in Swedish which means _snakes_, and _ormar(e)_ in Croatian which means _cabinet_. 
 
 And what's a better name for python ORM than snakes cabinet :)
 
@@ -46,8 +46,8 @@ Check out the [documentation][documentation] for details.
 **Note that for brevity most of the documentation snippets omit the creation of the database
 and scheduling the execution of functions for asynchronous run.**
 
-If you want more real life examples than in the documentation you can see [tests][tests] folder,
-since they actually have to create and connect to database in most of the tests.
+If you want more real life examples than in the documentation you can see the [tests][tests] folder,
+since they actually have to create and connect to a database in most of the tests.
 
 Yet remember that those are - well - tests and not all solutions are suitable to be used in real life applications.
 
@@ -61,7 +61,7 @@ As of now `ormar` is supported by:
 *  [`fastapi-crudrouter`](https://github.com/awtkns/fastapi-crudrouter)
 *  [`fastapi-pagination`](https://github.com/uriyyo/fastapi-pagination)
 
-If you maintain or use different library and would like it to support `ormar` let us know how we can help.
+If you maintain or use a different library and would like it to support `ormar` let us know how we can help.
 
 ### Dependencies
 
@@ -74,7 +74,7 @@ Ormar is built with:
 
 ### License
 
-`ormar` is built as an open-sorce software and remain completely free (MIT license).
+`ormar` is built as open-sorce software and will remain completely free (MIT license).
 
 As I write open-source code to solve everyday problems in my work or to promote and build strong python 
 community you can say thank you and buy me a coffee or sponsor me with a monthly amount to help ensure my work remains free and maintained.
@@ -109,7 +109,7 @@ tool that can help you with translating existing sqlalchemy orm models so you do
 **Beta** versions available at github: [`sqlalchemy-to-ormar`](https://github.com/collerek/sqlalchemy-to-ormar)
 or simply `pip install sqlalchemy-to-ormar`
 
-`sqlalchemy-to-ormar` can be used in pair with `sqlacodegen` to auto-map/ generate `ormar` models from existing database, even if you don't use the `sqlalchemy` for your project.
+`sqlalchemy-to-ormar` can be used in pair with `sqlacodegen` to auto-map/ generate `ormar` models from existing database, even if you don't use `sqlalchemy` for your project.
 
 ### Migrations & Database creation
 
@@ -153,12 +153,12 @@ Note that `ormar` is an asynchronous ORM, which means that you have to `await` t
 the methods, that are scheduled for execution in an event loop. Python has a builtin module
 [`asyncio`][asyncio] that allows you to do just that.
 
-Note that most of "normal" python interpreters do not allow execution of `await` 
-outside of a function (cause you actually schedule this function for delayed execution 
+Note that most "normal" python interpreters do not allow execution of `await` 
+outside of a function (because you actually schedule this function for delayed execution 
 and don't get the result immediately).
 
-In a modern web frameworks (like `fastapi`), the framework will handle this for you, but if
-you plan to do this on your own you need to perform this manually like described in a 
+In a modern web framework (like `fastapi`), the framework will handle this for you, but if
+you plan to do this on your own you need to perform this manually like described in the 
 quick start below.
 
 ### Quick Start
