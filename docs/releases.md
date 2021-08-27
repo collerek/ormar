@@ -1,3 +1,10 @@
+# 0.10.17
+
+## ✨ Features
+
+* Allow overwriting the default pydantic type for model fields [#312](https://github.com/collerek/ormar/issues/285)
+
+
 # 0.10.16
 
 ## ✨ Features
