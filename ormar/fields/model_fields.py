@@ -84,8 +84,13 @@ class ModelFieldFactory:
         encrypt_backend = kwargs.pop("encrypt_backend", EncryptBackends.NONE)
         encrypt_custom_backend = kwargs.pop("encrypt_custom_backend", None)
 
+        overwrite_pydantic_type = kwargs.pop("overwrite_pydantic_type", None)
+
         namespace = dict(
             __type__=cls._type,
+            __pydantic_type__=overwrite_pydantic_type
+            if overwrite_pydantic_type is not None
+            else cls._type,
             __sample__=cls._sample,
             alias=kwargs.pop("name", None),
             name=None,

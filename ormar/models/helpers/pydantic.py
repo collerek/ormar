@@ -5,8 +5,8 @@ import pydantic
 from pydantic.fields import ModelField
 from pydantic.utils import lenient_issubclass
 
-from ormar.fields import BaseField  # noqa: I100, I202
-from ormar.exceptions import ModelDefinitionError
+from ormar.exceptions import ModelDefinitionError  # noqa: I100, I202
+from ormar.fields import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -84,9 +84,15 @@ def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
     for field_name, field in potential_fields.items():
         field.name = field_name
         model_fields[field_name] = field
-        attrs["__annotations__"][field_name] = (
+        default_type = (
             field.__type__ if not field.nullable else Optional[field.__type__]
         )
+        overwrite_type = (
+            field.__pydantic_type__
+            if field.__type__ != field.__pydantic_type__
+            else None
+        )
+        attrs["__annotations__"][field_name] = overwrite_type or default_type
     return attrs, model_fields
 
 
