@@ -3,7 +3,7 @@
 ## ✨ Features
 
 * Allow overwriting the default pydantic type for model fields [#312](https://github.com/collerek/ormar/issues/285)
-
+* Add support for `sqlalchemy` >=1.4 (requires `databases` >= 0.5.0) [#142](https://github.com/collerek/ormar/issues/142)
 
 # 0.10.16
 

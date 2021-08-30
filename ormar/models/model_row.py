@@ -10,7 +10,11 @@ from typing import (
     cast,
 )
 
-import sqlalchemy
+try:
+    from sqlalchemy.engine.result import ResultProxy
+except ImportError:  # pragma: no cover
+    from sqlalchemy.engine.result import Row as ResultProxy  # type: ignore
+
 
 from ormar.models import NewBaseModel  # noqa: I202
 from ormar.models.excludable import ExcludableItems
@@ -25,7 +29,7 @@ class ModelRow(NewBaseModel):
     @classmethod
     def from_row(  # noqa: CFQ002
         cls,
-        row: sqlalchemy.engine.ResultProxy,
+        row: ResultProxy,
         source_model: Type["Model"],
         select_related: List = None,
         related_models: Any = None,
@@ -59,7 +63,7 @@ class ModelRow(NewBaseModel):
         :param source_model: model on which relation was defined
         :type source_model: Type[Model]
         :param row: raw result row from the database
-        :type row: sqlalchemy.engine.result.ResultProxy
+        :type row: ResultProxy
         :param select_related: list of names of related models fetched from database
         :type select_related: List
         :param related_models: list or dict of related models
@@ -153,7 +157,7 @@ class ModelRow(NewBaseModel):
     def _populate_nested_models_from_row(  # noqa: CFQ002
         cls,
         item: dict,
-        row: sqlalchemy.engine.ResultProxy,
+        row: ResultProxy,
         source_model: Type["Model"],
         related_models: Any,
         excludable: ExcludableItems,
@@ -183,7 +187,7 @@ class ModelRow(NewBaseModel):
         :param item: dictionary of already populated nested models, otherwise empty dict
         :type item: Dict
         :param row: raw result row from the database
-        :type row: sqlalchemy.engine.result.ResultProxy
+        :type row: ResultProxy
         :param related_models: list or dict of related models
         :type related_models: Union[Dict, List]
         :return: dictionary with keys corresponding to model fields names
@@ -263,7 +267,7 @@ class ModelRow(NewBaseModel):
     @classmethod
     def _populate_through_instance(  # noqa: CFQ002
         cls,
-        row: sqlalchemy.engine.ResultProxy,
+        row: ResultProxy,
         item: Dict,
         related: str,
         excludable: ExcludableItems,
@@ -275,7 +279,7 @@ class ModelRow(NewBaseModel):
         Normally it's child class, unless the query is from queryset.
 
         :param row: row from db result
-        :type row: sqlalchemy.engine.ResultProxy
+        :type row: ResultProxy
         :param item: parent item dict
         :type item: Dict
         :param related: current relation name
@@ -301,7 +305,7 @@ class ModelRow(NewBaseModel):
     @classmethod
     def _create_through_instance(
         cls,
-        row: sqlalchemy.engine.ResultProxy,
+        row: ResultProxy,
         through_name: str,
         related: str,
         excludable: ExcludableItems,
@@ -343,7 +347,7 @@ class ModelRow(NewBaseModel):
     def extract_prefixed_table_columns(
         cls,
         item: dict,
-        row: sqlalchemy.engine.result.ResultProxy,
+        row: ResultProxy,
         table_prefix: str,
         excludable: ExcludableItems,
     ) -> Dict:
