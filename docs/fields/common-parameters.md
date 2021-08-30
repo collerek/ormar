@@ -158,6 +158,37 @@ Used for data related to given model but not to be stored in the database.
 
 Used in pydantic only.
 
+## overwrite_pydantic_type
+
+By default, ormar uses predefined pydantic field types that it applies on model creation (hence the type hints are optional).
+
+If you want to, you can apply your own type, that will be **completely** replacing the build in one.
+So it's on you as a user to provide a type that is valid in the context of given ormar field type.
+
+!!!warning
+        Note that by default you should use build in arguments that are passed to underlying pydantic field. 
+        
+        You can check what arguments are supported in field types section or in [pydantic](https://pydantic-docs.helpmanual.io/usage/schema/#field-customisation) docs.
+
+!!!danger
+        Setting a wrong type of pydantic field can break your model, so overwrite it only when you know what you are doing.
+        
+        As it's easy to break functionality of ormar the `overwrite_pydantic_type` argument is not available on relation fields!
+
+```python
+# sample overwrites
+class OverwriteTest(ormar.Model):
+    class Meta:
+        tablename = "overwrites"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    my_int: str = ormar.Integer(overwrite_pydantic_type=PositiveInt)
+    constraint_dict: Json = ormar.JSON(
+        overwrite_pydantic_type=Optional[Json[Dict[str, int]]])
+```
+
 ## choices
 
 `choices`: `Sequence` = `[]` 

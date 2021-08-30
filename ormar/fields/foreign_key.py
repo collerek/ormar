@@ -143,12 +143,14 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
     encrypt_secret = kwargs.pop("encrypt_secret", None)
     encrypt_backend = kwargs.pop("encrypt_backend", None)
     encrypt_custom_backend = kwargs.pop("encrypt_custom_backend", None)
+    overwrite_pydantic_type = kwargs.pop("overwrite_pydantic_type", None)
 
     not_supported = [
         default,
         encrypt_secret,
         encrypt_backend,
         encrypt_custom_backend,
+        overwrite_pydantic_type,
     ]
     if any(x is not None for x in not_supported):
         raise ModelDefinitionError(
