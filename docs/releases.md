@@ -1,8 +1,15 @@
+# 0.10.18
+
+## 🐛 Fixes
+
+* Fix order of fields in pydantic models [#328](https://github.com/collerek/ormar/issues/328)
+* Fix databases 0.5.0 support [#142](https://github.com/collerek/ormar/issues/142)
+
 # 0.10.17
 
 ## ✨ Features
 
-* Allow overwriting the default pydantic type for model fields [#312](https://github.com/collerek/ormar/issues/285)
+* Allow overwriting the default pydantic type for model fields [#312](https://github.com/collerek/ormar/issues/312)
 * Add support for `sqlalchemy` >=1.4 (requires `databases` >= 0.5.0) [#142](https://github.com/collerek/ormar/issues/142)
 
 # 0.10.16

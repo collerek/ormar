@@ -64,6 +64,9 @@ class PydanticMixin(RelationMixin):
         fields_to_process = cls._get_not_excluded_fields(
             fields={*cls.Meta.model_fields.keys()}, include=include, exclude=exclude
         )
+        fields_to_process.sort(
+            key=lambda x: list(cls.Meta.model_fields.keys()).index(x)
+        )
         for name in fields_to_process:
             field = cls._determine_pydantic_field_type(
                 name=name,
