@@ -1,3 +1,9 @@
+# 0.10.19
+
+## ✨ Features
+
+* Add support for multi-column non-unique `IndexColumns` in `Meta.constraints` [#307](https://github.com/collerek/ormar/issues/307)
+
 # 0.10.18
 
 ## 🐛 Fixes

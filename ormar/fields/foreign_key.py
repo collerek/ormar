@@ -18,7 +18,6 @@ from typing import (
 import sqlalchemy
 from pydantic import BaseModel, create_model
 from pydantic.typing import ForwardRef, evaluate_forwardref
-from sqlalchemy import UniqueConstraint
 
 import ormar  # noqa I101
 from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
@@ -158,13 +157,6 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
             f"is not supported "
             "on relation fields!"
         )
-
-
-class UniqueColumns(UniqueConstraint):
-    """
-    Subclass of sqlalchemy.UniqueConstraint.
-    Used to avoid importing anything from sqlalchemy by user.
-    """
 
 
 @dataclass

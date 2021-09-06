@@ -1,4 +1,3 @@
-import asyncio
 import sqlite3
 
 import asyncpg  # type: ignore
@@ -7,7 +6,7 @@ import pymysql
 import pytest
 import sqlalchemy
 
-import ormar
+import ormar.fields.constraints
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -19,22 +18,15 @@ class Product(ormar.Model):
         tablename = "products"
         metadata = metadata
         database = database
-        constraints = [ormar.UniqueColumns("name", "company")]
+        constraints = [ormar.fields.constraints.UniqueColumns("name", "company")]
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     company: str = ormar.String(max_length=200)
 
 
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.get_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest.fixture(autouse=True, scope="module")
-async def create_test_database():
+def create_test_database():
     engine = sqlalchemy.create_engine(DATABASE_URL)
     metadata.drop_all(engine)
     metadata.create_all(engine)
