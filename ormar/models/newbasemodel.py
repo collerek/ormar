@@ -65,6 +65,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     """
 
     __slots__ = ("_orm_id", "_orm_saved", "_orm", "_pk_column", "__pk_only__")
+    __relations_map__ = None
 
     if TYPE_CHECKING:  # pragma no cover
         pk: Any
@@ -687,12 +688,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             include = translate_list_to_dict(include)
         if exclude and isinstance(exclude, Set):
             exclude = translate_list_to_dict(exclude)
-
-        relation_map = (
-            relation_map
-            if relation_map is not None
-            else translate_list_to_dict(self._iterate_related_models())
-        )
+        if(self.__class__.__relations_map__ is None):
+            relation_map = (
+                relation_map
+                if relation_map is not None
+                else translate_list_to_dict(self._iterate_related_models())
+            )
+            self.__class__.__relations_map__ = relation_map
+        else:
+            relation_map = self.__class__.__relations_map__
+        
         pk_only = getattr(self, "__pk_only__", False)
         if relation_map and not pk_only:
             dict_instance = self._extract_nested_models(
