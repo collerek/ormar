@@ -136,7 +136,7 @@ class RelationMixin:
             current_node = node_list[-1]
         relations = cls.extract_related_names()
         processed_relations = []
-        if(limit > 2):
+        if(limit > 3):
             return cls._get_final_relations(processed_relations, source_relation)
         for relation in relations:
             if not current_node.visited(relation):
