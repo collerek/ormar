@@ -120,7 +120,7 @@ class RelationMixin:
 
     @classmethod
     def _iterate_related_models(  # noqa: CCR001
-        cls, node_list: NodeList = None, source_relation: str = None
+        cls, node_list: NodeList = None, source_relation: str = None, limit = 0
     ) -> List[str]:
         """
         Iterates related models recursively to extract relation strings of
@@ -136,6 +136,8 @@ class RelationMixin:
             current_node = node_list[-1]
         relations = cls.extract_related_names()
         processed_relations = []
+        if(limit > 2):
+            return cls._get_final_relations(processed_relations, source_relation)
         for relation in relations:
             if not current_node.visited(relation):
                 target_model = cls.Meta.model_fields[relation].to
@@ -145,7 +147,7 @@ class RelationMixin:
                     parent_node=current_node,
                 )
                 deep_relations = target_model._iterate_related_models(
-                    source_relation=relation, node_list=node_list
+                    source_relation=relation, node_list=node_list, limit = limit + 1
                 )
                 processed_relations.extend(deep_relations)
 

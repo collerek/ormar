@@ -688,15 +688,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             include = translate_list_to_dict(include)
         if exclude and isinstance(exclude, Set):
             exclude = translate_list_to_dict(exclude)
-        if(self.__class__.__relations_map__ is None):
-            relation_map = (
-                relation_map
-                if relation_map is not None
-                else translate_list_to_dict(self._iterate_related_models())
-            )
-            self.__class__.__relations_map__ = relation_map
-        else:
-            relation_map = self.__class__.__relations_map__
+        relation_map = (
+            relation_map
+            if relation_map is not None
+            else translate_list_to_dict(self._iterate_related_models())
+        )
+       
         
         pk_only = getattr(self, "__pk_only__", False)
         if relation_map and not pk_only:
