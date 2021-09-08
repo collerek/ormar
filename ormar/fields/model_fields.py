@@ -75,6 +75,7 @@ class ModelFieldFactory:
         default = kwargs.pop("default", None)
         server_default = kwargs.pop("server_default", None)
         nullable = kwargs.pop("nullable", None)
+        sql_nullable = kwargs.pop("sql_nullable", None)
         pydantic_only = kwargs.pop("pydantic_only", False)
 
         primary_key = kwargs.pop("primary_key", False)
@@ -85,6 +86,13 @@ class ModelFieldFactory:
         encrypt_custom_backend = kwargs.pop("encrypt_custom_backend", None)
 
         overwrite_pydantic_type = kwargs.pop("overwrite_pydantic_type", None)
+
+        nullable = is_field_nullable(
+            nullable, default, server_default, pydantic_only
+        ) or is_auto_primary_key(primary_key, autoincrement)
+        sql_nullable = (
+            nullable if sql_nullable is None else (sql_nullable and not primary_key)
+        )
 
         namespace = dict(
             __type__=cls._type,
@@ -97,8 +105,8 @@ class ModelFieldFactory:
             primary_key=primary_key,
             default=default,
             server_default=server_default,
-            nullable=is_field_nullable(nullable, default, server_default, pydantic_only)
-            or is_auto_primary_key(primary_key, autoincrement),
+            nullable=nullable,
+            sql_nullable=sql_nullable,
             index=kwargs.pop("index", False),
             unique=kwargs.pop("unique", False),
             pydantic_only=pydantic_only,

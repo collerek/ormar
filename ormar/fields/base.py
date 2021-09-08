@@ -43,6 +43,7 @@ class BaseField(FieldInfo):
         self.primary_key: bool = kwargs.pop("primary_key", False)
         self.autoincrement: bool = kwargs.pop("autoincrement", False)
         self.nullable: bool = kwargs.pop("nullable", False)
+        self.sql_nullable: bool = kwargs.pop("sql_nullable", False)
         self.index: bool = kwargs.pop("index", False)
         self.unique: bool = kwargs.pop("unique", False)
         self.pydantic_only: bool = kwargs.pop("pydantic_only", False)
@@ -265,7 +266,7 @@ class BaseField(FieldInfo):
                 self.column_type,
                 *self.construct_constraints(),
                 primary_key=self.primary_key,
-                nullable=self.nullable and not self.primary_key,
+                nullable=self.sql_nullable,
                 index=self.index,
                 unique=self.unique,
                 default=self.ormar_default,

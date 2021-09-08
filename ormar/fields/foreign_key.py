@@ -234,6 +234,9 @@ def ForeignKey(  # noqa CFQ002
     skip_reverse = kwargs.pop("skip_reverse", False)
     skip_field = kwargs.pop("skip_field", False)
 
+    sql_nullable = kwargs.pop("sql_nullable", None)
+    sql_nullable = nullable if sql_nullable is None else sql_nullable
+
     validate_not_allowed_fields(kwargs)
 
     if to.__class__ == ForwardRef:
@@ -255,6 +258,7 @@ def ForeignKey(  # noqa CFQ002
         alias=name,
         name=kwargs.pop("real_name", None),
         nullable=nullable,
+        sql_nullable=sql_nullable,
         constraints=constraints,
         unique=unique,
         column_type=column_type,
