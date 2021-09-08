@@ -28,8 +28,8 @@ class PrimaryModel(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255, index=True)
     some_text: Optional[str] = ormar.Text(nullable=True, sql_nullable=False)
-    some_other_text: Optional[str] = ormar.Text(
-        nullable=True, sql_nullable=False, server_default=text("''")
+    some_other_text: Optional[str] = ormar.String(
+        max_length=255, nullable=True, sql_nullable=False, server_default=text("''")
     )
 
 
