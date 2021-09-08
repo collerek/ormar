@@ -3,6 +3,7 @@
 ## ✨ Features
 
 * Add support for multi-column non-unique `IndexColumns` in `Meta.constraints` [#307](https://github.com/collerek/ormar/issues/307)
+* Add `sql_nullable` field attribute that allows to set different nullable setting for pydantic model and for underlying sql column [#308](https://github.com/collerek/ormar/issues/308)
 
 # 0.10.18
 
