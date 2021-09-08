@@ -103,7 +103,7 @@ class RelationDescriptor:
         self.name = name
 
     def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
-        if self.name in instance._orm:
+        if hasattr(instance, '_orm') and self.name in instance._orm:
             return instance._orm.get(self.name)  # type: ignore
         return None  # pragma no cover
 
