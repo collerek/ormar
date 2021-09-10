@@ -20,6 +20,7 @@ class RelationMixin:
         from ormar import ModelMeta
 
         Meta: ModelMeta
+        __relation_map__: Optional[List[str]]
         _related_names: Optional[Set]
         _through_names: Optional[Set]
         _related_fields: Optional[List]
@@ -120,7 +121,10 @@ class RelationMixin:
 
     @classmethod
     def _iterate_related_models(  # noqa: CCR001
-        cls, node_list: NodeList = None, source_relation: str = None
+        cls,
+        node_list: NodeList = None,
+        source_relation: str = None,
+        recurrent: bool = False,
     ) -> List[str]:
         """
         Iterates related models recursively to extract relation strings of
@@ -130,6 +134,8 @@ class RelationMixin:
         :rtype: List[str]
         """
         if not node_list:
+            if cls.__relation_map__:
+                return cls.__relation_map__
             node_list = NodeList()
             current_node = node_list.add(node_class=cls)
         else:
@@ -145,11 +151,14 @@ class RelationMixin:
                     parent_node=current_node,
                 )
                 deep_relations = target_model._iterate_related_models(
-                    source_relation=relation, node_list=node_list
+                    source_relation=relation, node_list=node_list, recurrent=True
                 )
                 processed_relations.extend(deep_relations)
 
-        return cls._get_final_relations(processed_relations, source_relation)
+        result = cls._get_final_relations(processed_relations, source_relation)
+        if not recurrent:
+            cls.__relation_map__ = result
+        return result
 
     @staticmethod
     def _get_final_relations(
