@@ -17,6 +17,7 @@ import sqlalchemy
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
+import ormar.fields.constraints
 from ormar import ModelDefinitionError  # noqa I100
 from ormar.exceptions import ModelError
 from ormar.fields import BaseField
@@ -219,7 +220,8 @@ def update_attrs_from_base_meta(  # noqa: CCR001
                     parent_value=parent_value,
                 )
                 parent_value = [
-                    ormar.UniqueColumns(*x._pending_colargs) for x in parent_value
+                    ormar.fields.constraints.UniqueColumns(*x._pending_colargs)
+                    for x in parent_value
                 ]
             if isinstance(current_value, list):
                 current_value.extend(parent_value)

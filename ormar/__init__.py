@@ -51,6 +51,7 @@ from ormar.fields import (
     Float,
     ForeignKey,
     ForeignKeyField,
+    IndexColumns,
     Integer,
     JSON,
     LargeBinary,
@@ -77,7 +78,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.10.18"
+__version__ = "0.10.19"
 __all__ = [
     "Integer",
     "BigInteger",
@@ -102,6 +103,7 @@ __all__ = [
     "Undefined",
     "UUID",
     "UniqueColumns",
+    "IndexColumns",
     "QuerySetProtocol",
     "RelationProtocol",
     "ModelMeta",

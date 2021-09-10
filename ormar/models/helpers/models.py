@@ -75,6 +75,8 @@ def populate_default_options_values(
         if field.__type__ == bytes
     }
 
+    new_model.__relation_map__ = None
+
 
 class Connection(sqlite3.Connection):
     def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover
