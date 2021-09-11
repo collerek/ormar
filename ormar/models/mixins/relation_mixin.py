@@ -1,5 +1,6 @@
 from typing import (
     Callable,
+    Dict,
     List,
     Optional,
     Set,
@@ -123,6 +124,7 @@ class RelationMixin:
     def _iterate_related_models(  # noqa: CCR001
         cls,
         node_list: NodeList = None,
+        parsed_map: Dict = None,
         source_relation: str = None,
         recurrent: bool = False,
     ) -> List[str]:
@@ -137,11 +139,12 @@ class RelationMixin:
             if cls.__relation_map__:
                 return cls.__relation_map__
             node_list = NodeList()
+            parsed_map = dict()
             current_node = node_list.add(node_class=cls)
         else:
             current_node = node_list[-1]
-        relations = cls.extract_related_names()
-        processed_relations = []
+        relations = sorted(cls.extract_related_names())
+        processed_relations: List[str] = []
         for relation in relations:
             if not current_node.visited(relation):
                 target_model = cls.Meta.model_fields[relation].to
@@ -150,9 +153,17 @@ class RelationMixin:
                     relation_name=relation,
                     parent_node=current_node,
                 )
-                deep_relations = target_model._iterate_related_models(
-                    source_relation=relation, node_list=node_list, recurrent=True
-                )
+                relation_key = f"{cls.get_name()}_{relation}"
+                parsed_map = cast(Dict, parsed_map)
+                deep_relations = parsed_map.get(relation_key)
+                if not deep_relations:
+                    deep_relations = target_model._iterate_related_models(
+                        source_relation=relation,
+                        node_list=node_list,
+                        recurrent=True,
+                        parsed_map=parsed_map,
+                    )
+                    parsed_map[relation_key] = deep_relations
                 processed_relations.extend(deep_relations)
 
         result = cls._get_final_relations(processed_relations, source_relation)
