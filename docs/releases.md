@@ -8,6 +8,13 @@
 ## 🐛 Fixes
 
 * Enable caching of relation map to increase performance [#337](https://github.com/collerek/ormar/issues/337)
+* Clarify and fix documentation in regard of nullable fields [#339](https://github.com/collerek/ormar/issues/339)
+
+## 💬 Other
+
+* Bump supported `databases` version to `<=5.2`.
+
+
 
 # 0.10.18
 
