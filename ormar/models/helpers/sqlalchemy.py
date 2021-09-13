@@ -285,22 +285,38 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
 
     :param meta: Meta class of the Model without sqlalchemy table constructed
     :type meta: Model class Meta
-    :return: class with populated Meta.table
-    :rtype: Model class
     """
     if not hasattr(meta, "table") and check_for_null_type_columns_from_forward_refs(
         meta
     ):
-        for constraint in meta.constraints:
-            if isinstance(constraint, sqlalchemy.UniqueConstraint):
-                constraint.name = (
-                    f"uc_{meta.tablename}_"
-                    f'{"_".join([str(col) for col in constraint._pending_colargs])}'
-                )
+        set_constraint_names(meta=meta)
         table = sqlalchemy.Table(
             meta.tablename, meta.metadata, *meta.columns, *meta.constraints
         )
         meta.table = table
+
+
+def set_constraint_names(meta: "ModelMeta") -> None:
+    """
+    Populates the names on IndexColumn and UniqueColumns constraints.
+
+    :param meta: Meta class of the Model without sqlalchemy table constructed
+    :type meta: Model class Meta
+    """
+    for constraint in meta.constraints:
+        if isinstance(constraint, sqlalchemy.UniqueConstraint) and not constraint.name:
+            constraint.name = (
+                f"uc_{meta.tablename}_"
+                f'{"_".join([str(col) for col in constraint._pending_colargs])}'
+            )
+        elif (
+            isinstance(constraint, sqlalchemy.Index)
+            and constraint.name == "TEMPORARY_NAME"
+        ):
+            constraint.name = (
+                f"ix_{meta.tablename}_"
+                f'{"_".join([col for col in constraint._pending_colargs])}'
+            )
 
 
 def update_column_definition(

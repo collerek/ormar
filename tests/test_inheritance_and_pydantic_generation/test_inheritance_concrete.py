@@ -8,6 +8,7 @@ import sqlalchemy as sa
 from sqlalchemy import create_engine
 
 import ormar
+import ormar.fields.constraints
 from ormar import ModelDefinitionError, property_field
 from ormar.exceptions import ModelError
 from tests.settings import DATABASE_URL
@@ -45,7 +46,9 @@ class DateFieldsModel(ormar.Model):
         abstract = True
         metadata = metadata
         database = db
-        constraints = [ormar.UniqueColumns("creation_date", "modification_date")]
+        constraints = [
+            ormar.fields.constraints.UniqueColumns("creation_date", "modification_date")
+        ]
 
     created_date: datetime.datetime = ormar.DateTime(
         default=datetime.datetime.now, name="creation_date"
@@ -58,7 +61,7 @@ class DateFieldsModel(ormar.Model):
 class Category(DateFieldsModel, AuditModel):
     class Meta(ormar.ModelMeta):
         tablename = "categories"
-        constraints = [ormar.UniqueColumns("name", "code")]
+        constraints = [ormar.fields.constraints.UniqueColumns("name", "code")]
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)

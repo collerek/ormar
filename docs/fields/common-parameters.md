@@ -22,9 +22,23 @@ Used both in sql and pydantic (changes pk field to optional for autoincrement).
 
 ## nullable
 
-`nullable`: `bool` = `not primary_key` -> defaults to False for primary key column, and True for all other. 
+`nullable`: `bool` = `False` -> defaults to False for all fields except relation fields.
+
+Automatically changed to True if user provide one of the following:
+
+* `default` value or function is provided
+* `server_default` value or function is provided
+* `autoincrement` is set on `Integer` `primary_key` field
+* **[DEPRECATED]**`pydantic_only=True` is set 
 
 Specifies if field is optional or required, used both with sql and pydantic.
+
+By default, used for both `pydantic` and `sqlalchemy` as those are the most common settings:
+
+* `nullable=False` - means database column is not null and field is required in pydantic
+* `nullable=True` - means database column is null and field is optional in pydantic
+
+If you want to set different setting for pydantic and the database see `sql_nullable` below.
 
 !!!note
     By default all `ForeignKeys` are also nullable, meaning the related `Model` is not required.
@@ -32,8 +46,17 @@ Specifies if field is optional or required, used both with sql and pydantic.
     If you change the `ForeignKey` column to `nullable=False`, it becomes required.
     
 
-!!!info
-    If you want to know more about how you can preload related models during queries and how the relations work read the [queries][queries] and [relations][relations] sections. 
+## sql_nullable
+
+`sql_nullable`: `bool` = `nullable` -> defaults to the value of nullable (described above). 
+
+Specifies if field is not null or allows nulls in the database only. 
+
+Use this setting in combination with `nullable` only if you want to set different options on pydantic model and in the database. 
+
+A sample usage might be i.e. making field not null in the database, but allow this field to be nullable in pydantic (i.e. with `server_default` value).
+That will prevent the updates of the field to null (as with `server_default` set you cannot insert null values already as the default value would be used)
+
 
 
 ## default

@@ -357,10 +357,15 @@ You can overwrite this parameter by providing `Meta` class `tablename` argument.
 
 On a model level you can also set model-wise constraints on sql columns.
 
-Right now only `UniqueColumns` constraint is present. 
+Right now only `IndexColumns` and `UniqueColumns` constraints are supported. 
+
+!!!note
+        Note that both constraints should be used only if you want to set a name on constraint or want to set the index on multiple columns, otherwise `index` and `unique` properties on ormar fields are preferred.
 
 !!!tip
     To read more about columns constraints like `primary_key`, `unique`, `ForeignKey` etc. visit [fields][fields].
+
+#### UniqueColumns
 
 You can set this parameter by providing `Meta` class `constraints` argument.
 
@@ -372,6 +377,20 @@ You can set this parameter by providing `Meta` class `constraints` argument.
         Note that constraints are meant for combination of columns that should be unique. 
         To set one column as unique use [`unique`](../fields/common-parameters.md#unique) common parameter. 
         Of course you can set many columns as unique with this param but each of them will be checked separately.
+
+#### IndexColumns
+
+You can set this parameter by providing `Meta` class `constraints` argument.
+
+```Python hl_lines="14-17"
+--8<-- "../docs_src/models/docs017.py"
+```
+
+!!!note
+        Note that constraints are meant for combination of columns that should be in the index. 
+        To set one column index use [`unique`](../fields/common-parameters.md#index) common parameter. 
+        Of course, you can set many columns as indexes with this param but each of them will be a separate index.
+
 
 ### Pydantic configuration
 

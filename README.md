@@ -657,7 +657,8 @@ The following keyword arguments are supported on all field types.
 
 All fields are required unless one of the following is set:
 
-* `nullable` - Creates a nullable column. Sets the default to `None`.
+* `nullable` - Creates a nullable column. Sets the default to `False`. Read the fields common parameters for details.
+* `sql_nullable` - Used to set different setting for pydantic and the database. Sets the default to `nullable` value. Read the fields common parameters for details.
 * `default` - Set a default value for the field. **Not available for relation fields**
 * `server_default` - Set a default value for the field on server side (like sqlalchemy's `func.now()`). **Not available for relation fields**
 * `primary key` with `autoincrement` - When a column is set to primary key and autoincrement is set on this column.

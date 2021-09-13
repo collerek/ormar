@@ -76,6 +76,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         __tablename__: str
         __metadata__: sqlalchemy.MetaData
         __database__: databases.Database
+        __relation_map__: Optional[List[str]]
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
         _orm_id: int
