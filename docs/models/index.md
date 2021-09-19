@@ -396,7 +396,7 @@ You can set this parameter by providing `Meta` class `constraints` argument.
 
 As each `ormar.Model` is also a `pydantic` model, you might want to tweak the settings of the pydantic configuration.
 
-The way to do this in pydantic is to adjust the settings on the `Config` class provided to your model, and it works exactly the same for ormer.Models.
+The way to do this in pydantic is to adjust the settings on the `Config` class provided to your model, and it works exactly the same for ormar models.
 
 So in order to set your own preferences you need to provide not only the `Meta` class but also the `Config` class to your model.
 
