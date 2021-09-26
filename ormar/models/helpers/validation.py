@@ -234,10 +234,9 @@ def get_pydantic_example_repr(type_: Any) -> Any:
     """
     if issubclass(type_, (numbers.Number, decimal.Decimal)):
         return 0
-    elif issubclass(type_, pydantic.BaseModel):
+    if issubclass(type_, pydantic.BaseModel):
         return generate_pydantic_example(pydantic_model=type_)
-    else:
-        return "string"
+    return "string"
 
 
 def overwrite_example_and_description(

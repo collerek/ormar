@@ -252,12 +252,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         for field_name in self.extract_through_names():
             through_tmp_dict[field_name] = kwargs.pop(field_name, None)
 
-        if self.Meta.extra == Extra.ignore:
-            kwargs = {
-                k: v
-                for k, v in kwargs.items()
-                if k in model_fields or k in pydantic_fields
-            }
+        kwargs = self._remove_extra_parameters_if_they_should_be_ignored(
+            kwargs=kwargs, model_fields=model_fields, pydantic_fields=pydantic_fields
+        )
         try:
             new_kwargs: Dict[str, Any] = {
                 k: self._convert_to_bytes(
@@ -282,6 +279,29 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             new_kwargs[field_to_nullify] = None
 
         return new_kwargs, through_tmp_dict
+
+    def _remove_extra_parameters_if_they_should_be_ignored(
+        self, kwargs: Dict, model_fields: Dict, pydantic_fields: Set
+    ) -> Dict:
+        """
+        Removes the extra fields from kwargs if they should be ignored.
+
+        :param kwargs: passed arguments
+        :type kwargs: Dict
+        :param model_fields: dictionary of model fields
+        :type model_fields: Dict
+        :param pydantic_fields: set of pydantic fields names
+        :type pydantic_fields: Set
+        :return: dict without extra fields
+        :rtype: Dict
+        """
+        if self.Meta.extra == Extra.ignore:
+            kwargs = {
+                k: v
+                for k, v in kwargs.items()
+                if k in model_fields or k in pydantic_fields
+            }
+        return kwargs
 
     def _initialize_internal_attributes(self) -> None:
         """
