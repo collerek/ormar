@@ -52,8 +52,8 @@ def convert_choices_if_needed(  # noqa: CCR001
 
     :param field: ormar field to check with choices
     :type field: BaseField
-    :param values: current values of the model to verify
-    :type values: Dict
+    :param value: current values of the model to verify
+    :type value: Dict
     :return: value, choices list
     :rtype: Tuple[Any, List]
     """
@@ -97,6 +97,8 @@ def validate_choices(field: "BaseField", value: Any) -> None:
     :type value: Any
     """
     value, choices = convert_choices_if_needed(field=field, value=value)
+    if field.nullable:
+        choices.append(None)
     if value is not ormar.Undefined and value not in choices:
         raise ValueError(
             f"{field.name}: '{value}' " f"not in allowed choices set:" f" {choices}"
