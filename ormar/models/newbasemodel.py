@@ -18,6 +18,8 @@ from typing import (
     cast,
 )
 
+from ormar.models.utils import Extra
+
 try:
     import orjson as json
 except ImportError:  # pragma: no cover
@@ -250,6 +252,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         for field_name in self.extract_through_names():
             through_tmp_dict[field_name] = kwargs.pop(field_name, None)
 
+        if self.Meta.extra == Extra.ignore:
+            kwargs = {
+                k: v
+                for k, v in kwargs.items()
+                if k in model_fields or k in pydantic_fields
+            }
         try:
             new_kwargs: Dict[str, Any] = {
                 k: self._convert_to_bytes(

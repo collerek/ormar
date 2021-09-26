@@ -49,6 +49,7 @@ from ormar.models.helpers import (
     sqlalchemy_columns_from_model_fields,
 )
 from ormar.models.quick_access_views import quick_access_set
+from ormar.models.utils import Extra
 from ormar.queryset import FieldAccessor, QuerySet
 from ormar.relations.alias_manager import AliasManager
 from ormar.signals import Signal, SignalEmitter
@@ -83,6 +84,7 @@ class ModelMeta:
     requires_ref_update: bool
     orders_by: List[str]
     exclude_parent_fields: List[str]
+    extra: Extra
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:
