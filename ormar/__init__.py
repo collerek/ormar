@@ -64,7 +64,7 @@ from ormar.fields import (
     UUID,
     UniqueColumns,
 )  # noqa: I100
-from ormar.models import ExcludableItems, Model
+from ormar.models import ExcludableItems, Model, Extra
 from ormar.models.metaclass import ModelMeta
 from ormar.queryset import OrderAction, QuerySet, and_, or_
 from ormar.relations import RelationType
@@ -78,7 +78,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.10.19"
+__version__ = "0.10.20"
 __all__ = [
     "Integer",
     "BigInteger",
@@ -130,4 +130,5 @@ __all__ = [
     "ENCODERS_MAP",
     "DECODERS_MAP",
     "LargeBinary",
+    "Extra",
 ]

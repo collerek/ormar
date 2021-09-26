@@ -417,6 +417,37 @@ So to overwrite setting or provide your own a sample model can look like followi
 --8<-- "../docs_src/models/docs016.py"
 ```
 
+### Extra fields in models
+
+By default `ormar` forbids you to pass extra fields to Model.
+
+If you try to do so the `ModelError` will be raised.
+
+Since the extra fields cannot be saved in the database the default to disallow such fields seems a feasible option.
+
+On the contrary in `pydantic` the default option is to ignore such extra fields, therefore `ormar` provides an `Meta.extra` setting to behave in the same way.
+
+To ignore extra fields passed to `ormar` set this setting to `Extra.ignore` instead of default `Extra.forbid`.
+
+Note that `ormar` does not allow accepting extra fields, you can only ignore them or forbid them (raise exception if present)
+
+```python
+from ormar import Extra
+
+class Child(ormar.Model):
+    class Meta(ormar.ModelMeta):
+        tablename = "children"
+        metadata = metadata
+        database = database
+        extra = Extra.ignore  # set extra setting to prevent exceptions on extra fields presence
+
+    id: int = ormar.Integer(name="child_id", primary_key=True)
+    first_name: str = ormar.String(name="fname", max_length=100)
+    last_name: str = ormar.String(name="lname", max_length=100)
+```
+
+To set the same setting on all model check the [best practices]("../models/index/#best-practice") and `BaseMeta` concept.
+
 ## Model sort order
 
 When querying the database with given model by default the Model is ordered by the `primary_key`

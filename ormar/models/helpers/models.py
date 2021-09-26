@@ -7,6 +7,7 @@ import pydantic
 from pydantic.typing import ForwardRef
 import ormar  # noqa: I100
 from ormar.models.helpers.pydantic import populate_pydantic_default_values
+from ormar.models.utils import Extra
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -52,6 +53,8 @@ def populate_default_options_values(
         new_model.Meta.model_fields = model_fields
     if not hasattr(new_model.Meta, "abstract"):
         new_model.Meta.abstract = False
+    if not hasattr(new_model.Meta, "extra"):
+        new_model.Meta.extra = Extra.forbid
     if not hasattr(new_model.Meta, "orders_by"):
         new_model.Meta.orders_by = []
     if not hasattr(new_model.Meta, "exclude_parent_fields"):

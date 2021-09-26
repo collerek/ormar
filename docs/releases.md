@@ -1,3 +1,14 @@
+# 0.10.20
+
+## ✨ Features
+
+* Add `extra` parameter in `Model.Meta` that accepts `Extra.ignore` and `Extra.forbid` (default) and either ignores the extra fields passed to `ormar` model or raises an exception if one is encountered [#358](https://github.com/collerek/ormar/issues/358)
+
+## 🐛 Fixes
+
+* Allow `None` if field is nullable and have choices set [#354](https://github.com/collerek/ormar/issues/354)
+* Always set `primary_key` to `not null` regardless of `autoincrement` and explicit `nullable` setting to avoid problems with migrations [#348](https://github.com/collerek/ormar/issues/348) 
+
 # 0.10.19
 
 ## ✨ Features

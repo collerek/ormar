@@ -8,5 +8,6 @@ from ormar.models.newbasemodel import NewBaseModel  # noqa I100
 from ormar.models.model_row import ModelRow  # noqa I100
 from ormar.models.model import Model, T  # noqa I100
 from ormar.models.excludable import ExcludableItems  # noqa I100
+from ormar.models.utils import Extra  # noqa I100
 
-__all__ = ["NewBaseModel", "Model", "ModelRow", "ExcludableItems", "T"]
+__all__ = ["NewBaseModel", "Model", "ModelRow", "ExcludableItems", "T", "Extra"]
