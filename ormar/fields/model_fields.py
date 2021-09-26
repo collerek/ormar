@@ -91,7 +91,9 @@ class ModelFieldFactory:
             nullable, default, server_default, pydantic_only
         ) or is_auto_primary_key(primary_key, autoincrement)
         sql_nullable = (
-            nullable if sql_nullable is None else (sql_nullable and not primary_key)
+            False
+            if primary_key
+            else (nullable if sql_nullable is None else sql_nullable)
         )
 
         namespace = dict(
