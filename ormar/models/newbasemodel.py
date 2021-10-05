@@ -14,6 +14,7 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Type,
+    TypeVar,
     Union,
     cast,
 )
@@ -50,8 +51,11 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
     from ormar.signals import SignalEmitter
 
+    T = TypeVar("T", bound="NewBaseModel")
+
     IntStr = Union[int, str]
     DictStrAny = Dict[str, Any]
+    SetStr = Set[str]
     AbstractSetIntStr = AbstractSet[IntStr]
     MappingIntStrAny = Mapping[IntStr, Any]
 
@@ -154,7 +158,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         # register the columns models after initialization
         for related in self.extract_related_names().union(self.extract_through_names()):
             model_fields[related].expand_relationship(
-                new_kwargs.get(related), self, to_register=True,
+                new_kwargs.get(related),
+                self,
+                to_register=True,
             )
 
         if hasattr(self, "_init_private_attributes"):
@@ -261,7 +267,11 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     k,
                     self._convert_json(
                         k,
-                        model_fields[k].expand_relationship(v, self, to_register=False,)
+                        model_fields[k].expand_relationship(
+                            v,
+                            self,
+                            to_register=False,
+                        )
                         if k in model_fields
                         else (v if k in pydantic_fields else model_fields[k]),
                     ),
@@ -315,7 +325,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             self,
             "_orm",
             RelationsManager(
-                related_fields=self.extract_related_fields(), owner=cast("Model", self),
+                related_fields=self.extract_related_fields(),
+                owner=cast("Model", self),
             ),
         )
 
@@ -488,7 +499,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     @staticmethod
     def _get_not_excluded_fields(
-        fields: Union[List, Set], include: Optional[Dict], exclude: Optional[Dict],
+        fields: Union[List, Set],
+        include: Optional[Dict],
+        exclude: Optional[Dict],
     ) -> List:
         """
         Returns related field names applying on them include and exclude set.
@@ -784,6 +797,49 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if self.__custom_root_type__:  # pragma: no cover
             data = data["__root__"]
         return self.__config__.json_dumps(data, default=encoder, **dumps_kwargs)
+
+    @classmethod
+    def construct(
+        cls: Type["T"], _fields_set: Optional["SetStr"] = None, **values: Any
+    ) -> "T":
+        own_values = {
+            k: v for k, v in values.items() if k not in cls.extract_related_names()
+        }
+        m = cls.__new__(cls)
+        fields_values: Dict[str, Any] = {}
+        for name, field in cls.__fields__.items():
+            if name in own_values:
+                fields_values[name] = own_values[name]
+            elif not field.required:
+                fields_values[name] = field.get_default()
+        fields_values.update(own_values)
+        object.__setattr__(m, "__dict__", fields_values)
+        m._initialize_internal_attributes()
+        for relation in cls.extract_related_names():
+            if relation in values:
+                relation_field = cls.Meta.model_fields[relation]
+                if isinstance(values[relation], list):
+                    relation_value = [
+                        relation_field.to.construct(**x) if isinstance(x, dict) else x
+                        for x in values[relation]
+                    ]
+                else:
+                    relation_value = [
+                        relation_field.to.construct(**values[relation])
+                        if isinstance(values[relation], dict)
+                        else values[relation]
+                    ]
+
+                for child in relation_value:
+                    m._orm.add(
+                        parent=child,
+                        child=m,
+                        field=relation_field,
+                    )
+        if _fields_set is None:
+            _fields_set = set(values.keys())
+        object.__setattr__(m, "__fields_set__", _fields_set)
+        return m
 
     def update_from_dict(self, value_dict: Dict) -> "NewBaseModel":
         """
