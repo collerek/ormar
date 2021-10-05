@@ -176,7 +176,7 @@ await Car.objects.select_related('manufacturer').fields({'id': ...,
 
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
-    Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
+    Something like `Track.objects.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
 
 ## exclude_fields
 
