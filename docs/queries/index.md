@@ -17,7 +17,7 @@ divided into categories according to the function they fulfill.
 
 Note that some functions/methods are in multiple categories.
 
-For complicity also Models and relations methods are listed.
+For completeness, Model and relation methods are listed.
 
 To read more about any specific section or function please refer to the details subpage.
 
