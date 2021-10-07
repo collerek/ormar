@@ -109,6 +109,9 @@ assert all_cars[0].manufacturer.founded == 1937
     Mandatory fields cannot be excluded as it will raise `ValidationError`, to
     exclude a field it has to be nullable.
 
+    The `values()` method can be used to exclude mandatory fields, though data will
+    be returned as a `dict`.
+
 You cannot exclude mandatory model columns - `manufacturer__name` in this example.
 
 ```python
@@ -273,6 +276,9 @@ await Car.objects.select_related('manufacturer').exclude_fields([{'company': {'n
 !!!warning 
     Mandatory fields cannot be excluded as it will raise `ValidationError`, to
     exclude a field it has to be nullable.
+
+    The `values()` method can be used to exclude mandatory fields, though data will
+    be returned as a `dict`.
 
 !!!tip 
     Pk column cannot be excluded - it's always auto added even if explicitly
