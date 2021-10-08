@@ -214,21 +214,22 @@ def extract_nested_models(  # noqa: CCR001
     follow = [rel for rel in model_type.extract_related_names() if rel in select_dict]
     for related in follow:
         child = getattr(model, related)
-        if child:
-            target_model = model_type.Meta.model_fields[related].to
-            if isinstance(child, list):
-                extracted.setdefault(target_model.get_name(), []).extend(child)
-                if select_dict[related] is not Ellipsis:
-                    for sub_child in child:
-                        extract_nested_models(
-                            sub_child, target_model, select_dict[related], extracted
-                        )
-            else:
-                extracted.setdefault(target_model.get_name(), []).append(child)
-                if select_dict[related] is not Ellipsis:
+        if not child:
+            continue
+        target_model = model_type.Meta.model_fields[related].to
+        if isinstance(child, list):
+            extracted.setdefault(target_model.get_name(), []).extend(child)
+            if select_dict[related] is not Ellipsis:
+                for sub_child in child:
                     extract_nested_models(
-                        child, target_model, select_dict[related], extracted
+                        sub_child, target_model, select_dict[related], extracted
                     )
+        else:
+            extracted.setdefault(target_model.get_name(), []).append(child)
+            if select_dict[related] is not Ellipsis:
+                extract_nested_models(
+                    child, target_model, select_dict[related], extracted
+                )
 
 
 def extract_models_to_dict_of_lists(

@@ -43,7 +43,7 @@ class QuerysetProxy(Generic[T]):
         type_: "RelationType",
         qryset: "QuerySet[T]" = None,
     ) -> None:
-        self.relation: Relation = relation
+        self.relation: "Relation" = relation
         self._queryset: Optional["QuerySet[T]"] = qryset
         self.type_: "RelationType" = type_
         self._owner: Union[CallableProxyType, "Model"] = self.relation.manager.owner

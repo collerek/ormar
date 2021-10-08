@@ -30,11 +30,11 @@ def sort_models(models: List["Model"], orders_by: Dict) -> List["Model"]:
     ]
     sort_criteria = sort_criteria[::-1]
     for criteria in sort_criteria:
-        key, value = criteria
+        key_name, value = criteria
         if value == "desc":
-            models.sort(key=lambda x: getattr(x, key), reverse=True)
+            models.sort(key=lambda x: getattr(x, key_name), reverse=True)
         else:
-            models.sort(key=lambda x: getattr(x, key))
+            models.sort(key=lambda x: getattr(x, key_name))
     return models
 
 
