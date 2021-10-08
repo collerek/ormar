@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union, cast
 
 try:
-    from sqlalchemy.engine.result import ResultProxy
+    from sqlalchemy.engine.result import ResultProxy  # type: ignore
 except ImportError:  # pragma: no cover
     from sqlalchemy.engine.result import Row as ResultProxy  # type: ignore
 

@@ -27,7 +27,7 @@ class Mol(ormar.Model):
     class Meta(BaseMeta):
         tablename = "mols"
 
-    id: str = ormar.UUID(primary_key=True, index=True, uuid_format="hex")
+    id: uuid.UUID = ormar.UUID(primary_key=True, index=True, uuid_format="hex")
     smiles: str = ormar.String(nullable=False, unique=True, max_length=256)
 
     def __init__(self, **kwargs):

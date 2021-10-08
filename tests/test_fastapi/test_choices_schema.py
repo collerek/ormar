@@ -1,7 +1,6 @@
 import datetime
 import decimal
 import uuid
-from base64 import b64encode
 from enum import Enum
 
 import databases
@@ -60,7 +59,7 @@ class Organisation(ormar.Model):
     random_decimal: decimal.Decimal = ormar.Decimal(
         scale=2, precision=4, choices=[decimal.Decimal(12.4), decimal.Decimal(58.2)]
     )
-    random_json: pydantic.Json = ormar.JSON(choices=["aa", '{"aa":"bb"}'])
+    random_json: pydantic.Json = ormar.JSON(choices=["aa", '{"aa": "bb"}'])
     random_uuid: uuid.UUID = ormar.UUID(choices=[uuid1, uuid2])
     enum_string: str = ormar.String(max_length=100, choices=list(EnumTest))
     blob_col: bytes = ormar.LargeBinary(max_length=100000, choices=[blob, blob2])
@@ -116,7 +115,7 @@ def test_all_endpoints():
                 "expire_datetime": "2022-05-01T12:30:00",
                 "random_val": 3.5,
                 "random_decimal": 12.4,
-                "random_json": '{"aa":"bb"}',
+                "random_json": '{"aa": "bb"}',
                 "random_uuid": str(uuid1),
                 "enum_string": EnumTest.val1.value,
                 "blob_col": blob.decode("utf-8"),

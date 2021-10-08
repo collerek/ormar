@@ -1,8 +1,9 @@
 from collections import OrderedDict
-from typing import List, Optional, TYPE_CHECKING, Tuple, Type
+from typing import List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import sqlalchemy
-from sqlalchemy import text
+from sqlalchemy import Table, text
+from sqlalchemy.sql import Join
 
 import ormar  # noqa I100
 from ormar.models.helpers.models import group_related_list
@@ -41,7 +42,7 @@ class Query:
 
         self.used_aliases: List[str] = []
 
-        self.select_from: List[str] = []
+        self.select_from: Union[Join, Table, List[str]] = []
         self.columns = [sqlalchemy.Column]
         self.order_columns = order_bys
         self.sorted_orders: OrderedDict[OrderAction, text] = OrderedDict()

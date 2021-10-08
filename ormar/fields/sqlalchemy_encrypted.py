@@ -6,7 +6,7 @@ from typing import Any, Callable, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy.types as types
 from pydantic.utils import lenient_issubclass
-from sqlalchemy.engine.default import DefaultDialect
+from sqlalchemy.engine import Dialect
 
 import ormar  # noqa: I100, I202
 from ormar import ModelDefinitionError  # noqa: I202, I100
@@ -146,14 +146,14 @@ class EncryptedString(types.TypeDecorator):
     def __repr__(self) -> str:  # pragma: nocover
         return "TEXT()"
 
-    def load_dialect_impl(self, dialect: DefaultDialect) -> Any:
+    def load_dialect_impl(self, dialect: Dialect) -> Any:
         return dialect.type_descriptor(types.TEXT())
 
     def _refresh(self) -> None:
         key = self._key() if callable(self._key) else self._key
         self.backend._refresh(key)
 
-    def process_bind_param(self, value: Any, dialect: DefaultDialect) -> Optional[str]:
+    def process_bind_param(self, value: Any, dialect: Dialect) -> Optional[str]:
         if value is None:
             return value
         self._refresh()
@@ -167,7 +167,7 @@ class EncryptedString(types.TypeDecorator):
         encrypted_value = self.backend.encrypt(value)
         return encrypted_value
 
-    def process_result_value(self, value: Any, dialect: DefaultDialect) -> Any:
+    def process_result_value(self, value: Any, dialect: Dialect) -> Any:
         if value is None:
             return value
         self._refresh()
