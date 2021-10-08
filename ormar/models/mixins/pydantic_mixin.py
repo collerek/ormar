@@ -28,7 +28,7 @@ class PydanticMixin(RelationMixin):
 
     @classmethod
     def get_pydantic(
-        cls, *, include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None,
+        cls, *, include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None
     ) -> Type[pydantic.BaseModel]:
         """
         Returns a pydantic model out of ormar model.

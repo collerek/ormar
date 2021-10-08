@@ -111,7 +111,7 @@ class Query:
         :rtype: sqlalchemy.sql.selectable.Select
         """
         self_related_fields = self.model_cls.own_table_columns(
-            model=self.model_cls, excludable=self.excludable, use_alias=True,
+            model=self.model_cls, excludable=self.excludable, use_alias=True
         )
         self.columns = self.model_cls.Meta.alias_manager.prefixed_columns(
             "", self.table, self_related_fields

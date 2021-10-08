@@ -25,7 +25,7 @@ class BaseMeta(ormar.ModelMeta):
 
 
 default_fernet = dict(
-    encrypt_secret="asd123", encrypt_backend=ormar.EncryptBackends.FERNET,
+    encrypt_secret="asd123", encrypt_backend=ormar.EncryptBackends.FERNET
 )
 
 

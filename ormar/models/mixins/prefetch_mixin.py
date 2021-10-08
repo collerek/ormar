@@ -51,7 +51,7 @@ class PrefetchQueryMixin(RelationMixin):
 
     @staticmethod
     def get_column_name_for_id_extraction(
-        parent_model: Type["Model"], reverse: bool, related: str, use_raw: bool,
+        parent_model: Type["Model"], reverse: bool, related: str, use_raw: bool
     ) -> str:
         """
         Returns name of the column that should be used to extract ids from model.

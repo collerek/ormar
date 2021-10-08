@@ -185,7 +185,7 @@ class QueryClause:
     """
 
     def __init__(
-        self, model_cls: Type["Model"], filter_clauses: List, select_related: List,
+        self, model_cls: Type["Model"], filter_clauses: List, select_related: List
     ) -> None:
 
         self._select_related = select_related[:]

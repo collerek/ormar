@@ -294,7 +294,7 @@ class QuerysetProxy(Generic[T]):
         :type fields:  Union[List, str, Set, Dict]
         """
         return await self.queryset.values(
-            fields=fields, exclude_through=exclude_through,
+            fields=fields, exclude_through=exclude_through
         )
 
     async def values_list(
@@ -479,8 +479,7 @@ class QuerysetProxy(Generic[T]):
             await child.update(**kwargs)  # type: ignore
             if self.type_ == ormar.RelationType.MULTIPLE and through_kwargs:
                 await self.update_through_instance(
-                    child=child,  # type: ignore
-                    **through_kwargs,
+                    child=child, **through_kwargs  # type: ignore
                 )
         return len(children)
 

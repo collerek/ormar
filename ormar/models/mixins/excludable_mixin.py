@@ -141,7 +141,7 @@ class ExcludableMixin(RelationMixin):
         return columns
 
     @classmethod
-    def _update_excluded_with_related(cls, exclude: Union[Set, Dict, None],) -> Set:
+    def _update_excluded_with_related(cls, exclude: Union[Set, Dict, None]) -> Set:
         """
         Used during generation of the dict().
         To avoid cyclical references and max recurrence limit nested models have to

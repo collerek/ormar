@@ -95,8 +95,7 @@ def test_field_redefining_in_second_raises_error():
     )
     assert any(x.name == "creation_date" for x in RedefinedField2.Meta.table.columns)
     assert isinstance(
-        RedefinedField2.Meta.table.columns["creation_date"].type,
-        sa.sql.sqltypes.String,
+        RedefinedField2.Meta.table.columns["creation_date"].type, sa.sql.sqltypes.String
     )
 
 

@@ -221,13 +221,13 @@ def extract_nested_models(  # noqa: CCR001
                 if select_dict[related] is not Ellipsis:
                     for sub_child in child:
                         extract_nested_models(
-                            sub_child, target_model, select_dict[related], extracted,
+                            sub_child, target_model, select_dict[related], extracted
                         )
             else:
                 extracted.setdefault(target_model.get_name(), []).append(child)
                 if select_dict[related] is not Ellipsis:
                     extract_nested_models(
-                        child, target_model, select_dict[related], extracted,
+                        child, target_model, select_dict[related], extracted
                     )
 
 

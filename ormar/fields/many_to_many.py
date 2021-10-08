@@ -223,20 +223,16 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         """
         if self.to.__class__ == ForwardRef:
             self.to = evaluate_forwardref(
-                self.to,  # type: ignore
-                globalns,
-                localns or None,
+                self.to, globalns, localns or None  # type: ignore
             )
 
-            (self.__type__, self.column_type,) = populate_m2m_params_based_on_to_model(
-                to=self.to, nullable=self.nullable,
+            (self.__type__, self.column_type) = populate_m2m_params_based_on_to_model(
+                to=self.to, nullable=self.nullable
             )
 
         if self.through.__class__ == ForwardRef:
             self.through = evaluate_forwardref(
-                self.through,  # type: ignore
-                globalns,
-                localns or None,
+                self.through, globalns, localns or None  # type: ignore
             )
             forbid_through_relations(self.through)
 

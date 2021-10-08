@@ -254,9 +254,7 @@ class Text(ModelFieldFactory, str):
     _type = str
     _sample = "text"
 
-    def __new__(  # type: ignore
-        cls, **kwargs: Any
-    ) -> BaseField:
+    def __new__(cls, **kwargs: Any) -> BaseField:  # type: ignore
         kwargs = {
             **kwargs,
             **{

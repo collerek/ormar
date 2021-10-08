@@ -280,7 +280,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
         field.create_default_through_model()
         through_class = field.through
     new_meta: ormar.ModelMeta = type(  # type: ignore
-        "Meta", (), dict(through_class.Meta.__dict__),
+        "Meta", (), dict(through_class.Meta.__dict__)
     )
     copy_name = through_class.__name__ + attrs.get("__name__", "")
     copy_through = type(copy_name, (ormar.Model,), {"Meta": new_meta})
@@ -566,9 +566,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             attrs, model_fields = extract_from_parents_definition(
                 base_class=base, curr_class=mcs, attrs=attrs, model_fields=model_fields
             )
-        new_model = super().__new__(  # type: ignore
-            mcs, name, bases, attrs
-        )
+        new_model = super().__new__(mcs, name, bases, attrs)  # type: ignore
 
         add_cached_properties(new_model)
 
@@ -647,6 +645,6 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                     access_chain=item,
                 )
             return FieldAccessor(
-                source_model=cast(Type["Model"], self), field=field, access_chain=item,
+                source_model=cast(Type["Model"], self), field=field, access_chain=item
             )
         return object.__getattribute__(self, item)

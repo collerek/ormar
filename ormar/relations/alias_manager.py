@@ -99,7 +99,7 @@ class AliasManager:
         return table.alias(f"{alias}_{table.name}")
 
     def add_relation_type(
-        self, source_model: Type["Model"], relation_name: str, reverse_name: str = None,
+        self, source_model: Type["Model"], relation_name: str, reverse_name: str = None
     ) -> None:
         """
         Registers the relations defined in ormar models.

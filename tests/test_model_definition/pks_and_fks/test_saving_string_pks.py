@@ -62,18 +62,18 @@ async def cleanup():
 @pytest.mark.asyncio
 async def test_creating_a_position(cleanup):
     async with database:
-        instance = PositionOrm(name="my_pos", x=1.0, y=2.0, degrees=3.0,)
+        instance = PositionOrm(name="my_pos", x=1.0, y=2.0, degrees=3.0)
         await instance.save()
         assert instance.saved
         assert instance.name == "my_pos"
 
-        instance2 = PositionOrmDef(x=1.0, y=2.0, degrees=3.0,)
+        instance2 = PositionOrmDef(x=1.0, y=2.0, degrees=3.0)
         await instance2.save()
         assert instance2.saved
         assert instance2.name is not None
         assert len(instance2.name) == 12
 
-        instance3 = PositionOrmDef(x=1.0, y=2.0, degrees=3.0,)
+        instance3 = PositionOrmDef(x=1.0, y=2.0, degrees=3.0)
         await instance3.save()
         assert instance3.saved
         assert instance3.name is not None
