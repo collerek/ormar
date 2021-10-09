@@ -182,7 +182,7 @@ def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":  # pragma: no cover
     ...
 
 
-def ForeignKey(  # noqa CFQ002
+def ForeignKey(  # type: ignore # noqa CFQ002
     to: "ToType",
     *,
     name: str = None,

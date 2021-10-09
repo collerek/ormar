@@ -78,7 +78,7 @@ def ManyToMany(to: ForwardRef, **kwargs: Any) -> "RelationProxy":  # pragma: no 
     ...
 
 
-def ManyToMany(
+def ManyToMany(  # type: ignore
     to: "ToType",
     through: Optional["ToType"] = None,
     *,
