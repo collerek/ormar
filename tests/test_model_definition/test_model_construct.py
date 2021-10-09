@@ -19,7 +19,6 @@ class NickNames(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
-    is_lame: bool = ormar.Boolean(nullable=True)
 
 
 class NicksHq(ormar.Model):
@@ -69,3 +68,20 @@ async def test_init_and_construct_has_same_effect():
             comp = Company(name="Banzai", hq=hq, founded=1988)
             comp2 = Company.construct(**dict(name="Banzai", hq=hq, founded=1988))
             assert comp.dict() == comp2.dict()
+
+            comp3 = Company.construct(**dict(name="Banzai", hq=hq.dict(), founded=1988))
+            assert comp.dict() == comp3.dict()
+
+
+@pytest.mark.asyncio
+async def test_init_and_construct_has_same_effect_with_m2m():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            n1 = await NickNames(name="test").save()
+            n2 = await NickNames(name="test2").save()
+            hq = HQ(name="Main", nicks=[n1, n2])
+            hq2 = HQ.construct(**dict(name="Main", nicks=[n1, n2]))
+            assert hq.dict() == hq2.dict()
+
+            hq3 = HQ.construct(**dict(name="Main", nicks=[n1.dict(), n2.dict()]))
+            assert hq.dict() == hq3.dict()
