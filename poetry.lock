@@ -1288,6 +1288,14 @@ types-enum34 = "*"
 types-ipaddress = "*"
 
 [[package]]
+name = "types-dataclasses"
+version = "0.1.7"
+description = "Typing stubs for dataclasses"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "types-enum34"
 version = "1.1.0"
 description = "Typing stubs for enum34"
@@ -1426,7 +1434,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2"
-content-hash = "620cb15a54d9bb8cdbffe28ff94ddfec094468d050f4fa0c1a4a0375c5019a52"
+content-hash = "a6fddac57b64af3f1164dbaa7be05a13e3766aeeb783a9de55c6ead91316925f"
 
 [metadata.files]
 aiocontextvars = [
@@ -2286,6 +2294,10 @@ types-aiofiles = [
 types-cryptography = [
     {file = "types-cryptography-3.3.5.tar.gz", hash = "sha256:65f51b899499a97efa155b2882eafca003b404af3c67a0ff492d3b7f140f6468"},
     {file = "types_cryptography-3.3.5-py3-none-any.whl", hash = "sha256:1526811a0d5f2971b2d8719fce76790800eca6ca9c817b1552c8cacdc6e0cac3"},
+]
+types-dataclasses = [
+    {file = "types-dataclasses-0.1.7.tar.gz", hash = "sha256:248075d093d8f7c1541ce515594df7ae40233d1340afde11ce7125368c5209b8"},
+    {file = "types_dataclasses-0.1.7-py3-none-any.whl", hash = "sha256:fc372bb68b878ac7a68fd04230d923d4a6303a137ecb0b9700b90630bdfcbfc9"},
 ]
 types-enum34 = [
     {file = "types-enum34-1.1.0.tar.gz", hash = "sha256:9d42b80e1d783aab2289ebdf599d9011bd39af6ed9308bbdfe63200df3d36455"},
