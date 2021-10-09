@@ -20,9 +20,9 @@ And what's a better name for python ORM than snakes cabinet :)
 
 """
 try:
-    from importlib import metadata
+    from importlib.metadata import version  # type: ignore
 except ImportError:  # pragma: no cover
-    import importlib_metadata as metadata  # type: ignore
+    from importlib_metadata import version   # type: ignore
 from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
 from ormar.decorators import (  # noqa: I100
     post_delete,
@@ -82,7 +82,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = metadata.version("ormar")
+__version__ = version("ormar")
 __all__ = [
     "Integer",
     "BigInteger",

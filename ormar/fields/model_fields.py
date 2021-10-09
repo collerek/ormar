@@ -12,7 +12,7 @@ from ormar.fields.base import BaseField  # noqa I101
 from ormar.fields.sqlalchemy_encrypted import EncryptBackends
 
 try:
-    from typing import Literal
+    from typing import Literal  # type: ignore
 except ImportError:  # pragma: no cover
     from typing_extensions import Literal  # type: ignore
 
@@ -468,13 +468,13 @@ class JSON(ModelFieldFactory, pydantic.Json):
 if TYPE_CHECKING:  # pragma: nocover # noqa: C901
 
     @overload
-    def LargeBinary(
+    def LargeBinary(  # type: ignore
         max_length: int, *, represent_as_base64_str: Literal[True], **kwargs: Any
     ) -> str:
         ...
 
     @overload
-    def LargeBinary(
+    def LargeBinary(  # type: ignore
         max_length: int, *, represent_as_base64_str: Literal[False], **kwargs: Any
     ) -> bytes:
         ...
