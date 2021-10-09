@@ -55,7 +55,7 @@ version = "^3.7"
 python = "<3.8"
 
 [tool.poetry.dependencies.importlib-metadata]
-version = ">=1.0"
+version = ">=3.1"
 python = "<3.8"
 
 
