@@ -167,11 +167,7 @@ def test_excluding_fields_in_endpoints():
         assert created_user.pk is not None
         assert created_user.password is None
 
-        user2 = {
-            "email": "test@domain.com",
-            "first_name": "John",
-            "last_name": "Doe",
-        }
+        user2 = {"email": "test@domain.com", "first_name": "John", "last_name": "Doe"}
 
         response = client.post("/users/", json=user2)
         created_user = User(**response.json())

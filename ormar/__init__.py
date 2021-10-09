@@ -19,6 +19,10 @@ snakes, and ormar(e) in italian which means cabinet.
 And what's a better name for python ORM than snakes cabinet :)
 
 """
+try:
+    from importlib.metadata import version  # type: ignore
+except ImportError:  # pragma: no cover
+    from importlib_metadata import version  # type: ignore
 from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
 from ormar.decorators import (  # noqa: I100
     post_delete,
@@ -64,7 +68,7 @@ from ormar.fields import (
     UUID,
     UniqueColumns,
 )  # noqa: I100
-from ormar.models import ExcludableItems, Model, Extra
+from ormar.models import ExcludableItems, Extra, Model
 from ormar.models.metaclass import ModelMeta
 from ormar.queryset import OrderAction, QuerySet, and_, or_
 from ormar.relations import RelationType
@@ -78,7 +82,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.10.20"
+__version__ = version("ormar")
 __all__ = [
     "Integer",
     "BigInteger",

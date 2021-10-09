@@ -1,17 +1,7 @@
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    TYPE_CHECKING,
-    Tuple,
-    Type,
-    Union,
-    cast,
-)
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union, cast
 
 try:
-    from sqlalchemy.engine.result import ResultProxy
+    from sqlalchemy.engine.result import ResultProxy  # type: ignore
 except ImportError:  # pragma: no cover
     from sqlalchemy.engine.result import Row as ResultProxy  # type: ignore
 
@@ -293,7 +283,7 @@ class ModelRow(NewBaseModel):
         """
         through_name = cls.Meta.model_fields[related].through.get_name()
         through_child = cls._create_through_instance(
-            row=row, related=related, through_name=through_name, excludable=excludable,
+            row=row, related=related, through_name=through_name, excludable=excludable
         )
 
         if child.__class__ != proxy_source_model:
@@ -378,7 +368,7 @@ class ModelRow(NewBaseModel):
         :rtype: Dict
         """
         selected_columns = cls.own_table_columns(
-            model=cls, excludable=excludable, alias=table_prefix, use_alias=False,
+            model=cls, excludable=excludable, alias=table_prefix, use_alias=False
         )
 
         column_prefix = table_prefix + "_" if table_prefix else ""

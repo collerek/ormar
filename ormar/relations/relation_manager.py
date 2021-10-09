@@ -57,7 +57,7 @@ class RelationsManager:
         return None  # pragma nocover
 
     @staticmethod
-    def add(parent: "Model", child: "Model", field: "ForeignKeyField",) -> None:
+    def add(parent: "Model", child: "Model", field: "ForeignKeyField") -> None:
         """
         Adds relation on both sides -> meaning on both child and parent models.
         One side of the relation is always weakref proxy to avoid circular refs.
@@ -73,7 +73,7 @@ class RelationsManager:
         :param field: field with relation definition
         :type field: ForeignKeyField
         """
-        (parent, child, child_name, to_name,) = get_relations_sides_and_names(
+        (parent, child, child_name, to_name) = get_relations_sides_and_names(
             field, parent, child
         )
 

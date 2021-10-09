@@ -1,14 +1,5 @@
 from collections import OrderedDict
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    TYPE_CHECKING,
-    Tuple,
-    Type,
-    cast,
-)
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, cast
 
 import sqlalchemy
 from sqlalchemy import text
@@ -102,9 +93,7 @@ class SqlJoin:
         """
         return self.next_model.Meta.table
 
-    def _on_clause(
-        self, previous_alias: str, from_clause: str, to_clause: str,
-    ) -> text:
+    def _on_clause(self, previous_alias: str, from_clause: str, to_clause: str) -> text:
         """
         Receives aliases and names of both ends of the join and combines them
         into one text clause used in joins.
@@ -140,12 +129,7 @@ class SqlJoin:
 
         self._process_following_joins()
 
-        return (
-            self.used_aliases,
-            self.select_from,
-            self.columns,
-            self.sorted_orders,
-        )
+        return (self.used_aliases, self.select_from, self.columns, self.sorted_orders)
 
     def _forward_join(self) -> None:
         """
@@ -269,7 +253,7 @@ class SqlJoin:
             new_part = target_field.default_target_field_name()  # type: ignore
         return new_part
 
-    def _process_join(self,) -> None:  # noqa: CFQ002
+    def _process_join(self) -> None:  # noqa: CFQ002
         """
         Resolves to and from column names and table names.
 
@@ -316,7 +300,7 @@ class SqlJoin:
     def _set_default_primary_key_order_by(self) -> None:
         for order_by in self.next_model.Meta.orders_by:
             clause = ormar.OrderAction(
-                order_str=order_by, model_cls=self.next_model, alias=self.next_alias,
+                order_str=order_by, model_cls=self.next_model, alias=self.next_alias
             )
             self.sorted_orders[clause] = clause.get_text_clause()
 
@@ -355,8 +339,7 @@ class SqlJoin:
             model = self.target_field.to
         else:
             alias = self.alias_manager.resolve_relation_alias(
-                from_model=self.target_field.owner,
-                relation_name=self.target_field.name,
+                from_model=self.target_field.owner, relation_name=self.target_field.name
             )
             model = self.target_field.to
 

@@ -130,7 +130,7 @@ async def test_or_filters():
                         )
                     )
                     & (Book.title.startswith("The"))
-                ),
+                )
             )
             .all()
         )

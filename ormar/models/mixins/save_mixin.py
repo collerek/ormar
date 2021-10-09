@@ -1,5 +1,15 @@
 import uuid
-from typing import Callable, Collection, Dict, List, Optional, Set, TYPE_CHECKING, cast
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    cast,
+)
 
 import ormar
 from ormar.exceptions import ModelPersistenceError
@@ -93,7 +103,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
             if field.__type__ == uuid.UUID and name in model_dict:
                 parsers = {"string": lambda x: str(x), "hex": lambda x: "%.32x" % x.int}
                 uuid_format = field.column_type.uuid_format
-                parser = parsers.get(uuid_format, lambda x: x)
+                parser: Callable[..., Any] = parsers.get(uuid_format, lambda x: x)
                 model_dict[name] = parser(model_dict[name])
         return model_dict
 
@@ -222,7 +232,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
 
     @staticmethod
     async def _upsert_through_model(
-        instance: "Model", previous_model: "Model", relation_field: "ForeignKeyField",
+        instance: "Model", previous_model: "Model", relation_field: "ForeignKeyField"
     ) -> None:
         """
         Upsert through model for m2m relation.

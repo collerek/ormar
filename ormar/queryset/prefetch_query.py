@@ -1,13 +1,4 @@
-from typing import (
-    Dict,
-    List,
-    Sequence,
-    Set,
-    TYPE_CHECKING,
-    Tuple,
-    Type,
-    cast,
-)
+from typing import Dict, List, Sequence, Set, TYPE_CHECKING, Tuple, Type, cast
 
 import ormar
 from ormar.queryset.clause import QueryClause
@@ -39,11 +30,11 @@ def sort_models(models: List["Model"], orders_by: Dict) -> List["Model"]:
     ]
     sort_criteria = sort_criteria[::-1]
     for criteria in sort_criteria:
-        key, value = criteria
+        key_name, value = criteria
         if value == "desc":
-            models.sort(key=lambda x: getattr(x, key), reverse=True)
+            models.sort(key=lambda x: getattr(x, key_name), reverse=True)
         else:
-            models.sort(key=lambda x: getattr(x, key))
+            models.sort(key=lambda x: getattr(x, key_name))
     return models
 
 
@@ -192,7 +183,7 @@ class PrefetchQuery:
         return list_of_ids
 
     def _extract_required_ids(
-        self, parent_model: Type["Model"], reverse: bool, related: str,
+        self, parent_model: Type["Model"], reverse: bool, related: str
     ) -> Set:
         """
         Delegates extraction of the fields to either get ids from raw sql response
@@ -210,10 +201,7 @@ class PrefetchQuery:
         use_raw = parent_model.get_name() not in self.models
 
         column_name = parent_model.get_column_name_for_id_extraction(
-            parent_model=parent_model,
-            reverse=reverse,
-            related=related,
-            use_raw=use_raw,
+            parent_model=parent_model, reverse=reverse, related=related, use_raw=use_raw
         )
 
         if use_raw:
@@ -263,7 +251,7 @@ class PrefetchQuery:
                 related=related,
             )
             qryclause = QueryClause(
-                model_cls=clause_target, select_related=[], filter_clauses=[],
+                model_cls=clause_target, select_related=[], filter_clauses=[]
             )
             kwargs = {f"{filter_column}__in": ids}
             filter_clauses, _ = qryclause.prepare_filter(_own_only=False, **kwargs)
@@ -271,7 +259,7 @@ class PrefetchQuery:
         return []
 
     def _populate_nested_related(
-        self, model: "Model", prefetch_dict: Dict, orders_by: Dict,
+        self, model: "Model", prefetch_dict: Dict, orders_by: Dict
     ) -> "Model":
         """
         Populates all related models children of parent model that are
@@ -540,7 +528,7 @@ class PrefetchQuery:
         )
 
     def _update_already_loaded_rows(  # noqa: CFQ002
-        self, target_field: "BaseField", prefetch_dict: Dict, orders_by: Dict,
+        self, target_field: "BaseField", prefetch_dict: Dict, orders_by: Dict
     ) -> None:
         """
         Updates models that are already loaded, usually children of children.
@@ -598,7 +586,7 @@ class PrefetchQuery:
         for row in rows:
             field_name = parent_model.get_related_field_name(target_field=target_field)
             item = target_model.extract_prefixed_table_columns(
-                item={}, row=row, table_prefix=table_prefix, excludable=excludable,
+                item={}, row=row, table_prefix=table_prefix, excludable=excludable
             )
             item["__excluded__"] = target_model.get_names_to_exclude(
                 excludable=excludable, alias=exclude_prefix

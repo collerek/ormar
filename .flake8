@@ -1,5 +1,5 @@
 [flake8]
-ignore = ANN101, ANN102, W503, S101
+ignore = ANN101, ANN102, W503, S101, CFQ004
 max-complexity = 8
 max-line-length = 88
 import-order-style = pycharm
