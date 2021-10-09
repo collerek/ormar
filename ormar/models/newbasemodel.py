@@ -823,24 +823,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 value_to_set = [value_to_set]
             relation_field = cls.Meta.model_fields[relation]
             relation_value = [
-                cls.construct_from_dict_if_required(relation_field, value=x)
+                relation_field.expand_relationship(x, model, to_register=False)
                 for x in value_to_set
             ]
 
             for child in relation_value:
                 model._orm.add(
-                    parent=child,
+                    parent=cast("Model", child),
                     child=cast("Model", model),
                     field=cast("ForeignKeyField", relation_field),
                 )
-
-    @staticmethod
-    def construct_from_dict_if_required(
-        relation_field: "BaseField", value: Any
-    ) -> "Model":
-        return (
-            relation_field.to.construct(**value) if isinstance(value, dict) else value
-        )
 
     def update_from_dict(self, value_dict: Dict) -> "NewBaseModel":
         """
