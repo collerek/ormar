@@ -813,7 +813,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         return model
 
     @classmethod
-    def _construct_relations(cls: Type["T"], model: "T", values: Dict):
+    def _construct_relations(cls: Type["T"], model: "T", values: Dict) -> None:
         present_relations = [
             relation for relation in cls.extract_related_names() if relation in values
         ]
@@ -830,12 +830,14 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             for child in relation_value:
                 model._orm.add(
                     parent=child,
-                    child=model,
-                    field=relation_field,
+                    child=cast("Model", model),
+                    field=cast("ForeignKeyField", relation_field),
                 )
 
     @staticmethod
-    def construct_from_dict_if_required(relation_field: "BaseField", value: Any):
+    def construct_from_dict_if_required(
+        relation_field: "BaseField", value: Any
+    ) -> "Model":
         return (
             relation_field.to.construct(**value) if isinstance(value, dict) else value
         )
