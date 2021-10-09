@@ -19,7 +19,6 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
       fail-fast: false
-    
     services:
       mysql:
         image: mysql:5.7
@@ -50,8 +49,10 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        python -m pip install pip==21.0.1
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        python -m pip install poetry==1.1.11
+        poetry install
+      env:
+        POETRY_VIRTUALENVS_CREATE: false
     - name: Run mysql
       env:
         DATABASE_URL: "mysql://username:password@127.0.0.1:3306/testsuite"
@@ -64,7 +65,7 @@ jobs:
       env:
         DATABASE_URL: "sqlite:///testsuite"
       run: bash scripts/test.sh
-    - run: mypy --config-file mypy.ini ormar tests
+    - run: mypy ormar tests
     - name: Upload coverage
       uses: codecov/codecov-action@v1
     - name: Test & publish code coverage

@@ -29,7 +29,7 @@ def is_field_an_forward_ref(field: "BaseField") -> bool:
     )
 
 
-def populate_default_options_values(
+def populate_default_options_values(  # noqa: CCR001
     new_model: Type["Model"], model_fields: Dict
 ) -> None:
     """

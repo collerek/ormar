@@ -92,7 +92,7 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-    to: Type["T"], nullable: bool, onupdate: str = None, ondelete: str = None,
+    to: Type["T"], nullable: bool, onupdate: str = None, ondelete: str = None
 ) -> Tuple[Any, List, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
@@ -182,7 +182,7 @@ def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":  # pragma: no cover
     ...
 
 
-def ForeignKey(  # noqa CFQ002
+def ForeignKey(  # type: ignore # noqa CFQ002
     to: "ToType",
     *,
     name: str = None,
@@ -347,9 +347,7 @@ class ForeignKeyField(BaseField):
         """
         if self.to.__class__ == ForwardRef:
             self.to = evaluate_forwardref(
-                self.to,  # type: ignore
-                globalns,
-                localns or None,
+                self.to, globalns, localns or None  # type: ignore
             )
             (
                 self.__type__,
@@ -363,7 +361,7 @@ class ForeignKeyField(BaseField):
             )
 
     def _extract_model_from_sequence(
-        self, value: List, child: "Model", to_register: bool,
+        self, value: List, child: "Model", to_register: bool
     ) -> List["Model"]:
         """
         Takes a list of Models and registers them on parent.
@@ -382,13 +380,13 @@ class ForeignKeyField(BaseField):
         """
         return [
             self.expand_relationship(  # type: ignore
-                value=val, child=child, to_register=to_register,
+                value=val, child=child, to_register=to_register
             )
             for val in value
         ]
 
     def _register_existing_model(
-        self, value: "Model", child: "Model", to_register: bool,
+        self, value: "Model", child: "Model", to_register: bool
     ) -> "Model":
         """
         Takes already created instance and registers it for parent.
@@ -479,9 +477,7 @@ class ForeignKeyField(BaseField):
         :param child: child model
         :type child: Model class
         """
-        model._orm.add(
-            parent=model, child=child, field=self,
-        )
+        model._orm.add(parent=model, child=child, field=self)
 
     def has_unresolved_forward_refs(self) -> bool:
         """

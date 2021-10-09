@@ -19,17 +19,17 @@ from typing import (
     cast,
 )
 
+import databases
+import pydantic
+import sqlalchemy
 from ormar.models.utils import Extra
+from pydantic import BaseModel
 
 try:
     import orjson as json
 except ImportError:  # pragma: no cover
     import json  # type: ignore
 
-import databases
-import pydantic
-import sqlalchemy
-from pydantic import BaseModel
 
 import ormar  # noqa I100
 from ormar.exceptions import ModelError, ModelPersistenceError
@@ -158,9 +158,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         # register the columns models after initialization
         for related in self.extract_related_names().union(self.extract_through_names()):
             model_fields[related].expand_relationship(
-                new_kwargs.get(related),
-                self,
-                to_register=True,
+                new_kwargs.get(related), self, to_register=True
             )
 
         if hasattr(self, "_init_private_attributes"):
@@ -224,7 +222,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 f"need to call update_forward_refs()."
             )
 
-    def _process_kwargs(self, kwargs: Dict) -> Tuple[Dict, Dict]:
+    def _process_kwargs(self, kwargs: Dict) -> Tuple[Dict, Dict]:  # noqa: CCR001
         """
         Initializes nested models.
 
@@ -267,11 +265,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     k,
                     self._convert_json(
                         k,
-                        model_fields[k].expand_relationship(
-                            v,
-                            self,
-                            to_register=False,
-                        )
+                        model_fields[k].expand_relationship(v, self, to_register=False)
+
                         if k in model_fields
                         else (v if k in pydantic_fields else model_fields[k]),
                     ),
@@ -325,8 +320,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             self,
             "_orm",
             RelationsManager(
-                related_fields=self.extract_related_fields(),
-                owner=cast("Model", self),
+                related_fields=self.extract_related_fields(), owner=cast("Model", self)
             ),
         )
 
@@ -499,9 +493,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     @staticmethod
     def _get_not_excluded_fields(
-        fields: Union[List, Set],
-        include: Optional[Dict],
-        exclude: Optional[Dict],
+        fields: Union[List, Set], include: Optional[Dict], exclude: Optional[Dict]
     ) -> List:
         """
         Returns related field names applying on them include and exclude set.

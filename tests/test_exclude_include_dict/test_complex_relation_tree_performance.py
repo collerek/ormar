@@ -135,7 +135,7 @@ class Project(orm.Model):
     type: str = orm.String(max_length=10, default="cs")
     target_branch_name: str = orm.String(max_length=100, default="master")
     header: str = orm.String(max_length=250, default="")
-    jira_url: str = orm.String(max_length=500,)
+    jira_url: str = orm.String(max_length=500)
     changelog_file: str = orm.String(max_length=250, default="")
     version_file: str = orm.String(max_length=250, default="")
 

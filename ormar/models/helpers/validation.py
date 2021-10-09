@@ -64,8 +64,11 @@ def convert_choices_if_needed(  # noqa: CCR001
         value = value.isoformat() if not isinstance(value, str) else value
         choices = [o.isoformat() for o in field.choices]
     elif field.__type__ == pydantic.Json:
-        value = json.dumps(value) if not isinstance(value, str) else value
+        value = (
+            json.dumps(value) if not isinstance(value, str) else re_dump_value(value)
+        )
         value = value.decode("utf-8") if isinstance(value, bytes) else value
+        choices = [re_dump_value(x) for x in field.choices]
     elif field.__type__ == uuid.UUID:
         value = str(value) if not isinstance(value, str) else value
         choices = [str(o) for o in field.choices]
@@ -84,6 +87,21 @@ def convert_choices_if_needed(  # noqa: CCR001
             value = value if isinstance(value, bytes) else value.encode("utf-8")
 
     return value, choices
+
+
+def re_dump_value(value: str) -> str:
+    """
+    Rw-dumps choices due to different string representation in orjson and json
+    :param value: string to re-dump
+    :type value: str
+    :return: re-dumped choices
+    :rtype: List[str]
+    """
+    try:
+        result: Union[str, bytes] = json.dumps(json.loads(value))
+    except json.JSONDecodeError:
+        result = value
+    return result.decode("utf-8") if isinstance(result, bytes) else result
 
 
 def validate_choices(field: "BaseField", value: Any) -> None:

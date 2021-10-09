@@ -117,7 +117,7 @@ def test_operator_return_proper_filter_action(method, expected, expected_value):
     }
 
 
-@pytest.mark.parametrize("method, expected_direction", [("asc", ""), ("desc", "desc"),])
+@pytest.mark.parametrize("method, expected_direction", [("asc", ""), ("desc", "desc")])
 def test_operator_return_proper_order_action(method, expected_direction):
     action = getattr(Product.name, method)()
     assert action.source_model == Product

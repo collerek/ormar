@@ -35,7 +35,7 @@ class SecondaryModel(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     primary_model: PrimaryModel = ormar.ForeignKey(
-        PrimaryModel, related_name="secondary_models",
+        PrimaryModel, related_name="secondary_models"
     )
 
 

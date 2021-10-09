@@ -1,13 +1,4 @@
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    Set,
-    TYPE_CHECKING,
-    TypeVar,
-    Union,
-)
+from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, TypeVar, Union
 
 import ormar.queryset  # noqa I100
 from ormar.exceptions import ModelPersistenceError, NoMatch

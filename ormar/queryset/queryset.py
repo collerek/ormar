@@ -247,7 +247,7 @@ class QuerySet(Generic[T]):
         return self.model_meta.table
 
     def build_select_expression(
-        self, limit: int = None, offset: int = None, order_bys: List = None,
+        self, limit: int = None, offset: int = None, order_bys: List = None
     ) -> sqlalchemy.sql.select:
         """
         Constructs the actual database query used in the QuerySet.
@@ -378,7 +378,7 @@ class QuerySet(Generic[T]):
         ]
 
         related = sorted(list(set(list(self._select_related) + related)))
-        return self.rebuild_self(select_related=related,)
+        return self.rebuild_self(select_related=related)
 
     def select_all(self, follow: bool = False) -> "QuerySet[T]":
         """
@@ -404,7 +404,7 @@ class QuerySet(Generic[T]):
         relations = list(self.model.extract_related_names())
         if follow:
             relations = self.model._iterate_related_models()
-        return self.rebuild_self(select_related=relations,)
+        return self.rebuild_self(select_related=relations)
 
     def prefetch_related(
         self, related: Union[List, str, FieldAccessor]
@@ -434,7 +434,7 @@ class QuerySet(Generic[T]):
         ]
 
         related = list(set(list(self._prefetch_related) + related))
-        return self.rebuild_self(prefetch_related=related,)
+        return self.rebuild_self(prefetch_related=related)
 
     def fields(
         self, columns: Union[List, str, Set, Dict], _is_exclude: bool = False
@@ -490,7 +490,7 @@ class QuerySet(Generic[T]):
             is_exclude=_is_exclude,
         )
 
-        return self.rebuild_self(excludable=excludable,)
+        return self.rebuild_self(excludable=excludable)
 
     def exclude_fields(self, columns: Union[List, str, Set, Dict]) -> "QuerySet[T]":
         """
@@ -564,7 +564,7 @@ class QuerySet(Generic[T]):
         ]
 
         order_bys = self.order_bys + [x for x in orders_by if x not in self.order_bys]
-        return self.rebuild_self(order_bys=order_bys,)
+        return self.rebuild_self(order_bys=order_bys)
 
     async def values(
         self,
@@ -821,7 +821,7 @@ class QuerySet(Generic[T]):
 
         limit_count = page_size
         query_offset = (page - 1) * page_size
-        return self.rebuild_self(limit_count=limit_count, offset=query_offset,)
+        return self.rebuild_self(limit_count=limit_count, offset=query_offset)
 
     def limit(self, limit_count: int, limit_raw_sql: bool = None) -> "QuerySet[T]":
         """
@@ -838,7 +838,7 @@ class QuerySet(Generic[T]):
         :rtype: QuerySet
         """
         limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
-        return self.rebuild_self(limit_count=limit_count, limit_raw_sql=limit_raw_sql,)
+        return self.rebuild_self(limit_count=limit_count, limit_raw_sql=limit_raw_sql)
 
     def offset(self, offset: int, limit_raw_sql: bool = None) -> "QuerySet[T]":
         """
@@ -855,7 +855,7 @@ class QuerySet(Generic[T]):
         :rtype: QuerySet
         """
         limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
-        return self.rebuild_self(offset=offset, limit_raw_sql=limit_raw_sql,)
+        return self.rebuild_self(offset=offset, limit_raw_sql=limit_raw_sql)
 
     async def first(self, *args: Any, **kwargs: Any) -> "T":
         """
