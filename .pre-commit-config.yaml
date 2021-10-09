@@ -3,6 +3,7 @@ repos:
     rev: 21.9b0
     hooks:
       - id: black
+        files: ormar tests
   - repo: https://github.com/pycqa/flake8
     rev: 3.9.2
     hooks:
@@ -14,4 +15,3 @@ repos:
     hooks:
       - id: mypy
         files: ormar tests
-        additional_dependencies: [ types-pytz ]
