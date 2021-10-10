@@ -160,7 +160,7 @@ class EncryptedString(types.TypeDecorator):
         try:
             value = self._underlying_type.process_bind_param(value, dialect)
         except AttributeError:
-            encoder = ormar.ENCODERS_MAP.get(self.type_, None)
+            encoder = ormar.SQL_ENCODERS_MAP.get(self.type_, None)
             if encoder:
                 value = encoder(value)  # type: ignore
 

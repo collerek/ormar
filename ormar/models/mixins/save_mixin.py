@@ -11,9 +11,10 @@ from typing import (
     cast,
 )
 
-import ormar
+import pydantic
+
+import ormar  # noqa: I100, I202
 from ormar.exceptions import ModelPersistenceError
-from ormar.models.helpers.validation import validate_choices
 from ormar.models.mixins import AliasMixin
 from ormar.models.mixins.relation_mixin import RelationMixin
 
@@ -29,6 +30,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
     if TYPE_CHECKING:  # pragma: nocover
         _choices_fields: Optional[Set]
         _skip_ellipsis: Callable
+        __fields__: Dict[str, pydantic.fields.ModelField]
 
     @classmethod
     def prepare_model_to_save(cls, new_kwargs: dict) -> dict:
@@ -180,9 +182,18 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         if not cls._choices_fields:
             return new_kwargs
 
-        for field_name, field in cls.Meta.model_fields.items():
-            if field_name in new_kwargs and field_name in cls._choices_fields:
-                validate_choices(field=field, value=new_kwargs.get(field_name))
+        fields_to_check = [
+            field
+            for field in cls.Meta.model_fields.values()
+            if field.name in cls._choices_fields and field.name in new_kwargs
+        ]
+        for field in fields_to_check:
+            if new_kwargs[field.name] not in field.choices:
+                raise ValueError(
+                    f"{field.name}: '{new_kwargs[field.name]}' "
+                    f"not in allowed choices set:"
+                    f" {field.choices}"
+                )
         return new_kwargs
 
     @staticmethod

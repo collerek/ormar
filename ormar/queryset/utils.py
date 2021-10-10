@@ -29,8 +29,8 @@ def check_node_not_dict_or_not_last_node(
 
     :param part:
     :type part: str
-    :param parts:
-    :type parts: List[str]
+    :param is_last: flag to check if last element
+    :type is_last: bool
     :param current_level: current level of the traversed structure
     :type current_level: Any
     :return: result of the check
@@ -52,7 +52,7 @@ def translate_list_to_dict(  # noqa: CCR001
     Default required key ise Ellipsis like in pydantic.
 
     :param list_to_trans: input list
-    :type list_to_trans: set
+    :type list_to_trans: Union[List, Set]
     :param is_order: flag if change affects order_by clauses are they require special
     default value with sort order.
     :type is_order: bool

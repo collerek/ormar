@@ -24,7 +24,7 @@ from ormar.fields.model_fields import (
     Time,
     UUID,
 )
-from ormar.fields.parsers import DECODERS_MAP, ENCODERS_MAP
+from ormar.fields.parsers import DECODERS_MAP, ENCODERS_MAP, SQL_ENCODERS_MAP
 from ormar.fields.sqlalchemy_encrypted import EncryptBackend, EncryptBackends
 from ormar.fields.through_field import Through, ThroughField
 
@@ -54,6 +54,7 @@ __all__ = [
     "EncryptBackend",
     "DECODERS_MAP",
     "ENCODERS_MAP",
+    "SQL_ENCODERS_MAP",
     "LargeBinary",
     "UniqueColumns",
 ]

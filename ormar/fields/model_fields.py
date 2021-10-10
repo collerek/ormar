@@ -1,11 +1,13 @@
 import datetime
 import decimal
 import uuid
-from typing import Any, Optional, TYPE_CHECKING, Union, overload
+from enum import Enum
+from typing import Any, Optional, Set, TYPE_CHECKING, Type, Union, overload
 
 import pydantic
 import sqlalchemy
 
+import ormar  # noqa I101
 from ormar import ModelDefinitionError  # noqa I101
 from ormar.fields import sqlalchemy_uuid
 from ormar.fields.base import BaseField  # noqa I101
@@ -60,6 +62,39 @@ def is_auto_primary_key(primary_key: bool, autoincrement: bool) -> bool:
     return primary_key and autoincrement
 
 
+def convert_choices_if_needed(
+    field_type: "Type", choices: Set, nullable: bool, scale: int = None
+) -> Set:
+    """
+    Converts dates to isoformat as fastapi can check this condition in routes
+    and the fields are not yet parsed.
+    Converts enums to list of it's values.
+    Converts uuids to strings.
+    Converts decimal to float with given scale.
+
+    :param field_type: type o the field
+    :type field_type: Type
+    :param nullable: set of choices
+    :type nullable: Set
+    :param scale: scale for decimals
+    :type scale: int
+    :param scale: scale for decimals
+    :type scale: int
+    :return: value, choices list
+    :rtype: Tuple[Any, Set]
+    """
+    choices = {o.value if isinstance(o, Enum) else o for o in choices}
+    encoder = ormar.ENCODERS_MAP.get(field_type, lambda x: x)
+    if field_type == decimal.Decimal:
+        precision = scale
+        choices = {encoder(o, precision) for o in choices}
+    elif encoder:
+        choices = {encoder(o) for o in choices}
+    if nullable:
+        choices.add(None)
+    return choices
+
+
 class ModelFieldFactory:
     """
     Default field factory that construct Field classes and populated their values.
@@ -96,6 +131,15 @@ class ModelFieldFactory:
             else (nullable if sql_nullable is None else sql_nullable)
         )
 
+        choices = set(kwargs.pop("choices", []))
+        if choices:
+            choices = convert_choices_if_needed(
+                field_type=cls._type,
+                choices=choices,
+                nullable=nullable,
+                scale=kwargs.get("scale", None),
+            )
+
         namespace = dict(
             __type__=cls._type,
             __pydantic_type__=overwrite_pydantic_type
@@ -114,7 +158,7 @@ class ModelFieldFactory:
             pydantic_only=pydantic_only,
             autoincrement=autoincrement,
             column_type=cls.get_column_type(**kwargs),
-            choices=set(kwargs.pop("choices", [])),
+            choices=choices,
             encrypt_secret=encrypt_secret,
             encrypt_backend=encrypt_backend,
             encrypt_custom_backend=encrypt_custom_backend,

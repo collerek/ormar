@@ -1,30 +1,37 @@
 import base64
-import datetime
 import decimal
 import numbers
-import uuid
-from enum import Enum
-from typing import Any, Dict, List, Set, TYPE_CHECKING, Tuple, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Set,
+    TYPE_CHECKING,
+    Type,
+    Union,
+)
 
 try:
     import orjson as json
 except ImportError:  # pragma: no cover
-    import json  # type: ignore
+    import json  # type: ignore  # noqa: F401
 
 import pydantic
-from pydantic.fields import SHAPE_LIST
+from pydantic.class_validators import make_generic_validator
+from pydantic.fields import ModelField, SHAPE_LIST
 from pydantic.main import SchemaExtraCallable
 
 import ormar  # noqa: I100, I202
-from ormar.fields import BaseField
 from ormar.models.helpers.models import meta_field_not_set
 from ormar.queryset.utils import translate_list_to_dict
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
+    from ormar.fields import BaseField
 
 
-def check_if_field_has_choices(field: BaseField) -> bool:
+def check_if_field_has_choices(field: "BaseField") -> bool:
     """
     Checks if given field has choices populated.
     A if it has one, a validator for this field needs to be attached.
@@ -37,110 +44,53 @@ def check_if_field_has_choices(field: BaseField) -> bool:
     return hasattr(field, "choices") and bool(field.choices)
 
 
-def convert_choices_if_needed(  # noqa: CCR001
-    field: "BaseField", value: Any
-) -> Tuple[Any, List]:
+def convert_value_if_needed(field: "BaseField", value: Any) -> Any:
     """
     Converts dates to isoformat as fastapi can check this condition in routes
     and the fields are not yet parsed.
-
     Converts enums to list of it's values.
-
     Converts uuids to strings.
-
     Converts decimal to float with given scale.
 
     :param field: ormar field to check with choices
     :type field: BaseField
     :param value: current values of the model to verify
-    :type value: Dict
-    :return: value, choices list
-    :rtype: Tuple[Any, List]
-    """
-    # TODO use same maps as with EncryptedString
-    choices = [o.value if isinstance(o, Enum) else o for o in field.choices]
-
-    if field.__type__ in [datetime.datetime, datetime.date, datetime.time]:
-        value = value.isoformat() if not isinstance(value, str) else value
-        choices = [o.isoformat() for o in field.choices]
-    elif field.__type__ == pydantic.Json:
-        value = (
-            json.dumps(value) if not isinstance(value, str) else re_dump_value(value)
-        )
-        value = value.decode("utf-8") if isinstance(value, bytes) else value
-        choices = [re_dump_value(x) for x in field.choices]
-    elif field.__type__ == uuid.UUID:
-        value = str(value) if not isinstance(value, str) else value
-        choices = [str(o) for o in field.choices]
-    elif field.__type__ == decimal.Decimal:
-        precision = field.scale  # type: ignore
-        value = (
-            round(float(value), precision)
-            if isinstance(value, decimal.Decimal)
-            else value
-        )
-        choices = [round(float(o), precision) for o in choices]
-    elif field.__type__ == bytes:
-        if field.represent_as_base64_str:
-            value = value if isinstance(value, bytes) else base64.b64decode(value)
-        else:
-            value = value if isinstance(value, bytes) else value.encode("utf-8")
-
-    return value, choices
-
-
-def re_dump_value(value: str) -> str:
-    """
-    Rw-dumps choices due to different string representation in orjson and json
-    :param value: string to re-dump
-    :type value: str
-    :return: re-dumped choices
-    :rtype: List[str]
-    """
-    try:
-        result: Union[str, bytes] = json.dumps(json.loads(value))
-    except json.JSONDecodeError:
-        result = value
-    return result.decode("utf-8") if isinstance(result, bytes) else result
-
-
-def validate_choices(field: "BaseField", value: Any) -> None:
-    """
-    Validates if given value is in provided choices.
-
-    :raises ValueError: If value is not in choices.
-    :param field:field to validate
-    :type field: BaseField
-    :param value: value of the field
     :type value: Any
+    :return: value, choices list
+    :rtype: Any
     """
-    value, choices = convert_choices_if_needed(field=field, value=value)
-    if field.nullable:
-        choices.append(None)
-    if value is not ormar.Undefined and value not in choices:
-        raise ValueError(
-            f"{field.name}: '{value}' " f"not in allowed choices set:" f" {choices}"
-        )
+    encoder = ormar.ENCODERS_MAP.get(field.__type__, lambda x: x)
+    if field.__type__ == decimal.Decimal:
+        precision = field.scale  # type: ignore
+        value = encoder(value, precision)
+    elif encoder:
+        value = encoder(value)
+    return value
 
 
-def choices_validator(cls: Type["Model"], values: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Validator that is attached to pydantic model pre root validators.
-    Validator checks if field value is in field.choices list.
+def generate_validator(ormar_field: "BaseField") -> Callable:
+    choices = ormar_field.choices
 
-    :raises ValueError: if field value is outside of allowed choices.
-    :param cls: constructed class
-    :type cls: Model class
-    :param values: dictionary of field values (pydantic side)
-    :type values: Dict[str, Any]
-    :return: values if pass validation, otherwise exception is raised
-    :rtype: Dict[str, Any]
-    """
-    for field_name, field in cls.Meta.model_fields.items():
-        if check_if_field_has_choices(field):
-            value = values.get(field_name, ormar.Undefined)
-            validate_choices(field=field, value=value)
-    return values
+    def validate_choices(cls: type, value: Any, field: "ModelField") -> None:
+        """
+        Validates if given value is in provided choices.
+
+        :raises ValueError: If value is not in choices.
+        :param field:field to validate
+        :type field: BaseField
+        :param value: value of the field
+        :type value: Any
+        """
+        adjusted_value = convert_value_if_needed(field=ormar_field, value=value)
+        if adjusted_value is not ormar.Undefined and adjusted_value not in choices:
+            raise ValueError(
+                f"{field.name}: '{adjusted_value}' "
+                f"not in allowed choices set:"
+                f" {choices}"
+            )
+        return value
+
+    return validate_choices
 
 
 def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> Dict:
@@ -172,7 +122,7 @@ def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> D
 
 
 def populates_sample_fields_values(
-    example: Dict[str, Any], name: str, field: BaseField, relation_map: Dict = None
+    example: Dict[str, Any], name: str, field: "BaseField", relation_map: Dict = None
 ) -> None:
     """
     Iterates the field and sets fields to sample values
@@ -350,15 +300,14 @@ def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
     """
     fields_with_choices = []
     if not meta_field_not_set(model=model, field_name="model_fields"):
+        if hasattr(model, "_choices_fields"):
+            return
+        model._choices_fields = set()
         for name, field in model.Meta.model_fields.items():
             if check_if_field_has_choices(field):
                 fields_with_choices.append(name)
-                validators = getattr(model, "__pre_root_validators__", [])
-                if choices_validator not in validators:
-                    validators.append(choices_validator)
-                    model.__pre_root_validators__ = validators
-                if not model._choices_fields:
-                    model._choices_fields = set()
+                validator = make_generic_validator(generate_validator(field))
+                model.__fields__[name].validators.append(validator)
                 model._choices_fields.add(name)
 
         if fields_with_choices:

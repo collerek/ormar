@@ -90,7 +90,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         _related_names: Optional[Set]
         _through_names: Optional[Set]
         _related_names_hash: str
-        _choices_fields: Optional[Set]
+        _choices_fields: Set
         _pydantic_fields: Set
         _quick_access_fields: Set
         _json_fields: Set
@@ -928,6 +928,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: dictionary of fields names and values.
         :rtype: Dict
         """
+        # TODO: Cache this dictionary?
         self_fields = self._extract_own_model_fields()
         self_fields = {
             k: v
