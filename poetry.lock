@@ -293,7 +293,7 @@ test = ["pytest (>=6.2.0)", "pytest-cov", "pytest-subtests", "pytest-xdist", "pr
 
 [[package]]
 name = "databases"
-version = "0.5.2"
+version = "0.5.3"
 description = "Async database support for Python."
 category = "main"
 optional = false
@@ -1434,7 +1434,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2"
-content-hash = "a6fddac57b64af3f1164dbaa7be05a13e3766aeeb783a9de55c6ead91316925f"
+content-hash = "bcf8bb6b4519b1926cfb01759d7b769da032207aac101b1188b73ef6c0413e79"
 
 [metadata.files]
 aiocontextvars = [
@@ -1632,8 +1632,8 @@ cryptography = [
     {file = "cryptography-35.0.0.tar.gz", hash = "sha256:9933f28f70d0517686bd7de36166dda42094eac49415459d9bdf5e7df3e0086d"},
 ]
 databases = [
-    {file = "databases-0.5.2-py3-none-any.whl", hash = "sha256:c12473ce4a3eb9623bef0623ebd021012c6c4e27216689b501e701d012e84381"},
-    {file = "databases-0.5.2.tar.gz", hash = "sha256:4e93800c540a4dbef8b8ce73dfeee95551d5d27e872b07326b1e523c185645b4"},
+    {file = "databases-0.5.3-py3-none-any.whl", hash = "sha256:23862bd96241d8fcbf97eea82995ccb3baa8415c3cb106832b7509f296322f86"},
+    {file = "databases-0.5.3.tar.gz", hash = "sha256:b69d74ee0b47fa30bb6e76db0c58da998e973393259d29215d8fb29352162bd6"},
 ]
 "databind.core" = [
     {file = "databind.core-1.2.3-py3-none-any.whl", hash = "sha256:401d6591baf49bcbf16de3dd50fbb8cbdb7efc0961ecea44d1fa7f2a7e756bc9"},
