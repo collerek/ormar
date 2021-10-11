@@ -63,6 +63,9 @@ def convert_value_if_needed(field: "BaseField", value: Any) -> Any:
     if field.__type__ == decimal.Decimal:
         precision = field.scale  # type: ignore
         value = encoder(value, precision)
+    elif field.__type__ == bytes:
+        represent_as_string = field.represent_as_base64_str
+        value = encoder(value, represent_as_string)
     elif encoder:
         value = encoder(value)
     return value

@@ -63,7 +63,11 @@ def is_auto_primary_key(primary_key: bool, autoincrement: bool) -> bool:
 
 
 def convert_choices_if_needed(
-    field_type: "Type", choices: Set, nullable: bool, scale: int = None
+    field_type: "Type",
+    choices: Set,
+    nullable: bool,
+    scale: int = None,
+    represent_as_str: bool = False,
 ) -> Set:
     """
     Converts dates to isoformat as fastapi can check this condition in routes
@@ -74,10 +78,14 @@ def convert_choices_if_needed(
 
     :param field_type: type o the field
     :type field_type: Type
-    :param nullable: set of choices
-    :type nullable: Set
+    :param choices: set of choices
+    :type choices: Set
     :param scale: scale for decimals
     :type scale: int
+    :param nullable: flag if field_nullable
+    :type nullable: bool
+    :param represent_as_str: flag for bytes fields
+    :type represent_as_str: bool
     :param scale: scale for decimals
     :type scale: int
     :return: value, choices list
@@ -88,6 +96,8 @@ def convert_choices_if_needed(
     if field_type == decimal.Decimal:
         precision = scale
         choices = {encoder(o, precision) for o in choices}
+    elif field_type == bytes:
+        choices = {encoder(o, represent_as_str) for o in choices}
     elif encoder:
         choices = {encoder(o) for o in choices}
     if nullable:
@@ -138,6 +148,7 @@ class ModelFieldFactory:
                 choices=choices,
                 nullable=nullable,
                 scale=kwargs.get("scale", None),
+                represent_as_str=kwargs.get("represent_as_base64_str", False),
             )
 
         namespace = dict(
