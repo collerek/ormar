@@ -5,7 +5,6 @@ import pydantic
 import pytest
 import sqlalchemy
 from pydantic import ValidationError
-from pydantic.class_validators import make_generic_validator
 
 
 import ormar
@@ -44,26 +43,14 @@ class ModelExample(ormar.Model):
             raise ValueError("must contain a space")
         return v
 
-
-def validate_str_field(cls, v):
-    if " " not in v:
-        raise ValueError("must contain a space")
-    return v
-
-
-def validate_choices(cls, v):
-    if v not in list(EnumExample):
-        raise ValueError(f"{v} is not in allowed choices: {list(EnumExample)}")
-    return v
+    @pydantic.validator("str_field")
+    def validate_str_field2(cls, v):
+        if " " not in v:
+            raise ValueError("must contain a space")
+        return v
 
 
 ModelExampleCreate = ModelExample.get_pydantic(exclude={"id"})
-ModelExampleCreate.__fields__["str_field"].validators.append(
-    make_generic_validator(validate_str_field)
-)
-ModelExampleCreate.__fields__["enum_field"].validators.append(
-    make_generic_validator(validate_choices)
-)
 
 
 def test_ormar_validator():

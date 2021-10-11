@@ -50,9 +50,10 @@ def get_pydantic_field(field_name: str, model: Type["Model"]) -> "ModelField":
     :return: newly created pydantic field
     :rtype: pydantic.ModelField
     """
+    type_ = model.Meta.model_fields[field_name].__type__
     return ModelField(
         name=field_name,
-        type_=model.Meta.model_fields[field_name].__type__,  # type: ignore
+        type_=type_,  # type: ignore
         model_config=model.__config__,
         required=not model.Meta.model_fields[field_name].nullable,
         class_validators={},

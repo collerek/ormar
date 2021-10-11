@@ -4,11 +4,8 @@ from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 from tests.settings import DATABASE_URL
-from tests.test_inheritance_and_pydantic_generation.test_geting_the_pydantic_models import (
+from tests.test_inheritance_and_pydantic_generation.test_geting_pydantic_models import (
     Category,
-    Item,
-    MutualA,
-    MutualB,
     SelfRef,
     database,
     metadata,
@@ -53,7 +50,9 @@ app.post("/categories/", response_model=Category)(create_category)
     response_model=SelfRef.get_pydantic(exclude={"parent", "children__name"}),
 )
 async def create_selfref(
-    selfref: SelfRef.get_pydantic(exclude={"children__name"}),  # type: ignore
+    selfref: SelfRef.get_pydantic(  # type: ignore
+        exclude={"children__name"}  # noqa: F821
+    ),
 ):
     selfr = SelfRef(**selfref.dict())
     await selfr.save()
