@@ -43,12 +43,6 @@ class ModelExample(ormar.Model):
             raise ValueError("must contain a space")
         return v
 
-    @pydantic.validator("str_field")
-    def validate_str_field2(cls, v):
-        if " " not in v:
-            raise ValueError("must contain a space")
-        return v
-
 
 ModelExampleCreate = ModelExample.get_pydantic(exclude={"id"})
 
