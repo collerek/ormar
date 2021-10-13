@@ -93,7 +93,7 @@ flake8-expression-complexity = "^0.0.9"
 
 # types
 mypy = "^0.910"
-types-ujson = "^0.1.1"
+types-ujson = "^4.2.0"
 types-PyMySQL = "^1.0.3"
 types-ipaddress = "^1.0.0"
 types-enum34 = "^1.1.0"
