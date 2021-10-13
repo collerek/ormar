@@ -106,7 +106,7 @@ types-toml = "^0.10.1"
 types-dataclasses = { version = "^0.6.0", markers = "python_version < '3.7'" }
 
 # Documantation
-mkdocs = "^1.2.2"
+mkdocs = "^1.2.3"
 mkdocs-material = "^7.3.3"
 mkdocs-material-extensions = "^1.0.3"
 pydoc-markdown = { version = "^4.3.2", markers = "python_version > '3.7'" }
