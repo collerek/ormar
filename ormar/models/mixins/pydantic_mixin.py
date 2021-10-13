@@ -1,3 +1,4 @@
+import copy
 import string
 from random import choices
 from typing import (
@@ -82,7 +83,9 @@ class PydanticMixin(RelationMixin):
             (pydantic.BaseModel,),
             {"__annotations__": fields_dict, **defaults},
         )
-        return cast(Type[pydantic.BaseModel], model)
+        model = cast(Type[pydantic.BaseModel], model)
+        cls._copy_field_validators(model=model)
+        return model
 
     @classmethod
     def _determine_pydantic_field_type(
@@ -111,3 +114,33 @@ class PydanticMixin(RelationMixin):
         if target is not None and field.nullable:
             target = Optional[target]
         return target
+
+    @classmethod
+    def _copy_field_validators(cls, model: Type[pydantic.BaseModel]) -> None:
+        """
+        Copy field validators from ormar model to generated pydantic model.
+        """
+        for field_name, field in model.__fields__.items():
+            if (
+                field_name not in cls.__fields__
+                or cls.Meta.model_fields[field_name].is_relation
+            ):
+                continue
+            validators = cls.__fields__[field_name].validators
+            already_attached = [
+                validator.__wrapped__ for validator in field.validators  # type: ignore
+            ]
+            validators_to_copy = [
+                validator
+                for validator in validators
+                if validator.__wrapped__ not in already_attached  # type: ignore
+            ]
+            field.validators.extend(copy.deepcopy(validators_to_copy))
+            class_validators = cls.__fields__[field_name].class_validators
+            field.class_validators.update(copy.deepcopy(class_validators))
+            field.pre_validators = copy.deepcopy(
+                cls.__fields__[field_name].pre_validators
+            )
+            field.post_validators = copy.deepcopy(
+                cls.__fields__[field_name].post_validators
+            )

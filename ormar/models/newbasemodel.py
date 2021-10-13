@@ -14,6 +14,7 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Type,
+    TypeVar,
     Union,
     cast,
 )
@@ -50,8 +51,11 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
     from ormar.signals import SignalEmitter
 
+    T = TypeVar("T", bound="NewBaseModel")
+
     IntStr = Union[int, str]
     DictStrAny = Dict[str, Any]
+    SetStr = Set[str]
     AbstractSetIntStr = AbstractSet[IntStr]
     MappingIntStrAny = Mapping[IntStr, Any]
 
@@ -86,7 +90,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         _related_names: Optional[Set]
         _through_names: Optional[Set]
         _related_names_hash: str
-        _choices_fields: Optional[Set]
+        _choices_fields: Set
         _pydantic_fields: Set
         _quick_access_fields: Set
         _json_fields: Set
@@ -785,6 +789,51 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             data = data["__root__"]
         return self.__config__.json_dumps(data, default=encoder, **dumps_kwargs)
 
+    @classmethod
+    def construct(
+        cls: Type["T"], _fields_set: Optional["SetStr"] = None, **values: Any
+    ) -> "T":
+        own_values = {
+            k: v for k, v in values.items() if k not in cls.extract_related_names()
+        }
+        model = cls.__new__(cls)
+        fields_values: Dict[str, Any] = {}
+        for name, field in cls.__fields__.items():
+            if name in own_values:
+                fields_values[name] = own_values[name]
+            elif not field.required:
+                fields_values[name] = field.get_default()
+        fields_values.update(own_values)
+        object.__setattr__(model, "__dict__", fields_values)
+        model._initialize_internal_attributes()
+        cls._construct_relations(model=model, values=values)
+        if _fields_set is None:
+            _fields_set = set(values.keys())
+        object.__setattr__(model, "__fields_set__", _fields_set)
+        return model
+
+    @classmethod
+    def _construct_relations(cls: Type["T"], model: "T", values: Dict) -> None:
+        present_relations = [
+            relation for relation in cls.extract_related_names() if relation in values
+        ]
+        for relation in present_relations:
+            value_to_set = values[relation]
+            if not isinstance(value_to_set, list):
+                value_to_set = [value_to_set]
+            relation_field = cls.Meta.model_fields[relation]
+            relation_value = [
+                relation_field.expand_relationship(x, model, to_register=False)
+                for x in value_to_set
+            ]
+
+            for child in relation_value:
+                model._orm.add(
+                    parent=cast("Model", child),
+                    child=cast("Model", model),
+                    field=cast("ForeignKeyField", relation_field),
+                )
+
     def update_from_dict(self, value_dict: Dict) -> "NewBaseModel":
         """
         Updates self with values of fields passed in the dictionary.
@@ -879,6 +928,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: dictionary of fields names and values.
         :rtype: Dict
         """
+        # TODO: Cache this dictionary?
         self_fields = self._extract_own_model_fields()
         self_fields = {
             k: v

@@ -14,7 +14,7 @@ class BaseMeta(ormar.ModelMeta):
     metadata = metadata
 
 
-class TestModel(ormar.Model):
+class NewTestModel(ormar.Model):
     class Meta:
         database = database
         metadata = metadata
@@ -37,5 +37,5 @@ def create_test_database():
 
 
 def test_model_field_order():
-    TestCreate = TestModel.get_pydantic(exclude={"a"})
+    TestCreate = NewTestModel.get_pydantic(exclude={"a"})
     assert list(TestCreate.__fields__.keys()) == ["b", "c", "d", "e", "f"]

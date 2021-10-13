@@ -121,7 +121,6 @@ def test_all_endpoints():
                 "blob_col": blob.decode("utf-8"),
             },
         )
-
         assert response.status_code == 200
         item = Organisation(**response.json())
         assert item.pk is not None

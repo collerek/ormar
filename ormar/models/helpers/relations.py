@@ -101,6 +101,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
     :type model_field: relation Field
     """
     related_name = model_field.get_related_name()
+    # TODO: Reverse relations does not register pydantic fields?
     if model_field.is_multi:
         model_field.to.Meta.model_fields[related_name] = ManyToMany(  # type: ignore
             model_field.owner,

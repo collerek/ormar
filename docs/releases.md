@@ -1,3 +1,10 @@
+# 0.10.21
+
+## 🐛 Fixes
+
+* Add `ormar` implementation of `construct` classmethod that allows to build `Model` instances without validating the input to speed up the whole flow, if your data is already validated [#318](https://github.com/collerek/ormar/issues/318)
+* Fix for "inheriting" field validators from `ormar` model when newly created pydanic model is generated with `get_pydantic` [#365](https://github.com/collerek/ormar/issues/365)
+
 # 0.10.20
 
 ## ✨ Features
