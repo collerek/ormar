@@ -1297,7 +1297,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-enum34"
-version = "1.1.0"
+version = "1.1.1"
 description = "Typing stubs for enum34"
 category = "dev"
 optional = false
@@ -1434,7 +1434,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2"
-content-hash = "593920cbe5f26c0241a33ec6bbe0c9cb1b5622d407ea70784b8458bb26e47847"
+content-hash = "e136d57c2de8c112263ff4265a350b0451c7027bf124159a2ab9d901891f1769"
 
 [metadata.files]
 aiocontextvars = [
@@ -2305,8 +2305,8 @@ types-dataclasses = [
     {file = "types_dataclasses-0.6.0-py3-none-any.whl", hash = "sha256:3a992bf86a4b73fd2745092dd0b72bee3837e79611987dfc5bdfb182dfbb6319"},
 ]
 types-enum34 = [
-    {file = "types-enum34-1.1.0.tar.gz", hash = "sha256:9d42b80e1d783aab2289ebdf599d9011bd39af6ed9308bbdfe63200df3d36455"},
-    {file = "types_enum34-1.1.0-py3-none-any.whl", hash = "sha256:d19c8e3c412064283f52507dcef7969f3252c00feaa414f9c6cc4eacdbea3fab"},
+    {file = "types-enum34-1.1.1.tar.gz", hash = "sha256:55c44c44f193636ed82f1cb68a9a632e1ea7096724f024c25e015976809df339"},
+    {file = "types_enum34-1.1.1-py3-none-any.whl", hash = "sha256:b6d55d7c91867bd2fd6fc90651d91629c98b27cb26df11b1db658ae7a72bb768"},
 ]
 types-ipaddress = [
     {file = "types-ipaddress-1.0.1.tar.gz", hash = "sha256:dc5540c7fd8d4b3ffe8461bc01f27513c0abe5f2088e491218bd0a98a0b4584e"},
