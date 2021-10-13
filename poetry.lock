@@ -1305,7 +1305,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-ipaddress"
-version = "1.0.0"
+version = "1.0.1"
 description = "Typing stubs for ipaddress"
 category = "dev"
 optional = false
@@ -1434,7 +1434,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2"
-content-hash = "531b4813a753f6337bb4b8b49e763461dee55a81732d4e6e169ab88a8f433110"
+content-hash = "99673e5c0fecf6ed34f21c64263891840ba4601b5e6e73fe7b7eb198f3aab457"
 
 [metadata.files]
 aiocontextvars = [
@@ -2309,8 +2309,8 @@ types-enum34 = [
     {file = "types_enum34-1.1.0-py3-none-any.whl", hash = "sha256:d19c8e3c412064283f52507dcef7969f3252c00feaa414f9c6cc4eacdbea3fab"},
 ]
 types-ipaddress = [
-    {file = "types-ipaddress-1.0.0.tar.gz", hash = "sha256:2f32f181bf80ee5fb66e1326139d09737bd20f2a7a2b761ef895528a57e61ce9"},
-    {file = "types_ipaddress-1.0.0-py3-none-any.whl", hash = "sha256:f6cfd6d7605fd26537565f91fff5a9dd4802db4fa6b6be7dc0a55d605c0d943d"},
+    {file = "types-ipaddress-1.0.1.tar.gz", hash = "sha256:dc5540c7fd8d4b3ffe8461bc01f27513c0abe5f2088e491218bd0a98a0b4584e"},
+    {file = "types_ipaddress-1.0.1-py3-none-any.whl", hash = "sha256:9d0a642526c4a1f87ee9ae29d91b93f708508b891d038db2e1c9f06219383516"},
 ]
 types-orjson = [
     {file = "types-orjson-3.6.1.tar.gz", hash = "sha256:6bc2245b242c9ab4c8845495a4c16a51fa22510c8ac1d83da027ab3ce1f77d8a"},
