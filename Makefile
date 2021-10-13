@@ -27,5 +27,9 @@ coverage:
 black:
 	black ormar tests
 
+lint:
+	black ormar tests
+	flake8 ormar
+
 mypy:
-	mypy --config-file mypy.ini ormar tests
+	mypy ormar tests
