@@ -1,3 +1,10 @@
+# 0.10.22
+
+## 🐛 Fixes
+
+* Hot fix for validators not being inherited when parent `ormar` model was set [#365](https://github.com/collerek/ormar/issues/365)
+
+
 # 0.10.21
 
 ## 🐛 Fixes

@@ -303,11 +303,10 @@ def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
     """
     fields_with_choices = []
     if not meta_field_not_set(model=model, field_name="model_fields"):
-        if hasattr(model, "_choices_fields"):
-            return
-        model._choices_fields = set()
+        if not hasattr(model, "_choices_fields"):
+            model._choices_fields = set()
         for name, field in model.Meta.model_fields.items():
-            if check_if_field_has_choices(field):
+            if check_if_field_has_choices(field) and name not in model._choices_fields:
                 fields_with_choices.append(name)
                 validator = make_generic_validator(generate_validator(field))
                 model.__fields__[name].validators.append(validator)
