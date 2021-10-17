@@ -9,7 +9,8 @@ from ormar.fields.composite_constraints import (
     ForeignKeyConstraint,
     PrimaryKeyConstraint,
 )
-from ormar.fields.foreign_key import ForeignKey, ForeignKeyField, UniqueColumns
+from ormar.fields.foreign_key import ForeignKey, ForeignKeyField
+from ormar.fields.constraints import IndexColumns, UniqueColumns
 from ormar.fields.many_to_many import ManyToMany, ManyToManyField
 from ormar.fields.model_fields import (
     BigInteger,
@@ -27,7 +28,7 @@ from ormar.fields.model_fields import (
     Time,
     UUID,
 )
-from ormar.fields.parsers import DECODERS_MAP, ENCODERS_MAP
+from ormar.fields.parsers import DECODERS_MAP, ENCODERS_MAP, SQL_ENCODERS_MAP
 from ormar.fields.sqlalchemy_encrypted import EncryptBackend, EncryptBackends
 from ormar.fields.through_field import Through, ThroughField
 
@@ -40,6 +41,7 @@ __all__ = [
     "DateTime",
     "String",
     "JSON",
+    "IndexColumns",
     "Integer",
     "Text",
     "Float",
@@ -49,7 +51,6 @@ __all__ = [
     "ManyToMany",
     "ManyToManyField",
     "BaseField",
-    "UniqueColumns",
     "ForeignKeyField",
     "ThroughField",
     "Through",
@@ -57,7 +58,9 @@ __all__ = [
     "EncryptBackend",
     "DECODERS_MAP",
     "ENCODERS_MAP",
+    "SQL_ENCODERS_MAP",
     "LargeBinary",
     "PrimaryKeyConstraint",
     "ForeignKeyConstraint",
+    "UniqueColumns",
 ]

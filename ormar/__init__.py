@@ -19,6 +19,10 @@ snakes, and ormar(e) in italian which means cabinet.
 And what's a better name for python ORM than snakes cabinet :)
 
 """
+try:
+    from importlib.metadata import version  # type: ignore
+except ImportError:  # pragma: no cover
+    from importlib_metadata import version  # type: ignore
 from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
 from ormar.decorators import (  # noqa: I100
     post_delete,
@@ -53,12 +57,14 @@ from ormar.fields import (
     ForeignKey,
     ForeignKeyConstraint,
     ForeignKeyField,
+    IndexColumns,
     Integer,
     JSON,
     LargeBinary,
     ManyToMany,
     ManyToManyField,
     PrimaryKeyConstraint,
+    SQL_ENCODERS_MAP,
     SmallInteger,
     String,
     Text,
@@ -66,7 +72,7 @@ from ormar.fields import (
     UUID,
     UniqueColumns,
 )  # noqa: I100
-from ormar.models import ExcludableItems, Model
+from ormar.models import ExcludableItems, Extra, Model
 from ormar.models.metaclass import ModelMeta
 from ormar.queryset import OrderAction, QuerySet, and_, or_
 from ormar.relations import RelationType
@@ -80,7 +86,7 @@ class UndefinedType:  # pragma no cover
 
 Undefined = UndefinedType()
 
-__version__ = "0.10.16"
+__version__ = version("ormar")
 __all__ = [
     "Integer",
     "BigInteger",
@@ -106,6 +112,7 @@ __all__ = [
     "Undefined",
     "UUID",
     "UniqueColumns",
+    "IndexColumns",
     "QuerySetProtocol",
     "RelationProtocol",
     "ModelMeta",
@@ -130,8 +137,10 @@ __all__ = [
     "or_",
     "EncryptBackends",
     "ENCODERS_MAP",
+    "SQL_ENCODERS_MAP",
     "DECODERS_MAP",
     "LargeBinary",
     "PrimaryKeyConstraint",
     "ModelError",
+    "Extra",
 ]

@@ -63,7 +63,7 @@ def create_test_database():
 
 
 @pytest.mark.asyncio
-async def test_instantation_false_save_true():
+async def test_instantiation_false_save_true():
     async with database:
         async with database.transaction(force_rollback=True):
             comp = Company(name="Banzai", founded=1988)

@@ -1,7 +1,18 @@
-from typing import Callable, Collection, Dict, List, Optional, Set, TYPE_CHECKING, cast
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    cast,
+)
 
-import ormar
-from ormar.models.helpers.validation import validate_choices
+import pydantic
+
+import ormar  # noqa: I100, I202
 from ormar.models.mixins import AliasMixin
 from ormar.models.mixins.relation_mixin import RelationMixin
 
@@ -19,6 +30,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         _skip_ellipsis: Callable
         pk_names_list: List[str]
         pk_aliases_list: List[str]
+        __fields__: Dict[str, pydantic.fields.ModelField]
 
     @classmethod
     def prepare_model_to_save(cls, new_kwargs: dict) -> dict:
@@ -119,7 +131,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
             if hasattr(field.column_type, "uuid_format") and name in model_dict:
                 parsers = {"string": lambda x: str(x), "hex": lambda x: "%.32x" % x.int}
                 uuid_format = field.column_type.uuid_format
-                parser = parsers.get(uuid_format, lambda x: x)
+                parser: Callable[..., Any] = parsers.get(uuid_format, lambda x: x)
                 model_dict[name] = parser(model_dict[name])
         return model_dict
 
@@ -192,9 +204,18 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         if not cls._choices_fields:
             return new_kwargs
 
-        for field_name, field in cls.Meta.model_fields.items():
-            if field_name in new_kwargs and field_name in cls._choices_fields:
-                validate_choices(field=field, value=new_kwargs.get(field_name))
+        fields_to_check = [
+            field
+            for field in cls.Meta.model_fields.values()
+            if field.name in cls._choices_fields and field.name in new_kwargs
+        ]
+        for field in fields_to_check:
+            if new_kwargs[field.name] not in field.choices:
+                raise ValueError(
+                    f"{field.name}: '{new_kwargs[field.name]}' "
+                    f"not in allowed choices set:"
+                    f" {field.choices}"
+                )
         return new_kwargs
 
     @staticmethod
@@ -244,7 +265,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
 
     @staticmethod
     async def _upsert_through_model(
-        instance: "Model", previous_model: "Model", relation_field: "ForeignKeyField",
+        instance: "Model", previous_model: "Model", relation_field: "ForeignKeyField"
     ) -> None:
         """
         Upsert through model for m2m relation.

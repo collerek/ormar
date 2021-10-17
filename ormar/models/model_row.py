@@ -1,16 +1,10 @@
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    TYPE_CHECKING,
-    Tuple,
-    Type,
-    Union,
-    cast,
-)
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union, cast
 
-import sqlalchemy
+try:
+    from sqlalchemy.engine.result import ResultProxy  # type: ignore
+except ImportError:  # pragma: no cover
+    from sqlalchemy.engine.result import Row as ResultProxy  # type: ignore
+
 
 from ormar.models import NewBaseModel  # noqa: I202
 from ormar.models.excludable import ExcludableItems
@@ -25,7 +19,7 @@ class ModelRow(NewBaseModel):
     @classmethod
     def from_row(  # noqa: CFQ002
         cls,
-        row: sqlalchemy.engine.RowProxy,
+        row: ResultProxy,
         source_model: Type["Model"],
         select_related: List = None,
         related_models: Any = None,
@@ -59,7 +53,7 @@ class ModelRow(NewBaseModel):
         :param source_model: model on which relation was defined
         :type source_model: Type[Model]
         :param row: raw result row from the database
-        :type row: sqlalchemy.engine.result.ResultProxy
+        :type row: ResultProxy
         :param select_related: list of names of related models fetched from database
         :type select_related: List
         :param related_models: list or dict of related models
@@ -154,7 +148,7 @@ class ModelRow(NewBaseModel):
     def _populate_nested_models_from_row(  # noqa: CFQ002
         cls,
         item: dict,
-        row: sqlalchemy.engine.RowProxy,
+        row: ResultProxy,
         source_model: Type["Model"],
         related_models: Any,
         excludable: ExcludableItems,
@@ -184,7 +178,7 @@ class ModelRow(NewBaseModel):
         :param item: dictionary of already populated nested models, otherwise empty dict
         :type item: Dict
         :param row: raw result row from the database
-        :type row: sqlalchemy.engine.result.ResultProxy
+        :type row: ResultProxy
         :param related_models: list or dict of related models
         :type related_models: Union[Dict, List]
         :return: dictionary with keys corresponding to model fields names
@@ -264,7 +258,7 @@ class ModelRow(NewBaseModel):
     @classmethod
     def _populate_through_instance(  # noqa: CFQ002
         cls,
-        row: sqlalchemy.engine.RowProxy,
+        row: ResultProxy,
         item: Dict,
         related: str,
         excludable: ExcludableItems,
@@ -276,7 +270,7 @@ class ModelRow(NewBaseModel):
         Normally it's child class, unless the query is from queryset.
 
         :param row: row from db result
-        :type row: sqlalchemy.engine.ResultProxy
+        :type row: ResultProxy
         :param item: parent item dict
         :type item: Dict
         :param related: current relation name
@@ -290,7 +284,7 @@ class ModelRow(NewBaseModel):
         """
         through_name = cls.Meta.model_fields[related].through.get_name()
         through_child = cls._create_through_instance(
-            row=row, related=related, through_name=through_name, excludable=excludable,
+            row=row, related=related, through_name=through_name, excludable=excludable
         )
 
         if child.__class__ != proxy_source_model:
@@ -302,7 +296,7 @@ class ModelRow(NewBaseModel):
     @classmethod
     def _create_through_instance(
         cls,
-        row: sqlalchemy.engine.RowProxy,
+        row: ResultProxy,
         through_name: str,
         related: str,
         excludable: ExcludableItems,
@@ -344,7 +338,7 @@ class ModelRow(NewBaseModel):
     def extract_prefixed_table_columns(
         cls,
         item: dict,
-        row: sqlalchemy.engine.result.RowProxy,
+        row: ResultProxy,
         table_prefix: str,
         excludable: ExcludableItems,
     ) -> Dict:
@@ -396,7 +390,9 @@ class ModelRow(NewBaseModel):
 
     @classmethod
     def _get_fields_to_extract_from_row(
-        cls, table_prefix: str, excludable: ExcludableItems,
+        cls,
+        table_prefix: str,
+        excludable: ExcludableItems,
     ) -> Dict:
         """
         Extracts the names of the columns that should be extracted from db row
@@ -411,7 +407,7 @@ class ModelRow(NewBaseModel):
         :rtype: Dict
         """
         selected_columns = cls.own_table_columns(
-            model=cls, excludable=excludable, alias=table_prefix, use_alias=False,
+            model=cls, excludable=excludable, alias=table_prefix, use_alias=False
         )
 
         all_names = {
@@ -427,7 +423,7 @@ class ModelRow(NewBaseModel):
     @classmethod
     def _extract_compound_model_fields(
         cls,
-        row: sqlalchemy.engine.result.RowProxy,
+        row: ResultProxy,
         column_prefix: str,
         model_field: "ForeignKeyField",
     ) -> Dict:

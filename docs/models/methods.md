@@ -17,6 +17,25 @@ especially `dict()` and `json()` methods that can also accept `exclude`, `includ
 
 To read more check [pydantic][pydantic] documentation
 
+## construct
+
+`construct` is a raw equivalent of `__init__` method used for construction of new instances.
+
+The difference is that `construct` skips validations, so it should be used when you know that data is correct and can be trusted.
+The benefit of using construct is the speed of execution due to skipped validation.
+
+!!!note 
+        Note that in contrast to `pydantic.construct` method - the `ormar` equivalent will also process the nested related models.
+
+!!!warning
+        Bear in mind that due to skipped validation the `construct` method does not perform any conversions, checks etc. 
+        So it's your responsibility to provide tha data that is valid and can be consumed by the database.
+        
+        The only two things that construct still performs are:
+
+        *  Providing a `default` value for not set fields
+        *  Initialize nested ormar models if you pass a dictionary or a primary key value
+
 ## dict
 
 `dict` is a method inherited from `pydantic`, yet `ormar` adds its own parameters and has some nuances when working with default values,
@@ -363,9 +382,15 @@ class Category(BaseModel):
     items: Optional[List[Item]]
 ```
 
-Of course you can use also deeply nested structures and ormar will generate it pydantic equivalent you (in a way that exclude loops).
+Of course, you can use also deeply nested structures and ormar will generate it pydantic equivalent you (in a way that exclude loops).
 
 Note how `Item` model above does not have a reference to `Category` although in ormar the relation is bidirectional (and `ormar.Item` has `categories` field).
+
+!!!warning
+        Note that the generated pydantic model will inherit all **field** validators from the original `ormar` model, that includes the ormar choices validator as well as validators defined with `pydantic.validator` decorator.
+        
+        But, at the same time all root validators present on `ormar` models will **NOT** be copied to the generated pydantic model. Since root validator can operate on all fields and a user can exclude some fields during generation of pydantic model it's not safe to copy those validators.
+        If required, you need to redefine/ manually copy them to generated pydantic model.
 
 ## load
 

@@ -15,7 +15,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def Through(  # noqa CFQ002
-    to: "ToType", *, name: str = None, related_name: str = None, **kwargs: Any,
+    to: "ToType", *, name: str = None, related_name: str = None, **kwargs: Any
 ) -> Any:
     """
     Despite a name it's a function that returns constructed ThroughField.

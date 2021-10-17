@@ -17,6 +17,7 @@ import sqlalchemy
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
+import ormar.fields.constraints
 from ormar import ModelDefinitionError  # noqa I100
 from ormar.exceptions import ModelError
 from ormar.fields import BaseField
@@ -49,6 +50,7 @@ from ormar.models.helpers import (
 )
 from ormar.models.helpers.sqlalchemy import resolve_primary_key
 from ormar.models.quick_access_views import quick_access_set
+from ormar.models.utils import Extra
 from ormar.queryset import FieldAccessor, QuerySet
 from ormar.relations.alias_manager import AliasManager
 from ormar.signals import Signal, SignalEmitter
@@ -87,6 +89,7 @@ class ModelMeta:
     pk_constraint: Optional[ormar.PrimaryKeyConstraint]
     denied_fields: Set[str]
     aliases_dict: Dict[str, str]
+    extra: Extra
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:
@@ -108,7 +111,6 @@ def add_cached_properties(new_model: Type["Model"]) -> None:
     new_model._through_names = None
     new_model._related_fields = None
     new_model._pydantic_fields = {name for name in new_model.__fields__}
-    new_model._choices_fields = set()
     new_model._json_fields = set()
     new_model._bytes_fields = set()
 
@@ -224,7 +226,8 @@ def update_attrs_from_base_meta(  # noqa: CCR001
                     parent_value=parent_value,
                 )
                 parent_value = [
-                    ormar.UniqueColumns(*x._pending_colargs) for x in parent_value
+                    ormar.fields.constraints.UniqueColumns(*x._pending_colargs)
+                    for x in parent_value
                 ]
             if isinstance(current_value, list):
                 current_value.extend(parent_value)
@@ -281,7 +284,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
         field.create_default_through_model()
         through_class = field.through
     new_meta: ormar.ModelMeta = type(  # type: ignore
-        "Meta", (), dict(through_class.Meta.__dict__),
+        "Meta", (), dict(through_class.Meta.__dict__)
     )
     copy_name = through_class.__name__ + attrs.get("__name__", "")
     copy_through = type(copy_name, (ormar.Model,), {"Meta": new_meta})
@@ -567,9 +570,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             attrs, model_fields = extract_from_parents_definition(
                 base_class=base, curr_class=mcs, attrs=attrs, model_fields=model_fields
             )
-        new_model = super().__new__(  # type: ignore
-            mcs, name, bases, attrs
-        )
+        new_model = super().__new__(mcs, name, bases, attrs)  # type: ignore
 
         add_cached_properties(new_model)
 
@@ -720,6 +721,6 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                     access_chain=item,
                 )
             return FieldAccessor(
-                source_model=cast(Type["Model"], self), field=field, access_chain=item,
+                source_model=cast(Type["Model"], self), field=field, access_chain=item
             )
         return object.__getattribute__(self, item)

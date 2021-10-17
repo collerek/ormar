@@ -97,7 +97,7 @@ def ManyToMany(to: ForwardRef, **kwargs: Any) -> "RelationProxy":  # pragma: no 
     ...
 
 
-def ManyToMany(
+def ManyToMany(  # type: ignore
     to: "ToType",
     through: Optional["ToType"] = None,
     *,
@@ -160,9 +160,7 @@ def ManyToMany(
         column_type = None
         is_compound = False
     else:
-        names = generate_relation_fields_if_required(
-            to=to, names=names  # type: ignore
-        )
+        names = generate_relation_fields_if_required(to=to, names=names)  # type: ignore
         __type__, column_type = populate_m2m_params_based_on_to_model(
             to=to, nullable=nullable  # type: ignore
         )
@@ -251,24 +249,20 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         """
         if self.to.__class__ == ForwardRef:
             self.to = evaluate_forwardref(
-                self.to,  # type: ignore
-                globalns,
-                localns or None,
+                self.to, globalns, localns or None  # type: ignore
             )
             self.names: Dict[str, str] = generate_relation_fields_if_required(
                 to=self.to, names=self.names  # type: ignore
             )
 
-            (self.__type__, self.column_type,) = populate_m2m_params_based_on_to_model(
-                to=self.to, nullable=self.nullable,
+            (self.__type__, self.column_type) = populate_m2m_params_based_on_to_model(
+                to=self.to, nullable=self.nullable
             )
             self.is_compound = self.to.has_pk_constraint
 
         if self.through.__class__ == ForwardRef:
             self.through = evaluate_forwardref(
-                self.through,  # type: ignore
-                globalns,
-                localns or None,
+                self.through, globalns, localns or None  # type: ignore
             )
             forbid_through_relations(self.through)
 

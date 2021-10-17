@@ -31,7 +31,7 @@ class DataSourceTable(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200, index=True)
     source: Optional[DataSource] = ormar.ForeignKey(
-        DataSource, name="source_id", related_name="tables", ondelete="CASCADE",
+        DataSource, name="source_id", related_name="tables", ondelete="CASCADE"
     )
 
 
@@ -43,7 +43,7 @@ class DataSourceTableColumn(ormar.Model):
     name: str = ormar.String(max_length=200, index=True)
     data_type: str = ormar.String(max_length=200)
     table: Optional[DataSourceTable] = ormar.ForeignKey(
-        DataSourceTable, name="table_id", related_name="columns", ondelete="CASCADE",
+        DataSourceTable, name="table_id", related_name="columns", ondelete="CASCADE"
     )
 
 

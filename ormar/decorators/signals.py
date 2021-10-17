@@ -41,7 +41,7 @@ def receiver(
     return _decorator
 
 
-def post_save(senders: Union[Type["Model"], List[Type["Model"]]],) -> Callable:
+def post_save(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
     """
     Connect given function to all senders for post_save signal.
 
@@ -54,7 +54,7 @@ def post_save(senders: Union[Type["Model"], List[Type["Model"]]],) -> Callable:
     return receiver(signal="post_save", senders=senders)
 
 
-def post_update(senders: Union[Type["Model"], List[Type["Model"]]],) -> Callable:
+def post_update(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
     """
     Connect given function to all senders for post_update signal.
 
@@ -67,7 +67,7 @@ def post_update(senders: Union[Type["Model"], List[Type["Model"]]],) -> Callable
     return receiver(signal="post_update", senders=senders)
 
 
-def post_delete(senders: Union[Type["Model"], List[Type["Model"]]],) -> Callable:
+def post_delete(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
     """
     Connect given function to all senders for post_delete signal.
 
@@ -80,7 +80,7 @@ def post_delete(senders: Union[Type["Model"], List[Type["Model"]]],) -> Callable
     return receiver(signal="post_delete", senders=senders)
 
 
-def pre_save(senders: Union[Type["Model"], List[Type["Model"]]],) -> Callable:
+def pre_save(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
     """
     Connect given function to all senders for pre_save signal.
 

@@ -1,3 +1,60 @@
+# 0.10.22
+
+## 🐛 Fixes
+
+* Hot fix for validators not being inherited when parent `ormar` model was set [#365](https://github.com/collerek/ormar/issues/365)
+
+
+# 0.10.21
+
+## 🐛 Fixes
+
+* Add `ormar` implementation of `construct` classmethod that allows to build `Model` instances without validating the input to speed up the whole flow, if your data is already validated [#318](https://github.com/collerek/ormar/issues/318)
+* Fix for "inheriting" field validators from `ormar` model when newly created pydanic model is generated with `get_pydantic` [#365](https://github.com/collerek/ormar/issues/365)
+
+# 0.10.20
+
+## ✨ Features
+
+* Add `extra` parameter in `Model.Meta` that accepts `Extra.ignore` and `Extra.forbid` (default) and either ignores the extra fields passed to `ormar` model or raises an exception if one is encountered [#358](https://github.com/collerek/ormar/issues/358)
+
+## 🐛 Fixes
+
+* Allow `None` if field is nullable and have choices set [#354](https://github.com/collerek/ormar/issues/354)
+* Always set `primary_key` to `not null` regardless of `autoincrement` and explicit `nullable` setting to avoid problems with migrations [#348](https://github.com/collerek/ormar/issues/348) 
+
+# 0.10.19
+
+## ✨ Features
+
+* Add support for multi-column non-unique `IndexColumns` in `Meta.constraints` [#307](https://github.com/collerek/ormar/issues/307)
+* Add `sql_nullable` field attribute that allows to set different nullable setting for pydantic model and for underlying sql column [#308](https://github.com/collerek/ormar/issues/308)
+
+## 🐛 Fixes
+
+* Enable caching of relation map to increase performance [#337](https://github.com/collerek/ormar/issues/337)
+* Clarify and fix documentation in regard of nullable fields [#339](https://github.com/collerek/ormar/issues/339)
+
+## 💬 Other
+
+* Bump supported `databases` version to `<=5.2`.
+
+
+
+# 0.10.18
+
+## 🐛 Fixes
+
+* Fix order of fields in pydantic models [#328](https://github.com/collerek/ormar/issues/328)
+* Fix databases 0.5.0 support [#142](https://github.com/collerek/ormar/issues/142)
+
+# 0.10.17
+
+## ✨ Features
+
+* Allow overwriting the default pydantic type for model fields [#312](https://github.com/collerek/ormar/issues/312)
+* Add support for `sqlalchemy` >=1.4 (requires `databases` >= 0.5.0) [#142](https://github.com/collerek/ormar/issues/142)
+
 # 0.10.16
 
 ## ✨ Features

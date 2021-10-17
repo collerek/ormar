@@ -6,14 +6,7 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar import (
-    post_delete,
-    post_save,
-    post_update,
-    pre_delete,
-    pre_save,
-    pre_update,
-)
+from ormar import post_delete, post_save, post_update, pre_delete, pre_save, pre_update
 from ormar.exceptions import SignalDefinitionError
 from tests.settings import DATABASE_URL
 

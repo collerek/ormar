@@ -106,13 +106,7 @@ def compare_results_include(excludable):
 
 
 def test_excluding_fields_from_list():
-    fields = [
-        "gearbox_type",
-        "gears",
-        "aircon_type",
-        "year",
-        "manufacturer__founded",
-    ]
+    fields = ["gearbox_type", "gears", "aircon_type", "year", "manufacturer__founded"]
     excludable = ExcludableItems()
     excludable.build(items=fields, model_cls=Car, is_exclude=True)
     compare_results(excludable)
@@ -174,7 +168,7 @@ def test_nested_includes_from_dict():
     fields = {
         "id": ...,
         "name": ...,
-        "manufacturer": {"name": ..., "hq": {"name": ..., "nicks": {"name": ...}},},
+        "manufacturer": {"name": ..., "hq": {"name": ..., "nicks": {"name": ...}}},
     }
     excludable = ExcludableItems()
     excludable.build(items=fields, model_cls=Car, is_exclude=False)
@@ -185,7 +179,7 @@ def test_nested_includes_from_dict_with_set():
     fields = {
         "id": ...,
         "name": ...,
-        "manufacturer": {"name": ..., "hq": {"name": ..., "nicks": {"name"}},},
+        "manufacturer": {"name": ..., "hq": {"name": ..., "nicks": {"name"}}},
     }
     excludable = ExcludableItems()
     excludable.build(items=fields, model_cls=Car, is_exclude=False)

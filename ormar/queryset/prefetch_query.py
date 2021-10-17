@@ -117,7 +117,9 @@ class Node(abc.ABC):
         clause_target = self.relation_field.get_filter_clause_target()
         filter_column = self.relation_field.get_related_field_alias()
         qryclause = QueryClause(
-            model_cls=clause_target, select_related=[], filter_clauses=[],
+            model_cls=clause_target,
+            select_related=[],
+            filter_clauses=[],
         )
         if isinstance(filter_column, dict):
             kwargs: Dict[str, Union[List, Set]] = dict()

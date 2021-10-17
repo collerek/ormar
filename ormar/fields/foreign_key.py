@@ -19,7 +19,6 @@ from typing import (
 import sqlalchemy
 from pydantic import BaseModel, create_model
 from pydantic.typing import ForwardRef, evaluate_forwardref
-from sqlalchemy import UniqueConstraint
 
 import ormar  # noqa I101
 from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
@@ -198,12 +197,14 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
     encrypt_secret = kwargs.pop("encrypt_secret", None)
     encrypt_backend = kwargs.pop("encrypt_backend", None)
     encrypt_custom_backend = kwargs.pop("encrypt_custom_backend", None)
+    overwrite_pydantic_type = kwargs.pop("overwrite_pydantic_type", None)
 
     not_supported = [
         default,
         encrypt_secret,
         encrypt_backend,
         encrypt_custom_backend,
+        overwrite_pydantic_type,
     ]
     if any(x is not None for x in not_supported):
         raise ModelDefinitionError(
@@ -219,13 +220,6 @@ def generate_relation_fields_if_required(
     if not names:
         return {pk_name: f"{to.get_name()}_{pk_name}" for pk_name in to.pk_aliases_list}
     return names
-
-
-class UniqueColumns(UniqueConstraint):
-    """
-    Subclass of sqlalchemy.UniqueConstraint.
-    Used to avoid importing anything from sqlalchemy by user.
-    """
 
 
 @dataclass
@@ -251,7 +245,7 @@ def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":  # pragma: no cover
     ...
 
 
-def ForeignKey(  # noqa CFQ002
+def ForeignKey(  # type: ignore # noqa CFQ002
     to: "ToType",
     *,
     name: str = None,
@@ -305,6 +299,8 @@ def ForeignKey(  # noqa CFQ002
 
     real_name = kwargs.pop("real_name", None)
     names = kwargs.pop("names", None)
+    sql_nullable = kwargs.pop("sql_nullable", None)
+    sql_nullable = nullable if sql_nullable is None else sql_nullable
 
     validate_not_allowed_fields(kwargs)
 
@@ -315,9 +311,7 @@ def ForeignKey(  # noqa CFQ002
         column_type = None
         is_compound = False
     else:
-        names = generate_relation_fields_if_required(
-            to=to, names=names  # type: ignore
-        )
+        names = generate_relation_fields_if_required(to=to, names=names)  # type: ignore
         __type__, constraints, column_type = populate_fk_params_based_on_to_model(
             to=to,  # type: ignore
             nullable=nullable,
@@ -335,6 +329,7 @@ def ForeignKey(  # noqa CFQ002
         alias=name,
         name=real_name,
         nullable=nullable,
+        sql_nullable=sql_nullable,
         constraints=constraints,
         unique=unique,
         column_type=column_type,
@@ -496,9 +491,7 @@ class ForeignKeyField(BaseField):
         """
         if self.to.__class__ == ForwardRef:
             self.to = evaluate_forwardref(
-                self.to,  # type: ignore
-                globalns,
-                localns or None,
+                self.to, globalns, localns or None  # type: ignore
             )
             self.names: Dict[str, str] = generate_relation_fields_if_required(
                 to=self.to, names=self.names  # type: ignore
@@ -518,7 +511,7 @@ class ForeignKeyField(BaseField):
             self.is_compound = self.to.has_pk_constraint  # type: ignore
 
     def _extract_model_from_sequence(
-        self, value: List, child: "Model", to_register: bool,
+        self, value: List, child: "Model", to_register: bool
     ) -> List["Model"]:
         """
         Takes a list of Models and registers them on parent.
@@ -537,13 +530,13 @@ class ForeignKeyField(BaseField):
         """
         return [
             self.expand_relationship(  # type: ignore
-                value=val, child=child, to_register=to_register,
+                value=val, child=child, to_register=to_register
             )
             for val in value
         ]
 
     def _register_existing_model(
-        self, value: "Model", child: "Model", to_register: bool,
+        self, value: "Model", child: "Model", to_register: bool
     ) -> "Model":
         """
         Takes already created instance and registers it for parent.
@@ -665,9 +658,7 @@ class ForeignKeyField(BaseField):
         :param child: child model
         :type child: Model class
         """
-        model._orm.add(
-            parent=model, child=child, field=self,
-        )
+        model._orm.add(parent=model, child=child, field=self)
 
     def has_unresolved_forward_refs(self) -> bool:
         """

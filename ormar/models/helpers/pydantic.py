@@ -50,9 +50,10 @@ def get_pydantic_field(field_name: str, model: Type["Model"]) -> "ModelField":
     :return: newly created pydantic field
     :rtype: pydantic.ModelField
     """
+    type_ = model.Meta.model_fields[field_name].__type__
     return ModelField(
         name=field_name,
-        type_=model.Meta.model_fields[field_name].__type__,  # type: ignore
+        type_=type_,  # type: ignore
         model_config=model.__config__,
         required=not model.Meta.model_fields[field_name].nullable,
         class_validators={},
@@ -84,9 +85,15 @@ def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
     for field_name, field in potential_fields.items():
         field.name = field_name
         model_fields[field_name] = field
-        attrs["__annotations__"][field_name] = (
+        default_type = (
             field.__type__ if not field.nullable else Optional[field.__type__]
         )
+        overwrite_type = (
+            field.__pydantic_type__
+            if field.__type__ != field.__pydantic_type__
+            else None
+        )
+        attrs["__annotations__"][field_name] = overwrite_type or default_type
     return attrs, model_fields
 
 

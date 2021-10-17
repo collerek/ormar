@@ -95,6 +95,6 @@ async def test_add_students():
         assert user.attending is not None
         assert len(user.attending) > 0
 
-        query = Session.objects.prefetch_related(["students", "teacher",])
+        query = Session.objects.prefetch_related(["students", "teacher"])
         sessions = await query.all()
         assert len(sessions) == 5

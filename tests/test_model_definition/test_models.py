@@ -126,12 +126,32 @@ class Country(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(
-        max_length=9, choices=country_name_choices, default="Canada",
+        max_length=9, choices=country_name_choices, default="Canada"
     )
     taxed: bool = ormar.Boolean(choices=country_taxed_choices, default=True)
     country_code: int = ormar.Integer(
         minimum=0, maximum=1000, choices=country_country_code_choices, default=1
     )
+
+
+class NullableCountry(ormar.Model):
+    class Meta:
+        tablename = "country2"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=9, choices=country_name_choices, nullable=True)
+
+
+class NotNullableCountry(ormar.Model):
+    class Meta:
+        tablename = "country3"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=9, choices=country_name_choices, nullable=False)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -536,6 +556,17 @@ async def test_model_choices():
             check_choices((name, taxed, country_code), ["in", "out", "in"])
             await Country(name="Belize").save()
             await Country.objects.filter(name="Belize").update(name="Vietnam")
+
+
+@pytest.mark.asyncio
+async def test_nullable_field_model_choices():
+    """Test that choices work properly for according to nullable setting"""
+    async with database:
+        c1 = await NullableCountry(name=None).save()
+        assert c1.name is None
+
+        with pytest.raises(ValueError):
+            await NotNullableCountry(name=None).save()
 
 
 @pytest.mark.asyncio

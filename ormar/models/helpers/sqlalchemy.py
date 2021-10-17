@@ -40,7 +40,9 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
         model_field=model_field, target_model=model_field.to, field_name=parent_name
     )
     create_through_relation_fields(
-        model_field=model_field, target_model=model_field.owner, field_name=child_name,
+        model_field=model_field,
+        target_model=model_field.owner,
+        field_name=child_name,
     )
 
 
@@ -109,7 +111,10 @@ def create_and_append_m2m_fk(
         for pk_column in pk_columns:
             col_name = f"{field_name}_{pk_column.name}"
             relation_columns.append(col_name)
-            column = sqlalchemy.Column(col_name, pk_column.type,)
+            column = sqlalchemy.Column(
+                col_name,
+                pk_column.type,
+            )
             model_field.through.Meta.columns.append(column)
             model_field.through.Meta.table.append_column(column)
         fk_constraint = ormar.ForeignKeyConstraint(
@@ -340,22 +345,38 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
 
     :param meta: Meta class of the Model without sqlalchemy table constructed
     :type meta: Model class Meta
-    :return: class with populated Meta.table
-    :rtype: Model class
     """
     if not hasattr(meta, "table") and check_for_null_type_columns_from_forward_refs(
         meta
     ):
-        for constraint in meta.constraints:
-            if isinstance(constraint, sqlalchemy.UniqueConstraint):
-                constraint.name = (
-                    f"uc_{meta.tablename}_"
-                    f'{"_".join([str(col) for col in constraint._pending_colargs])}'
-                )
+        set_constraint_names(meta=meta)
         table = sqlalchemy.Table(
             meta.tablename, meta.metadata, *meta.columns, *meta.constraints
         )
         meta.table = table
+
+
+def set_constraint_names(meta: "ModelMeta") -> None:
+    """
+    Populates the names on IndexColumn and UniqueColumns constraints.
+
+    :param meta: Meta class of the Model without sqlalchemy table constructed
+    :type meta: Model class Meta
+    """
+    for constraint in meta.constraints:
+        if isinstance(constraint, sqlalchemy.UniqueConstraint) and not constraint.name:
+            constraint.name = (
+                f"uc_{meta.tablename}_"
+                f'{"_".join([str(col) for col in constraint._pending_colargs])}'
+            )
+        elif (
+            isinstance(constraint, sqlalchemy.Index)
+            and constraint.name == "TEMPORARY_NAME"
+        ):
+            constraint.name = (
+                f"ix_{meta.tablename}_"
+                f'{"_".join([col for col in constraint._pending_colargs])}'
+            )
 
 
 def update_column_definition(

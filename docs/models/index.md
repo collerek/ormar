@@ -33,7 +33,7 @@ Only one primary key column is allowed.
 
 By default if you assign primary key to `Integer` field, the `autoincrement` option is set to true.
 
-You can disable by passing `autoincremant=False`.
+You can disable by passing `autoincrement=False`.
 
 ```Python 
 id: int = ormar.Integer(primary_key=True, autoincrement=False)
@@ -357,10 +357,15 @@ You can overwrite this parameter by providing `Meta` class `tablename` argument.
 
 On a model level you can also set model-wise constraints on sql columns.
 
-Right now only `UniqueColumns` constraint is present. 
+Right now only `IndexColumns` and `UniqueColumns` constraints are supported. 
+
+!!!note
+        Note that both constraints should be used only if you want to set a name on constraint or want to set the index on multiple columns, otherwise `index` and `unique` properties on ormar fields are preferred.
 
 !!!tip
     To read more about columns constraints like `primary_key`, `unique`, `ForeignKey` etc. visit [fields][fields].
+
+#### UniqueColumns
 
 You can set this parameter by providing `Meta` class `constraints` argument.
 
@@ -373,11 +378,25 @@ You can set this parameter by providing `Meta` class `constraints` argument.
         To set one column as unique use [`unique`](../fields/common-parameters.md#unique) common parameter. 
         Of course you can set many columns as unique with this param but each of them will be checked separately.
 
+#### IndexColumns
+
+You can set this parameter by providing `Meta` class `constraints` argument.
+
+```Python hl_lines="14-17"
+--8<-- "../docs_src/models/docs017.py"
+```
+
+!!!note
+        Note that constraints are meant for combination of columns that should be in the index. 
+        To set one column index use [`unique`](../fields/common-parameters.md#index) common parameter. 
+        Of course, you can set many columns as indexes with this param but each of them will be a separate index.
+
+
 ### Pydantic configuration
 
 As each `ormar.Model` is also a `pydantic` model, you might want to tweak the settings of the pydantic configuration.
 
-The way to do this in pydantic is to adjust the settings on the `Config` class provided to your model, and it works exactly the same for ormer.Models.
+The way to do this in pydantic is to adjust the settings on the `Config` class provided to your model, and it works exactly the same for ormar models.
 
 So in order to set your own preferences you need to provide not only the `Meta` class but also the `Config` class to your model.
 
@@ -397,6 +416,37 @@ So to overwrite setting or provide your own a sample model can look like followi
 ```Python hl_lines="15-16"
 --8<-- "../docs_src/models/docs016.py"
 ```
+
+### Extra fields in models
+
+By default `ormar` forbids you to pass extra fields to Model.
+
+If you try to do so the `ModelError` will be raised.
+
+Since the extra fields cannot be saved in the database the default to disallow such fields seems a feasible option.
+
+On the contrary in `pydantic` the default option is to ignore such extra fields, therefore `ormar` provides an `Meta.extra` setting to behave in the same way.
+
+To ignore extra fields passed to `ormar` set this setting to `Extra.ignore` instead of default `Extra.forbid`.
+
+Note that `ormar` does not allow accepting extra fields, you can only ignore them or forbid them (raise exception if present)
+
+```python
+from ormar import Extra
+
+class Child(ormar.Model):
+    class Meta(ormar.ModelMeta):
+        tablename = "children"
+        metadata = metadata
+        database = database
+        extra = Extra.ignore  # set extra setting to prevent exceptions on extra fields presence
+
+    id: int = ormar.Integer(name="child_id", primary_key=True)
+    first_name: str = ormar.String(name="fname", max_length=100)
+    last_name: str = ormar.String(name="lname", max_length=100)
+```
+
+To set the same setting on all model check the [best practices]("../models/index/#best-practice") and `BaseMeta` concept.
 
 ## Model sort order
 

@@ -1,0 +1,158 @@
+[project]
+name = "ormar"
+
+[tool.poetry]
+name = "ormar"
+version = "0.10.22"
+description = "A simple async ORM with fastapi in mind and pydantic validation."
+authors = ["Radosław Drążkiewicz <collerek@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/collerek/ormar"
+repository = "https://github.com/collerek/ormar"
+documentation = "https://collerek.github.io/ormar/"
+packages = [
+    { include="ormar" }
+]
+keywords = [
+    "orm",
+    "sqlalchemy",
+    "fastapi",
+    "pydantic",
+    "databases",
+    "async",
+    "alembic",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Internet :: WWW/HTTP",
+    "Framework :: AsyncIO",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3 :: Only",
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.6.2"
+databases = ">=0.3.2,<0.5.4"
+pydantic = ">=1.6.1,!=1.7,!=1.7.1,!=1.7.2,!=1.7.3,!=1.8,!=1.8.1,<=1.8.2"
+SQLAlchemy = ">=1.3.18,<1.4.26"
+asyncpg = { version = "^0.24.0", optional = true }
+psycopg2-binary = { version = "^2.9.1", optional = true }
+aiomysql = { version = "^0.0.21", optional = true }
+aiosqlite = { version = "^0.17.0", optional = true }
+cryptography = { version = "^35.0.0", optional = true }
+
+[tool.poetry.dependencies.orjson]
+version = "^3.6.4"
+optional = true
+python = ">=3.7"
+
+[tool.poetry.dependencies.typing-extensions]
+version = "^3.7"
+python = "<3.8"
+
+[tool.poetry.dependencies.importlib-metadata]
+version = ">=3.1"
+python = "<3.8"
+
+
+[tool.poetry.dev-dependencies]
+# Async database driversy
+aiomysql = "^0.0.21"
+aiosqlite = "^0.17.0"
+aiopg = "^1.3.2"
+asyncpg = "^0.24.0"
+
+# Sync database drivers for standard tooling around setup/teardown/migrations.
+psycopg2-binary = "^2.9.1"
+mysqlclient = "^2.0.3"
+PyMySQL = ">=0.9,<=0.9.3"
+
+# Testing
+pytest = "^6.2.5"
+pytest-cov = "^3.0.0"
+codecov = "^2.1.12"
+pytest-asyncio = "^0.15.1"
+fastapi = "^0.70.0"
+flake8 = "^3.9.2"
+flake8-black = "^0.2.3"
+flake8-bugbear = "^21.9.2"
+flake8-import-order = "^0.18.1"
+flake8-bandit = "^2.1.2"
+flake8-builtins = "^1.5.3"
+flake8-variables-names = "^0.0.4"
+flake8-cognitive-complexity = "^0.1.0"
+flake8-functions = "^0.0.6"
+flake8-expression-complexity = "^0.0.9"
+
+# types
+mypy = "^0.910"
+types-ujson = "^4.2.0"
+types-PyMySQL = "^1.0.3"
+types-ipaddress = "^1.0.1"
+types-enum34 = "^1.1.1"
+types-cryptography = "^3.3.6"
+types-orjson = "^3.6.1"
+types-aiofiles = "^0.7.0"
+types-pkg-resources = "^0.1.3"
+types-requests = "^2.25.10"
+types-toml = "^0.10.1"
+types-dataclasses = { version = "^0.6.0", markers = "python_version < '3.7'" }
+
+# Documantation
+mkdocs = "^1.2.3"
+mkdocs-material = "^7.3.3"
+mkdocs-material-extensions = "^1.0.3"
+pydoc-markdown = { version = "^4.3.2", markers = "python_version > '3.7'" }
+dataclasses = { version = ">=0.6.0,<0.8 || >0.8,<1.0.0" }
+
+# Performance testing
+yappi = "^1.3.3"
+
+pre-commit = "^2.15.0"
+
+[tool.poetry.extras]
+postgresql = ["asyncpg", "psycopg2-binary"]
+postgres = ["asyncpg", "psycopg2-binary"]
+mysql = ["aiomysql"]
+sqlite = ["sqlite"]
+orjson = ["orjson"]
+crypto = ["cryptography"]
+dev = [
+    "asyncpg",
+    "psycopg2-binary",
+    "aiomysql",
+    "sqlite",
+    "orjson",
+    "cryptography",
+]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+# TODO: Enable mypy plugin after pydantic release supporting toml file
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_calls = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+module = ["sqlalchemy.*", "asyncpg"]
+ignore_missing_imports = true
+

@@ -14,19 +14,22 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Type,
+    TypeVar,
     Union,
     cast,
 )
+
+import databases
+import pydantic
+import sqlalchemy
+from ormar.models.utils import Extra
+from pydantic import BaseModel
 
 try:
     import orjson as json
 except ImportError:  # pragma: no cover
     import json  # type: ignore
 
-import databases
-import pydantic
-import sqlalchemy
-from pydantic import BaseModel
 
 import ormar  # noqa I100
 from ormar.exceptions import ModelError, ModelPersistenceError
@@ -52,8 +55,11 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model
     from ormar.signals import SignalEmitter
 
+    T = TypeVar("T", bound="NewBaseModel")
+
     IntStr = Union[int, str]
     DictStrAny = Dict[str, Any]
+    SetStr = Set[str]
     AbstractSetIntStr = AbstractSet[IntStr]
     MappingIntStrAny = Mapping[IntStr, Any]
 
@@ -80,6 +86,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         __tablename__: str
         __metadata__: sqlalchemy.MetaData
         __database__: databases.Database
+        __relation_map__: Optional[List[str]]
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
         _orm_id: int
@@ -87,7 +94,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         _related_names: Optional[Set]
         _through_names: Optional[Set]
         _related_names_hash: str
-        _choices_fields: Optional[Set]
+        _choices_fields: Set
         _pydantic_fields: Set
         _quick_access_fields: Set
         _json_fields: Set
@@ -156,7 +163,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         # register the columns models after initialization
         for related in self.extract_related_names().union(self.extract_through_names()):
             model_fields[related].expand_relationship(
-                new_kwargs.get(related), self, to_register=True,
+                new_kwargs.get(related), self, to_register=True
             )
 
         if hasattr(self, "_init_private_attributes"):
@@ -220,7 +227,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 f"need to call update_forward_refs()."
             )
 
-    def _process_kwargs(self, kwargs: Dict) -> Tuple[Dict, Dict, Set]:
+    def _process_kwargs(self, kwargs: Dict) -> Tuple[Dict, Dict, Set]:  # noqa: CCR001
         """
         Initializes nested models.
 
@@ -254,13 +261,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         for field_name in self.extract_through_names():
             through_tmp_dict[field_name] = kwargs.pop(field_name, None)
 
+        kwargs = self._remove_extra_parameters_if_they_should_be_ignored(
+            kwargs=kwargs, model_fields=model_fields, pydantic_fields=pydantic_fields
+        )
         try:
             new_kwargs: Dict[str, Any] = {
                 k: self._convert_to_bytes(
                     k,
                     self._convert_json(
                         k,
-                        model_fields[k].expand_relationship(v, self, to_register=False,)
+                        model_fields[k].expand_relationship(v, self, to_register=False)
                         if k in model_fields
                         else (v if k in pydantic_fields else model_fields[k]),
                     ),
@@ -305,6 +315,29 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         related_dict["__pk_only__"] = True
         return related_dict
 
+    def _remove_extra_parameters_if_they_should_be_ignored(
+        self, kwargs: Dict, model_fields: Dict, pydantic_fields: Set
+    ) -> Dict:
+        """
+        Removes the extra fields from kwargs if they should be ignored.
+
+        :param kwargs: passed arguments
+        :type kwargs: Dict
+        :param model_fields: dictionary of model fields
+        :type model_fields: Dict
+        :param pydantic_fields: set of pydantic fields names
+        :type pydantic_fields: Set
+        :return: dict without extra fields
+        :rtype: Dict
+        """
+        if self.Meta.extra == Extra.ignore:
+            kwargs = {
+                k: v
+                for k, v in kwargs.items()
+                if k in model_fields or k in pydantic_fields
+            }
+        return kwargs
+
     def _initialize_internal_attributes(self) -> None:
         """
         Initializes internal attributes during __init__()
@@ -317,7 +350,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             self,
             "_orm",
             RelationsManager(
-                related_fields=self.extract_related_fields(), owner=cast("Model", self),
+                related_fields=self.extract_related_fields(), owner=cast("Model", self)
             ),
         )
 
@@ -481,7 +514,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     @staticmethod
     def _get_not_excluded_fields(
-        fields: Union[List, Set], include: Optional[Dict], exclude: Optional[Dict],
+        fields: Union[List, Set], include: Optional[Dict], exclude: Optional[Dict]
     ) -> List:
         """
         Returns related field names applying on them include and exclude set.
@@ -789,6 +822,51 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             data = data["__root__"]
         return self.__config__.json_dumps(data, default=encoder, **dumps_kwargs)
 
+    @classmethod
+    def construct(
+        cls: Type["T"], _fields_set: Optional["SetStr"] = None, **values: Any
+    ) -> "T":
+        own_values = {
+            k: v for k, v in values.items() if k not in cls.extract_related_names()
+        }
+        model = cls.__new__(cls)
+        fields_values: Dict[str, Any] = {}
+        for name, field in cls.__fields__.items():
+            if name in own_values:
+                fields_values[name] = own_values[name]
+            elif not field.required:
+                fields_values[name] = field.get_default()
+        fields_values.update(own_values)
+        object.__setattr__(model, "__dict__", fields_values)
+        model._initialize_internal_attributes()
+        cls._construct_relations(model=model, values=values)
+        if _fields_set is None:
+            _fields_set = set(values.keys())
+        object.__setattr__(model, "__fields_set__", _fields_set)
+        return model
+
+    @classmethod
+    def _construct_relations(cls: Type["T"], model: "T", values: Dict) -> None:
+        present_relations = [
+            relation for relation in cls.extract_related_names() if relation in values
+        ]
+        for relation in present_relations:
+            value_to_set = values[relation]
+            if not isinstance(value_to_set, list):
+                value_to_set = [value_to_set]
+            relation_field = cls.Meta.model_fields[relation]
+            relation_value = [
+                relation_field.expand_relationship(x, model, to_register=False)
+                for x in value_to_set
+            ]
+
+            for child in relation_value:
+                model._orm.add(
+                    parent=cast("Model", child),
+                    child=cast("Model", model),
+                    field=cast("ForeignKeyField", relation_field),
+                )
+
     def update_from_dict(self, value_dict: Dict) -> "NewBaseModel":
         """
         Updates self with values of fields passed in the dictionary.
@@ -883,6 +961,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: dictionary of fields names and values.
         :rtype: Dict
         """
+        # TODO: Cache this dictionary?
         self_fields = self._extract_own_model_fields()
         self_fields = {
             k: v

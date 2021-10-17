@@ -24,7 +24,7 @@ class ModelTest(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)
-    url: HttpUrl = "https://www.example.com"
+    url: HttpUrl = "https://www.example.com"  # type: ignore
     number: Optional[PaymentCardNumber]
 
 
@@ -47,7 +47,7 @@ class ModelTest2(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)
-    url: HttpUrl = "https://www.example2.com"
+    url: HttpUrl = "https://www.example2.com"  # type: ignore
     number: PaymentCardNumber = Field(default_factory=get_number)
 
 
@@ -67,7 +67,7 @@ class ModelTest3(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)
-    url: HttpUrl = "https://www.example3.com"
+    url: HttpUrl = "https://www.example3.com"  # type: ignore
     number: PaymentCardNumber
     pydantic_test: PydanticTest
 
