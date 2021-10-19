@@ -7,7 +7,10 @@ from ormar.models.mixins import (
 
 
 class ModelTableProxy(
-    MergeModelMixin, SavePrepareMixin, ExcludableMixin, PydanticMixin,
+    MergeModelMixin,
+    SavePrepareMixin,
+    ExcludableMixin,
+    PydanticMixin,
 ):
     """
     Used to combine all mixins with different set of functionalities.

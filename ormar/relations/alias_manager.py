@@ -2,6 +2,7 @@ import string
 import uuid
 from random import choices
 from typing import Any, Dict, List, TYPE_CHECKING, Type, Union
+from collections import defaultdict
 
 import sqlalchemy
 from sqlalchemy import text
@@ -33,14 +34,14 @@ class AliasManager:
     """
 
     def __init__(self) -> None:
-        self._aliases_new: Dict[str, str] = dict()
         self._reversed_aliases: Dict[str, str] = dict()
+        self._relation_aliases: Dict[str, str] = defaultdict(get_table_alias)
 
     def __contains__(self, item: str) -> bool:
-        return self._aliases_new.__contains__(item)
+        return self._relation_aliases.__contains__(item)
 
     def __getitem__(self, key: str) -> Any:
-        return self._aliases_new.__getitem__(key)
+        return self._relation_aliases.__getitem__(key)
 
     @property
     def reversed_aliases(self) -> Dict:
@@ -50,9 +51,7 @@ class AliasManager:
         :return: dictionary of prefix to relation
         :rtype: Dict
         """
-        if self._reversed_aliases:
-            return self._reversed_aliases
-        reversed_aliases = {v: k for k, v in self._aliases_new.items()}
+        reversed_aliases = {v: k for k, v in self._relation_aliases.items()}
         self._reversed_aliases = reversed_aliases
         return self._reversed_aliases
 
@@ -98,110 +97,19 @@ class AliasManager:
         """
         return table.alias(f"{alias}_{table.name}")
 
-    def add_relation_type(
-        self, source_model: Type["Model"], relation_name: str, reverse_name: str = None
-    ) -> None:
-        """
-        Registers the relations defined in ormar models.
-        Given the relation it registers also the reverse side of this relation.
-
-        Used by both ForeignKey and ManyToMany relations.
-
-        Each relation is registered as Model name and relation name.
-        Each alias registered has to be unique.
-
-        Aliases are used to construct joins to assure proper links between tables.
-        That way you can link to the same target tables from multiple fields
-        on one model as well as from multiple different models in one join.
-
-        :param source_model: model with relation defined
-        :type source_model: source Model
-        :param relation_name: name of the relation to define
-        :type relation_name: str
-        :param reverse_name: name of related_name fo given relation for m2m relations
-        :type reverse_name: Optional[str]
-        :return: none
-        :rtype: None
-        """
-        parent_key = f"{source_model.get_name()}_{relation_name}"
-        if parent_key not in self._aliases_new:
-            self.add_alias(parent_key)
-
-        to_field = source_model.Meta.model_fields[relation_name]
-        child_model = to_field.to
-        child_key = f"{child_model.get_name()}_{reverse_name}"
-        if child_key not in self._aliases_new:
-            self.add_alias(child_key)
-
-    def add_alias(self, alias_key: str) -> str:
-        """
-        Adds alias to the dictionary of aliases under given key.
-
-        :param alias_key: key of relation to generate alias for
-        :type alias_key: str
-        :return: generated alias
-        :rtype: str
-        """
-        alias = get_table_alias()
-        self._aliases_new[alias_key] = alias
-        return alias
-
-    def resolve_relation_alias(
-        self, from_model: Union[Type["Model"], Type["ModelRow"]], relation_name: str
-    ) -> str:
-        """
-        Given model and relation name returns the alias for this relation.
-
-        :param from_model: model with relation defined
-        :type from_model: source Model
-        :param relation_name: name of the relation field
-        :type relation_name: str
-        :return: alias of the relation
-        :rtype: str
-        """
-        alias = self._aliases_new.get(f"{from_model.get_name()}_{relation_name}", "")
-        return alias
-
-    def resolve_complex_relation_alias(self, alias_key: str) -> str:
-        """
-        Given full complex relation str returns the alias for this relation.
-
-        :param alias_key: name of the relation field
-        :type alias_key: str
-        :return: alias of the relation
-        :rtype: str
-        """
-        alias = self._aliases_new.get(alias_key, "")
-        return alias
-
-    def resolve_relation_alias_after_complex(
-        self,
-        source_model: Union[Type["Model"], Type["ModelRow"]],
-        relation_str: str,
-        relation_field: "ForeignKeyField",
+    def resolve_relation_string_alias(
+        self, source_model: Union[Type["Model"], Type["ModelRow"]], relation_string: str
     ) -> str:
         """
         Given source model and relation string returns the alias for this complex
         relation if it exists, otherwise fallback to normal relation from a relation
         field definition.
 
-        :param relation_field: field with direct relation definition
-        :type relation_field: "ForeignKeyField"
         :param source_model: model with query starts
         :type source_model: source Model
-        :param relation_str: string with relation joins defined
-        :type relation_str: str
+        :param relation_string: string with relation joins defined
+        :type relation_string: str
         :return: alias of the relation
         :rtype: str
         """
-        alias = ""
-        if relation_str and "__" in relation_str:
-            alias = self.resolve_relation_alias(
-                from_model=source_model, relation_name=relation_str
-            )
-        if not alias:
-            alias = self.resolve_relation_alias(
-                from_model=relation_field.get_source_model(),
-                relation_name=relation_field.get_relation_name(),
-            )
-        return alias
+        return self._relation_aliases[f"{source_model.get_name()}_{relation_string}"]

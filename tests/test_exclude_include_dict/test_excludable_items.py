@@ -69,7 +69,9 @@ def compare_results(excludable):
 
     assert car_excludable.is_excluded("year")
 
-    alias = Company.Meta.alias_manager.resolve_relation_alias(Car, "manufacturer")
+    alias = Company.Meta.alias_manager.resolve_relation_string_alias(
+        Car, "manufacturer"
+    )
     manu_excludable = excludable.get(Company, alias=alias)
     assert manu_excludable.exclude == {"founded"}
     assert manu_excludable.include == set()
@@ -86,7 +88,7 @@ def compare_results_include(excludable):
     assert car_excludable.is_included("name")
     assert not car_excludable.is_included("gears")
 
-    alias = manager.resolve_relation_alias(Car, "manufacturer")
+    alias = manager.resolve_relation_string_alias(Car, "manufacturer")
     manu_excludable = excludable.get(Company, alias=alias)
     assert manu_excludable.include == {"name"}
     assert manu_excludable.exclude == set()
@@ -94,12 +96,12 @@ def compare_results_include(excludable):
     assert manu_excludable.is_included("name")
     assert not manu_excludable.is_included("founded")
 
-    alias = manager.resolve_relation_alias(Company, "hq")
+    alias = manager.resolve_relation_string_alias(Car, "manufacturer__hq")
     hq_excludable = excludable.get(HQ, alias=alias)
     assert hq_excludable.include == {"name"}
     assert hq_excludable.exclude == set()
 
-    alias = manager.resolve_relation_alias(NicksHq, "nicknames")
+    alias = manager.resolve_relation_string_alias(Car, "manufacturer__hq__nicks")
     nick_excludable = excludable.get(NickNames, alias=alias)
     assert nick_excludable.include == {"name"}
     assert nick_excludable.exclude == set()
@@ -204,7 +206,9 @@ def test_includes_and_excludes_combo():
     assert car_excludable.is_excluded("aircon_type")
     assert car_excludable.is_included("name")
 
-    alias = Company.Meta.alias_manager.resolve_relation_alias(Car, "manufacturer")
+    alias = Company.Meta.alias_manager.resolve_relation_string_alias(
+        Car, "manufacturer"
+    )
     manu_excludable = excludable.get(Company, alias=alias)
     assert manu_excludable.include == {"name"}
     assert manu_excludable.exclude == {"founded"}

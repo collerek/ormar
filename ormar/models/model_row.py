@@ -126,21 +126,14 @@ class ModelRow(NewBaseModel):
         :return: table_prefix to use
         :rtype: str
         """
-        if related_field.is_multi:
-            previous_model = related_field.through
-        else:
-            previous_model = related_field.owner
-        table_prefix = cls.Meta.alias_manager.resolve_relation_alias(
-            from_model=previous_model, relation_name=related_field.name
+        manager = cls.Meta.alias_manager
+        relation_str = current_relation_str
+        # if related_field.is_multi:
+        #     relation_str += "__multi"
+        table_prefix = manager.resolve_relation_string_alias(
+            source_model=source_model,
+            relation_string=relation_str,
         )
-        if not table_prefix or table_prefix in used_prefixes:
-            manager = cls.Meta.alias_manager
-            relation_str = current_relation_str
-            table_prefix = manager.resolve_relation_alias_after_complex(
-                source_model=source_model,
-                relation_str=relation_str,
-                relation_field=related_field,
-            )
         used_prefixes.append(table_prefix)
         return table_prefix
 
@@ -224,6 +217,8 @@ class ModelRow(NewBaseModel):
                     excludable=excludable,
                     child=child,
                     proxy_source_model=proxy_source_model,
+                    relation_str=relation_str,
+                    source_model=source_model,
                 )
 
         return item
@@ -264,6 +259,8 @@ class ModelRow(NewBaseModel):
         excludable: ExcludableItems,
         child: "Model",
         proxy_source_model: Optional[Type["Model"]],
+        relation_str: str,
+        source_model: Type["Model"],
     ) -> None:
         """
         Populates the through model on reverse side of current query.
@@ -284,7 +281,12 @@ class ModelRow(NewBaseModel):
         """
         through_name = cls.Meta.model_fields[related].through.get_name()
         through_child = cls._create_through_instance(
-            row=row, related=related, through_name=through_name, excludable=excludable
+            row=row,
+            related=related,
+            through_name=through_name,
+            excludable=excludable,
+            relation_str=relation_str,
+            source_model=source_model,
         )
 
         if child.__class__ != proxy_source_model:
@@ -300,6 +302,8 @@ class ModelRow(NewBaseModel):
         through_name: str,
         related: str,
         excludable: ExcludableItems,
+        relation_str: str,
+        source_model: Type["Model"],
     ) -> "ModelRow":
         """
         Initialize the through model from db row.
@@ -317,8 +321,8 @@ class ModelRow(NewBaseModel):
         :rtype: "ModelRow"
         """
         model_cls = cls.Meta.model_fields[through_name].to
-        table_prefix = cls.Meta.alias_manager.resolve_relation_alias(
-            from_model=cls, relation_name=related
+        table_prefix = cls.Meta.alias_manager.resolve_relation_string_alias(
+            source_model=source_model, relation_string=relation_str + "__multi"
         )
         # remove relations on through field
         model_excludable = excludable.get(model_cls=model_cls, alias=table_prefix)

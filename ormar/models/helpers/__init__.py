@@ -14,7 +14,6 @@ from ormar.models.helpers.pydantic import (
 from ormar.models.helpers.relations import (
     alias_manager,
     process_compound_foreign_keys,
-    register_relation_in_alias_manager,
 )
 from ormar.models.helpers.relations import expand_reverse_relationships
 from ormar.models.helpers.sqlalchemy import (
@@ -33,7 +32,6 @@ __all__ = [
     "populate_meta_sqlalchemy_table_if_required",
     "populate_default_options_values",
     "alias_manager",
-    "register_relation_in_alias_manager",
     "get_pydantic_field",
     "get_potential_fields",
     "get_pydantic_base_orm_config",

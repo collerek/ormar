@@ -137,6 +137,7 @@ class Query:
                 relation_name=related,
                 relation_str=related,
                 related_models=remainder,
+                source_model=self.model_cls,
             )
 
             (

@@ -281,16 +281,16 @@ class QueryClause:
         :rtype: None
         """
         prefixes = self._parse_related_prefixes(select_related=select_related)
-
-        filtered_prefixes = sorted(prefixes, key=lambda x: x.table_prefix)
-        grouped = itertools.groupby(filtered_prefixes, key=lambda x: x.table_prefix)
-        for _, group in grouped:
-            sorted_group = sorted(
-                group, key=lambda x: (len(x.relation_str), x.relation_str), reverse=True
-            )
-            self._register_all_but_shortest_duplicated_by_relation_string(
-                same_prefix_group=sorted_group
-            )
+        # TODO: clean this mess
+        # filtered_prefixes = sorted(prefixes, key=lambda x: x.table_prefix)
+        # grouped = itertools.groupby(filtered_prefixes, key=lambda x: x.table_prefix)
+        # for _, group in grouped:
+        #     sorted_group = sorted(
+        #         group, key=lambda x: (len(x.relation_str), x.relation_str), reverse=True
+        #     )
+        #     self._register_all_but_shortest_duplicated_by_relation_string(
+        #         same_prefix_group=sorted_group
+        #     )
 
     def _register_all_but_shortest_duplicated_by_relation_string(
         self, same_prefix_group: List
@@ -372,6 +372,8 @@ class QueryClause:
         :type action: ormar.queryset.actions.filter_action.FilterAction
         """
         manager = self.model_cls.Meta.alias_manager
-        new_alias = manager.resolve_relation_alias(self.model_cls, action.related_str)
+        new_alias = manager.resolve_relation_string_alias(
+            self.model_cls, action.related_str
+        )
         if "__" in action.related_str and new_alias and new_alias in self.used_aliases:
             action.table_prefix = new_alias

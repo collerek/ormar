@@ -891,7 +891,9 @@ async def test_set_composite_pk_property():
             user_josie = await User(email="josie@example.com").save()
 
             project = await Project(
-                id=345, owner=user_tian, name="Become an influencer",
+                id=345,
+                owner=user_tian,
+                name="Become an influencer",
             ).save()
             project.pk = {"id": 445, "owner": user_josie}
             assert project.id == 445
@@ -905,12 +907,16 @@ async def test_set_composite_pk_property():
             await project.update()
 
             await Project(
-                pk=dict(id=346, owner=user_tian), name="Become an insta model",
+                pk=dict(id=346, owner=user_tian),
+                name="Become an insta model",
             ).save()
             project2 = await Project.objects.get(id=346, owner=user_tian.pk)
             assert project2.name == "Become an insta model"
 
-            await Project(pk=project2.pk, name="Become an CoD soldier",).update()
+            await Project(
+                pk=project2.pk,
+                name="Become an CoD soldier",
+            ).update()
             project3 = await Project.objects.get(id=346, owner=user_tian.pk)
             assert project3.name == "Become an CoD soldier"
 

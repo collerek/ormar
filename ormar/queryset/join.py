@@ -169,27 +169,13 @@ class SqlJoin:
         Process actual join.
         Registers complex relation join on encountering of the duplicated alias.
         """
-        self.next_alias = self.alias_manager.resolve_relation_alias(
-            from_model=self.target_field.owner, relation_name=self.relation_name
+        relation_key = self.relation_str
+        if self.target_field.is_multi:
+            relation_key += "__multi"
+        self.next_alias = self.alias_manager.resolve_relation_string_alias(
+            source_model=self.source_model, relation_string=relation_key
         )
-        if self.next_alias not in self.used_aliases:
-            self._process_join()
-        else:
-            self._switch_to_complex_prefix_based_on_relation_str()
-
-    def _switch_to_complex_prefix_based_on_relation_str(self) -> None:
-        """
-        Replace table prefix for duplicate relations in same query
-        """
-        if "__" in self.relation_str and self.source_model:
-            relation_key = f"{self.source_model.get_name()}_{self.relation_str}"
-            if self.target_field.is_multi:
-                relation_key += "__multi"
-            if relation_key not in self.alias_manager:
-                self.next_alias = self.alias_manager.add_alias(alias_key=relation_key)
-            else:
-                self.next_alias = self.alias_manager[relation_key]
-            self._process_join()
+        self._process_join()
 
     def _process_following_joins(self) -> None:
         """
@@ -359,23 +345,26 @@ class SqlJoin:
         :return: alias and model to be used in clause
         :rtype: Tuple[str, Type["Model"]]
         """
-        if self.target_field.is_multi and "__" in order_by:
-            self._verify_allowed_order_field(order_by=order_by)
-            alias = self.next_alias
-            model = self.target_field.owner
-        elif self.target_field.is_multi:
-            alias = self.alias_manager.resolve_relation_alias(
-                from_model=self.target_field.through,
-                relation_name=cast(
-                    "ManyToManyField", self.target_field
-                ).default_target_field_name(),
-            )
-            model = self.target_field.to
-        else:
-            alias = self.alias_manager.resolve_relation_alias(
-                from_model=self.target_field.owner, relation_name=self.target_field.name
-            )
-            model = self.target_field.to
+        # if self.target_field.is_multi and "__" in order_by:
+        #     self._verify_allowed_order_field(order_by=order_by)
+        #     alias = self.next_alias
+        #     model = self.target_field.owner
+        # elif self.target_field.is_multi:
+        #     alias = self.alias_manager.resolve_relation_alias(
+        #         from_model=self.target_field.through,
+        #         relation_name=cast(
+        #             "ManyToManyField", self.target_field
+        #         ).default_target_field_name(),
+        #     )
+        #     model = self.target_field.to
+        # else:
+        relation_key = self.relation_str
+        if self.target_field.is_multi:
+            relation_key += "__multi"
+        alias = self.alias_manager.resolve_relation_string_alias(
+            source_model=self.source_model, relation_string=relation_key
+        )
+        model = self.target_field.to
 
         return alias, model
 

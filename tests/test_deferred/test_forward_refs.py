@@ -191,8 +191,6 @@ def test_proper_field_init():
     )
     assert len(Person.Meta.table.columns["supervisor"].foreign_keys) > 0
 
-    assert "person_supervisor" in Person.Meta.alias_manager._aliases_new
-
 
 @pytest.mark.asyncio
 async def test_self_relation():
@@ -337,7 +335,11 @@ async def test_prefetch_query_with_self_related():
             await billy.friends.add(steve)
             billy_check2 = (
                 await Child.objects.select_related("friends__favourite_game")
-                .prefetch_related(["friends__least_favourite_game",])
+                .prefetch_related(
+                    [
+                        "friends__least_favourite_game",
+                    ]
+                )
                 .filter(friends__favourite_game__name__in=["Checkers", "Jenga"])
                 .get(name="Billy")
             )

@@ -44,7 +44,6 @@ from ormar.models.helpers import (
     populate_meta_sqlalchemy_table_if_required,
     populate_meta_tablename_columns_and_pk,
     process_compound_foreign_keys,
-    register_relation_in_alias_manager,
     remove_excluded_parent_fields,
     sqlalchemy_columns_from_model_fields,
 )
@@ -592,7 +591,6 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 expand_reverse_relationships(new_model)
                 # TODO: iterate only related fields
                 for field_name, field in new_model.Meta.model_fields.items():
-                    register_relation_in_alias_manager(field=field)
                     if field_name not in new_model.__dict__:
                         add_field_descriptor(
                             name=field_name, field=field, new_model=new_model

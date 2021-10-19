@@ -202,7 +202,7 @@ def get_relationship_alias_model_and_str(
     previous_model = target_model
     previous_models = [target_model]
     manager = target_model.Meta.alias_manager
-    for relation in related_parts[:]:
+    for ind, relation in enumerate(related_parts[:]):
         related_field = target_model.Meta.model_fields[relation]
 
         if related_field.is_through:
@@ -213,11 +213,13 @@ def get_relationship_alias_model_and_str(
                 previous_model=previous_model,
                 previous_models=previous_models,
             )
-        if related_field.is_multi:
-            previous_model = related_field.through
-            relation = related_field.default_target_field_name()  # type: ignore
-        table_prefix = manager.resolve_relation_alias(
-            from_model=previous_model, relation_name=relation
+        relation_str = "__".join(related_parts[: ind + 1])
+        # if related_field.is_multi:
+        #     previous_model = related_field.through
+        #     relation_str = relation_str + '__multi'
+        # relation = related_field.default_target_field_name()  # type: ignore
+        table_prefix = manager.resolve_relation_string_alias(
+            source_model=source_model, relation_string=relation_str
         )
         target_model = related_field.to
         previous_model = target_model

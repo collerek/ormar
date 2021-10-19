@@ -260,6 +260,7 @@ class LoadNode(Node):
         excludable: "ExcludableItems",
         orders_by: List["OrderAction"],
         parent: "Node",
+        source_model: Type["Model"],
     ) -> None:
         super().__init__(relation_field=relation_field, parent=parent)
         self.excludable = excludable
@@ -267,6 +268,7 @@ class LoadNode(Node):
         self.orders_by = orders_by
         self.use_alias = True
         self.grouped_models: Dict[Any, List["Model"]] = dict()
+        self.source_model = source_model
 
     async def load_data(self) -> None:
         """
@@ -313,14 +315,11 @@ class LoadNode(Node):
         """
         related_field_names = self.relation_field.get_related_field_name()
         alias_manager = self.relation_field.to.Meta.alias_manager
+        relation_key = self._build_relation_string()
         if self.relation_field.is_multi:
-            from_model = self.relation_field.through
-            relation_name = self.target_name
-        else:
-            from_model = self.relation_field.owner
-            relation_name = self.relation_field.name
-        self.exclude_prefix = alias_manager.resolve_relation_alias(
-            from_model=from_model, relation_name=relation_name
+            relation_key = relation_key + "__multi"
+        self.exclude_prefix = alias_manager.resolve_relation_string_alias(
+            source_model=self.source_model, relation_string=relation_key
         )
         if self.relation_field.is_multi:
             self.table_prefix = self.exclude_prefix
@@ -334,6 +333,14 @@ class LoadNode(Node):
                 related_name
             ):
                 model_excludable.set_values({related_name}, is_exclude=False)
+
+    def _build_relation_string(self):
+        node = self
+        relation = node.relation_field.name
+        while not isinstance(node.parent, RootNode):
+            relation = node.parent.relation_field.name + "__" + relation
+            node = node.parent
+        return relation
 
     def _extract_own_order_bys(self) -> List["OrderAction"]:
         """
@@ -648,6 +655,7 @@ class PrefetchQuery:
                     excludable=self.excludable,
                     orders_by=self.orders_by,
                     parent=parent,
+                    source_model=self.model,
                 )
             if prefetch_dict:
                 self._build_load_tree(
