@@ -1372,7 +1372,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-cryptography"
-version = "3.3.6"
+version = "3.3.8"
 description = "Typing stubs for cryptography"
 category = "dev"
 optional = false
@@ -1550,7 +1550,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2"
-content-hash = "a116820c631af18c7e92089b5cdad28335207cb53917b161c8e3cf6ee5ae94f5"
+content-hash = "cc0d03db9e3c586909774ba079d4da1a26dc722cb9bafc013c3c58e71d1bf15b"
 
 [metadata.files]
 aiocontextvars = [
@@ -2468,8 +2468,8 @@ types-aiofiles = [
     {file = "types_aiofiles-0.7.0-py3-none-any.whl", hash = "sha256:0334df97d4fcc70a29ad82ccbe48b914cd7bf31e6cc95942862057892ec5cc81"},
 ]
 types-cryptography = [
-    {file = "types-cryptography-3.3.6.tar.gz", hash = "sha256:3018192812b073fc00eee66bfd8e202e62359e415ec690f41747b2097c1daf40"},
-    {file = "types_cryptography-3.3.6-py3-none-any.whl", hash = "sha256:171c2813085b86a5117e388f42812e9ba7fd6e1fda83647896a13265c8bab106"},
+    {file = "types-cryptography-3.3.8.tar.gz", hash = "sha256:07ff76c1fd78724adf3b774bb78928a35b010ec0b29caaf5c959d3b233a2b82d"},
+    {file = "types_cryptography-3.3.8-py3-none-any.whl", hash = "sha256:cf1b981597c482828d3ea84bcbe3fbd695cf178cd32b60cd09944f4dbe914746"},
 ]
 types-dataclasses = [
     {file = "types-dataclasses-0.6.1.tar.gz", hash = "sha256:6568532fed11f854e4db2eb48063385b323b93ecadd09f10a215d56246c306d7"},
