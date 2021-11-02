@@ -69,7 +69,7 @@ python = "<3.8"
 # Async database driversy
 aiomysql = "^0.0.21"
 aiosqlite = "^0.17.0"
-aiopg = "^1.3.2"
+aiopg = "^1.3.3"
 asyncpg = "^0.24.0"
 
 # Sync database drivers for standard tooling around setup/teardown/migrations.
