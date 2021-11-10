@@ -1432,7 +1432,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-requests"
-version = "2.25.11"
+version = "2.25.12"
 description = "Typing stubs for requests"
 category = "dev"
 optional = false
@@ -1550,7 +1550,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2"
-content-hash = "653815cb5cc53ceaa78d6f9ca47dda9bce2c03d4063cf4a3574574cde25e1314"
+content-hash = "46f869bd148dcb2f187736896eaf348642037500b65c6d6def1c1feb6c5da61a"
 
 [metadata.files]
 aiocontextvars = [
@@ -2174,6 +2174,8 @@ psycopg2-binary = [
     {file = "psycopg2_binary-2.9.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:661509f51531ec125e52357a489ea3806640d0ca37d9dada461ffc69ee1e7b6e"},
     {file = "psycopg2_binary-2.9.1-cp310-cp310-manylinux_2_24_aarch64.whl", hash = "sha256:d92272c7c16e105788efe2cfa5d680f07e34e0c29b03c1908f8636f55d5f915a"},
     {file = "psycopg2_binary-2.9.1-cp310-cp310-manylinux_2_24_ppc64le.whl", hash = "sha256:736b8797b58febabb85494142c627bd182b50d2a7ec65322983e71065ad3034c"},
+    {file = "psycopg2_binary-2.9.1-cp310-cp310-win32.whl", hash = "sha256:ebccf1123e7ef66efc615a68295bf6fdba875a75d5bba10a05073202598085fc"},
+    {file = "psycopg2_binary-2.9.1-cp310-cp310-win_amd64.whl", hash = "sha256:1f6ca4a9068f5c5c57e744b4baa79f40e83e3746875cac3c45467b16326bab45"},
     {file = "psycopg2_binary-2.9.1-cp36-cp36m-macosx_10_14_x86_64.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:c250a7ec489b652c892e4f0a5d122cc14c3780f9f643e1a326754aedf82d9a76"},
     {file = "psycopg2_binary-2.9.1-cp36-cp36m-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:aef9aee84ec78af51107181d02fe8773b100b01c5dfde351184ad9223eab3698"},
     {file = "psycopg2_binary-2.9.1-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:123c3fb684e9abfc47218d3784c7b4c47c8587951ea4dd5bc38b6636ac57f616"},
@@ -2502,8 +2504,8 @@ types-pymysql = [
     {file = "types_PyMySQL-1.0.4-py3-none-any.whl", hash = "sha256:bac28f07504e9460e284e5e7018b82f83f3f1ccbb6d106e3b0101c9b9bbd88a4"},
 ]
 types-requests = [
-    {file = "types-requests-2.25.11.tar.gz", hash = "sha256:b279284e51f668e38ee12d9665e4d789089f532dc2a0be4a1508ca0efd98ba9e"},
-    {file = "types_requests-2.25.11-py3-none-any.whl", hash = "sha256:ba1d108d512e294b6080c37f6ae7cb2a2abf527560e2b671d1786c1fc46b541a"},
+    {file = "types-requests-2.25.12.tar.gz", hash = "sha256:055863c0aacf8f8f29cd2ca0d3320efdf39f28e71de68d327761751d2f62bb57"},
+    {file = "types_requests-2.25.12-py3-none-any.whl", hash = "sha256:441a0e5671a3813e69e39ae2369d8f45558dcb96eff0bac148806e4799304f3f"},
 ]
 types-toml = [
     {file = "types-toml-0.10.1.tar.gz", hash = "sha256:5c1f8f8d57692397c8f902bf6b4d913a0952235db7db17d2908cc110e70610cb"},
