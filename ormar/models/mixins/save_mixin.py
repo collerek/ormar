@@ -164,7 +164,10 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
             ):
                 new_kwargs[field_name] = field.get_default()
             # clear fields with server_default set as None
-            if field.server_default is not None and not new_kwargs.get(field_name):
+            if (
+                field.server_default is not None
+                and new_kwargs.get(field_name, None) is None
+            ):
                 new_kwargs.pop(field_name, None)
         return new_kwargs
 
