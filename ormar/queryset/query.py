@@ -98,7 +98,9 @@ class Query:
             and self._select_related
         )
 
-    def build_select_expression(self) -> sqlalchemy.sql.select:
+    def build_select_expression(
+        self, overwrite_relation_key: bool = False, overwritten_relation_key: str = None
+    ) -> sqlalchemy.sql.select:
         """
         Main entry point from outside (after proper initialization).
 
@@ -138,6 +140,8 @@ class Query:
                 relation_str=related,
                 related_models=remainder,
                 source_model=self.model_cls,
+                overwrite_relation_key=overwrite_relation_key,
+                overwritten_relation_key=overwritten_relation_key,
             )
 
             (

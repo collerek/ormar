@@ -113,3 +113,16 @@ class AliasManager:
         :rtype: str
         """
         return self._relation_aliases[f"{source_model.get_name()}_{relation_string}"]
+
+    def resolve_full_string_alias(self, relation_string: str) -> str:
+        """
+        Given source model and relation string returns the alias for this complex
+        relation if it exists, otherwise fallback to normal relation from a relation
+        field definition.
+
+        :param relation_string: string with relation joins defined
+        :type relation_string: str
+        :return: alias of the relation
+        :rtype: str
+        """
+        return self._relation_aliases[relation_string]

@@ -301,8 +301,13 @@ class LoadNode(Node):
                 order_bys=self._extract_own_order_bys(),
                 limit_raw_sql=False,
             )
-            expr = qry.build_select_expression()
-            # print(expr.compile(compile_kwargs={"literal_binds": True}))
+            overwritten_key = (
+                self.source_model.get_name() + "_" + self._build_relation_key()
+            )
+            expr = qry.build_select_expression(
+                overwrite_relation_key=True, overwritten_relation_key=overwritten_key
+            )
+            print(expr.compile(compile_kwargs={"literal_binds": True}))
             self.rows = await query_target.Meta.database.fetch_all(expr)
 
             for child in self.children:
@@ -315,9 +320,7 @@ class LoadNode(Node):
         """
         related_field_names = self.relation_field.get_related_field_name()
         alias_manager = self.relation_field.to.Meta.alias_manager
-        relation_key = self._build_relation_string()
-        if self.relation_field.is_multi:
-            relation_key = relation_key + "__multi"
+        relation_key = self._build_relation_key()
         self.exclude_prefix = alias_manager.resolve_relation_string_alias(
             source_model=self.source_model, relation_string=relation_key
         )
@@ -341,6 +344,12 @@ class LoadNode(Node):
             relation = node.parent.relation_field.name + "__" + relation
             node = node.parent
         return relation
+
+    def _build_relation_key(self) -> str:
+        relation_key = self._build_relation_string()
+        if self.relation_field.is_multi:
+            relation_key = relation_key + "__multi"
+        return relation_key
 
     def _extract_own_order_bys(self) -> List["OrderAction"]:
         """

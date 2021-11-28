@@ -213,7 +213,12 @@ def get_relationship_alias_model_and_str(
                 previous_model=previous_model,
                 previous_models=previous_models,
             )
-        relation_str = "__".join(related_parts[: ind + 1])
+            relation_str = "__".join(related_parts[: ind + 1])
+            if not relation_str.split("__")[-1] == relation:
+                relation_str += ("__" if relation_str else "") + relation
+            relation_str += "__multi"
+        else:
+            relation_str = "__".join(related_parts[: ind + 1])
         # if related_field.is_multi:
         #     previous_model = related_field.through
         #     relation_str = relation_str + '__multi'

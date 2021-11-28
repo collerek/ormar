@@ -26,11 +26,15 @@ class SqlJoin:
         main_model: Type["Model"],
         relation_name: str,
         relation_str: str,
+        overwrite_relation_key: bool = False,
+        overwritten_relation_key: str = None,
         related_models: Any = None,
         own_alias: str = "",
         source_model: Type["Model"] = None,
         already_sorted: Dict = None,
     ) -> None:
+        self.overwritten_relation_key = overwritten_relation_key
+        self.overwrite_relation_key = overwrite_relation_key
         self.relation_name = relation_name
         self.related_models = related_models or []
         self.select_from = select_from
@@ -170,11 +174,16 @@ class SqlJoin:
         Registers complex relation join on encountering of the duplicated alias.
         """
         relation_key = self.relation_str
-        if self.target_field.is_multi:
-            relation_key += "__multi"
-        self.next_alias = self.alias_manager.resolve_relation_string_alias(
-            source_model=self.source_model, relation_string=relation_key
-        )
+        if self.overwrite_relation_key:
+            self.next_alias = self.alias_manager.resolve_full_string_alias(
+                relation_string=self.overwritten_relation_key
+            )
+        else:
+            if self.target_field.is_multi:
+                relation_key += "__multi"
+            self.next_alias = self.alias_manager.resolve_relation_string_alias(
+                source_model=self.source_model, relation_string=relation_key
+            )
         self._process_join()
 
     def _process_following_joins(self) -> None:
@@ -359,7 +368,7 @@ class SqlJoin:
         #     model = self.target_field.to
         # else:
         relation_key = self.relation_str
-        if self.target_field.is_multi:
+        if self.target_field.is_multi and "__" in order_by:
             relation_key += "__multi"
         alias = self.alias_manager.resolve_relation_string_alias(
             source_model=self.source_model, relation_string=relation_key

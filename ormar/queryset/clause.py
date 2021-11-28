@@ -260,6 +260,7 @@ class QueryClause:
             own_filter_clauses.append(filter_action)
 
         self._register_complex_duplicates(select_related)
+        # TODO: Wrong switch
         filter_clauses = self._switch_filter_action_prefixes(
             filter_clauses=filter_clauses + own_filter_clauses
         )
@@ -356,7 +357,7 @@ class QueryClause:
         :return: list of actions with aliases changed if needed
         :rtype: List[FilterAction]
         """
-
+        # TODO: Fix this!
         for action in filter_clauses:
             if isinstance(action, FilterGroup):
                 for action2 in action._iter():
@@ -372,8 +373,10 @@ class QueryClause:
         :type action: ormar.queryset.actions.filter_action.FilterAction
         """
         manager = self.model_cls.Meta.alias_manager
-        new_alias = manager.resolve_relation_string_alias(
-            self.model_cls, action.related_str
-        )
-        if "__" in action.related_str and new_alias and new_alias in self.used_aliases:
-            action.table_prefix = new_alias
+        if "__" in action.related_str:
+            relation_str = action.related_str + ("__multi" if action.is_through else "")
+            new_alias = manager.resolve_relation_string_alias(
+                self.model_cls, relation_str
+            )
+            if new_alias and new_alias in self.used_aliases:
+                action.table_prefix = new_alias
