@@ -426,6 +426,17 @@ docspec = ">=1.2.0,<2.0.0"
 test = ["types-deprecated"]
 
 [[package]]
+name = "docstring-parser"
+version = "0.13"
+description = "\"Parse Python docstrings in reST, Google and Numpydoc format\""
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+test = ["pytest", "black"]
+
+[[package]]
 name = "fastapi"
 version = "0.70.0"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
@@ -1065,7 +1076,7 @@ email = ["email-validator (>=1.0.3)"]
 
 [[package]]
 name = "pydoc-markdown"
-version = "4.3.2"
+version = "4.5.0"
 description = "Create Python API documentation in Markdown format."
 category = "dev"
 optional = false
@@ -1077,12 +1088,11 @@ click = ">=7.1,<9.0"
 "databind.json" = ">=1.2.2,<2.0.0"
 docspec = ">=1.0.0,<2.0.0"
 docspec-python = ">=1.0.0,<2.0.0"
+docstring-parser = ">=0.11.0,<1.0.0"
 "nr.fs" = ">=1.6.0,<2.0.0"
-"nr.pylang.utils" = ">=0.1.1,<1.0.0"
 "nr.stream" = ">=0.1.2,<1.0.0"
 PyYAML = ">=5.3.0,<6.0.0"
 requests = ">=2.23.0,<3.0.0"
-six = ">=1.11.0,<2.0.0"
 toml = ">=0.10.1,<1.0.0"
 watchdog = "*"
 
@@ -1550,7 +1560,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2"
-content-hash = "587576b41092249e4d206d5d29517d29c7faeda8863259d2c7eddb68486b6aa2"
+content-hash = "f0addf672cbcc232cb33d5f3eac4a503d55ed48ffbf2b303beebbfc5af2294c5"
 
 [metadata.files]
 aiocontextvars = [
@@ -1800,6 +1810,9 @@ docspec = [
 docspec-python = [
     {file = "docspec-python-1.2.0.tar.gz", hash = "sha256:491755689aec1f7b5abaed8e7b11b013ab6bfb979c5e7d9855f41cf40cb82192"},
     {file = "docspec_python-1.2.0-py3-none-any.whl", hash = "sha256:347aae3e2ef3f41d4e27e5e0e4996935286087cf9b7a948d512a6c03b277e530"},
+]
+docstring-parser = [
+    {file = "docstring_parser-0.13.tar.gz", hash = "sha256:66dd7eac7232202bf220fd98a5f11491863c01f958a75fdd535c7eccac9ced78"},
 ]
 fastapi = [
     {file = "fastapi-0.70.0-py3-none-any.whl", hash = "sha256:a36d5f2fad931aa3575c07a3472c784e81f3e664e3bb5c8b9c88d0ec1104f59c"},
@@ -2257,8 +2270,8 @@ pydantic = [
     {file = "pydantic-1.8.2.tar.gz", hash = "sha256:26464e57ccaafe72b7ad156fdaa4e9b9ef051f69e175dbbb463283000c05ab7b"},
 ]
 pydoc-markdown = [
-    {file = "pydoc-markdown-4.3.2.tar.gz", hash = "sha256:d2ec788eb20e5bbcf6be5d08afe4b6a814e83631f75f91ffd37957d397f18e9c"},
-    {file = "pydoc_markdown-4.3.2-py3-none-any.whl", hash = "sha256:c953860e6e3b8ddb9c11969fa978d3b9477e27d413500108c3af64fb6bdc427d"},
+    {file = "pydoc-markdown-4.5.0.tar.gz", hash = "sha256:131636ed32324d255816e476d72eb592542f120fce0d9a4ddca888934bc51282"},
+    {file = "pydoc_markdown-4.5.0-py3-none-any.whl", hash = "sha256:925fd854a477157fbda811bdb3046a570fe83bb5d410504ff5e46410d40ad8fa"},
 ]
 pyflakes = [
     {file = "pyflakes-2.3.1-py2.py3-none-any.whl", hash = "sha256:7893783d01b8a89811dd72d7dfd4d84ff098e5eed95cfa8905b22bbffe52efc3"},
