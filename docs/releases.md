@@ -1,3 +1,15 @@
+# 0.10.23
+
+## ✨ Features
+
+* Add ability to pass `comment` to sqlalchemy when creating a column [#485](https://github.com/collerek/ormar/issues/485)
+
+## 🐛 Fixes
+
+* Fix `LargeBinary` fields that can be nullable [#409](https://github.com/collerek/ormar/issues/409)
+* Make `ormar` models pickable [#413](https://github.com/collerek/ormar/issues/413)
+
+
 # 0.10.22
 
 ## 🐛 Fixes
