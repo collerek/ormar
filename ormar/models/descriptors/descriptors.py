@@ -59,7 +59,11 @@ class BytesDescriptor:
     def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
         value = instance.__dict__.get(self.name, None)
         field = instance.Meta.model_fields[self.name]
-        if field.represent_as_base64_str and not isinstance(value, str):
+        if (
+            value is not None
+            and field.represent_as_base64_str
+            and not isinstance(value, str)
+        ):
             value = base64.b64encode(value).decode()
         return value
 

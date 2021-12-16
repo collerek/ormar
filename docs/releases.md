@@ -1,3 +1,16 @@
+# 0.10.23
+
+## ✨ Features
+
+* Add ability to pass `comment` to sqlalchemy when creating a column [#485](https://github.com/collerek/ormar/issues/485)
+
+## 🐛 Fixes
+
+* Fix `LargeBinary` fields that can be nullable [#409](https://github.com/collerek/ormar/issues/409)
+* Make `ormar.Model` pickable [#413](https://github.com/collerek/ormar/issues/413)
+* Make `first()` and `get()` without arguments respect ordering of main model set by user, fallback to primary key (asc, and desc respectively) [#453](https://github.com/collerek/ormar/issues/453)
+* Fix improper quoting of non-aliased join `on` clauses in postgress [#455](https://github.com/collerek/ormar/issues/455)
+
 # 0.10.22
 
 ## 🐛 Fixes

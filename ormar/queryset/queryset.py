@@ -873,12 +873,16 @@ class QuerySet(Generic[T]):
 
         expr = self.build_select_expression(
             limit=1,
-            order_bys=[
-                OrderAction(
-                    order_str=f"{self.model.Meta.pkname}",
-                    model_cls=self.model_cls,  # type: ignore
-                )
-            ]
+            order_bys=(
+                [
+                    OrderAction(
+                        order_str=f"{self.model.Meta.pkname}",
+                        model_cls=self.model_cls,  # type: ignore
+                    )
+                ]
+                if not any([x.is_source_model_order for x in self.order_bys])
+                else []
+            )
             + self.order_bys,
         )
         rows = await self.database.fetch_all(expr)
@@ -909,7 +913,7 @@ class QuerySet(Generic[T]):
         except ormar.NoMatch:
             return None
 
-    async def get(self, *args: Any, **kwargs: Any) -> "T":
+    async def get(self, *args: Any, **kwargs: Any) -> "T":  # noqa: CCR001
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
@@ -931,12 +935,16 @@ class QuerySet(Generic[T]):
         if not self.filter_clauses:
             expr = self.build_select_expression(
                 limit=1,
-                order_bys=[
-                    OrderAction(
-                        order_str=f"-{self.model.Meta.pkname}",
-                        model_cls=self.model_cls,  # type: ignore
-                    )
-                ]
+                order_bys=(
+                    [
+                        OrderAction(
+                            order_str=f"-{self.model.Meta.pkname}",
+                            model_cls=self.model_cls,  # type: ignore
+                        )
+                    ]
+                    if not any([x.is_source_model_order for x in self.order_bys])
+                    else []
+                )
                 + self.order_bys,
             )
         else:
@@ -1096,6 +1104,7 @@ class QuerySet(Generic[T]):
                 )
             new_kwargs = self.model.parse_non_db_fields(new_kwargs)
             new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
+            new_kwargs = self.model.reconvert_str_to_bytes(new_kwargs)
             new_kwargs = self.model.translate_columns_to_aliases(new_kwargs)
             new_kwargs = {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
             ready_objects.append(new_kwargs)

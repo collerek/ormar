@@ -195,6 +195,29 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         """
         return super().__getattribute__(item)
 
+    def __getstate__(self) -> Dict[Any, Any]:
+        state = super().__getstate__()
+        self_dict = self.dict()
+        state["__dict__"].update(**self_dict)
+        return state
+
+    def __setstate__(self, state: Dict[Any, Any]) -> None:
+        relations = {
+            k: v
+            for k, v in state["__dict__"].items()
+            if k in self.extract_related_names()
+        }
+        basic_state = {
+            k: v
+            for k, v in state["__dict__"].items()
+            if k not in self.extract_related_names()
+        }
+        state["__dict__"] = basic_state
+        super().__setstate__(state)
+        self._initialize_internal_attributes()
+        for name, value in relations.items():
+            setattr(self, name, value)
+
     def _internal_set(self, name: str, value: Any) -> None:
         """
         Delegates call to pydantic.
@@ -861,7 +884,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if column_name not in self._bytes_fields:
             return value
         field = self.Meta.model_fields[column_name]
-        if not isinstance(value, bytes):
+        if not isinstance(value, bytes) and value is not None:
             if field.represent_as_base64_str:
                 value = base64.b64decode(value)
             else:
@@ -882,7 +905,11 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if column_name not in self._bytes_fields:
             return value
         field = self.Meta.model_fields[column_name]
-        if not isinstance(value, str) and field.represent_as_base64_str:
+        if (
+            value is not None
+            and not isinstance(value, str)
+            and field.represent_as_base64_str
+        ):
             return base64.b64encode(value).decode()
         return value
 

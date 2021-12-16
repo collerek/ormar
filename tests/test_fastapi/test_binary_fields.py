@@ -1,11 +1,9 @@
 import base64
 import json
-import os
 import uuid
 from typing import List
 
 import databases
-import pydantic
 import pytest
 import sqlalchemy
 from fastapi import FastAPI
