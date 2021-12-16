@@ -108,7 +108,14 @@ class SqlJoin:
         :rtype: sqlalchemy.text
         """
         left_part = f"{self.next_alias}_{to_clause}"
-        right_part = f"{previous_alias + '_' if previous_alias else ''}{from_clause}"
+        if not previous_alias:
+            dialect = self.main_model.Meta.database._backend._dialect
+            table, column = from_clause.split(".")
+            quotter = dialect.identifier_preparer.quote
+            right_part = f"{quotter(table)}.{quotter(column)}"
+        else:
+            right_part = f"{previous_alias}'_'{from_clause}"
+
         return text(f"{left_part}={right_part}")
 
     def build_join(self) -> Tuple[List, sqlalchemy.sql.select, List, OrderedDict]:

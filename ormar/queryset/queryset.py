@@ -913,7 +913,7 @@ class QuerySet(Generic[T]):
         except ormar.NoMatch:
             return None
 
-    async def get(self, *args: Any, **kwargs: Any) -> "T":
+    async def get(self, *args: Any, **kwargs: Any) -> "T":  # noqa: CCR001
         """
         Get's the first row from the db meeting the criteria set by kwargs.
 
