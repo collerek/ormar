@@ -114,7 +114,7 @@ class SqlJoin:
             quotter = dialect.identifier_preparer.quote
             right_part = f"{quotter(table)}.{quotter(column)}"
         else:
-            right_part = f"{previous_alias}'_'{from_clause}"
+            right_part = f"{previous_alias}_{from_clause}"
 
         return text(f"{left_part}={right_part}")
 
