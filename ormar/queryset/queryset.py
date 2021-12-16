@@ -873,12 +873,16 @@ class QuerySet(Generic[T]):
 
         expr = self.build_select_expression(
             limit=1,
-            order_bys=[
-                OrderAction(
-                    order_str=f"{self.model.Meta.pkname}",
-                    model_cls=self.model_cls,  # type: ignore
-                )
-            ]
+            order_bys=(
+                [
+                    OrderAction(
+                        order_str=f"{self.model.Meta.pkname}",
+                        model_cls=self.model_cls,  # type: ignore
+                    )
+                ]
+                if not any([x.is_source_model_order for x in self.order_bys])
+                else []
+            )
             + self.order_bys,
         )
         rows = await self.database.fetch_all(expr)
@@ -931,12 +935,16 @@ class QuerySet(Generic[T]):
         if not self.filter_clauses:
             expr = self.build_select_expression(
                 limit=1,
-                order_bys=[
-                    OrderAction(
-                        order_str=f"-{self.model.Meta.pkname}",
-                        model_cls=self.model_cls,  # type: ignore
-                    )
-                ]
+                order_bys=(
+                    [
+                        OrderAction(
+                            order_str=f"-{self.model.Meta.pkname}",
+                            model_cls=self.model_cls,  # type: ignore
+                        )
+                    ]
+                    if not any([x.is_source_model_order for x in self.order_bys])
+                    else []
+                )
                 + self.order_bys,
             )
         else:

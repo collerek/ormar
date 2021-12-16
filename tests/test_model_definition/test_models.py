@@ -352,14 +352,16 @@ async def test_model_get():
             lookup = await User.objects.get()
             assert lookup == user
 
-            user = await User.objects.create(name="Jane")
+            user2 = await User.objects.create(name="Jane")
             await User.objects.create(name="Jane")
             with pytest.raises(ormar.MultipleMatches):
                 await User.objects.get(name="Jane")
 
-            same_user = await User.objects.get(pk=user.id)
-            assert same_user.id == user.id
-            assert same_user.pk == user.pk
+            same_user = await User.objects.get(pk=user2.id)
+            assert same_user.id == user2.id
+            assert same_user.pk == user2.pk
+
+            assert await User.objects.order_by("-name").get() == user
 
 
 @pytest.mark.asyncio
@@ -494,6 +496,8 @@ async def test_model_first():
             assert await User.objects.filter(name="Jane").first() == jane
             with pytest.raises(NoMatch):
                 await User.objects.filter(name="Lucy").first()
+
+            assert await User.objects.order_by("name").first() == jane
 
 
 def not_contains(a, b):

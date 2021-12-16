@@ -7,8 +7,8 @@
 ## 🐛 Fixes
 
 * Fix `LargeBinary` fields that can be nullable [#409](https://github.com/collerek/ormar/issues/409)
-* Make `ormar` models pickable [#413](https://github.com/collerek/ormar/issues/413)
-
+* Make `ormar.Model` pickable [#413](https://github.com/collerek/ormar/issues/413)
+* Make `first()` and `get()` without arguments respect ordering set by user, fallback to primary key (asc, and desc respectively) [#453](https://github.com/collerek/ormar/issues/453)
 
 # 0.10.22
 
