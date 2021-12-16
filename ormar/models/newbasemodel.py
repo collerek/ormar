@@ -861,7 +861,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if column_name not in self._bytes_fields:
             return value
         field = self.Meta.model_fields[column_name]
-        if not isinstance(value, bytes):
+        if not isinstance(value, bytes) and value is not None:
             if field.represent_as_base64_str:
                 value = base64.b64decode(value)
             else:
@@ -882,7 +882,11 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if column_name not in self._bytes_fields:
             return value
         field = self.Meta.model_fields[column_name]
-        if not isinstance(value, str) and field.represent_as_base64_str:
+        if (
+            value is not None
+            and not isinstance(value, str)
+            and field.represent_as_base64_str
+        ):
             return base64.b64encode(value).decode()
         return value
 

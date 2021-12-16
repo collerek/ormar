@@ -1096,6 +1096,7 @@ class QuerySet(Generic[T]):
                 )
             new_kwargs = self.model.parse_non_db_fields(new_kwargs)
             new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
+            new_kwargs = self.model.reconvert_str_to_bytes(new_kwargs)
             new_kwargs = self.model.translate_columns_to_aliases(new_kwargs)
             new_kwargs = {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
             ready_objects.append(new_kwargs)
