@@ -1,6 +1,6 @@
 import asyncio
 import inspect
-from typing import Any, Callable, Dict, List, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, Callable, Dict, TYPE_CHECKING, Tuple, Type, Union
 
 from ormar.exceptions import SignalDefinitionError
 
@@ -45,7 +45,7 @@ class Signal:
     """
 
     def __init__(self) -> None:
-        self._receivers: Dict[Tuple[Union[int, Tuple[int, int]]], Callable] = {}
+        self._receivers: Dict[Union[int, Tuple[int, int]], Callable] = {}
 
     def connect(self, receiver: Callable) -> None:
         """
@@ -76,8 +76,9 @@ class Signal:
         :rtype: bool
         """
         new_receiver_key = make_id(receiver)
-        receiver = self._receivers.pop(new_receiver_key, None)
-        return True if receiver is not None else False
+        receiver_func: Union[Callable, None] = self._receivers.pop(
+            new_receiver_key, None)
+        return True if receiver_func is not None else False
 
     async def send(self, sender: Type["Model"], **kwargs: Any) -> None:
         """
