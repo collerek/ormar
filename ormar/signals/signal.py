@@ -45,7 +45,7 @@ class Signal:
     """
 
     def __init__(self) -> None:
-        self._receivers: List[Tuple[Union[int, Tuple[int, int]], Callable]] = []
+        self._receivers: Dict[Tuple[Union[int, Tuple[int, int]]], Callable] = {}
 
     def connect(self, receiver: Callable) -> None:
         """
@@ -63,8 +63,8 @@ class Signal:
                 "Signal receivers must accept **kwargs argument."
             )
         new_receiver_key = make_id(receiver)
-        if not any(rec_id == new_receiver_key for rec_id, _ in self._receivers):
-            self._receivers.append((new_receiver_key, receiver))
+        if new_receiver_key not in self._receivers:
+            self._receivers[new_receiver_key] = receiver
 
     def disconnect(self, receiver: Callable) -> bool:
         """
@@ -75,15 +75,9 @@ class Signal:
         :return: flag if receiver was removed
         :rtype: bool
         """
-        removed = False
         new_receiver_key = make_id(receiver)
-        for ind, rec in enumerate(self._receivers):
-            rec_id, _ = rec
-            if rec_id == new_receiver_key:
-                removed = True
-                del self._receivers[ind]
-                break
-        return removed
+        receiver = self._receivers.pop(new_receiver_key, None)
+        return True if receiver is not None else False
 
     async def send(self, sender: Type["Model"], **kwargs: Any) -> None:
         """
@@ -93,10 +87,10 @@ class Signal:
         :param kwargs: arguments passed to receivers
         :type kwargs: Any
         """
-        receivers = []
-        for receiver in self._receivers:
-            _, receiver_func = receiver
-            receivers.append(receiver_func(sender=sender, **kwargs))
+        receivers = [
+            receiver_func(sender=sender, **kwargs)
+            for receiver_func in self._receivers.values()
+        ]
         await asyncio.gather(*receivers)
 
 
