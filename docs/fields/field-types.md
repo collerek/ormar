@@ -140,13 +140,6 @@ You can pass `timezone=True` for timezone aware database column.
 * Sqlalchemy column: `sqlalchemy.JSON`  
 * Type (used for pydantic): `pydantic.Json` 
 
-### JSONB
-
-`JSONB()` has no required parameters, only support it in the postgresql.
-
-* Sqlalchemy column: `sqlalchemy.dialects.postgresql.JSONB`  
-* Type (used for pydantic): `pydantic.Json` 
-
 ### LargeBinary
 
 `LargeBinary(max_length)` has a required `max_length` parameter.  
