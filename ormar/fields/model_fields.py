@@ -520,6 +520,29 @@ class JSON(ModelFieldFactory, pydantic.Json):
         return sqlalchemy.JSON()
 
 
+class JSONB(JSON):
+    """
+    JSONB field factory that construct Field classes and populated their values,
+    only support postgresql
+    """
+
+    _type = pydantic.Json
+    _sample = '{"jsonb": "jsonb"}'
+
+    @classmethod
+    def get_column_type(cls, **kwargs: Any) -> Any:
+        """
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
+        """
+        return sqlalchemy.dialects.postgresql.JSONB()
+
+
 if TYPE_CHECKING:  # pragma: nocover # noqa: C901
 
     @overload
