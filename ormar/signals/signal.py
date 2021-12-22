@@ -1,6 +1,6 @@
 import asyncio
 import inspect
-from typing import Any, Callable, Dict, TYPE_CHECKING, Tuple, Type, Union
+from typing import Any, Callable, Dict, Tuple, Type, TYPE_CHECKING, Union
 
 from ormar.exceptions import SignalDefinitionError
 
@@ -95,21 +95,15 @@ class Signal:
         await asyncio.gather(*receivers)
 
 
-class SignalEmitter:
+class SignalEmitter(dict):
     """
     Emitter that registers the signals in internal dictionary.
     If signal with given name does not exist it's auto added on access.
     """
-
-    if TYPE_CHECKING:  # pragma: no cover
-        signals: Dict[str, Signal]
-
-    def __init__(self) -> None:
-        object.__setattr__(self, "signals", dict())
-
     def __getattr__(self, item: str) -> Signal:
-        return self.signals.setdefault(item, Signal())
+        return self.setdefault(item, Signal())
 
-    def __setattr__(self, key: str, value: Any) -> None:
-        signals = object.__getattribute__(self, "signals")
-        signals[key] = value
+    def __setattr__(self, key: str, value: Signal) -> None:
+        if not isinstance(value, Signal):
+            raise ValueError(f"{value} is not valid signal")
+        self[key] = value
