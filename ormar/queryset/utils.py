@@ -11,6 +11,7 @@ from typing import (
     Type,
     Union,
 )
+import ormar
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model, BaseField
@@ -204,6 +205,11 @@ def get_relationship_alias_model_and_str(
     manager = target_model.Meta.alias_manager
     for ind, relation in enumerate(related_parts[:]):
         related_field = target_model.Meta.model_fields[relation]
+
+        if not related_field.is_relation:
+            raise ormar.ModelDefinitionError(
+                f"Field '{relation}' is not a relation field."
+            )
 
         if related_field.is_through:
             (previous_model, relation, is_through) = _process_through_field(

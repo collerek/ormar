@@ -24,7 +24,7 @@ class User(ormar.Model):
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     email: str = ormar.String(nullable=False, max_length=100)
-    role: "Role" = ormar.ForeignKey(
+    role: Optional["Role"] = ormar.ForeignKey(
         ForwardRef("Role"),
         nullable=False,
         names={"id": "role_id", "order_no": "role_order_no"},

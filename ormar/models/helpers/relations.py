@@ -73,6 +73,7 @@ def process_compound_foreign_keys(new_model: Type["Model"]) -> None:
                 copied_field.is_denied = True
                 copied_field.primary_key = False
                 copied_field.nullable = True
+                copied_field.sql_nullable = True
                 model_fields[name] = copied_field
                 target_pydantic_field = copy.deepcopy(field.to.__fields__[field_name])
                 target_pydantic_field.name = name

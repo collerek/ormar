@@ -337,8 +337,8 @@ class LoadNode(Node):
             ):
                 model_excludable.set_values({related_name}, is_exclude=False)
 
-    def _build_relation_string(self):
-        node = self
+    def _build_relation_string(self) -> str:
+        node: Union[LoadNode, Node] = self
         relation = node.relation_field.name
         while not isinstance(node.parent, RootNode):
             relation = node.parent.relation_field.name + "__" + relation
