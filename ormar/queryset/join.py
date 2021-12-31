@@ -5,7 +5,7 @@ import sqlalchemy
 from sqlalchemy import text
 
 import ormar  # noqa I100
-from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
+from ormar.exceptions import RelationshipInstanceError
 from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
@@ -333,18 +333,6 @@ class SqlJoin:
             )
             self.sorted_orders[clause] = clause.get_text_clause()
 
-    def _verify_allowed_order_field(self, order_by: str) -> None:
-        """
-        Verifies if proper field string is used.
-        :param order_by: string with order by definition
-        :type order_by: str
-        """
-        parts = order_by.split("__")
-        if len(parts) > 2 or parts[0] != self.target_field.through.get_name():
-            raise ModelDefinitionError(
-                "You can order the relation only " "by related or link table columns!"
-            )
-
     def _get_alias_and_model(self, order_by: str) -> Tuple[str, Type["Model"]]:
         """
         Returns proper model and alias to be applied in the clause.
@@ -354,19 +342,6 @@ class SqlJoin:
         :return: alias and model to be used in clause
         :rtype: Tuple[str, Type["Model"]]
         """
-        # if self.target_field.is_multi and "__" in order_by:
-        #     self._verify_allowed_order_field(order_by=order_by)
-        #     alias = self.next_alias
-        #     model = self.target_field.owner
-        # elif self.target_field.is_multi:
-        #     alias = self.alias_manager.resolve_relation_alias(
-        #         from_model=self.target_field.through,
-        #         relation_name=cast(
-        #             "ManyToManyField", self.target_field
-        #         ).default_target_field_name(),
-        #     )
-        #     model = self.target_field.to
-        # else:
         relation_key = self.relation_str
         if self.target_field.is_multi and "__" in order_by:
             relation_key += "__multi"

@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Generator, List, Set, TYPE_CHECKING, Tuple, Type, cast
+from typing import Any, Dict, List, Set, TYPE_CHECKING, Tuple, Type
 
 import sqlalchemy
 
 import ormar  # noqa I100
 from ormar.queryset.actions.filter_action import FilterAction
-from ormar.queryset.utils import get_relationship_alias_model_and_str
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import BaseField, Model
@@ -89,16 +88,6 @@ class FilterGroup:
                 )
         return filter_clauses, select_related
 
-    def _iter(self) -> Generator:
-        """
-        Iterates all actions in a tree
-        :return: generator yielding from own actions and nested groups
-        :rtype: Generator
-        """
-        for group in self._nested_groups:
-            yield from group._iter()
-        yield from self.actions
-
     def _get_text_clauses(self) -> List[sqlalchemy.sql.expression.TextClause]:
         """
         Helper to return list of text queries from actions and nested groups
@@ -172,11 +161,6 @@ class Prefix:
     relation_str: str
     is_through: bool
     relation_field: "BaseField"
-
-    @property
-    def alias_key(self) -> str:
-        source_model_name = self.source_model.get_name()
-        return f"{source_model_name}_" f"{self.relation_str}"
 
 
 class QueryClause:
@@ -258,114 +242,7 @@ class QueryClause:
 
             own_filter_clauses.append(filter_action)
 
-        self._register_complex_duplicates(select_related)
-        # TODO: Wrong switch
-        filter_clauses = self._switch_filter_action_prefixes(
-            filter_clauses=filter_clauses + own_filter_clauses
-        )
+        filter_clauses = filter_clauses + own_filter_clauses
         if _own_only:
             return own_filter_clauses, select_related
         return filter_clauses, select_related
-
-    def _register_complex_duplicates(self, select_related: List[str]) -> None:
-        """
-        Checks if duplicate aliases are presented which can happen in self relation
-        or when two joins end with the same pair of models.
-
-        If there are duplicates, the all duplicated joins are registered as source
-        model and whole relation key (not just last relation name).
-
-        :param select_related: list of relation strings
-        :type select_related: List[str]
-        :return: None
-        :rtype: None
-        """
-        pass
-
-    def _register_all_but_shortest_duplicated_by_relation_string(
-        self, same_prefix_group: List
-    ) -> None:
-        manager = self.model_cls.Meta.alias_manager
-        for prefix in same_prefix_group[:-1]:
-            method = (
-                "add_alias"
-                if prefix.alias_key not in manager
-                else "resolve_complex_relation_alias"
-            )
-            if prefix.relation_field.is_multi:
-                multi_alias = getattr(manager, method)(
-                    alias_key=prefix.alias_key + "__multi"
-                )
-                self.used_aliases.add(multi_alias)
-            alias = getattr(manager, method)(alias_key=prefix.alias_key)
-            self.used_aliases.add(alias)
-
-    def _parse_related_prefixes(self, select_related: List[str]) -> List[Prefix]:
-        """
-        Walks all relation strings and parses the target models and prefixes.
-
-        :param select_related: list of relation strings
-        :type select_related: List[str]
-        :return: list of parsed prefixes
-        :rtype: List[Prefix]
-        """
-        prefixes: List[Prefix] = []
-        for related in select_related:
-            prefix = Prefix(
-                self.model_cls,
-                *get_relationship_alias_model_and_str(
-                    self.model_cls, related.split("__")
-                ),
-                relation_field=self._get_related_field_from_relation_str(
-                    related=related
-                ),
-            )
-            prefixes.append(prefix)
-            self.used_aliases.add(prefix.table_prefix)
-        return prefixes
-
-    def _get_related_field_from_relation_str(self, related: str) -> "BaseField":
-        source_model = self.model_cls
-        related_parts = related.split("__")
-        field = None
-        for part in related_parts:
-            field = source_model.Meta.model_fields[part]
-            if field.is_relation:
-                source_model = field.to
-        return cast("BaseField", field)
-
-    def _switch_filter_action_prefixes(
-        self, filter_clauses: List[FilterAction]
-    ) -> List[FilterAction]:
-        """
-        Substitutes aliases for filter action if the complex key (whole relation str) is
-        present in alias_manager.
-
-        :param filter_clauses: raw list of actions
-        :type filter_clauses: List[FilterAction]
-        :return: list of actions with aliases changed if needed
-        :rtype: List[FilterAction]
-        """
-        # TODO: Fix this!
-        for action in filter_clauses:
-            if isinstance(action, FilterGroup):
-                for action2 in action._iter():
-                    self._verify_prefix_and_switch(action2)
-            else:
-                self._verify_prefix_and_switch(action)
-        return filter_clauses
-
-    def _verify_prefix_and_switch(self, action: "FilterAction") -> None:
-        """
-        Helper to switch prefix to complex relation one if required
-        :param action: action to switch prefix in
-        :type action: ormar.queryset.actions.filter_action.FilterAction
-        """
-        manager = self.model_cls.Meta.alias_manager
-        if "__" in action.related_str:
-            relation_str = action.related_str + ("__multi" if action.is_through else "")
-            new_alias = manager.resolve_relation_string_alias(
-                self.model_cls, relation_str
-            )
-            if new_alias and new_alias in self.used_aliases:
-                action.table_prefix = new_alias

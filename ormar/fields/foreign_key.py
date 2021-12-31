@@ -368,16 +368,6 @@ class ForeignKeyField(BaseField):
         self.onupdate: str = kwargs.pop("onupdate", None)
         super().__init__(**kwargs)
 
-    def get_source_related_name(self) -> str:
-        """
-        Returns name to use for source relation name.
-        For FK it's the same, differs for m2m fields.
-        It's either set as `related_name` or by default it's owner model. get_name + 's'
-        :return: name of the related_name or default related name.
-        :rtype: str
-        """
-        return self.get_related_name()
-
     def get_related_name(self) -> str:
         """
         Returns name to use for reverse relation.
@@ -705,22 +695,3 @@ class ForeignKeyField(BaseField):
             value.__class__.__name__, self._construct_model_from_pk
         )(value, child, to_register)
         return model
-
-    def get_relation_name(self) -> str:  # pragma: no cover
-        """
-        Returns name of the relation, which can be a own name or through model
-        names for m2m models
-
-        :return: result of the check
-        :rtype: bool
-        """
-        return self.name
-
-    def get_source_model(self) -> Type["Model"]:  # pragma: no cover
-        """
-        Returns model from which the relation comes -> either owner or through model
-
-        :return: source model
-        :rtype: Type["Model"]
-        """
-        return self.owner

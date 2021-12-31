@@ -211,21 +211,6 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
             self.through: Type["Model"]
         super().__init__(**kwargs)
 
-    def get_source_related_name(self) -> str:
-        """
-        Returns name to use for source relation name.
-        For FK it's the same, differs for m2m fields.
-        It's either set as `related_name` or by default it's field name.
-        :return: name of the related_name or default related name.
-        :rtype: str
-        """
-        return (
-            self.through.Meta.model_fields[
-                self.default_source_field_name()
-            ].related_name
-            or self.name
-        )
-
     def has_unresolved_forward_refs(self) -> bool:
         """
         Verifies if the filed has any ForwardRefs that require updating before the
@@ -265,27 +250,6 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
                 self.through, globalns, localns or None  # type: ignore
             )
             forbid_through_relations(self.through)
-
-    def get_relation_name(self) -> str:
-        """
-        Returns name of the relation, which can be a own name or through model
-        names for m2m models
-
-        :return: result of the check
-        :rtype: bool
-        """
-        if self.self_reference and self.name == self.self_reference_primary:
-            return self.default_source_field_name()
-        return self.default_target_field_name()
-
-    def get_source_model(self) -> Type["Model"]:
-        """
-        Returns model from which the relation comes -> either owner or through model
-
-        :return: source model
-        :rtype: Type["Model"]
-        """
-        return self.through
 
     def get_model_relation_fields(
         self, use_alias: bool = False

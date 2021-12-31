@@ -2,7 +2,7 @@ import string
 import uuid
 from collections import defaultdict
 from random import choices
-from typing import Any, Dict, List, TYPE_CHECKING, Type, Union
+from typing import Dict, List, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
 from sqlalchemy import text
@@ -38,12 +38,6 @@ class AliasManager:
     def __init__(self) -> None:
         self._reversed_aliases: Dict[str, str] = dict()
         self._relation_aliases: Dict[str, str] = defaultdict(get_table_alias)
-
-    def __contains__(self, item: str) -> bool:
-        return self._relation_aliases.__contains__(item)
-
-    def __getitem__(self, key: str) -> Any:
-        return self._relation_aliases.__getitem__(key)
 
     @property
     def reversed_aliases(self) -> Dict:
