@@ -80,9 +80,7 @@ def create_dummy_model(
     :return: constructed dummy model
     :rtype: pydantic.BaseModel
     """
-    alias = (
-        "".join(choices(string.ascii_uppercase, k=6))  # + uuid.uuid4().hex[:4]
-    ).lower()
+    alias = ("".join(choices(string.ascii_uppercase, k=6))).lower()  # noqa: S311
     fields = {f"{pk_field.name}": (pk_field.__type__, None) for pk_field in pk_fields}
 
     dummy_model = create_model(  # type: ignore
@@ -241,7 +239,7 @@ def ForeignKey(to: Type["T"], **kwargs: Any) -> "T":  # pragma: no cover
 
 
 @overload
-def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":  # pragma: no cover
+def ForeignKey(to: ForwardRef, **kwargs: Any) -> "T":  # pragma: no cover
     ...
 
 

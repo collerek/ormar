@@ -1,8 +1,8 @@
 import string
 import uuid
+from collections import defaultdict
 from random import choices
 from typing import Any, Dict, List, TYPE_CHECKING, Type, Union
-from collections import defaultdict
 
 import sqlalchemy
 from sqlalchemy import text
@@ -10,7 +10,6 @@ from sqlalchemy import text
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
     from ormar.models import ModelRow
-    from ormar.fields import ForeignKeyField
 
 
 def get_table_alias() -> str:
@@ -23,7 +22,10 @@ def get_table_alias() -> str:
     :return: randomly generated alias
     :rtype: str
     """
-    alias = "".join(choices(string.ascii_uppercase, k=2)) + uuid.uuid4().hex[:4]
+    alias = (
+        "".join(choices(string.ascii_uppercase, k=2))  # noqa: S311
+        + uuid.uuid4().hex[:4]
+    )
     return alias.lower()
 
 

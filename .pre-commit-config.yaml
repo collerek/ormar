@@ -3,6 +3,7 @@ repos:
     rev: 21.12b0
     hooks:
       - id: black
+        exclude: docs_src/
 #  - repo: https://github.com/pycqa/flake8
 #    rev: 3.9.2
 #    hooks:

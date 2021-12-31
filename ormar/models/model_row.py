@@ -282,7 +282,6 @@ class ModelRow(NewBaseModel):
         through_name = cls.Meta.model_fields[related].through.get_name()
         through_child = cls._create_through_instance(
             row=row,
-            related=related,
             through_name=through_name,
             excludable=excludable,
             relation_str=relation_str,
@@ -300,7 +299,6 @@ class ModelRow(NewBaseModel):
         cls,
         row: ResultProxy,
         through_name: str,
-        related: str,
         excludable: ExcludableItems,
         relation_str: str,
         source_model: Type["Model"],
@@ -313,8 +311,6 @@ class ModelRow(NewBaseModel):
         :type row: sqlalchemy.engine.ResultProxy
         :param through_name: name of the through field
         :type through_name: str
-        :param related: name of the relation
-        :type related: str
         :param excludable: structure of fields to include and exclude
         :type excludable: ExcludableItems
         :return: initialized through model without relation

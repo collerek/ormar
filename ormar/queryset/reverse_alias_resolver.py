@@ -179,7 +179,7 @@ class ReverseAliasResolver:
                 field = model_cls.Meta.model_fields[relation]
                 field = cast("ForeignKeyField", field)
                 prefix_name = self._handle_through_fields_and_prefix(
-                    model_cls=model_cls,
+                    model_cls=self.model_cls,
                     field=field,
                     previous_related_str=previous_related_str,
                     relation=relation,
@@ -215,12 +215,11 @@ class ReverseAliasResolver:
         :return: name of prefix to populate
         :rtype: str
         """
-        prefix_name = f"{model_cls.get_name()}_{relation}"
+        prefix_name = f"{model_cls.get_name()}_{previous_related_str}{relation}"
         if field.is_multi:
-            through_name = field.through.get_name()
             if not self.exclude_through:
-                self._fields[prefix_name] = field
-                new_through_str = previous_related_str + through_name
-                self._prefixes[prefix_name] = new_through_str
-            prefix_name = f"{through_name}_{field.default_target_field_name()}"
+                through_name = field.through.get_name()
+                new_through_str = f"{prefix_name}__multi"
+                self._fields[new_through_str] = field
+                self._prefixes[new_through_str] = previous_related_str + through_name
         return prefix_name

@@ -9,8 +9,8 @@ from ormar.fields.composite_constraints import (
     ForeignKeyConstraint,
     PrimaryKeyConstraint,
 )
-from ormar.fields.foreign_key import ForeignKey, ForeignKeyField
 from ormar.fields.constraints import IndexColumns, UniqueColumns
+from ormar.fields.foreign_key import ForeignKey, ForeignKeyField
 from ormar.fields.many_to_many import ManyToMany, ManyToManyField
 from ormar.fields.model_fields import (
     BigInteger,

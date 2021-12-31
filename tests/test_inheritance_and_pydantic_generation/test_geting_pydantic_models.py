@@ -24,7 +24,9 @@ class SelfRef(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="selfref")
-    parent = ormar.ForeignKey(ForwardRef("SelfRef"), related_name="children")
+    parent: Optional["SelfRef"] = ormar.ForeignKey(
+        ForwardRef("SelfRef"), related_name="children"
+    )
 
 
 SelfRef.update_forward_refs()
@@ -52,7 +54,9 @@ class MutualA(ormar.Model):
         tablename = "mutual_a"
 
     id: int = ormar.Integer(primary_key=True)
-    mutual_b = ormar.ForeignKey(ForwardRef("MutualB"), related_name="mutuals_a")
+    mutual_b: Optional["MutualB"] = ormar.ForeignKey(
+        ForwardRef("MutualB"), related_name="mutuals_a"
+    )
 
 
 class MutualB(ormar.Model):

@@ -9,7 +9,7 @@ from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
 from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model, ManyToManyField
+    from ormar import Model
     from ormar.queryset import OrderAction
     from ormar.models.excludable import ExcludableItems
 
@@ -26,11 +26,11 @@ class SqlJoin:
         main_model: Type["Model"],
         relation_name: str,
         relation_str: str,
+        source_model: Type["Model"],
         overwrite_relation_key: bool = False,
         overwritten_relation_key: str = None,
         related_models: Any = None,
         own_alias: str = "",
-        source_model: Type["Model"] = None,
         already_sorted: Dict = None,
     ) -> None:
         self.overwritten_relation_key = overwritten_relation_key
@@ -176,7 +176,7 @@ class SqlJoin:
         relation_key = self.relation_str
         if self.overwrite_relation_key:
             self.next_alias = self.alias_manager.resolve_full_string_alias(
-                relation_string=self.overwritten_relation_key
+                relation_string=cast(str, self.overwritten_relation_key)
             )
         else:
             if self.target_field.is_multi:

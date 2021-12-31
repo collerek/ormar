@@ -1,4 +1,3 @@
-import itertools
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, Generator, List, Set, TYPE_CHECKING, Tuple, Type, cast
@@ -281,17 +280,7 @@ class QueryClause:
         :return: None
         :rtype: None
         """
-        prefixes = self._parse_related_prefixes(select_related=select_related)
-        # TODO: clean this mess
-        # filtered_prefixes = sorted(prefixes, key=lambda x: x.table_prefix)
-        # grouped = itertools.groupby(filtered_prefixes, key=lambda x: x.table_prefix)
-        # for _, group in grouped:
-        #     sorted_group = sorted(
-        #         group, key=lambda x: (len(x.relation_str), x.relation_str), reverse=True
-        #     )
-        #     self._register_all_but_shortest_duplicated_by_relation_string(
-        #         same_prefix_group=sorted_group
-        #     )
+        pass
 
     def _register_all_but_shortest_duplicated_by_relation_string(
         self, same_prefix_group: List

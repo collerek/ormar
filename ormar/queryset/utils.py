@@ -11,6 +11,7 @@ from typing import (
     Type,
     Union,
 )
+
 import ormar
 
 if TYPE_CHECKING:  # pragma no cover
