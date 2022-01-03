@@ -226,10 +226,6 @@ def get_relationship_alias_model_and_str(
             relation_str += "__multi"
         else:
             relation_str = "__".join(related_parts[: ind + 1])
-        # if related_field.is_multi:
-        #     previous_model = related_field.through
-        #     relation_str = relation_str + '__multi'
-        # relation = related_field.default_target_field_name()  # type: ignore
         table_prefix = manager.resolve_relation_string_alias(
             source_model=source_model, relation_string=relation_str
         )

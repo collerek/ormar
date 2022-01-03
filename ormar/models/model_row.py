@@ -128,8 +128,6 @@ class ModelRow(NewBaseModel):
         """
         manager = cls.Meta.alias_manager
         relation_str = current_relation_str
-        # if related_field.is_multi:
-        #     relation_str += "__multi"
         table_prefix = manager.resolve_relation_string_alias(
             source_model=source_model,
             relation_string=relation_str,

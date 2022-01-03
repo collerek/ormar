@@ -347,9 +347,6 @@ class LoadNode(Node):
 
     def _build_relation_key(self) -> str:
         relation_key = self._build_relation_string()
-        # TODO: Check this
-        # if self.relation_field.is_multi:
-        #     relation_key = relation_key + "__multi"
         return relation_key
 
     def _extract_own_order_bys(self) -> List["OrderAction"]:
