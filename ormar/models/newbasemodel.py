@@ -76,7 +76,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         pk: Any
         __model_fields__: Dict[str, BaseField]
         __table__: sqlalchemy.Table
-        __fields__: Dict[str, pydantic.fields.ModelField]
         __pydantic_model__: Type[BaseModel]
         __pkname__: str
         __tablename__: str

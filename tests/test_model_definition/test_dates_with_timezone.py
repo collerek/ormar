@@ -55,6 +55,16 @@ class DateModel(ormar.Model):
     creation_date: date = ormar.Date()
 
 
+class MyModel(ormar.Model):
+    id: int = ormar.Integer(primary_key=True)
+    created_at: datetime = ormar.DateTime(timezone=True, nullable=False)
+
+    class Meta:
+        tablename = "mymodels"
+        metadata = metadata
+        database = database
+
+
 @pytest.fixture(autouse=True, scope="module")
 def create_test_database():
     engine = sqlalchemy.create_engine(DATABASE_URL)
@@ -116,3 +126,17 @@ async def test_query_with_time_in_filter():
         assert len(outdated_samples) == 2
         assert outdated_samples[0] == sample2
         assert outdated_samples[1] == sample3
+
+
+@pytest.mark.asyncio
+async def test_filtering_by_timezone_with_timedelta():
+    now_utc = datetime.now(timezone.utc)
+    object = MyModel(created_at=now_utc)
+    await object.save()
+
+    one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+    created_since_one_hour_ago = await MyModel.objects.filter(
+        created_at__gte=one_hour_ago
+    ).all()
+
+    assert len(created_since_one_hour_ago) == 1
