@@ -1,7 +1,7 @@
+import datetime
 from typing import Any, Dict, TYPE_CHECKING, Type
 
 import sqlalchemy
-from sqlalchemy import text
 
 import ormar  # noqa: I100, I202
 from ormar.exceptions import QueryDefinitionError
@@ -125,7 +125,7 @@ class FilterAction(QueryAction):
         sufix = "%" if "end" not in self.operator else ""
         self.filter_value = f"{prefix}{self.filter_value}{sufix}"
 
-    def get_text_clause(self) -> sqlalchemy.sql.expression.TextClause:
+    def get_text_clause(self) -> sqlalchemy.sql.expression.BinaryExpression:
         """
         Escapes characters if it's required.
         Substitutes values of the models if value is a ormar Model with its pk value.
@@ -137,17 +137,43 @@ class FilterAction(QueryAction):
         if isinstance(self.filter_value, ormar.Model):
             self.filter_value = self.filter_value.pk
 
+        # self._convert_dates_if_required()
+
         op_attr = FILTER_OPERATORS[self.operator]
         if self.operator == "isnull":
             op_attr = "is_" if self.filter_value else "isnot"
             filter_value = None
         else:
             filter_value = self.filter_value
-        clause = getattr(self.column, op_attr)(filter_value)
+        if self.table_prefix:
+            aliased_table = self.source_model.Meta.alias_manager.prefixed_table_name(
+                self.table_prefix, self.column.table
+            )
+            aliased_column = getattr(aliased_table.c, self.column.name)
+        else:
+            aliased_column = self.column
+        clause = getattr(aliased_column, op_attr)(filter_value)
         clause = self._compile_clause(
             clause, modifiers={"escape": "\\" if self.has_escaped_character else None}
         )
         return clause
+
+    def _convert_dates_if_required(self) -> None:
+        """
+        Converts dates, time and datetime to isoformat
+        """
+        if isinstance(
+            self.filter_value, (datetime.date, datetime.time, datetime.datetime)
+        ):
+            self.filter_value = self.filter_value.isoformat()
+
+        if isinstance(self.filter_value, (list, tuple, set)):
+            self.filter_value = [
+                x.isoformat()
+                if isinstance(x, (datetime.date, datetime.time, datetime.datetime))
+                else x
+                for x in self.filter_value
+            ]
 
     def _compile_clause(
         self, clause: sqlalchemy.sql.expression.BinaryExpression, modifiers: Dict
@@ -166,19 +192,24 @@ class FilterAction(QueryAction):
         for modifier, modifier_value in modifiers.items():
             clause.modifiers[modifier] = modifier_value
 
-        clause_text = str(
-            clause.compile(
-                dialect=self.target_model.Meta.database._backend._dialect,
-                compile_kwargs={"literal_binds": True},
-            )
-        )
-        alias = f"{self.table_prefix}_" if self.table_prefix else ""
-        aliased_name = f"{alias}{self.table.name}.{self.column.name}"
-        clause_text = clause_text.replace(
-            f"{self.table.name}.{self.column.name}", aliased_name
-        )
-        dialect_name = self.target_model.Meta.database._backend._dialect.name
-        if dialect_name != "sqlite":  # pragma: no cover
-            clause_text = clause_text.replace("%%", "%")  # remove %% in some dialects
-        clause = text(clause_text)
+        # compiled_clause = clause.compile(
+        #         dialect=self.target_model.Meta.database._backend._dialect,
+        #         # compile_kwargs={"literal_binds": True},
+        #     )
+        #
+        # compiled_clause2 = clause.compile(
+        #     dialect=self.target_model.Meta.database._backend._dialect,
+        #     compile_kwargs={"literal_binds": True},
+        # )
+        #
+        # alias = f"{self.table_prefix}_" if self.table_prefix else ""
+        # aliased_name = f"{alias}{self.table.name}.{self.column.name}"
+        # clause_text = self.compile_query(compiled_query=compiled_clause)
+        # clause_text = clause_text.replace(
+        #     f"{self.table.name}.{self.column.name}", aliased_name
+        # )
+        # # dialect_name = self.target_model.Meta.database._backend._dialect.name
+        # # if dialect_name != "sqlite":  # pragma: no cover
+        # #     clause_text = clause_text.replace("%%", "%")
+        # clause = text(clause_text)
         return clause
