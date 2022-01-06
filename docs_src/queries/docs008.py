@@ -36,33 +36,65 @@ class Car(ormar.Model):
 
 # build some sample data
 toyota = await Company.objects.create(name="Toyota", founded=1937)
-await Car.objects.create(manufacturer=toyota, name="Corolla", year=2020, gearbox_type='Manual', gears=5,
-                         aircon_type='Manual')
-await Car.objects.create(manufacturer=toyota, name="Yaris", year=2019, gearbox_type='Manual', gears=5,
-                         aircon_type='Manual')
-await Car.objects.create(manufacturer=toyota, name="Supreme", year=2020, gearbox_type='Auto', gears=6,
-                         aircon_type='Auto')
+await Car.objects.create(
+    manufacturer=toyota,
+    name="Corolla",
+    year=2020,
+    gearbox_type="Manual",
+    gears=5,
+    aircon_type="Manual",
+)
+await Car.objects.create(
+    manufacturer=toyota,
+    name="Yaris",
+    year=2019,
+    gearbox_type="Manual",
+    gears=5,
+    aircon_type="Manual",
+)
+await Car.objects.create(
+    manufacturer=toyota,
+    name="Supreme",
+    year=2020,
+    gearbox_type="Auto",
+    gears=6,
+    aircon_type="Auto",
+)
 
 # select manufacturer but only name - to include related models use notation {model_name}__{column}
-all_cars = await Car.objects.select_related('manufacturer').exclude_fields(
-    ['year', 'gearbox_type', 'gears', 'aircon_type', 'company__founded']).all()
+all_cars = (
+    await Car.objects.select_related("manufacturer")
+    .exclude_fields(
+        ["year", "gearbox_type", "gears", "aircon_type", "company__founded"]
+    )
+    .all()
+)
 for car in all_cars:
     # excluded columns will yield None
-    assert all(getattr(car, x) is None for x in ['year', 'gearbox_type', 'gears', 'aircon_type'])
+    assert all(
+        getattr(car, x) is None
+        for x in ["year", "gearbox_type", "gears", "aircon_type"]
+    )
     # included column on related models will be available, pk column is always included
     # even if you do not include it in fields list
-    assert car.manufacturer.name == 'Toyota'
+    assert car.manufacturer.name == "Toyota"
     # also in the nested related models - you cannot exclude pk - it's always auto added
     assert car.manufacturer.founded is None
 
 # fields() can be called several times, building up the columns to select
 # models selected in select_related but with no columns in fields list implies all fields
-all_cars = await Car.objects.select_related('manufacturer').exclude_fields('year').exclude_fields(
-    ['gear', 'gearbox_type']).all()
+all_cars = (
+    await Car.objects.select_related("manufacturer")
+    .exclude_fields("year")
+    .exclude_fields(["gear", "gearbox_type"])
+    .all()
+)
 # all fiels from company model are selected
-assert all_cars[0].manufacturer.name == 'Toyota'
+assert all_cars[0].manufacturer.name == "Toyota"
 assert all_cars[0].manufacturer.founded == 1937
 
 # cannot exclude mandatory model columns - company__name in this example - note usage of dict/set this time
-await Car.objects.select_related('manufacturer').exclude_fields([{'company': {'name'}}]).all()
+await Car.objects.select_related("manufacturer").exclude_fields(
+    [{"company": {"name"}}]
+).all()
 # will raise pydantic ValidationError as company.name is required

@@ -56,6 +56,10 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
+@pytest.mark.skipif(
+    database._backend._dialect.name == "sqlite",
+    reason="wait for fix for sqlite in encode/databases",
+)
 @pytest.mark.asyncio
 async def test_double_nested_reverse_relation():
     async with database:

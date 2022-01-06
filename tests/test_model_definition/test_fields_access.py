@@ -142,16 +142,16 @@ def test_combining_groups_together():
     group = (Product.name == "Test") & (Product.rating >= 3.0)
     group.resolve(model_cls=Product)
     assert len(group._nested_groups) == 2
-    assert str(group.get_text_clause()) == (
-        "( ( product.name = 'Test' ) AND" " ( product.rating >= 3.0 ) )"
-    )
+    assert str(
+        group.get_text_clause().compile(compile_kwargs={"literal_binds": True})
+    ) == ("((product.name = 'Test') AND (product.rating >= 3.0))")
 
     group = ~((Product.name == "Test") & (Product.rating >= 3.0))
     group.resolve(model_cls=Product)
     assert len(group._nested_groups) == 2
-    assert str(group.get_text_clause()) == (
-        " NOT ( ( product.name = 'Test' ) AND" " ( product.rating >= 3.0 ) )"
-    )
+    assert str(
+        group.get_text_clause().compile(compile_kwargs={"literal_binds": True})
+    ) == ("NOT ((product.name = 'Test') AND" " (product.rating >= 3.0))")
 
     group = ((Product.name == "Test") & (Product.rating >= 3.0)) | (
         Product.category.name << (["Toys", "Books"])
@@ -159,11 +159,13 @@ def test_combining_groups_together():
     group.resolve(model_cls=Product)
     assert len(group._nested_groups) == 2
     assert len(group._nested_groups[0]._nested_groups) == 2
-    group_str = str(group.get_text_clause())
+    group_str = str(
+        group.get_text_clause().compile(compile_kwargs={"literal_binds": True})
+    )
     category_prefix = group._nested_groups[1].actions[0].table_prefix
     assert group_str == (
-        "( ( ( product.name = 'Test' ) AND ( product.rating >= 3.0 ) ) "
-        f"OR ( {category_prefix}_categories.name IN ('Toys', 'Books') ) )"
+        "(((product.name = 'Test') AND (product.rating >= 3.0)) "
+        f"OR ({category_prefix}_categories.name IN ('Toys', 'Books')))"
     )
 
     group = (Product.name % "Test") | (
@@ -173,15 +175,17 @@ def test_combining_groups_together():
     group.resolve(model_cls=Product)
     assert len(group._nested_groups) == 2
     assert len(group._nested_groups[1]._nested_groups) == 2
-    group_str = str(group.get_text_clause())
+    group_str = str(
+        group.get_text_clause().compile(compile_kwargs={"literal_binds": True})
+    )
     price_list_prefix = (
         group._nested_groups[1]._nested_groups[0].actions[0].table_prefix
     )
     category_prefix = group._nested_groups[1]._nested_groups[1].actions[0].table_prefix
     assert group_str == (
-        f"( ( product.name LIKE '%Test%' ) "
-        f"OR ( ( {price_list_prefix}_price_lists.name LIKE 'Aa%' ) "
-        f"OR ( {category_prefix}_categories.name IN ('Toys', 'Books') ) ) )"
+        f"((product.name LIKE '%Test%') "
+        f"OR (({price_list_prefix}_price_lists.name LIKE 'Aa%') "
+        f"OR ({category_prefix}_categories.name IN ('Toys', 'Books'))))"
     )
 
 

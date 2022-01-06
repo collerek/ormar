@@ -40,9 +40,10 @@ def test_or_group():
     assert result.actions[0].target_model == Author
     assert result.actions[1].target_model == Book
     assert (
-        str(result.get_text_clause()) == f"( authors.name = 'aa' OR "
+        str(result.get_text_clause().compile(compile_kwargs={"literal_binds": True}))
+        == f"(authors.name = 'aa' OR "
         f"{result.actions[1].table_prefix}"
-        f"_books.title = 'bb' )"
+        f"_books.title = 'bb')"
     )
 
 
@@ -53,9 +54,10 @@ def test_and_group():
     assert result.actions[0].target_model == Author
     assert result.actions[1].target_model == Book
     assert (
-        str(result.get_text_clause()) == f"( authors.name = 'aa' AND "
+        str(result.get_text_clause().compile(compile_kwargs={"literal_binds": True}))
+        == f"(authors.name = 'aa' AND "
         f"{result.actions[1].table_prefix}"
-        f"_books.title = 'bb' )"
+        f"_books.title = 'bb')"
     )
 
 
@@ -68,12 +70,13 @@ def test_nested_and():
     assert len(result._nested_groups) == 2
     book_prefix = result._nested_groups[0].actions[1].table_prefix
     assert (
-        str(result.get_text_clause()) == f"( ( authors.name = 'aa' OR "
+        str(result.get_text_clause().compile(compile_kwargs={"literal_binds": True}))
+        == f"((authors.name = 'aa' OR "
         f"{book_prefix}"
-        f"_books.title = 'bb' ) AND "
-        f"( authors.name = 'cc' OR "
+        f"_books.title = 'bb') AND "
+        f"(authors.name = 'cc' OR "
         f"{book_prefix}"
-        f"_books.title = 'dd' ) )"
+        f"_books.title = 'dd'))"
     )
 
 
@@ -84,11 +87,12 @@ def test_nested_group_and_action():
     assert len(result._nested_groups) == 1
     book_prefix = result._nested_groups[0].actions[1].table_prefix
     assert (
-        str(result.get_text_clause()) == f"( ( authors.name = 'aa' OR "
+        str(result.get_text_clause().compile(compile_kwargs={"literal_binds": True}))
+        == f"((authors.name = 'aa' OR "
         f"{book_prefix}"
-        f"_books.title = 'bb' ) AND "
+        f"_books.title = 'bb') AND "
         f"{book_prefix}"
-        f"_books.title = 'dd' )"
+        f"_books.title = 'dd')"
     )
 
 
@@ -108,12 +112,14 @@ def test_deeply_nested_or():
     assert len(result._nested_groups) == 2
     assert len(result._nested_groups[0]._nested_groups) == 2
     book_prefix = result._nested_groups[0]._nested_groups[0].actions[1].table_prefix
-    result_qry = str(result.get_text_clause())
+    result_qry = str(
+        result.get_text_clause().compile(compile_kwargs={"literal_binds": True})
+    )
     expected_qry = (
-        f"( ( ( authors.name = 'aa' OR {book_prefix}_books.title = 'bb' ) AND "
-        f"( authors.name = 'cc' OR {book_prefix}_books.title = 'dd' ) ) "
-        f"OR ( ( {book_prefix}_books.year < 1900 OR {book_prefix}_books.title = '11' ) AND "
-        f"( {book_prefix}_books.year > 'xx' OR {book_prefix}_books.title = '22' ) ) )"
+        f"(((authors.name = 'aa' OR {book_prefix}_books.title = 'bb') AND "
+        f"(authors.name = 'cc' OR {book_prefix}_books.title = 'dd')) "
+        f"OR (({book_prefix}_books.year < 1900 OR {book_prefix}_books.title = '11') AND"
+        f" ({book_prefix}_books.year > 'xx' OR {book_prefix}_books.title = '22')))"
     )
     assert result_qry.replace("\n", "") == expected_qry.replace("\n", "")
 
