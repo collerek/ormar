@@ -1,3 +1,11 @@
+# 0.10.24
+
+## 🐛 Fixes
+
+* Fix support for `pydantic==1.9.0` [#502](https://github.com/collerek/ormar/issues/502)
+* Fix timezone issues with datetime [#504](https://github.com/collerek/ormar/issues/504)
+* Remove literal binds in query generation to unblock postgres arrays [#/tophat/ormar-postgres-extensions/9](https://github.com/tophat/ormar-postgres-extensions/pull/9)
+
 # 0.10.23
 
 ## ✨ Features
