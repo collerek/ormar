@@ -101,18 +101,6 @@ community you can say thank you and buy me a coffee or sponsor me with a monthly
 </div>
 </a>
 
-### Sponsors (III Tier)
-<table style="margin-left: auto; margin-right: auto; border: none;">
-<tr style="border: none;">
-<td style="border: none;">
-<div style="text-align: center;">
-<img src="https://avatars.githubusercontent.com/u/2663394?s=64&amp;v=4" alt="" size="64" height="64" width="64"><br>
-<a href="https://github.com/igormorgado">@igormorgado</a>
-</div>
-</td>
-</tr>
-</table>
-
 ### Migrating from `sqlalchemy` and existing databases
 
 If you currently use `sqlalchemy` and would like to switch to `ormar` check out the auto-translation
