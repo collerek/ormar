@@ -130,13 +130,14 @@ async def test_query_with_time_in_filter():
 
 @pytest.mark.asyncio
 async def test_filtering_by_timezone_with_timedelta():
-    now_utc = datetime.now(timezone.utc)
-    object = MyModel(created_at=now_utc)
-    await object.save()
+    async with database:
+        now_utc = datetime.now(timezone.utc)
+        object = MyModel(created_at=now_utc)
+        await object.save()
 
-    one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
-    created_since_one_hour_ago = await MyModel.objects.filter(
-        created_at__gte=one_hour_ago
-    ).all()
+        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+        created_since_one_hour_ago = await MyModel.objects.filter(
+            created_at__gte=one_hour_ago
+        ).all()
 
-    assert len(created_since_one_hour_ago) == 1
+        assert len(created_since_one_hour_ago) == 1

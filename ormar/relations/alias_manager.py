@@ -79,7 +79,6 @@ class AliasManager:
         """
         alias = f"{alias}_" if alias else ""
         aliased_fields = [f"{alias}{x}" for x in fields] if fields else []
-        # TODO: check if normal fields still needed or only aliased one
         all_columns = (
             table.columns
             if not fields
