@@ -105,5 +105,5 @@ class SignalEmitter(dict):
 
     def __setattr__(self, key: str, value: Signal) -> None:
         if not isinstance(value, Signal):
-            raise ValueError(f"{value} is not valid signal")
+            raise SignalDefinitionError(f"{value} is not valid signal")
         self[key] = value

@@ -7,6 +7,7 @@ import sqlalchemy
 
 import ormar
 from ormar import post_delete, post_save, post_update, pre_delete, pre_save, pre_update
+from ormar.signals import SignalEmitter
 from ormar.exceptions import SignalDefinitionError
 from tests.settings import DATABASE_URL
 
@@ -75,6 +76,12 @@ def test_passing_callable_without_kwargs():
         @pre_save(Album)
         def trigger(sender, instance):  # pragma: no cover
             pass
+
+
+def test_invalid_signal():
+    emitter = SignalEmitter()
+    with pytest.raises(SignalDefinitionError):
+        emitter.save = 1
 
 
 @pytest.mark.asyncio
