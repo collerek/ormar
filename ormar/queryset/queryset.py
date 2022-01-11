@@ -1055,8 +1055,8 @@ class QuerySet(Generic[T]):
             new_kwargs = objt.prepare_model_to_save(new_kwargs)
             ready_objects.append(new_kwargs)
 
-        expr = self.table.insert()
-        await self.database.execute_many(expr, ready_objects)
+        expr = self.table.insert().values(ready_objects)
+        await self.database.execute(expr)
 
         for objt in objects:
             objt.set_save_status(True)
