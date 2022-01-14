@@ -1080,7 +1080,7 @@ class QuerySet(Generic[T]):
 
         Bulk operations do not send signals.
 
-        :param objects:list of ormar models
+        :param objects: list of ormar models
         :type objects: List[Model]
         :param columns: list of columns to update
         :type columns: List[str]
@@ -1135,8 +1135,7 @@ class QuerySet(Generic[T]):
         for obj in objects:
             obj.set_save_status(True)
 
-        entity = list(objects)[0]
-        await entity.signals.post_bulk_update.send(
-            sender=entity.__class__, instances=objects
+        await self.__class__.signals.post_bulk_update.send(
+            sender=self.__class__, instances=objects
         )
 
