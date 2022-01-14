@@ -6,6 +6,11 @@
 * Fix timezone issues with datetime [#504](https://github.com/collerek/ormar/issues/504)
 * Remove literal binds in query generation to unblock postgres arrays [#/tophat/ormar-postgres-extensions/9](https://github.com/tophat/ormar-postgres-extensions/pull/9)
 
+## 💬 Other
+
+* Bump min. required `databases` version to `>=5.4`.
+
+
 # 0.10.23
 
 ## ✨ Features
