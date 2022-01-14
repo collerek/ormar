@@ -54,8 +54,7 @@ def post_save(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
     return receiver(signal="post_save", senders=senders)
 
 
-def post_update(senders: Union[Type["Model"], List[Type["Model"]]]
-) -> Callable:
+def post_update(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
     """
     Connect given function to all senders for post_update signal.
 
@@ -68,8 +67,7 @@ def post_update(senders: Union[Type["Model"], List[Type["Model"]]]
     return receiver(signal="post_update", senders=senders)
 
 
-def post_delete(senders: Union[Type["Model"], List[Type["Model"]]]
-) -> Callable:
+def post_delete(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
     """
     Connect given function to all senders for post_delete signal.
 
@@ -121,8 +119,7 @@ def pre_delete(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
     return receiver(signal="pre_delete", senders=senders)
 
 
-def pre_relation_add(senders: Union[Type["Model"], List[Type["Model"]]]
-) -> Callable:
+def pre_relation_add(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
     """
     Connect given function to all senders for pre_relation_add signal.
 
@@ -135,8 +132,7 @@ def pre_relation_add(senders: Union[Type["Model"], List[Type["Model"]]]
     return receiver(signal="pre_relation_add", senders=senders)
 
 
-def post_relation_add(senders: Union[Type["Model"], List[Type["Model"]]]
-) -> Callable:
+def post_relation_add(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
     """
     Connect given function to all senders for post_relation_add signal.
 
@@ -149,8 +145,7 @@ def post_relation_add(senders: Union[Type["Model"], List[Type["Model"]]]
     return receiver(signal="post_relation_add", senders=senders)
 
 
-def pre_relation_remove(senders: Union[Type["Model"], List[Type["Model"]]]
-) -> Callable:
+def pre_relation_remove(senders: Union[Type["Model"], List[Type["Model"]]]) -> Callable:
     """
     Connect given function to all senders for pre_relation_remove signal.
 
