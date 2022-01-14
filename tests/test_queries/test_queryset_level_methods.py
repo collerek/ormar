@@ -1,13 +1,15 @@
-from typing import Optional
+from typing import List, Optional
 
 import databases
+import pydantic
 import pytest
 import sqlalchemy
 
 import ormar
 from ormar.exceptions import (
-    ModelPersistenceError, QueryDefinitionError,
-    ModelListEmptyError
+    ModelPersistenceError,
+    QueryDefinitionError,
+    ModelListEmptyError,
 )
 from tests.settings import DATABASE_URL
 
@@ -61,6 +63,17 @@ class Note(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     text: str = ormar.String(max_length=500)
     category: Optional[Category] = ormar.ForeignKey(Category)
+
+
+class ItemConfig(ormar.Model):
+    class Meta:
+        metadata = metadata
+        database = database
+        tablename = "item_config"
+
+    id: Optional[int] = ormar.Integer(primary_key=True)
+    item_id: str = ormar.String(max_length=32, index=True)
+    pairs: pydantic.Json = ormar.JSON(default=["2", "3"])
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -315,3 +328,23 @@ async def test_bulk_update_not_saved_objts():
 
         with pytest.raises(ModelListEmptyError):
             await Note.objects.bulk_update([])
+
+
+@pytest.mark.asyncio
+async def test_bulk_operations_with_json():
+    async with database:
+        items = [
+            ItemConfig(item_id="test1"),
+            ItemConfig(item_id="test2"),
+            ItemConfig(item_id="test3"),
+        ]
+        await ItemConfig.objects.bulk_create(items)
+        items = await ItemConfig.objects.all()
+        assert all(x.pairs == ["2", "3"] for x in items)
+
+        for item in items:
+            item.pairs = ["1"]
+
+        await ItemConfig.objects.bulk_update(items)
+        items = await ItemConfig.objects.all()
+        assert all(x.pairs == ["1"] for x in items)

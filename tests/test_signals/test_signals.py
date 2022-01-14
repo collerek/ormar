@@ -7,8 +7,13 @@ import sqlalchemy
 
 import ormar
 from ormar import (
-    post_bulk_update, post_delete, post_save, post_update,
-    pre_delete, pre_save, pre_update
+    post_bulk_update,
+    post_delete,
+    post_save,
+    post_update,
+    pre_delete,
+    pre_save,
+    pre_update,
 )
 from ormar.signals import SignalEmitter
 from ormar.exceptions import SignalDefinitionError
@@ -202,7 +207,9 @@ async def test_signal_functions(cleanup):
 
             await Album.objects.bulk_update(albums)
 
-            cnt = await AuditLog.objects.filter(event_type__contains="BULK_POST").count()
+            cnt = await AuditLog.objects.filter(
+                event_type__contains="BULK_POST"
+            ).count()
             assert cnt == len(albums)
 
             album.signals.bulk_post_update.disconnect(after_bulk_update)

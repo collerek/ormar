@@ -30,8 +30,9 @@ except ImportError:  # pragma: no cover
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
 from ormar.exceptions import (
-    ModelPersistenceError, QueryDefinitionError,
-    ModelListEmptyError
+    ModelPersistenceError,
+    QueryDefinitionError,
+    ModelListEmptyError,
 )
 from ormar.queryset import FieldAccessor, FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
@@ -1063,10 +1064,7 @@ class QuerySet(Generic[T]):
         :param objects: list of ormar models already initialized and ready to save.
         :type objects: List[Model]
         """
-        ready_objects = [
-            obj.prepare_model_to_save(obj.dict())
-            for obj in objects
-        ]
+        ready_objects = [obj.prepare_model_to_save(obj.dict()) for obj in objects]
         expr = self.table.insert().values(ready_objects)
         await self.database.execute(expr)
 
@@ -1118,9 +1116,9 @@ class QuerySet(Generic[T]):
                     f"{self.model.__name__} has to have {pk_name} filled."
                 )
             new_kwargs = obj.prepare_model_to_update(new_kwargs)
-            ready_objects.append({
-                "new_" + k: v for k, v in new_kwargs.items() if k in columns
-            })
+            ready_objects.append(
+                {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
+            )
 
         pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
         pk_column_name = self.model.get_column_alias(pk_name)
@@ -1146,4 +1144,3 @@ class QuerySet(Generic[T]):
         await cast(Type["Model"], self.model_cls).Meta.signals.post_bulk_update.send(
             sender=self.model_cls, instances=objects  # type: ignore
         )
-
