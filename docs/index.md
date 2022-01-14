@@ -61,6 +61,12 @@ As of now `ormar` is supported by:
 *  [`fastapi-crudrouter`](https://github.com/awtkns/fastapi-crudrouter)
 *  [`fastapi-pagination`](https://github.com/uriyyo/fastapi-pagination)
 
+Ormar remains sql dialect agnostic - so only columns working in all supported backends are implemented.
+
+It's relatively easy to implement columns for specific dialects as an extensions of ormar.
+
+Postgres specific columns implementation: [`ormar-postgres-extensions`](https://github.com/tophat/ormar-postgres-extensions)
+
 If you maintain or use a different library and would like it to support `ormar` let us know how we can help.
 
 ### Dependencies
@@ -74,7 +80,7 @@ Ormar is built with:
 
 ### License
 
-`ormar` is built as open-sorce software and will remain completely free (MIT license).
+`ormar` is built as open-source software and will remain completely free (MIT license).
 
 As I write open-source code to solve everyday problems in my work or to promote and build strong python 
 community you can say thank you and buy me a coffee or sponsor me with a monthly amount to help ensure my work remains free and maintained.

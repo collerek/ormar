@@ -20,7 +20,6 @@ except ImportError:  # pragma: no cover
 import pydantic
 from pydantic.class_validators import make_generic_validator
 from pydantic.fields import ModelField, SHAPE_LIST
-from pydantic.main import SchemaExtraCallable
 
 import ormar  # noqa: I100, I202
 from ormar.models.helpers.models import meta_field_not_set
@@ -249,7 +248,7 @@ def overwrite_binary_format(schema: Dict[str, Any], model: Type["Model"]) -> Non
                 ]
 
 
-def construct_modify_schema_function(fields_with_choices: List) -> SchemaExtraCallable:
+def construct_modify_schema_function(fields_with_choices: List) -> Callable:
     """
     Modifies the schema to include fields with choices validator.
     Those fields will be displayed in schema as Enum types with available choices
@@ -275,7 +274,7 @@ def construct_modify_schema_function(fields_with_choices: List) -> SchemaExtraCa
     return staticmethod(schema_extra)  # type: ignore
 
 
-def construct_schema_function_without_choices() -> SchemaExtraCallable:
+def construct_schema_function_without_choices() -> Callable:
     """
     Modifies model example and description if needed.
 

@@ -87,4 +87,5 @@ class ModelListEmptyError(AsyncOrmException):
     """
     Raised for objects is empty when bulk_update
     """
+
     pass

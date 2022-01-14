@@ -381,7 +381,6 @@ if TYPE_CHECKING:  # pragma: nocover
     def Boolean(**kwargs: Any) -> bool:
         pass
 
-
 else:
 
     class Boolean(ModelFieldFactory, int):
@@ -544,7 +543,6 @@ if TYPE_CHECKING:  # pragma: nocover # noqa: C901
         max_length: int, represent_as_base64_str: bool = False, **kwargs: Any
     ) -> Union[str, bytes]:
         pass
-
 
 else:
 

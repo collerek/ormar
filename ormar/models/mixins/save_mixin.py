@@ -12,6 +12,11 @@ from typing import (
     cast,
 )
 
+try:
+    import orjson as json
+except ImportError:  # pragma: no cover
+    import json  # type: ignore
+
 import pydantic
 
 import ormar  # noqa: I100, I202
@@ -31,6 +36,8 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
     if TYPE_CHECKING:  # pragma: nocover
         _choices_fields: Optional[Set]
         _skip_ellipsis: Callable
+        _json_fields: Set[str]
+        _bytes_fields: Set[str]
         __fields__: Dict[str, pydantic.fields.ModelField]
 
     @classmethod
@@ -53,6 +60,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         new_kwargs = cls.substitute_models_with_pks(new_kwargs)
         new_kwargs = cls.populate_default_values(new_kwargs)
         new_kwargs = cls.reconvert_str_to_bytes(new_kwargs)
+        new_kwargs = cls.dump_all_json_fields_to_str(new_kwargs)
         new_kwargs = cls.translate_columns_to_aliases(new_kwargs)
         return new_kwargs
 
@@ -68,6 +76,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         new_kwargs = cls.parse_non_db_fields(new_kwargs)
         new_kwargs = cls.substitute_models_with_pks(new_kwargs)
         new_kwargs = cls.reconvert_str_to_bytes(new_kwargs)
+        new_kwargs = cls.dump_all_json_fields_to_str(new_kwargs)
         new_kwargs = cls.translate_columns_to_aliases(new_kwargs)
         return new_kwargs
 
@@ -172,23 +181,34 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict
         """
-        bytes_fields = {
-            name
-            for name, field in cls.Meta.model_fields.items()
-            if field.__type__ == bytes
-        }
         bytes_base64_fields = {
             name
             for name, field in cls.Meta.model_fields.items()
             if field.represent_as_base64_str
         }
         for key, value in model_dict.items():
-            if key in bytes_fields and isinstance(value, str):
+            if key in cls._bytes_fields and isinstance(value, str):
                 model_dict[key] = (
                     value.encode("utf-8")
                     if key not in bytes_base64_fields
                     else base64.b64decode(value)
                 )
+        return model_dict
+
+    @classmethod
+    def dump_all_json_fields_to_str(cls, model_dict: Dict) -> Dict:
+        """
+        Receives dictionary of model that is about to be saved and changes
+        all json fields into strings
+
+        :param model_dict: dictionary of model that is about to be saved
+        :type model_dict: Dict
+        :return: dictionary of model that is about to be saved
+        :rtype: Dict
+        """
+        for key, value in model_dict.items():
+            if key in cls._json_fields and not isinstance(value, str):
+                model_dict[key] = json.dumps(value)
         return model_dict
 
     @classmethod

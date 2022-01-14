@@ -1,3 +1,21 @@
+# 0.10.24
+
+## ✨ Features
+
+* Add `post_bulk_update` signal (by @ponytailer - thanks!) [#524](https://github.com/collerek/ormar/pull/524)
+
+## 🐛 Fixes
+
+* Fix support for `pydantic==1.9.0` [#502](https://github.com/collerek/ormar/issues/502)
+* Fix timezone issues with datetime [#504](https://github.com/collerek/ormar/issues/504)
+* Remove literal binds in query generation to unblock postgres arrays [#/tophat/ormar-postgres-extensions/9](https://github.com/tophat/ormar-postgres-extensions/pull/9)
+* Fix bulk update for `JSON` fields [#519](https://github.com/collerek/ormar/issues/519)
+
+## 💬 Other
+
+* Improve performance of `bulk_create` by bypassing `databases` `execute_many` suboptimal implementation. (by @Mng-dev-ai thanks!) [#520](https://github.com/collerek/ormar/pull/520) 
+* Bump min. required `databases` version to `>=5.4`.
+
 # 0.10.23
 
 ## ✨ Features

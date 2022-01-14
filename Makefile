@@ -1,6 +1,3 @@
-PIPENV_RUN := pipenv run
-PG_DOCKERFILE_NAME := fastapi-users-test-mongo
-
 test_all: test_pg test_mysql test_sqlite
 
 test_pg: export DATABASE_URL=postgresql://username:password@localhost:5432/testsuite

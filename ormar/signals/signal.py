@@ -77,7 +77,8 @@ class Signal:
         """
         new_receiver_key = make_id(receiver)
         receiver_func: Union[Callable, None] = self._receivers.pop(
-            new_receiver_key, None)
+            new_receiver_key, None
+        )
         return True if receiver_func is not None else False
 
     async def send(self, sender: Type["Model"], **kwargs: Any) -> None:
@@ -100,6 +101,7 @@ class SignalEmitter(dict):
     Emitter that registers the signals in internal dictionary.
     If signal with given name does not exist it's auto added on access.
     """
+
     def __getattr__(self, item: str) -> Signal:
         return self.setdefault(item, Signal())
 
