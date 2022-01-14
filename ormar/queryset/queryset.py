@@ -1056,6 +1056,8 @@ class QuerySet(Generic[T]):
             obj.prepare_model_to_save(obj.dict())
             for obj in objects
         ]
+        # don't use execute_many, as in databases it's executed in a loop 
+        # instead of using execute_many from drivers
         expr = self.table.insert().values(ready_objects)
         await self.database.execute(expr)
 
