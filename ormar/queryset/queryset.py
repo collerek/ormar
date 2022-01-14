@@ -1132,11 +1132,11 @@ class QuerySet(Generic[T]):
         expr = str(expr)
         await self.database.execute_many(expr, ready_objects)
 
-        entity = list(objects)[0]
+        for obj in objects:
+            obj.set_save_status(True)
 
+        entity = list(objects)[0]
         await entity.signals.post_bulk_update.send(
             sender=entity.__class__, instances=objects
         )
 
-        for obj in objects:
-            obj.set_save_status(True)
