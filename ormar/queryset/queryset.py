@@ -1039,7 +1039,7 @@ class QuerySet(Generic[T]):
 
     async def bulk_create(self, objects: List["T"]) -> None:
         """
-        Performs a bulk update in one database session to speed up the process.
+        Performs a bulk create in one database session to speed up the process.
 
         Allows you to create multiple objects at once.
 
@@ -1074,7 +1074,7 @@ class QuerySet(Generic[T]):
         """
         Performs bulk update in one database session to speed up the process.
 
-        Allows to update multiple instance at once.
+        Allows you to update multiple instance at once.
 
         All `Models` passed need to have primary key column populated.
 
@@ -1083,7 +1083,7 @@ class QuerySet(Generic[T]):
 
         Bulk operations do not send signals.
 
-        :param objects: list of ormar models
+        :param objects:list of ormar models
         :type objects: List[Model]
         :param columns: list of columns to update
         :type columns: List[str]
