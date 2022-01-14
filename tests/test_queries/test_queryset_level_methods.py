@@ -5,8 +5,10 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar import post_save, post_update, pre_save
-from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
+from ormar.exceptions import (
+    ModelPersistenceError, QueryDefinitionError,
+    ModelListEmptyError
+)
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -195,35 +197,6 @@ async def test_bulk_create():
 
 
 @pytest.mark.asyncio
-async def test_bulk_create_send_signals():
-    async with database:
-
-        @pre_save(ToDo)
-        async def before_save(sender, instance, **kwargs):
-            instance.completed = False
-
-        @post_save(ToDo)
-        async def after_save(sender, instance, **kwargs):
-            assert not instance.completed
-
-        await ToDo.objects.bulk_create(
-            [
-                ToDo(text="Buy the groceries."),
-                ToDo(text="Call Mum.", completed=True),
-                ToDo(text="Send invoices.", completed=True),
-            ], send_signals=True
-        )
-
-        todoes = await ToDo.objects.all()
-        assert len(todoes) == 3
-        for todo in todoes:
-            assert todo.pk is not None
-
-        count = await ToDo.objects.filter(completed=False).count()
-        assert count == 3
-
-
-@pytest.mark.asyncio
 async def test_bulk_create_with_relation():
     async with database:
         category = await Category.objects.create(name="Sample Category")
@@ -268,34 +241,6 @@ async def test_bulk_update():
 
         for todo in todoes:
             assert todo.text[-2:] == "_1"
-
-
-@pytest.mark.asyncio
-async def test_bulk_update_send_signals():
-    async with database:
-
-        @post_update(ToDo)
-        async def after_update(sender, instance, **kwargs):
-            await instance.delete()
-
-        await ToDo.objects.bulk_create(
-            [
-                ToDo(text="Buy the groceries."),
-                ToDo(text="Call Mum.", completed=True),
-                ToDo(text="Send invoices.", completed=True),
-            ]
-        )
-        todoes = await ToDo.objects.all()
-        assert len(todoes) == 3
-
-        for todo in todoes:
-            todo.text = todo.text + "_1"
-            todo.completed = False
-
-        await ToDo.objects.bulk_update(todoes, send_signals=True)
-
-        count = await ToDo.objects.filter(completed=False).count()
-        assert count == 0
 
 
 @pytest.mark.asyncio
@@ -367,3 +312,6 @@ async def test_bulk_update_not_saved_objts():
                     Note(text="Call Mum.", category=category),
                 ]
             )
+
+        with pytest.raises(ModelListEmptyError):
+            await Note.objects.bulk_update([])
