@@ -1057,8 +1057,6 @@ class QuerySet(Generic[T]):
             for obj in objects
         ]
         expr = self.table.insert().values(ready_objects)
-
-        # shouldn't use the execute_many, it's `queries.foreach(execute)`
         await self.database.execute(expr)
 
         for obj in objects:
