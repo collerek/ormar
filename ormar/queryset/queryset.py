@@ -20,7 +20,7 @@ from sqlalchemy import bindparam
 
 try:
     from sqlalchemy.engine import LegacyRow
-except ImportError:
+except ImportError:  # pragma: no cover
     if TYPE_CHECKING:
 
         class LegacyRow(dict):  # type: ignore
