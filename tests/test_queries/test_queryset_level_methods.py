@@ -5,7 +5,10 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
+from ormar.exceptions import (
+    ModelPersistenceError, QueryDefinitionError,
+    ModelListEmptyError
+)
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -309,3 +312,6 @@ async def test_bulk_update_not_saved_objts():
                     Note(text="Call Mum.", category=category),
                 ]
             )
+
+        with pytest.raises(ModelListEmptyError):
+            await Note.objects.bulk_update([])

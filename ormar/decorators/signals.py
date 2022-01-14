@@ -1,4 +1,4 @@
-from typing import Callable, List, TYPE_CHECKING, Type, Union
+from typing import Callable, List, Type, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
@@ -171,3 +171,18 @@ def post_relation_remove(
     :rtype: Callable
     """
     return receiver(signal="post_relation_remove", senders=senders)
+
+
+def post_bulk_update(
+    senders: Union[Type["Model"], List[Type["Model"]]]
+) -> Callable:
+    """
+    Connect given function to all senders for post_bulk_update signal.
+
+    :param senders: one or a list of "Model" classes
+    that should have the signal receiver registered
+    :type senders: Union[Type["Model"], List[Type["Model"]]]
+    :return: returns the original function untouched
+    :rtype: Callable
+    """
+    return receiver(signal="post_bulk_update", senders=senders)
