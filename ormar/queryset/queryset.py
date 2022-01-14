@@ -1135,7 +1135,7 @@ class QuerySet(Generic[T]):
         for obj in objects:
             obj.set_save_status(True)
 
-        await self.__class__.signals.post_bulk_update.send(
+        await obj.signals.post_bulk_update.send(
             sender=self.__class__, instances=objects
         )
 
