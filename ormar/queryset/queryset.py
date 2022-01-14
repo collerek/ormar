@@ -1037,7 +1037,9 @@ class QuerySet(Generic[T]):
         instance = await instance.save()
         return instance
 
-    async def bulk_create(self, objects: List["T"]) -> None:
+    async def bulk_create(
+        self, objects: List["T"], send_signals: bool = False
+    ) -> None:
         """
         Performs a bulk create in one database session to speed up the process.
 
@@ -1049,27 +1051,42 @@ class QuerySet(Generic[T]):
 
         :param objects: list of ormar models already initialized and ready to save.
         :type objects: List[Model]
+        :param send_signals: confirm send the pre/post create signals
+        :type send_signals: bool
         """
+
+        async def before_create(entity: "T") -> None:
+            await entity.signals.pre_save.send(
+                sender=entity.__class__, instance=entity)
+
+        async def after_create(entity: "T") -> None:
+            entity.set_save_status(True)
+            # FIXME do not have the `id` value, because not reload from db
+            if send_signals:
+                await entity.signals.post_save.send(
+                    sender=entity.__class__, instance=entity)
+
+        if send_signals:
+            await asyncio.gather(
+                *[before_create(entity) for entity in objects]
+            )
+
         ready_objects = [
             obj.prepare_model_to_save(obj.dict())
             for obj in objects
         ]
         expr = self.table.insert().values(ready_objects)
+
         # shouldn't use the execute_many, it's `queries.foreach(execute)`
         await self.database.execute(expr)
-
-        # FIXME: add pre_save signals
-        async def after_create(entity: "T") -> None:
-            entity.set_save_status(True)
-            await entity.signals.post_save.send(
-                sender=entity.__class__, instance=entity)
 
         await asyncio.gather(
             *[after_create(entity) for entity in objects]
         )
 
     async def bulk_update(  # noqa:  CCR001
-        self, objects: List["T"], columns: List[str] = None
+        self, objects: List["T"], columns: List[str] = None,
+        send_signals: bool = False
     ) -> None:
         """
         Performs bulk update in one database session to speed up the process.
@@ -1087,6 +1104,8 @@ class QuerySet(Generic[T]):
         :type objects: List[Model]
         :param columns: list of columns to update
         :type columns: List[str]
+        :param send_signals: confirm send the pre/post create signals
+        :type send_signals: bool
         """
         ready_objects = []
         pk_name = self.model_meta.pkname
@@ -1135,9 +1154,10 @@ class QuerySet(Generic[T]):
         # FIXME: add pre-update-signals
         async def after_update(entity: "T") -> None:
             entity.set_save_status(True)
-            await entity.signals.post_update.send(
-                sender=entity.__class__, instance=entity
-            )
+            if send_signals:
+                await entity.signals.post_update.send(
+                    sender=entity.__class__, instance=entity
+                )
 
         await asyncio.gather(
             *[after_update(entity) for entity in objects]
