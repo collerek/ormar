@@ -6,7 +6,10 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar import post_delete, post_save, post_update, pre_delete, pre_save, pre_update
+from ormar import (
+    post_bulk_update, post_delete, post_save, post_update,
+    pre_delete, pre_save, pre_update
+)
 from ormar.signals import SignalEmitter
 from ormar.exceptions import SignalDefinitionError
 from tests.settings import DATABASE_URL
@@ -131,6 +134,14 @@ async def test_signal_functions(cleanup):
                     event_log=instance.json(),
                 ).save()
 
+            @post_bulk_update(Album)
+            async def after_bulk_update(sender, instances, **kwargs):
+                for it in instances:
+                    await AuditLog(
+                        event_type=f"BULK_POST_UPDATE_{sender.get_name()}",
+                        event_log=it.json(),
+                    ).save()
+
             album = await Album.objects.create(name="Venice")
 
             audits = await AuditLog.objects.all()
@@ -182,6 +193,19 @@ async def test_signal_functions(cleanup):
             album.signals.post_delete.disconnect(after_delete)
             album.signals.pre_save.disconnect(before_save)
             album.signals.post_save.disconnect(after_save)
+
+            albums = await Album.objects.all()
+            assert len(albums)
+
+            for album in albums:
+                album.play_count = 1
+
+            await Album.objects.bulk_update(albums)
+
+            cnt = await AuditLog.objects.filter(event_type__contains="BULK_POST").count()
+            assert cnt == len(albums)
+
+            album.signals.bulk_post_update.disconnect(after_bulk_update)
 
 
 @pytest.mark.asyncio

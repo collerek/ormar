@@ -159,6 +159,7 @@ def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
         signals.post_relation_add = Signal()
         signals.pre_relation_remove = Signal()
         signals.post_relation_remove = Signal()
+        signals.post_bulk_update = Signal()
         new_model.Meta.signals = signals
 
 
