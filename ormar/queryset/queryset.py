@@ -1059,7 +1059,7 @@ class QuerySet(Generic[T]):
         await self.database.execute(expr)
 
         # FIXME: add pre_save signals
-        async def after_create(entity):
+        async def after_create(entity: "T") -> None:
             entity.set_save_status(True)
             await entity.signals.post_save.send(
                 sender=entity.__class__, instance=entity)
@@ -1133,7 +1133,7 @@ class QuerySet(Generic[T]):
         await self.database.execute_many(expr, ready_objects)
 
         # FIXME: add pre-update-signals
-        async def after_update(entity):
+        async def after_update(entity: "T") -> None:
             entity.set_save_status(True)
             await entity.signals.post_update.send(
                 sender=entity.__class__, instance=entity
