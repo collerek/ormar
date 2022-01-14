@@ -1557,7 +1557,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2"
-content-hash = "e225b046ea8842875754f54a879c18d9e9ffb724758f5be9db2bbe88e3f59967"
+content-hash = "7f70457628e806c602066d934eeac8f5550e53107b31906a5ec3a20bca9dbbda"
 
 [metadata.files]
 aiocontextvars = [

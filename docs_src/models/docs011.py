@@ -16,5 +16,4 @@ class Course(ormar.Model):
     name: ormar.String(max_length=100)
     completed: ormar.Boolean(default=False)
 
-
 c1 = Course()

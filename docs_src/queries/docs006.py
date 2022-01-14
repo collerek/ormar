@@ -36,27 +36,10 @@ class Car(ormar.Model):
 
 # build some sample data
 toyota = await Company.objects.create(name="Toyota", founded=1937)
-await Car.objects.create(
-    manufacturer=toyota,
-    name="Corolla",
-    year=2020,
-    gearbox_type="Manual",
-    gears=5,
-    aircon_type="Manual",
-)
-await Car.objects.create(
-    manufacturer=toyota,
-    name="Yaris",
-    year=2019,
-    gearbox_type="Manual",
-    gears=5,
-    aircon_type="Manual",
-)
-await Car.objects.create(
-    manufacturer=toyota,
-    name="Supreme",
-    year=2020,
-    gearbox_type="Auto",
-    gears=6,
-    aircon_type="Auto",
-)
+await Car.objects.create(manufacturer=toyota, name="Corolla", year=2020, gearbox_type='Manual', gears=5,
+                         aircon_type='Manual')
+await Car.objects.create(manufacturer=toyota, name="Yaris", year=2019, gearbox_type='Manual', gears=5,
+                         aircon_type='Manual')
+await Car.objects.create(manufacturer=toyota, name="Supreme", year=2020, gearbox_type='Auto', gears=6,
+                         aircon_type='Auto')
+

@@ -26,9 +26,7 @@ class Course(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     completed: bool = ormar.Boolean(default=False)
-    department: Optional[Department] = ormar.ForeignKey(
-        Department, related_name="my_courses"
-    )
+    department: Optional[Department] = ormar.ForeignKey(Department, related_name="my_courses")
 
 
 department = Department(name="Science")
