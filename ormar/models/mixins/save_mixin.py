@@ -57,6 +57,21 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return new_kwargs
 
     @classmethod
+    def prepare_model_to_update(cls, new_kwargs: dict) -> dict:
+        """
+        Combines all preparation methods before updating.
+        :param new_kwargs: dictionary of model that is about to be saved
+        :type new_kwargs: Dict[str, str]
+        :return: dictionary of model that is about to be updated
+        :rtype: Dict[str, str]
+        """
+        new_kwargs = cls.parse_non_db_fields(new_kwargs)
+        new_kwargs = cls.substitute_models_with_pks(new_kwargs)
+        new_kwargs = cls.reconvert_str_to_bytes(new_kwargs)
+        new_kwargs = cls.translate_columns_to_aliases(new_kwargs)
+        return new_kwargs
+
+    @classmethod
     def _remove_not_ormar_fields(cls, new_kwargs: dict) -> dict:
         """
         Removes primary key for if it's nullable or autoincrement pk field,

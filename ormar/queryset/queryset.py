@@ -29,7 +29,10 @@ except ImportError:  # pragma: no cover
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
-from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
+from ormar.exceptions import (
+    ModelPersistenceError, QueryDefinitionError,
+    ModelListEmptyError
+)
 from ormar.queryset import FieldAccessor, FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
@@ -1049,7 +1052,7 @@ class QuerySet(Generic[T]):
 
     async def bulk_create(self, objects: List["T"]) -> None:
         """
-        Performs a bulk update in one database session to speed up the process.
+        Performs a bulk create in one database session to speed up the process.
 
         Allows you to create multiple objects at once.
 
@@ -1060,17 +1063,15 @@ class QuerySet(Generic[T]):
         :param objects: list of ormar models already initialized and ready to save.
         :type objects: List[Model]
         """
-        ready_objects = []
-        for objt in objects:
-            new_kwargs = objt.dict()
-            new_kwargs = objt.prepare_model_to_save(new_kwargs)
-            ready_objects.append(new_kwargs)
+        ready_objects = [
+            obj.prepare_model_to_save(obj.dict())
+            for obj in objects
+        ]
+        expr = self.table.insert().values(ready_objects)
+        await self.database.execute(expr)
 
-        expr = self.table.insert()
-        await self.database.execute_many(expr, ready_objects)
-
-        for objt in objects:
-            objt.set_save_status(True)
+        for obj in objects:
+            obj.set_save_status(True)
 
     async def bulk_update(  # noqa:  CCR001
         self, objects: List["T"], columns: List[str] = None
@@ -1078,7 +1079,7 @@ class QuerySet(Generic[T]):
         """
         Performs bulk update in one database session to speed up the process.
 
-        Allows to update multiple instance at once.
+        Allows you to update multiple instance at once.
 
         All `Models` passed need to have primary key column populated.
 
@@ -1092,6 +1093,9 @@ class QuerySet(Generic[T]):
         :param columns: list of columns to update
         :type columns: List[str]
         """
+        if not objects:
+            raise ModelListEmptyError("Bulk update objects are empty!")
+
         ready_objects = []
         pk_name = self.model_meta.pkname
         if not columns:
@@ -1106,19 +1110,17 @@ class QuerySet(Generic[T]):
 
         columns = [self.model.get_column_alias(k) for k in columns]
 
-        for objt in objects:
-            new_kwargs = objt.dict()
-            if pk_name not in new_kwargs or new_kwargs.get(pk_name) is None:
+        for obj in objects:
+            new_kwargs = obj.dict()
+            if new_kwargs.get(pk_name) is None:
                 raise ModelPersistenceError(
                     "You cannot update unsaved objects. "
                     f"{self.model.__name__} has to have {pk_name} filled."
                 )
-            new_kwargs = self.model.parse_non_db_fields(new_kwargs)
-            new_kwargs = self.model.substitute_models_with_pks(new_kwargs)
-            new_kwargs = self.model.reconvert_str_to_bytes(new_kwargs)
-            new_kwargs = self.model.translate_columns_to_aliases(new_kwargs)
-            new_kwargs = {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
-            ready_objects.append(new_kwargs)
+            new_kwargs = obj.prepare_model_to_update(new_kwargs)
+            ready_objects.append({
+                "new_" + k: v for k, v in new_kwargs.items() if k in columns
+            })
 
         pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
         pk_column_name = self.model.get_column_alias(pk_name)
@@ -1138,5 +1140,10 @@ class QuerySet(Generic[T]):
         expr = str(expr)
         await self.database.execute_many(expr, ready_objects)
 
-        for objt in objects:
-            objt.set_save_status(True)
+        for obj in objects:
+            obj.set_save_status(True)
+
+        await cast(Type["Model"], self.model_cls).Meta.signals.post_bulk_update.send(
+            sender=self.model_cls, instances=objects  # type: ignore
+        )
+
