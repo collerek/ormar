@@ -1135,7 +1135,7 @@ class QuerySet(Generic[T]):
         for obj in objects:
             obj.set_save_status(True)
 
-        await self.model_cls.Meta.signals.post_bulk_update.send(
-            sender=self.model_cls, instances=objects
+        await cast(Type["Model"], self.model_cls).Meta.signals.post_bulk_update.send(
+            sender=self.model_cls, instances=objects  # type: ignore
         )
 
