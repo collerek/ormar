@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, TypeVar, Union
+from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, TypeVar, \
+    Union
 
 import ormar.queryset  # noqa I100
 from ormar.exceptions import ModelPersistenceError, NoMatch
@@ -67,7 +68,8 @@ class Model(ModelRow):
         await self.signals.pre_save.send(sender=self.__class__, instance=self)
         self_fields = self._extract_model_db_fields()
 
-        if not self.pk and self.Meta.model_fields[self.Meta.pkname].autoincrement:
+        if not self.pk and self.Meta.model_fields[
+            self.Meta.pkname].autoincrement:
             self_fields.pop(self.Meta.pkname, None)
         self_fields = self.populate_default_values(self_fields)
         self.update_from_dict(
@@ -90,8 +92,8 @@ class Model(ModelRow):
         # refresh server side defaults
         if any(
             field.server_default is not None
-            for name, field in self.Meta.model_fields.items()
-            if name not in self_fields
+                for name, field in self.Meta.model_fields.items()
+                if name not in self_fields
         ):
             await self.load()
 
@@ -220,6 +222,7 @@ class Model(ModelRow):
         :rtype: Model
         """
         if kwargs:
+            kwargs = self.populate_onupdate_value(kwargs)
             self.update_from_dict(kwargs)
 
         if not self.pk:
@@ -233,14 +236,16 @@ class Model(ModelRow):
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
         if _columns:
-            self_fields = {k: v for k, v in self_fields.items() if k in _columns}
+            self_fields = {k: v for k, v in self_fields.items() if
+                k in _columns}
         self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.update().values(**self_fields)
         expr = expr.where(self.pk_column == getattr(self, self.Meta.pkname))
 
         await self.Meta.database.execute(expr)
         self.set_save_status(True)
-        await self.signals.post_update.send(sender=self.__class__, instance=self)
+        await self.signals.post_update.send(sender=self.__class__,
+                                            instance=self)
         return self
 
     async def delete(self) -> int:
@@ -258,12 +263,14 @@ class Model(ModelRow):
         :return: number of deleted rows (for some backends)
         :rtype: int
         """
-        await self.signals.pre_delete.send(sender=self.__class__, instance=self)
+        await self.signals.pre_delete.send(sender=self.__class__,
+                                           instance=self)
         expr = self.Meta.table.delete()
         expr = expr.where(self.pk_column == (getattr(self, self.Meta.pkname)))
         result = await self.Meta.database.execute(expr)
         self.set_save_status(False)
-        await self.signals.post_delete.send(sender=self.__class__, instance=self)
+        await self.signals.post_delete.send(sender=self.__class__,
+                                            instance=self)
         return result
 
     async def load(self: T) -> T:
@@ -280,7 +287,8 @@ class Model(ModelRow):
         expr = self.Meta.table.select().where(self.pk_column == self.pk)
         row = await self.Meta.database.fetch_one(expr)
         if not row:  # pragma nocover
-            raise NoMatch("Instance was deleted from database and cannot be refreshed")
+            raise NoMatch(
+                "Instance was deleted from database and cannot be refreshed")
         kwargs = dict(row)
         kwargs = self.translate_aliases_to_columns(kwargs)
         self.update_from_dict(kwargs)
