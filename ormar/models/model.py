@@ -237,7 +237,11 @@ class Model(ModelRow):
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
         if _columns:
-            self_fields = {k: v for k, v in self_fields.items() if k in _columns}
+            onupdate_fields = self.get_fields_has_onupdate()
+            self_fields = {
+                k: v for k, v in self_fields.items()
+                if k in _columns or k in onupdate_fields
+            }
         self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.update().values(**self_fields)
         expr = expr.where(self.pk_column == getattr(self, self.Meta.pkname))

@@ -418,3 +418,11 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         if not isinstance(values, list):
             values = [values]
         return values
+
+    @classmethod
+    def get_fields_has_onupdate(cls) -> List[str]:
+        return [
+            field_name
+            for field_name, field in cls.Meta.model_fields.items()
+            if field.has_onupdate() and not field.pydantic_only
+        ]
