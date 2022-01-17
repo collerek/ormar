@@ -208,6 +208,9 @@ async def test_bulk_create():
         completed = await ToDo.objects.filter(completed=True).all()
         assert len(completed) == 2
 
+        with pytest.raises(ModelListEmptyError):
+            await ToDo.objects.bulk_create([])
+
 
 @pytest.mark.asyncio
 async def test_bulk_create_with_relation():
