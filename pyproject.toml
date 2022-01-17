@@ -85,7 +85,7 @@ pytest-asyncio = "^0.16.0"
 fastapi = "^0.70.1"
 flake8 = "^3.9.2"
 flake8-black = "^0.2.3"
-flake8-bugbear = "^21.11.29"
+flake8-bugbear = "^22.1.11"
 flake8-import-order = "^0.18.1"
 flake8-bandit = "^2.1.2"
 flake8-builtins = "^1.5.3"
@@ -110,7 +110,7 @@ types-dataclasses = { version = "^0.6.1", markers = "python_version < '3.7'" }
 
 # Documantation
 mkdocs = "^1.2.3"
-mkdocs-material = "^8.1.2"
+mkdocs-material = "^8.1.7"
 mkdocs-material-extensions = "^1.0.3"
 pydoc-markdown = { version = "^4.5.0", markers = "python_version > '3.7'" }
 dataclasses = { version = ">=0.6.0,<0.8 || >0.8,<1.0.0" }
