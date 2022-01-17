@@ -244,8 +244,7 @@ class Model(ModelRow):
 
         await self.Meta.database.execute(expr)
         self.set_save_status(True)
-        await self.signals.post_update.send(sender=self.__class__,
-                                            instance=self)
+        await self.signals.post_update.send(sender=self.__class__, instance=self)
         return self
 
     async def delete(self) -> int:
