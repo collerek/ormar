@@ -167,6 +167,31 @@ async def test_get_or_create():
 
 
 @pytest.mark.asyncio
+async def test_find_or_create():
+    async with database:
+        tom, is_new = await Book.objects.find_or_create(
+            title="Volume I", author="Anonymous", genre="Fiction"
+        )
+        assert await Book.objects.count() == 1
+        assert is_new
+
+        book, is_new = await Book.objects.find_or_create(
+            title="Volume I", author="Anonymous", genre="Fiction"
+        )
+        assert book == tom
+        assert not is_new
+        assert await Book.objects.count() == 1
+
+        assert await Book.objects.create(
+            title="Volume I", author="Anonymous", genre="Fiction"
+        )
+        with pytest.raises(ormar.exceptions.MultipleMatches):
+            await Book.objects.find_or_create(
+                title="Volume I", author="Anonymous", genre="Fiction"
+            )
+
+
+@pytest.mark.asyncio
 async def test_update_or_create():
     async with database:
         tom = await Book.objects.update_or_create(

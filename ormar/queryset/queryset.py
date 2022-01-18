@@ -993,6 +993,26 @@ class QuerySet(Generic[T]):
         except NoMatch:
             return await self.create(**kwargs)
 
+    async def find_or_create(self, *args: Any, **kwargs: Any) -> Tuple["T", bool]:
+        """
+        A new method to combination of create and get methods.
+        because should be keeping compatible for `get_or_create`
+
+        FIXME
+        When the next big release version to publish, this method should be
+        overridden `get_or_create`
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: returned or created Model and a flag to check it's new
+        :rtype: Model
+        :rtype: bool
+        """
+        try:
+            return await self.get(*args, **kwargs), False
+        except NoMatch:
+            return await self.create(**kwargs), True
+
     async def update_or_create(self, **kwargs: Any) -> "T":
         """
         Updates the model, or in case there is no match in database creates a new one.
