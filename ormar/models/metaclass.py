@@ -614,6 +614,8 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
 
         return new_model
 
+    __queryset_cls__ = QuerySet
+
     @property
     def objects(cls: Type["T"]) -> "QuerySet[T]":  # type: ignore
         if cls.Meta.requires_ref_update:
@@ -622,7 +624,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 f"ForwardRefs. \nBefore using the model you "
                 f"need to call update_forward_refs()."
             )
-        return QuerySet(model_cls=cls)
+        return cls.__queryset_cls__(model_cls=cls)
 
     def __getattr__(self, item: str) -> Any:
         """
