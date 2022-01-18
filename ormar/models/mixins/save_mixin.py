@@ -249,7 +249,8 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict
         """
-        for field_name, field in cls.Meta.model_fields.items():
+        for field_name in cls.get_fields_with_onupdate():
+            field = cls.Meta.model_fields[field_name]
             if field.has_onupdate() and not field.pydantic_only:
                 new_kwargs[field_name] = field.get_onupdate()
         return new_kwargs
@@ -420,7 +421,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return values
 
     @classmethod
-    def get_fields_has_onupdate(cls) -> List[str]:
+    def get_fields_with_onupdate(cls) -> List[str]:
         return [
             field_name
             for field_name, field in cls.Meta.model_fields.items()

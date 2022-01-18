@@ -1114,7 +1114,7 @@ class QuerySet(Generic[T]):
         columns = [self.model.get_column_alias(k) for k in columns]
         onupdate_fields = [
             self.model.get_column_alias(k)
-            for k in cast(Type["Model"], self.model_cls).get_fields_has_onupdate()
+            for k in cast(Type["Model"], self.model_cls).get_fields_with_onupdate()
         ]
         updated_columns = list(set(columns + onupdate_fields))
 

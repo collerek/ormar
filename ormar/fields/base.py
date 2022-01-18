@@ -226,15 +226,7 @@ class BaseField(FieldInfo):
         :return: result of the check if onupdate value is set
         rtype: bool
         """
-        if self.__pydantic_type__ is None:
-            return self.onupdate is not None
-
-        if self.onupdate is not None and not callable(self.onupdate):
-            if isinstance(self.onupdate, self.__pydantic_type__):
-                return True
-        elif self.onupdate is not None and callable(self.onupdate):
-            return True
-        return False
+        return self.onupdate is not None
 
     def get_onupdate(self) -> Union[None, Any]:
         """
@@ -243,9 +235,7 @@ class BaseField(FieldInfo):
         :return: result of the onupdate
         rtype: Any
         """
-        if callable(self.onupdate):
-            return self.onupdate()
-        return self.onupdate
+        return self.onupdate() if callable(self.onupdate) else self.onupdate
 
     def is_auto_primary_key(self) -> bool:
         """

@@ -237,7 +237,7 @@ class Model(ModelRow):
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
         if _columns:
-            onupdate_fields = self.get_fields_has_onupdate()
+            onupdate_fields = self.get_fields_with_onupdate()
             self_fields = {
                 k: v for k, v in self_fields.items()
                 if k in _columns or k in onupdate_fields
