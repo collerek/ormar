@@ -48,8 +48,8 @@ class BaseField(FieldInfo):
         self.index: bool = kwargs.pop("index", False)
         self.unique: bool = kwargs.pop("unique", False)
         self.pydantic_only: bool = kwargs.pop("pydantic_only", False)
-        self.onupdate: Union[Callable[..., Any], Any, None] = kwargs.pop(
-            "onupdate", None)
+        self.on_update: Union[Callable[..., Any], Any, None] = kwargs.pop(
+            "on_update", None)
         if self.pydantic_only:
             warnings.warn(
                 "Parameter `pydantic_only` is deprecated and will "
@@ -226,7 +226,7 @@ class BaseField(FieldInfo):
         :return: result of the check if onupdate value is set
         rtype: bool
         """
-        return self.onupdate is not None
+        return self.on_update is not None
 
     def get_onupdate(self) -> Union[None, Any]:
         """
@@ -235,7 +235,7 @@ class BaseField(FieldInfo):
         :return: result of the onupdate
         rtype: Any
         """
-        return self.onupdate() if callable(self.onupdate) else self.onupdate
+        return self.on_update() if callable(self.on_update) else self.on_update
 
     def is_auto_primary_key(self) -> bool:
         """
