@@ -20,13 +20,13 @@ class Task(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(
-        max_length=255, onupdate=lambda: "hello",
+        max_length=255, on_update=lambda: "hello",
     )
     age: int = ormar.Integer()
     points: int = ormar.Integer(
-        default=0, minimum=0, onupdate=1
+        default=0, minimum=0, on_update=1
     )
-    year = ormar.Integer(onupdate=2, default=1)
+    year = ormar.Integer(on_update=2, default=1)
 
 
 @pytest.fixture(autouse=True, scope="module")
