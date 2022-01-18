@@ -12,3 +12,4 @@ def test_to_str():
     assert isinstance(expected_bytes, bytes)
 
     assert isinstance(to_str(expected_bytes), str)
+    assert "1" == to_str(1)
