@@ -1,6 +1,8 @@
 import base64
 from typing import Any, TYPE_CHECKING, Type
 
+from ormar.queryset.utils import to_str
+
 try:
     import orjson as json
 except ImportError:  # pragma: no cover
@@ -42,7 +44,7 @@ class JsonDescriptor:
     def __set__(self, instance: "Model", value: Any) -> None:
         if not isinstance(value, str):
             value = json.dumps(value)
-        value = value.decode("utf-8") if isinstance(value, bytes) else value
+        value = to_str(value)
         instance._internal_set(self.name, value)
         instance.set_save_status(False)
 

@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma no cover
 def to_str(val: Union[bytes, str]):
     """ convert bytes to str simply """
     if isinstance(val, bytes):
-        return val.decode()
+        return val.decode("utf-8")
     return str(val)
 
 
