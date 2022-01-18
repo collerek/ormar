@@ -38,6 +38,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         _skip_ellipsis: Callable
         _json_fields: Set[str]
         _bytes_fields: Set[str]
+        _onupdate_fields: Set[str]
         __fields__: Dict[str, pydantic.fields.ModelField]
 
     @classmethod
@@ -251,8 +252,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         """
         for field_name in cls.get_fields_with_onupdate():
             field = cls.Meta.model_fields[field_name]
-            if field.has_onupdate() and not field.pydantic_only:
-                new_kwargs[field_name] = field.get_onupdate()
+            new_kwargs[field_name] = field.get_onupdate()
         return new_kwargs
 
     @classmethod
@@ -421,9 +421,12 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return values
 
     @classmethod
-    def get_fields_with_onupdate(cls) -> List[str]:
-        return [
-            field_name
-            for field_name, field in cls.Meta.model_fields.items()
-            if field.has_onupdate() and not field.pydantic_only
-        ]
+    def get_fields_with_onupdate(cls) -> Set[str]:
+        if not cls._onupdate_fields:
+            cls._onupdate_fields = {
+                field_name
+                for field_name, field in cls.Meta.model_fields.items()
+                if field.has_onupdate() and not field.pydantic_only
+            }
+        return cls._onupdate_fields
+
