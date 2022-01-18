@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar import Model, BaseField
 
 
-def to_str(val: Union[bytes, str, int]):
+def to_str(val: Union[bytes, str, int]) -> str:
     """ convert bytes to str simply """
     if isinstance(val, bytes):
         return val.decode("utf-8")
