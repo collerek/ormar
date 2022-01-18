@@ -94,6 +94,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         _quick_access_fields: Set
         _json_fields: Set
         _bytes_fields: Set
+        _onupdate_fields: Set
         Meta: ModelMeta
 
     # noinspection PyMissingConstructor
