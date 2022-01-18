@@ -17,6 +17,13 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar import Model, BaseField
 
 
+def to_str(val: Union[bytes, str]):
+    """ convert bytes to str simply """
+    if isinstance(val, bytes):
+        return val.decode()
+    return str(val)
+
+
 def check_node_not_dict_or_not_last_node(
     part: str, is_last: bool, current_level: Any
 ) -> bool:

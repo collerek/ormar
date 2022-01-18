@@ -23,6 +23,7 @@ import ormar  # noqa: I100, I202
 from ormar.exceptions import ModelPersistenceError
 from ormar.models.mixins import AliasMixin
 from ormar.models.mixins.relation_mixin import RelationMixin
+from ormar.queryset.utils import to_str
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import ForeignKeyField, Model
@@ -208,7 +209,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         """
         for key, value in model_dict.items():
             if key in cls._json_fields and not isinstance(value, str):
-                model_dict[key] = json.dumps(value)
+                model_dict[key] = to_str(json.dumps(value))
         return model_dict
 
     @classmethod

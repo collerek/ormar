@@ -42,6 +42,7 @@ class ToDo(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     text: str = ormar.String(max_length=500)
     completed: bool = ormar.Boolean(default=False)
+    pairs: List[str] = ormar.JSON(default=[])
 
 
 class Category(ormar.Model):
