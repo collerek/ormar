@@ -78,7 +78,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         new_kwargs = cls.substitute_models_with_pks(new_kwargs)
         new_kwargs = cls.reconvert_str_to_bytes(new_kwargs)
         new_kwargs = cls.dump_all_json_fields_to_str(new_kwargs)
-        new_kwargs = cls.populate_onupdate_value(new_kwargs)
+        # new_kwargs = cls.populate_onupdate_value(new_kwargs)
         new_kwargs = cls.translate_columns_to_aliases(new_kwargs)
         return new_kwargs
 
@@ -252,7 +252,8 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         """
         for field_name in cls.get_fields_with_onupdate():
             field = cls.Meta.model_fields[field_name]
-            new_kwargs[field_name] = field.get_onupdate()
+            if field_name not in new_kwargs:
+                new_kwargs[field_name] = field.get_onupdate()
         return new_kwargs
 
     @classmethod

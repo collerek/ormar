@@ -1112,13 +1112,15 @@ class QuerySet(Generic[T]):
             columns.append(pk_name)
 
         columns = [self.model.get_column_alias(k) for k in columns]
-        onupdate_fields = [
-            self.model.get_column_alias(k)
-            for k in cast(Type["Model"], self.model_cls).get_fields_with_onupdate()
-        ]
-        updated_columns = list(set(columns + onupdate_fields))
+        # on_update_fields = [
+        #     self.model.get_column_alias(k)
+        #     for k in cast(Type["Model"], self.model_cls).get_fields_with_onupdate()
+        # ]
+        # updated_columns = list(set(columns + on_update_fields))
 
         for obj in objects:
+            # when the obj.__setattr__, should be dirty for column
+            # only load the kv from dirty fields
             new_kwargs = obj.dict()
             if new_kwargs.get(pk_name) is None:
                 raise ModelPersistenceError(
@@ -1129,7 +1131,7 @@ class QuerySet(Generic[T]):
             ready_objects.append(
                 {
                     "new_" + k: v for k, v in new_kwargs.items()
-                    if k in updated_columns
+                    if k in columns
                 }
             )
         pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
@@ -1141,7 +1143,7 @@ class QuerySet(Generic[T]):
         expr = expr.values(
             **{
                 k: bindparam("new_" + k)
-                for k in updated_columns
+                for k in columns
                 if k != pk_column_name and k in table_columns
             }
         )
