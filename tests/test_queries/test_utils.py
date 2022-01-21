@@ -1,3 +1,4 @@
+import orjson
 import json
 
 from ormar.queryset.utils import to_str
@@ -5,6 +6,9 @@ from ormar.queryset.utils import to_str
 
 def test_to_str():
     expected_str = "[]"
+    val = orjson.dumps([])
+    assert expected_str == to_str(val)
+
     val = json.dumps([])
     assert expected_str == to_str(val)
 
