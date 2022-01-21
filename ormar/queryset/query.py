@@ -156,8 +156,8 @@ class Query:
         expr = expr.select_from(self.select_from)
 
         expr = self._apply_expression_modifiers(expr)
-
-        # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
+        if self.model_cls.Meta.debug:
+            print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
         self._reset_query_parameters()
 
         return expr

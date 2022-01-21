@@ -85,6 +85,7 @@ class ModelMeta:
     orders_by: List[str]
     exclude_parent_fields: List[str]
     extra: Extra
+    debug: bool  # if it's true, show the raw select sql
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:
