@@ -596,7 +596,7 @@ class Book(ormar.Model):
         database = database
         tablename = "book"
     
-        __queryset_cls__ = MyQuerySetClass
+    __queryset_cls__ = MyQuerySetClass
     
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=32)
