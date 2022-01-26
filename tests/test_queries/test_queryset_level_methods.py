@@ -6,6 +6,7 @@ import pytest
 import sqlalchemy
 
 import ormar
+from ormar import QuerySet
 from ormar.exceptions import (
     ModelPersistenceError,
     QueryDefinitionError,
@@ -42,6 +43,7 @@ class ToDo(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     text: str = ormar.String(max_length=500)
     completed: bool = ormar.Boolean(default=False)
+    pairs: pydantic.Json = ormar.JSON(default=[])
 
 
 class Category(ormar.Model):
@@ -74,6 +76,26 @@ class ItemConfig(ormar.Model):
     id: Optional[int] = ormar.Integer(primary_key=True)
     item_id: str = ormar.String(max_length=32, index=True)
     pairs: pydantic.Json = ormar.JSON(default=["2", "3"])
+
+
+class QuerySetCls(QuerySet):
+    async def first_or_404(self, *args, **kwargs):
+        entity = await self.get_or_none(*args, **kwargs)
+        if not entity:
+            # maybe HTTPException in fastapi
+            raise ValueError("customer not found")
+        return entity
+
+
+class Customer(ormar.Model):
+    class Meta:
+        metadata = metadata
+        database = database
+        tablename = "customer"
+        queryset_class = QuerySetCls
+
+    id: Optional[int] = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=32)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -348,3 +370,14 @@ async def test_bulk_operations_with_json():
         await ItemConfig.objects.bulk_update(items)
         items = await ItemConfig.objects.all()
         assert all(x.pairs == ["1"] for x in items)
+
+
+@pytest.mark.asyncio
+async def test_custom_queryset_cls():
+    async with database:
+        with pytest.raises(ValueError):
+            await Customer.objects.first_or_404(id=1)
+
+        await Customer(name="test").save()
+        c = await Customer.objects.first_or_404(name="test")
+        assert c.name == "test"

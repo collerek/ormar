@@ -12,15 +12,11 @@ from typing import (
     cast,
 )
 
-try:
-    import orjson as json
-except ImportError:  # pragma: no cover
-    import json  # type: ignore
-
 import pydantic
 
 import ormar  # noqa: I100, I202
 from ormar.exceptions import ModelPersistenceError
+from ormar.fields.parsers import encode_json
 from ormar.models.mixins import AliasMixin
 from ormar.models.mixins.relation_mixin import RelationMixin
 
@@ -207,8 +203,8 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :rtype: Dict
         """
         for key, value in model_dict.items():
-            if key in cls._json_fields and not isinstance(value, str):
-                model_dict[key] = json.dumps(value)
+            if key in cls._json_fields:
+                model_dict[key] = encode_json(value)
         return model_dict
 
     @classmethod
