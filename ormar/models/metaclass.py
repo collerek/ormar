@@ -85,6 +85,7 @@ class ModelMeta:
     orders_by: List[str]
     exclude_parent_fields: List[str]
     extra: Extra
+    queryset_class: Type[QuerySet]
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:
@@ -614,8 +615,6 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
 
         return new_model
 
-    __queryset_cls__ = QuerySet
-
     @property
     def objects(cls: Type["T"]) -> "QuerySet[T]":  # type: ignore
         if cls.Meta.requires_ref_update:
@@ -624,7 +623,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 f"ForwardRefs. \nBefore using the model you "
                 f"need to call update_forward_refs()."
             )
-        return cls.__queryset_cls__(model_cls=cls)
+        return cls.Meta.queryset_class(model_cls=cls)
 
     def __getattr__(self, item: str) -> Any:
         """

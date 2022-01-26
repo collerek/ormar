@@ -47,18 +47,18 @@ def populate_default_options_values(  # noqa: CCR001
     :param model_fields: dict of model fields
     :type model_fields: Union[Dict[str, type], Dict]
     """
-    if not hasattr(new_model.Meta, "constraints"):
-        new_model.Meta.constraints = []
-    if not hasattr(new_model.Meta, "model_fields"):
-        new_model.Meta.model_fields = model_fields
-    if not hasattr(new_model.Meta, "abstract"):
-        new_model.Meta.abstract = False
-    if not hasattr(new_model.Meta, "extra"):
-        new_model.Meta.extra = Extra.forbid
-    if not hasattr(new_model.Meta, "orders_by"):
-        new_model.Meta.orders_by = []
-    if not hasattr(new_model.Meta, "exclude_parent_fields"):
-        new_model.Meta.exclude_parent_fields = []
+    defaults = {
+        "queryset_class": ormar.QuerySet,
+        "constraints": [],
+        "model_fields": model_fields,
+        "abstract": False,
+        "extra": Extra.forbid,
+        "orders_by": [],
+        "exclude_parent_fields": [],
+    }
+    for key, value in defaults.items():
+        if not hasattr(new_model.Meta, key):
+            setattr(new_model.Meta, key, value)
 
     if any(
         is_field_an_forward_ref(field) for field in new_model.Meta.model_fields.values()

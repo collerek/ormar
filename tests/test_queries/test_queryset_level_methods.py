@@ -78,22 +78,21 @@ class ItemConfig(ormar.Model):
     pairs: pydantic.Json = ormar.JSON(default=["2", "3"])
 
 
+class QuerySetCls(QuerySet):
+    async def first_or_404(self, *args, **kwargs):
+        entity = await self.get_or_none(*args, **kwargs)
+        if not entity:
+            # maybe HTTPException in fastapi
+            raise ValueError("customer not found")
+        return entity
+
+
 class Customer(ormar.Model):
     class Meta:
         metadata = metadata
         database = database
         tablename = "customer"
-
-    class QuerySetCls(QuerySet):
-
-        async def first_or_404(self, *args, **kwargs):
-            entity = await self.get_or_none(*args, **kwargs)
-            if not entity:
-                # maybe HTTPException in fastapi
-                raise ValueError("customer not found")
-            return entity
-
-    __queryset_cls__ = QuerySetCls
+        queryset_class = QuerySetCls
 
     id: Optional[int] = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=32)

@@ -266,6 +266,44 @@ But for now you cannot change the ManyToMany column names as they go through oth
 --8<-- "../docs_src/models/docs010.py"
 ```
 
+## Overwriting the default QuerySet
+
+If you want to customize the queries run by ormar you can define your own queryset class (that extends the ormar `QuerySet`) in your model class, default one is simply the `QuerySet`
+
+You can provide a new class in `Meta` configuration of your class as `queryset_class` parameter.
+
+```python
+import ormar
+from ormar.queryset.queryset import QuerySet
+from fastapi import HTTPException
+
+
+class MyQuerySetClass(QuerySet):
+    
+    async def first_or_404(self, *args, **kwargs):
+        entity = await self.get_or_none(*args, **kwargs) 
+        if entity is None:
+            # in fastapi or starlette
+            raise HTTPException(404)
+
+        
+class Book(ormar.Model):
+    
+    class Meta(ormar.ModelMeta):
+        metadata = metadata
+        database = database
+        tablename = "book"
+        queryset_class = MyQuerySetClass
+    
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=32)
+
+
+# when book not found, raise `404` in your view.
+book = await Book.objects.first_or_404(name="123")
+
+```
+
 ### Type Hints & Legacy
 
 Before version 0.4.0 `ormar` supported only one way of defining `Fields` on a `Model` using python type hints as pydantic.

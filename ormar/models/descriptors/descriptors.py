@@ -1,12 +1,7 @@
 import base64
 from typing import Any, TYPE_CHECKING, Type
 
-from ormar.queryset.utils import to_str
-
-try:
-    import orjson as json
-except ImportError:  # pragma: no cover
-    import json  # type: ignore
+from ormar.fields.parsers import encode_json
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
@@ -42,9 +37,7 @@ class JsonDescriptor:
         return value
 
     def __set__(self, instance: "Model", value: Any) -> None:
-        if not isinstance(value, str):
-            value = json.dumps(value)
-        value = to_str(value)
+        value = encode_json(value)
         instance._internal_set(self.name, value)
         instance.set_save_status(False)
 

@@ -571,37 +571,3 @@ class Category(CreateDateFieldsModel, AuditCreateModel):
 ```
 
 That way you can inherit from both create and update classes if needed, and only one of them otherwise.
-
-## __queryset_cls__
-
-You can define your own queryset_class(extends the `Queryset`) in your model class, default is `QuerySet`
-
-```python
-import ormar
-from ormar.queryset.queryset import QuerySet
-from fastapi import HTTPException
-
-
-class MyQuerySetClass(QuerySet):
-    
-    async def first_or_404(self, *args, **kwargs):
-        entity = await self.get_or_none(*args, **kwargs) 
-        if entity is None:
-            # in fastapi or starlette
-            raise HTTPException(404)
-
-class Book(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = database
-        tablename = "book"
-    
-    __queryset_cls__ = MyQuerySetClass
-    
-    id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=32)
-
-    # when book not found, raise `404` in your view.
-    book = await Book.objects.first_or_404(name="123")
-
-```
