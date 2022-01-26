@@ -30,9 +30,9 @@ except ImportError:  # pragma: no cover
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
 from ormar.exceptions import (
+    ModelListEmptyError,
     ModelPersistenceError,
     QueryDefinitionError,
-    ModelListEmptyError,
 )
 from ormar.queryset import FieldAccessor, FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
@@ -1068,6 +1068,7 @@ class QuerySet(Generic[T]):
             raise ModelListEmptyError("Bulk create objects are empty!")
 
         ready_objects = [obj.prepare_model_to_save(obj.dict()) for obj in objects]
+
         # don't use execute_many, as in databases it's executed in a loop
         # instead of using execute_many from drivers
         expr = self.table.insert().values(ready_objects)
