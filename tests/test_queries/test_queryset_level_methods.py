@@ -209,7 +209,7 @@ async def test_get_or_create_with_defaults():
         assert book2.author == "Mojix"
         assert book2.genre == "Historic"
         assert await Book.objects.count() == 1
-        
+
 
 @pytest.mark.asyncio
 async def test_update_or_create():

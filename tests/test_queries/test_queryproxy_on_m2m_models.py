@@ -107,7 +107,9 @@ async def test_queryset_methods():
             assert len(post.categories) == 1
             assert created is False
 
-            category, created = await post.categories.get_or_create(name="Breaking News")
+            category, created = await post.categories.get_or_create(
+                name="Breaking News"
+            )
             assert category != breaking
             assert category.pk is not None
             assert len(post.categories) == 2

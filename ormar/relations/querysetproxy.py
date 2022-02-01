@@ -9,9 +9,9 @@ from typing import (  # noqa: I100, I201
     Sequence,
     Set,
     TYPE_CHECKING,
+    Tuple,
     Type,
     TypeVar,
-    Tuple,
     Union,
     cast,
 )

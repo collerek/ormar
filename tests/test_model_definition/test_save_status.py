@@ -195,11 +195,15 @@ async def test_queryset_methods():
             comps = await Company.objects.all()
             assert [comp.saved for comp in comps]
 
-            comp2, created = await Company.objects.get_or_create(name="Banzai_new", founded=2001)
+            comp2, created = await Company.objects.get_or_create(
+                name="Banzai_new", founded=2001
+            )
             assert comp2.saved
             assert created is True
 
-            comp3, created = await Company.objects.get_or_create(name="Banzai", founded=1988)
+            comp3, created = await Company.objects.get_or_create(
+                name="Banzai", founded=1988
+            )
             assert comp3.saved
             assert comp3.pk == comp.pk
             assert created is False
