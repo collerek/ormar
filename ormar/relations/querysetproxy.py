@@ -11,6 +11,7 @@ from typing import (  # noqa: I100, I201
     TYPE_CHECKING,
     Type,
     TypeVar,
+    Tuple,
     Union,
     cast,
 )
@@ -483,23 +484,33 @@ class QuerysetProxy(Generic[T]):
                 )
         return len(children)
 
-    async def get_or_create(self, *args: Any, **kwargs: Any) -> "T":
+    async def get_or_create(
+        self,
+        _defaults: Optional[Dict[str, Any]] = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Tuple["T", bool]:
         """
         Combination of create and get methods.
 
         Tries to get a row meeting the criteria fro kwargs
         and if `NoMatch` exception is raised
-        it creates a new one with given kwargs.
+        it creates a new one with given kwargs and _defaults.
 
         :param kwargs: fields names and proper value types
         :type kwargs: Any
-        :return: returned or created Model
-        :rtype: Model
+        :param _defaults: default values for creating object
+        :type _defaults: Optional[Dict[str, Any]]
+        :return: model instance and a boolean
+        :rtype: Tuple("T", bool)
         """
         try:
-            return await self.get(*args, **kwargs)
-        except ormar.NoMatch:
-            return await self.create(**kwargs)
+            return await self.get(*args, **kwargs), False
+        except NoMatch:
+            if _defaults is None:
+                return await self.create(**kwargs), True
+            else:
+                return await self.create(**kwargs, **_defaults), True
 
     async def update_or_create(self, **kwargs: Any) -> "T":
         """
