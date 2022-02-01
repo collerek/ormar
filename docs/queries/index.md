@@ -24,7 +24,7 @@ To read more about any specific section or function please refer to the details 
 ###[Insert data into database](./create.md)
 
 * `create(**kwargs) -> Model`
-* `get_or_create(**kwargs) -> Model`
+* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
 * `update_or_create(**kwargs) -> Model`
 * `bulk_create(objects: List[Model]) -> None`
 
@@ -37,7 +37,7 @@ To read more about any specific section or function please refer to the details 
   
 * `QuerysetProxy`
     * `QuerysetProxy.create(**kwargs)` method
-    * `QuerysetProxy.get_or_create(**kwargs)` method
+    * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs)` method
     * `QuerysetProxy.update_or_create(**kwargs)` method
   
 !!!tip
@@ -47,7 +47,7 @@ To read more about any specific section or function please refer to the details 
 
 * `get(**kwargs) -> Model`
 * `get_or_none(**kwargs) -> Optional[Model]`
-* `get_or_create(**kwargs) -> Model`
+* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
 * `first() -> Model`
 * `all(**kwargs) -> List[Optional[Model]]`
 
@@ -59,7 +59,7 @@ To read more about any specific section or function please refer to the details 
 * `QuerysetProxy`
     * `QuerysetProxy.get(**kwargs)` method
     * `QuerysetProxy.get_or_none(**kwargs)` method
-    * `QuerysetProxy.get_or_create(**kwargs)` method
+    * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs)` method
     * `QuerysetProxy.first()` method
     * `QuerysetProxy.all(**kwargs)` method
   
@@ -140,7 +140,7 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
 * `order_by(columns:Union[List, str]) -> QuerySet`
 * `get(**kwargs) -> Model`
 * `get_or_none(**kwargs) -> Optional[Model]`
-* `get_or_create(**kwargs) -> Model`
+* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
 * `all(**kwargs) -> List[Optional[Model]]`
 
 
@@ -150,7 +150,7 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
     * `QuerysetProxy.order_by(columns:Union[List, str])` method
     * `QuerysetProxy.get(**kwargs)` method
     * `QuerysetProxy.get_or_none(**kwargs)` method
-    * `QuerysetProxy.get_or_create(**kwargs)` method
+    * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs)` method
     * `QuerysetProxy.all(**kwargs)` method
   
 !!!tip
