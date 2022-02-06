@@ -210,6 +210,20 @@ async def test_get_or_create_with_defaults():
         assert book2.genre == "Historic"
         assert await Book.objects.count() == 1
 
+        book, created = await Book.objects.get_or_create(
+            title="doesn't exist", 
+            _defaults={"title": "overwritten", "author": "Mojix", "genre": "Historic"},
+        )
+        assert created is True
+        assert book.title == "overwritten"
+
+        book2, created = await Book.objects.get_or_create(
+            title="overwritten", _defaults={"title": "doesn't work"}
+        )
+        assert created is False
+        assert book2.title == "overwritten"
+        assert book2 == book
+
 
 @pytest.mark.asyncio
 async def test_update_or_create():

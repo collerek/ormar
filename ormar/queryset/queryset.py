@@ -998,10 +998,8 @@ class QuerySet(Generic[T]):
         try:
             return await self.get(*args, **kwargs), False
         except NoMatch:
-            if _defaults is None:
-                return await self.create(**kwargs), True
-            else:
-                return await self.create(**kwargs, **_defaults), True
+            _defaults = _defaults or {}
+            return await self.create(**{**kwargs, **_defaults}), True
 
     async def update_or_create(self, **kwargs: Any) -> "T":
         """
