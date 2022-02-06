@@ -211,7 +211,7 @@ async def test_get_or_create_with_defaults():
         assert await Book.objects.count() == 1
 
         book, created = await Book.objects.get_or_create(
-            title="doesn't exist", 
+            title="doesn't exist",
             _defaults={"title": "overwritten", "author": "Mojix", "genre": "Historic"},
         )
         assert created is True
