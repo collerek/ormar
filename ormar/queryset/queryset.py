@@ -1112,12 +1112,12 @@ class QuerySet(Generic[T]):
         if pk_name not in columns:
             columns.append(pk_name)
 
-        columns = [self.model.get_column_alias(k) for k in columns]
-        # on_update_fields = [
-        #     self.model.get_column_alias(k)
-        #     for k in cast(Type["Model"], self.model_cls).get_fields_with_onupdate()
-        # ]
-        # updated_columns = list(set(columns + on_update_fields))
+        columns = {self.model.get_column_alias(k) for k in columns}
+        on_update_fields = {
+            self.model.get_column_alias(k)
+            for k in cast(Type["Model"], self.model_cls).get_fields_with_onupdate()
+        }
+        updated_columns = columns | on_update_fields
 
         for obj in objects:
             # when the obj.__setattr__, should be dirty for column
@@ -1132,19 +1132,20 @@ class QuerySet(Generic[T]):
             ready_objects.append(
                 {
                     "new_" + k: v for k, v in new_kwargs.items()
-                    if k in columns
+                    if k in updated_columns
                 }
             )
         pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
         pk_column_name = self.model.get_column_alias(pk_name)
         table_columns = [c.name for c in self.model_meta.table.c]
+        # Make the expr
         expr = self.table.update().where(
             pk_column == bindparam("new_" + pk_column_name)
         )
         expr = expr.values(
             **{
                 k: bindparam("new_" + k)
-                for k in columns
+                for k in updated_columns
                 if k != pk_column_name and k in table_columns
             }
         )
