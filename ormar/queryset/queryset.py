@@ -1112,13 +1112,13 @@ class QuerySet(Generic[T]):
         if pk_name not in columns:
             columns.append(pk_name)
 
-        new_columns: Set[str] = {self.model.get_column_alias(k) for k in columns}
+        columns = [self.model.get_column_alias(k) for k in columns]
 
-        on_update_fields = {
-            self.model.get_column_alias(k)
-            for k in cast(Type["Model"], self.model_cls).get_fields_with_onupdate()
-        }
-        updated_columns = new_columns | on_update_fields
+        # on_update_fields = {
+        #     self.model.get_column_alias(k)
+        #     for k in cast(Type["Model"], self.model_cls).get_fields_with_onupdate()
+        # }
+        # updated_columns = new_columns | on_update_fields
 
         for obj in objects:
             # when the obj.__setattr__, should be dirty for column
@@ -1133,7 +1133,7 @@ class QuerySet(Generic[T]):
             ready_objects.append(
                 {
                     "new_" + k: v for k, v in new_kwargs.items()
-                    if k in updated_columns
+                    if k in columns
                 }
             )
         pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
@@ -1146,7 +1146,7 @@ class QuerySet(Generic[T]):
         expr = expr.values(
             **{
                 k: bindparam("new_" + k)
-                for k in updated_columns
+                for k in columns
                 if k != pk_column_name and k in table_columns
             }
         )
