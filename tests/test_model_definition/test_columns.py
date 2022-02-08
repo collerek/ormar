@@ -1,5 +1,4 @@
 import datetime
-
 from enum import Enum
 
 import databases
@@ -8,6 +7,7 @@ import pytest
 import sqlalchemy
 
 import ormar
+from ormar import ModelDefinitionError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -37,7 +37,7 @@ class Example(ormar.Model):
     description: str = ormar.Text(nullable=True)
     value: float = ormar.Float(nullable=True)
     data: pydantic.Json = ormar.JSON(default={})
-    size: MyEnum = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
+    size = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -72,3 +72,17 @@ async def test_model_crud():
         assert example.size == MyEnum.BIG
 
         await example.delete()
+
+
+@pytest.mark.asyncio
+async def test_invalid_enum_field():
+    async with database:
+        with pytest.raises(ModelDefinitionError):
+            class Example2(ormar.Model):
+                class Meta:
+                    tablename = "example"
+                    metadata = metadata
+                    database = database
+
+                id: int = ormar.Integer(primary_key=True)
+                size: MyEnum = ormar.Enum(enum_class=[])

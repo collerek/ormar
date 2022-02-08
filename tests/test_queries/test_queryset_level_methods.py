@@ -82,7 +82,7 @@ class ItemConfig(ormar.Model):
     id: Optional[int] = ormar.Integer(primary_key=True)
     item_id: str = ormar.String(max_length=32, index=True)
     pairs: pydantic.Json = ormar.JSON(default=["2", "3"])
-    size: MySize = ormar.Enum(enum_class=MySize, default=MySize.SMALL)
+    size = ormar.Enum(enum_class=MySize, default=MySize.SMALL)
 
 
 class QuerySetCls(QuerySet):

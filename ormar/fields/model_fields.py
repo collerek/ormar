@@ -1,7 +1,7 @@
 import datetime
 import decimal
 import uuid
-from enum import Enum as E
+from enum import EnumMeta, Enum as E
 from typing import Any, Optional, Set, TYPE_CHECKING, Type, Union, overload
 
 import pydantic
@@ -810,9 +810,12 @@ class Enum(ModelFieldFactory):
     _sample = None
 
     def __new__(  # type: ignore # noqa CFQ002
-        cls, *, enum_class: Type[E] = None, **kwargs: Any
+        cls,
+        *,
+        enum_class: Type[E] = None,
+        **kwargs: Any
     ) -> BaseField:
-        if enum_class is None or isinstance(enum_class, E):
+        if enum_class is None or not isinstance(enum_class, EnumMeta):
             raise ModelDefinitionError("Enum Field choices must be EnumType")
 
         kwargs = {
