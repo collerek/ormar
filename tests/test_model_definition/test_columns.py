@@ -1,5 +1,7 @@
 import datetime
 
+from enum import Enum
+
 import databases
 import pydantic
 import pytest
@@ -16,6 +18,11 @@ def time():
     return datetime.datetime.now().time()
 
 
+class MyEnum(Enum):
+    SMALL = 1
+    BIG = 2
+
+
 class Example(ormar.Model):
     class Meta:
         tablename = "example"
@@ -30,6 +37,7 @@ class Example(ormar.Model):
     description: str = ormar.Text(nullable=True)
     value: float = ormar.Float(nullable=True)
     data: pydantic.Json = ormar.JSON(default={})
+    size: MyEnum = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -52,10 +60,15 @@ async def test_model_crud():
         assert example.description is None
         assert example.value is None
         assert example.data == {}
+        assert example.size == MyEnum.SMALL
 
-        await example.update(data={"foo": 123}, value=123.456)
+        await example.update(
+            data={"foo": 123}, value=123.456,
+            size=MyEnum.BIG
+        )
         await example.load()
         assert example.value == 123.456
         assert example.data == {"foo": 123}
+        assert example.size == MyEnum.BIG
 
         await example.delete()

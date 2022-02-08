@@ -53,6 +53,7 @@ from ormar.fields import (
     Decimal,
     ENCODERS_MAP,
     EncryptBackends,
+    Enum,
     Float,
     ForeignKey,
     ForeignKeyField,
@@ -108,6 +109,7 @@ __all__ = [
     "RelationType",
     "Undefined",
     "UUID",
+    "Enum"
     "UniqueColumns",
     "IndexColumns",
     "QuerySetProtocol",

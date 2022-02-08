@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List, Optional
 
 import databases
@@ -67,6 +68,11 @@ class Note(ormar.Model):
     category: Optional[Category] = ormar.ForeignKey(Category)
 
 
+class MySize(Enum):
+    SMALL = 0
+    BIG = 1
+
+
 class ItemConfig(ormar.Model):
     class Meta:
         metadata = metadata
@@ -76,6 +82,7 @@ class ItemConfig(ormar.Model):
     id: Optional[int] = ormar.Integer(primary_key=True)
     item_id: str = ormar.String(max_length=32, index=True)
     pairs: pydantic.Json = ormar.JSON(default=["2", "3"])
+    size: MySize = ormar.Enum(enum_class=MySize, default=MySize.SMALL)
 
 
 class QuerySetCls(QuerySet):
@@ -381,3 +388,13 @@ async def test_custom_queryset_cls():
         await Customer(name="test").save()
         c = await Customer.objects.first_or_404(name="test")
         assert c.name == "test"
+
+
+@pytest.mark.asyncio
+async def test_filter_enum():
+    async with database:
+        it = ItemConfig(item_id="test_1")
+        await it.save()
+
+        it = await ItemConfig.objects.filter(size=MySize.SMALL).first()
+        assert it
