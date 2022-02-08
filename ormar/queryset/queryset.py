@@ -1112,12 +1112,13 @@ class QuerySet(Generic[T]):
         if pk_name not in columns:
             columns.append(pk_name)
 
-        columns = {self.model.get_column_alias(k) for k in columns}
+        new_columns: Set[str] = {self.model.get_column_alias(k) for k in columns}
+
         on_update_fields = {
             self.model.get_column_alias(k)
             for k in cast(Type["Model"], self.model_cls).get_fields_with_onupdate()
         }
-        updated_columns = columns | on_update_fields
+        updated_columns = new_columns | on_update_fields
 
         for obj in objects:
             # when the obj.__setattr__, should be dirty for column
