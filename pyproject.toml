@@ -111,7 +111,7 @@ types-dataclasses = { version = "^0.6.1", markers = "python_version < '3.7'" }
 
 # Documantation
 mkdocs = "^1.2.3"
-mkdocs-material = "^8.1.2"
+mkdocs-material = "^8.1.11"
 mkdocs-material-extensions = "^1.0.3"
 pydoc-markdown = { version = "^4.5.0", markers = "python_version > '3.7'" }
 dataclasses = { version = ">=0.6.0,<0.8 || >0.8,<1.0.0" }
