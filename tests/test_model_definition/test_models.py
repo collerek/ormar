@@ -58,6 +58,21 @@ class LargeBinaryStr(ormar.Model):
     )
 
 
+class LargeBinaryNullableStr(ormar.Model):
+    class Meta:
+        tablename = "my_str_blobs2"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    test_binary: str = ormar.LargeBinary(
+        max_length=100000,
+        choices=[blob3, blob4],
+        represent_as_base64_str=True,
+        nullable=True,
+    )
+
+
 class UUIDSample(ormar.Model):
     class Meta:
         tablename = "uuids"
@@ -232,6 +247,37 @@ async def test_binary_str_column():
 
 
 @pytest.mark.asyncio
+async def test_binary_nullable_str_column():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            await LargeBinaryNullableStr().save()
+            await LargeBinaryNullableStr.objects.create()
+            items = await LargeBinaryNullableStr.objects.all()
+            assert len(items) == 2
+
+            items[0].test_binary = blob3
+            items[1].test_binary = blob4
+
+            await LargeBinaryNullableStr.objects.bulk_update(items)
+            items = await LargeBinaryNullableStr.objects.all()
+            assert len(items) == 2
+            assert items[0].test_binary == base64.b64encode(blob3).decode()
+            items[0].test_binary = base64.b64encode(blob4).decode()
+            assert items[0].test_binary == base64.b64encode(blob4).decode()
+            assert items[1].test_binary == base64.b64encode(blob4).decode()
+            assert items[1].__dict__["test_binary"] == blob4
+
+            await LargeBinaryNullableStr.objects.bulk_create(
+                [LargeBinaryNullableStr(), LargeBinaryNullableStr(test_binary=blob3)]
+            )
+            items = await LargeBinaryNullableStr.objects.all()
+            assert len(items) == 4
+            await items[0].update(test_binary=blob4)
+            check_item = await LargeBinaryNullableStr.objects.get(id=items[0].id)
+            assert check_item.test_binary == base64.b64encode(blob4).decode()
+
+
+@pytest.mark.asyncio
 async def test_uuid_column():
     async with database:
         async with database.transaction(force_rollback=True):
@@ -306,14 +352,16 @@ async def test_model_get():
             lookup = await User.objects.get()
             assert lookup == user
 
-            user = await User.objects.create(name="Jane")
+            user2 = await User.objects.create(name="Jane")
             await User.objects.create(name="Jane")
             with pytest.raises(ormar.MultipleMatches):
                 await User.objects.get(name="Jane")
 
-            same_user = await User.objects.get(pk=user.id)
-            assert same_user.id == user.id
-            assert same_user.pk == user.pk
+            same_user = await User.objects.get(pk=user2.id)
+            assert same_user.id == user2.id
+            assert same_user.pk == user2.pk
+
+            assert await User.objects.order_by("-name").get() == user
 
 
 @pytest.mark.asyncio
@@ -448,6 +496,8 @@ async def test_model_first():
             assert await User.objects.filter(name="Jane").first() == jane
             with pytest.raises(NoMatch):
                 await User.objects.filter(name="Lucy").first()
+
+            assert await User.objects.order_by("name").first() == jane
 
 
 def not_contains(a, b):

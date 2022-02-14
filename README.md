@@ -679,6 +679,7 @@ Signals allow to trigger your function for a given event on a given Model.
 * `post_relation_add`
 * `pre_relation_remove`
 * `post_relation_remove`
+* `post_bulk_update`
 
 
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/

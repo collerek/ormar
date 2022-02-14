@@ -192,6 +192,7 @@ class Query:
         for order in list(self.sorted_orders.keys()):
             if order is not None and order.get_field_name_text() != pk_aliased_name:
                 aliased_col = order.get_field_name_text()
+                # maxes[aliased_col] = order.get_text_clause()
                 maxes[aliased_col] = order.get_min_or_max()
             elif order.get_field_name_text() == pk_aliased_name:
                 maxes[pk_aliased_name] = order.get_text_clause()

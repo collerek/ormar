@@ -47,18 +47,20 @@ def populate_default_options_values(  # noqa: CCR001
     :param model_fields: dict of model fields
     :type model_fields: Union[Dict[str, type], Dict]
     """
-    if not hasattr(new_model.Meta, "aliases_dict"):
-        new_model.Meta.aliases_dict = dict()
-    if not hasattr(new_model.Meta, "model_fields"):
-        new_model.Meta.model_fields = model_fields
-    if not hasattr(new_model.Meta, "abstract"):
-        new_model.Meta.abstract = False
-    if not hasattr(new_model.Meta, "extra"):
-        new_model.Meta.extra = Extra.forbid
-    if not hasattr(new_model.Meta, "orders_by"):
-        new_model.Meta.orders_by = []
-    if not hasattr(new_model.Meta, "exclude_parent_fields"):
-        new_model.Meta.exclude_parent_fields = []
+
+    defaults = {
+        "aliases_dict": {},
+        "queryset_class": ormar.QuerySet,
+        "constraints": [],
+        "model_fields": model_fields,
+        "abstract": False,
+        "extra": Extra.forbid,
+        "orders_by": [],
+        "exclude_parent_fields": [],
+    }
+    for key, value in defaults.items():
+        if not hasattr(new_model.Meta, key):
+            setattr(new_model.Meta, key, value)
 
     set_constraints(new_model=new_model)
     verify_if_model_has_unresolved_forward_references(new_model=new_model)
@@ -116,7 +118,7 @@ class Connection(sqlite3.Connection):
         self.execute("PRAGMA foreign_keys=1;")
 
 
-def substitue_backend_pool_for_sqlite(new_model: Type["Model"]) -> None:
+def substitute_backend_pool_for_sqlite(new_model: Type["Model"]) -> None:
     """
     Recreates Connection pool for sqlite3 with new factory that
     executes "PRAGMA foreign_keys=1; on initialization to enable foreign keys.
@@ -149,7 +151,7 @@ def check_required_meta_parameters(new_model: Type["Model"]) -> None:
             )
 
     else:
-        substitue_backend_pool_for_sqlite(new_model=new_model)
+        substitute_backend_pool_for_sqlite(new_model=new_model)
 
     if not hasattr(new_model.Meta, "metadata"):
         if not getattr(new_model.Meta, "abstract", False):

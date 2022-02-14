@@ -100,6 +100,8 @@ class BaseField(FieldInfo):
         self.ormar_default: Any = kwargs.pop("default", None)
         self.server_default: Any = kwargs.pop("server_default", None)
 
+        self.comment: str = kwargs.pop("comment", None)
+
         self.represent_as_base64_str: bool = kwargs.pop(
             "represent_as_base64_str", False
         )
@@ -285,6 +287,7 @@ class BaseField(FieldInfo):
                 unique=self.unique,
                 default=self.ormar_default,
                 server_default=self.server_default,
+                comment=self.comment,
             )
         else:
             column = self._get_encrypted_column(name=name)

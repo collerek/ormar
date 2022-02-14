@@ -48,7 +48,7 @@ class DataSourceTableColumn(ormar.Model):
 
 
 @pytest.fixture(autouse=True, scope="module")
-def create_test_database():
+def create_test_database():  # pragma: no cover
     engine = sqlalchemy.create_engine(DATABASE_URL)
     metadata.drop_all(engine)
     metadata.create_all(engine)

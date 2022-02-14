@@ -9,6 +9,7 @@ Currently only:
 """
 from ormar.decorators.property_field import property_field
 from ormar.decorators.signals import (
+    post_bulk_update,
     post_delete,
     post_relation_add,
     post_relation_remove,
@@ -23,6 +24,7 @@ from ormar.decorators.signals import (
 
 __all__ = [
     "property_field",
+    "post_bulk_update",
     "post_delete",
     "post_save",
     "post_update",

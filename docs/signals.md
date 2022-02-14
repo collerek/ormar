@@ -232,6 +232,11 @@ Send for `Model.relation_name.remove()` method for `ManyToMany` relations and re
 `sender` - sender class, `instance` - instance to which related model is added, `child` - model being added,
 `relation_name` - name of the relation to which child is added.
 
+### post_bulk_update
+
+`post_bulk_update(sender: Type["Model"], instances: List["Model"], **kwargs)`, 
+Send for `Model.objects.bulk_update(List[objects])` method.
+
 
 ## Defining your own signals
 

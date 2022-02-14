@@ -89,6 +89,7 @@ class ModelMeta:
     denied_fields: Set[str]
     aliases_dict: Dict[str, str]
     extra: Extra
+    queryset_class: Type[QuerySet]
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:
@@ -163,6 +164,7 @@ def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
         signals.post_relation_add = Signal()
         signals.pre_relation_remove = Signal()
         signals.post_relation_remove = Signal()
+        signals.post_bulk_update = Signal()
         new_model.Meta.signals = signals
 
 
@@ -619,7 +621,7 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 f"ForwardRefs. \nBefore using the model you "
                 f"need to call update_forward_refs()."
             )
-        return QuerySet(model_cls=cls)
+        return cls.Meta.queryset_class(model_cls=cls)
 
     @property
     def pk_type(cls) -> Any:

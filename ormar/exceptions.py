@@ -81,3 +81,11 @@ class SignalDefinitionError(AsyncOrmException):
     """
 
     pass
+
+
+class ModelListEmptyError(AsyncOrmException):
+    """
+    Raised for objects is empty when bulk_update
+    """
+
+    pass

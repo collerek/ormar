@@ -38,6 +38,7 @@ class AliasManager:
     def __init__(self) -> None:
         self._reversed_aliases: Dict[str, str] = dict()
         self._relation_aliases: Dict[str, str] = defaultdict(get_table_alias)
+        self._prefixed_tables: Dict[str, text] = dict()
 
     @property
     def reversed_aliases(self) -> Dict:
@@ -72,15 +73,19 @@ class AliasManager:
         :rtype: List[text]
         """
         alias = f"{alias}_" if alias else ""
+        aliased_fields = [f"{alias}{x}" for x in fields] if fields else []
         all_columns = (
             table.columns
             if not fields
-            else [col for col in table.columns if col.name in fields]
+            else [
+                col
+                for col in table.columns
+                if col.name in fields or col.name in aliased_fields
+            ]
         )
         return [column.label(f"{alias}{column.name}") for column in all_columns]
 
-    @staticmethod
-    def prefixed_table_name(alias: str, table: sqlalchemy.Table) -> text:
+    def prefixed_table_name(self, alias: str, table: sqlalchemy.Table) -> text:
         """
         Creates text clause with table name with aliased name.
 
@@ -91,7 +96,9 @@ class AliasManager:
         :return: sqlalchemy text clause as "table_name aliased_name"
         :rtype: sqlalchemy text clause
         """
-        return table.alias(f"{alias}_{table.name}")
+        full_alias = f"{alias}_{table.name}"
+        key = f"{full_alias}_{id(table)}"
+        return self._prefixed_tables.setdefault(key, table.alias(full_alias))
 
     def resolve_relation_string_alias(
         self, source_model: Union[Type["Model"], Type["ModelRow"]], relation_string: str

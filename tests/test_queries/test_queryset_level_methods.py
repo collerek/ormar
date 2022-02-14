@@ -1,11 +1,17 @@
-from typing import Optional
+from typing import List, Optional
 
 import databases
+import pydantic
 import pytest
 import sqlalchemy
 
 import ormar
-from ormar.exceptions import ModelPersistenceError, QueryDefinitionError
+from ormar import QuerySet
+from ormar.exceptions import (
+    ModelPersistenceError,
+    QueryDefinitionError,
+    ModelListEmptyError,
+)
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -37,6 +43,7 @@ class ToDo(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     text: str = ormar.String(max_length=500)
     completed: bool = ormar.Boolean(default=False)
+    pairs: pydantic.Json = ormar.JSON(default=[])
 
 
 class Category(ormar.Model):
@@ -58,6 +65,37 @@ class Note(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     text: str = ormar.String(max_length=500)
     category: Optional[Category] = ormar.ForeignKey(Category)
+
+
+class ItemConfig(ormar.Model):
+    class Meta:
+        metadata = metadata
+        database = database
+        tablename = "item_config"
+
+    id: Optional[int] = ormar.Integer(primary_key=True)
+    item_id: str = ormar.String(max_length=32, index=True)
+    pairs: pydantic.Json = ormar.JSON(default=["2", "3"])
+
+
+class QuerySetCls(QuerySet):
+    async def first_or_404(self, *args, **kwargs):
+        entity = await self.get_or_none(*args, **kwargs)
+        if not entity:
+            # maybe HTTPException in fastapi
+            raise ValueError("customer not found")
+        return entity
+
+
+class Customer(ormar.Model):
+    class Meta:
+        metadata = metadata
+        database = database
+        tablename = "customer"
+        queryset_class = QuerySetCls
+
+    id: Optional[int] = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=32)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -309,3 +347,37 @@ async def test_bulk_update_not_saved_objts():
                     Note(text="Call Mum.", category=category),
                 ]
             )
+
+        with pytest.raises(ModelListEmptyError):
+            await Note.objects.bulk_update([])
+
+
+@pytest.mark.asyncio
+async def test_bulk_operations_with_json():
+    async with database:
+        items = [
+            ItemConfig(item_id="test1"),
+            ItemConfig(item_id="test2"),
+            ItemConfig(item_id="test3"),
+        ]
+        await ItemConfig.objects.bulk_create(items)
+        items = await ItemConfig.objects.all()
+        assert all(x.pairs == ["2", "3"] for x in items)
+
+        for item in items:
+            item.pairs = ["1"]
+
+        await ItemConfig.objects.bulk_update(items)
+        items = await ItemConfig.objects.all()
+        assert all(x.pairs == ["1"] for x in items)
+
+
+@pytest.mark.asyncio
+async def test_custom_queryset_cls():
+    async with database:
+        with pytest.raises(ValueError):
+            await Customer.objects.first_or_404(id=1)
+
+        await Customer(name="test").save()
+        c = await Customer.objects.first_or_404(name="test")
+        assert c.name == "test"

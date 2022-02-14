@@ -25,6 +25,7 @@ except ImportError:  # pragma: no cover
     from importlib_metadata import version  # type: ignore
 from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
 from ormar.decorators import (  # noqa: I100
+    post_bulk_update,
     post_delete,
     post_relation_add,
     post_relation_remove,
@@ -117,6 +118,7 @@ __all__ = [
     "RelationProtocol",
     "ModelMeta",
     "property_field",
+    "post_bulk_update",
     "post_delete",
     "post_save",
     "post_update",

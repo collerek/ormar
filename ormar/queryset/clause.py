@@ -109,19 +109,12 @@ class FilterGroup:
         :return: complied and escaped clause
         :rtype: sqlalchemy.sql.elements.TextClause
         """
-        prefix = " NOT " if self.exclude else ""
         if self.filter_type == FilterType.AND:
-            clause = sqlalchemy.text(
-                f"{prefix}( "
-                + str(sqlalchemy.sql.and_(*self._get_text_clauses()))
-                + " )"
-            )
+            clause = sqlalchemy.sql.and_(*self._get_text_clauses()).self_group()
         else:
-            clause = sqlalchemy.text(
-                f"{prefix}( "
-                + str(sqlalchemy.sql.or_(*self._get_text_clauses()))
-                + " )"
-            )
+            clause = sqlalchemy.sql.or_(*self._get_text_clauses()).self_group()
+        if self.exclude:
+            clause = sqlalchemy.sql.not_(clause)
         return clause
 
 
