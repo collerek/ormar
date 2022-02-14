@@ -1,5 +1,4 @@
-from collections import OrderedDict
-from typing import List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import sqlalchemy
 from sqlalchemy import Table, text
@@ -7,9 +6,10 @@ from sqlalchemy.sql import Join
 
 import ormar  # noqa I100
 from ormar.models.helpers.models import group_related_list
-from ormar.queryset import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
+from ormar.queryset.queries import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
 from ormar.queryset.actions.filter_action import FilterAction
 from ormar.queryset.join import SqlJoin
+from ormar.queryset.utils import Processor
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -45,7 +45,7 @@ class Query:
         self.select_from: Union[Join, Table, List[str]] = []
         self.columns = [sqlalchemy.Column]
         self.order_columns = order_bys
-        self.sorted_orders: OrderedDict[OrderAction, text] = OrderedDict()
+        self.sorted_orders: Dict[OrderAction, text] = dict()
         self._init_sorted_orders()
 
         self.limit_raw_sql = limit_raw_sql
@@ -183,7 +183,7 @@ class Query:
         pk_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
         pk_aliased_name = f"{self.table.name}.{pk_alias}"
         qry_text = sqlalchemy.text(f"{pk_aliased_name}")
-        maxes = OrderedDict()
+        maxes = dict()
         for order in list(self.sorted_orders.keys()):
             if order is not None and order.get_field_name_text() != pk_aliased_name:
                 aliased_col = order.get_field_name_text()
@@ -192,22 +192,23 @@ class Query:
             elif order.get_field_name_text() == pk_aliased_name:
                 maxes[pk_aliased_name] = order.get_text_clause()
 
-        limit_qry = sqlalchemy.sql.select([qry_text])
-        limit_qry = limit_qry.select_from(self.select_from)
-        limit_qry = FilterQuery(filter_clauses=self.filter_clauses).apply(limit_qry)
-        limit_qry = FilterQuery(
-            filter_clauses=self.exclude_clauses, exclude=True
-        ).apply(limit_qry)
-        limit_qry = limit_qry.group_by(qry_text)
-        for order_by in maxes.values():
-            limit_qry = limit_qry.order_by(order_by)
-        limit_qry = LimitQuery(limit_count=self.limit_count).apply(limit_qry)
-        limit_qry = OffsetQuery(query_offset=self.query_offset).apply(limit_qry)
-        limit_qry = limit_qry.alias("limit_query")
+        query = sqlalchemy.sql.select([qry_text])
+
+        processor = Processor(query) \
+            .then(lambda x: x.select_from(self.select_from)) \
+            .then(FilterQuery(filter_clauses=self.filter_clauses).apply) \
+            .then(FilterQuery(
+                filter_clauses=self.exclude_clauses, exclude=True).apply) \
+            .then(lambda x: x.group_by(qry_text)) \
+            .foreach(lambda x, y: x.order_by(y), maxes.values()) \
+            .then(LimitQuery(limit_count=self.limit_count).apply) \
+            .then(OffsetQuery(query_offset=self.query_offset).apply) \
+            .then(lambda x: x.alias("limit_query"))
+
         on_clause = sqlalchemy.text(
             f"limit_query.{pk_alias}={self.table.name}.{pk_alias}"
         )
-        return limit_qry, on_clause
+        return processor.result, on_clause
 
     def _apply_expression_modifiers(
         self, expr: sqlalchemy.sql.select
@@ -224,18 +225,20 @@ class Query:
 
         :param expr: select expression before clauses
         :type expr: sqlalchemy.sql.selectable.Select
-        :return: expresion with all present clauses applied
+        :return: expression with all present clauses applied
         :rtype: sqlalchemy.sql.selectable.Select
         """
-        expr = FilterQuery(filter_clauses=self.filter_clauses).apply(expr)
-        expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
-            expr
-        )
+        processor = Processor(expr) \
+            .then(FilterQuery(filter_clauses=self.filter_clauses).apply) \
+            .then(
+                FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply) \
+
         if not self._pagination_query_required():
-            expr = LimitQuery(limit_count=self.limit_count).apply(expr)
-            expr = OffsetQuery(query_offset=self.query_offset).apply(expr)
-        expr = OrderQuery(sorted_orders=self.sorted_orders).apply(expr)
-        return expr
+            processor.then(LimitQuery(limit_count=self.limit_count).apply) \
+                .then(OffsetQuery(query_offset=self.query_offset).apply)
+
+        processor.then(OrderQuery(sorted_orders=self.sorted_orders).apply)
+        return processor.result
 
     def _reset_query_parameters(self) -> None:
         """

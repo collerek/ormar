@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from typing import Dict, List, Optional, TYPE_CHECKING, cast
 
 import ormar
@@ -32,7 +31,7 @@ class MergeModelMixin:
         :rtype: List["Model"]
         """
         merged_rows: List["Model"] = []
-        grouped_instances: OrderedDict = OrderedDict()
+        grouped_instances: Dict = {}
 
         for model in result_rows:
             grouped_instances.setdefault(model.pk, []).append(model)

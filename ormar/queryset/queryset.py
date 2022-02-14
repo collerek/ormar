@@ -1,8 +1,7 @@
 from typing import (
     Any,
     Dict,
-    Generic,
-    List,
+    Generic, List,
     Optional,
     Sequence,
     Set,
@@ -26,7 +25,6 @@ except ImportError:  # pragma: no cover
         class LegacyRow(dict):  # type: ignore
             pass
 
-
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
 from ormar.exceptions import (
@@ -34,11 +32,12 @@ from ormar.exceptions import (
     ModelPersistenceError,
     QueryDefinitionError,
 )
-from ormar.queryset import FieldAccessor, FilterQuery, SelectAction
+from ormar.queryset import FieldAccessor, FilterQuery
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
-from ormar.queryset.prefetch_query import PrefetchQuery
-from ormar.queryset.query import Query
+from ormar.queryset.mixins import AggregationMixin
+from ormar.queryset.queries import PrefetchQuery
+from ormar.queryset.queries import Query
 from ormar.queryset.reverse_alias_resolver import ReverseAliasResolver
 
 if TYPE_CHECKING:  # pragma no cover
@@ -50,7 +49,7 @@ else:
     T = TypeVar("T", bound="Model")
 
 
-class QuerySet(Generic[T]):
+class QuerySet(AggregationMixin, Generic[T]):
     """
     Main class to perform database queries, exposed on each model as objects attribute.
     """
@@ -689,71 +688,6 @@ class QuerySet(Generic[T]):
         expr = self.build_select_expression().alias("subquery_for_count")
         expr = sqlalchemy.func.count().select().select_from(expr)
         return await self.database.fetch_val(expr)
-
-    async def _query_aggr_function(self, func_name: str, columns: List) -> Any:
-        func = getattr(sqlalchemy.func, func_name)
-        select_actions = [
-            SelectAction(select_str=column, model_cls=self.model) for column in columns
-        ]
-        if func_name in ["sum", "avg"]:
-            if any(not x.is_numeric for x in select_actions):
-                raise QueryDefinitionError(
-                    "You can use sum and svg only with" "numeric types of columns"
-                )
-        select_columns = [x.apply_func(func, use_label=True) for x in select_actions]
-        expr = self.build_select_expression().alias(f"subquery_for_{func_name}")
-        expr = sqlalchemy.select(select_columns).select_from(expr)
-        # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
-        result = await self.database.fetch_one(expr)
-        return dict(result) if len(result) > 1 else result[0]  # type: ignore
-
-    async def max(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
-        """
-        Returns max value of columns for rows matching the given criteria
-        (applied with `filter` and `exclude` if set before).
-
-        :return: max value of column(s)
-        :rtype: Any
-        """
-        if not isinstance(columns, list):
-            columns = [columns]
-        return await self._query_aggr_function(func_name="max", columns=columns)
-
-    async def min(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
-        """
-        Returns min value of columns for rows matching the given criteria
-        (applied with `filter` and `exclude` if set before).
-
-        :return: min value of column(s)
-        :rtype: Any
-        """
-        if not isinstance(columns, list):
-            columns = [columns]
-        return await self._query_aggr_function(func_name="min", columns=columns)
-
-    async def sum(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
-        """
-        Returns sum value of columns for rows matching the given criteria
-        (applied with `filter` and `exclude` if set before).
-
-        :return: sum value of columns
-        :rtype: int
-        """
-        if not isinstance(columns, list):
-            columns = [columns]
-        return await self._query_aggr_function(func_name="sum", columns=columns)
-
-    async def avg(self, columns: Union[str, List[str]]) -> Any:
-        """
-        Returns avg value of columns for rows matching the given criteria
-        (applied with `filter` and `exclude` if set before).
-
-        :return: avg value of columns
-        :rtype: Union[int, float, List]
-        """
-        if not isinstance(columns, list):
-            columns = [columns]
-        return await self._query_aggr_function(func_name="avg", columns=columns)
 
     async def update(self, each: bool = False, **kwargs: Any) -> int:
         """

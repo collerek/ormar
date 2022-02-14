@@ -2,8 +2,8 @@ import collections.abc
 import copy
 from typing import (
     Any,
-    Dict,
-    List,
+    Callable, Dict,
+    Iterable, List,
     Optional,
     Sequence,
     Set,
@@ -93,10 +93,10 @@ def convert_set_to_required_dict(set_to_convert: set) -> Dict:
     :return: set converted to dict of ellipsis
     :rtype: Dict
     """
-    new_dict = dict()
-    for key in set_to_convert:
-        new_dict[key] = Ellipsis
-    return new_dict
+    return {
+        key: Ellipsis
+        for key in set_to_convert
+    }
 
 
 def update(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR001
@@ -340,3 +340,41 @@ def _process_through_field(
     else:
         relation = related_field.related_name
     return previous_model, relation, is_through
+
+
+class Processor:
+    """
+    Simple func processor.
+    The argument of current func is return_value of previous function.
+    For example:
+        b = func(a)
+        c = func2(b)
+        d = func3(c)
+        e = d.func4(other_arg)
+        for i in range(10):
+            e = func4(e, i)
+
+        p = Processor(a) \
+            .then(func) \
+            .then(func2) \
+            .then(func3) \
+            .then(lambda x: x.func4(other_arg)) \
+            .foreach(func, range(10)) \
+        print(p.result)
+    """
+    def __init__(self, root: Any):
+        self._result = root
+
+    @property
+    def result(self) -> Any:
+        """the return_value of last function"""
+        return self._result
+
+    def then(self, func: Callable) -> "Processor":
+        self._result = func(self._result)
+        return self
+
+    def foreach(self, func: Callable, iterators: Iterable) -> "Processor":
+        for val in iterators:
+            self._result = func(self._result, val)
+        return self
