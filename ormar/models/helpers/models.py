@@ -68,9 +68,6 @@ def populate_default_options_values(  # noqa: CCR001
 
 
 def set_constraints(new_model: Type["Model"]) -> None:
-    if not hasattr(new_model.Meta, "constraints"):
-        new_model.Meta.constraints = []
-
     if any(
         isinstance(const, ormar.PrimaryKeyConstraint)
         for const in new_model.Meta.constraints
