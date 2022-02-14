@@ -9,7 +9,6 @@ from ormar.models.helpers.models import group_related_list
 from ormar.queryset.queries import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
 from ormar.queryset.actions.filter_action import FilterAction
 from ormar.queryset.join import SqlJoin
-from ormar.queryset.utils import Processor
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
