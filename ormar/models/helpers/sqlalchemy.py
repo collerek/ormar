@@ -22,6 +22,8 @@ if TYPE_CHECKING:  # pragma no cover
     )
     from ormar.models import NewBaseModel
 
+logger = logging.getLogger(__name__)
+
 
 def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
     """
@@ -185,7 +187,7 @@ def sqlalchemy_columns_from_model_fields(
     """
     if len(model_fields.keys()) == 0:
         model_fields["id"] = ormar.Integer(name="id", primary_key=True)
-        logging.warning(
+        logger.warning(
             f"Table {new_model.Meta.tablename} had no fields so auto "
             "Integer primary key named `id` created."
         )

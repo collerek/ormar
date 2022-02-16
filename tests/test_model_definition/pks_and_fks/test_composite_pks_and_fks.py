@@ -980,7 +980,7 @@ async def test_bulk_create_and_update():
 # (V)  -> normal,
 # (V)  -> reverse,
 # (V)  -> many to many
-# (V/X) fix dict() - what about the "technical columns"
+# (V/X) fix dict() - what about the "technical columns"?
 # (V) fix __repr__ for denied fields
 # defaults
 # (V) self reference models
@@ -1000,3 +1000,4 @@ async def test_bulk_create_and_update():
 # json
 # mixins
 # inheritance
+# encryption

@@ -77,12 +77,10 @@ class RelationsManager:
             field, parent, child
         )
 
-        # print('adding parent', parent.get_name(), child.get_name(), child_name)
         parent_relation = parent._orm._get(child_name)
         if parent_relation:
             parent_relation.add(child)  # type: ignore
 
-        # print('adding child', child.get_name(), parent.get_name(), to_name)
         child_relation = child._orm._get(to_name)
         if child_relation:
             child_relation.add(parent)

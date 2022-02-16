@@ -19,21 +19,17 @@ class PrimaryKeyConstraint(sqlalchemy.PrimaryKeyConstraint):
         super().__init__(*args, **kwargs)
 
     def _resolve_column_aliases(self) -> None:
+        """
+        Final initialization needs to be postponed as the owner is not yet set
+        during the declaration of the constraint in Meta
+        """
         if not self.owner:  # pragma: no cover
             raise ormar.ModelDefinitionError("Cannot resolve aliases without owner")
         for column in self.column_names:
             column_name = self.owner.get_column_name_from_alias(column)
-            if (
-                self.owner.Meta.model_fields[column_name]
-                and self.owner.Meta.model_fields[column_name].is_relation
-            ):
-                self.owner.Meta.model_fields[column_name].nullable = False
-                self.owner.__fields__[column_name].required = True
-                self.column_aliases.append(column)
-            else:
-                self.owner.Meta.model_fields[column_name].nullable = False
-                self.owner.__fields__[column_name].required = True
-                self.column_aliases.append(column)
+            self.owner.Meta.model_fields[column_name].nullable = False
+            self.owner.__fields__[column_name].required = True
+            self.column_aliases.append(column)
         super().__init__(*self.column_aliases, **self._kwargs)
 
 

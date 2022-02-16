@@ -15,6 +15,7 @@ from typing import (
 )
 
 import databases
+import logging
 import sqlalchemy
 from sqlalchemy import bindparam
 
@@ -48,6 +49,8 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.models.excludable import ExcludableItems
 else:
     T = TypeVar("T", bound="Model")
+
+logger = logging.getLogger(__name__)
 
 
 class QuerySet(Generic[T]):
@@ -287,7 +290,12 @@ class QuerySet(Generic[T]):
             limit_raw_sql=self.limit_sql_raw,
         )
         exp = qry.build_select_expression()
-        print("\n", exp.compile(compile_kwargs={"literal_binds": True}))
+        logger.debug(
+            exp.compile(
+                dialect=self.model_meta.database._backend._dialect,
+                compile_kwargs={"literal_binds": True},
+            )
+        )
         return exp
 
     def filter(  # noqa: A003
@@ -703,7 +711,12 @@ class QuerySet(Generic[T]):
         select_columns = [x.apply_func(func, use_label=True) for x in select_actions]
         expr = self.build_select_expression().alias(f"subquery_for_{func_name}")
         expr = sqlalchemy.select(select_columns).select_from(expr)
-        # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
+        logger.debug(
+            expr.compile(
+                dialect=self.model_meta.database._backend._dialect,
+                compile_kwargs={"literal_binds": True},
+            )
+        )
         result = await self.database.fetch_one(expr)
         return dict(result) if len(result) > 1 else result[0]  # type: ignore
 

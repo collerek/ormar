@@ -12,7 +12,7 @@ from typing import (
     Union,
     cast,
 )
-
+import logging
 import sqlalchemy
 
 import ormar  # noqa:  I100, I202
@@ -24,6 +24,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model, ForeignKeyField
     from ormar.queryset import OrderAction, FilterAction
     from ormar.models.excludable import ExcludableItems
+
+logger = logging.getLogger(__name__)
 
 
 class UniqueList(list):
@@ -307,7 +309,12 @@ class LoadNode(Node):
             expr = qry.build_select_expression(
                 overwrite_relation_key=True, overwritten_relation_key=overwritten_key
             )
-            print(expr.compile(compile_kwargs={"literal_binds": True}))
+            logger.debug(
+                expr.compile(
+                    dialect=self.source_model.Meta.database._backend._dialect,
+                    compile_kwargs={"literal_binds": True},
+                )
+            )
             self.rows = await query_target.Meta.database.fetch_all(expr)
 
             for child in self.children:

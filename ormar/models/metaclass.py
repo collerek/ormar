@@ -591,7 +591,6 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
                 resolve_primary_key(new_model=new_model, attrs=attrs)
                 populate_meta_sqlalchemy_table_if_required(new_model.Meta)
                 expand_reverse_relationships(new_model)
-                # TODO: iterate only related fields
                 for field_name, field in new_model.Meta.model_fields.items():
                     if field_name not in new_model.__dict__:
                         add_field_descriptor(

@@ -303,7 +303,6 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     validate_not_allowed_fields(kwargs)
 
     if to.__class__ == ForwardRef:
-        # TODO: Handle names dict in forward ref update
         __type__ = to if not nullable else Optional[to]
         constraints: List = []
         column_type = None
