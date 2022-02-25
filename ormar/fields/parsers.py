@@ -2,7 +2,7 @@ import base64
 import datetime
 import decimal
 import uuid
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 import pydantic
 from pydantic.datetime_parse import parse_date, parse_datetime, parse_time
@@ -37,7 +37,7 @@ def encode_bytes(value: Union[str, bytes], represent_as_string: bool = False) ->
     return value if isinstance(value, bytes) else value.encode("utf-8")
 
 
-def encode_json(value: Any) -> str:
+def encode_json(value: Any) -> Optional[str]:
     value = json.dumps(value) if not isinstance(value, str) else re_dump_value(value)
     value = value.decode("utf-8") if isinstance(value, bytes) else value
     return value

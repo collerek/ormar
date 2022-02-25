@@ -22,13 +22,10 @@ from typing import (
 import databases
 import pydantic
 import sqlalchemy
+
+from ormar.fields.parsers import encode_json
 from ormar.models.utils import Extra
 from pydantic import BaseModel
-
-try:
-    import orjson as json
-except ImportError:  # pragma: no cover
-    import json  # type: ignore
 
 
 import ormar  # noqa I100
@@ -925,12 +922,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         """
         if column_name not in self._json_fields:
             return value
-        if not isinstance(value, str):
-            try:
-                value = json.dumps(value)
-            except TypeError:  # pragma no cover
-                pass
-        return value.decode("utf-8") if isinstance(value, bytes) else value
+        return encode_json(value)
 
     def _extract_own_model_fields(self) -> Dict:
         """

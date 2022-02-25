@@ -168,7 +168,7 @@ class ModelFieldFactory:
             unique=kwargs.pop("unique", False),
             pydantic_only=pydantic_only,
             autoincrement=autoincrement,
-            column_type=cls.get_column_type(**kwargs),
+            column_type=cls.get_column_type(**kwargs, sql_nullable=sql_nullable),
             choices=choices,
             encrypt_secret=encrypt_secret,
             encrypt_backend=encrypt_backend,
@@ -516,7 +516,7 @@ class JSON(ModelFieldFactory, pydantic.Json):
         :return: initialized column with proper options
         :rtype: sqlalchemy Column
         """
-        return sqlalchemy.JSON()
+        return sqlalchemy.JSON(none_as_null=kwargs.get("sql_nullable", False))
 
 
 if TYPE_CHECKING:  # pragma: nocover # noqa: C901
