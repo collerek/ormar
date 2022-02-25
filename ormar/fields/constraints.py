@@ -11,10 +11,10 @@ class UniqueColumns(UniqueConstraint):
 
 
 class IndexColumns(Index):
-    def __init__(self, *args: Any, name: str = None) -> None:
+    def __init__(self, *args: Any, name: str = None, **kw: Any) -> None:
         if not name:
             name = "TEMPORARY_NAME"
-        super().__init__(name, *args)
+        super().__init__(name, *args, **kw)
 
     """
     Subclass of sqlalchemy.Index.
