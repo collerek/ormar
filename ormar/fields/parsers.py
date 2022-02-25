@@ -38,6 +38,8 @@ def encode_bytes(value: Union[str, bytes], represent_as_string: bool = False) ->
 
 
 def encode_json(value: Any) -> Optional[str]:
+    if isinstance(value, (datetime.date, datetime.datetime, datetime.time)):
+        value = value.isoformat()
     value = json.dumps(value) if not isinstance(value, str) else re_dump_value(value)
     value = value.decode("utf-8") if isinstance(value, bytes) else value
     return value
