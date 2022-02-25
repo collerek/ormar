@@ -83,6 +83,7 @@ class MergeModelMixin:
                 setattr(other, field_name, value_to_set)
             elif (
                 isinstance(current_field, ormar.Model)
+                and isinstance(other_value, ormar.Model)
                 and current_field.pk == other_value.pk
             ):
                 setattr(

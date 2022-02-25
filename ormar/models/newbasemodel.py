@@ -909,7 +909,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             return base64.b64encode(value).decode()
         return value
 
-    def _convert_json(self, column_name: str, value: Any) -> Union[str, Dict]:
+    def _convert_json(self, column_name: str, value: Any) -> Union[str, Dict, None]:
         """
         Converts value to/from json if needed (for Json columns).
 

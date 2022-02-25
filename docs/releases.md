@@ -1,3 +1,15 @@
+# 0.10.25
+
+## ✨ Features
+
+* Add `queryset_class` option to `Model.Meta` that allows you to easily swap `QuerySet` for your Model (by @ponytailer - thanks!) [#538](https://github.com/collerek/ormar/pull/538)
+* Allow passing extra `kwargs` to `IndexColumns` that will be passed to sqlalchemy `Index` (by @zevisert - thanks) [#575](https://github.com/collerek/ormar/pull/538)
+
+## 🐛 Fixes
+
+* Fix nullable setting on `JSON` fields [#529](https://github.com/collerek/ormar/issues/529)
+* Fix bytes/str mismatch in bulk operations when using orjson instead of json (by @ponytailer - thanks!) [#538](https://github.com/collerek/ormar/pull/538)
+
 # 0.10.24
 
 ## ✨ Features
