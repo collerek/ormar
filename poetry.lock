@@ -317,38 +317,47 @@ postgresql_aiopg = ["aiopg"]
 sqlite = ["aiosqlite"]
 
 [[package]]
+name = "databind"
+version = "1.5.0"
+description = "Databind is a library inspired by jackson-databind to de-/serialize Python dataclasses. The `databind` package will install the full suite of databind packages. Compatible with Python 3.7 and newer."
+category = "dev"
+optional = false
+python-versions = ">=3.7,<4.0"
+
+[package.dependencies]
+"databind.core" = ">=1.5.0,<2.0.0"
+"databind.json" = ">=1.5.0,<2.0.0"
+
+[[package]]
 name = "databind.core"
-version = "1.4.0"
+version = "1.5.0"
 description = "Databind is a library inspired by jackson-databind to de-/serialize Python dataclasses. Compatible with Python 3.7 and newer."
 category = "dev"
 optional = false
-python-versions = ">=3.7.0,<4.0.0"
+python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
 Deprecated = ">=1.2.12,<2.0.0"
-"nr.optional" = ">=0.1.1,<1.0.0"
+"nr.optional" = ">=0.1.1,<0.2.0"
 "nr.parsing.date" = ">=1.0.1,<2.0.0"
-"nr.preconditions" = ">=0.0.4,<1.0.0"
-"nr.pylang.utils" = ">=0.1.3,<1.0.0"
-"nr.stream" = ">=0.1.1,<1.0.0"
+"nr.preconditions" = ">=0.0.4,<0.0.5"
+"nr.pylang.utils" = ">=0.1.3,<0.2.0"
+"nr.stream" = ">=0.1.1,<0.2.0"
 typing-extensions = ">=3.10.0,<4.0.0"
-
-[package.extras]
-test = ["types-dataclasses", "types-deprecated", "types-pkg-resources"]
 
 [[package]]
 name = "databind.json"
-version = "1.4.0"
+version = "1.5.0"
 description = "De-/serialize Python dataclasses to or from JSON payloads. Compatible with Python 3.7 and newer."
 category = "dev"
 optional = false
-python-versions = ">=3.7.0,<4.0.0"
+python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-"databind.core" = ">=1.4.0,<2.0.0"
-"nr.optional" = ">=0.1.1,<1.0.0"
+"databind.core" = ">=1.5.0,<2.0.0"
+"nr.optional" = ">=0.1.1,<0.2.0"
 "nr.parsing.date" = ">=1.0.1,<2.0.0"
-"nr.preconditions" = ">=0.0.4,<1.0.0"
+"nr.preconditions" = ">=0.0.4,<0.0.5"
 typing-extensions = ">=3.10.0,<4.0.0"
 
 [[package]]
@@ -408,7 +417,7 @@ docspec = ">=1.3.0,<2.0.0"
 
 [[package]]
 name = "docstring-parser"
-version = "0.13"
+version = "0.11"
 description = "\"Parse Python docstrings in reST, Google and Numpydoc format\""
 category = "dev"
 optional = false
@@ -870,8 +879,8 @@ six = ">=1.11.0,<2.0.0"
 
 [[package]]
 name = "nr.optional"
-version = "0.2.0"
-description = "Optional type in Python, allow mapping and flat-mapping if you also have nr.stream installed."
+version = "0.1.1"
+description = "Package description here."
 category = "dev"
 optional = false
 python-versions = ">=3.5.0,<4.0.0"
@@ -909,7 +918,7 @@ python-versions = ">=3.6.0,<4.0.0"
 
 [[package]]
 name = "nr.stream"
-version = "0.2.3"
+version = "0.1.2"
 description = "Use iterators like Java streams."
 category = "dev"
 optional = false
@@ -917,9 +926,6 @@ python-versions = ">=3.5.0,<4.0.0"
 
 [package.dependencies]
 "nr.pylang.utils" = ">=0.1.0,<1.0.0"
-
-[package.extras]
-test = ["pytest"]
 
 [[package]]
 name = "nr.util"
@@ -1070,24 +1076,23 @@ email = ["email-validator (>=1.0.3)"]
 
 [[package]]
 name = "pydoc-markdown"
-version = "4.5.0"
+version = "4.5.1"
 description = "Create Python API documentation in Markdown format."
 category = "dev"
 optional = false
-python-versions = ">=3.7.0,<4.0.0"
+python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
 click = ">=7.1,<9.0"
-"databind.core" = ">=1.2.2,<2.0.0"
-"databind.json" = ">=1.2.2,<2.0.0"
+databind = ">=1.5.0,<2.0.0"
 docspec = ">=1.0.0,<2.0.0"
 docspec-python = ">=1.0.0,<2.0.0"
-docstring-parser = ">=0.11.0,<1.0.0"
+docstring-parser = ">=0.11,<0.12"
 "nr.fs" = ">=1.6.0,<2.0.0"
-"nr.stream" = ">=0.1.2,<1.0.0"
-PyYAML = ">=5.3.0,<6.0.0"
+"nr.stream" = ">=0.1.2,<0.2.0"
+PyYAML = ">=5.3,<6.0"
 requests = ">=2.23.0,<3.0.0"
-toml = ">=0.10.1,<1.0.0"
+toml = ">=0.10.1,<0.11.0"
 watchdog = "*"
 
 [[package]]
@@ -1559,7 +1564,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2"
-content-hash = "575bb8d4579784ffd8d104085aa4582efe92661f1d9c8c76abd3fe259b9876da"
+content-hash = "d7f38264588804a99de4485f1275fb538ab196ca52261617ff726f20e8909886"
 
 [metadata.files]
 aiocontextvars = [
@@ -1817,13 +1822,17 @@ databases = [
     {file = "databases-0.5.5-py3-none-any.whl", hash = "sha256:97d9b9647216d1ab53ca61c059412b5c7b6e1f0bf8ce985477982ebcc7f278f3"},
     {file = "databases-0.5.5.tar.gz", hash = "sha256:02c6b016c1c951c21cca281dc8e2e002c60dc44026c0084aabbd8c37514aeb37"},
 ]
+databind = [
+    {file = "databind-1.5.0-py3-none-any.whl", hash = "sha256:ff073b54340450245c5f55ce5776a7f7b528c23b855e903a1076f06c57634a6e"},
+    {file = "databind-1.5.0.tar.gz", hash = "sha256:b3dfc1aaca5a9a113083cb11a398ccf98a7b09f390894ecd0996a06bcafd5de4"},
+]
 "databind.core" = [
-    {file = "databind.core-1.4.0-py3-none-any.whl", hash = "sha256:cff3f43b6966a9374e084baf42322cd5091e01ef38298673f24d5ce345e05c0c"},
-    {file = "databind.core-1.4.0.tar.gz", hash = "sha256:ae6e13da4e30ebff447e003f92c0f2fe38b70f03502ef9e2afed24991d6b54bc"},
+    {file = "databind.core-1.5.0-py3-none-any.whl", hash = "sha256:8e8869aaa3d8d9356a5c0547974f24ee3454bd7f4393b1bd639aabc4c85905a8"},
+    {file = "databind.core-1.5.0.tar.gz", hash = "sha256:ef3704e9ee204e0749fdd724ace3597acc15a499e54cbeead89698ad1623fb59"},
 ]
 "databind.json" = [
-    {file = "databind.json-1.4.0-py3-none-any.whl", hash = "sha256:b8730986f039435302b2b21afbde2f6b045e0fb4268517c493c38c50fc674fcf"},
-    {file = "databind.json-1.4.0.tar.gz", hash = "sha256:b53b51cecb59d8b2f6eaafdc1f39e1ab887f6c4d99bcd6ca09e42f7df6175641"},
+    {file = "databind.json-1.5.0-py3-none-any.whl", hash = "sha256:ad217d57c5394865cad06da01fe7da95140b8adb4b148336039b1687706dceb5"},
+    {file = "databind.json-1.5.0.tar.gz", hash = "sha256:7661694bd16b71d33dbf59b566e76509a082a2f766ee0a9afe4721e1268cc272"},
 ]
 dataclasses = [
     {file = "dataclasses-0.6-py3-none-any.whl", hash = "sha256:454a69d788c7fda44efd71e259be79577822f5e3f53f029a22d08004e951dc9f"},
@@ -1846,7 +1855,7 @@ docspec-python = [
     {file = "docspec_python-1.3.0-py3-none-any.whl", hash = "sha256:3f2f078a51763ca1aa6f4ae5f0ae1a79388dc3987b07c5a14038de4c24f69685"},
 ]
 docstring-parser = [
-    {file = "docstring_parser-0.13.tar.gz", hash = "sha256:66dd7eac7232202bf220fd98a5f11491863c01f958a75fdd535c7eccac9ced78"},
+    {file = "docstring_parser-0.11.tar.gz", hash = "sha256:93b3f8f481c7d24e37c5d9f30293c89e2933fa209421c8abd731dd3ef0715ecb"},
 ]
 fastapi = [
     {file = "fastapi-0.74.1-py3-none-any.whl", hash = "sha256:b8ec8400623ef0b2ff558ebe06753b349f8e3a5dd38afea650800f2644ddba34"},
@@ -2159,8 +2168,8 @@ nodeenv = [
     {file = "nr.fs-1.6.3.tar.gz", hash = "sha256:788aa0a04c4143f95c5245bc8ccc0c0872e932be533bd37780fbb55afcdf124a"},
 ]
 "nr.optional" = [
-    {file = "nr.optional-0.2.0-py3-none-any.whl", hash = "sha256:2dc604155f670a82ae8a433e22c266c9628a88706415b90718bbc6b3a8b6994f"},
-    {file = "nr.optional-0.2.0.tar.gz", hash = "sha256:1b801f73f50389625722647f6befe15d5b43e507f73ce35569a13efaa2df4c08"},
+    {file = "nr.optional-0.1.1-py3-none-any.whl", hash = "sha256:d451cabe8a5a8c92267f01a82db0d601ace6dfe88eded89c6297b59b52d19015"},
+    {file = "nr.optional-0.1.1.tar.gz", hash = "sha256:7f40a9b345e3d0c5d4329db8a588e04383edd04ba2dd1b2e64c03eaa597f3f97"},
 ]
 "nr.parsing.date" = [
     {file = "nr.parsing.date-1.0.3-py3-none-any.whl", hash = "sha256:9e14541c9596014d5a631031be725dc303ff78062ffdc5b34a30712faf11a914"},
@@ -2175,8 +2184,8 @@ nodeenv = [
     {file = "nr.pylang.utils-0.1.3.tar.gz", hash = "sha256:a54beae6288a0befcc8fce4852a341914e0267130c7abc612be38b6478869837"},
 ]
 "nr.stream" = [
-    {file = "nr.stream-0.2.3-py3-none-any.whl", hash = "sha256:c55118d56bdd88a4cb2a4809f5cf853963de93ec0d1ce9f28d61792f85617000"},
-    {file = "nr.stream-0.2.3.tar.gz", hash = "sha256:76c93c8cc100b22d24fc4d751d35e8850f8094403f28c0862cb55a3644db6592"},
+    {file = "nr.stream-0.1.2-py3-none-any.whl", hash = "sha256:25fc65e7c6fc610871775d59fc15494d1a9b9e9d0b5822354f8885cd77d95721"},
+    {file = "nr.stream-0.1.2.tar.gz", hash = "sha256:fb4595e60e8a1d3e18f71db7a1257c35e8968b9d06da3a16b1e084a83427b49c"},
 ]
 "nr.util" = [
     {file = "nr.util-0.6.7-py3-none-any.whl", hash = "sha256:6f5d78a1ef564c129d30b4b1b926917d8dcbcee0d29733d37b79c0f8cdf299b4"},
@@ -2352,8 +2361,8 @@ pydantic = [
     {file = "pydantic-1.9.0.tar.gz", hash = "sha256:742645059757a56ecd886faf4ed2441b9c0cd406079c2b4bee51bcc3fbcd510a"},
 ]
 pydoc-markdown = [
-    {file = "pydoc-markdown-4.5.0.tar.gz", hash = "sha256:131636ed32324d255816e476d72eb592542f120fce0d9a4ddca888934bc51282"},
-    {file = "pydoc_markdown-4.5.0-py3-none-any.whl", hash = "sha256:925fd854a477157fbda811bdb3046a570fe83bb5d410504ff5e46410d40ad8fa"},
+    {file = "pydoc-markdown-4.5.1.tar.gz", hash = "sha256:ff6eedd24d2b140180831ff606a495e82deef593a0f2c0bc4deaae303c575449"},
+    {file = "pydoc_markdown-4.5.1-py3-none-any.whl", hash = "sha256:cf0cf169dcca548bd8e772db8d1bef051cc1e01d4756aba24e3e5200762dca8d"},
 ]
 pyflakes = [
     {file = "pyflakes-2.3.1-py2.py3-none-any.whl", hash = "sha256:7893783d01b8a89811dd72d7dfd4d84ff098e5eed95cfa8905b22bbffe52efc3"},
