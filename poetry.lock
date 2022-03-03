@@ -780,7 +780,7 @@ i18n = ["babel (>=2.9.0)"]
 
 [[package]]
 name = "mkdocs-material"
-version = "8.2.1"
+version = "8.2.4"
 description = "A Material Design theme for MkDocs"
 category = "dev"
 optional = false
@@ -2106,8 +2106,8 @@ mkdocs = [
     {file = "mkdocs-1.2.3.tar.gz", hash = "sha256:89f5a094764381cda656af4298727c9f53dc3e602983087e1fe96ea1df24f4c1"},
 ]
 mkdocs-material = [
-    {file = "mkdocs-material-8.2.1.tar.gz", hash = "sha256:efcb3a24e1ef374268306cb8b4d3ba0db5d2c4ee4aa1fc4bcbd2087571b1d975"},
-    {file = "mkdocs_material-8.2.1-py2.py3-none-any.whl", hash = "sha256:9496b26593c8a0f9bb18bda7f1b919c0bc16838217f38212dca47cc9006d7fe0"},
+    {file = "mkdocs-material-8.2.4.tar.gz", hash = "sha256:3c350a03e2f7288874f0a9cf5aacfbbb8721cc7d4e389b53169180ee2187223e"},
+    {file = "mkdocs_material-8.2.4-py2.py3-none-any.whl", hash = "sha256:7aa9ed562f68c8592dad3f568378c98a2350398445dbf46de373585b3cd9080e"},
 ]
 mkdocs-material-extensions = [
     {file = "mkdocs-material-extensions-1.0.3.tar.gz", hash = "sha256:bfd24dfdef7b41c312ede42648f9eb83476ea168ec163b613f9abd12bbfddba2"},
