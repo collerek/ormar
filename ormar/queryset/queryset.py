@@ -1,3 +1,4 @@
+import asyncio
 from typing import (
     Any,
     Dict,
@@ -15,7 +16,6 @@ from typing import (
 
 import databases
 import sqlalchemy
-from sqlalchemy import bindparam
 
 try:
     from sqlalchemy.engine import LegacyRow
@@ -1031,7 +1031,6 @@ class QuerySet(AggregationMixin, Generic[T]):
         if not objects:
             raise ModelListEmptyError("Bulk update objects are empty!")
 
-        ready_objects = []
         pk_name = self.model_meta.pkname
         if not columns:
             columns = list(
@@ -1044,6 +1043,10 @@ class QuerySet(AggregationMixin, Generic[T]):
             columns.append(pk_name)
 
         columns = [self.model.get_column_alias(k) for k in columns]
+        pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
+        pk_column_name = self.model.get_column_alias(pk_name)
+
+        futures = []
 
         for obj in objects:
             new_kwargs = obj.dict()
@@ -1053,27 +1056,16 @@ class QuerySet(AggregationMixin, Generic[T]):
                     f"{self.model.__name__} has to have {pk_name} filled."
                 )
             new_kwargs = obj.prepare_model_to_update(new_kwargs)
-            ready_objects.append(
-                {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
-            )
-
-        pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
-        pk_column_name = self.model.get_column_alias(pk_name)
-        table_columns = [c.name for c in self.model_meta.table.c]
-        expr = self.table.update().where(
-            pk_column == bindparam("new_" + pk_column_name)
-        )
-        expr = expr.values(
-            **{
-                k: bindparam("new_" + k)
-                for k in columns
-                if k != pk_column_name and k in table_columns
+            model_ = {
+                k: v for k, v in new_kwargs.items()
+                if k in columns and k != pk_column_name
             }
-        )
-        # databases bind params only where query is passed as string
-        # otherwise it just passes all data to values and results in unconsumed columns
-        expr = str(expr)
-        await self.database.execute_many(expr, ready_objects)
+            pk_value = getattr(obj, pk_name)
+            expr = self.table.update().values(**model_) \
+                .where(pk_column == pk_value)
+            futures.append(self.database.execute(expr))
+
+        await asyncio.gather(*futures)
 
         for obj in objects:
             obj.set_save_status(True)
