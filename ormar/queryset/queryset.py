@@ -678,7 +678,7 @@ class QuerySet(Generic[T]):
         expr = sqlalchemy.exists(expr).select()
         return await self.database.fetch_val(expr)
 
-    async def count(self) -> int:
+    async def count(self, distinct: bool = True) -> int:
         """
         Returns number of rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -688,6 +688,9 @@ class QuerySet(Generic[T]):
         """
         expr = self.build_select_expression().alias("subquery_for_count")
         expr = sqlalchemy.func.count().select().select_from(expr)
+        if distinct:
+            expr_distinct = expr.group_by(self.model_meta.pkname).alias("subquery_for_group")
+            expr = sqlalchemy.func.count().select().select_from(expr_distinct)
         return await self.database.fetch_val(expr)
 
     async def _query_aggr_function(self, func_name: str, columns: List) -> Any:
