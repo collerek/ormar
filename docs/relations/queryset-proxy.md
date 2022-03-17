@@ -6,35 +6,35 @@ But at the same time it exposes subset of QuerySet API, so you can filter, creat
 
 !!!note
     By default exposed QuerySet is already filtered to return only `Models` related to parent `Model`.
-    
+
     So if you issue `post.categories.all()` you will get all categories related to that post, not all in table.
 
 !!!note
-    Note that when accessing QuerySet API methods through QuerysetProxy you don't 
+    Note that when accessing QuerySet API methods through QuerysetProxy you don't
     need to use `objects` attribute like in normal queries.
-    
+
     So note that it's `post.categories.all()` and **not** `post.categories.objects.all()`.
-    
+
     To learn more about available QuerySet methods visit [queries][queries]
 
 !!!warning
     Querying related models from ManyToMany cleans list of related models loaded on parent model:
-    
+
     Example: `post.categories.first()` will set post.categories to list of 1 related model -> the one returned by first()
-    
-    Example 2: if post has 4 categories so `len(post.categories) == 4` calling `post.categories.limit(2).all()` 
+
+    Example 2: if post has 4 categories so `len(post.categories) == 4` calling `post.categories.limit(2).all()`
     -> will load only 2 children and now `assert len(post.categories) == 2`
-    
+
     This happens for all QuerysetProxy methods returning data: `get`, `all` and `first` and in `get_or_create` if model already exists.
-    
-    Note that value returned by `create` or created in `get_or_create` and `update_or_create` 
+
+    Note that value returned by `create` or created in `get_or_create` and `update_or_create`
     if model does not exist will be added to relation list (not clearing it).
 
 ## Read data from database
 
 ### get
 
-`get(**kwargs): -> Model` 
+`get(**kwargs): -> Model`
 
 To grab just one of related models filtered by name you can use `get(**kwargs)` method.
 
@@ -67,7 +67,7 @@ Tries to get a row meeting the criteria and if NoMatch exception is raised it cr
 
 `all(**kwargs) -> List[Optional["Model"]]`
 
-To get a list of related models use `all()` method. 
+To get a list of related models use `all()` method.
 
 Note that you can filter the queryset, select related, exclude fields etc. like in normal query.
 
@@ -88,7 +88,7 @@ assert news_posts[0].author == guido
 
 ### create
 
-`create(**kwargs): -> Model` 
+`create(**kwargs): -> Model`
 
 Create related `Model` directly from parent `Model`.
 
@@ -105,7 +105,7 @@ assert len(await post.categories.all()) == 2
     Read more in queries documentation [create][create]
 
 For `ManyToMany` relations there is an additional functionality of passing parameters
-that will be used to create a through model if you declared additional fields on explicitly 
+that will be used to create a through model if you declared additional fields on explicitly
 provided Through model.
 
 Given sample like this:
@@ -274,7 +274,7 @@ With exclude_fields() you can select subset of model columns that will be exclud
 
 ### count
 
-`count() -> int`
+`count(distinct: bool = True) -> int`
 
 Returns number of rows matching the given criteria (i.e. applied with filter and exclude)
 
