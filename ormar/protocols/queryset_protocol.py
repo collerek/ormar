@@ -26,7 +26,7 @@ class QuerySetProtocol(Protocol):  # pragma: nocover
     async def exists(self) -> bool:
         ...
 
-    async def count(self) -> int:
+    async def count(self, distinct: bool = True) -> int:
         ...
 
     async def clear(self) -> int:

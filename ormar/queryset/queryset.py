@@ -682,6 +682,12 @@ class QuerySet(Generic[T]):
         """
         Returns number of rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
+        If `distinct` is `True` (the default), this will return the number of primary rows selected. If `False`,
+        the count will be the total number of rows returned
+        (including extra rows for `one-to-many` or `many-to-many` left `select_related` table joins).
+        `False` is the legacy (buggy) behavior for workflows that depend on it.
+
+        :param distinct: flag if the primary table rows should be distinct or not
 
         :return: number of rows
         :rtype: int
