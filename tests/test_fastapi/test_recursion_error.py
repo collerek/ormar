@@ -123,28 +123,29 @@ async def create_quiz_lol(
 
 @pytest.mark.asyncio()
 async def test_quiz_creation():
-    await User(email="mail@example.com", username="aa", password="pass").save()
-    client = TestClient(app=router)
-    payload = {
-        "title": "Some test question",
-        "description": "A description",
-        "questions": [
-            {
-                "question": "Is ClassQuiz cool?",
-                "answers": [
-                    {"right": True, "answer": "Yes"},
-                    {"right": False, "answer": "No"},
-                ],
-            },
-            {
-                "question": "Do you like open source?",
-                "answers": [
-                    {"right": True, "answer": "Yes"},
-                    {"right": False, "answer": "No"},
-                    {"right": False, "answer": "Maybe"},
-                ],
-            },
-        ],
-    }
-    response = client.post("/create", data=json.dumps(payload))
-    assert response.status_code == 200
+    async with database:
+        await User(email="mail@example.com", username="aa", password="pass").save()
+        client = TestClient(app=router)
+        payload = {
+            "title": "Some test question",
+            "description": "A description",
+            "questions": [
+                {
+                    "question": "Is ClassQuiz cool?",
+                    "answers": [
+                        {"right": True, "answer": "Yes"},
+                        {"right": False, "answer": "No"},
+                    ],
+                },
+                {
+                    "question": "Do you like open source?",
+                    "answers": [
+                        {"right": True, "answer": "Yes"},
+                        {"right": False, "answer": "No"},
+                        {"right": False, "answer": "Maybe"},
+                    ],
+                },
+            ],
+        }
+        response = client.post("/create", data=json.dumps(payload))
+        assert response.status_code == 200
