@@ -4,6 +4,7 @@ import databases
 import pydantic
 import pytest
 import sqlalchemy
+from pydantic import Json
 
 import ormar
 from ormar import QuerySet
@@ -68,7 +69,7 @@ class Note(ormar.Model):
 
 
 class ItemConfig(ormar.Model):
-    class Meta:
+    class Meta(ormar.ModelMeta):
         metadata = metadata
         database = database
         tablename = "item_config"
@@ -96,6 +97,16 @@ class Customer(ormar.Model):
 
     id: Optional[int] = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=32)
+
+
+class JsonTestModel(ormar.Model):
+    class Meta(ormar.ModelMeta):
+        metadata = metadata
+        database = database
+        tablename = "test_model"
+
+    id: int = ormar.Integer(primary_key=True)
+    json_field: Json = ormar.JSON()
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -269,6 +280,36 @@ async def test_bulk_create():
 
 
 @pytest.mark.asyncio
+async def test_bulk_create_json_field():
+    async with database:
+        json_value = {"a": 1}
+        test_model_1 = JsonTestModel(id=1, json_field=json_value)
+        test_model_2 = JsonTestModel(id=2, json_field=json_value)
+
+        # store one with .save() and the other with .bulk_create()
+        await test_model_1.save()
+        await JsonTestModel.objects.bulk_create([test_model_2])
+
+        # refresh from the database
+        await test_model_1.load()
+        await test_model_2.load()
+
+        assert test_model_1.json_field == test_model_2.json_field  # True
+
+        # try to query the json field
+        table = JsonTestModel.Meta.table
+        query = table.select().where(table.c.json_field["a"].as_integer() == 1)
+        res = [
+            JsonTestModel.from_row(record, source_model=JsonTestModel)
+            for record in await database.fetch_all(query)
+        ]
+
+        assert test_model_1 in res
+        assert test_model_2 in res
+        assert len(res) == 2
+
+
+@pytest.mark.asyncio
 async def test_bulk_create_with_relation():
     async with database:
         category = await Category.objects.create(name="Sample Category")
@@ -407,6 +448,21 @@ async def test_bulk_operations_with_json():
         await ItemConfig.objects.bulk_update(items)
         items = await ItemConfig.objects.all()
         assert all(x.pairs == ["1"] for x in items)
+
+        items = await ItemConfig.objects.filter(ItemConfig.id > 1).all()
+        for item in items:
+            item.pairs = {"b": 2}
+        await ItemConfig.objects.bulk_update(items)
+        items = await ItemConfig.objects.filter(ItemConfig.id > 1).all()
+        assert all(x.pairs == {"b": 2} for x in items)
+
+        table = ItemConfig.Meta.table
+        query = table.select().where(table.c.pairs["b"].as_integer() == 2)
+        res = [
+            ItemConfig.from_row(record, source_model=ItemConfig)
+            for record in await database.fetch_all(query)
+        ]
+        assert len(res) == 2
 
 
 @pytest.mark.asyncio

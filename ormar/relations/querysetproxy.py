@@ -198,9 +198,11 @@ class QuerysetProxy(Generic[T]):
         """
         Returns number of rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
-        If `distinct` is `True` (the default), this will return the number of primary rows selected. If `False`,
+        If `distinct` is `True` (the default), this will return
+        the number of primary rows selected. If `False`,
         the count will be the total number of rows returned
-        (including extra rows for `one-to-many` or `many-to-many` left `select_related` table joins).
+        (including extra rows for `one-to-many` or `many-to-many`
+        left `select_related` table joins).
         `False` is the legacy (buggy) behavior for workflows that depend on it.
 
         Actual call delegated to QuerySet.

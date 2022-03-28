@@ -23,8 +23,7 @@ import databases
 import pydantic
 import sqlalchemy
 
-from ormar.fields.parsers import encode_json
-from ormar.models.utils import Extra
+
 from pydantic import BaseModel
 
 
@@ -32,6 +31,7 @@ import ormar  # noqa I100
 from ormar.exceptions import ModelError, ModelPersistenceError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
+from ormar.fields.parsers import encode_json
 from ormar.models.helpers import register_relation_in_alias_manager
 from ormar.models.helpers.relations import expand_reverse_relationship
 from ormar.models.helpers.sqlalchemy import (
@@ -40,6 +40,7 @@ from ormar.models.helpers.sqlalchemy import (
 )
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
+from ormar.models.utils import Extra
 from ormar.queryset.utils import translate_list_to_dict
 from ormar.relations.alias_manager import AliasManager
 from ormar.relations.relation_manager import RelationsManager
