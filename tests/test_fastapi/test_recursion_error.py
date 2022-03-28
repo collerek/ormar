@@ -110,7 +110,7 @@ def create_test_database():
 
 
 async def get_current_user():
-    return await User.objects.get()
+    return await User(email="mail@example.com", username="aa", password="pass").save()
 
 
 @router.post("/create", response_model=Quiz)
@@ -122,30 +122,28 @@ async def create_quiz_lol(
 
 
 @pytest.mark.asyncio()
-async def test_quiz_creation():
-    async with database:
-        await User(email="mail@example.com", username="aa", password="pass").save()
-        client = TestClient(app=router)
-        payload = {
-            "title": "Some test question",
-            "description": "A description",
-            "questions": [
-                {
-                    "question": "Is ClassQuiz cool?",
-                    "answers": [
-                        {"right": True, "answer": "Yes"},
-                        {"right": False, "answer": "No"},
-                    ],
-                },
-                {
-                    "question": "Do you like open source?",
-                    "answers": [
-                        {"right": True, "answer": "Yes"},
-                        {"right": False, "answer": "No"},
-                        {"right": False, "answer": "Maybe"},
-                    ],
-                },
-            ],
-        }
-        response = client.post("/create", data=json.dumps(payload))
-        assert response.status_code == 200
+def test_quiz_creation():
+    client = TestClient(app=router)
+    payload = {
+        "title": "Some test question",
+        "description": "A description",
+        "questions": [
+            {
+                "question": "Is ClassQuiz cool?",
+                "answers": [
+                    {"right": True, "answer": "Yes"},
+                    {"right": False, "answer": "No"},
+                ],
+            },
+            {
+                "question": "Do you like open source?",
+                "answers": [
+                    {"right": True, "answer": "Yes"},
+                    {"right": False, "answer": "No"},
+                    {"right": False, "answer": "Maybe"},
+                ],
+            },
+        ],
+    }
+    response = client.post("/create", data=json.dumps(payload))
+    assert response.status_code == 200
