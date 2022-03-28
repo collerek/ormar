@@ -2,8 +2,13 @@
 
 ## ✨ Breaking Changes
 
+* Dropped support for python 3.6
 * `Queryset.get_or_create` returns now a tuple with model and bool value indicating if the model was created (by @MojixCoder - thanks!) [#554](https://github.com/collerek/ormar/pull/554)
 * `Queryset.count()` now counts the number of distinct parent model rows by default, counting all rows is possible by setting `distinct=False` (by @erichaydel - thanks) [#588](https://github.com/collerek/ormar/pull/588)
+
+## ✨ Features
+
+* Added support for python 3.10
 
 ## 🐛 Fixes
 
