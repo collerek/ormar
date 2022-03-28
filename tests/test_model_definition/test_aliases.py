@@ -157,15 +157,17 @@ async def test_bulk_operations_and_fields():
 async def test_working_with_aliases_get_or_create():
     async with database:
         async with database.transaction(force_rollback=True):
-            artist = await Artist.objects.get_or_create(
+            artist, created = await Artist.objects.get_or_create(
                 first_name="Teddy", last_name="Bear", born_year=2020
             )
             assert artist.pk is not None
+            assert created is True
 
-            artist2 = await Artist.objects.get_or_create(
+            artist2, created = await Artist.objects.get_or_create(
                 first_name="Teddy", last_name="Bear", born_year=2020
             )
             assert artist == artist2
+            assert created is False
 
             art3 = artist2.dict()
             art3["born_year"] = 2019

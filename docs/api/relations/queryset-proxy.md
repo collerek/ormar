@@ -404,7 +404,7 @@ each=True flag to affect whole table.
 #### get\_or\_create
 
 ```python
- | async get_or_create(*args: Any, **kwargs: Any) -> "T"
+ | async get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args: Any, **kwargs: Any) -> Tuple["T", bool]
 ```
 
 Combination of create and get methods.

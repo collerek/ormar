@@ -3,7 +3,7 @@
 Following methods allow you to load data from the database.
 
 * `get(*args, **kwargs) -> Model`
-* `get_or_create(*args, **kwargs) -> Model`
+* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 * `first(*args, **kwargs) -> Model`
 * `all(*args, **kwargs) -> List[Optional[Model]]`
 
@@ -14,7 +14,7 @@ Following methods allow you to load data from the database.
 
 * `QuerysetProxy`
     * `QuerysetProxy.get(*args, **kwargs)` method
-    * `QuerysetProxy.get_or_create(*args, **kwargs)` method
+    * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs)` method
     * `QuerysetProxy.first(*args, **kwargs)` method
     * `QuerysetProxy.all(*args, **kwargs)` method
 
@@ -64,12 +64,12 @@ Exact equivalent of get described above but instead of raising the exception ret
 
 ## get_or_create
 
-`get_or_create(*args, **kwargs) -> Model`
+`get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 
 Combination of create and get methods.
 
 Tries to get a row meeting the criteria and if `NoMatch` exception is raised it creates
-a new one with given kwargs.
+a new one with given kwargs and _defaults.
 
 ```python
 class Album(ormar.Model):
@@ -80,12 +80,17 @@ class Album(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
+    year: int = ormar.Integer()
 ```
 
 ```python
-album = await Album.objects.get_or_create(name='The Cat')
+album, created = await Album.objects.get_or_create(name='The Cat', _defaults={"year": 1999})
+assert created is True
+assert album.name == "The Cat"
+assert album.year == 1999
 # object is created as it does not exist
-album2 = await Album.objects.get_or_create(name='The Cat')
+album2, created = await Album.objects.get_or_create(name='The Cat')
+assert created is False
 assert album == album2
 # return True as the same db row is returned
 ```

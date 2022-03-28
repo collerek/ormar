@@ -166,17 +166,18 @@ async def test_delete_and_update():
 @pytest.mark.asyncio
 async def test_get_or_create():
     async with database:
-        tom = await Book.objects.get_or_create(
+        tom, created = await Book.objects.get_or_create(
             title="Volume I", author="Anonymous", genre="Fiction"
         )
         assert await Book.objects.count() == 1
+        assert created is True
 
-        assert (
-            await Book.objects.get_or_create(
-                title="Volume I", author="Anonymous", genre="Fiction"
-            )
-            == tom
+        second_tom, created = await Book.objects.get_or_create(
+            title="Volume I", author="Anonymous", genre="Fiction"
         )
+
+        assert second_tom.pk == tom.pk
+        assert created is False
         assert await Book.objects.count() == 1
 
         assert await Book.objects.create(
@@ -186,6 +187,42 @@ async def test_get_or_create():
             await Book.objects.get_or_create(
                 title="Volume I", author="Anonymous", genre="Fiction"
             )
+
+
+@pytest.mark.asyncio
+async def test_get_or_create_with_defaults():
+    async with database:
+        book, created = await Book.objects.get_or_create(
+            title="Nice book", _defaults={"author": "Mojix", "genre": "Historic"}
+        )
+        assert created is True
+        assert book.author == "Mojix"
+        assert book.title == "Nice book"
+        assert book.genre == "Historic"
+
+        book2, created = await Book.objects.get_or_create(
+            author="Mojix", _defaults={"title": "Book2"}
+        )
+        assert created is False
+        assert book2 == book
+        assert book2.title == "Nice book"
+        assert book2.author == "Mojix"
+        assert book2.genre == "Historic"
+        assert await Book.objects.count() == 1
+
+        book, created = await Book.objects.get_or_create(
+            title="doesn't exist",
+            _defaults={"title": "overwritten", "author": "Mojix", "genre": "Historic"},
+        )
+        assert created is True
+        assert book.title == "overwritten"
+
+        book2, created = await Book.objects.get_or_create(
+            title="overwritten", _defaults={"title": "doesn't work"}
+        )
+        assert created is False
+        assert book2.title == "overwritten"
+        assert book2 == book
 
 
 @pytest.mark.asyncio
