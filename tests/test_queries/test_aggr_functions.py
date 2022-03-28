@@ -176,14 +176,15 @@ async def test_queryset_method():
             year=1930, title="Book 3"
         )
 
+
 @pytest.mark.asyncio
 async def test_count_method():
     async with database:
         await sample_data()
 
-        count =  await Author.objects.select_related("books").count()
+        count = await Author.objects.select_related("books").count()
         assert count == 1
 
         # The legacy functionality
-        count =  await Author.objects.select_related("books").count(distinct=False)
+        count = await Author.objects.select_related("books").count(distinct=False)
         assert count == 3

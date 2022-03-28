@@ -45,10 +45,16 @@ class FieldAccessor:
         :return: FieldAccessor for field or nested model
         :rtype: ormar.queryset.field_accessor.FieldAccessor
         """
-        if self._field and item == self._field.name:
+        if (
+            object.__getattribute__(self, "_field")
+            and item == object.__getattribute__(self, "_field").name
+        ):
             return self._field
 
-        if self._model and item in self._model.Meta.model_fields:
+        if (
+            object.__getattribute__(self, "_model")
+            and item in object.__getattribute__(self, "_model").Meta.model_fields
+        ):
             field = self._model.Meta.model_fields[item]
             if field.is_relation:
                 return FieldAccessor(
