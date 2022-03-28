@@ -63,6 +63,9 @@ Combination of create and get methods.
 Tries to get a row meeting the criteria and if `NoMatch` exception is raised it creates
 a new one with given kwargs and _defaults.
 
+When `_defaults` dictionary is provided the values set in `_defaults` will **always** be set, including overwriting explicitly provided values. 
+i.e. `get_or_create(_defaults: {"title": "I win"}, title="never used")` will always use "I win" as title whether you provide your own value in kwargs or not. 
+
 ```python
 class Album(ormar.Model):
     class Meta:
