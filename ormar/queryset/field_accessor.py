@@ -55,7 +55,7 @@ class FieldAccessor:
             object.__getattribute__(self, "_model")
             and item in object.__getattribute__(self, "_model").Meta.model_fields
         ):
-            field = cast(Model, self._model).Meta.model_fields[item]
+            field = cast("Model", self._model).Meta.model_fields[item]
             if field.is_relation:
                 return FieldAccessor(
                     source_model=self._source_model,
