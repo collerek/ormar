@@ -678,16 +678,25 @@ class QuerySet(Generic[T]):
         expr = sqlalchemy.exists(expr).select()
         return await self.database.fetch_val(expr)
 
-    async def count(self) -> int:
+    async def count(self, distinct: bool = True) -> int:
         """
         Returns number of rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
+        If `distinct` is `True` (the default), this will return the number of primary rows selected. If `False`,
+        the count will be the total number of rows returned
+        (including extra rows for `one-to-many` or `many-to-many` left `select_related` table joins).
+        `False` is the legacy (buggy) behavior for workflows that depend on it.
+
+        :param distinct: flag if the primary table rows should be distinct or not
 
         :return: number of rows
         :rtype: int
         """
         expr = self.build_select_expression().alias("subquery_for_count")
         expr = sqlalchemy.func.count().select().select_from(expr)
+        if distinct:
+            expr_distinct = expr.group_by(self.model_meta.pkname).alias("subquery_for_group")
+            expr = sqlalchemy.func.count().select().select_from(expr_distinct)
         return await self.database.fetch_val(expr)
 
     async def _query_aggr_function(self, func_name: str, columns: List) -> Any:

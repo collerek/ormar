@@ -499,11 +499,19 @@ Returns a bool value to confirm if there are rows matching the given criteria
 #### count
 
 ```python
- | async count() -> int
+ | async count(distinct: bool = True) -> int
 ```
 
 Returns number of rows matching the given criteria
 (applied with `filter` and `exclude` if set before).
+If `distinct` is `True` (the default), this will return the number of primary rows selected. If `False`,
+the count will be the total number of rows returned
+(including extra rows for `one-to-many` or `many-to-many` left `select_related` table joins).
+`False` is the legacy (buggy) behavior for workflows that depend on it.
+
+**Arguments**:
+
+- `distinct` (`bool`): flag if the primary table rows should be distinct or not
 
 **Returns**:
 
@@ -865,4 +873,3 @@ Bulk operations do not send signals.
 
 - `objects` (`List[Model]`): list of ormar models
 - `columns` (`List[str]`): list of columns to update
-

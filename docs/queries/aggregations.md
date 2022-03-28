@@ -3,7 +3,7 @@
 Currently 6 aggregation functions are supported.
 
 
-* `count() -> int`
+* `count(distinct: bool = True) -> int`
 * `exists() -> bool`
 * `sum(columns) -> Any`
 * `avg(columns) -> Any`
@@ -12,19 +12,23 @@ Currently 6 aggregation functions are supported.
 
 
 * `QuerysetProxy`
-    * `QuerysetProxy.count()` method
+    * `QuerysetProxy.count(distinct=True)` method
     * `QuerysetProxy.exists()` method
     * `QuerysetProxy.sum(columns)` method
     * `QuerysetProxy.avg(columns)` method
     * `QuerysetProxy.min(column)` method
     * `QuerysetProxy.max(columns)` method
-  
+
 
 ## count
 
-`count() -> int`
+`count(distinct: bool = True) -> int`
 
-Returns number of rows matching the given criteria (i.e. applied with `filter` and `exclude`)
+Returns number of rows matching the given criteria (i.e. applied with `filter` and `exclude`).
+If `distinct` is `True` (the default), this will return the number of primary rows selected. If `False`,
+the count will be the total number of rows returned
+(including extra rows for `one-to-many` or `many-to-many` left `select_related` table joins).
+`False` is the legacy (buggy) behavior for workflows that depend on it.
 
 ```python
 class Book(ormar.Model):
@@ -84,7 +88,7 @@ Returns sum value of columns for rows matching the given criteria (applied with 
 
 You can pass one or many column names including related columns.
 
-As of now each column passed is aggregated separately (so `sum(col1+col2)` is not possible, 
+As of now each column passed is aggregated separately (so `sum(col1+col2)` is not possible,
 you can have `sum(col1, col2)` and later add 2 returned sums in python)
 
 You cannot `sum` non numeric columns.
@@ -138,7 +142,7 @@ Returns avg value of columns for rows matching the given criteria (applied with 
 
 You can pass one or many column names including related columns.
 
-As of now each column passed is aggregated separately (so `sum(col1+col2)` is not possible, 
+As of now each column passed is aggregated separately (so `sum(col1+col2)` is not possible,
 you can have `sum(col1, col2)` and later add 2 returned sums in python)
 
 You cannot `avg` non numeric columns.
@@ -193,7 +197,7 @@ Returns min value of columns for rows matching the given criteria (applied with 
 
 You can pass one or many column names including related columns.
 
-As of now each column passed is aggregated separately (so `sum(col1+col2)` is not possible, 
+As of now each column passed is aggregated separately (so `sum(col1+col2)` is not possible,
 you can have `sum(col1, col2)` and later add 2 returned sums in python)
 
 If you aggregate on one column, the single value is directly returned as a result
@@ -241,7 +245,7 @@ Returns min value of columns for rows matching the given criteria (applied with 
 
 You can pass one or many column names including related columns.
 
-As of now each column passed is aggregated separately (so `sum(col1+col2)` is not possible, 
+As of now each column passed is aggregated separately (so `sum(col1+col2)` is not possible,
 you can have `sum(col1, col2)` and later add 2 returned sums in python)
 
 If you aggregate on one column, the single value is directly returned as a result
@@ -292,7 +296,7 @@ select related etc related models directly from parent model.
 Works exactly the same as [count](./#count) function above but allows you to select columns from related
 objects from other side of the relation.
 
-!!!tip 
+!!!tip
     To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
 
 ### exists
@@ -320,6 +324,5 @@ objects from other side of the relation.
 Works exactly the same as [max](./#max) function above but allows you to select maximum of columns from related
 objects from other side of the relation.
 
-!!!tip 
+!!!tip
     To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
-
