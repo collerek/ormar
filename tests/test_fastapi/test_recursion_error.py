@@ -77,13 +77,13 @@ class QuizAnswer(BaseModel):
 
 class QuizQuestion(BaseModel):
     question: str
-    answers: list[QuizAnswer]
+    answers: List[QuizAnswer]
 
 
 class QuizInput(BaseModel):
     title: str
     description: str
-    questions: list[QuizQuestion]
+    questions: List[QuizQuestion]
 
 
 class Quiz(ormar.Model):
