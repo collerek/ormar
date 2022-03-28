@@ -87,22 +87,26 @@ async def test_quering_by_reverse_fk():
             assert await album.tracks.exists()
             assert await album.tracks.count() == 3
 
-            track = await album.tracks.get_or_create(
+            track, created = await album.tracks.get_or_create(
                 title="The Bird", position=1, play_count=30
             )
             assert track == track1
+            assert created is False
             assert len(album.tracks) == 1
 
-            track = await album.tracks.get_or_create(
-                title="The Bird2", position=4, play_count=5
+            track, created = await album.tracks.get_or_create(
+                title="The Bird2", _defaults={"position": 4, "play_count": 5}
             )
             assert track != track1
+            assert created is True
             assert track.pk is not None
+            assert track.position == 4 and track.play_count == 5
             assert len(album.tracks) == 2
 
             await album.tracks.update_or_create(pk=track.pk, play_count=50)
             assert len(album.tracks) == 2
-            track = await album.tracks.get_or_create(title="The Bird2")
+            track, created = await album.tracks.get_or_create(title="The Bird2")
+            assert created is False
             assert track.play_count == 50
             assert len(album.tracks) == 1
 

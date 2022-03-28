@@ -985,26 +985,34 @@ class QuerySet(Generic[T]):
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
-    async def get_or_create(self, *args: Any, **kwargs: Any) -> "T":
+    async def get_or_create(
+        self,
+        _defaults: Optional[Dict[str, Any]] = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Tuple["T", bool]:
         """
         Combination of create and get methods.
 
         Tries to get a row meeting the criteria for kwargs
         and if `NoMatch` exception is raised
-        it creates a new one with given kwargs.
+        it creates a new one with given kwargs and _defaults.
 
         Passing a criteria is actually calling filter(*args, **kwargs) method described
         below.
 
         :param kwargs: fields names and proper value types
         :type kwargs: Any
-        :return: returned or created Model
-        :rtype: Model
+        :param _defaults: default values for creating object
+        :type _defaults: Optional[Dict[str, Any]]
+        :return: model instance and a boolean
+        :rtype: Tuple("T", bool)
         """
         try:
-            return await self.get(*args, **kwargs)
+            return await self.get(*args, **kwargs), False
         except NoMatch:
-            return await self.create(**kwargs)
+            _defaults = _defaults or {}
+            return await self.create(**{**kwargs, **_defaults}), True
 
     async def update_or_create(self, **kwargs: Any) -> "T":
         """

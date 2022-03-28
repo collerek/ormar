@@ -587,7 +587,7 @@ metadata.drop_all(engine)
 *  `create(**kwargs): -> Model`
 *  `get(*args, **kwargs): -> Model`
 *  `get_or_none(*args, **kwargs): -> Optional[Model]`
-*  `get_or_create(*args, **kwargs) -> Model`
+*  `get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 *  `first(*args, **kwargs): -> Model`
 *  `update(each: bool = False, **kwargs) -> int`
 *  `update_or_create(**kwargs) -> Model`

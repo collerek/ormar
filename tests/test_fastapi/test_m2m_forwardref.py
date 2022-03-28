@@ -102,7 +102,7 @@ def test_payload():
             "native_name": "Thailand",
         }
         resp = client.post("/", json=payload, headers={"application-type": "json"})
-        print(resp.content)
+        # print(resp.content)
         assert resp.status_code == 201
 
         resp_country = Country(**resp.json())

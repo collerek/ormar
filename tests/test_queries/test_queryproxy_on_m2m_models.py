@@ -102,20 +102,25 @@ async def test_queryset_methods():
             await post.categories.add(news)
             await post.categories.add(breaking)
 
-            category = await post.categories.get_or_create(name="News")
+            category, created = await post.categories.get_or_create(name="News")
             assert category == news
             assert len(post.categories) == 1
+            assert created is False
 
-            category = await post.categories.get_or_create(name="Breaking News")
+            category, created = await post.categories.get_or_create(
+                name="Breaking News"
+            )
             assert category != breaking
             assert category.pk is not None
             assert len(post.categories) == 2
+            assert created is True
 
             await post.categories.update_or_create(pk=category.pk, name="Urgent News")
             assert len(post.categories) == 2
-            cat = await post.categories.get_or_create(name="Urgent News")
+            cat, created = await post.categories.get_or_create(name="Urgent News")
             assert cat.pk == category.pk
             assert len(post.categories) == 1
+            assert created is False
 
             await post.categories.remove(cat)
             await cat.delete()
