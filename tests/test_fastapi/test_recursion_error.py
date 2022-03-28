@@ -121,7 +121,6 @@ async def create_quiz_lol(
     return await quiz.save()
 
 
-@pytest.mark.asyncio()
 def test_quiz_creation():
     client = TestClient(app=router)
     payload = {
