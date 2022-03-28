@@ -150,13 +150,21 @@ Actual call delegated to QuerySet.
 #### count
 
 ```python
- | async count() -> int
+ | async count(distinct: bool = True) -> int
 ```
 
 Returns number of rows matching the given criteria
 (applied with `filter` and `exclude` if set before).
+If `distinct` is `True` (the default), this will return the number of primary rows selected. If `False`,
+the count will be the total number of rows returned
+(including extra rows for `one-to-many` or `many-to-many` left `select_related` table joins).
+`False` is the legacy (buggy) behavior for workflows that depend on it.
 
 Actual call delegated to QuerySet.
+
+**Arguments**:
+
+- `distinct` (`bool`): flag if the primary table rows should be distinct or not
 
 **Returns**:
 
@@ -260,11 +268,11 @@ List of related models is cleared before the call.
 
 **Arguments**:
 
-- `kwargs`: 
+- `kwargs`:
 
 **Returns**:
 
-`_asyncio.Future`: 
+`_asyncio.Future`:
 
 <a name="relations.querysetproxy.QuerysetProxy.get_or_none"></a>
 #### get\_or\_none
@@ -773,4 +781,3 @@ Actual call delegated to QuerySet.
 **Returns**:
 
 `QuerysetProxy`: QuerysetProxy
-

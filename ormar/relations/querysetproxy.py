@@ -193,17 +193,22 @@ class QuerysetProxy(Generic[T]):
         """
         return await self.queryset.exists()
 
-    async def count(self) -> int:
+    async def count(self, distinct: bool = True) -> int:
         """
         Returns number of rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
+        If `distinct` is `True` (the default), this will return the number of primary rows selected. If `False`,
+        the count will be the total number of rows returned
+        (including extra rows for `one-to-many` or `many-to-many` left `select_related` table joins).
+        `False` is the legacy (buggy) behavior for workflows that depend on it.
 
         Actual call delegated to QuerySet.
 
+        :param distinct: flag if the primary table rows should be distinct or not
         :return: number of rows
         :rtype: int
         """
-        return await self.queryset.count()
+        return await self.queryset.count(distinct=distinct)
 
     async def max(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
         """

@@ -334,7 +334,7 @@ async def delete():
 
 async def joins():
     # Tho join two models use select_related
-    
+
     # Django style
     book = await Book.objects.select_related("author").get(title="The Hobbit")
     # Python style
@@ -348,7 +348,7 @@ async def joins():
     # By default you also get a second side of the relation
     # constructed as lowercase source model name +'s' (books in this case)
     # you can also provide custom name with parameter related_name
-    
+
     # Django style
     author = await Author.objects.select_related("books").all(name="J.R.R. Tolkien")
     # Python style
@@ -601,7 +601,7 @@ metadata.drop_all(engine)
 *  `prefetch_related(related: Union[List, str]) -> QuerySet`
 *  `limit(limit_count: int) -> QuerySet`
 *  `offset(offset: int) -> QuerySet`
-*  `count() -> int`
+*  `count(distinct: bool = True) -> int`
 *  `exists() -> bool`
 *  `max(columns: List[str]) -> Any`
 *  `min(columns: List[str]) -> Any`
