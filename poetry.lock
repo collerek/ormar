@@ -515,7 +515,7 @@ flake8 = "*"
 
 [[package]]
 name = "flake8-functions"
-version = "0.0.6"
+version = "0.0.7"
 description = "A flake8 extension that checks functions"
 category = "dev"
 optional = false
@@ -523,7 +523,6 @@ python-versions = "*"
 
 [package.dependencies]
 mr-proper = "*"
-pytest = "*"
 
 [[package]]
 name = "flake8-import-order"
@@ -1431,7 +1430,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "9458bdef6a34e80c9ab81665f6533d5798ee5544d246304614b89096439c529c"
+content-hash = "242d87044b5510f45a1cecec68aa9abe352889941a2f38f5ec0ac7ae6d34b54e"
 
 [metadata.files]
 aiomysql = [
@@ -1742,8 +1741,8 @@ flake8-expression-complexity = [
     {file = "flake8_expression_complexity-0.0.11.tar.gz", hash = "sha256:4dd8909fecbc20f53814cdcef9d0b04f61532764278d9b6e8026686812e96631"},
 ]
 flake8-functions = [
-    {file = "flake8_functions-0.0.6-py3-none-any.whl", hash = "sha256:7afa7979d20d28a3cde0c14b3fddf42beef23232620a641ad20dcc2de49eddf3"},
-    {file = "flake8_functions-0.0.6.tar.gz", hash = "sha256:6d42da93c4b13354a3973da7bf4e239225f9dba167e8a099fd647ae483ac3e24"},
+    {file = "flake8_functions-0.0.7-py3-none-any.whl", hash = "sha256:f2f75545c2b0df9eeba0ad316e2ac38c101676970b4441300fc07af3226a44f6"},
+    {file = "flake8_functions-0.0.7.tar.gz", hash = "sha256:40584b05d57e5ab185545bcfa08aa0edca52b04646d0df266e2b1667d6437184"},
 ]
 flake8-import-order = [
     {file = "flake8-import-order-0.18.1.tar.gz", hash = "sha256:a28dc39545ea4606c1ac3c24e9d05c849c6e5444a50fb7e9cdd430fc94de6e92"},
