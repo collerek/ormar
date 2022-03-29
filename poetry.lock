@@ -503,11 +503,11 @@ cognitive_complexity = "*"
 
 [[package]]
 name = "flake8-expression-complexity"
-version = "0.0.9"
+version = "0.0.11"
 description = "A flake8 extension that checks expressions complexity"
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 astpretty = "*"
@@ -1431,7 +1431,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "99eccf111d9ba19c126c0d2d64c0a3bbf34dce3979800106d332835e43262fb1"
+content-hash = "9458bdef6a34e80c9ab81665f6533d5798ee5544d246304614b89096439c529c"
 
 [metadata.files]
 aiomysql = [
@@ -1738,7 +1738,8 @@ flake8-cognitive-complexity = [
     {file = "flake8_cognitive_complexity-0.1.0.tar.gz", hash = "sha256:f202df054e4f6ff182b659c261922b9c684628a47beb19cb0973c50d6a7831c1"},
 ]
 flake8-expression-complexity = [
-    {file = "flake8_expression_complexity-0.0.9.tar.gz", hash = "sha256:1ae325880a5dbfef60a35eaa8bb5351d5c5102774a41d4ed7059bc093a95955b"},
+    {file = "flake8_expression_complexity-0.0.11-py3-none-any.whl", hash = "sha256:b56bac37f7dd5d3d102a7111c89f6579c2cbd897b868147794c9ed12aadc627c"},
+    {file = "flake8_expression_complexity-0.0.11.tar.gz", hash = "sha256:4dd8909fecbc20f53814cdcef9d0b04f61532764278d9b6e8026686812e96631"},
 ]
 flake8-functions = [
     {file = "flake8_functions-0.0.6-py3-none-any.whl", hash = "sha256:7afa7979d20d28a3cde0c14b3fddf42beef23232620a641ad20dcc2de49eddf3"},
