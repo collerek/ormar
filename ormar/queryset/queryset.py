@@ -1,8 +1,8 @@
+import asyncio
 from typing import (
     Any,
     Dict,
-    Generic,
-    List,
+    Generic, List,
     Optional,
     Sequence,
     Set,
@@ -16,7 +16,6 @@ from typing import (
 
 import databases
 import sqlalchemy
-from sqlalchemy import bindparam
 
 try:
     from sqlalchemy.engine import LegacyRow
@@ -26,7 +25,6 @@ except ImportError:  # pragma: no cover
         class LegacyRow(dict):  # type: ignore
             pass
 
-
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
 from ormar.exceptions import (
@@ -34,11 +32,12 @@ from ormar.exceptions import (
     ModelPersistenceError,
     QueryDefinitionError,
 )
-from ormar.queryset import FieldAccessor, FilterQuery, SelectAction
+from ormar.queryset import FieldAccessor, FilterQuery
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
-from ormar.queryset.prefetch_query import PrefetchQuery
-from ormar.queryset.query import Query
+from ormar.queryset.mixins import AggregationMixin
+from ormar.queryset.queries import PrefetchQuery
+from ormar.queryset.queries import Query
 from ormar.queryset.reverse_alias_resolver import ReverseAliasResolver
 
 if TYPE_CHECKING:  # pragma no cover
@@ -50,7 +49,7 @@ else:
     T = TypeVar("T", bound="Model")
 
 
-class QuerySet(Generic[T]):
+class QuerySet(AggregationMixin, Generic[T]):
     """
     Main class to perform database queries, exposed on each model as objects attribute.
     """
@@ -703,71 +702,6 @@ class QuerySet(Generic[T]):
             expr = sqlalchemy.func.count().select().select_from(expr_distinct)
         return await self.database.fetch_val(expr)
 
-    async def _query_aggr_function(self, func_name: str, columns: List) -> Any:
-        func = getattr(sqlalchemy.func, func_name)
-        select_actions = [
-            SelectAction(select_str=column, model_cls=self.model) for column in columns
-        ]
-        if func_name in ["sum", "avg"]:
-            if any(not x.is_numeric for x in select_actions):
-                raise QueryDefinitionError(
-                    "You can use sum and svg only with" "numeric types of columns"
-                )
-        select_columns = [x.apply_func(func, use_label=True) for x in select_actions]
-        expr = self.build_select_expression().alias(f"subquery_for_{func_name}")
-        expr = sqlalchemy.select(select_columns).select_from(expr)
-        # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
-        result = await self.database.fetch_one(expr)
-        return dict(result) if len(result) > 1 else result[0]  # type: ignore
-
-    async def max(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
-        """
-        Returns max value of columns for rows matching the given criteria
-        (applied with `filter` and `exclude` if set before).
-
-        :return: max value of column(s)
-        :rtype: Any
-        """
-        if not isinstance(columns, list):
-            columns = [columns]
-        return await self._query_aggr_function(func_name="max", columns=columns)
-
-    async def min(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
-        """
-        Returns min value of columns for rows matching the given criteria
-        (applied with `filter` and `exclude` if set before).
-
-        :return: min value of column(s)
-        :rtype: Any
-        """
-        if not isinstance(columns, list):
-            columns = [columns]
-        return await self._query_aggr_function(func_name="min", columns=columns)
-
-    async def sum(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
-        """
-        Returns sum value of columns for rows matching the given criteria
-        (applied with `filter` and `exclude` if set before).
-
-        :return: sum value of columns
-        :rtype: int
-        """
-        if not isinstance(columns, list):
-            columns = [columns]
-        return await self._query_aggr_function(func_name="sum", columns=columns)
-
-    async def avg(self, columns: Union[str, List[str]]) -> Any:
-        """
-        Returns avg value of columns for rows matching the given criteria
-        (applied with `filter` and `exclude` if set before).
-
-        :return: avg value of columns
-        :rtype: Union[int, float, List]
-        """
-        if not isinstance(columns, list):
-            columns = [columns]
-        return await self._query_aggr_function(func_name="avg", columns=columns)
-
     async def update(self, each: bool = False, **kwargs: Any) -> int:
         """
         Updates the model table after applying the filters from kwargs.
@@ -1118,7 +1052,6 @@ class QuerySet(Generic[T]):
         if not objects:
             raise ModelListEmptyError("Bulk update objects are empty!")
 
-        ready_objects = []
         pk_name = self.model_meta.pkname
         if not columns:
             columns = list(
@@ -1131,6 +1064,10 @@ class QuerySet(Generic[T]):
             columns.append(pk_name)
 
         columns = [self.model.get_column_alias(k) for k in columns]
+        pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
+        pk_column_name = self.model.get_column_alias(pk_name)
+
+        futures = []
 
         for obj in objects:
             new_kwargs = obj.dict()
@@ -1140,27 +1077,16 @@ class QuerySet(Generic[T]):
                     f"{self.model.__name__} has to have {pk_name} filled."
                 )
             new_kwargs = obj.prepare_model_to_update(new_kwargs)
-            ready_objects.append(
-                {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
-            )
-
-        pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
-        pk_column_name = self.model.get_column_alias(pk_name)
-        table_columns = [c.name for c in self.model_meta.table.c]
-        expr = self.table.update().where(
-            pk_column == bindparam("new_" + pk_column_name)
-        )
-        expr = expr.values(
-            **{
-                k: bindparam("new_" + k)
-                for k in columns
-                if k != pk_column_name and k in table_columns
+            model_ = {
+                k: v for k, v in new_kwargs.items()
+                if k in columns and k != pk_column_name
             }
-        )
-        # databases bind params only where query is passed as string
-        # otherwise it just passes all data to values and results in unconsumed columns
-        expr = str(expr)
-        await self.database.execute_many(expr, ready_objects)
+            pk_value = getattr(obj, pk_name)
+            expr = self.table.update().values(**model_) \
+                .where(pk_column == pk_value)
+            futures.append(self.database.execute(expr))
+
+        await asyncio.gather(*futures)
 
         for obj in objects:
             obj.set_save_status(True)

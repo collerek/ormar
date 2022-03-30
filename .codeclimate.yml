@@ -5,7 +5,7 @@ checks:
       threshold: 8
   argument-count:
     config:
-      threshold: 6
+      threshold: 10
   method-count:
     config:
       threshold: 25
@@ -14,7 +14,7 @@ checks:
       threshold: 35
   file-lines:
     config:
-      threshold: 500
+      threshold: 600
 engines:
   bandit:
     enabled: true

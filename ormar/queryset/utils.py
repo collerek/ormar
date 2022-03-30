@@ -1,16 +1,7 @@
 import collections.abc
 import copy
 from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    TYPE_CHECKING,
-    Tuple,
-    Type,
-    Union,
+    Any, Dict, List, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 )
 
 if TYPE_CHECKING:  # pragma no cover
@@ -93,10 +84,10 @@ def convert_set_to_required_dict(set_to_convert: set) -> Dict:
     :return: set converted to dict of ellipsis
     :rtype: Dict
     """
-    new_dict = dict()
-    for key in set_to_convert:
-        new_dict[key] = Ellipsis
-    return new_dict
+    return {
+        key: Ellipsis
+        for key in set_to_convert
+    }
 
 
 def update(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR001

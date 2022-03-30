@@ -71,7 +71,6 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         new_kwargs = cls.parse_non_db_fields(new_kwargs)
         new_kwargs = cls.substitute_models_with_pks(new_kwargs)
         new_kwargs = cls.reconvert_str_to_bytes(new_kwargs)
-        new_kwargs = cls.dump_all_json_fields_to_str(new_kwargs)
         new_kwargs = cls.translate_columns_to_aliases(new_kwargs)
         return new_kwargs
 
@@ -203,7 +202,8 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         """
         for key, value in model_dict.items():
             if key in cls._json_fields:
-                model_dict[key] = encode_json(value)
+                # model_dict[key] = encode_json(value)
+                pass
         return model_dict
 
     @classmethod
