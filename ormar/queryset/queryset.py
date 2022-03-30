@@ -1085,6 +1085,9 @@ class QuerySet(Generic[T]):
         :param objects: list of ormar models already initialized and ready to save.
         :type objects: List[Model]
         """
+        if not objects:
+            raise ModelListEmptyError("Bulk create objects are empty!")
+
         ready_objects = [obj.prepare_model_to_save(obj.dict()) for obj in objects]
 
         # don't use execute_many, as in databases it's executed in a loop
@@ -1132,7 +1135,15 @@ class QuerySet(Generic[T]):
 
         columns = [self.model.get_column_alias(k) for k in columns]
 
+        # on_update_fields = {
+        #     self.model.get_column_alias(k)
+        #     for k in cast(Type["Model"], self.model_cls).get_fields_with_onupdate()
+        # }
+        # updated_columns = new_columns | on_update_fields
+
         for obj in objects:
+            # when the obj.__setattr__, should be dirty for column
+            # only load the kv from dirty fields
             new_kwargs = obj.dict()
             if new_kwargs.get(pk_name) is None:
                 raise ModelPersistenceError(
@@ -1141,12 +1152,15 @@ class QuerySet(Generic[T]):
                 )
             new_kwargs = obj.prepare_model_to_update(new_kwargs)
             ready_objects.append(
-                {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
+                {
+                    "new_" + k: v for k, v in new_kwargs.items()
+                    if k in columns
+                }
             )
-
         pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
         pk_column_name = self.model.get_column_alias(pk_name)
         table_columns = [c.name for c in self.model_meta.table.c]
+        # Make the expr
         expr = self.table.update().where(
             pk_column == bindparam("new_" + pk_column_name)
         )

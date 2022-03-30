@@ -34,6 +34,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         _skip_ellipsis: Callable
         _json_fields: Set[str]
         _bytes_fields: Set[str]
+        _onupdate_fields: Set[str]
         __fields__: Dict[str, pydantic.fields.ModelField]
 
     @classmethod
@@ -72,6 +73,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         new_kwargs = cls.substitute_models_with_pks(new_kwargs)
         new_kwargs = cls.reconvert_str_to_bytes(new_kwargs)
         new_kwargs = cls.dump_all_json_fields_to_str(new_kwargs)
+        # new_kwargs = cls.populate_onupdate_value(new_kwargs)
         new_kwargs = cls.translate_columns_to_aliases(new_kwargs)
         return new_kwargs
 
@@ -231,6 +233,22 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
                 and new_kwargs.get(field_name, None) is None
             ):
                 new_kwargs.pop(field_name, None)
+        return new_kwargs
+
+    @classmethod
+    def populate_onupdate_value(cls, new_kwargs: Dict) -> Dict:
+        """
+        Populate value which from onupdate options in field
+
+        :param new_kwargs: dictionary of model that is about to be saved
+        :type new_kwargs: Dict
+        :return: dictionary of model that is about to be saved
+        :rtype: Dict
+        """
+        for field_name in cls.get_fields_with_onupdate():
+            field = cls.Meta.model_fields[field_name]
+            if field_name not in new_kwargs:
+                new_kwargs[field_name] = field.get_onupdate()
         return new_kwargs
 
     @classmethod
@@ -397,3 +415,14 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         if not isinstance(values, list):
             values = [values]
         return values
+
+    @classmethod
+    def get_fields_with_onupdate(cls) -> Set[str]:
+        if not cls._onupdate_fields:
+            cls._onupdate_fields = {
+                field_name
+                for field_name, field in cls.Meta.model_fields.items()
+                if field.has_onupdate() and not field.pydantic_only
+            }
+        return cls._onupdate_fields
+

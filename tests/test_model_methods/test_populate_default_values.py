@@ -1,5 +1,4 @@
 import databases
-import pytest
 import sqlalchemy
 from sqlalchemy import text
 
