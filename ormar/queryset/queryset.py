@@ -1141,7 +1141,10 @@ class QuerySet(Generic[T]):
                 )
             new_kwargs = obj.prepare_model_to_update(new_kwargs)
             ready_objects.append(
-                {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
+                {
+                    "new_" + k: v for k, v in new_kwargs.items()
+                    if k in columns
+                }
             )
 
         pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
