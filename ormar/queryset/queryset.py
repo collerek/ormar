@@ -1110,11 +1110,6 @@ class QuerySet(Generic[T]):
             columns.append(pk_name)
 
         columns = [self.model.get_column_alias(k) for k in columns]
-        # on_update_fields = {
-        #     self.model.get_column_alias(k)
-        #     for k in cast(Type["Model"], self.model_cls).get_fields_with_onupdate()
-        # }
-        # updated_columns = new_columns | on_update_fields
 
         for obj in objects:
             new_kwargs = obj.dict()
