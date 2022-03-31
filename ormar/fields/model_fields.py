@@ -815,8 +815,6 @@ class Enum(ModelFieldFactory):
         enum_class: Type[E] = None,
         **kwargs: Any
     ) -> BaseField:
-        if enum_class is None or not isinstance(enum_class, EnumMeta):
-            raise ModelDefinitionError("Enum Field choices must be EnumType")
 
         kwargs = {
             **kwargs,
@@ -827,6 +825,12 @@ class Enum(ModelFieldFactory):
             },
         }
         return super().__new__(cls, **kwargs)
+
+    @classmethod
+    def validate(cls, **kwargs: Any) -> None:
+        enum_class = kwargs.get("enum_class")
+        if enum_class is None or not isinstance(enum_class, EnumMeta):
+            raise ModelDefinitionError("Enum Field choices must be EnumType")
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
