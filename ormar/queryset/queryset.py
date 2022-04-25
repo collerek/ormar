@@ -697,7 +697,8 @@ class QuerySet(Generic[T]):
         expr = self.build_select_expression().alias("subquery_for_count")
         expr = sqlalchemy.func.count().select().select_from(expr)
         if distinct:
-            expr_distinct = expr.group_by(self.model_meta.pkname).alias(
+            pk_column_name = self.model.get_column_alias(self.model_meta.pkname)
+            expr_distinct = expr.group_by(pk_column_name).alias(
                 "subquery_for_group"
             )
             expr = sqlalchemy.func.count().select().select_from(expr_distinct)
