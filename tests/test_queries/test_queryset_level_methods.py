@@ -1,4 +1,5 @@
-from typing import List, Optional
+from enum import Enum
+from typing import Optional
 
 import databases
 import pydantic
@@ -17,6 +18,11 @@ from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
+
+
+class MySize(Enum):
+    SMALL = 0
+    BIG = 1
 
 
 class Book(ormar.Model):
@@ -45,6 +51,7 @@ class ToDo(ormar.Model):
     text: str = ormar.String(max_length=500)
     completed: bool = ormar.Boolean(default=False)
     pairs: pydantic.Json = ormar.JSON(default=[])
+    size = ormar.Enum(enum_class=MySize, default=MySize.SMALL)
 
 
 class Category(ormar.Model):
@@ -77,6 +84,7 @@ class ItemConfig(ormar.Model):
     id: Optional[int] = ormar.Integer(primary_key=True)
     item_id: str = ormar.String(max_length=32, index=True)
     pairs: pydantic.Json = ormar.JSON(default=["2", "3"])
+    size = ormar.Enum(enum_class=MySize, default=MySize.SMALL)
 
 
 class QuerySetCls(QuerySet):
@@ -343,6 +351,7 @@ async def test_bulk_update():
         for todo in todoes:
             todo.text = todo.text + "_1"
             todo.completed = False
+            todo.size = MySize.BIG
 
         await ToDo.objects.bulk_update(todoes)
 
@@ -354,6 +363,7 @@ async def test_bulk_update():
 
         for todo in todoes:
             assert todo.text[-2:] == "_1"
+            assert todo.size == MySize.BIG
 
 
 @pytest.mark.asyncio
@@ -474,3 +484,13 @@ async def test_custom_queryset_cls():
         await Customer(name="test").save()
         c = await Customer.objects.first_or_404(name="test")
         assert c.name == "test"
+
+
+@pytest.mark.asyncio
+async def test_filter_enum():
+    async with database:
+        it = ItemConfig(item_id="test_1")
+        await it.save()
+
+        it = await ItemConfig.objects.filter(size=MySize.SMALL).first()
+        assert it

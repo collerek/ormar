@@ -1,7 +1,7 @@
 import datetime
 import decimal
 import uuid
-from enum import Enum
+from enum import EnumMeta, Enum as E
 from typing import Any, Optional, Set, TYPE_CHECKING, Type, Union, overload
 
 import pydantic
@@ -91,7 +91,7 @@ def convert_choices_if_needed(
     :return: value, choices list
     :rtype: Tuple[Any, Set]
     """
-    choices = {o.value if isinstance(o, Enum) else o for o in choices}
+    choices = {o.value if isinstance(o, E) else o for o in choices}
     encoder = ormar.ENCODERS_MAP.get(field_type, lambda x: x)
     if field_type == decimal.Decimal:
         precision = scale
@@ -803,3 +803,36 @@ class UUID(ModelFieldFactory, uuid.UUID):
         """
         uuid_format = kwargs.get("uuid_format", "hex")
         return sqlalchemy_uuid.UUID(uuid_format=uuid_format)
+
+
+class Enum(ModelFieldFactory):
+    _type = E
+    _sample = None
+
+    def __new__(  # type: ignore # noqa CFQ002
+        cls,
+        *,
+        enum_class: Type[E] = None,
+        **kwargs: Any
+    ) -> BaseField:
+
+        kwargs = {
+            **kwargs,
+            **{
+                k: v
+                for k, v in locals().items()
+                if k not in ["cls", "__class__", "kwargs"]
+            },
+        }
+        return super().__new__(cls, **kwargs)
+
+    @classmethod
+    def validate(cls, **kwargs: Any) -> None:
+        enum_class = kwargs.get("enum_class")
+        if enum_class is None or not isinstance(enum_class, EnumMeta):
+            raise ModelDefinitionError("Enum Field choices must be EnumType")
+
+    @classmethod
+    def get_column_type(cls, **kwargs: Any) -> Any:
+        enum_cls = kwargs.get("enum_class")
+        return sqlalchemy.Enum(enum_cls)
