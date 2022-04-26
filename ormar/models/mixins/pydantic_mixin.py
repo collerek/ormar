@@ -22,6 +22,9 @@ from ormar.queryset.utils import translate_list_to_dict
 
 
 class PydanticMixin(RelationMixin):
+
+    __cache__ = {}
+
     if TYPE_CHECKING:  # pragma: no cover
         __fields__: Dict[str, ModelField]
         _skip_ellipsis: Callable
@@ -68,6 +71,10 @@ class PydanticMixin(RelationMixin):
         fields_to_process.sort(
             key=lambda x: list(cls.Meta.model_fields.keys()).index(x)
         )
+        cache_key = f"{cls.__name__}_{str(fields_to_process)}_{str(include)}_{str(exclude)}"
+        if cache_key in cls.__cache__:
+            return cls.__cache__[cache_key]
+        
         for name in fields_to_process:
             field = cls._determine_pydantic_field_type(
                 name=name,
@@ -85,8 +92,9 @@ class PydanticMixin(RelationMixin):
         )
         model = cast(Type[pydantic.BaseModel], model)
         cls._copy_field_validators(model=model)
+        cls.__cache__[cache_key] = model
         return model
-
+        
     @classmethod
     def _determine_pydantic_field_type(
         cls,
