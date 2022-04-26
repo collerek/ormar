@@ -79,6 +79,7 @@ async def test_model_crud():
         await example.delete()
 
 
+@pytest.mark.asyncio
 async def test_invalid_enum_field():
     async with database:
         with pytest.raises(ModelDefinitionError):
