@@ -37,7 +37,20 @@ class Example(ormar.Model):
     description: str = ormar.Text(nullable=True)
     value: float = ormar.Float(nullable=True)
     data: pydantic.Json = ormar.JSON(default={})
-    size = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
+    size: MyEnum = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
+
+
+def test_proper_enum_column_type():
+    assert Example.__fields__["size"].type_ == MyEnum
+
+
+def test_accepts_only_proper_enums():
+    class WrongEnum(Enum):
+        A = 1
+        B = 2
+
+    with pytest.raises(pydantic.ValidationError):
+        Example(size=WrongEnum.A)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -62,10 +75,7 @@ async def test_model_crud():
         assert example.data == {}
         assert example.size == MyEnum.SMALL
 
-        await example.update(
-            data={"foo": 123}, value=123.456,
-            size=MyEnum.BIG
-        )
+        await example.update(data={"foo": 123}, value=123.456, size=MyEnum.BIG)
         await example.load()
         assert example.value == 123.456
         assert example.data == {"foo": 123}
@@ -83,6 +93,7 @@ async def test_model_crud():
 async def test_invalid_enum_field():
     async with database:
         with pytest.raises(ModelDefinitionError):
+
             class Example2(ormar.Model):
                 class Meta:
                     tablename = "example"

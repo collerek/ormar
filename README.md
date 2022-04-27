@@ -637,10 +637,11 @@ Available Model Fields (with required args - optional ones in docs):
 * `Decimal(scale, precision)`
 * `UUID()`
 * `LargeBinary(max_length)`
-* `EnumField` - by passing `choices` to any other Field type
+* `Enum(enum_class)`
+* `Enum` like Field - by passing `choices` to any other Field type
 * `EncryptedString` - by passing `encrypt_secret` and `encrypt_backend`
 * `ForeignKey(to)`
-* `ManyToMany(to, through)`
+* `ManyToMany(to)`
 
 ### Available fields options
 The following keyword arguments are supported on all field types.
