@@ -1,5 +1,6 @@
 import base64
 import uuid
+from enum import Enum
 from typing import (
     Any,
     Callable,
@@ -73,6 +74,14 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         new_kwargs = cls.reconvert_str_to_bytes(new_kwargs)
         new_kwargs = cls.dump_all_json_fields_to_str(new_kwargs)
         new_kwargs = cls.translate_columns_to_aliases(new_kwargs)
+        new_kwargs = cls.translate_enum_columns(new_kwargs)
+        return new_kwargs
+
+    @classmethod
+    def translate_enum_columns(cls, new_kwargs: dict) -> dict:
+        for k, v in new_kwargs.items():
+            if isinstance(v, Enum):
+                new_kwargs[k] = v.name
         return new_kwargs
 
     @classmethod
