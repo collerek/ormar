@@ -40,6 +40,24 @@ class Example(ormar.Model):
     size: MyEnum = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
 
 
+class EnumExample(ormar.Model):
+    class Meta:
+        tablename = "enum_example"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    size: MyEnum = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
+
+
+@pytest.fixture(autouse=True, scope="module")
+def create_test_database():
+    engine = sqlalchemy.create_engine(DATABASE_URL)
+    metadata.create_all(engine)
+    yield
+    metadata.drop_all(engine)
+
+
 def test_proper_enum_column_type():
     assert Example.__fields__["size"].type_ == MyEnum
 
@@ -53,12 +71,34 @@ def test_accepts_only_proper_enums():
         Example(size=WrongEnum.A)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+@pytest.mark.asyncio
+async def test_enum_bulk_operations():
+    async with database:
+        examples = [EnumExample(), EnumExample()]
+        await EnumExample.objects.bulk_create(examples)
+
+        check = await EnumExample.objects.all()
+        assert all(x.size == MyEnum.SMALL for x in check)
+
+        for x in check:
+            x.size = MyEnum.BIG
+
+        await EnumExample.objects.bulk_update(check)
+        check2 = await EnumExample.objects.all()
+        assert all(x.size == MyEnum.BIG for x in check2)
+
+
+@pytest.mark.asyncio
+async def test_enum_filter():
+    async with database:
+        examples = [EnumExample(), EnumExample(size=MyEnum.BIG)]
+        await EnumExample.objects.bulk_create(examples)
+
+        check = await EnumExample.objects.all(size=MyEnum.SMALL)
+        assert len(check) == 1
+
+        check = await EnumExample.objects.all(size=MyEnum.BIG)
+        assert len(check) == 1
 
 
 @pytest.mark.asyncio
