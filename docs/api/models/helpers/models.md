@@ -91,7 +91,7 @@ extraction of ormar model_fields.
 #### group\_related\_list
 
 ```python
-group_related_list(list_: List) -> collections.OrderedDict
+group_related_list(list_: List) -> Dict
 ```
 
 Translates the list of related strings into a dictionary.

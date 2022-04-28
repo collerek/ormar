@@ -60,7 +60,7 @@ into one text clause used in joins.
 #### build\_join
 
 ```python
- | build_join() -> Tuple[List, sqlalchemy.sql.select, List, OrderedDict]
+ | build_join() -> Tuple[List, sqlalchemy.sql.select, List, Dict]
 ```
 
 Main external access point for building a join.
@@ -70,7 +70,7 @@ used_aliases and sort_orders.
 
 **Returns**:
 
-`Tuple[List[str], Join, List[TextClause], collections.OrderedDict]`: list of used aliases, select from, list of aliased columns, sort orders
+`Tuple[List[str], Join, List[TextClause], Dict]`: list of used aliases, select from, list of aliased columns, sort orders
 
 <a name="queryset.join.SqlJoin._forward_join"></a>
 #### \_forward\_join
