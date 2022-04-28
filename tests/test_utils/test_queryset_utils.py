@@ -2,8 +2,7 @@ import databases
 import sqlalchemy
 
 import ormar
-from ormar.models.mixins import ExcludableMixin
-from ormar.queryset.prefetch_query import sort_models
+from ormar.queryset.queries.prefetch_query import sort_models
 from ormar.queryset.utils import (
     subtract_dict,
     translate_list_to_dict,

@@ -37,8 +37,8 @@ from ormar.exceptions import (
 from ormar.queryset import FieldAccessor, FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
-from ormar.queryset.prefetch_query import PrefetchQuery
-from ormar.queryset.query import Query
+from ormar.queryset.queries.prefetch_query import PrefetchQuery
+from ormar.queryset.queries.query import Query
 from ormar.queryset.reverse_alias_resolver import ReverseAliasResolver
 
 if TYPE_CHECKING:  # pragma no cover

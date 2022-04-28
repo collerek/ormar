@@ -7,7 +7,7 @@ from sqlalchemy.sql import Join
 
 import ormar  # noqa I100
 from ormar.models.helpers.models import group_related_list
-from ormar.queryset import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
+from ormar.queryset.queries import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
 from ormar.queryset.actions.filter_action import FilterAction
 from ormar.queryset.join import SqlJoin
 
