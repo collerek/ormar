@@ -37,7 +37,17 @@ class Example(ormar.Model):
     description: str = ormar.Text(nullable=True)
     value: float = ormar.Float(nullable=True)
     data: pydantic.Json = ormar.JSON(default={})
-    size = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
+    size: MyEnum = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
+
+
+class EnumExample(ormar.Model):
+    class Meta:
+        tablename = "enum_example"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    size: MyEnum = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -46,6 +56,49 @@ def create_test_database():
     metadata.create_all(engine)
     yield
     metadata.drop_all(engine)
+
+
+def test_proper_enum_column_type():
+    assert Example.__fields__["size"].type_ == MyEnum
+
+
+def test_accepts_only_proper_enums():
+    class WrongEnum(Enum):
+        A = 1
+        B = 2
+
+    with pytest.raises(pydantic.ValidationError):
+        Example(size=WrongEnum.A)
+
+
+@pytest.mark.asyncio
+async def test_enum_bulk_operations():
+    async with database:
+        examples = [EnumExample(), EnumExample()]
+        await EnumExample.objects.bulk_create(examples)
+
+        check = await EnumExample.objects.all()
+        assert all(x.size == MyEnum.SMALL for x in check)
+
+        for x in check:
+            x.size = MyEnum.BIG
+
+        await EnumExample.objects.bulk_update(check)
+        check2 = await EnumExample.objects.all()
+        assert all(x.size == MyEnum.BIG for x in check2)
+
+
+@pytest.mark.asyncio
+async def test_enum_filter():
+    async with database:
+        examples = [EnumExample(), EnumExample(size=MyEnum.BIG)]
+        await EnumExample.objects.bulk_create(examples)
+
+        check = await EnumExample.objects.all(size=MyEnum.SMALL)
+        assert len(check) == 1
+
+        check = await EnumExample.objects.all(size=MyEnum.BIG)
+        assert len(check) == 1
 
 
 @pytest.mark.asyncio
@@ -62,10 +115,7 @@ async def test_model_crud():
         assert example.data == {}
         assert example.size == MyEnum.SMALL
 
-        await example.update(
-            data={"foo": 123}, value=123.456,
-            size=MyEnum.BIG
-        )
+        await example.update(data={"foo": 123}, value=123.456, size=MyEnum.BIG)
         await example.load()
         assert example.value == 123.456
         assert example.data == {"foo": 123}
@@ -83,6 +133,7 @@ async def test_model_crud():
 async def test_invalid_enum_field():
     async with database:
         with pytest.raises(ModelDefinitionError):
+
             class Example2(ormar.Model):
                 class Meta:
                     tablename = "example"
