@@ -23,7 +23,7 @@ from ormar.queryset.utils import translate_list_to_dict
 
 class PydanticMixin(RelationMixin):
 
-    __cache__ = {}
+    __cache__: Dict[str, pydantic.BaseModel] = {}
 
     if TYPE_CHECKING:  # pragma: no cover
         __fields__: Dict[str, ModelField]
@@ -71,7 +71,8 @@ class PydanticMixin(RelationMixin):
         fields_to_process.sort(
             key=lambda x: list(cls.Meta.model_fields.keys()).index(x)
         )
-        cache_key = f"{cls.__name__}_{str(fields_to_process)}_{str(include)}_{str(exclude)}"
+
+        cache_key = f"{cls.__name__}_{str(include)}_{str(exclude)}"
         if cache_key in cls.__cache__:
             return cls.__cache__[cache_key]
         

@@ -60,6 +60,7 @@ class MutualB(ormar.Model):
         tablename = "mutual_b"
 
     id: int = ormar.Integer(primary_key=True)
+    name = ormar.String(max_length=100, default="test")
     mutual_a = ormar.ForeignKey(MutualA, related_name="mutuals_b")
 
 
@@ -183,7 +184,20 @@ def test_getting_pydantic_model_self_ref():
     assert len(InnerSelf2.__fields__) == 2
     assert set(InnerSelf2.__fields__.keys()) == {"id", "name"}
 
-    assert InnerSelf2 != InnerSelf
+
+def test_getting_pydantic_model_self_ref_exclude():
+    PydanticSelfRef = SelfRef.get_pydantic(exclude={"children": {"name"}})
+    assert len(PydanticSelfRef.__fields__) == 4
+    assert set(PydanticSelfRef.__fields__.keys()) == {
+        "id",
+        "name",
+        "parent",
+        "children",
+    }
+    PydanticSelfRefChildren = PydanticSelfRef.__fields__["children"].type_
+    assert len(PydanticSelfRefChildren.__fields__) == 1
+    assert set(PydanticSelfRefChildren.__fields__.keys()) == {"id"}
+    assert PydanticSelfRef != PydanticSelfRefChildren
 
 
 def test_getting_pydantic_model_mutual_rels():
@@ -193,10 +207,23 @@ def test_getting_pydantic_model_mutual_rels():
 
     MutualB1 = MutualAPydantic.__fields__["mutual_b"].type_
     MutualB2 = MutualAPydantic.__fields__["mutuals_b"].type_
-    assert MutualB1 != MutualB2
+    assert len(MutualB1.__fields__) == 2
+    assert set(MutualB1.__fields__.keys()) == {"id", "name"}
+    assert len(MutualB2.__fields__) == 2
+    assert set(MutualB2.__fields__.keys()) == {"id" , "name"}
+    assert MutualB1 == MutualB2
+
+
+def test_getting_pydantic_model_mutual_rels_exclude():
+    MutualAPydantic = MutualA.get_pydantic(exclude={"mutual_b": {"name"}})
+    assert len(MutualAPydantic.__fields__) == 3
+    assert set(MutualAPydantic.__fields__.keys()) == {"id", "mutual_b", "mutuals_b"}
+
+    MutualB1 = MutualAPydantic.__fields__["mutual_b"].type_
+    MutualB2 = MutualAPydantic.__fields__["mutuals_b"].type_
 
     assert len(MutualB1.__fields__) == 1
-    assert "id" in MutualB1.__fields__
-
-    assert len(MutualB2.__fields__) == 1
-    assert "id" in MutualB2.__fields__
+    assert set(MutualB1.__fields__.keys()) == {"id"}
+    assert len(MutualB2.__fields__) == 2
+    assert set(MutualB2.__fields__.keys()) == {"id" , "name"}
+    assert MutualB1 != MutualB2
