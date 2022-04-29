@@ -194,10 +194,16 @@ def test_getting_pydantic_model_self_ref_exclude():
         "parent",
         "children",
     }
+
+    InnerSelf = PydanticSelfRef.__fields__["parent"].type_
+    assert len(InnerSelf.__fields__) == 2
+    assert set(InnerSelf.__fields__.keys()) == {"id", "name"}
+    
     PydanticSelfRefChildren = PydanticSelfRef.__fields__["children"].type_
     assert len(PydanticSelfRefChildren.__fields__) == 1
     assert set(PydanticSelfRefChildren.__fields__.keys()) == {"id"}
     assert PydanticSelfRef != PydanticSelfRefChildren
+    assert InnerSelf != PydanticSelfRefChildren
 
 
 def test_getting_pydantic_model_mutual_rels():

@@ -23,7 +23,7 @@ from ormar.queryset.utils import translate_list_to_dict
 
 class PydanticMixin(RelationMixin):
 
-    __cache__: Dict[str, pydantic.BaseModel] = {}
+    __cache__: Dict[str, Type[pydantic.BaseModel]] = {}
 
     if TYPE_CHECKING:  # pragma: no cover
         __fields__: Dict[str, ModelField]
