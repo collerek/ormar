@@ -1,5 +1,6 @@
 import inspect
-from typing import Dict, Optional, TYPE_CHECKING, Tuple, Type
+from types import MappingProxyType
+from typing import Dict, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import pydantic
 from pydantic.fields import ModelField
@@ -137,7 +138,7 @@ def get_pydantic_base_orm_config() -> Type[pydantic.BaseConfig]:
     return Config
 
 
-def get_potential_fields(attrs: Dict) -> Dict:
+def get_potential_fields(attrs: Union[Dict, MappingProxyType]) -> Dict:
     """
     Gets all the fields in current class namespace that are Fields.
 
