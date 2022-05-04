@@ -1,6 +1,15 @@
+# Basic set up
+# https://help.github.com/en/github/administering-a-repository/configuration-options-for-dependency-updates#package-ecosystem
+
 version: 2
 updates:
-  - package-ecosystem: "pip" # See documentation for possible values
-    directory: "/" # Location of package manifests
+
+  - package-ecosystem: "pip"
+    directory: "/"
     schedule:
       interval: "daily"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+        interval: daily
