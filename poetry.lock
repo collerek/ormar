@@ -1288,7 +1288,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-pymysql"
-version = "1.0.14"
+version = "1.0.19"
 description = "Typing stubs for PyMySQL"
 category = "dev"
 optional = false
@@ -1431,7 +1431,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "d877d1069c42d248080f5911574ba7c1eebab0a1c5dcd606393b5a4db1af9bc2"
+content-hash = "5dc2f52b8cf1c99881d7646f2c8e764770b19f40072b5c6256501b0e427cd4af"
 
 [metadata.files]
 aiomysql = [
@@ -2331,8 +2331,8 @@ types-pkg-resources = [
     {file = "types_pkg_resources-0.1.3-py2.py3-none-any.whl", hash = "sha256:0cb9972cee992249f93fff1a491bf2dc3ce674e5a1926e27d4f0866f7d9b6d9c"},
 ]
 types-pymysql = [
-    {file = "types-PyMySQL-1.0.14.tar.gz", hash = "sha256:335efb8a3e0ebaa9164440b21a01cde11dab52b26e79c56f9752306092798e33"},
-    {file = "types_PyMySQL-1.0.14-py3-none-any.whl", hash = "sha256:65ce75e3f5cd30b569f5b05fc5945aac1e8175744f5fa1ff9ae518d7bc76458a"},
+    {file = "types-PyMySQL-1.0.19.tar.gz", hash = "sha256:f79a1f4d9df4a65db999537f9a47de419be162dfeab3b2c91bcba8bb1a362a65"},
+    {file = "types_PyMySQL-1.0.19-py3-none-any.whl", hash = "sha256:fc43dceda3f3fc4ac388db7dd57b157c13d94cb84e30cca4848df590c314bf68"},
 ]
 types-requests = [
     {file = "types-requests-2.27.25.tar.gz", hash = "sha256:805ae7e38fd9d157153066dc4381cf585fd34dfa212f2fc1fece248c05aac571"},
