@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3.7 -m pip install --upgrade pip
-          python3.7 -m pip install "mkdocs-material>=8.1.4,<9.0.0" "pydoc-markdown<=3.12"
+          python3.7 -m pip install "mkdocs-material>=8.1.4,<9.0.0" "pydoc-markdown==3.12"
       - name: Build API docs
         run: pydoc-markdown --build --site-dir=api
       - name: Copy APi docs
