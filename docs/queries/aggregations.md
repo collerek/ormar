@@ -326,3 +326,5 @@ objects from other side of the relation.
 
 !!!tip
     To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+[querysetproxy]: ../relations/queryset-proxy.md
