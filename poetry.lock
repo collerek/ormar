@@ -536,7 +536,7 @@ docs = ["sphinx"]
 
 [[package]]
 name = "griffe"
-version = "0.18.0"
+version = "0.19.0"
 description = "Signatures for entire Python programs. Extract the structure, the frame, the skeleton of your project, to generate API documentation or find breaking changes in your API."
 category = "dev"
 optional = false
@@ -1426,7 +1426,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "9852142828af6df49f5f794edbce47d88508bf6b8e85e32ddaac39e8ea3cfa60"
+content-hash = "2e422873c084d679d17902464a1439b76dec6bba2bdffd6b5ac4cf6809fcc797"
 
 [metadata.files]
 aiomysql = [
@@ -1804,8 +1804,8 @@ greenlet = [
     {file = "greenlet-1.1.2.tar.gz", hash = "sha256:e30f5ea4ae2346e62cedde8794a56858a67b878dd79f7df76a0767e356b1744a"},
 ]
 griffe = [
-    {file = "griffe-0.18.0-py3-none-any.whl", hash = "sha256:578e52513851f4652eb57543364df1675a755536b0ba8548cbb96dd07962b115"},
-    {file = "griffe-0.18.0.tar.gz", hash = "sha256:b6231f80a002322ac3fcfc2e1cb02a016666b7caba1da9468fe52a5ef8710dec"},
+    {file = "griffe-0.19.0-py3-none-any.whl", hash = "sha256:1bff0dc8692c862780c5c5ab12e19ae70855553b48cab03210c4b14402594c66"},
+    {file = "griffe-0.19.0.tar.gz", hash = "sha256:9fd1ae56b819e0c3c48e2d8d62f768721e39f7290e5e7de8caa010fb77073b4c"},
 ]
 identify = [
     {file = "identify-2.5.0-py2.py3-none-any.whl", hash = "sha256:3acfe15a96e4272b4ec5662ee3e231ceba976ef63fd9980ed2ce9cc415df393f"},
