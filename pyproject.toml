@@ -49,7 +49,7 @@ asyncpg = { version = ">=0.24,<0.26", optional = true }
 psycopg2-binary = { version = "^2.9.1", optional = true }
 aiomysql = { version = ">=0.0.21,<0.0.23", optional = true }
 aiosqlite = { version = "^0.17.0", optional = true }
-cryptography = { version = ">=35,<37", optional = true }
+cryptography = { version = ">=35,<38", optional = true }
 
 [tool.poetry.dependencies.orjson]
 version = ">=3.6.4"
