@@ -9,18 +9,16 @@ jobs:
     steps:
       - name: Checkout Master
         uses: actions/checkout@v3
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Install dependencies
         run: |
-          python3.7 -m pip install --upgrade pip
-          python3.7 -m pip install "mkdocs-material>=8.1.4,<9.0.0" "pydoc-markdown==3.13"
-      - name: Build API docs
-        run: pydoc-markdown --build --site-dir=api
-      - name: Copy APi docs
-        run: cp -Tavr ./build/docs/content/ ./docs/api/
+          python -m pip install poetry==1.1.11
+          poetry install
+        env:
+          POETRY_VIRTUALENVS_CREATE: false
       - name: Deploy
         run: |
           mkdocs gh-deploy --force

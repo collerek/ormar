@@ -110,7 +110,10 @@ types-toml = "^0.10.6"
 mkdocs = "^1.2.3"
 mkdocs-material = ">=8.1.2,<8.3"
 mkdocs-material-extensions = "^1.0.3"
-pydoc-markdown = "^4.5.0"
+mkdocstrings = {version = "==0.18", extras = ["python"]}
+mkdocs-gen-files = "^0.3.4"
+mkdocs-literate-nav = "^0.4.1"
+mkdocs-section-index = "^0.3.4"
 dataclasses = { version = ">=0.6.0,<0.8 || >0.8,<1.0.0" }
 
 # Performance testing
@@ -157,4 +160,9 @@ ignore_errors = true
 [[tool.mypy.overrides]]
 module = ["sqlalchemy.*", "asyncpg"]
 ignore_missing_imports = true
+
+[tool.yapf]
+based_on_style = "pep8"
+disable_ending_comma_heuristic = true
+split_arguments_when_comma_terminated = true
 
