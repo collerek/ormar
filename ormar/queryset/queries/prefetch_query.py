@@ -2,7 +2,7 @@ from typing import Dict, List, Sequence, Set, TYPE_CHECKING, Tuple, Type, cast
 
 import ormar
 from ormar.queryset.clause import QueryClause
-from ormar.queryset.query import Query
+from ormar.queryset.queries.query import Query
 from ormar.queryset.utils import extract_models_to_dict_of_lists, translate_list_to_dict
 
 if TYPE_CHECKING:  # pragma: no cover
