@@ -13,7 +13,7 @@ else:
     T = TypeVar("T", bound="Model")
 
 
-class RelationProxy(Generic[T], list):
+class RelationProxy(Generic[T], list[T]):
     """
     Proxy of the Relation that is a list with special methods.
     """
