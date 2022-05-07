@@ -174,7 +174,7 @@ await Car.objects.select_related('manufacturer').fields({'id': ...,
 ```
 
 !!!note 
-    All methods that do not return the rows explicitly returns a QueySet instance so
+    All methods that do not return the rows explicitly returns a QuerySet instance so
     you can chain them together
 
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
@@ -285,7 +285,7 @@ await Car.objects.select_related('manufacturer').exclude_fields([{'company': {'n
     excluded.
 
 !!!note 
-    All methods that do not return the rows explicitly returns a QueySet instance so
+    All methods that do not return the rows explicitly returns a QuerySet instance so
     you can chain them together
 
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
