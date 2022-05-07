@@ -198,7 +198,7 @@ def test_getting_pydantic_model_self_ref_exclude():
     InnerSelf = PydanticSelfRef.__fields__["parent"].type_
     assert len(InnerSelf.__fields__) == 2
     assert set(InnerSelf.__fields__.keys()) == {"id", "name"}
-    
+
     PydanticSelfRefChildren = PydanticSelfRef.__fields__["children"].type_
     assert len(PydanticSelfRefChildren.__fields__) == 1
     assert set(PydanticSelfRefChildren.__fields__.keys()) == {"id"}
@@ -216,7 +216,7 @@ def test_getting_pydantic_model_mutual_rels():
     assert len(MutualB1.__fields__) == 2
     assert set(MutualB1.__fields__.keys()) == {"id", "name"}
     assert len(MutualB2.__fields__) == 2
-    assert set(MutualB2.__fields__.keys()) == {"id" , "name"}
+    assert set(MutualB2.__fields__.keys()) == {"id", "name"}
     assert MutualB1 == MutualB2
 
 
@@ -231,5 +231,5 @@ def test_getting_pydantic_model_mutual_rels_exclude():
     assert len(MutualB1.__fields__) == 1
     assert set(MutualB1.__fields__.keys()) == {"id"}
     assert len(MutualB2.__fields__) == 2
-    assert set(MutualB2.__fields__.keys()) == {"id" , "name"}
+    assert set(MutualB2.__fields__.keys()) == {"id", "name"}
     assert MutualB1 != MutualB2

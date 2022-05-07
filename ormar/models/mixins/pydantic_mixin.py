@@ -75,7 +75,7 @@ class PydanticMixin(RelationMixin):
         cache_key = f"{cls.__name__}_{str(include)}_{str(exclude)}"
         if cache_key in cls.__cache__:
             return cls.__cache__[cache_key]
-        
+
         for name in fields_to_process:
             field = cls._determine_pydantic_field_type(
                 name=name,
@@ -95,7 +95,7 @@ class PydanticMixin(RelationMixin):
         cls._copy_field_validators(model=model)
         cls.__cache__[cache_key] = model
         return model
-        
+
     @classmethod
     def _determine_pydantic_field_type(
         cls,
