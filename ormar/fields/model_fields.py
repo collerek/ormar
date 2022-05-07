@@ -1,7 +1,7 @@
 import datetime
 import decimal
 import uuid
-from enum import EnumMeta, Enum as E
+from enum import Enum as E, EnumMeta
 from typing import Any, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union, overload
 
 import pydantic

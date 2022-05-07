@@ -79,9 +79,9 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
 
     @classmethod
     def translate_enum_columns(cls, new_kwargs: dict) -> dict:
-        for k, v in new_kwargs.items():
-            if isinstance(v, Enum):
-                new_kwargs[k] = v.name
+        for key, value in new_kwargs.items():
+            if isinstance(value, Enum):
+                new_kwargs[key] = value.name
         return new_kwargs
 
     @classmethod
