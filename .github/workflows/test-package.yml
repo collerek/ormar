@@ -42,7 +42,7 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
@@ -67,9 +67,9 @@ jobs:
       run: bash scripts/test.sh
     - run: mypy ormar tests
     - name: Upload coverage
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v3
     - name: Test & publish code coverage
-      uses: paambaati/codeclimate-action@v2.7.5
+      uses: paambaati/codeclimate-action@v3.0.0
       if: github.event.pull_request.head.repo.full_name == 'collerek/ormar'
       env:
         CC_TEST_REPORTER_ID:  ${{ secrets.CC_COVERAGE_TOKEN }}

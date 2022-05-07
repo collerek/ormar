@@ -1,8 +1,8 @@
 import datetime
 import decimal
 import uuid
-from enum import Enum
-from typing import Any, Optional, Set, TYPE_CHECKING, Type, Union, overload
+from enum import EnumMeta, Enum as E
+from typing import Any, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union, overload
 
 import pydantic
 import sqlalchemy
@@ -91,7 +91,7 @@ def convert_choices_if_needed(
     :return: value, choices list
     :rtype: Tuple[Any, Set]
     """
-    choices = {o.value if isinstance(o, Enum) else o for o in choices}
+    choices = {o.value if isinstance(o, E) else o for o in choices}
     encoder = ormar.ENCODERS_MAP.get(field_type, lambda x: x)
     if field_type == decimal.Decimal:
         precision = scale
@@ -150,12 +150,14 @@ class ModelFieldFactory:
                 scale=kwargs.get("scale", None),
                 represent_as_str=kwargs.get("represent_as_base64_str", False),
             )
+        enum_class = kwargs.get("enum_class", None)
+        field_type = cls._type if enum_class is None else enum_class
 
         namespace = dict(
-            __type__=cls._type,
+            __type__=field_type,
             __pydantic_type__=overwrite_pydantic_type
             if overwrite_pydantic_type is not None
-            else cls._type,
+            else field_type,
             __sample__=cls._sample,
             alias=kwargs.pop("name", None),
             name=None,
@@ -803,3 +805,46 @@ class UUID(ModelFieldFactory, uuid.UUID):
         """
         uuid_format = kwargs.get("uuid_format", "hex")
         return sqlalchemy_uuid.UUID(uuid_format=uuid_format)
+
+
+if TYPE_CHECKING:  # pragma: nocover
+
+    T = TypeVar("T", bound=E)
+
+    def Enum(enum_class: Type[T], **kwargs: Any) -> T:
+        pass
+
+else:
+
+    class Enum(ModelFieldFactory):
+        """
+        Enum field factory that construct Field classes and populated their values.
+        """
+
+        _type = E
+        _sample = None
+
+        def __new__(  # type: ignore # noqa CFQ002
+            cls, *, enum_class: Type[E], **kwargs: Any
+        ) -> BaseField:
+
+            kwargs = {
+                **kwargs,
+                **{
+                    k: v
+                    for k, v in locals().items()
+                    if k not in ["cls", "__class__", "kwargs"]
+                },
+            }
+            return super().__new__(cls, **kwargs)
+
+        @classmethod
+        def validate(cls, **kwargs: Any) -> None:
+            enum_class = kwargs.get("enum_class")
+            if enum_class is None or not isinstance(enum_class, EnumMeta):
+                raise ModelDefinitionError("Enum Field choices must be EnumType")
+
+        @classmethod
+        def get_column_type(cls, **kwargs: Any) -> Any:
+            enum_cls = kwargs.get("enum_class")
+            return sqlalchemy.Enum(enum_cls)
