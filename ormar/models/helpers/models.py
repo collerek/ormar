@@ -173,9 +173,7 @@ def group_related_list(list_: List) -> Dict:
             result_dict[key] = group_related_list(new)
         else:
             result_dict.setdefault(key, []).extend(new)
-    return dict(
-        sorted(result_dict.items(), key=lambda item: len(item[1]))
-    )
+    return dict(sorted(result_dict.items(), key=lambda item: len(item[1])))
 
 
 def meta_field_not_set(model: Type["Model"], field_name: str) -> bool:

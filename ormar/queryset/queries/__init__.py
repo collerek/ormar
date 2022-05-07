@@ -11,5 +11,5 @@ __all__ = [
     "OffsetQuery",
     "OrderQuery",
     "PrefetchQuery",
-    "Query"
+    "Query",
 ]
