@@ -1318,7 +1318,7 @@ types-urllib3 = "<1.27"
 
 [[package]]
 name = "types-toml"
-version = "0.10.6"
+version = "0.10.7"
 description = "Typing stubs for toml"
 category = "dev"
 optional = false
@@ -1426,7 +1426,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "2e077e653d44845480497266ff615c7a19e405526f418dcec8cc7492213b1a52"
+content-hash = "bbc702f4f9a403ead6eb66cd28318aad194d564f51a982d9b3e2f93a493cb8fb"
 
 [metadata.files]
 aiomysql = [
@@ -2345,8 +2345,8 @@ types-requests = [
     {file = "types_requests-2.27.25-py3-none-any.whl", hash = "sha256:2444905c89731dbcb6bbcd6d873a04252445df7623917c640e463b2b28d2a708"},
 ]
 types-toml = [
-    {file = "types-toml-0.10.6.tar.gz", hash = "sha256:6aeb3ed7bfa869381551c774ed6a9142e3eed98a83efa5108a9632eafd56dcd3"},
-    {file = "types_toml-0.10.6-py3-none-any.whl", hash = "sha256:c1289e9fb748a6a1ed068694ded1eb16f83df22d58cc1abae8ef6262403545d8"},
+    {file = "types-toml-0.10.7.tar.gz", hash = "sha256:a567fe2614b177d537ad99a661adc9bfc8c55a46f95e66370a4ed2dd171335f9"},
+    {file = "types_toml-0.10.7-py3-none-any.whl", hash = "sha256:05a8da4bfde2f1ee60e90c7071c063b461f74c63a9c3c1099470c08d6fa58615"},
 ]
 types-ujson = [
     {file = "types-ujson-4.2.1.tar.gz", hash = "sha256:9e7576316914151f4e7086fae4c5aea3a17ae2d66c2edea6525f4c82354c364d"},
