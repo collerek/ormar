@@ -1393,7 +1393,7 @@ watchmedo = ["PyYAML (>=3.10)"]
 
 [[package]]
 name = "yappi"
-version = "1.3.3"
+version = "1.3.5"
 description = "Yet Another Python Profiler"
 category = "dev"
 optional = false
@@ -1426,7 +1426,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "6d4a327c8fee71167362149fded454c2aed0a44b30b73b092b10fcc47fe7e98f"
+content-hash = "b7257e4ec695d1982243642d24b1ea37ad2475d9a3438565436703e55c0ffe8d"
 
 [metadata.files]
 aiomysql = [
@@ -2396,7 +2396,7 @@ watchdog = [
     {file = "watchdog-2.1.7.tar.gz", hash = "sha256:3fd47815353be9c44eebc94cc28fe26b2b0c5bd889dafc4a5a7cbdf924143480"},
 ]
 yappi = [
-    {file = "yappi-1.3.3.tar.gz", hash = "sha256:855890cd9a90d833dd2df632d648de8ccd0a4c3131f1edc8abd004db0625b5e8"},
+    {file = "yappi-1.3.5.tar.gz", hash = "sha256:f54c25f04aa7c613633b529bffd14e0699a4363f414dc9c065616fd52064a49b"},
 ]
 zipp = [
     {file = "zipp-3.8.0-py3-none-any.whl", hash = "sha256:c4f6e5bbf48e74f7a38e7cc5b0480ff42b0ae5178957d564d18932525d5cf099"},
