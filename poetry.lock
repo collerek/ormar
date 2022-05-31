@@ -279,20 +279,23 @@ test = ["pytest (>=6.2.0)", "pytest-benchmark", "pytest-cov", "pytest-subtests",
 
 [[package]]
 name = "databases"
-version = "0.5.5"
+version = "0.6.0"
 description = "Async database support for Python."
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 sqlalchemy = ">=1.4,<1.5"
 
 [package.extras]
+aiomysql = ["aiomysql"]
+aiopg = ["aiopg"]
+aiosqlite = ["aiosqlite"]
+asyncmy = ["asyncmy"]
+asyncpg = ["asyncpg"]
 mysql = ["aiomysql"]
-mysql_asyncmy = ["asyncmy"]
 postgresql = ["asyncpg"]
-postgresql_aiopg = ["aiopg"]
 sqlite = ["aiosqlite"]
 
 [[package]]
@@ -1386,7 +1389,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "72b829716e8eeb0163a20c656859cdba8fbec45577d9622bfe70d35cdb56394c"
+content-hash = "73a8a38df210d771544a0e4865373d1743ed815e62c82bb7f24927fa9650b3cd"
 
 [metadata.files]
 aiomysql = [
@@ -1630,8 +1633,8 @@ cryptography = [
     {file = "cryptography-37.0.2.tar.gz", hash = "sha256:f224ad253cc9cea7568f49077007d2263efa57396a2f2f78114066fd54b5c68e"},
 ]
 databases = [
-    {file = "databases-0.5.5-py3-none-any.whl", hash = "sha256:97d9b9647216d1ab53ca61c059412b5c7b6e1f0bf8ce985477982ebcc7f278f3"},
-    {file = "databases-0.5.5.tar.gz", hash = "sha256:02c6b016c1c951c21cca281dc8e2e002c60dc44026c0084aabbd8c37514aeb37"},
+    {file = "databases-0.6.0-py3-none-any.whl", hash = "sha256:c36468d9e00f47a825669a73158e6745e0401a169186fdefbb2fb7d43276320a"},
+    {file = "databases-0.6.0.tar.gz", hash = "sha256:abf088900e6665952fede331cb126a1810a097fb3aad54e02a4f58521419dabf"},
 ]
 dataclasses = [
     {file = "dataclasses-0.6-py3-none-any.whl", hash = "sha256:454a69d788c7fda44efd71e259be79577822f5e3f53f029a22d08004e951dc9f"},
