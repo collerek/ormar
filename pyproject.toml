@@ -103,7 +103,7 @@ types-cryptography = "^3.3.21"
 types-orjson = "^3.6.1"
 types-aiofiles = "^0.8.8"
 types-pkg-resources = "^0.1.3"
-types-requests = "^2.27.29"
+types-requests = "^2.27.30"
 types-toml = "^0.10.7"
 
 # Documantation
