@@ -12,6 +12,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    AsyncGenerator,
 )
 
 import databases
@@ -1055,12 +1056,26 @@ class QuerySet(Generic[T]):
 
         return result_rows
 
-    async def iterator(self):
+    async def iterator(  # noqa: A003
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> AsyncGenerator["T", None]:
         """
-        Return iterable generator for all rows from a database for given model.
+        Return async iterable generator for all rows from a database for given model.
         """
 
-        pass
+        if kwargs or args:
+            return await self.filter(*args, **kwargs).iterator()
+
+        expr = self.build_select_expression()
+        rows = await self.database.fetch_all(expr)
+        for row in rows:
+            result_row = self._process_query_result_rows([row])
+            if self._prefetch_related and result_row:
+                result_row = await self._prefetch_related_models(result_row, [row])
+
+            yield result_row[0]
 
     async def create(self, **kwargs: Any) -> "T":
         """
