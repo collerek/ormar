@@ -1063,6 +1063,16 @@ class QuerySet(Generic[T]):
     ) -> AsyncGenerator["T", None]:
         """
         Return async iterable generator for all rows from a database for given model.
+
+        Passing args and/or kwargs is a shortcut and equals to calling
+        `filter(*args, **kwargs).iterator()`.
+
+        If there are no rows meeting the criteria an empty async generator is returned.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: asynchronous iterable generator of returned models
+        :rtype: AsyncGenerator[Model]
         """
 
         if kwargs or args:
