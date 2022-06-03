@@ -1055,6 +1055,13 @@ class QuerySet(Generic[T]):
 
         return result_rows
 
+    async def iterator(self):
+        """
+        Return iterable generator for all rows from a database for given model.
+        """
+
+        pass
+
     async def create(self, **kwargs: Any) -> "T":
         """
         Creates the model instance, saves it in a database and returns the updates model
