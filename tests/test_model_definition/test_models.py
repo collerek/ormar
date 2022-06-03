@@ -500,6 +500,18 @@ async def test_model_first():
             assert await User.objects.order_by("name").first() == jane
 
 
+@pytest.mark.asyncio
+async def test_model_iterator():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            tom = await User.objects.create(name="Tom")
+            jane = await User.objects.create(name="Jane")
+            lucy = await User.objects.create(name="Lucy")
+
+            async for user in User.objects.iterator():
+                assert user in (tom, jane, lucy)
+
+
 def not_contains(a, b):
     return a not in b
 
