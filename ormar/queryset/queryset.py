@@ -1079,8 +1079,7 @@ class QuerySet(Generic[T]):
             return await self.filter(*args, **kwargs).iterator()
 
         expr = self.build_select_expression()
-        rows = await self.database.fetch_all(expr)
-        for row in rows:
+        async for row in self.database.iterate(query=expr):
             result_row = self._process_query_result_rows([row])
             if self._prefetch_related and result_row:
                 result_row = await self._prefetch_related_models(result_row, [row])
