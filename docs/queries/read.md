@@ -173,6 +173,34 @@ tracks = await Track.objects.all()
 
 ```
 
+## iterator
+
+`iterator(*args, **kwargs) -> List[Optional["Model"]]`
+
+Return async iterable generator for all rows from a database for given model.
+
+Passing args and/or kwargs is a shortcut and equals to calling `filter(*args, **kwargs).iterator()`.
+
+If there are no rows meeting the criteria an empty async generator is returned.
+
+```python
+class Album(ormar.Model):
+    class Meta:
+        tablename = "album"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+```
+
+```python
+await Album.objects.create(name='The Cat')
+await Album.objects.create(name='The Dog')
+async for album in Album.objects.iterator():
+    print(album.name)
+```
+
 ## Model methods
 
 Each model instance have a set of methods to `save`, `update` or `load` itself.
