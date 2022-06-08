@@ -388,6 +388,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def _copy_and_set_values(
         self: "NewBaseModel", values: "DictStrAny", fields_set: "SetStr", *, deep: bool
     ) -> "NewBaseModel":
+        """
+        Overwrite related models values with dict representation to avoid infinite
+        recursion through related fields.
+        """
         self_dict = values
         self_dict.update(self.dict())
         return cast(

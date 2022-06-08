@@ -1,3 +1,9 @@
+# 0.11.1
+
+## 🐛 Fixes
+
+* Fix deepcopy issues introduced in pydantic 1.9 [#685](https://github.com/collerek/ormar/issues/685)
+
 # 0.11.0
 
 ## ✨ Breaking Changes
