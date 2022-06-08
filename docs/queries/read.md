@@ -175,7 +175,7 @@ tracks = await Track.objects.all()
 
 ## iterator
 
-`iterator(*args, **kwargs) -> List[Optional["Model"]]`
+`iterator(*args, **kwargs) -> AsyncGenerator["Model"]`
 
 Return async iterable generator for all rows from a database for given model.
 
@@ -197,8 +197,13 @@ class Album(ormar.Model):
 ```python
 await Album.objects.create(name='The Cat')
 await Album.objects.create(name='The Dog')
+# will Asynchronous Iterable Generator for All Rows Album Model:
 async for album in Album.objects.iterator():
     print(album.name)
+
+# The Cat
+# The Dog
+
 ```
 
 ## Model methods
