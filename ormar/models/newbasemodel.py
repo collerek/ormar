@@ -385,6 +385,18 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             )
         )
 
+    def _copy_and_set_values(
+        self: "NewBaseModel", values: "DictStrAny", fields_set: "SetStr", *, deep: bool
+    ) -> "NewBaseModel":
+        self_dict = values
+        self_dict.update(self.dict())
+        return cast(
+            "NewBaseModel",
+            super()._copy_and_set_values(
+                values=self_dict, fields_set=fields_set, deep=deep
+            ),
+        )
+
     @classmethod
     def get_name(cls, lower: bool = True) -> str:
         """
