@@ -1076,7 +1076,9 @@ class QuerySet(Generic[T]):
         """
 
         if kwargs or args:
-            return await self.filter(*args, **kwargs).iterator()
+            async for result in self.filter(*args, **kwargs).iterator():
+                yield result
+            return
 
         expr = self.build_select_expression()
         async for row in self.database.iterate(query=expr):
