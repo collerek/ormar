@@ -1289,7 +1289,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-ujson"
-version = "5.2.0"
+version = "5.3.0"
 description = "Typing stubs for ujson"
 category = "dev"
 optional = false
@@ -1389,7 +1389,7 @@ sqlite = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "272b38d53bff689a04cf1153d1533d5cb9243ff97cbb95a8f38f54a11267f29d"
+content-hash = "e78e741cd78524cde4f3739a06be83f9bd51c37da8f916c9107e3bab84478553"
 
 [metadata.files]
 aiomysql = [
@@ -2301,8 +2301,8 @@ types-toml = [
     {file = "types_toml-0.10.7-py3-none-any.whl", hash = "sha256:05a8da4bfde2f1ee60e90c7071c063b461f74c63a9c3c1099470c08d6fa58615"},
 ]
 types-ujson = [
-    {file = "types-ujson-5.2.0.tar.gz", hash = "sha256:caca2323dc5f3e1b987f44aa51ed8d37b694709d46e74b166b73bf4e42a31b6d"},
-    {file = "types_ujson-5.2.0-py3-none-any.whl", hash = "sha256:6caa6b60c6a65f04a7010a46a6a6290d02aa4bd41b86f3d0556a2ebcd4f72d7a"},
+    {file = "types-ujson-5.3.0.tar.gz", hash = "sha256:3b25f0ea993f0a9aa7b1edbf5d7a51fb6e17d4f375201684933ce16e4aa702de"},
+    {file = "types_ujson-5.3.0-py3-none-any.whl", hash = "sha256:91702721e00c6f3003be6499f971ae7bbb1e5e1c9ffbad3a7648c7e7590d86e2"},
 ]
 types-urllib3 = [
     {file = "types-urllib3-1.26.15.tar.gz", hash = "sha256:c89283541ef92e344b7f59f83ea9b5a295b16366ceee3f25ecfc5593c79f794e"},
