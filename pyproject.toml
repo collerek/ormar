@@ -73,7 +73,7 @@ asyncpg = ">=0.24,<0.26"
 
 # Sync database drivers for standard tooling around setup/teardown/migrations.
 psycopg2-binary = "^2.9.1"
-mysqlclient = "^2.1.0"
+mysqlclient = "^2.1.1"
 PyMySQL = ">=0.9,<=0.9.3"
 
 # Testing
