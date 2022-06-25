@@ -128,6 +128,11 @@ async def test_model_crud():
 
         await example.delete()
 
+@pytest.mark.asyncio
+async def test_enum_schema():
+    Example.get_pydantic().schema_json()
+
+
 
 @pytest.mark.asyncio
 async def test_invalid_enum_field():
