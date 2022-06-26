@@ -351,6 +351,18 @@ async def test_limit_and_offset():
             assert len(tracks) == 1
             assert tracks[0].title == "Sample2"
 
+            album = await Album.objects.select_related("tracks").limit(1).get()
+            assert len(album.tracks) == 3
+            assert album.tracks[0].title == "Sample"
+
+            album = (
+                await Album.objects.select_related("tracks")
+                .limit(1, limit_raw_sql=True)
+                .get()
+            )
+            assert len(album.tracks) == 1
+            assert album.tracks[0].title == "Sample"
+
 
 @pytest.mark.asyncio
 async def test_get_exceptions():
