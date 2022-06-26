@@ -34,6 +34,7 @@ class Track(ormar.Model):
     title: str = ormar.String(max_length=100)
     position: int = ormar.Integer()
     play_count: int = ormar.Integer(nullable=True, default=0)
+    is_disabled: bool = ormar.Boolean(default=False)
 
 
 class Cover(ormar.Model):
