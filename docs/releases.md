@@ -1,3 +1,11 @@
+# 0.11.2
+
+## 🐛 Fixes
+
+* Fix database drivers being required, while they should be optional [#713](https://github.com/collerek/ormar/issues/713)
+* Fix boolean field problem in `limit` queries in postgres without `limit_raw_sql` flag [#704](https://github.com/collerek/ormar/issues/704)
+* Fix enum_class spilling to schema causing errors in OpenAPI [#699](https://github.com/collerek/ormar/issues/699)
+
 # 0.11.1
 
 ## 🐛 Fixes
