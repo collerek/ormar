@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Type
 
 import sqlalchemy
 from sqlalchemy import text
@@ -35,16 +35,10 @@ class OrderAction(QueryAction):
         return self.target_model.get_column_alias(self.field_name)
 
     @property
-    def field_type(self) -> Any:
-        return self.target_model.Meta.model_fields[self.field_name].__type__
-
-    @property
-    def dialect(self) -> str:
-        return self.target_model.Meta.database._backend._dialect.name
-
-    @property
     def is_postgres_bool(self) -> bool:
-        return self.dialect == "postgresql" and self.field_type == bool
+        dialect = self.target_model.Meta.database._backend._dialect.name
+        field_type = self.target_model.Meta.model_fields[self.field_name].__type__
+        return dialect == "postgresql" and field_type == bool
 
     def get_field_name_text(self) -> str:
         """
