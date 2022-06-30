@@ -115,6 +115,17 @@ class User2(ormar.Model):
     name: str = ormar.String(max_length=100, default="")
 
 
+class Task(ormar.Model):
+    class Meta:
+        tablename = "tasks"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, default="")
+    user: User = ormar.ForeignKey(to=User)
+
+
 class Product(ormar.Model):
     class Meta:
         tablename = "product"
@@ -510,6 +521,34 @@ async def test_model_iterator():
 
             async for user in User.objects.iterator():
                 assert user in (tom, jane, lucy)
+
+
+@pytest.mark.asyncio
+async def test_model_iterator_filter():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            tom = await User.objects.create(name="Tom")
+            jane = await User.objects.create(name="Jane")
+            lucy = await User.objects.create(name="Lucy")
+
+            async for user in User.objects.iterator(name="Tom"):
+                assert user.name == tom.name
+
+
+@pytest.mark.asyncio
+async def test_model_iterator_relational():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            tom = await User.objects.create(name="Tom")
+            jane = await User.objects.create(name="Jane")
+            lucy = await User.objects.create(name="Lucy")
+
+            for user in tom, jane, lucy:
+                await Task.objects.create(name="task1", user=user)
+                await Task.objects.create(name="task2", user=user)
+
+            async for user in User.objects.select_related(User.tasks).iterator():
+                assert len(user.tasks) == 2
 
 
 def not_contains(a, b):
