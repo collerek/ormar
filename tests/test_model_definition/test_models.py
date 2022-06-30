@@ -115,6 +115,16 @@ class User2(ormar.Model):
     name: str = ormar.String(max_length=100, default="")
 
 
+class User3(ormar.Model):
+    class Meta:
+        tablename = "users3"
+        metadata = metadata
+        database = database
+
+    id: str = ormar.String(primary_key=True, max_length=100)
+    name: str = ormar.String(max_length=100, default="")
+
+
 class Task(ormar.Model):
     class Meta:
         tablename = "tasks"
@@ -123,7 +133,7 @@ class Task(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="")
-    user: User = ormar.ForeignKey(to=User)
+    user: User3 = ormar.ForeignKey(to=User3)
 
 
 class Product(ormar.Model):
@@ -515,9 +525,9 @@ async def test_model_first():
 async def test_model_iterator():
     async with database:
         async with database.transaction(force_rollback=True):
-            tom = await User.objects.create(name="Tom")
-            jane = await User.objects.create(name="Jane")
-            lucy = await User.objects.create(name="Lucy")
+            tom = await User3.objects.create(name="Tom")
+            jane = await User3.objects.create(name="Jane")
+            lucy = await User3.objects.create(name="Lucy")
 
             async for user in User.objects.iterator():
                 assert user in (tom, jane, lucy)
@@ -527,9 +537,9 @@ async def test_model_iterator():
 async def test_model_iterator_filter():
     async with database:
         async with database.transaction(force_rollback=True):
-            tom = await User.objects.create(name="Tom")
-            jane = await User.objects.create(name="Jane")
-            lucy = await User.objects.create(name="Lucy")
+            tom = await User3.objects.create(name="Tom")
+            jane = await User3.objects.create(name="Jane")
+            lucy = await User3.objects.create(name="Lucy")
 
             async for user in User.objects.iterator(name="Tom"):
                 assert user.name == tom.name
@@ -539,9 +549,9 @@ async def test_model_iterator_filter():
 async def test_model_iterator_relational():
     async with database:
         async with database.transaction(force_rollback=True):
-            tom = await User.objects.create(name="Tom")
-            jane = await User.objects.create(name="Jane")
-            lucy = await User.objects.create(name="Lucy")
+            tom = await User3.objects.create(name="Tom")
+            jane = await User3.objects.create(name="Jane")
+            lucy = await User3.objects.create(name="Lucy")
 
             for user in tom, jane, lucy:
                 await Task.objects.create(name="task1", user=user)
