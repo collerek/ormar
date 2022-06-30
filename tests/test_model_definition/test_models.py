@@ -121,7 +121,7 @@ class User3(ormar.Model):
         metadata = metadata
         database = database
 
-    id: str = ormar.String(primary_key=True, max_length=100)
+    id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="")
 
 
