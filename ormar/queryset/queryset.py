@@ -1080,7 +1080,9 @@ class QuerySet(Generic[T]):
                 yield result
             return
 
-        expr, rows = self.build_select_expression(), []
+        expr = self.build_select_expression()
+
+        rows: list = []
         async for row in self.database.iterate(query=expr):
             result_row = self._process_query_result_rows([*rows, row])
             if len(result_row) == 1:
