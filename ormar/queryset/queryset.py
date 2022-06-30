@@ -1087,16 +1087,10 @@ class QuerySet(Generic[T]):
                 rows.append(row)
                 continue
 
-            if self._prefetch_related and result_row:
-                result_row = await self._prefetch_related_models(result_row, rows)
-
             yield result_row[0]
             rows = [row]
 
         result_row = self._process_query_result_rows(rows)
-        if self._prefetch_related and result_row:
-            result_row = await self._prefetch_related_models(result_row, rows)
-
         yield result_row[0]
 
     async def create(self, **kwargs: Any) -> "T":
