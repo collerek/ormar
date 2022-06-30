@@ -1082,7 +1082,7 @@ class QuerySet(Generic[T]):
 
         expr, rows = self.build_select_expression(), []
         async for row in self.database.iterate(query=expr):
-            result_row = self._process_query_result_rows((*rows, row))
+            result_row = self._process_query_result_rows([*rows, row])
             if len(result_row) == 1:
                 rows.append(row)
                 continue
