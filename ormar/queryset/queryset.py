@@ -1080,13 +1080,24 @@ class QuerySet(Generic[T]):
                 yield result
             return
 
-        expr = self.build_select_expression()
+        expr, rows = self.build_select_expression(), []
         async for row in self.database.iterate(query=expr):
-            result_row = self._process_query_result_rows([row])
+            result_row = self._process_query_result_rows((*rows, row))
+            if len(result_row) == 1:
+                rows.append(row)
+                continue
+
             if self._prefetch_related and result_row:
-                result_row = await self._prefetch_related_models(result_row, [row])
+                result_row = await self._prefetch_related_models(result_row, rows)
 
             yield result_row[0]
+            rows = [row]
+
+        result_row = self._process_query_result_rows(rows)
+        if self._prefetch_related and result_row:
+            result_row = await self._prefetch_related_models(result_row, rows)
+
+        yield result_row[0]
 
     async def create(self, **kwargs: Any) -> "T":
         """
