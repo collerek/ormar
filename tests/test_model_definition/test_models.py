@@ -529,7 +529,7 @@ async def test_model_iterator():
             jane = await User3.objects.create(name="Jane")
             lucy = await User3.objects.create(name="Lucy")
 
-            async for user in User.objects.iterator():
+            async for user in User3.objects.iterator():
                 assert user in (tom, jane, lucy)
 
 
@@ -541,7 +541,7 @@ async def test_model_iterator_filter():
             jane = await User3.objects.create(name="Jane")
             lucy = await User3.objects.create(name="Lucy")
 
-            async for user in User.objects.iterator(name="Tom"):
+            async for user in User3.objects.iterator(name="Tom"):
                 assert user.name == tom.name
 
 
@@ -557,7 +557,7 @@ async def test_model_iterator_relational():
                 await Task.objects.create(name="task1", user=user)
                 await Task.objects.create(name="task2", user=user)
 
-            async for user in User.objects.select_related(User.tasks).iterator():
+            async for user in User3.objects.select_related(User3.tasks).iterator():
                 assert len(user.tasks) == 2
 
 
