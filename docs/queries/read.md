@@ -173,9 +173,9 @@ tracks = await Track.objects.all()
 
 ```
 
-## iterator
+## iterate
 
-`iterator(*args, **kwargs) -> AsyncGenerator["Model"]`
+`iterate(*args, **kwargs) -> AsyncGenerator["Model"]`
 
 Return async iterable generator for all rows from a database for given model.
 

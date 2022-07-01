@@ -590,7 +590,7 @@ async def test_model_iterator_with_prefetch_raises_error():
     async with database:
         with pytest.raises(QueryDefinitionError):
             async for user in User3.objects.prefetch_related(User3.tasks).iterate():
-                pass
+                pass  # pragma: no cover
 
 
 def not_contains(a, b):
