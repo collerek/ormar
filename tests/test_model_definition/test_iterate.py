@@ -71,7 +71,7 @@ async def test_empty_result():
     async with database:
         async with database.transaction(force_rollback=True):
             async for user in User.objects.iterate():
-                pass
+                pass  # pragma: no cover
 
 
 @pytest.mark.asyncio
