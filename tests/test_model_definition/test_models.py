@@ -590,6 +590,32 @@ async def test_model_iterator_relations():
 
 
 @pytest.mark.asyncio
+async def test_model_iterator_relations_queryset_proxy():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            tom = await User3.objects.create(name="Tom")
+            jane = await User3.objects.create(name="Jane")
+
+            for user in tom, jane:
+                await Task.objects.create(name="task1", user=user)
+                await Task.objects.create(name="task2", user=user)
+
+            tom_tasks = []
+            async for task in tom.tasks.iterate():
+                assert task.name in "task1", "task2"
+                tom_tasks.append(task)
+
+            assert len(tom_tasks) == 2
+
+            jane_tasks = []
+            async for task in jane.tasks.iterate():
+                assert task.name in "task1", "task2"
+                jane_tasks.append(task)
+
+            assert len(jane_tasks) == 2
+
+
+@pytest.mark.asyncio
 async def test_model_iterator_uneven_number_of_relations():
     async with database:
         async with database.transaction(force_rollback=True):
@@ -651,6 +677,32 @@ async def test_model_iterator_relations_uuid_pk():
                 assert len(user.tasks) == 2
                 results.append(user)
             assert len(results) == 3
+
+
+@pytest.mark.asyncio
+async def test_model_iterator_relations_queryset_proxy_uuid_pk():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            tom = await User4.objects.create(name="Tom")
+            jane = await User4.objects.create(name="Jane")
+
+            for user in tom, jane:
+                await Task2.objects.create(name="task1", user=user)
+                await Task2.objects.create(name="task2", user=user)
+
+            tom_tasks = []
+            async for task in tom.tasks.iterate():
+                assert task.name in "task1", "task2"
+                tom_tasks.append(task)
+
+            assert len(tom_tasks) == 2
+
+            jane_tasks = []
+            async for task in jane.tasks.iterate():
+                assert task.name in "task1", "task2"
+                jane_tasks.append(task)
+
+            assert len(jane_tasks) == 2
 
 
 @pytest.mark.asyncio
