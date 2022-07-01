@@ -84,6 +84,23 @@ assert news_posts[0].author == guido
 !!!tip
     Read more in queries documentation [all][all]
 
+### iterate
+
+`iterate(**kwargs) -> AsyncGenerator["Model"]`
+
+To iterate on related models use `iterate()` method.
+
+Note that you can filter the queryset, select related, exclude fields etc. like in normal query.
+
+```python
+# iterate on categories of this post with an async generator
+async for category in post.categories.iterate():
+    print(category.name)
+```
+
+!!!tip
+    Read more in queries documentation [iterate][iterate]
+
 ## Insert/ update data into database
 
 ### create
@@ -294,6 +311,7 @@ Returns a bool value to confirm if there are rows matching the given criteria (a
 [queries]: ../queries/index.md
 [get]: ../queries/read.md#get
 [all]: ../queries/read.md#all
+[iterate]: ../queries/read.md#iterate
 [create]: ../queries/create.md#create
 [get_or_create]: ../queries/read.md#get_or_create
 [update_or_create]: ../queries/update.md#update_or_create
