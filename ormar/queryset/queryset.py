@@ -1089,7 +1089,7 @@ class QuerySet(Generic[T]):
 
         rows: list = []
         last_primary_key = None
-        pk_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
+        pk_alias = self.model.get_column_alias(self.model_meta.pkname)
 
         async for row in self.database.iterate(query=expr):
             current_primary_key = row[pk_alias]
