@@ -586,6 +586,7 @@ async def test_model_iterator_relations():
             async for user in User3.objects.select_related(User3.tasks).iterate():
                 assert len(user.tasks) == 2
                 results.append(user)
+
             assert len(results) == 3
 
 
@@ -602,14 +603,14 @@ async def test_model_iterator_relations_queryset_proxy():
 
             tom_tasks = []
             async for task in tom.tasks.iterate():
-                assert task.name in "task1", "task2"
+                assert task.name in ("task1", "task2")
                 tom_tasks.append(task)
 
             assert len(tom_tasks) == 2
 
             jane_tasks = []
             async for task in jane.tasks.iterate():
-                assert task.name in "task1", "task2"
+                assert task.name in ("task1", "task2")
                 jane_tasks.append(task)
 
             assert len(jane_tasks) == 2
@@ -633,6 +634,7 @@ async def test_model_iterator_uneven_number_of_relations():
             async for user in User3.objects.select_related(User3.tasks).iterate():
                 assert len(user.tasks) == expected_counts[user.name]
                 results.append(user)
+
             assert len(results) == 3
 
 
@@ -673,9 +675,10 @@ async def test_model_iterator_relations_uuid_pk():
                 await Task2.objects.create(name="task2", user=user)
 
             results = []
-            async for user in User4.objects.select_related(User4.tasks).iterate():
-                assert len(user.tasks) == 2
+            async for user in User4.objects.select_related(User4.task2s).iterate():
+                assert len(user.task2s) == 2
                 results.append(user)
+
             assert len(results) == 3
 
 
@@ -691,15 +694,15 @@ async def test_model_iterator_relations_queryset_proxy_uuid_pk():
                 await Task2.objects.create(name="task2", user=user)
 
             tom_tasks = []
-            async for task in tom.tasks.iterate():
-                assert task.name in "task1", "task2"
+            async for task in tom.task2s.iterate():
+                assert task.name in ("task1", "task2")
                 tom_tasks.append(task)
 
             assert len(tom_tasks) == 2
 
             jane_tasks = []
-            async for task in jane.tasks.iterate():
-                assert task.name in "task1", "task2"
+            async for task in jane.task2s.iterate():
+                assert task.name in ("task1", "task2")
                 jane_tasks.append(task)
 
             assert len(jane_tasks) == 2
@@ -718,11 +721,14 @@ async def test_model_iterator_uneven_number_of_relations_uuid_pk():
                 await Task2.objects.create(name="task2", user=user)
 
             await Task2.objects.create(name="task3", user=lucy)
+
             expected_counts = {"Tom": 2, "Jane": 2, "Lucy": 1}
+
             results = []
-            async for user in User4.objects.select_related(User4.tasks).iterate():
-                assert len(user.tasks) == expected_counts[user.name]
+            async for user in User4.objects.select_related(User4.task2s).iterate():
+                assert len(user.task2s) == expected_counts[user.name]
                 results.append(user)
+
             assert len(results) == 3
 
 
