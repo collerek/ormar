@@ -179,7 +179,7 @@ tracks = await Track.objects.all()
 
 Return async iterable generator for all rows from a database for given model.
 
-Passing args and/or kwargs is a shortcut and equals to calling `filter(*args, **kwargs).iterator()`.
+Passing args and/or kwargs is a shortcut and equals to calling `filter(*args, **kwargs).iterate()`.
 
 If there are no rows meeting the criteria an empty async generator is returned.
 
@@ -205,6 +205,12 @@ async for album in Album.objects.iterate():
 # The Dog
 
 ```
+
+!!!warning
+    Use of `iterate()` causes previous `prefetch_related()` calls to be ignored;
+    since these two optimizations do not make sense together.
+
+    If `iterate()` & `prefetch_related()` are used together the `QueryDefinitionError` exception is raised.
 
 ## Model methods
 

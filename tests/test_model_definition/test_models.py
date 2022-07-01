@@ -125,6 +125,18 @@ class User3(ormar.Model):
     name: str = ormar.String(max_length=100, default="")
 
 
+class User4(ormar.Model):
+    class Meta:
+        tablename = "users4"
+        metadata = metadata
+        database = database
+
+    id: uuid.UUID = ormar.UUID(
+        uuid_format="string", primary_key=True, default=uuid.uuid4
+    )
+    name: str = ormar.String(max_length=100, default="")
+
+
 class Task(ormar.Model):
     class Meta:
         tablename = "tasks"
@@ -134,6 +146,19 @@ class Task(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="")
     user: User3 = ormar.ForeignKey(to=User3)
+
+
+class Task2(ormar.Model):
+    class Meta:
+        tablename = "tasks2"
+        metadata = metadata
+        database = database
+
+    id: uuid.UUID = ormar.UUID(
+        uuid_format="string", primary_key=True, default=uuid.uuid4
+    )
+    name: str = ormar.String(max_length=100, default="")
+    user: User4 = ormar.ForeignKey(to=User4)
 
 
 class Product(ormar.Model):
@@ -580,6 +605,70 @@ async def test_model_iterator_uneven_number_of_relations():
             expected_counts = {"Tom": 2, "Jane": 2, "Lucy": 1}
             results = []
             async for user in User3.objects.select_related(User3.tasks).iterate():
+                assert len(user.tasks) == expected_counts[user.name]
+                results.append(user)
+            assert len(results) == 3
+
+
+@pytest.mark.asyncio
+async def test_model_iterator_uuid_pk():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            tom = await User4.objects.create(name="Tom")
+            jane = await User4.objects.create(name="Jane")
+            lucy = await User4.objects.create(name="Lucy")
+
+            async for user in User4.objects.iterate():
+                assert user in (tom, jane, lucy)
+
+
+@pytest.mark.asyncio
+async def test_model_iterator_filter_uuid_pk():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            tom = await User4.objects.create(name="Tom")
+            await User4.objects.create(name="Jane")
+            await User4.objects.create(name="Lucy")
+
+            async for user in User4.objects.iterate(name="Tom"):
+                assert user.name == tom.name
+
+
+@pytest.mark.asyncio
+async def test_model_iterator_relations_uuid_pk():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            tom = await User4.objects.create(name="Tom")
+            jane = await User4.objects.create(name="Jane")
+            lucy = await User4.objects.create(name="Lucy")
+
+            for user in tom, jane, lucy:
+                await Task2.objects.create(name="task1", user=user)
+                await Task2.objects.create(name="task2", user=user)
+
+            results = []
+            async for user in User4.objects.select_related(User4.tasks).iterate():
+                assert len(user.tasks) == 2
+                results.append(user)
+            assert len(results) == 3
+
+
+@pytest.mark.asyncio
+async def test_model_iterator_uneven_number_of_relations_uuid_pk():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            tom = await User4.objects.create(name="Tom")
+            jane = await User4.objects.create(name="Jane")
+            lucy = await User4.objects.create(name="Lucy")
+
+            for user in tom, jane:
+                await Task2.objects.create(name="task1", user=user)
+                await Task2.objects.create(name="task2", user=user)
+
+            await Task2.objects.create(name="task3", user=lucy)
+            expected_counts = {"Tom": 2, "Jane": 2, "Lucy": 1}
+            results = []
+            async for user in User4.objects.select_related(User4.tasks).iterate():
                 assert len(user.tasks) == expected_counts[user.name]
                 results.append(user)
             assert len(results) == 3

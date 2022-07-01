@@ -1065,7 +1065,7 @@ class QuerySet(Generic[T]):
         Return async iterable generator for all rows from a database for given model.
 
         Passing args and/or kwargs is a shortcut and equals to calling
-        `filter(*args, **kwargs).iterator()`.
+        `filter(*args, **kwargs).iterate()`.
 
         If there are no rows meeting the criteria an empty async generator is returned.
 
@@ -1101,6 +1101,7 @@ class QuerySet(Generic[T]):
             yield self._process_query_result_rows(rows)[0]
             last_primary_key = current_primary_key
             rows = [row]
+
         yield self._process_query_result_rows(rows)[0]
 
     async def create(self, **kwargs: Any) -> "T":
