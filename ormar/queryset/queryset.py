@@ -1102,7 +1102,8 @@ class QuerySet(Generic[T]):
             last_primary_key = current_primary_key
             rows = [row]
 
-        yield self._process_query_result_rows(rows)[0]
+        if rows:
+            yield self._process_query_result_rows(rows)[0]
 
     async def create(self, **kwargs: Any) -> "T":
         """

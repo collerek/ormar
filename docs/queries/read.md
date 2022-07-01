@@ -197,7 +197,7 @@ class Album(ormar.Model):
 ```python
 await Album.objects.create(name='The Cat')
 await Album.objects.create(name='The Dog')
-# will Asynchronous Iterable Generator for All Rows Album Model:
+# will asynchronously iterate all Album models yielding one main model at a time from the generator
 async for album in Album.objects.iterate():
     print(album.name)
 

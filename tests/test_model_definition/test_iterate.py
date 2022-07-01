@@ -66,6 +66,13 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
+@pytest.mark.asyncio
+async def test_empty_result():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            async for user in User.objects.iterate():
+                pass
+
 
 @pytest.mark.asyncio
 async def test_model_iterator():
