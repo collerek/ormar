@@ -1056,7 +1056,7 @@ class QuerySet(Generic[T]):
 
         return result_rows
 
-    async def iterator(  # noqa: A003
+    async def iterate(  # noqa: A003
         self,
         *args: Any,
         **kwargs: Any,
@@ -1075,25 +1075,33 @@ class QuerySet(Generic[T]):
         :rtype: AsyncGenerator[Model]
         """
 
+        if self._prefetch_related:
+            raise QueryDefinitionError(
+                "Prefetch related queries are not supported in iterators"
+            )
+
         if kwargs or args:
-            async for result in self.filter(*args, **kwargs).iterator():
+            async for result in self.filter(*args, **kwargs).iterate():
                 yield result
             return
 
         expr = self.build_select_expression()
 
         rows: list = []
+        last_primary_key = None
+        pk_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
+
         async for row in self.database.iterate(query=expr):
-            result_row = self._process_query_result_rows([*rows, row])
-            if len(result_row) == 1:
+            current_primary_key = row[pk_alias]
+            if last_primary_key == current_primary_key or last_primary_key is None:
+                last_primary_key = current_primary_key
                 rows.append(row)
                 continue
 
-            yield result_row[0]
+            yield self._process_query_result_rows(rows)[0]
+            last_primary_key = current_primary_key
             rows = [row]
-
-        result_row = self._process_query_result_rows(rows)
-        yield result_row[0]
+        yield self._process_query_result_rows(rows)[0]
 
     async def create(self, **kwargs: Any) -> "T":
         """

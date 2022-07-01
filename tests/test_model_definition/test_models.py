@@ -529,7 +529,7 @@ async def test_model_iterator():
             jane = await User3.objects.create(name="Jane")
             lucy = await User3.objects.create(name="Lucy")
 
-            async for user in User3.objects.iterator():
+            async for user in User3.objects.iterate():
                 assert user in (tom, jane, lucy)
 
 
@@ -538,15 +538,15 @@ async def test_model_iterator_filter():
     async with database:
         async with database.transaction(force_rollback=True):
             tom = await User3.objects.create(name="Tom")
-            jane = await User3.objects.create(name="Jane")
-            lucy = await User3.objects.create(name="Lucy")
+            await User3.objects.create(name="Jane")
+            await User3.objects.create(name="Lucy")
 
-            async for user in User3.objects.iterator(name="Tom"):
+            async for user in User3.objects.iterate(name="Tom"):
                 assert user.name == tom.name
 
 
 @pytest.mark.asyncio
-async def test_model_iterator_relational():
+async def test_model_iterator_relations():
     async with database:
         async with database.transaction(force_rollback=True):
             tom = await User3.objects.create(name="Tom")
@@ -557,8 +557,40 @@ async def test_model_iterator_relational():
                 await Task.objects.create(name="task1", user=user)
                 await Task.objects.create(name="task2", user=user)
 
-            async for user in User3.objects.select_related(User3.tasks).iterator():
+            results = []
+            async for user in User3.objects.select_related(User3.tasks).iterate():
                 assert len(user.tasks) == 2
+                results.append(user)
+            assert len(results) == 3
+
+
+@pytest.mark.asyncio
+async def test_model_iterator_uneven_number_of_relations():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            tom = await User3.objects.create(name="Tom")
+            jane = await User3.objects.create(name="Jane")
+            lucy = await User3.objects.create(name="Lucy")
+
+            for user in tom, jane:
+                await Task.objects.create(name="task1", user=user)
+                await Task.objects.create(name="task2", user=user)
+
+            await Task.objects.create(name="task3", user=lucy)
+            expected_counts = {"Tom": 2, "Jane": 2, "Lucy": 1}
+            results = []
+            async for user in User3.objects.select_related(User3.tasks).iterate():
+                assert len(user.tasks) == expected_counts[user.name]
+                results.append(user)
+            assert len(results) == 3
+
+
+@pytest.mark.asyncio
+async def test_model_iterator_with_prefetch_raises_error():
+    async with database:
+        with pytest.raises(QueryDefinitionError):
+            async for user in User3.objects.prefetch_related(User3.tasks).iterate():
+                pass
 
 
 def not_contains(a, b):
