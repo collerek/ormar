@@ -14,7 +14,7 @@ sa = ["sqlalchemy (>=1.0)"]
 
 [[package]]
 name = "aiopg"
-version = "1.3.3"
+version = "1.3.4"
 description = "Postgres integration with asyncio."
 category = "main"
 optional = true
@@ -1398,8 +1398,8 @@ aiomysql = [
     {file = "aiomysql-0.0.22.tar.gz", hash = "sha256:9bcf8f26d22e550f75cabd635fa19a55c45f835eea008275960cb37acadd622a"},
 ]
 aiopg = [
-    {file = "aiopg-1.3.3-py3-none-any.whl", hash = "sha256:2842dd8741460eeef940032dcb577bfba4d4115205dd82a73ce13b3271f5bf0a"},
-    {file = "aiopg-1.3.3.tar.gz", hash = "sha256:547c6ba4ea0d73c2a11a2f44387d7133cc01d3c6f3b8ed976c0ac1eff4f595d7"},
+    {file = "aiopg-1.3.4-py3-none-any.whl", hash = "sha256:b5b74a124831aad71608c3c203479db90bac4a7eb3f8982bc48c3d3e6f1e57bf"},
+    {file = "aiopg-1.3.4.tar.gz", hash = "sha256:23f9e4cd9f28e9d91a6de3b4fb517e8bed25511cd954acccba9fe3a702d9b7d0"},
 ]
 aiosqlite = [
     {file = "aiosqlite-0.17.0-py3-none-any.whl", hash = "sha256:6c49dc6d3405929b1d08eeccc72306d3677503cc5e5e43771efc1e00232e8231"},
