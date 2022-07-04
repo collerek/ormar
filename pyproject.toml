@@ -61,7 +61,7 @@ version = ">=3.6.4"
 optional = true
 
 [tool.poetry.dependencies.typing-extensions]
-version = "^3.7"
+version = ">=3.7,<=5.0"
 python = "<3.8"
 
 [tool.poetry.dependencies.importlib-metadata]
