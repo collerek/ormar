@@ -46,7 +46,7 @@ async def test_check_columns():
             )
 
             if Product.Meta.database._backend._dialect.name != "mysql":
-                with pytest.raises(
+                with pytest.raises(  # pragma: no cover
                     (
                         sqlite3.IntegrityError,
                         asyncpg.exceptions.CheckViolationError,
