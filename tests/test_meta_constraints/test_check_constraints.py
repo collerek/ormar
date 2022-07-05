@@ -2,7 +2,6 @@ import sqlite3
 
 import asyncpg  # type: ignore
 import databases
-import pymysql
 import pytest
 import sqlalchemy
 
@@ -19,13 +18,14 @@ class Product(ormar.Model):
         metadata = metadata
         database = database
         constraints = [
-            ormar.fields.constraints.CheckColumns("inventory > 0", name="inv_check"),
+            ormar.fields.constraints.CheckColumns("inventory > buffer"),
         ]
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     company: str = ormar.String(max_length=200)
     inventory: int = ormar.Integer()
+    buffer: int = ormar.Integer()
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -41,15 +41,17 @@ def create_test_database():
 async def test_check_columns():
     async with database:
         async with database.transaction(force_rollback=True):
-            await Product.objects.create(name="Cookies", company="Nestle", inventory=1)
-            await Product.objects.create(name="Mars", company="Mars", inventory=1000)
-            await Product.objects.create(name="Mars", company="Nestle", inventory=100)
+            await Product.objects.create(
+                name="Mars", company="Nestle", inventory=100, buffer=10
+            )
 
-            with pytest.raises(
-                (
-                    sqlite3.IntegrityError,
-                    pymysql.IntegrityError,
-                    asyncpg.exceptions.UniqueViolationError,
-                )
-            ):
-                await Product.objects.create(name="Mars", company="Mars", inventory=-1)
+            if Product.Meta.database._backend._dialect.name != "mysql":
+                with pytest.raises(
+                    (
+                        sqlite3.IntegrityError,
+                        asyncpg.exceptions.CheckViolationError,
+                    )
+                ):
+                    await Product.objects.create(
+                        name="Cookies", company="Nestle", inventory=1, buffer=10
+                    )
