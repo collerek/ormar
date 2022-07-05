@@ -52,6 +52,6 @@ async def test_check_columns():
                         asyncpg.exceptions.CheckViolationError,
                     )
                 ):
-                    await Product.objects.create(
+                    await Product.objects.create(  # pragma: no cover
                         name="Cookies", company="Nestle", inventory=1, buffer=10
                     )
