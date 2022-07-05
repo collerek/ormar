@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import Index, UniqueConstraint
+from sqlalchemy import Index, UniqueConstraint, CheckConstraint
 
 
 class UniqueColumns(UniqueConstraint):
@@ -19,4 +19,13 @@ class IndexColumns(Index):
     """
     Subclass of sqlalchemy.Index.
     Used to avoid importing anything from sqlalchemy by user.
+    """
+
+
+class CheckColumns(CheckConstraint):
+    """
+    Subclass of sqlalchemy.CheckConstraint.
+    Used to avoid importing anything from sqlalchemy by user.
+
+    Note that some databases do not actively support check constraints such as MySQL.
     """
