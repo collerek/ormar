@@ -160,7 +160,7 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
         )
 
 
-def validate_referential_action(action: Optional[Union[Action, str]]) -> Optional[str]:
+def validate_referential_action(action: Optional[Union[Action, str]]) -> str:
     """
     Validation `onupdate` and `ondelete` action cast to a string value
 
@@ -178,8 +178,7 @@ def validate_referential_action(action: Optional[Union[Action, str]]) -> Optiona
             raise ModelDefinitionError(f"{name} Referential Action Not Supported.")
 
     if action is not None:
-        result: str = action.value
-        return result
+        return action.value
 
 
 @dataclass
