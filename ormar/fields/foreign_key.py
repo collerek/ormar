@@ -178,7 +178,8 @@ def validate_referential_action(action: Optional[Union[Action, str]]) -> Optiona
             raise ModelDefinitionError(f"{name} Referential Action Not Supported.")
 
     if action is not None:
-        return action.value
+        result: str = action.value
+        return result
 
 
 @dataclass
