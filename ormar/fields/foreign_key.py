@@ -160,7 +160,7 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
         )
 
 
-def validate_referential_action(action: Optional[Union[Action, str]]) -> str:
+def validate_referential_action(action: Optional[Union[Action, str]]) -> Optional[str]:
     """
     Validation `onupdate` and `ondelete` action cast to a string value
 
@@ -179,6 +179,8 @@ def validate_referential_action(action: Optional[Union[Action, str]]) -> str:
 
     if action is not None:
         return action.value
+
+    return
 
 
 @dataclass
