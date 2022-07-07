@@ -38,6 +38,7 @@ from ormar.decorators import (  # noqa: I100
     pre_update,
     property_field,
 )
+from ormar.actions import Action
 from ormar.exceptions import (  # noqa: I100
     ModelDefinitionError,
     MultipleMatches,
@@ -102,6 +103,7 @@ __all__ = [
     "Float",
     "ManyToMany",
     "Model",
+    "Action",
     "ModelDefinitionError",
     "MultipleMatches",
     "NoMatch",
