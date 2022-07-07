@@ -6,6 +6,7 @@ Following methods allow you to load data from the database.
 * `get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 * `first(*args, **kwargs) -> Model`
 * `all(*args, **kwargs) -> List[Optional[Model]]`
+* `iterate(*args, **kwargs) -> AsyncGenerator[Model]`
 
 
 * `Model`
