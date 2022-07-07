@@ -96,8 +96,10 @@ def test_validations_referential_action():
 
 @pytest.mark.asyncio
 async def test_cascade_clear():
-    a = await A.objects.create(name="a")
-    b = await B.objects.create(name="b", a=a)
-    c = await C.objects.create(name="c", b=b)
+    async with database:
+        async with database.transaction(force_rollback=True):
+            a = await A.objects.create(name="a")
+            b = await B.objects.create(name="b", a=a)
+            c = await C.objects.create(name="c", b=b)
 
-    await a.bs.clear(keep_reversed=False)
+            await a.bs.clear(keep_reversed=False)
