@@ -20,6 +20,7 @@ from pydantic import BaseModel, create_model
 from pydantic.typing import ForwardRef, evaluate_forwardref
 
 import ormar  # noqa I101
+from ormar.actions import Action
 from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
 from ormar.fields.base import BaseField
 
@@ -159,6 +160,27 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
         )
 
 
+def validate_referential_action(action: Optional[Union[Action, str]]) -> Optional[str]:
+    """
+    Validation `onupdate` and `ondelete` action cast to a string value
+
+    :raises ModelDefinitionError: if action is a not valid name string value
+    :param action: referential action attribute or name string
+    :type action: Optional[Union[Action, str]]
+    :rtype: Optional[str]
+    """
+
+    if isinstance(action, str):
+        name = action.upper()
+        try:
+            action = Action(name)
+        except ValueError:
+            raise ModelDefinitionError(f"{name} Referential Action Not Supported.")
+
+    if action is not None:
+        return action.value
+
+
 @dataclass
 class ForeignKeyConstraint:
     """
@@ -190,8 +212,8 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     nullable: bool = True,
     related_name: str = None,
     virtual: bool = False,
-    onupdate: str = None,
-    ondelete: str = None,
+    onupdate: Union[Action, str] = None,
+    ondelete: Union[Action, str] = None,
     **kwargs: Any,
 ) -> "T":
     """
@@ -224,6 +246,9 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     :return: ormar ForeignKeyField with relation to selected model
     :rtype: ForeignKeyField
     """
+
+    onupdate = validate_referential_action(action=onupdate)
+    ondelete = validate_referential_action(action=ondelete)
 
     owner = kwargs.pop("owner", None)
     self_reference = kwargs.pop("self_reference", False)
