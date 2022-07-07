@@ -236,10 +236,10 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     :type virtual: bool
     :param onupdate: parameter passed to sqlalchemy.ForeignKey.
     How to treat child rows on update of parent (the one where FK is defined) model.
-    :type onupdate: str
+    :type onupdate: Union[Action, str]
     :param ondelete: parameter passed to sqlalchemy.ForeignKey.
     How to treat child rows on delete of parent (the one where FK is defined) model.
-    :type ondelete: str
+    :type ondelete: Union[Action, str]
     :param kwargs: all other args to be populated by BaseField
     :type kwargs: Any
     :return: ormar ForeignKeyField with relation to selected model
