@@ -1,6 +1,9 @@
 # ForeignKey
 
-`ForeignKey(to, related_name=None)` has required parameters `to` that takes target `Model` class.  
+`ForeignKey(to: Model, *, name: str = None, unique: bool = False, nullable: bool = True,
+related_name: str = None, virtual: bool = False, onupdate: Union[Action, str] = None,
+ondelete: Union[Action, str] = None, **kwargs: Any)`
+has required parameters `to` that takes target `Model` class.  
 
 Sqlalchemy column and Type are automatically taken from target `Model`.
 
@@ -181,6 +184,36 @@ But you can overwrite this name by providing `related_name` parameter like below
     When you provide multiple relations to the same model `ormar` can no longer auto generate
     the `related_name` for you. Therefore, in that situation you **have to** provide `related_name`
     for all but one (one can be default and generated) or all related fields.
+
+## Referential Actions
+
+When an object referenced by a ForeignKey is changed (deleted or updated),
+ormar will set the SQL constraint specified by the `ondelete` and `onupdate` argument.
+
+The possible values for `ondelete` and `onupdate` are found in `ormar.Action`:
+
+!!!note
+    Instead of `ormar.Action`, you can directly pass string values to these two arguments, but this is not recommended because it will break the integrity.
+
+### CASCADE
+
+Lorem Ipsum.
+
+### RESTRICT
+
+Lorem Ipsum.
+
+### SET_NULL
+
+Lorem Ipsum.
+
+### SET_DEFAULT
+
+Lorem Ipsum.
+
+### DO_NOTHING
+
+Lorem Ipsum.
 
 ## Relation Setup
 
