@@ -197,23 +197,25 @@ The possible values for `ondelete` and `onupdate` are found in `ormar.Action`:
 
 ### CASCADE
 
-Lorem Ipsum.
+Whenever rows in the parent (referenced) table are deleted (or updated), the respective rows of the child (referencing) table with a matching foreign key column will be deleted (or updated) as well. This is called a cascade delete (or update).
 
 ### RESTRICT
 
-Lorem Ipsum.
+A value cannot be updated or deleted when a row exists in a referencing or child table that references the value in the referenced table.
+
+Similarly, a row cannot be deleted as long as there is a reference to it from a referencing or child table.
 
 ### SET_NULL
 
-Lorem Ipsum.
+Set the ForeignKey to `None`; this is only possible if `nullable` is True.
 
 ### SET_DEFAULT
 
-Lorem Ipsum.
+Set the ForeignKey to its default value; a `default` for the ForeignKey must be set.
 
 ### DO_NOTHING
 
-Lorem Ipsum.
+Take `NO ACTION`; NO ACTION and RESTRICT are very much alike. The main difference between NO ACTION and RESTRICT is that with NO ACTION the referential integrity check is done after trying to alter the table. RESTRICT does the check before trying to execute the UPDATE or DELETE statement. Both referential actions act the same if the referential integrity check fails: the UPDATE or DELETE statement will result in an error.
 
 ## Relation Setup
 
