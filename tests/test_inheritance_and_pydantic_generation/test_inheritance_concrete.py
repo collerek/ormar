@@ -243,7 +243,7 @@ def test_params_are_inherited():
     assert Category.Meta.database == db
     assert len(Category.Meta.property_fields) == 2
 
-    constraints = Counter(Category.Meta.constraints)
+    constraints = Counter(map(lambda c: type(c), Category.Meta.constraints))
     assert constraints[ormar.fields.constraints.UniqueColumns] == 2
     assert constraints[ormar.fields.constraints.IndexColumns] == 0
     assert constraints[ormar.fields.constraints.CheckColumns] == 1
