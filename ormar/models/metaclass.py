@@ -23,6 +23,7 @@ from ormar.exceptions import ModelError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
+from ormar.fields.constraints import UniqueColumns, IndexColumns, CheckColumns
 from ormar.models.descriptors import (
     JsonDescriptor,
     PkDescriptor,
@@ -186,7 +187,7 @@ def verify_constraint_names(
     for column_set in constraints_columns:
         if any(x not in old_aliases.values() for x in column_set):
             raise ModelDefinitionError(
-                f"Unique columns constraint "
+                f"Column constraints "
                 f"{column_set} "
                 f"has column names "
                 f"that are not in the model fields."
@@ -226,13 +227,13 @@ def update_attrs_from_base_meta(  # noqa: CCR001
 
                 for value in parent_value:
                     if isinstance(value, sqlalchemy.UniqueConstraint):
-                        constraint = ormar.fields.constraints.UniqueColumns
+                        constraint = UniqueColumns(*value._pending_colargs)
                     elif isinstance(value, sqlalchemy.Index):
-                        constraint = ormar.fields.constraints.IndexColumns
+                        constraint = IndexColumns(*value._pending_colargs)
                     elif isinstance(value, sqlalchemy.CheckConstraint):
-                        constraint = ormar.fields.constraints.CheckColumns
+                        constraint = CheckColumns(value.sqltext)
 
-                    extended_value.append(constraint(*value._pending_colargs))
+                    extended_value.append(constraint)
 
             else:
                 extended_value = parent_value
