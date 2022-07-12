@@ -23,7 +23,6 @@ from ormar.exceptions import ModelError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
-from ormar.fields.constraints import UniqueColumns, IndexColumns, CheckColumns
 from ormar.models.descriptors import (
     JsonDescriptor,
     PkDescriptor,
@@ -217,31 +216,16 @@ def update_attrs_from_base_meta(  # noqa: CCR001
             base_class.Meta.__dict__.get(param) if hasattr(base_class, "Meta") else None
         )
         if parent_value:
-            extended_value = []
             if param == "constraints":
                 verify_constraint_names(
                     base_class=base_class,
                     model_fields=model_fields,
                     parent_value=parent_value,
                 )
-
-                for value in parent_value:
-                    if isinstance(value, sqlalchemy.UniqueConstraint):
-                        constraint = UniqueColumns(*value._pending_colargs)
-                    elif isinstance(value, sqlalchemy.Index):
-                        constraint = IndexColumns(*value._pending_colargs)
-                    elif isinstance(value, sqlalchemy.CheckConstraint):
-                        constraint = CheckColumns(value.sqltext)
-
-                    extended_value.append(constraint)
-
-            else:
-                extended_value = parent_value
-
             if isinstance(current_value, list):
-                current_value.extend(extended_value)
+                current_value.extend(parent_value)
             else:
-                setattr(attrs["Meta"], param, extended_value)
+                setattr(attrs["Meta"], param, parent_value)
 
 
 def copy_and_replace_m2m_through_model(  # noqa: CFQ002

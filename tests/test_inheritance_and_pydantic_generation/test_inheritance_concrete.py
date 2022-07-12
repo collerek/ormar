@@ -1,6 +1,7 @@
 # type: ignore
 import datetime
 from typing import List, Optional
+from collections import Counter
 
 import databases
 import pytest
@@ -9,7 +10,6 @@ from sqlalchemy import create_engine
 
 import ormar
 import ormar.fields.constraints
-from ormar.fields.constraints import UniqueColumns, IndexColumns, CheckColumns
 from ormar import ModelDefinitionError, property_field
 from ormar.exceptions import ModelError
 from tests.settings import DATABASE_URL
@@ -48,8 +48,13 @@ class DateFieldsModel(ormar.Model):
         metadata = metadata
         database = db
         constraints = [
-            UniqueColumns("creation_date", "modification_date"),
-            CheckColumns("creation_date <= modification_date", name="check_dates"),
+            ormar.fields.constraints.UniqueColumns(
+                "creation_date",
+                "modification_date",
+            ),
+            ormar.fields.constraints.CheckColumns(
+                "creation_date <= modification_date",
+            ),
         ]
 
     created_date: datetime.datetime = ormar.DateTime(
@@ -238,18 +243,10 @@ def test_params_are_inherited():
     assert Category.Meta.database == db
     assert len(Category.Meta.property_fields) == 2
 
-    unique, index, check = 0, 0, 0
-    for constraint in Category.Meta.constraints:
-        if isinstance(constraint, UniqueColumns):
-            unique += 1
-        if isinstance(constraint, IndexColumns):
-            index += 1
-        if isinstance(constraint, CheckColumns):
-            check += 1
-
-    assert unique == 2
-    assert index == 0
-    assert check == 1
+    constraints = Counter(Category.Meta.constraints)
+    assert constraints[ormar.fields.constraints.UniqueColumns] == 2
+    assert constraints[ormar.fields.constraints.IndexColumns] == 0
+    assert constraints[ormar.fields.constraints.CheckColumns] == 1
 
 
 def round_date_to_seconds(
