@@ -216,20 +216,31 @@ def update_attrs_from_base_meta(  # noqa: CCR001
             base_class.Meta.__dict__.get(param) if hasattr(base_class, "Meta") else None
         )
         if parent_value:
+            extended_value = []
             if param == "constraints":
                 verify_constraint_names(
                     base_class=base_class,
                     model_fields=model_fields,
                     parent_value=parent_value,
                 )
-                parent_value = [
-                    ormar.fields.constraints.UniqueColumns(*x._pending_colargs)
-                    for x in parent_value
-                ]
-            if isinstance(current_value, list):
-                current_value.extend(parent_value)
+
+                for value in parent_value:
+                    if isinstance(value, sqlalchemy.UniqueConstraint):
+                        constraint = ormar.fields.constraints.UniqueColumns
+                    elif isinstance(value, sqlalchemy.Index):
+                        constraint = ormar.fields.constraints.IndexColumns
+                    elif isinstance(value, sqlalchemy.CheckConstraint):
+                        constraint = ormar.fields.constraints.CheckColumns
+
+                    extended_value.append(constraint(*value._pending_colargs))
+
             else:
-                setattr(attrs["Meta"], param, parent_value)
+                extended_value = parent_value
+
+            if isinstance(current_value, list):
+                current_value.extend(extended_value)
+            else:
+                setattr(attrs["Meta"], param, extended_value)
 
 
 def copy_and_replace_m2m_through_model(  # noqa: CFQ002
