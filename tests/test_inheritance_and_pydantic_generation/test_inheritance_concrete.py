@@ -12,6 +12,7 @@ import ormar
 import ormar.fields.constraints
 from ormar import ModelDefinitionError, property_field
 from ormar.exceptions import ModelError
+from ormar.models.metaclass import get_constraint_copy
 from tests.settings import DATABASE_URL
 
 metadata = sa.MetaData()
@@ -530,3 +531,8 @@ def test_custom_config():
     sam = ImmutablePerson(name="Sam")
     with pytest.raises(TypeError):
         sam.name = "Not Sam"
+
+
+def test_get_constraint_copy():
+    with pytest.raises(ValueError):
+        get_constraint_copy("INVALID CONSTRAINT")
