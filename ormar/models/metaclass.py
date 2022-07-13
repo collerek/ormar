@@ -18,6 +18,7 @@ from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
 import ormar.fields.constraints
+from ormar.fields.constraints import UniqueColumns, IndexColumns, CheckColumns
 from ormar import ModelDefinitionError  # noqa I100
 from ormar.exceptions import ModelError
 from ormar.fields import BaseField
@@ -195,6 +196,29 @@ def verify_constraint_names(
             )
 
 
+def get_constraint_copy(
+    value: ColumnCollectionConstraint,
+) -> Union[UniqueColumns, IndexColumns, CheckColumns]:
+    """
+    Copy the constraint and unpacking it's values
+
+    :raises ValueError: if non subclass of ColumnCollectionConstraint
+    :param value: an instance of the ColumnCollectionConstraint class
+    :type value: Instance of ColumnCollectionConstraint child
+    :return: copy ColumnCollectionConstraint ormar constraints
+    :rtype: Union[UniqueColumns, IndexColumns, CheckColumns]
+    """
+
+    if isinstance(value, sqlalchemy.UniqueConstraint):
+        return UniqueColumns(*value._pending_colargs)
+    elif isinstance(value, sqlalchemy.Index):
+        return IndexColumns(*value._pending_colargs)
+    elif isinstance(value, sqlalchemy.CheckConstraint):
+        return CheckColumns(value.sqltext)
+
+    raise ValueError(f"{value} Must be a ColumnCollectionConstraint.")
+
+
 def update_attrs_from_base_meta(  # noqa: CCR001
     base_class: "Model", attrs: Dict, model_fields: Dict
 ) -> None:
@@ -222,6 +246,7 @@ def update_attrs_from_base_meta(  # noqa: CCR001
                     model_fields=model_fields,
                     parent_value=parent_value,
                 )
+                parent_value = [get_constraint_copy(value) for value in parent_value]
             if isinstance(current_value, list):
                 current_value.extend(parent_value)
             else:
