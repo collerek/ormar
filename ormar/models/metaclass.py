@@ -210,11 +210,11 @@ def get_constraint_copy(
     """
 
     if isinstance(value, sqlalchemy.UniqueConstraint):
-        return UniqueColumns(*value._pending_colargs)
+        return UniqueColumns(*value._pending_colargs)  # pragma: no cover
     elif isinstance(value, sqlalchemy.Index):
-        return IndexColumns(*value._pending_colargs)
+        return IndexColumns(*value._pending_colargs)  # pragma: no cover
     elif isinstance(value, sqlalchemy.CheckConstraint):
-        return CheckColumns(value.sqltext)
+        return CheckColumns(value.sqltext)  # pragma: no cover
 
     raise ValueError(f"{value} Must be a ColumnCollectionConstraint.")
 
