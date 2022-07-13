@@ -318,7 +318,8 @@ def set_constraint_names(meta: "ModelMeta") -> None:
                 f'{"_".join([col for col in constraint._pending_colargs])}'
             )
         elif isinstance(constraint, sqlalchemy.CheckConstraint) and not constraint.name:
-            constraint.name = f"check_{meta.tablename}_{constraint.sqltext}"
+            sql_condition: str = constraint.sqltext.replace(" ", "_")
+            constraint.name = f"check_{meta.tablename}_{sql_condition}"
 
 
 def update_column_definition(
