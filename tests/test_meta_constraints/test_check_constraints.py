@@ -38,20 +38,20 @@ def create_test_database():
 
 
 @pytest.mark.asyncio
-async def test_check_columns():
-    async with database:
-        async with database.transaction(force_rollback=True):
-            await Product.objects.create(
-                name="Mars", company="Nestle", inventory=100, buffer=10
-            )
+async def test_check_columns_exclude_mysql():
+    if Product.Meta.database._backend._dialect.name != "mysql":
+        async with database:  # pragma: no cover
+            async with database.transaction(force_rollback=True):
+                await Product.objects.create(
+                    name="Mars", company="Nestle", inventory=100, buffer=10
+                )
 
-            if Product.Meta.database._backend._dialect.name != "mysql":
-                with pytest.raises(  # pragma: no cover
+                with pytest.raises(
                     (
                         sqlite3.IntegrityError,
                         asyncpg.exceptions.CheckViolationError,
                     )
                 ):
-                    await Product.objects.create(  # pragma: no cover
+                    await Product.objects.create(
                         name="Cookies", company="Nestle", inventory=1, buffer=10
                     )
