@@ -71,6 +71,7 @@ from ormar.fields import (
     Time,
     UUID,
     UniqueColumns,
+    CheckColumns,
 )  # noqa: I100
 from ormar.models import ExcludableItems, Extra, Model
 from ormar.models.metaclass import ModelMeta
@@ -114,6 +115,7 @@ __all__ = [
     "UUID",
     "UniqueColumns",
     "IndexColumns",
+    "CheckColumns",
     "QuerySetProtocol",
     "RelationProtocol",
     "ModelMeta",

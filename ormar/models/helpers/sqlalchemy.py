@@ -298,7 +298,7 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
 
 def set_constraint_names(meta: "ModelMeta") -> None:
     """
-    Populates the names on IndexColumn and UniqueColumns constraints.
+    Populates the names on IndexColumns and UniqueColumns and CheckColumns constraints.
 
     :param meta: Meta class of the Model without sqlalchemy table constructed
     :type meta: Model class Meta
@@ -317,6 +317,9 @@ def set_constraint_names(meta: "ModelMeta") -> None:
                 f"ix_{meta.tablename}_"
                 f'{"_".join([col for col in constraint._pending_colargs])}'
             )
+        elif isinstance(constraint, sqlalchemy.CheckConstraint) and not constraint.name:
+            sql_condition: str = str(constraint.sqltext).replace(" ", "_")
+            constraint.name = f"check_{meta.tablename}_{sql_condition}"
 
 
 def update_column_definition(
