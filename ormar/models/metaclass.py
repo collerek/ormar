@@ -9,6 +9,7 @@ from typing import (
     Type,
     Union,
     cast,
+    Callable,
 )
 
 import databases
@@ -216,9 +217,10 @@ def get_constraint_copy(
     }
     checks = (key if isinstance(constraint, key) else None for key in constraints)
     target_class = next((target for target in checks if target is not None), None)
-    constructor = constraints.get(target_class)
+    constructor: Optional[Callable] = constraints.get(target_class)
     if not constructor:
         raise ValueError(f"{constraint} must be a ColumnCollectionMixin!")
+
     return constructor(constraint)
 
 
