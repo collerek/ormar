@@ -197,7 +197,7 @@ def verify_constraint_names(
 
 
 def get_constraint_copy(
-    value: ColumnCollectionConstraint,
+    constraint: ColumnCollectionConstraint,
 ) -> Union[UniqueColumns, IndexColumns, CheckColumns]:
     """
     Copy the constraint and unpacking it's values
@@ -209,14 +209,17 @@ def get_constraint_copy(
     :rtype: Union[UniqueColumns, IndexColumns, CheckColumns]
     """
 
-    if isinstance(value, sqlalchemy.UniqueConstraint):
-        return UniqueColumns(*value._pending_colargs)  # pragma: no cover
-    elif isinstance(value, sqlalchemy.Index):
-        return IndexColumns(*value._pending_colargs)  # pragma: no cover
-    elif isinstance(value, sqlalchemy.CheckConstraint):
-        return CheckColumns(value.sqltext)  # pragma: no cover
-
-    raise ValueError(f"{value} Must be a ColumnCollectionConstraint.")
+    constraints = {
+        sqlalchemy.UniqueConstraint: lambda x: UniqueColumns(*x._pending_colargs),
+        sqlalchemy.Index: lambda x: IndexColumns(*x._pending_colargs),
+        sqlalchemy.CheckConstraint: lambda x: CheckColumns(x.sqltext),
+    }
+    checks = (key if isinstance(constraint, key) else None for key in constraints)
+    target_class = next((target for target in checks if target is not None), None)
+    constructor = constraints.get(target_class)
+    if not constructor:
+        raise ValueError(f"{constraint} must be a ColumnCollectionMixin!")
+    return constructor(constraint)
 
 
 def update_attrs_from_base_meta(  # noqa: CCR001
