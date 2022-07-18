@@ -1,5 +1,6 @@
 import asyncio
 import time
+import uuid
 from datetime import datetime
 
 import databases
@@ -85,3 +86,25 @@ async def test_model_creation():
             if Product.db_backend_name() != "postgresql":
                 # postgres use transaction timestamp so it will remain the same
                 assert p1.created != p2.created  # pragma nocover
+
+
+@pytest.mark.asyncio
+async def test_postgres_server_default_as_pk():
+
+    class Jimmy(ormar.Model):
+        class Meta:
+            tablename = "jimmy"
+            metadata = metadata
+            database = database
+
+        id: uuid.UUID = ormar.UUID(
+            primary_key=True, server_default=text("gen_random_uuid()"), uuid_format="string"
+        )
+
+    if Jimmy.db_backend_name() != "postgresql":
+        pytest.skip()
+
+    async with database:
+        async with database.transaction(force_rollback=True):
+            jimmyrus = Jimmy()
+            await jimmyrus.save()

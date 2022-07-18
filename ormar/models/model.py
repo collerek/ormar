@@ -93,7 +93,7 @@ class Model(ModelRow):
             for name, field in self.Meta.model_fields.items()
             if name not in self_fields
         ):
-            await self.load()
+            await self.load(pk=pk)
 
         await self.signals.post_save.send(sender=self.__class__, instance=self)
         return self
@@ -266,7 +266,7 @@ class Model(ModelRow):
         await self.signals.post_delete.send(sender=self.__class__, instance=self)
         return result
 
-    async def load(self: T) -> T:
+    async def load(self: T, pk=None) -> T:
         """
         Allow to refresh existing Models fields from database.
         Be careful as the related models can be overwritten by pk_only models in load.
@@ -277,7 +277,7 @@ class Model(ModelRow):
         :return: reloaded Model
         :rtype: Model
         """
-        expr = self.Meta.table.select().where(self.pk_column == self.pk)
+        expr = self.Meta.table.select().where(self.pk_column == pk if pk else self.pk)
         row = await self.Meta.database.fetch_one(expr)
         if not row:  # pragma nocover
             raise NoMatch("Instance was deleted from database and cannot be refreshed")
