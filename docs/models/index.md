@@ -429,6 +429,17 @@ You can set this parameter by providing `Meta` class `constraints` argument.
         To set one column index use [`unique`](../fields/common-parameters.md#index) common parameter. 
         Of course, you can set many columns as indexes with this param but each of them will be a separate index.
 
+#### CheckColumns
+
+You can set this parameter by providing `Meta` class `constraints` argument.
+
+```Python hl_lines="14-17"
+--8<-- "../docs_src/models/docs018.py"
+```
+
+!!!note
+        Note that some databases do not actively support check constraints such as MySQL.
+
 
 ### Pydantic configuration
 
