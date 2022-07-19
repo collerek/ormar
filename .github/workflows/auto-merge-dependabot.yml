@@ -1,5 +1,5 @@
 # Based on https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/automating-dependabot-with-github-actions#enable-auto-merge-on-a-pull-request
-name: Dependabot auto-merge
+name: Dependabot auto-approve and auto-merge
 on: pull_request_target
 
 permissions:
@@ -7,6 +7,15 @@ permissions:
     contents: write
 
 jobs:
+    autoapprove:
+      name: Auto Approve a PR by dependabot
+      runs-on: ubuntu-latest
+      steps:
+        - name: Auto approve
+          uses: hmarr/auto-approve-action@v2.0.0
+          if: github.actor == 'dependabot[bot]'
+          with:
+            github-token: ${{ secrets.GITHUB_TOKEN }}
     dependabot:
         runs-on: ubuntu-latest
         if: ${{ github.actor == 'dependabot[bot]' }}
