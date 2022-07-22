@@ -28,6 +28,7 @@ from ormar.fields.model_fields import (
 from ormar.fields.parsers import DECODERS_MAP, ENCODERS_MAP, SQL_ENCODERS_MAP
 from ormar.fields.sqlalchemy_encrypted import EncryptBackend, EncryptBackends
 from ormar.fields.through_field import Through, ThroughField
+from ormar.fields.referential_actions import ReferentialAction
 
 __all__ = [
     "Decimal",
@@ -38,7 +39,6 @@ __all__ = [
     "DateTime",
     "String",
     "JSON",
-    "IndexColumns",
     "Integer",
     "Text",
     "Float",
@@ -59,4 +59,7 @@ __all__ = [
     "SQL_ENCODERS_MAP",
     "LargeBinary",
     "UniqueColumns",
+    "IndexColumns",
+    "CheckColumns",
+    "ReferentialAction",
 ]

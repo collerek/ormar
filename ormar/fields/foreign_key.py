@@ -21,6 +21,7 @@ from pydantic.typing import ForwardRef, evaluate_forwardref
 
 import ormar  # noqa I101
 from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
+from ormar.fields.referential_actions import ReferentialAction
 from ormar.fields.base import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
@@ -159,6 +160,27 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
         )
 
 
+def validate_referential_action(
+    action: Optional[Union[ReferentialAction, str]],
+) -> Optional[str]:
+    """
+    Validation `onupdate` and `ondelete` action cast to a string value
+
+    :raises ModelDefinitionError: if action is a not valid name string value
+    :param action: referential action attribute or name string
+    :type action: Optional[Union[ReferentialAction, str]]
+    :rtype: Optional[str]
+    """
+
+    if action is not None and not isinstance(action, ReferentialAction):
+        try:
+            action = ReferentialAction(action.upper())
+        except (ValueError, AttributeError):
+            raise ModelDefinitionError(f"{action} ReferentialAction not supported.")
+
+    return action.value if action is not None else None
+
+
 @dataclass
 class ForeignKeyConstraint:
     """
@@ -190,8 +212,8 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     nullable: bool = True,
     related_name: str = None,
     virtual: bool = False,
-    onupdate: str = None,
-    ondelete: str = None,
+    onupdate: Union[ReferentialAction, str] = None,
+    ondelete: Union[ReferentialAction, str] = None,
     **kwargs: Any,
 ) -> "T":
     """
@@ -215,15 +237,18 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     :type virtual: bool
     :param onupdate: parameter passed to sqlalchemy.ForeignKey.
     How to treat child rows on update of parent (the one where FK is defined) model.
-    :type onupdate: str
+    :type onupdate: Union[ReferentialAction, str]
     :param ondelete: parameter passed to sqlalchemy.ForeignKey.
     How to treat child rows on delete of parent (the one where FK is defined) model.
-    :type ondelete: str
+    :type ondelete: Union[ReferentialAction, str]
     :param kwargs: all other args to be populated by BaseField
     :type kwargs: Any
     :return: ormar ForeignKeyField with relation to selected model
     :rtype: ForeignKeyField
     """
+
+    onupdate = validate_referential_action(action=onupdate)
+    ondelete = validate_referential_action(action=ondelete)
 
     owner = kwargs.pop("owner", None)
     self_reference = kwargs.pop("self_reference", False)

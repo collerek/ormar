@@ -57,7 +57,6 @@ from ormar.fields import (
     Float,
     ForeignKey,
     ForeignKeyField,
-    IndexColumns,
     Integer,
     JSON,
     LargeBinary,
@@ -70,7 +69,9 @@ from ormar.fields import (
     Time,
     UUID,
     UniqueColumns,
+    IndexColumns,
     CheckColumns,
+    ReferentialAction,
 )  # noqa: I100
 from ormar.models import ExcludableItems, Extra, Model
 from ormar.models.metaclass import ModelMeta
@@ -103,6 +104,7 @@ __all__ = [
     "Float",
     "ManyToMany",
     "Model",
+    "Action",
     "ModelDefinitionError",
     "MultipleMatches",
     "NoMatch",
@@ -114,6 +116,7 @@ __all__ = [
     "UniqueColumns",
     "IndexColumns",
     "CheckColumns",
+    "ReferentialAction",
     "QuerySetProtocol",
     "RelationProtocol",
     "ModelMeta",
