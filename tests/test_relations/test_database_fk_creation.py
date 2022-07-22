@@ -42,6 +42,7 @@ class A(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=64, nullalbe=False)
 
+
 class B(ormar.Model):
     class Meta:
         metadata = metadata
@@ -50,6 +51,7 @@ class B(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=64, nullalbe=False)
     a: A = ormar.ForeignKey(to=A, ondelete=ormar.ReferentialAction.CASCADE)
+
 
 class C(ormar.Model):
     class Meta:
@@ -91,7 +93,7 @@ def test_validations_referential_action():
     assert validate_referential_action(ormar.ReferentialAction.CASCADE) == CASCADE
 
     with pytest.raises(ormar.ModelDefinitionError):
-            validate_referential_action("NOT VALID")
+        validate_referential_action("NOT VALID")
 
 
 @pytest.mark.asyncio
