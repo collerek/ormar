@@ -211,7 +211,10 @@ Set the ForeignKey to `None`; this is only possible if `nullable` is True.
 
 ### SET_DEFAULT
 
-Set the ForeignKey to its default value; a `default` for the ForeignKey must be set.
+Set the ForeignKey to its default value; a `server_default` for the ForeignKey must be set.
+
+!!!note
+      Note that the `default` value is not allowed and you must do this through `server_default`, which you can read about in [this section][server_default].
 
 ### DO_NOTHING
 
@@ -278,3 +281,4 @@ Finally you can explicitly set it to None (default behavior if no value passed).
 [fields]: ./queries.md#fields
 [exclude_fields]: ./queries.md#exclude_fields
 [order_by]: ./queries.md#order_by
+[server_default]: ../fields/common-parameters.md#server-default
