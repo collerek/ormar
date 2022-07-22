@@ -168,7 +168,7 @@ Product.objects.filter(
 ```
 
 !!!note 
-    All methods that do not return the rows explicitly returns a QueySet instance so
+    All methods that do not return the rows explicitly returns a QuerySet instance so
     you can chain them together
 
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
@@ -795,7 +795,7 @@ assert owner.toys[1].name == "Toy 1"
 ```
 
 !!!note 
-    All methods that do not return the rows explicitly returns a QueySet instance so
+    All methods that do not return the rows explicitly returns a QuerySet instance so
     you can chain them together
 
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.

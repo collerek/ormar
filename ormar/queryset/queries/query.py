@@ -1,5 +1,4 @@
-from collections import OrderedDict
-from typing import List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import sqlalchemy
 from sqlalchemy import Table, text
@@ -7,7 +6,7 @@ from sqlalchemy.sql import Join
 
 import ormar  # noqa I100
 from ormar.models.helpers.models import group_related_list
-from ormar.queryset import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
+from ormar.queryset.queries import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
 from ormar.queryset.actions.filter_action import FilterAction
 from ormar.queryset.join import SqlJoin
 
@@ -45,7 +44,7 @@ class Query:
         self.select_from: Union[Join, Table, List[str]] = []
         self.columns = [sqlalchemy.Column]
         self.order_columns = order_bys
-        self.sorted_orders: OrderedDict[OrderAction, text] = OrderedDict()
+        self.sorted_orders: Dict[OrderAction, text] = {}
         self._init_sorted_orders()
 
         self.limit_raw_sql = limit_raw_sql
@@ -183,7 +182,7 @@ class Query:
         pk_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
         pk_aliased_name = f"{self.table.name}.{pk_alias}"
         qry_text = sqlalchemy.text(f"{pk_aliased_name}")
-        maxes = OrderedDict()
+        maxes = {}
         for order in list(self.sorted_orders.keys()):
             if order is not None and order.get_field_name_text() != pk_aliased_name:
                 aliased_col = order.get_field_name_text()

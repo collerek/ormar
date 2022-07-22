@@ -14,6 +14,7 @@ from typing import (  # noqa: I100, I201
     TypeVar,
     Union,
     cast,
+    AsyncGenerator,
 )
 
 import ormar  # noqa: I100, I202
@@ -430,6 +431,28 @@ class QuerysetProxy(Generic[T]):
         self._clean_items_on_load()
         self._register_related(all_items)
         return all_items
+
+    async def iterate(  # noqa: A003
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> AsyncGenerator["T", None]:
+        """
+        Return async iterable generator for all rows from a database for given model.
+
+        Passing args and/or kwargs is a shortcut and equals to calling
+        `filter(*args, **kwargs).iterate()`.
+
+        If there are no rows meeting the criteria an empty async generator is returned.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: asynchronous iterable generator of returned models
+        :rtype: AsyncGenerator[Model]
+        """
+
+        async for item in self.queryset.iterate(*args, **kwargs):
+            yield item
 
     async def create(self, **kwargs: Any) -> "T":
         """

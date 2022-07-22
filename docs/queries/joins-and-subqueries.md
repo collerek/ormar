@@ -75,7 +75,7 @@ album = await Album.objects.select_related("tracks").all()
 # Python style
 album = await Album.objects.select_related(Album.tracks).all()
 
-# will return album will all columns tracks
+# will return album with all columns tracks
 ```
 
 You can provide a string or a list of strings (or a field/ list of fields)
@@ -148,7 +148,7 @@ fields and the final `Models` are fetched for you.
     them in select_related.
 
 !!!note 
-    All methods that do not return the rows explicitly returns a QueySet instance so
+    All methods that do not return the rows explicitly returns a QuerySet instance so
     you can chain them together
 
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
@@ -366,7 +366,7 @@ fields and the final `Models` are fetched for you.
     them in select_related.
 
 !!!note 
-    All methods that do not return the rows explicitly returns a QueySet instance so
+    All methods that do not return the rows explicitly returns a QuerySet instance so
     you can chain them together
 
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.

@@ -52,7 +52,20 @@ theme:
   hljs_languages:
       - python
   palette:
-    primary: indigo
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/lightbulb
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to dark mode
   analytics:
     gtag: G-ZJWZYM5DNM
 markdown_extensions:

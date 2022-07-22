@@ -604,6 +604,7 @@ metadata.drop_all(engine)
 *  `bulk_update(objects: List[Model], columns: List[str] = None) -> None`
 *  `delete(*args, each: bool = False, **kwargs) -> int`
 *  `all(*args, **kwargs) -> List[Optional[Model]]`
+*  `iterate(*args, **kwargs) -> AsyncGenerator[Model]`
 *  `filter(*args, **kwargs) -> QuerySet`
 *  `exclude(*args, **kwargs) -> QuerySet`
 *  `select_related(related: Union[List, str]) -> QuerySet`

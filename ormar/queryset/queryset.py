@@ -12,6 +12,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    AsyncGenerator,
 )
 
 import databases
@@ -37,8 +38,8 @@ from ormar.exceptions import (
 from ormar.queryset import FieldAccessor, FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
-from ormar.queryset.prefetch_query import PrefetchQuery
-from ormar.queryset.query import Query
+from ormar.queryset.queries.prefetch_query import PrefetchQuery
+from ormar.queryset.queries.query import Query
 from ormar.queryset.reverse_alias_resolver import ReverseAliasResolver
 
 if TYPE_CHECKING:  # pragma no cover
@@ -1054,6 +1055,55 @@ class QuerySet(Generic[T]):
             result_rows = await self._prefetch_related_models(result_rows, rows)
 
         return result_rows
+
+    async def iterate(  # noqa: A003
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> AsyncGenerator["T", None]:
+        """
+        Return async iterable generator for all rows from a database for given model.
+
+        Passing args and/or kwargs is a shortcut and equals to calling
+        `filter(*args, **kwargs).iterate()`.
+
+        If there are no rows meeting the criteria an empty async generator is returned.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: asynchronous iterable generator of returned models
+        :rtype: AsyncGenerator[Model]
+        """
+
+        if self._prefetch_related:
+            raise QueryDefinitionError(
+                "Prefetch related queries are not supported in iterators"
+            )
+
+        if kwargs or args:
+            async for result in self.filter(*args, **kwargs).iterate():
+                yield result
+            return
+
+        expr = self.build_select_expression()
+
+        rows: list = []
+        last_primary_key = None
+        pk_alias = self.model.get_column_alias(self.model_meta.pkname)
+
+        async for row in self.database.iterate(query=expr):
+            current_primary_key = row[pk_alias]
+            if last_primary_key == current_primary_key or last_primary_key is None:
+                last_primary_key = current_primary_key
+                rows.append(row)
+                continue
+
+            yield self._process_query_result_rows(rows)[0]
+            last_primary_key = current_primary_key
+            rows = [row]
+
+        if rows:
+            yield self._process_query_result_rows(rows)[0]
 
     async def create(self, **kwargs: Any) -> "T":
         """

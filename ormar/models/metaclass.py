@@ -9,6 +9,7 @@ from typing import (
     Type,
     Union,
     cast,
+    Callable,
 )
 
 import databases
@@ -18,6 +19,7 @@ from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
 import ormar.fields.constraints
+from ormar.fields.constraints import UniqueColumns, IndexColumns, CheckColumns
 from ormar import ModelDefinitionError  # noqa I100
 from ormar.exceptions import ModelError
 from ormar.fields import BaseField
@@ -186,13 +188,40 @@ def verify_constraint_names(
     for column_set in constraints_columns:
         if any(x not in old_aliases.values() for x in column_set):
             raise ModelDefinitionError(
-                f"Unique columns constraint "
+                f"Column constraints "
                 f"{column_set} "
                 f"has column names "
                 f"that are not in the model fields."
                 f"\n Check columns redefined in subclasses "
                 f"to verify that they have proper 'name' set."
             )
+
+
+def get_constraint_copy(
+    constraint: ColumnCollectionConstraint,
+) -> Union[UniqueColumns, IndexColumns, CheckColumns]:
+    """
+    Copy the constraint and unpacking it's values
+
+    :raises ValueError: if non subclass of ColumnCollectionConstraint
+    :param value: an instance of the ColumnCollectionConstraint class
+    :type value: Instance of ColumnCollectionConstraint child
+    :return: copy ColumnCollectionConstraint ormar constraints
+    :rtype: Union[UniqueColumns, IndexColumns, CheckColumns]
+    """
+
+    constraints = {
+        sqlalchemy.UniqueConstraint: lambda x: UniqueColumns(*x._pending_colargs),
+        sqlalchemy.Index: lambda x: IndexColumns(*x._pending_colargs),
+        sqlalchemy.CheckConstraint: lambda x: CheckColumns(x.sqltext),
+    }
+    checks = (key if isinstance(constraint, key) else None for key in constraints)
+    target_class = next((target for target in checks if target is not None), None)
+    constructor: Optional[Callable] = constraints.get(target_class)
+    if not constructor:
+        raise ValueError(f"{constraint} must be a ColumnCollectionMixin!")
+
+    return constructor(constraint)
 
 
 def update_attrs_from_base_meta(  # noqa: CCR001
@@ -222,10 +251,7 @@ def update_attrs_from_base_meta(  # noqa: CCR001
                     model_fields=model_fields,
                     parent_value=parent_value,
                 )
-                parent_value = [
-                    ormar.fields.constraints.UniqueColumns(*x._pending_colargs)
-                    for x in parent_value
-                ]
+                parent_value = [get_constraint_copy(value) for value in parent_value]
             if isinstance(current_value, list):
                 current_value.extend(parent_value)
             else:
