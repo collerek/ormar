@@ -20,7 +20,7 @@ from pydantic import BaseModel, create_model
 from pydantic.typing import ForwardRef, evaluate_forwardref
 
 import ormar  # noqa I101
-from ormar.actions import Action
+from ormar.fields.referential_actions import Action
 from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
 from ormar.fields.base import BaseField
 

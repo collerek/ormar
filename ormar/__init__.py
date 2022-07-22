@@ -38,7 +38,6 @@ from ormar.decorators import (  # noqa: I100
     pre_update,
     property_field,
 )
-from ormar.actions import Action
 from ormar.exceptions import (  # noqa: I100
     ModelDefinitionError,
     MultipleMatches,
@@ -58,7 +57,6 @@ from ormar.fields import (
     Float,
     ForeignKey,
     ForeignKeyField,
-    IndexColumns,
     Integer,
     JSON,
     LargeBinary,
@@ -71,7 +69,9 @@ from ormar.fields import (
     Time,
     UUID,
     UniqueColumns,
+    IndexColumns,
     CheckColumns,
+    ReferentialAction,
 )  # noqa: I100
 from ormar.models import ExcludableItems, Extra, Model
 from ormar.models.metaclass import ModelMeta
@@ -116,6 +116,7 @@ __all__ = [
     "UniqueColumns",
     "IndexColumns",
     "CheckColumns",
+    "ReferentialAction",
     "QuerySetProtocol",
     "RelationProtocol",
     "ModelMeta",

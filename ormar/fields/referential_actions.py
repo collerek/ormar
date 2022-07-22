@@ -6,7 +6,7 @@ Gathers all referential actions by ormar.
 from enum import Enum
 
 
-class Action(Enum):
+class ReferentialAction(Enum):
     """
     Because the database management system(DBMS) enforces referential constraints,
     it must ensure data integrity
