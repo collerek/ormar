@@ -49,7 +49,7 @@ class B(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=64, nullalbe=False)
-    a: A = ormar.ForeignKey(to=A, ondelete=ormar.Action.CASCADE)
+    a: A = ormar.ForeignKey(to=A, ondelete=ormar.ReferentialAction.CASCADE)
 
 class C(ormar.Model):
     class Meta:
@@ -58,7 +58,7 @@ class C(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=64, nullalbe=False)
-    b: B = ormar.ForeignKey(to=B, ondelete=ormar.Action.CASCADE)
+    b: B = ormar.ForeignKey(to=B, ondelete=ormar.ReferentialAction.CASCADE)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -103,3 +103,6 @@ async def test_cascade_clear():
             c = await C.objects.create(name="c", b=b)
 
             await a.bs.clear(keep_reversed=False)
+
+            assert await B.objects.count() == 0
+            assert await C.objects.count() == 0
