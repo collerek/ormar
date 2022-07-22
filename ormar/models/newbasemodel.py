@@ -22,8 +22,6 @@ from typing import (
 import databases
 import pydantic
 import sqlalchemy
-
-
 from pydantic import BaseModel
 
 
