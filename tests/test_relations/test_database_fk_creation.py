@@ -84,11 +84,11 @@ def test_simple_cascade():
 
 
 def test_validations_referential_action():
-    CASCADE = ormar.Action.CASCADE.value
+    CASCADE = ormar.ReferentialAction.CASCADE.value
 
     assert validate_referential_action(None) == None
     assert validate_referential_action("cascade") == CASCADE
-    assert validate_referential_action(ormar.Action.CASCADE) == CASCADE
+    assert validate_referential_action(ormar.ReferentialAction.CASCADE) == CASCADE
 
     with pytest.raises(ormar.ModelDefinitionError):
             validate_referential_action("NOT VALID")
