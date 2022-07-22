@@ -1,8 +1,8 @@
 # ForeignKey
 
 `ForeignKey(to: Model, *, name: str = None, unique: bool = False, nullable: bool = True,
-related_name: str = None, virtual: bool = False, onupdate: Union[Action, str] = None,
-ondelete: Union[Action, str] = None, **kwargs: Any)`
+related_name: str = None, virtual: bool = False, onupdate: Union[ReferentialAction, str] = None,
+ondelete: Union[ReferentialAction, str] = None, **kwargs: Any)`
 has required parameters `to` that takes target `Model` class.  
 
 Sqlalchemy column and Type are automatically taken from target `Model`.
@@ -190,10 +190,10 @@ But you can overwrite this name by providing `related_name` parameter like below
 When an object referenced by a ForeignKey is changed (deleted or updated),
 ormar will set the SQL constraint specified by the `ondelete` and `onupdate` argument.
 
-The possible values for `ondelete` and `onupdate` are found in `ormar.Action`:
+The possible values for `ondelete` and `onupdate` are found in `ormar.ReferentialAction`:
 
 !!!note
-    Instead of `ormar.Action`, you can directly pass string values to these two arguments, but this is not recommended because it will break the integrity.
+    Instead of `ormar.ReferentialAction`, you can directly pass string values to these two arguments, but this is not recommended because it will break the integrity.
 
 ### CASCADE
 
