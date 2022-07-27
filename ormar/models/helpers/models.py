@@ -51,6 +51,7 @@ def populate_default_options_values(  # noqa: CCR001
         "constraints": [],
         "model_fields": model_fields,
         "abstract": False,
+        "proxy": False,
         "extra": Extra.forbid,
         "orders_by": [],
         "exclude_parent_fields": [],

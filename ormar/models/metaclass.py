@@ -83,6 +83,7 @@ class ModelMeta:
     property_fields: Set
     signals: SignalEmitter
     abstract: bool
+    proxy: bool
     requires_ref_update: bool
     orders_by: List[str]
     exclude_parent_fields: List[str]
