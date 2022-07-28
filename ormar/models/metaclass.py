@@ -364,9 +364,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
     """
     meta = attrs.get("Meta")
     if not meta:  # pragma: no cover
-        raise ModelDefinitionError(
-            f"Model {curr_class.__name__} declared without Meta"
-        )
+        raise ModelDefinitionError(f"Model {curr_class.__name__} declared without Meta")
 
     if (  # type: ignore
         model_fields
