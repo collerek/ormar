@@ -152,33 +152,3 @@ async def test_slice_getitem_queryset_on_single_model():
             cars_page4 = await Car.objects[5].all()
             assert len(cars_page4) == 1
             assert cars_page4[0].name == "5"
-
-
-@pytest.mark.asyncio
-async def test_slice_getitem_queryset_on_relational_model():
-    async with database:
-        async with database.transaction(force_rollback=True):
-            user = await User(name="Sep").save()
-
-            for i in range(10):
-                c = await Car(name=f"{i}").save()
-                await user.cars.add(c)
-
-            await user.cars[2:8].all()
-            assert len(user.cars) == 6
-            assert user.cars[0].name == "2"
-            assert user.cars[-1].name == "7"
-
-            await user.cars[2:].all()
-            assert len(user.cars) == 8
-            assert user.cars[0].name == "2"
-            assert user.cars[-1].name == "9"
-
-            await user.cars[:8].all()
-            assert len(user.cars) == 8
-            assert user.cars[0].name == "0"
-            assert user.cars[-1].name == "7"
-
-            await user.cars[5].all()
-            assert len(user.cars) == 1
-            assert user.cars[0].name == "5"
