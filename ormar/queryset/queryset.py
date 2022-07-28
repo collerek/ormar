@@ -1233,10 +1233,10 @@ class QuerySet(Generic[T]):
         if key.step is not None and key.step != 1:
             raise ValueError(f"{key.step} steps are not supported, only one.")
 
+        start, stop = key.start is not None, key.stop is not None
         if (
-            (key.start is not None and key.start < 0)
-            or (key.stop is not None and key.stop < 0)
-            or (key.start is not None and key.stop is not None and key.stop < key.start)
+            (start and key.start < 0) or (stop and key.stop < 0)
+            or (start and stop and key.stop < key.start)
         ):
             raise ValueError("The selected range is not valid.")
 
