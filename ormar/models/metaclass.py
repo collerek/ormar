@@ -362,62 +362,65 @@ def copy_data_from_parent_model(  # noqa: CCR001
     :return: updated attrs and model_fields
     :rtype: Tuple[Dict, Dict]
     """
-    meta = attrs.get("Meta")
-    if not meta:  # pragma: no cover
-        raise ModelDefinitionError(f"Model {curr_class.__name__} declared without Meta")
-
-    if (  # type: ignore
-        model_fields
-        and not base_class.Meta.abstract
-        and not getattr(meta, "proxy", False)
-    ):
-        raise ModelDefinitionError(
-            f"{curr_class.__name__} cannot inherit "
-            f"from non abstract class {base_class.__name__}"
-            "except for the proxy model mode without adding new model fields."
-        )
-    update_attrs_from_base_meta(
-        base_class=base_class,  # type: ignore
-        attrs=attrs,
-        model_fields=model_fields,
-    )
-    parent_fields: Dict = dict()
-    table_name = (
-        meta.tablename
-        if hasattr(meta, "tablename") and meta.tablename
-        else attrs.get("__name__", "").lower() + "s"
-    )
-    for field_name, field in base_class.Meta.model_fields.items():
-        if (
-            hasattr(meta, "exclude_parent_fields")
-            and field_name in meta.exclude_parent_fields
+    meta: Optional[ModelMeta] = attrs.get("Meta")
+    if meta is not None:
+        if (  # type: ignore
+            model_fields
+            and not base_class.Meta.abstract
+            and not getattr(meta, "proxy", False)
         ):
-            continue
-        if field.is_multi:
-            field = cast(ManyToManyField, field)
-            copy_and_replace_m2m_through_model(
-                field=field,
-                field_name=field_name,
-                table_name=table_name,
-                parent_fields=parent_fields,
-                attrs=attrs,
-                meta=meta,
-                base_class=base_class,  # type: ignore
+            raise ModelDefinitionError(
+                f"{curr_class.__name__} cannot inherit "
+                f"from non abstract class {base_class.__name__}"
+                "except for the proxy model mode without adding new model fields."
             )
-
-        elif field.is_relation and field.related_name:
-            Field = type(  # type: ignore
-                field.__class__.__name__, (ForeignKeyField, BaseField), {}
+        update_attrs_from_base_meta(
+            base_class=base_class,  # type: ignore
+            attrs=attrs,
+            model_fields=model_fields,
+        )
+        parent_fields: Dict = dict()
+        meta = attrs.get("Meta")
+        if not meta:  # pragma: no cover
+            raise ModelDefinitionError(
+                f"Model {curr_class.__name__} declared without Meta"
             )
-            copy_field = Field(**dict(field.__dict__))
-            related_name = field.related_name + "_" + table_name
-            copy_field.related_name = related_name  # type: ignore
-            parent_fields[field_name] = copy_field
-        else:
-            parent_fields[field_name] = field
+        table_name = (
+            meta.tablename
+            if hasattr(meta, "tablename") and meta.tablename
+            else attrs.get("__name__", "").lower() + "s"
+        )
+        for field_name, field in base_class.Meta.model_fields.items():
+            if (
+                hasattr(meta, "exclude_parent_fields")
+                and field_name in meta.exclude_parent_fields
+            ):
+                continue
+            if field.is_multi:
+                field = cast(ManyToManyField, field)
+                copy_and_replace_m2m_through_model(
+                    field=field,
+                    field_name=field_name,
+                    table_name=table_name,
+                    parent_fields=parent_fields,
+                    attrs=attrs,
+                    meta=meta,
+                    base_class=base_class,  # type: ignore
+                )
 
-    parent_fields.update(model_fields)  # type: ignore
-    model_fields = parent_fields
+            elif field.is_relation and field.related_name:
+                Field = type(  # type: ignore
+                    field.__class__.__name__, (ForeignKeyField, BaseField), {}
+                )
+                copy_field = Field(**dict(field.__dict__))
+                related_name = field.related_name + "_" + table_name
+                copy_field.related_name = related_name  # type: ignore
+                parent_fields[field_name] = copy_field
+            else:
+                parent_fields[field_name] = field
+
+        parent_fields.update(model_fields)  # type: ignore
+        model_fields = parent_fields
     return attrs, model_fields
 
 
