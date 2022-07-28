@@ -874,3 +874,11 @@ class QuerysetProxy(Generic[T]):
         return self.__class__(
             relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
         )
+
+    def __getitem__(self, key: Union[int, slice]) -> "QuerysetProxy[T]":
+        """Retrieve an item or slice from the set of results."""
+
+        queryset = self.queryset[key]
+        return self.__class__(
+            relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
+        )
