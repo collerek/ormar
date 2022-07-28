@@ -1217,3 +1217,30 @@ class QuerySet(Generic[T]):
         await cast(Type["Model"], self.model_cls).Meta.signals.post_bulk_update.send(
             sender=self.model_cls, instances=objects  # type: ignore
         )
+
+    def __getitem__(self, key: Union[int, slice]) -> "QuerySet[T]":
+        """Retrieve an item or slice from the set of results."""
+
+        if not isinstance(key, (int, slice)):
+            raise TypeError(f"{key} is neither an integer nor a range.")
+
+        if isinstance(key, int):
+            if key < 0:
+                raise ValueError("Negative indexing is not supported.")
+
+            return self.rebuild_self(offset=key, limit_count=1)
+
+        if key.step is not None and key.step != 1:
+            raise ValueError(f"{key.step} steps are not supported, only one.")
+
+        if (
+            (key.start is not None and key.start < 0)
+            or (key.stop is not None and key.stop < 0)
+            or (key.start is not None and key.stop is not None and key.stop < key.start)
+        ):
+            raise ValueError("The selected range is not valid.")
+
+        return self.rebuild_self(
+            offset=key.start,
+            limit_count=key.stop - (key.start or 0) if key.stop is not None else None,
+        )
