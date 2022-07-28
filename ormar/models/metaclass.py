@@ -345,12 +345,12 @@ def copy_data_from_parent_model(  # noqa: CCR001
     Copy the key parameters [database, metadata, property_fields and constraints]
     and fields from parent models. Overwrites them if needed.
 
-    Only abstract classes can be subclassed.
+    Only abstract or proxy classes can be subclassed.
 
     Since relation fields requires different related_name for different children
 
 
-    :raises ModelDefinitionError: if non abstract model is subclassed
+    :raises ModelDefinitionError: if non abstract model is subclassed or not proxy model
     :param base_class: one of the parent classes
     :type base_class: Model or model parent class
     :param curr_class: current constructed class
