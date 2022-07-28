@@ -610,7 +610,9 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             register_signals(new_model=new_model)
             populate_choices_validators(new_model)
 
-            if not new_model.Meta.abstract:
+            if new_model.Meta.proxy:
+                new_model.Meta.table = attrs.get("table")
+            elif not new_model.Meta.abstract:
                 new_model = populate_meta_tablename_columns_and_pk(name, new_model)
                 populate_meta_sqlalchemy_table_if_required(new_model.Meta)
                 expand_reverse_relationships(new_model)
