@@ -128,7 +128,7 @@ async def test_slice_getitem_queryset_exceptions():
 
 
 @pytest.mark.asyncio
-async def test_slice_getitem_queryset_successfully():
+async def test_slice_getitem_queryset_on_single_model():
     async with database:
         async with database.transaction(force_rollback=True):
             for i in range(10):
@@ -142,13 +142,43 @@ async def test_slice_getitem_queryset_successfully():
             cars_page2 = await Car.objects[2:].all()
             assert len(cars_page2) == 8
             assert cars_page2[0].name == "2"
-            assert cars_page2[-1].name == "10"
+            assert cars_page2[-1].name == "9"
 
             cars_page3 = await Car.objects[:8].all()
-            assert len(cars_page3) == 7
+            assert len(cars_page3) == 8
             assert cars_page3[0].name == "0"
             assert cars_page3[-1].name == "7"
 
             cars_page4 = await Car.objects[5].all()
             assert len(cars_page4) == 1
-            assert cars_page4[0].name == "6"
+            assert cars_page4[0].name == "5"
+
+
+@pytest.mark.asyncio
+async def test_slice_getitem_queryset_on_relational_model():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            user = await User(name="Sep").save()
+
+            for i in range(10):
+                c = await Car(name=f"{i}").save()
+                await user.cars.add(c)
+
+            await user.cars[2:8].all()
+            assert len(user.cars) == 6
+            assert user.cars[0].name == "2"
+            assert user.cars[-1].name == "7"
+
+            await user.cars[2:].all()
+            assert len(user.cars) == 8
+            assert user.cars[0].name == "2"
+            assert user.cars[-1].name == "9"
+
+            await user.cars[:8].all()
+            assert len(user.cars) == 8
+            assert user.cars[0].name == "0"
+            assert user.cars[-1].name == "7"
+
+            await user.cars[5].all()
+            assert len(user.cars) == 1
+            assert user.cars[0].name == "5"
