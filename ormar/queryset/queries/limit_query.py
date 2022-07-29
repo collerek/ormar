@@ -20,6 +20,8 @@ class LimitQuery:
         :return: modified query
         :rtype: sqlalchemy.sql.selectable.Select
         """
-        if self.limit_count:
+
+        if self.limit_count is not None:
             expr = expr.limit(self.limit_count)
+
         return expr
