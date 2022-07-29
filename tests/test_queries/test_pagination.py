@@ -55,7 +55,7 @@ async def test_limit_zero():
                 await Car(name=f"{i}").save()
 
             cars = await Car.objects.limit(0).all()
-            assert cars is []
+            assert cars == []
             assert len(cars) == 0
 
 
