@@ -48,6 +48,18 @@ def create_test_database():
 
 
 @pytest.mark.asyncio
+async def test_limit_zero():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            for i in range(5):
+                await Car(name=f"{i}").save()
+
+            cars = await Car.objects.limit(0).all()
+            assert cars == []
+            assert len(cars) == 0
+
+
+@pytest.mark.asyncio
 async def test_pagination_errors():
     async with database:
         async with database.transaction(force_rollback=True):
