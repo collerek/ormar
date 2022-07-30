@@ -135,6 +135,9 @@ async def test_slice_getitem_queryset_exceptions():
             with pytest.raises(ValueError):
                 await Car.objects[::2].all()
 
+            with pytest.raises(ValueError):
+                await Car.objects[-2:-1].all()
+
 
 @pytest.mark.asyncio
 async def test_slice_getitem_queryset_on_single_model():
