@@ -135,9 +135,6 @@ async def test_slice_getitem_queryset_exceptions():
             with pytest.raises(ValueError):
                 await Car.objects[::2].all()
 
-            with pytest.raises(ValueError):
-                await Car.objects[2:1].all()
-
 
 @pytest.mark.asyncio
 async def test_slice_getitem_queryset_on_single_model():
@@ -164,3 +161,7 @@ async def test_slice_getitem_queryset_on_single_model():
             cars_page4 = await Car.objects[5].all()
             assert len(cars_page4) == 1
             assert cars_page4[0].name == "5"
+
+            cars_page5 = await Car.objects[8:2].all()
+            assert len(cars_page5) == 0
+            assert cars_page5 == []
