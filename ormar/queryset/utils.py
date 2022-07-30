@@ -11,12 +11,15 @@ from typing import (
     Tuple,
     Type,
     Union,
-    Literal,
-    Callable,
 )
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model, BaseField
+
+try:
+    from typing import Literal  # type: ignore
+except ImportError:  # pragma: no cover
+    from typing_extensions import Literal  # type: ignore
 
 
 def check_node_not_dict_or_not_last_node(
@@ -384,5 +387,5 @@ def _slice_limit_offset(key: slice) -> Tuple[Optional[int], Optional[int]]:
 def get_limit_offset(key: Union[int, slice]) -> Tuple[Optional[int], Optional[int]]:
     """Utility to Select Limit Offset Function by `key` Type Slice or Integer"""
 
-    func: Any = _int_limit_offset if isinstance(key, int) else _slice_limit_offset
-    return func(key=key)
+    func = _int_limit_offset if isinstance(key, int) else _slice_limit_offset
+    return func(key=key)  # type: ignore
