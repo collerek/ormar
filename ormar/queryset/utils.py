@@ -12,6 +12,7 @@ from typing import (
     Type,
     Union,
     Literal,
+    Callable,
 )
 
 if TYPE_CHECKING:  # pragma no cover
@@ -383,5 +384,5 @@ def _slice_limit_offset(key: slice) -> Tuple[Optional[int], Optional[int]]:
 def get_limit_offset(key: Union[int, slice]) -> Tuple[Optional[int], Optional[int]]:
     """Utility to Select Limit Offset Function by `key` Type Slice or Integer"""
 
-    func = _int_limit_offset if isinstance(key, int) else _slice_limit_offset
+    func: Any = _int_limit_offset if isinstance(key, int) else _slice_limit_offset
     return func(key=key)
