@@ -11,6 +11,7 @@ from typing import (
     Tuple,
     Type,
     Union,
+    Literal,
 )
 
 if TYPE_CHECKING:  # pragma no cover
@@ -340,3 +341,47 @@ def _process_through_field(
     else:
         relation = related_field.related_name
     return previous_model, relation, is_through
+
+
+def _int_limit_offset(key: int) -> Tuple[Literal[1], int]:
+    """
+    Returned the `Limit` & `Offset` Calculated for Integer Object.
+
+    :param key: integer number in `__getitem__`
+    :type key: int
+    :return: limit_count, offset
+    :rtype: Tuple[Optional[int], Optional[int]]
+    """
+
+    if key < 0:
+        raise ValueError("Negative indexing is not supported.")
+
+    return 1, key
+
+
+def _slice_limit_offset(key: slice) -> Tuple[Optional[int], Optional[int]]:
+    """
+    Returned the `Limit` & `Offset` Calculated for Slice Object.
+
+    :param key: slice object in `__getitem__`
+    :type key: slice
+    :return: limit_count, offset
+    :rtype: Tuple[Optional[int], Optional[int]]
+    """
+
+    if key.step is not None and key.step != 1:
+        raise ValueError(f"{key.step} steps are not supported, only one.")
+
+    start, stop = key.start is not None, key.stop is not None
+    if (start and key.start < 0) or (stop and key.stop < 0):
+        raise ValueError("The selected range is not valid.")
+
+    limit_count: Optional[int] = max(key.stop - (key.start or 0), 0) if stop else None
+    return limit_count, key.start
+
+
+def get_limit_offset(key: Union[int, slice]) -> Tuple[Optional[int], Optional[int]]:
+    """Utility to Select Limit Offset Function by `key` Type Slice or Integer"""
+
+    func = _int_limit_offset if isinstance(key, int) else _slice_limit_offset
+    return func(key=key)

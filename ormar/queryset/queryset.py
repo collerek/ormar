@@ -41,6 +41,7 @@ from ormar.queryset.clause import FilterGroup, QueryClause
 from ormar.queryset.queries.prefetch_query import PrefetchQuery
 from ormar.queryset.queries.query import Query
 from ormar.queryset.reverse_alias_resolver import ReverseAliasResolver
+from ormar.queryset.utils import get_limit_offset
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -1224,23 +1225,5 @@ class QuerySet(Generic[T]):
         if not isinstance(key, (int, slice)):
             raise TypeError(f"{key} is neither an integer nor a range.")
 
-        if isinstance(key, int):
-            if key < 0:
-                raise ValueError("Negative indexing is not supported.")
-
-            return self.rebuild_self(offset=key, limit_count=1)
-
-        if key.step is not None and key.step != 1:
-            raise ValueError(f"{key.step} steps are not supported, only one.")
-
-        start, stop = key.start is not None, key.stop is not None
-        if (
-            (start and key.start < 0) or (stop and key.stop < 0)
-            or (start and stop and key.stop < key.start)
-        ):
-            raise ValueError("The selected range is not valid.")
-
-        return self.rebuild_self(
-            offset=key.start,
-            limit_count=key.stop - (key.start or 0) if key.stop is not None else None,
-        )
+        limit, offset = get_limit_offset(key=key)
+        return self.rebuild_self(offset=offset, limit_count=limit)
