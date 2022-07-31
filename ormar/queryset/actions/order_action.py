@@ -28,7 +28,6 @@ class OrderAction(QueryAction):
         nulls_first: Optional[bool] = None,
     ) -> None:
 
-        self.nulls: str = ""
         self.direction: str = ""
         super().__init__(query_str=order_str, model_cls=model_cls)
         self.is_source_model_order = False
@@ -37,14 +36,17 @@ class OrderAction(QueryAction):
         if self.source_model == self.target_model and "__" not in self.related_str:
             self.is_source_model_order = True
 
-        if nulls_first or (not nulls_last and nulls_last is not None):
-            self.nulls = "nulls first"
-        if nulls_last or (not nulls_first and nulls_first is not None):
-            self.nulls = "nulls last"
+        self.nulls: Optional[str] = self._get_nulls(
+            nulls_last=nulls_last, nulls_first=nulls_first
+        )
 
     @property
     def field_alias(self) -> str:
         return self.target_model.get_column_alias(self.field_name)
+
+    @property
+    def is_mysql_bool(self) -> bool:
+        return self.target_model.Meta.database._backend._dialect.name == "mysql"
 
     @property
     def is_postgres_bool(self) -> bool:
@@ -101,7 +103,7 @@ class OrderAction(QueryAction):
 
         return text(
             f"{prefix}{table_name}"
-            f".{field_name} {self.direction} {self.nulls}"
+            f".{self._get_field_name_direction_nulls(field_name=field_name)}"
         )
 
     def _split_value_into_parts(self, order_str: str) -> None:
@@ -111,6 +113,36 @@ class OrderAction(QueryAction):
         parts = order_str.split("__")
         self.field_name = parts[-1]
         self.related_parts = parts[:-1]
+
+    @staticmethod
+    def _get_nulls(
+        nulls_last: Optional[bool] = None,
+        nulls_first: Optional[bool] = None,
+    ) -> Optional[str]:
+
+        if nulls_first or (not nulls_last and nulls_last is not None):
+            return "first"
+
+        if nulls_last or (not nulls_first and nulls_first is not None):
+            return "last"
+
+        return None
+
+    def _handle_field_nulls_mysql(self, field_name: str, result: str) -> str:
+
+        if not self.is_mysql_bool:
+            return result + f" nulls {self.nulls}"
+
+        not_: str = "not" if self.nulls == "first" else ""
+        return f"{field_name} is {not_} null, {result}"
+
+    def _get_field_name_direction_nulls(self, field_name: str) -> str:
+
+        result: str = f"{field_name} {self.direction}"
+        if self.nulls is not None:
+            return self._handle_field_nulls_mysql(field_name=field_name, result=result)
+
+        return result
 
     def check_if_filter_apply(self, target_model: Type["Model"], alias: str) -> bool:
         """
