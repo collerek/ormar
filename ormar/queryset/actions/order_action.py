@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Type
+from typing import Optional, TYPE_CHECKING, Type
 
 import sqlalchemy
 from sqlalchemy import text
@@ -20,7 +20,12 @@ class OrderAction(QueryAction):
     """
 
     def __init__(
-        self, order_str: str, model_cls: Type["Model"], alias: str = None
+        self,
+        order_str: str,
+        model_cls: Type["Model"],
+        alias: str = None,
+        nulls_last: Optional[bool] = None,
+        nulls_first: Optional[bool] = None,
     ) -> None:
         self.direction: str = ""
         super().__init__(query_str=order_str, model_cls=model_cls)

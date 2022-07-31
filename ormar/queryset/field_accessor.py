@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING, Type, cast
+from typing import Any, Optional, TYPE_CHECKING, Type, cast
 
 from ormar.queryset.actions import OrderAction
 from ormar.queryset.actions.filter_action import METHODS_TO_OPERATORS
@@ -268,22 +268,58 @@ class FieldAccessor:
         """
         return self._select_operator(op="isnull", other=other)
 
-    def asc(self) -> OrderAction:
+    def asc(
+        self,
+        nulls_last: Optional[bool] = None,
+        nulls_first: Optional[bool] = None,
+    ) -> OrderAction:
         """
         works as sql `column asc`
 
+        :param nulls_last: optional boolean flag to Produce the `NULLS LAST`
+        :type nulls_last: Optional[bool]
+        :param nulls_first: optional boolean flag to Produce the `NULLS FIRST`
+        :type nulls_first: Optional[bool]
         :return: OrderGroup for operator
         :rtype: ormar.queryset.actions.OrderGroup
         """
-        return OrderAction(order_str=self._access_chain, model_cls=self._source_model)
 
-    def desc(self) -> OrderAction:
+        nulls_last = bool(nulls_last) if nulls_last is not None else None
+        nulls_first = bool(nulls_first) if nulls_first is not None else None
+        if nulls_last is not None and nulls_first is not None:
+            raise ValueError("Both values cannot be specified together.")
+
+        return OrderAction(
+            order_str=self._access_chain,
+            model_cls=self._source_model,
+            nulls_first=nulls_first,
+            nulls_last=nulls_last,
+        )
+
+    def desc(
+        self,
+        nulls_last: Optional[bool] = None,
+        nulls_first: Optional[bool] = None,
+    ) -> OrderAction:
         """
         works as sql `column desc`
 
+        :param nulls_last: optional boolean flag to Produce the `NULLS LAST`
+        :type nulls_last: Optional[bool]
+        :param nulls_first: optional boolean flag to Produce the `NULLS FIRST`
+        :type nulls_first: Optional[bool]
         :return: OrderGroup for operator
         :rtype: ormar.queryset.actions.OrderGroup
         """
+
+        nulls_last = bool(nulls_last) if nulls_last is not None else None
+        nulls_first = bool(nulls_first) if nulls_first is not None else None
+        if nulls_last is not None and nulls_first is not None:
+            raise ValueError("Both values cannot be specified together.")
+
         return OrderAction(
-            order_str="-" + self._access_chain, model_cls=self._source_model
+            order_str="-" + self._access_chain,
+            model_cls=self._source_model,
+            nulls_first=nulls_first,
+            nulls_last=nulls_last,
         )
