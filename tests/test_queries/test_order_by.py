@@ -167,22 +167,22 @@ async def test_sort_order_on_main_model():
 
         songs = await Song.objects.order_by(Song.sort_order.asc(nulls_last=True)).all()
         assert songs[0].name == "Song 1"
-        assert songs[1].name == "Song 2"
-        assert songs[2].name == "Song 3"
-        assert songs[3].name == "Song 4"
+        assert songs[1].name == "Song 4"
+        assert songs[2].name == "Song 2"
+        assert songs[3].name == "Song 3"
         assert songs[4].name == "Song 5"
 
         songs = await Song.objects.order_by(Song.sort_order.asc(nulls_first=True)).all()
         assert songs[0].name == "Song 5"
         assert songs[1].name == "Song 1"
-        assert songs[2].name == "Song 2"
-        assert songs[3].name == "Song 3"
-        assert songs[4].name == "Song 4"
+        assert songs[2].name == "Song 4"
+        assert songs[3].name == "Song 2"
+        assert songs[4].name == "Song 3"
 
         songs = await Song.objects.order_by(Song.sort_order.desc(nulls_last=True)).all()
-        assert songs[0].name == "Song 4"
-        assert songs[1].name == "Song 3"
-        assert songs[2].name == "Song 2"
+        assert songs[0].name == "Song 3"
+        assert songs[1].name == "Song 2"
+        assert songs[2].name == "Song 4"
         assert songs[3].name == "Song 1"
         assert songs[4].name == "Song 5"
 
@@ -190,9 +190,9 @@ async def test_sort_order_on_main_model():
             Song.sort_order.desc(nulls_first=True)
         ).all()
         assert songs[0].name == "Song 5"
-        assert songs[1].name == "Song 4"
-        assert songs[2].name == "Song 3"
-        assert songs[3].name == "Song 2"
+        assert songs[1].name == "Song 3"
+        assert songs[2].name == "Song 2"
+        assert songs[3].name == "Song 4"
         assert songs[4].name == "Song 1"
 
         with pytest.raises(ValueError):
