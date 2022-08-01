@@ -36,9 +36,7 @@ class OrderAction(QueryAction):
         if self.source_model == self.target_model and "__" not in self.related_str:
             self.is_source_model_order = True
 
-        self.nulls: Optional[str] = self._get_nulls(
-            nulls_last=nulls_last, nulls_first=nulls_first
-        )
+        self.nulls = self._get_nulls(nulls_last=nulls_last, nulls_first=nulls_first)
 
     @property
     def field_alias(self) -> str:
@@ -119,6 +117,16 @@ class OrderAction(QueryAction):
         nulls_last: Optional[bool] = None,
         nulls_first: Optional[bool] = None,
     ) -> Optional[str]:
+        """
+        Returned `FIRST` or `LAST` string for condition on nulls value
+
+        :param nulls_last: optional boolean flag to Produce the `NULLS LAST`
+        :type nulls_last: Optional[bool]
+        :param nulls_first: optional boolean flag to Produce the `NULLS FIRST`
+        :type nulls_first: Optional[bool]
+        :return: result of the nulls last of nulls first or none
+        :rtype: Optional[str]
+        """
 
         if nulls_first or (not nulls_last and nulls_last is not None):
             return "first"
@@ -129,14 +137,32 @@ class OrderAction(QueryAction):
         return None
 
     def _handle_field_nulls_mysql(self, field_name: str, result: str) -> str:
+        """
+        Generate the Final Query with handling mysql syntax for nulls value
+
+        :param field_name: string name of this field for order
+        :type field_name: str
+        :param result: query generated in previous stage without nulls value
+        :type result: str
+        :return: result of the final query by field name and direction and nulls value
+        :rtype: str
+        """
 
         if not self.is_mysql_bool:
             return result + f" nulls {self.nulls}"
 
-        not_: str = "not" if self.nulls == "first" else ""
-        return f"{field_name} is {not_} null, {result}"
+        condition: str = "not" if self.nulls == "first" else ""
+        return f"{field_name} is {condition} null, {result}"
 
     def _get_field_name_direction_nulls(self, field_name: str) -> str:
+        """
+        Generate the Query of Order for this field name by direction and nulls value
+
+        :param field_name: string name of this field for order
+        :type field_name: str
+        :return: result of the query by field name and direction and nulls value
+        :rtype: str
+        """
 
         result: str = f"{field_name} {self.direction}"
         if self.nulls is not None:
