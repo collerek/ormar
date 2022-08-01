@@ -149,10 +149,10 @@ class OrderAction(QueryAction):
         """
 
         if not self.is_mysql_bool:
-            return result + f" nulls {self.nulls}"
+            return result + f" nulls {self.nulls}"  # pragma: no cover
 
-        condition: str = "not" if self.nulls == "first" else ""
-        return f"{field_name} is {condition} null, {result}"
+        condition: str = "not" if self.nulls == "first" else ""  # pragma: no cover
+        return f"{field_name} is {condition} null, {result}"  # pragma: no cover
 
     def _get_field_name_direction_nulls(self, field_name: str) -> str:
         """

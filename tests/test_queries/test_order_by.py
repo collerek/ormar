@@ -200,6 +200,11 @@ async def test_sort_order_on_main_model():
                 Song.sort_order.asc(nulls_last=True, nulls_first=True)
             ).all()
 
+        with pytest.raises(ValueError):
+            await Song.objects.order_by(
+                Song.sort_order.desc(nulls_last=True, nulls_first=True)
+            ).all()
+
 
 @pytest.mark.asyncio
 async def test_sort_order_on_related_model():
