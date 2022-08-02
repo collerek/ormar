@@ -282,10 +282,10 @@ class QuerySet(Generic[T]):
             filter_clauses=self.filter_clauses,
             exclude_clauses=self.exclude_clauses,
             offset=offset or self.query_offset,
-            limit_count=limit or self.limit_count,
             excludable=self._excludable,
             order_bys=order_bys or self.order_bys,
             limit_raw_sql=self.limit_sql_raw,
+            limit_count=limit if limit is not None else self.limit_count,
         )
         exp = qry.build_select_expression()
         # print("\n", exp.compile(compile_kwargs={"literal_binds": True}))
