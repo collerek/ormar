@@ -12,6 +12,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    AsyncGenerator,
 )
 
 import databases
@@ -281,10 +282,10 @@ class QuerySet(Generic[T]):
             filter_clauses=self.filter_clauses,
             exclude_clauses=self.exclude_clauses,
             offset=offset or self.query_offset,
-            limit_count=limit or self.limit_count,
             excludable=self._excludable,
             order_bys=order_bys or self.order_bys,
             limit_raw_sql=self.limit_sql_raw,
+            limit_count=limit if limit is not None else self.limit_count,
         )
         exp = qry.build_select_expression()
         # print("\n", exp.compile(compile_kwargs={"literal_binds": True}))
@@ -1054,6 +1055,55 @@ class QuerySet(Generic[T]):
             result_rows = await self._prefetch_related_models(result_rows, rows)
 
         return result_rows
+
+    async def iterate(  # noqa: A003
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> AsyncGenerator["T", None]:
+        """
+        Return async iterable generator for all rows from a database for given model.
+
+        Passing args and/or kwargs is a shortcut and equals to calling
+        `filter(*args, **kwargs).iterate()`.
+
+        If there are no rows meeting the criteria an empty async generator is returned.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: asynchronous iterable generator of returned models
+        :rtype: AsyncGenerator[Model]
+        """
+
+        if self._prefetch_related:
+            raise QueryDefinitionError(
+                "Prefetch related queries are not supported in iterators"
+            )
+
+        if kwargs or args:
+            async for result in self.filter(*args, **kwargs).iterate():
+                yield result
+            return
+
+        expr = self.build_select_expression()
+
+        rows: list = []
+        last_primary_key = None
+        pk_alias = self.model.get_column_alias(self.model_meta.pkname)
+
+        async for row in self.database.iterate(query=expr):
+            current_primary_key = row[pk_alias]
+            if last_primary_key == current_primary_key or last_primary_key is None:
+                last_primary_key = current_primary_key
+                rows.append(row)
+                continue
+
+            yield self._process_query_result_rows(rows)[0]
+            last_primary_key = current_primary_key
+            rows = [row]
+
+        if rows:
+            yield self._process_query_result_rows(rows)[0]
 
     async def create(self, **kwargs: Any) -> "T":
         """

@@ -1,7 +1,7 @@
 import datetime
 import decimal
 import uuid
-from enum import EnumMeta, Enum as E
+from enum import Enum as E, EnumMeta
 from typing import Any, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union, overload
 
 import pydantic
@@ -150,7 +150,7 @@ class ModelFieldFactory:
                 scale=kwargs.get("scale", None),
                 represent_as_str=kwargs.get("represent_as_base64_str", False),
             )
-        enum_class = kwargs.get("enum_class", None)
+        enum_class = kwargs.pop("enum_class", None)
         field_type = cls._type if enum_class is None else enum_class
 
         namespace = dict(
@@ -170,7 +170,9 @@ class ModelFieldFactory:
             unique=kwargs.pop("unique", False),
             pydantic_only=pydantic_only,
             autoincrement=autoincrement,
-            column_type=cls.get_column_type(**kwargs, sql_nullable=sql_nullable),
+            column_type=cls.get_column_type(
+                **kwargs, sql_nullable=sql_nullable, enum_class=enum_class
+            ),
             choices=choices,
             encrypt_secret=encrypt_secret,
             encrypt_backend=encrypt_backend,

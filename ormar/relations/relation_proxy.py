@@ -1,4 +1,4 @@
-from typing import Any, Generic, Optional, TYPE_CHECKING, Type, TypeVar
+from typing import Any, Generic, List, Optional, TYPE_CHECKING, Type, TypeVar
 
 import ormar
 from ormar.exceptions import NoMatch, RelationshipInstanceError
@@ -13,7 +13,7 @@ else:
     T = TypeVar("T", bound="Model")
 
 
-class RelationProxy(Generic[T], list):
+class RelationProxy(Generic[T], List[T]):
     """
     Proxy of the Relation that is a list with special methods.
     """

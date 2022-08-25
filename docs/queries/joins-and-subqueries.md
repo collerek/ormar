@@ -75,7 +75,7 @@ album = await Album.objects.select_related("tracks").all()
 # Python style
 album = await Album.objects.select_related(Album.tracks).all()
 
-# will return album will all columns tracks
+# will return album with all columns tracks
 ```
 
 You can provide a string or a list of strings (or a field/ list of fields)

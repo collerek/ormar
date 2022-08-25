@@ -6,6 +6,7 @@ Following methods allow you to load data from the database.
 * `get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 * `first(*args, **kwargs) -> Model`
 * `all(*args, **kwargs) -> List[Optional[Model]]`
+* `iterate(*args, **kwargs) -> AsyncGenerator[Model]`
 
 
 * `Model`
@@ -172,6 +173,45 @@ tracks = await Track.objects.all()
 # will return a list of all Tracks in database
 
 ```
+
+## iterate
+
+`iterate(*args, **kwargs) -> AsyncGenerator["Model"]`
+
+Return async iterable generator for all rows from a database for given model.
+
+Passing args and/or kwargs is a shortcut and equals to calling `filter(*args, **kwargs).iterate()`.
+
+If there are no rows meeting the criteria an empty async generator is returned.
+
+```python
+class Album(ormar.Model):
+    class Meta:
+        tablename = "album"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+```
+
+```python
+await Album.objects.create(name='The Cat')
+await Album.objects.create(name='The Dog')
+# will asynchronously iterate all Album models yielding one main model at a time from the generator
+async for album in Album.objects.iterate():
+    print(album.name)
+
+# The Cat
+# The Dog
+
+```
+
+!!!warning
+    Use of `iterate()` causes previous `prefetch_related()` calls to be ignored;
+    since these two optimizations do not make sense together.
+
+    If `iterate()` & `prefetch_related()` are used together the `QueryDefinitionError` exception is raised.
 
 ## Model methods
 

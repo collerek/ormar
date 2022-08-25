@@ -1,6 +1,9 @@
 # ForeignKey
 
-`ForeignKey(to, related_name=None)` has required parameters `to` that takes target `Model` class.  
+`ForeignKey(to: Model, *, name: str = None, unique: bool = False, nullable: bool = True,
+related_name: str = None, virtual: bool = False, onupdate: Union[ReferentialAction, str] = None,
+ondelete: Union[ReferentialAction, str] = None, **kwargs: Any)`
+has required parameters `to` that takes target `Model` class.  
 
 Sqlalchemy column and Type are automatically taken from target `Model`.
 
@@ -182,6 +185,41 @@ But you can overwrite this name by providing `related_name` parameter like below
     the `related_name` for you. Therefore, in that situation you **have to** provide `related_name`
     for all but one (one can be default and generated) or all related fields.
 
+## Referential Actions
+
+When an object referenced by a ForeignKey is changed (deleted or updated),
+ormar will set the SQL constraint specified by the `ondelete` and `onupdate` argument.
+
+The possible values for `ondelete` and `onupdate` are found in `ormar.ReferentialAction`:
+
+!!!note
+    Instead of `ormar.ReferentialAction`, you can directly pass string values to these two arguments, but this is not recommended because it will break the integrity.
+
+### CASCADE
+
+Whenever rows in the parent (referenced) table are deleted (or updated), the respective rows of the child (referencing) table with a matching foreign key column will be deleted (or updated) as well. This is called a cascade delete (or update).
+
+### RESTRICT
+
+A value cannot be updated or deleted when a row exists in a referencing or child table that references the value in the referenced table.
+
+Similarly, a row cannot be deleted as long as there is a reference to it from a referencing or child table.
+
+### SET_NULL
+
+Set the ForeignKey to `None`; this is only possible if `nullable` is True.
+
+### SET_DEFAULT
+
+Set the ForeignKey to its default value; a `server_default` for the ForeignKey must be set.
+
+!!!note
+      Note that the `default` value is not allowed and you must do this through `server_default`, which you can read about in [this section][server_default].
+
+### DO_NOTHING
+
+Take `NO ACTION`; NO ACTION and RESTRICT are very much alike. The main difference between NO ACTION and RESTRICT is that with NO ACTION the referential integrity check is done after trying to alter the table. RESTRICT does the check before trying to execute the UPDATE or DELETE statement. Both referential actions act the same if the referential integrity check fails: the UPDATE or DELETE statement will result in an error.
+
 ## Relation Setup
 
 You have several ways to set-up a relationship connection.
@@ -243,3 +281,4 @@ Finally you can explicitly set it to None (default behavior if no value passed).
 [fields]: ./queries.md#fields
 [exclude_fields]: ./queries.md#exclude_fields
 [order_by]: ./queries.md#order_by
+[server_default]: ../fields/common-parameters.md#server-default
