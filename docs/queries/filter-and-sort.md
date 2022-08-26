@@ -803,9 +803,9 @@ assert owner.toys[1].name == "Toy 1"
     Something like `Track.objects.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
 
 !!!note 
-    You can use the parameters `nulls_last` and `nulls_first` to determine the behavior in dealing with `NULL` values.
+    You can use the parameter `nulls_ordering` to determine the behavior in dealing with `NULL` values.
 
-    Something like `Owner.objects.order_by(Owner.toys.name.desc(nulls_last=True)).all()`
+    Something like `Owner.objects.order_by(Owner.toys.name.desc(nulls_ordering=ormar.NullsOrdering.LAST)).all()`
 
 ### Default sorting in ormar
 
