@@ -180,16 +180,16 @@ async def test_slice_getitem_queryset_on_proxy():
                 c = await Car(name=f"{i}").save()
                 await user.cars.add(c)
 
-            await user.cars[:5]
+            user.cars[:5]
             assert len(user.cars) == 5
             assert user.cars[0].name == "0"
             assert user.cars[4].name == "4"
 
-            await user.cars[5:10]
+            user.cars[5:10]
             assert len(user.cars) == 5
             assert user.cars[0].name == "5"
             assert user.cars[4].name == "9"
 
-            await user.cars[10:]
+            user.cars[10:]
             assert len(user.cars) == 10
             assert user.cars[0].name == "10"
