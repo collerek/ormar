@@ -168,3 +168,28 @@ async def test_slice_getitem_queryset_on_single_model():
             cars_page5 = await Car.objects[8:2].all()
             assert len(cars_page5) == 0
             assert cars_page5 == []
+
+
+@pytest.mark.asyncio
+async def test_slice_getitem_queryset_on_proxy():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            user = await User(name="Sep").save()
+
+            for i in range(20):
+                c = await Car(name=f"{i}").save()
+                await user.cars.add(c)
+
+            await user.cars[:5].all()
+            assert len(user.cars) == 5
+            assert user.cars[0].name == "0"
+            assert user.cars[4].name == "4"
+
+            await user.cars[5:10].all()
+            assert len(user.cars) == 5
+            assert user.cars[0].name == "5"
+            assert user.cars[4].name == "9"
+
+            await user.cars[10:].all()
+            assert len(user.cars) == 10
+            assert user.cars[0].name == "10"
