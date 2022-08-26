@@ -165,21 +165,27 @@ async def test_sort_order_on_main_model():
 
         await Song.objects.create(name="Song 5")
 
-        songs = await Song.objects.order_by(Song.sort_order.asc(nulls_last=True)).all()
+        songs = await Song.objects.order_by(
+            Song.sort_order.asc(nulls_ordering=ormar.NullsOrdering.LAST)
+        ).all()
         assert songs[0].name in ("Song 1", "Song 4")
         assert songs[1].name in ("Song 1", "Song 4")
         assert songs[2].name == "Song 2"
         assert songs[3].name == "Song 3"
         assert songs[4].name == "Song 5"
 
-        songs = await Song.objects.order_by(Song.sort_order.asc(nulls_first=True)).all()
+        songs = await Song.objects.order_by(
+            Song.sort_order.asc(nulls_ordering=ormar.NullsOrdering.FIRST)
+        ).all()
         assert songs[0].name == "Song 5"
         assert songs[1].name in ("Song 1", "Song 4")
         assert songs[2].name in ("Song 1", "Song 4")
         assert songs[3].name == "Song 2"
         assert songs[4].name == "Song 3"
 
-        songs = await Song.objects.order_by(Song.sort_order.desc(nulls_last=True)).all()
+        songs = await Song.objects.order_by(
+            Song.sort_order.desc(nulls_ordering=ormar.NullsOrdering.LAST)
+        ).all()
         assert songs[0].name == "Song 3"
         assert songs[1].name == "Song 2"
         assert songs[2].name in ("Song 1", "Song 4")
@@ -187,7 +193,7 @@ async def test_sort_order_on_main_model():
         assert songs[4].name == "Song 5"
 
         songs = await Song.objects.order_by(
-            Song.sort_order.desc(nulls_first=True)
+            Song.sort_order.desc(nulls_ordering=ormar.NullsOrdering.FIRST)
         ).all()
         assert songs[0].name == "Song 5"
         assert songs[1].name == "Song 3"
@@ -196,14 +202,7 @@ async def test_sort_order_on_main_model():
         assert songs[4].name in ("Song 1", "Song 4")
 
         with pytest.raises(ValueError):
-            await Song.objects.order_by(
-                Song.sort_order.asc(nulls_last=True, nulls_first=True)
-            ).all()
-
-        with pytest.raises(ValueError):
-            await Song.objects.order_by(
-                Song.sort_order.desc(nulls_last=True, nulls_first=True)
-            ).all()
+            await Song.objects.order_by(Song.sort_order.asc(nulls_ordering=True)).all()
 
 
 @pytest.mark.asyncio
