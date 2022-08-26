@@ -21,8 +21,8 @@ class FilterType(Enum):
 class NullsOrdering(Enum):
     """Nulls ordering options for the `.order_by()` queries."""
 
-    FIRST: str = "FIRST"
-    LAST: str = "LAST"
+    FIRST: str = "first"
+    LAST: str = "last"
 
 
 class FilterGroup:

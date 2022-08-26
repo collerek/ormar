@@ -24,8 +24,7 @@ class OrderAction(QueryAction):
         order_str: str,
         model_cls: Type["Model"],
         alias: str = None,
-        nulls_last: Optional[bool] = None,
-        nulls_first: Optional[bool] = None,
+        nulls_ordering: Optional[str] = None,
     ) -> None:
 
         self.direction: str = ""
@@ -36,7 +35,7 @@ class OrderAction(QueryAction):
         if self.source_model == self.target_model and "__" not in self.related_str:
             self.is_source_model_order = True
 
-        self.nulls = self._get_nulls(nulls_last=nulls_last, nulls_first=nulls_first)
+        self.nulls = nulls_ordering if nulls_ordering is not None else None
 
     @property
     def field_alias(self) -> str:
@@ -111,30 +110,6 @@ class OrderAction(QueryAction):
         parts = order_str.split("__")
         self.field_name = parts[-1]
         self.related_parts = parts[:-1]
-
-    @staticmethod
-    def _get_nulls(
-        nulls_last: Optional[bool] = None,
-        nulls_first: Optional[bool] = None,
-    ) -> Optional[str]:
-        """
-        Returned `FIRST` or `LAST` string for condition on nulls value
-
-        :param nulls_last: optional boolean flag to Produce the `NULLS LAST`
-        :type nulls_last: Optional[bool]
-        :param nulls_first: optional boolean flag to Produce the `NULLS FIRST`
-        :type nulls_first: Optional[bool]
-        :return: result of the nulls last of nulls first or none
-        :rtype: Optional[str]
-        """
-
-        if nulls_first or (not nulls_last and nulls_last is not None):
-            return "first"
-
-        if nulls_last or (not nulls_first and nulls_first is not None):
-            return "last"
-
-        return None
 
     def _handle_field_nulls_mysql(self, field_name: str, result: str) -> str:
         """

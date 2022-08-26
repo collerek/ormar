@@ -2,7 +2,7 @@ from typing import Any, Optional, TYPE_CHECKING, Type, cast
 
 from ormar.queryset.actions import OrderAction
 from ormar.queryset.actions.filter_action import METHODS_TO_OPERATORS
-from ormar.queryset.clause import FilterGroup
+from ormar.queryset.clause import FilterGroup, NullsOrdering
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import BaseField, Model
@@ -268,58 +268,40 @@ class FieldAccessor:
         """
         return self._select_operator(op="isnull", other=other)
 
-    def asc(
-        self,
-        nulls_last: Optional[bool] = None,
-        nulls_first: Optional[bool] = None,
-    ) -> OrderAction:
+    def asc(self, nulls_ordering: Optional[NullsOrdering] = None) -> OrderAction:
         """
         works as sql `column asc`
 
-        :param nulls_last: optional boolean flag to Produce the `NULLS LAST`
-        :type nulls_last: Optional[bool]
-        :param nulls_first: optional boolean flag to Produce the `NULLS FIRST`
-        :type nulls_first: Optional[bool]
+        :param nulls_ordering: nulls ordering option first or last, defaults to None
+        :type nulls_ordering: Optional[NullsOrdering], optional
+        :raises ValueError: if nulls_ordering is not None or NullsOrdering Enum
         :return: OrderGroup for operator
         :rtype: ormar.queryset.actions.OrderGroup
         """
-
-        nulls_last = bool(nulls_last) if nulls_last is not None else None
-        nulls_first = bool(nulls_first) if nulls_first is not None else None
-        if nulls_last is not None and nulls_first is not None:
-            raise ValueError("Both values cannot be specified together.")
+        if nulls_ordering is not None and not isinstance(nulls_ordering, NullsOrdering):
+            raise ValueError("Invalid option for ordering nulls values.")
 
         return OrderAction(
             order_str=self._access_chain,
             model_cls=self._source_model,
-            nulls_first=nulls_first,
-            nulls_last=nulls_last,
+            nulls_ordering=nulls_ordering.value if nulls_ordering is not None else None,
         )
 
-    def desc(
-        self,
-        nulls_last: Optional[bool] = None,
-        nulls_first: Optional[bool] = None,
-    ) -> OrderAction:
+    def desc(self, nulls_ordering: Optional[NullsOrdering] = None) -> OrderAction:
         """
         works as sql `column desc`
 
-        :param nulls_last: optional boolean flag to Produce the `NULLS LAST`
-        :type nulls_last: Optional[bool]
-        :param nulls_first: optional boolean flag to Produce the `NULLS FIRST`
-        :type nulls_first: Optional[bool]
+        :param nulls_ordering: nulls ordering option first or last, defaults to None
+        :type nulls_ordering: Optional[NullsOrdering], optional
+        :raises ValueError: if nulls_ordering is not None or NullsOrdering Enum
         :return: OrderGroup for operator
         :rtype: ormar.queryset.actions.OrderGroup
         """
-
-        nulls_last = bool(nulls_last) if nulls_last is not None else None
-        nulls_first = bool(nulls_first) if nulls_first is not None else None
-        if nulls_last is not None and nulls_first is not None:
-            raise ValueError("Both values cannot be specified together.")
+        if nulls_ordering is not None and not isinstance(nulls_ordering, NullsOrdering):
+            raise ValueError("Invalid option for ordering nulls values.")
 
         return OrderAction(
             order_str="-" + self._access_chain,
             model_cls=self._source_model,
-            nulls_first=nulls_first,
-            nulls_last=nulls_last,
+            nulls_ordering=nulls_ordering.value if nulls_ordering is not None else None,
         )
