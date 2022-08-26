@@ -202,7 +202,10 @@ async def test_sort_order_on_main_model():
         assert songs[4].name in ("Song 1", "Song 4")
 
         with pytest.raises(ValueError):
-            await Song.objects.order_by(Song.sort_order.asc(nulls_ordering=True)).all()
+            await Song.objects.order_by(Song.sort_order.asc(nulls_ordering=False)).all()
+
+        with pytest.raises(ValueError):
+            await Song.objects.order_by(Song.sort_order.desc(nulls_ordering=True)).all()
 
 
 @pytest.mark.asyncio
