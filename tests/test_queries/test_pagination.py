@@ -180,16 +180,19 @@ async def test_slice_getitem_queryset_on_proxy():
                 c = await Car(name=f"{i}").save()
                 await user.cars.add(c)
 
-            cars_page1 = user.cars[:5]
-            assert len(cars_page1) == 5
-            assert cars_page1[0].name == "0"
-            assert cars_page1[4].name == "4"
+            await user.cars.filter(id__gte=0)[:5].all()
+            assert len(user.cars) == 5
+            assert user.cars[0].name == "0"
+            assert user.cars[4].name == "4"
 
-            cars_page2 = user.cars[5:10]
-            assert len(cars_page2) == 5
-            assert cars_page2[0].name == "5"
-            assert cars_page2[4].name == "9"
+            await user.cars.filter(id__gte=0)[5:10].all()
+            assert len(user.cars) == 5
+            assert user.cars[0].name == "5"
+            assert user.cars[4].name == "9"
 
-            cars_page3 = user.cars[10:]
-            assert len(cars_page3) == 10
-            assert cars_page3[0].name == "10"
+            await user.cars.filter(id__gte=0)[10].all()
+            assert len(user.cars) == 1
+
+            await user.cars.filter(id__gte=0)[10:].all()
+            assert len(user.cars) == 10
+            assert user.cars[0].name == "10"
