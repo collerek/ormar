@@ -1,3 +1,20 @@
+# 0.11.3
+
+## ✨ Features
+
+* Document `onupdate` and `ondelete` referential actions in `ForeignKey` and provide `ReferentialAction` enum to specify the behavior of the relationship (by @SepehrBazyar - thanks!) [#724](https://github.com/collerek/ormar/issues/724)
+* Add `CheckColumn` to supported constraints in models Meta (by @SepehrBazyar - thanks!) [#729](https://github.com/collerek/ormar/issues/729)
+
+## 🐛 Fixes
+
+* Fix limiting query result to 0 should return empty list (by @SepehrBazyar - thanks!) [#766](https://github.com/collerek/ormar/issues/713)
+
+## 💬 Other
+
+* Add dark mode to docs (by @SepehrBazyar - thanks!) [#717](https://github.com/collerek/ormar/pull/717) 
+* Update aiomysql dependency [#778](https://github.com/collerek/ormar/issues/778)
+
+
 # 0.11.2
 
 ## 🐛 Fixes
