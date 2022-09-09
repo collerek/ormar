@@ -1289,7 +1289,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-requests"
-version = "2.28.9"
+version = "2.28.10"
 description = "Typing stubs for requests"
 category = "dev"
 optional = false
@@ -1408,7 +1408,7 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "3adbb36d8e9235409fb88503225d8fec3aea9509d8fdfc1960bc901955905f2e"
+content-hash = "0d01fd1b92888994617775f9e42e6947d8c345b68b6c93a696301bba6132dbe8"
 
 [metadata.files]
 aiomysql = [
@@ -2355,8 +2355,8 @@ types-pymysql = [
     {file = "types_PyMySQL-1.0.19-py3-none-any.whl", hash = "sha256:fc43dceda3f3fc4ac388db7dd57b157c13d94cb84e30cca4848df590c314bf68"},
 ]
 types-requests = [
-    {file = "types-requests-2.28.9.tar.gz", hash = "sha256:feaf581bd580497a47fe845d506fa3b91b484cf706ff27774e87659837de9962"},
-    {file = "types_requests-2.28.9-py3-none-any.whl", hash = "sha256:86cb66d3de2f53eac5c09adc42cf6547eefbd0c7e1210beca1ee751c35d96083"},
+    {file = "types-requests-2.28.10.tar.gz", hash = "sha256:97d8f40aa1ffe1e58c3726c77d63c182daea9a72d9f1fa2cafdea756b2a19f2c"},
+    {file = "types_requests-2.28.10-py3-none-any.whl", hash = "sha256:45b485725ed58752f2b23461252f1c1ad9205b884a1e35f786bb295525a3e16a"},
 ]
 types-toml = [
     {file = "types-toml-0.10.8.tar.gz", hash = "sha256:b7e7ea572308b1030dc86c3ba825c5210814c2825612ec679eb7814f8dd9295a"},
