@@ -98,10 +98,10 @@ class OrderAction(QueryAction):
             table_name = dialect.identifier_preparer.quote(table_name)
             field_name = dialect.identifier_preparer.quote(field_name)
 
-        field_name_direction_nulls = self._get_field_name_direction_nulls(
-            field_name=field_name, prefix=prefix, table_name=table_name
+        return text(
+            f"{prefix}{table_name}"
+            f".{self._get_field_name_direction_nulls(field_name=field_name)}"
         )
-        return text(f"{prefix}{table_name}.{field_name_direction_nulls}")
 
     def _split_value_into_parts(self, order_str: str) -> None:
         if order_str.startswith("-"):
@@ -129,27 +129,19 @@ class OrderAction(QueryAction):
         condition: str = "not" if self.nulls == "first" else ""  # pragma: no cover
         return f"{field_name} is {condition} null, {result}"  # pragma: no cover
 
-    def _get_field_name_direction_nulls(
-        self, field_name: str, prefix: str, table_name: str
-    ) -> str:
+    def _get_field_name_direction_nulls(self, field_name: str) -> str:
         """
         Generate the Query of Order for this field name by direction and nulls value
 
         :param field_name: string name of this field for order
         :type field_name: str
-        :param prefix: string prefix name of this field for order
-        :type prefix: str
-        :param table_name: string table name of this field for order
-        :type table_name: str
         :return: result of the query by field name and direction and nulls value
         :rtype: str
         """
 
         result: str = f"{field_name} {self.direction}"
         if self.nulls is not None:
-            return self._generate_field_nulls_query(
-                field_name=f"{prefix}{table_name}.{field_name}", result=result
-            )
+            return self._generate_field_nulls_query(field_name=field_name, result=result)
 
         return result
 
