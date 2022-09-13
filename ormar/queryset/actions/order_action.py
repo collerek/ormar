@@ -111,7 +111,7 @@ class OrderAction(QueryAction):
         self.field_name = parts[-1]
         self.related_parts = parts[:-1]
 
-    def _handle_field_nulls_mysql(self, field_name: str, result: str) -> str:
+    def _generate_field_nulls_query(self, field_name: str, result: str) -> str:
         """
         Generate the Final Query with handling mysql syntax for nulls value
 
@@ -141,7 +141,7 @@ class OrderAction(QueryAction):
 
         result: str = f"{field_name} {self.direction}"
         if self.nulls is not None:
-            return self._handle_field_nulls_mysql(field_name=field_name, result=result)
+            return self._generate_field_nulls_query(field_name=field_name, result=result)
 
         return result
 
