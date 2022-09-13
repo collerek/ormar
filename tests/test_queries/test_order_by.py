@@ -30,6 +30,7 @@ class Owner(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
+    age: Optional[int] = ormar.Integer(nullable=True)
 
 
 class AliasNested(ormar.Model):
@@ -292,6 +293,21 @@ async def test_sort_order_on_related_model():
         assert len(toys) == 2
         assert toys[0].name == "Toy 2"
         assert toys[1].name == "Toy 3"
+
+        akbar = await Owner.objects.create(name="Akbar", age=22)
+        asqar = await Owner.objects.create(name="Asqar", age=18)
+
+        await Toy.objects.create(name="Toy 7", owner=akbar)
+        await Toy.objects.create(name="Toy 8", owner=asqar)
+
+        toys = (
+            await Toy.objects.select_related("owner")
+            .order_by(Toy.owner.age.desc(nulls_ordering=ormar.NullsOrdering.LAST))
+            .all()
+        )
+        assert len(toys) == 10
+        assert toys[0].name == "Toy 7"
+        assert toys[1].name == "Toy 8"
 
 
 @pytest.mark.asyncio
