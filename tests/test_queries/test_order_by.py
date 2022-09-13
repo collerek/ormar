@@ -297,17 +297,17 @@ async def test_sort_order_on_related_model():
         akbar = await Owner.objects.create(name="Akbar", age=22)
         asqar = await Owner.objects.create(name="Asqar", age=18)
 
-        await Toy.objects.create(name="Toy 7", owner=akbar)
-        await Toy.objects.create(name="Toy 8", owner=asqar)
+        await Toy.objects.create(name="Toy 8", owner=akbar)
+        await Toy.objects.create(name="Toy 9", owner=asqar)
 
         toys = (
             await Toy.objects.select_related("owner")
             .order_by(Toy.owner.age.desc(nulls_ordering=ormar.NullsOrdering.LAST))
             .all()
         )
-        assert len(toys) == 10
-        assert toys[0].name == "Toy 7"
-        assert toys[1].name == "Toy 8"
+        assert len(toys) == 9
+        assert toys[0].name == "Toy 8"
+        assert toys[1].name == "Toy 9"
 
 
 @pytest.mark.asyncio
