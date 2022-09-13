@@ -694,7 +694,7 @@ mkdocs = ">=1.0.3,<2.0.0"
 
 [[package]]
 name = "mkdocs-material"
-version = "8.4.3"
+version = "8.4.4"
 description = "Documentation that simply works"
 category = "dev"
 optional = false
@@ -1900,8 +1900,8 @@ mkdocs-literate-nav = [
     {file = "mkdocs_literate_nav-0.4.1-py3-none-any.whl", hash = "sha256:a4b761792ba21defbe2dfd5e0de6ba451639e1ca0f0661c37eda83cc6261e4f9"},
 ]
 mkdocs-material = [
-    {file = "mkdocs-material-8.4.3.tar.gz", hash = "sha256:f39af3234ce0b60024b7712995af0de5b5227ab6504f0b9c8709c9a770bd94bf"},
-    {file = "mkdocs_material-8.4.3-py2.py3-none-any.whl", hash = "sha256:d5cc6f5023061a663514f61810052ad266f5199feafcf15ad23ea4891b21e6bc"},
+    {file = "mkdocs-material-8.4.4.tar.gz", hash = "sha256:877cdaff642a224ea50e8f0f0a024c6e4a883c731c2efe4a6aaa4b958f3fd693"},
+    {file = "mkdocs_material-8.4.4-py2.py3-none-any.whl", hash = "sha256:fa18477fabc61a50c73b206191574eb550021efcf3fff9824d034f82e3f9406a"},
 ]
 mkdocs-material-extensions = [
     {file = "mkdocs-material-extensions-1.0.3.tar.gz", hash = "sha256:bfd24dfdef7b41c312ede42648f9eb83476ea168ec163b613f9abd12bbfddba2"},
