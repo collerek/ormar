@@ -1,6 +1,4 @@
-import string
-import sys
-import uuid
+import string, sys, uuid, sqlalchemy
 from dataclasses import dataclass
 from random import choices
 from typing import (
@@ -15,7 +13,6 @@ from typing import (
     overload,
 )
 
-import sqlalchemy
 from pydantic import BaseModel, create_model
 from pydantic.typing import ForwardRef, evaluate_forwardref
 
@@ -272,7 +269,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     validate_not_allowed_fields(kwargs)
 
     if to.__class__ == ForwardRef:
-        __type__ = to if not nullable else Optional[to]
+        __type__ = Optional[to] if nullable else to
         constraints: List = []
         column_type = None
     else:
