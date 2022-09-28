@@ -1136,7 +1136,9 @@ class QuerySet(Generic[T]):
         :type raise_error: bool, default false
         """
 
-        if not objects and raise_error:
+        if not objects:
+            if not raise_error:
+                return
             raise ModelListEmptyError("Bulk create objects are empty!")
 
         ready_objects = [obj.prepare_model_to_save(obj.dict()) for obj in objects]
