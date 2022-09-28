@@ -127,7 +127,7 @@ provided Through model.
 
 Given sample like this:
 
-```Python hl_lines="14-20, 29"
+```Python hl_lines="14-20 29"
 --8<-- "../docs_src/relations/docs004.py"
 ```
 
