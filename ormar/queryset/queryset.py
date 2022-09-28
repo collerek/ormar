@@ -1121,7 +1121,7 @@ class QuerySet(Generic[T]):
         instance = await instance.save()
         return instance
 
-    async def bulk_create(self, objects: List["T"], raise_error: bool = False) -> None:
+    async def bulk_create(self, objects: List["T"]) -> None:
         """
         Performs a bulk create in one database session to speed up the process.
 
@@ -1133,12 +1133,9 @@ class QuerySet(Generic[T]):
 
         :param objects: list of ormar models already initialized and ready to save.
         :type objects: List[Model]
-        :type raise_error: bool, default false
         """
 
         if not objects:
-            if not raise_error:
-                return
             raise ModelListEmptyError("Bulk create objects are empty!")
 
         ready_objects = [obj.prepare_model_to_save(obj.dict()) for obj in objects]

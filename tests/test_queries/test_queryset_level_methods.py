@@ -287,9 +287,7 @@ async def test_bulk_create():
         assert len(completed) == 2
 
         with pytest.raises(ormar.exceptions.ModelListEmptyError):
-            await ToDo.objects.bulk_create([], raise_error=True)
-
-        await ToDo.objects.bulk_create([])
+            await ToDo.objects.bulk_create([])
 
 
 @pytest.mark.asyncio
