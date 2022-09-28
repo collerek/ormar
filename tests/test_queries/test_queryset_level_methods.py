@@ -289,6 +289,8 @@ async def test_bulk_create():
         with pytest.raises(ormar.exceptions.ModelListEmptyError):
             await ToDo.objects.bulk_create([], raise_error=True)
 
+        await ToDo.objects.bulk_create([])
+
 
 @pytest.mark.asyncio
 async def test_bulk_create_json_field():
