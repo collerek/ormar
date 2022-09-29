@@ -71,7 +71,10 @@ class FieldAccessor:
         return object.__getattribute__(self, item)  # pragma: no cover
 
     def _check_field(self) -> None:
-        if not self._field and not self._access_chain in self._source_model.Meta.table.columns.keys():
+        if (
+            not self._field
+            and not self._access_chain in self._source_model.Meta.table.columns.keys()
+        ):
             raise AttributeError(
                 "Cannot filter by M2M field, you need to provide model name"
             )
