@@ -859,6 +859,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             relation_value = [
                 relation_field.expand_relationship(x, model, to_register=False)
                 for x in value_to_set
+                if x is not None
             ]
 
             for child in relation_value:
