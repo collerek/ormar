@@ -101,7 +101,7 @@ class ModelRow(NewBaseModel):
             item["__excluded__"] = cls.get_names_to_exclude(
                 excludable=excludable, alias=table_prefix
             )
-            instance = cast("Model", cls(**item))
+            instance = cast("Model", cls.construct(**item))
             instance.set_save_status(True)
         return instance
 
