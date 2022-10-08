@@ -244,7 +244,7 @@ class BaseField(FieldInfo):
                 con.reference,
                 ondelete=con.ondelete,
                 onupdate=con.onupdate,
-                name=f"fk_{self.owner.Meta.tablename}_{self.to.Meta.tablename}"
+                name=con.name or f"fk_{self.owner.Meta.tablename}_{self.to.Meta.tablename}"
                 f"_{self.to.get_column_alias(self.to.Meta.pkname)}_{self.name}",
             )
             for con in self.constraints

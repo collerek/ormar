@@ -44,10 +44,10 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
     )
 
     create_and_append_m2m_fk(
-        model=model_field.to, model_field=model_field, field_name=parent_name
+        model=model_field.to, model_field=model_field, field_name=parent_name, fk_name=model_field.through_reverse_relation_fk_name,
     )
     create_and_append_m2m_fk(
-        model=model_field.owner, model_field=model_field, field_name=child_name
+        model=model_field.owner, model_field=model_field, field_name=child_name, fk_name=model_field.through_relation_fk_name
     )
 
     create_pydantic_field(parent_name, model_field.to, model_field)
@@ -58,7 +58,7 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
 
 
 def create_and_append_m2m_fk(
-    model: Type["Model"], model_field: "ManyToManyField", field_name: str
+    model: Type["Model"], model_field: "ManyToManyField", field_name: str, fk_name: str = None
 ) -> None:
     """
     Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.
@@ -85,7 +85,7 @@ def create_and_append_m2m_fk(
             model.Meta.tablename + "." + pk_alias,
             ondelete="CASCADE",
             onupdate="CASCADE",
-            name=f"fk_{model_field.through.Meta.tablename}_{model.Meta.tablename}"
+            name=fk_name or f"fk_{model_field.through.Meta.tablename}_{model.Meta.tablename}"
             f"_{field_name}_{pk_alias}",
         ),
     )

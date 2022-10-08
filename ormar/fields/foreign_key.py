@@ -1,6 +1,4 @@
-import string
-import sys
-import uuid
+import string, sys, uuid, sqlalchemy
 from dataclasses import dataclass
 from random import choices
 from typing import (
@@ -15,7 +13,6 @@ from typing import (
     overload,
 )
 
-import sqlalchemy
 from pydantic import BaseModel, create_model
 from pydantic.typing import ForwardRef, evaluate_forwardref
 
@@ -93,7 +90,11 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-    to: Type["T"], nullable: bool, onupdate: str = None, ondelete: str = None
+    to: Type["T"],
+    nullable: bool,
+    onupdate: str = None,
+    ondelete: str = None,
+    fk_name: str = None,
 ) -> Tuple[Any, List, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
@@ -112,7 +113,7 @@ def populate_fk_params_based_on_to_model(
     :return: tuple with target pydantic type, list of fk constraints and target col type
     :rtype: Tuple[Any, List, Any]
     """
-    fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
+    fk_string = f"{to.Meta.tablename}.{to.get_column_alias(to.Meta.pkname)}"
     to_field = to.Meta.model_fields[to.Meta.pkname]
     pk_only_model = create_dummy_model(to, to_field)
     __type__ = (
@@ -122,7 +123,7 @@ def populate_fk_params_based_on_to_model(
     )
     constraints = [
         ForeignKeyConstraint(
-            reference=fk_string, ondelete=ondelete, onupdate=onupdate, name=None
+            reference=fk_string, ondelete=ondelete, onupdate=onupdate, name=fk_name
         )
     ]
     column_type = to_field.column_type
@@ -214,6 +215,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     virtual: bool = False,
     onupdate: Union[ReferentialAction, str] = None,
     ondelete: Union[ReferentialAction, str] = None,
+    fk_name: str = None,
     **kwargs: Any,
 ) -> "T":
     """
@@ -241,6 +243,8 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     :param ondelete: parameter passed to sqlalchemy.ForeignKey.
     How to treat child rows on delete of parent (the one where FK is defined) model.
     :type ondelete: Union[ReferentialAction, str]
+    :param fk_name: if fk_name is specified, it overrides foreign key constraint name which is generated automatically in migrations
+    :type fk_name: str
     :param kwargs: all other args to be populated by BaseField
     :type kwargs: Any
     :return: ormar ForeignKeyField with relation to selected model
@@ -265,7 +269,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     validate_not_allowed_fields(kwargs)
 
     if to.__class__ == ForwardRef:
-        __type__ = to if not nullable else Optional[to]
+        __type__ = Optional[to] if nullable else to
         constraints: List = []
         column_type = None
     else:
@@ -273,6 +277,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
             to=to,  # type: ignore
             nullable=nullable,
             ondelete=ondelete,
+            fk_name=fk_name,
             onupdate=onupdate,
         )
 
@@ -282,6 +287,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
         through=None,
         alias=name,
         name=kwargs.pop("real_name", None),
+        fk_name=fk_name,
         nullable=nullable,
         sql_nullable=sql_nullable,
         constraints=constraints,
@@ -320,6 +326,7 @@ class ForeignKeyField(BaseField):
             self.to: Type["Model"]
         self.ondelete: str = kwargs.pop("ondelete", None)
         self.onupdate: str = kwargs.pop("onupdate", None)
+        self.fk_name: str = kwargs.pop("fk_name", None)
         super().__init__(**kwargs)
 
     def get_source_related_name(self) -> str:
@@ -383,6 +390,7 @@ class ForeignKeyField(BaseField):
                 nullable=self.nullable,
                 ondelete=self.ondelete,
                 onupdate=self.onupdate,
+                fk_name=self.fk_name,
             )
 
     def _extract_model_from_sequence(

@@ -122,6 +122,8 @@ def ManyToMany(  # type: ignore
     skip_reverse = kwargs.pop("skip_reverse", False)
     skip_field = kwargs.pop("skip_field", False)
 
+    through_relation_fk_name = kwargs.pop("through_relation_fk_name", None)
+    through_reverse_relation_fk_name = kwargs.pop("through_reverse_relation_fk_name", None)
     through_relation_name = kwargs.pop("through_relation_name", None)
     through_reverse_relation_name = kwargs.pop("through_reverse_relation_name", None)
 
@@ -165,6 +167,8 @@ def ManyToMany(  # type: ignore
         related_orders_by=related_orders_by,
         skip_reverse=skip_reverse,
         skip_field=skip_field,
+        through_reverse_relation_fk_name=through_reverse_relation_fk_name,
+        through_relation_fk_name=through_relation_fk_name,
         through_relation_name=through_relation_name,
         through_reverse_relation_name=through_reverse_relation_name,
     )
