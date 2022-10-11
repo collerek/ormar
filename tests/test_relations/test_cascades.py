@@ -2,6 +2,7 @@ from typing import Optional
 
 import databases
 import pytest
+import pytest_asyncio
 import sqlalchemy
 
 import ormar
@@ -72,7 +73,7 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def cleanup():
     yield
     async with database:
