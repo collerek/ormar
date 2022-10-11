@@ -61,6 +61,16 @@ def create_test_database():
 
 
 @pytest.mark.asyncio
+async def test_construct_with_empty_relation():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            hq = await HQ.objects.create(name="Main")
+            comp = Company(name="Banzai", hq=None, founded=1988)
+            comp2 = Company.construct(**dict(name="Banzai", hq=None, founded=1988))
+            assert comp.dict() == comp2.dict()
+
+
+@pytest.mark.asyncio
 async def test_init_and_construct_has_same_effect():
     async with database:
         async with database.transaction(force_rollback=True):
