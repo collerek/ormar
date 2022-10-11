@@ -1,5 +1,4 @@
 import string
-import sys
 import uuid
 from dataclasses import dataclass
 from random import choices
@@ -15,23 +14,17 @@ from typing import (
     overload,
 )
 
+import ormar  # noqa I101
 import sqlalchemy
+from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
+from ormar.fields.base import BaseField
+from ormar.fields.referential_actions import ReferentialAction
 from pydantic import BaseModel, create_model
 from pydantic.typing import ForwardRef, evaluate_forwardref
-
-import ormar  # noqa I101
-from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
-from ormar.fields.referential_actions import ReferentialAction
-from ormar.fields.base import BaseField
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, NewBaseModel, T
     from ormar.fields import ManyToManyField
-
-    if sys.version_info < (3, 7):
-        ToType = Type["T"]
-    else:
-        ToType = Union[Type["T"], "ForwardRef"]
 
 
 def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
@@ -205,7 +198,7 @@ def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":  # pragma: no cover
 
 
 def ForeignKey(  # type: ignore # noqa CFQ002
-    to: "ToType",
+    to: Union[Type["T"], "ForwardRef"],
     *,
     name: str = None,
     unique: bool = False,

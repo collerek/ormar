@@ -772,11 +772,11 @@ typing-extensions = {version = ">=3.7.4.3", markers = "python_version < \"3.8\""
 
 [[package]]
 name = "mypy"
-version = "0.971"
+version = "0.982"
 description = "Optional static typing for Python"
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 mypy-extensions = ">=0.4.3"
@@ -1387,7 +1387,7 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "d1ef2355bf33d53551779a31fc88637b843e52e10f99cafb185ee50a4a507e58"
+content-hash = "1ab428c76cc992baf096cf334668a8f7c88cd2fd020ce5fba508eabdfb38becc"
 
 [metadata.files]
 aiomysql = []
