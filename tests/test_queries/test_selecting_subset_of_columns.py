@@ -5,6 +5,7 @@ from typing import Optional, List
 import databases
 import pydantic
 import pytest
+import pytest_asyncio
 import sqlalchemy
 
 import ormar
@@ -86,7 +87,7 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(autouse=True, scope="module")
+@pytest_asyncio.fixture(autouse=True, scope="module")
 async def sample_data(event_loop, create_test_database):
     async with database:
         nick1 = await NickNames.objects.create(name="Nippon", is_lame=False)

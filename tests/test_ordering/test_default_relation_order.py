@@ -3,6 +3,7 @@ from uuid import UUID, uuid4
 
 import databases
 import pytest
+import pytest_asyncio
 import sqlalchemy
 
 import ormar
@@ -70,7 +71,7 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-@pytest.fixture(autouse=True, scope="function")
+@pytest_asyncio.fixture(autouse=True, scope="function")
 async def cleanup():
     yield
     async with database:

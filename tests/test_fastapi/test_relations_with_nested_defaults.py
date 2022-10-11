@@ -2,6 +2,7 @@ from typing import Optional
 
 import databases
 import pytest
+import pytest_asyncio
 import sqlalchemy
 from fastapi import FastAPI
 from starlette.testclient import TestClient
@@ -71,7 +72,7 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-@pytest.fixture()
+@pytest_asyncio.fixture
 async def sample_data():
     async with database:
         country = await Country(id=1, name="USA").save()

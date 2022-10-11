@@ -3,6 +3,7 @@ from typing import List, Optional
 
 import databases
 import pytest
+import pytest_asyncio
 import sqlalchemy
 
 import ormar
@@ -53,7 +54,7 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(autouse=True, scope="module")
+@pytest_asyncio.fixture(autouse=True, scope="module")
 async def create_test_database():
     engine = sqlalchemy.create_engine(DATABASE_URL)
     metadata.create_all(engine)
@@ -61,7 +62,7 @@ async def create_test_database():
     metadata.drop_all(engine)
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def cleanup():
     yield
     async with database:
