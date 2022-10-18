@@ -101,7 +101,7 @@ types-requests = "^2.28.11"
 types-toml = "^0.10.8"
 
 # Documantation
-mkdocs = "^1.4.0"
+mkdocs = "^1.4.1"
 mkdocs-material = ">=8.1.2,<8.6"
 mkdocs-material-extensions = "^1.0.3"
 mkdocstrings = {version = "==0.19.0", extras = ["python"]}
