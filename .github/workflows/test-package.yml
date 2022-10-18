@@ -67,9 +67,9 @@ jobs:
       run: bash scripts/test.sh
     - run: mypy ormar tests
     - name: Upload coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v3.1.0
     - name: Test & publish code coverage
-      uses: paambaati/codeclimate-action@v3.0.0
+      uses: paambaati/codeclimate-action@v3.1.0
       if: github.event.pull_request.head.repo.full_name == 'collerek/ormar'
       env:
         CC_TEST_REPORTER_ID:  ${{ secrets.CC_COVERAGE_TOKEN }}

@@ -6,6 +6,7 @@ import decimal
 import databases
 import pydantic
 import pytest
+import pytest_asyncio
 import sqlalchemy
 import typing
 
@@ -63,15 +64,8 @@ class ExampleModel2(Model):
     test_string: str = ormar.String(max_length=250)
 
 
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.get_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest.fixture(autouse=True, scope="module")
-async def create_test_database():
+def create_test_database():
     engine = sqlalchemy.create_engine(DATABASE_URL)
     metadata.create_all(engine)
     yield

@@ -27,15 +27,8 @@ class Product(ormar.Model):
     created: datetime = ormar.DateTime(server_default=func.now())
 
 
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.get_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest.fixture(autouse=True, scope="module")
-async def create_test_database():
+def create_test_database():
     engine = sqlalchemy.create_engine(DATABASE_URL)
     metadata.drop_all(engine)
     metadata.create_all(engine)
