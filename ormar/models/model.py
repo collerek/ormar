@@ -341,7 +341,7 @@ class Model(ModelRow):
         self.update_from_dict(instance.dict())
         return self
 
-    def _get_integrity_exception(self) -> Type[Exception]:
+    def _get_integrity_exception(self) -> Type[Exception]:  # pragma: no cover
         """Imports proper IntegrityError depending on the backend used."""
         dialect = self.Meta.database._backend._dialect.name
         if dialect == "sqlite":
