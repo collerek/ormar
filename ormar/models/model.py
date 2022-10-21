@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, TypeVar, Union
 
 import ormar.queryset  # noqa I100
 from ormar.exceptions import ModelPersistenceError, NoMatch
@@ -39,12 +39,15 @@ class Model(ModelRow):
         """
 
         force_save = kwargs.pop("__force_save__", False)
-        IntegrityError = self._get_integrity_exception()
-        if not self.pk or force_save:
-            try:
+        if force_save:
+            expr = self.Meta.table.select().where(self.pk_column == self.pk)
+            row = await self.Meta.database.fetch_one(expr)
+            if not row:
                 return await self.save()
-            except IntegrityError:
-                return await self.update(**kwargs)
+            return await self.update(**kwargs)
+
+        if not self.pk:
+            return await self.save()
         return await self.update(**kwargs)
 
     async def save(self: T) -> T:
@@ -340,16 +343,3 @@ class Model(ModelRow):
         self._orm.clear()
         self.update_from_dict(instance.dict())
         return self
-
-    def _get_integrity_exception(self) -> Type[Exception]:  # pragma: no cover
-        """Imports proper IntegrityError depending on the backend used."""
-        dialect = self.Meta.database._backend._dialect.name
-        if dialect == "sqlite":
-            from sqlite3 import IntegrityError  # type: ignore
-        elif dialect == "postgresql":
-            from asyncpg.exceptions import UniqueViolationError
-
-            IntegrityError = UniqueViolationError  # type: ignore
-        else:
-            from pymysql import IntegrityError  # type: ignore
-        return IntegrityError
