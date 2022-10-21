@@ -254,8 +254,6 @@ def update_attrs_from_base_meta(  # noqa: CCR001
                 parent_value = [get_constraint_copy(value) for value in parent_value]
             if isinstance(current_value, list):
                 current_value.extend(parent_value)
-            elif isinstance(current_value, set):
-                setattr(attrs["Meta"], param, current_value.union(parent_value))
             else:
                 setattr(attrs["Meta"], param, parent_value)
 
