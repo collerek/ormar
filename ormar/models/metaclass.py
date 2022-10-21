@@ -238,7 +238,7 @@ def update_attrs_from_base_meta(  # noqa: CCR001
     :type model_fields: Dict[str, BaseField]
     """
 
-    params_to_update = ["metadata", "database", "constraints"]
+    params_to_update = ["metadata", "database", "constraints", "property_fields"]
     for param in params_to_update:
         current_value = attrs.get("Meta", {}).__dict__.get(param, ormar.Undefined)
         parent_value = (
