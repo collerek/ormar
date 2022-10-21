@@ -306,7 +306,7 @@ class Model(ModelRow):
         Allow to refresh existing Models fields from database.
         Performs refresh of the related models fields.
 
-        By default loads only self and the directly related ones.
+        By default, loads only self and the directly related ones.
 
         If follow=True is set it loads also related models of related models.
 
