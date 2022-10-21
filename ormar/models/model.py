@@ -37,6 +37,15 @@ class Model(ModelRow):
         :return: saved Model
         :rtype: Model
         """
+
+        force_save = kwargs.pop("__force_save__", False)
+        if force_save:
+            expr = self.Meta.table.select().where(self.pk_column == self.pk)
+            row = await self.Meta.database.fetch_one(expr)
+            if not row:
+                return await self.save()
+            return await self.update(**kwargs)
+
         if not self.pk:
             return await self.save()
         return await self.update(**kwargs)
