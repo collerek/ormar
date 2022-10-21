@@ -305,7 +305,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         if (
             save_all or not instance.pk or not instance.saved
         ) and not instance.__pk_only__:
-            await instance.upsert()
+            await instance.upsert(__force_save__=True)
             if relation_field and relation_field.is_multi:
                 await instance._upsert_through_model(
                     instance=instance,
