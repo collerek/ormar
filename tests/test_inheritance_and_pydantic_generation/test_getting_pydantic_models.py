@@ -3,7 +3,7 @@ from typing import List, Optional
 import databases
 import pydantic
 import sqlalchemy
-from pydantic import ConstrainedStr
+from pydantic import ConstrainedStr, PositiveInt
 from pydantic.typing import ForwardRef
 
 import ormar
@@ -165,6 +165,15 @@ def test_getting_pydantic_model_exclude_dict():
     PydanticCategory = PydanticItem.__fields__["category"].type_
     assert len(PydanticCategory.__fields__) == 1
     assert "name" not in PydanticCategory.__fields__
+
+
+def test_getting_pydantic_model_fk_as_int():
+    PydanticItem = Item.get_pydantic(
+        include={"category", "name"}, fk_as_int={"category", "name"}
+    )
+    assert len(PydanticItem.__fields__) == 2
+    assert PydanticItem.__fields__["category"].type_ == PositiveInt
+    assert PydanticItem.__fields__["name"].type_ != PositiveInt
 
 
 def test_getting_pydantic_model_self_ref():
