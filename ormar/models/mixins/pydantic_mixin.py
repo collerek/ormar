@@ -120,19 +120,26 @@ class PydanticMixin(RelationMixin):
         field = cls.Meta.model_fields[name]
         target: Any = None
         if field.is_relation and name in relation_map:  # type: ignore
-            if fk_as_int and name in fk_as_int and not isinstance(fk_as_int[name], Dict):  # type: ignore
-                target = pydantic.PositiveInt
+            if fk_as_int and name in fk_as_int:
+                if not isinstance(fk_as_int[name], Dict):  # type: ignore
+                    target = pydantic.PositiveInt
 
-            else:
-                if fk_as_int and name in fk_as_int and isinstance(fk_as_int[name], Dict):  # type: ignore
+                else:
                     current_level = fk_as_int[name]  # type: ignore
                     fk_as_int.update(current_level)
                     fk_as_int.pop(name)  # type: ignore
-
+                    target = field.to._convert_ormar_to_pydantic(
+                        include=cls._skip_ellipsis(include, name),
+                        exclude=cls._skip_ellipsis(exclude, name),
+                        fk_as_int=fk_as_int,
+                        relation_map=cls._skip_ellipsis(
+                            relation_map, name, default_return=dict()
+                        ),
+                    )
+            else:
                 target = field.to._convert_ormar_to_pydantic(
                     include=cls._skip_ellipsis(include, name),
                     exclude=cls._skip_ellipsis(exclude, name),
-                    fk_as_int=fk_as_int,  # type: ignore
                     relation_map=cls._skip_ellipsis(
                         relation_map, name, default_return=dict()
                     ),
