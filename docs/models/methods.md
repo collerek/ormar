@@ -305,13 +305,22 @@ Of course the end result is a string with json representation and not a dictiona
 
 ## get_pydantic
 
-`get_pydantic(include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None)`
+`get_pydantic(include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None, fk_as_int: Union[Set, Dict] = None)`
 
 This method allows you to generate `pydantic` models from your ormar models without you needing to retype all the fields.
 
 Note that if you have nested models, it **will generate whole tree of pydantic models for you!**
 
 Moreover, you can pass `exclude` and/or `include` parameters to keep only the fields that you want to, including in nested models.
+
+If you only want an ID instead of a nested model representation for a related field, add it to the `fk_as_int` parameter. 
+
+!!!Note
+        It is currently only possible to convert models nested once, meaning they must be directly related to a model that is in turn directly related to the model that `get_pydantic` got called on.
+        E.g. if you have a `User` model that has an FK to a `Person` model which in turn has an FK to a `Nation` model, you can have the full Person model (but in it the Nation FK instead of the full Nation model) in the resulting pydantic model like this: 
+        ```python
+        User.get_pdyantic(fk_as_int={"person__nation"})
+        ```
 
 That means that this way you can effortlessly create pydantic models for requests and responses in `fastapi`.
 
