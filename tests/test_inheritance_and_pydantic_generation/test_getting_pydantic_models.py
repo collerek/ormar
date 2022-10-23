@@ -7,6 +7,7 @@ from pydantic import ConstrainedStr, PositiveInt
 from pydantic.typing import ForwardRef
 
 import ormar
+from ormar.fields.foreign_key import ForeignKey
 from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()
@@ -45,6 +46,24 @@ class Item(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="test")
     category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
+
+
+class OrderPosition(ormar.Model):
+    class Meta(BaseMeta):
+        pass
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    item: Optional[Item] = ormar.ForeignKey(Item, skip_reverse=True)
+
+
+class Order(ormar.Model):
+    class Meta(BaseMeta):
+        pass
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    position: Optional[OrderPosition] = ForeignKey(OrderPosition)
 
 
 class MutualA(ormar.Model):
@@ -174,6 +193,16 @@ def test_getting_pydantic_model_fk_as_int():
     assert len(PydanticItem.__fields__) == 2
     assert PydanticItem.__fields__["category"].type_ == PositiveInt
     assert PydanticItem.__fields__["name"].type_ != PositiveInt
+
+
+def test_getting_pydantic_model_nested_fk_as_int():
+    PydanticOrder = Order.get_pydantic(
+        include={"name", "position"}, fk_as_int={"position__item"}
+    )
+    assert len(PydanticOrder.__fields__) == 2
+    PydanticPosition = PydanticOrder.__fields__["position"].type_
+    assert len(PydanticPosition.__fields__) == 3
+    assert PydanticPosition.__fields__["item"].type_ == PositiveInt
 
 
 def test_getting_pydantic_model_self_ref():
