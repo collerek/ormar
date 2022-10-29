@@ -37,6 +37,15 @@ class Model(ModelRow):
         :return: saved Model
         :rtype: Model
         """
+
+        force_save = kwargs.pop("__force_save__", False)
+        if force_save:
+            expr = self.Meta.table.select().where(self.pk_column == self.pk)
+            row = await self.Meta.database.fetch_one(expr)
+            if not row:
+                return await self.save()
+            return await self.update(**kwargs)
+
         if not self.pk:
             return await self.save()
         return await self.update(**kwargs)
@@ -297,7 +306,7 @@ class Model(ModelRow):
         Allow to refresh existing Models fields from database.
         Performs refresh of the related models fields.
 
-        By default loads only self and the directly related ones.
+        By default, loads only self and the directly related ones.
 
         If follow=True is set it loads also related models of related models.
 

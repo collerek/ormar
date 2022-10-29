@@ -193,7 +193,7 @@ class ModelRow(NewBaseModel):
                 model_cls=cast(Type["Model"], cls), alias=table_prefix
             )
             if model_excludable.is_excluded(related):
-                return item
+                continue
 
             relation_str, remainder = cls._process_remainder_and_relation_string(
                 related_models=related_models,
