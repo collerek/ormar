@@ -111,7 +111,7 @@ mkdocs-section-index = "^0.3.4"
 dataclasses = { version = ">=0.6.0,<0.8 || >0.8,<1.0.0" }
 
 # Performance testing
-yappi = "^1.3.6"
+yappi = "^1.4.0"
 
 pre-commit = "^2.20.0"
 
