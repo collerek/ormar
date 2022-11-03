@@ -91,16 +91,19 @@ class Model(ModelRow):
         expr = self.Meta.table.insert()
         expr = expr.values(**self_fields)
 
+        pkname = self.Meta.pkname
+        is_need_load_pk = True
         pk = await self.Meta.database.execute(expr)
         if pk and isinstance(pk, self.pk_type()):
-            setattr(self, self.Meta.pkname, pk)
+            setattr(self, pkname, pk)
+            is_need_load_pk = False
 
         self.set_save_status(True)
         # refresh server side defaults
         if any(
             field.server_default is not None
             for name, field in self.Meta.model_fields.items()
-            if name not in self_fields
+            if name not in self_fields and (is_need_load_pk or name != pkname)
         ):
             await self.load()
 
