@@ -1248,7 +1248,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-cryptography"
-version = "3.3.23.1"
+version = "3.3.23.2"
 description = "Typing stubs for cryptography"
 category = "dev"
 optional = false
@@ -2386,8 +2386,8 @@ types-aiofiles = [
     {file = "types_aiofiles-22.1.0.1-py3-none-any.whl", hash = "sha256:a73ab534601e31bff6380dc0df97cbb7a02328c5be2e3ea932abcd79b921c550"},
 ]
 types-cryptography = [
-    {file = "types-cryptography-3.3.23.1.tar.gz", hash = "sha256:f108e7a7161eedd9fe391e1a8ae5a98d40c1da2f0418bc0812a9119990272314"},
-    {file = "types_cryptography-3.3.23.1-py3-none-any.whl", hash = "sha256:b9f8aa93d9e4d7ff920961cdce3dc7cca479946890924d68356b66f15f4f35e3"},
+    {file = "types-cryptography-3.3.23.2.tar.gz", hash = "sha256:09cc53f273dd4d8c29fa7ad11fefd9b734126d467960162397bc5e3e604dea75"},
+    {file = "types_cryptography-3.3.23.2-py3-none-any.whl", hash = "sha256:b965d548f148f8e87f353ccf2b7bd92719fdf6c845ff7cedf2abb393a0643e4f"},
 ]
 types-enum34 = [
     {file = "types-enum34-1.1.8.tar.gz", hash = "sha256:6f9c769641d06d73a55e11c14d38ac76fcd37eb545ce79cebb6eec9d50a64110"},
