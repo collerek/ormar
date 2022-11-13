@@ -18,6 +18,7 @@ from typing import (
     Union,
     cast,
 )
+import functools
 
 import databases
 import pydantic
@@ -41,6 +42,7 @@ from ormar.models.modelproxy import ModelTableProxy
 from ormar.models.utils import Extra
 from ormar.queryset.utils import translate_list_to_dict
 from ormar.relations.alias_manager import AliasManager
+from ormar.relations.relation import Relation
 from ormar.relations.relation_manager import RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
@@ -171,11 +173,19 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: None
         :rtype: None
         """
+        prev_hash = hash(self)
+
         if hasattr(self, name):
             object.__setattr__(self, name, value)
         else:
             # let pydantic handle errors for unknown fields
             super().__setattr__(name, value)
+
+        new_hash = hash(self)
+        if prev_hash == new_hash:
+            return
+
+        self._update_relation_cache(prev_hash, new_hash)
 
     def __getattr__(self, item: str) -> Any:
         """
@@ -212,6 +222,26 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         self._initialize_internal_attributes()
         for name, value in relations.items():
             setattr(self, name, value)
+
+    def _update_relation_cache(self, prev_hash: int, new_hash: int) -> None:
+        """
+        Update all relation proxy caches with different hash if we have changed
+
+        :param prev_hash: The previous hash to update
+        :type prev_hash: int
+        :param new_hash: The hash to update to
+        :type new_hash: int
+        """
+
+        def update_cache(relations: List[Relation], recurse: bool = True) -> None:
+            for relation in relations:
+                relation_proxy = relation.get()
+                if hasattr(relation_proxy, "update_cache"):
+                    relation_proxy.update_cache(prev_hash, new_hash)  # type: ignore
+                elif recurse and hasattr(relation_proxy, "_orm"):
+                    update_cache(relation_proxy._orm._relations.values(), recurse=False)  # type: ignore
+
+        update_cache(list(self._orm._relations.values()))
 
     def _internal_set(self, name: str, value: Any) -> None:
         """
@@ -353,6 +383,17 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             return self.__same__(other)
         return super().__eq__(other)  # pragma no cover
 
+    def __hash__(self) -> int:
+        if self.pk is not None:
+            return hash(str(self.pk) + self.__class__.__name__)
+        else:
+            vals = {
+                k: v
+                for k, v in self.__dict__.items()
+                if k not in self.extract_related_names()
+            }
+            return hash(str(vals) + self.__class__.__name__)
+
     def __same__(self, other: "NewBaseModel") -> bool:
         """
         Used by __eq__, compares other model to this model.
@@ -365,23 +406,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: result of comparison
         :rtype: bool
         """
-        return (
-            # self._orm_id == other._orm_id
-            (self.pk == other.pk and self.pk is not None)
-            or (
-                (self.pk is None and other.pk is None)
-                and {
-                    k: v
-                    for k, v in self.__dict__.items()
-                    if k not in self.extract_related_names()
-                }
-                == {
-                    k: v
-                    for k, v in other.__dict__.items()
-                    if k not in other.extract_related_names()
-                }
-            )
-        )
+        if (self.pk is None and other.pk is not None) or (
+            self.pk is not None and other.pk is None
+        ):
+            return False
+        else:
+            return hash(self) == other.__hash__()
 
     def _copy_and_set_values(
         self: "NewBaseModel", values: "DictStrAny", fields_set: "SetStr", *, deep: bool

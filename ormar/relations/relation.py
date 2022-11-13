@@ -130,6 +130,10 @@ class Relation(Generic[T]):
             raise ValueError("Cannot find existing models in parent relation type")
         if self._to_remove:
             self._clean_related()
+
+        if child not in self.related_models:
+            return None
+
         for ind, relation_child in enumerate(self.related_models[:]):
             try:
                 if relation_child == child:

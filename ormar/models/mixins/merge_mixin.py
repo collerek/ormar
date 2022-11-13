@@ -17,6 +17,23 @@ class MergeModelMixin:
     """
 
     @classmethod
+    def _recursive_add(cls, g: List["Model"]) -> List["Model"]:
+        if len(g) <= 1:
+            return g
+
+        added_values = []
+        iterable_group = iter(g)
+        for model in iterable_group:
+            next_model = next(iterable_group, None)
+            if next_model is not None:
+                combined = cls.merge_two_instances(next_model, model)
+            else:
+                combined = model
+            added_values.append(combined)
+
+        return cls._recursive_add(added_values)
+
+    @classmethod
     def merge_instances_list(cls, result_rows: List["Model"]) -> List["Model"]:
         """
         Merges a list of models into list of unique models.
@@ -36,24 +53,8 @@ class MergeModelMixin:
         for model in result_rows:
             grouped_instances.setdefault(model.pk, []).append(model)
 
-        def recursive_add(g):
-            if len(g) <= 1:
-                return g
-
-            added_values = []
-            iterable_group = iter(g)
-            for model in iterable_group:
-                next_model = next(iterable_group, None)
-                if next_model is not None:
-                    combined = cls.merge_two_instances(next_model, model)
-                else:
-                    combined = model
-                added_values.append(combined)
-
-            return recursive_add(added_values)
-
         for group in grouped_instances.values():
-            model = recursive_add(group)[0]
+            model = cls._recursive_add(group)[0]
             merged_rows.append(model)
 
         return merged_rows

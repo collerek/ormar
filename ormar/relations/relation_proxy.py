@@ -36,6 +36,14 @@ class RelationProxy(Generic[T], List[T]):
         )
         self._related_field_name: Optional[str] = None
 
+        self._relation_cache = set()
+        if data_ is not None:
+            for d in data_:
+                try:
+                    self._relation_cache.add(d.__hash__())
+                except ReferenceError:
+                    pass
+
     @property
     def related_field_name(self) -> str:
         """
@@ -54,6 +62,23 @@ class RelationProxy(Generic[T], List[T]):
 
     def __getitem__(self, item: Any) -> "T":  # type: ignore
         return super().__getitem__(item)
+
+    def append(self, item: "T") -> None:
+        self._relation_cache.add(item.__hash__())
+        super().append(item)
+
+    def update_cache(self, prev_hash: int, new_hash: int) -> None:
+        try:
+            self._relation_cache.remove(prev_hash)
+        except KeyError:
+            pass
+        self._relation_cache.add(new_hash)
+
+    def __contains__(self, item: object) -> bool:
+        try:
+            return item.__hash__() in self._relation_cache
+        except ReferenceError:
+            return False
 
     def __getattribute__(self, item: str) -> Any:
         """
@@ -165,6 +190,7 @@ class RelationProxy(Generic[T], List[T]):
             relation_name=self.field_name,
         )
         super().remove(item)
+        self._relation_cache.remove(item.__hash__())
         relation_name = self.related_field_name
         relation = item._orm._get(relation_name)
         # if relation is None:  # pragma nocover
@@ -215,6 +241,7 @@ class RelationProxy(Generic[T], List[T]):
         else:
             setattr(item, relation_name, self._owner)
             await item.upsert()
+        self._relation_cache.add(item.__hash__())
         await self._owner.signals.post_relation_add.send(
             sender=self._owner.__class__,
             instance=self._owner,
