@@ -1,4 +1,15 @@
-from typing import Any, Generic, List, Optional, TYPE_CHECKING, Type, TypeVar
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    TYPE_CHECKING,
+    Set,
+    Type,
+    TypeVar,
+)
+from typing_extensions import SupportsIndex
 
 import ormar
 from ormar.exceptions import NoMatch, RelationshipInstanceError
@@ -26,7 +37,6 @@ class RelationProxy(Generic[T], List[T]):
         field_name: str,
         data_: Any = None,
     ) -> None:
-        super().__init__(data_ or ())
         self.relation: "Relation[T]" = relation
         self.type_: "RelationType" = type_
         self.field_name = field_name
@@ -36,13 +46,19 @@ class RelationProxy(Generic[T], List[T]):
         )
         self._related_field_name: Optional[str] = None
 
-        self._relation_cache = set()
+        self._relation_cache: Dict[int, int] = {}
+
+        validated_data = []
         if data_ is not None:
+            idx = 0
             for d in data_:
                 try:
-                    self._relation_cache.add(d.__hash__())
+                    self._relation_cache[d.__hash__()] = idx
+                    validated_data.append(d)
+                    idx += 1
                 except ReferenceError:
                     pass
+        super().__init__(validated_data or ())
 
     @property
     def related_field_name(self) -> str:
@@ -64,15 +80,47 @@ class RelationProxy(Generic[T], List[T]):
         return super().__getitem__(item)
 
     def append(self, item: "T") -> None:
-        self._relation_cache.add(item.__hash__())
+        idx = len(self)
+        self._relation_cache[item.__hash__()] = idx
         super().append(item)
 
     def update_cache(self, prev_hash: int, new_hash: int) -> None:
         try:
-            self._relation_cache.remove(prev_hash)
+            idx = self._relation_cache.pop(prev_hash)
+            self._relation_cache[new_hash] = idx
         except KeyError:
             pass
-        self._relation_cache.add(new_hash)
+
+    def index(self, item: T, *args: Any) -> int:
+        return self._relation_cache[item.__hash__()]
+
+    def _get_list_of_missing_weakrefs(self) -> Set[int]:
+        to_remove = set()
+        for ind, relation_child in enumerate(self[:]):
+            try:
+                relation_child.__repr__.__self__  # type: ignore
+            except ReferenceError:  # pragma no cover
+                to_remove.add(ind)
+
+        return to_remove
+
+    def pop(self, index: SupportsIndex = 0) -> T:
+        item = self[index]
+
+        # Try to delete it, but do it the long way if weakly-referenced thing doesn't exist
+        try:
+            self._relation_cache.pop(item.__hash__())
+        except ReferenceError:
+            for hash_, idx in self._relation_cache.items():
+                if idx == index:
+                    self._relation_cache.pop(hash_)
+                    break
+
+        index_int = int(index)
+        for idx in range(index_int + 1, len(self)):
+            self._relation_cache[self[idx].__hash__()] -= 1
+
+        return super().pop(index)
 
     def __contains__(self, item: object) -> bool:
         try:
@@ -108,6 +156,7 @@ class RelationProxy(Generic[T], List[T]):
         return getattr(self.queryset_proxy, item)
 
     def _clear(self) -> None:
+        self._relation_cache.clear()
         super().clear()
 
     def _initialize_queryset(self) -> None:
@@ -189,8 +238,10 @@ class RelationProxy(Generic[T], List[T]):
             child=item,
             relation_name=self.field_name,
         )
-        super().remove(item)
-        self._relation_cache.remove(item.__hash__())
+
+        index_to_remove = self._relation_cache[item.__hash__()]
+        self.pop(index_to_remove)
+
         relation_name = self.related_field_name
         relation = item._orm._get(relation_name)
         # if relation is None:  # pragma nocover
@@ -226,6 +277,7 @@ class RelationProxy(Generic[T], List[T]):
         :param item: child to add to relation
         :type item: Model
         """
+        new_idx = len(self)
         relation_name = self.related_field_name
         await self._owner.signals.pre_relation_add.send(
             sender=self._owner.__class__,
@@ -241,7 +293,7 @@ class RelationProxy(Generic[T], List[T]):
         else:
             setattr(item, relation_name, self._owner)
             await item.upsert()
-        self._relation_cache.add(item.__hash__())
+        self._relation_cache[item.__hash__()] = new_idx
         await self._owner.signals.post_relation_add.send(
             sender=self._owner.__class__,
             instance=self._owner,
