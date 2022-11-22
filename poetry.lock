@@ -381,7 +381,7 @@ pycodestyle = "*"
 
 [[package]]
 name = "flake8-black"
-version = "0.3.4"
+version = "0.3.5"
 description = "flake8 plugin to call black as a code style validator"
 category = "dev"
 optional = false
@@ -1418,7 +1418,7 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "8d7dc8df53804c0642b84a8d23df2920ab00a52991e0857e7f69aa603d4dc05e"
+content-hash = "8827c20c618bcd489a5040134e40141930df221e8ec7c866b25dffea7a14e4d2"
 
 [metadata.files]
 aiomysql = [
@@ -1724,8 +1724,8 @@ flake8-bandit = [
     {file = "flake8_bandit-3.0.0.tar.gz", hash = "sha256:54d19427e6a8d50322a7b02e1841c0a7c22d856975f3459803320e0e18e2d6a1"},
 ]
 flake8-black = [
-    {file = "flake8-black-0.3.4.tar.gz", hash = "sha256:7f96a4c80a828d09f1d550724e16aabb2adacd6a5f8e0bb051df422fc63d2183"},
-    {file = "flake8_black-0.3.4-py3-none-any.whl", hash = "sha256:fb52f258dfa6a25645c4ba8730eadc5f2ecd32057bf6c9fc21aef1cba9fefd74"},
+    {file = "flake8-black-0.3.5.tar.gz", hash = "sha256:9e93252b1314a8eb3c2f55dec54a07239e502b12f57567f2c105f2202714b15e"},
+    {file = "flake8_black-0.3.5-py3-none-any.whl", hash = "sha256:4948a579fdddd98fbf935fd94255dfcfce560c4ddc1ceee08e3f12d6114c8619"},
 ]
 flake8-bugbear = [
     {file = "flake8-bugbear-22.10.27.tar.gz", hash = "sha256:a6708608965c9e0de5fff13904fed82e0ba21ac929fe4896459226a797e11cd5"},
