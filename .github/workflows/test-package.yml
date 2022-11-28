@@ -65,7 +65,7 @@ jobs:
       env:
         DATABASE_URL: "sqlite:///testsuite"
       run: bash scripts/test.sh
-    - run: mypy ormar tests
+    - run: mypy ormar tests benchmarks
     - name: Upload coverage
       uses: codecov/codecov-action@v3.1.1
     - name: Test & publish code coverage
