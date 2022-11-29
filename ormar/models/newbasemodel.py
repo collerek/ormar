@@ -421,7 +421,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         recursion through related fields.
         """
         self_dict = values
-        self_dict.update(self.dict())
+        self_dict.update(self.dict(exclude_list=True))
         return cast(
             "NewBaseModel",
             super()._copy_and_set_values(
@@ -660,6 +660,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude: Optional[Dict],
         exclude_primary_keys: bool,
         exclude_through_models: bool,
+        exclude_list: bool,
     ) -> Dict:
         """
         Traverse nested models and converts them into dictionaries.
@@ -673,6 +674,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :type include: Optional[Dict]
         :param exclude: fields to exclude
         :type exclude: Optional[Dict]
+        :param exclude: whether to exclude lists
+        :type exclude: bool
         :return: current model dict with child models converted to dictionaries
         :rtype: Dict
         """
@@ -686,6 +689,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             try:
                 nested_model = getattr(self, field)
                 if isinstance(nested_model, MutableSequence):
+                    if exclude_list:
+                        continue
+
                     dict_instance[field] = self._extract_nested_models_from_list(
                         relation_map=self._skip_ellipsis(  # type: ignore
                             relation_map, field, default_return=dict()
@@ -725,6 +731,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude_none: bool = False,
         exclude_primary_keys: bool = False,
         exclude_through_models: bool = False,
+        exclude_list: bool = False,
         relation_map: Dict = None,
     ) -> "DictStrAny":  # noqa: A003'
         """
@@ -754,6 +761,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :type exclude_defaults: bool
         :param exclude_none: flag to exclude None values - passed to pydantic
         :type exclude_none: bool
+        :param exclude_list: flag to exclude lists of nested values models from dict
+        :type exclude_list: bool
         :param relation_map: map of the relations to follow to avoid circural deps
         :type relation_map: Dict
         :return:
@@ -799,6 +808,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 exclude=exclude,  # type: ignore
                 exclude_primary_keys=exclude_primary_keys,
                 exclude_through_models=exclude_through_models,
+                exclude_list=exclude_list,
             )
 
         # include model properties as fields in dict
