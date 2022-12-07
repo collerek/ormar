@@ -68,7 +68,14 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     the logic concerned with database connection and data persistance.
     """
 
-    __slots__ = ("_orm_id", "_orm_saved", "_orm", "_pk_column", "__pk_only__")
+    __slots__ = (
+        "_orm_id",
+        "_orm_saved",
+        "_orm",
+        "_pk_column",
+        "__pk_only__",
+        "__cached_hash__",
+    )
 
     if TYPE_CHECKING:  # pragma no cover
         pk: Any
@@ -80,6 +87,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         __metadata__: sqlalchemy.MetaData
         __database__: databases.Database
         __relation_map__: Optional[List[str]]
+        __cached_hash__: Optional[int]
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
         _orm_id: int
@@ -181,11 +189,13 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             # let pydantic handle errors for unknown fields
             super().__setattr__(name, value)
 
-        new_hash = hash(self)
-        if prev_hash == new_hash:
-            return
+        # In this case, the hash could have changed, so update it
+        if name == self.Meta.pkname or self.pk is None:
+            object.__setattr__(self, "__cached_hash__", None)
+            new_hash = hash(self)
 
-        self._update_relation_cache(prev_hash, new_hash)
+            if prev_hash != new_hash:
+                self._update_relation_cache(prev_hash, new_hash)
 
     def __getattr__(self, item: str) -> Any:
         """
@@ -232,16 +242,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :param new_hash: The hash to update to
         :type new_hash: int
         """
-
-        def update_cache(relations: List[Relation], recurse: bool = True) -> None:
+        def _update_cache(relations: List[Relation], recurse: bool = True) -> None:
             for relation in relations:
                 relation_proxy = relation.get()
+
                 if hasattr(relation_proxy, "update_cache"):
                     relation_proxy.update_cache(prev_hash, new_hash)  # type: ignore
                 elif recurse and hasattr(relation_proxy, "_orm"):
-                    update_cache(relation_proxy._orm._relations.values(), recurse=False)  # type: ignore
+                    _update_cache(relation_proxy._orm._relations.values(), recurse=False)  # type: ignore
 
-        update_cache(list(self._orm._relations.values()))
+        _update_cache(list(self._orm._relations.values()))
 
     def _internal_set(self, name: str, value: Any) -> None:
         """
@@ -384,15 +394,21 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         return super().__eq__(other)  # pragma no cover
 
     def __hash__(self) -> int:
+        if getattr(self, "__cached_hash__", None) is not None:
+            return self.__cached_hash__ or 0
+
         if self.pk is not None:
-            return hash(str(self.pk) + self.__class__.__name__)
+            ret = hash(str(self.pk) + self.__class__.__name__)
         else:
             vals = {
                 k: v
                 for k, v in self.__dict__.items()
                 if k not in self.extract_related_names()
             }
-            return hash(str(vals) + self.__class__.__name__)
+            ret = hash(str(vals) + self.__class__.__name__)
+
+        object.__setattr__(self, "__cached_hash__", ret)
+        return ret
 
     def __same__(self, other: "NewBaseModel") -> bool:
         """

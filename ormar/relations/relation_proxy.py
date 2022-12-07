@@ -80,11 +80,27 @@ class RelationProxy(Generic[T], List[T]):
         return super().__getitem__(item)
 
     def append(self, item: "T") -> None:
+        """
+        Appends an item to the list in place
+
+        :param item: The generic item of the list
+        :type item: T
+        """
         idx = len(self)
         self._relation_cache[item.__hash__()] = idx
         super().append(item)
 
     def update_cache(self, prev_hash: int, new_hash: int) -> None:
+        """
+        Updates the cache from the old hash to the new one.
+        This maintains the index cache, which allows O(1) indexing and
+        existence checks
+
+        :param prev_hash: The hash to update
+        :type prev_hash: int
+        :param prev_hash: The new hash to update to
+        :type new_hash: int
+        """
         try:
             idx = self._relation_cache.pop(prev_hash)
             self._relation_cache[new_hash] = idx
@@ -92,9 +108,21 @@ class RelationProxy(Generic[T], List[T]):
             pass
 
     def index(self, item: T, *args: Any) -> int:
+        """
+        Gets the index of the item in the list
+
+        :param item: The item to get the index of
+        :type item: "T"
+        """
         return self._relation_cache[item.__hash__()]
 
     def _get_list_of_missing_weakrefs(self) -> Set[int]:
+        """
+        Iterates through the list and checks for weakrefs.
+
+        :return: The set of missing weakref indices
+        :rtype: Set[int]
+        """
         to_remove = set()
         for ind, relation_child in enumerate(self[:]):
             try:
@@ -105,6 +133,16 @@ class RelationProxy(Generic[T], List[T]):
         return to_remove
 
     def pop(self, index: SupportsIndex = 0) -> T:
+        """
+        Pops the index off the list and returns it. By default,
+        it pops off the element at index 0.
+        This also clears the value from the relation cache.
+
+        :param index: The index to pop
+        :type index: SupportsIndex
+        :return: The item at the provided index
+        :rtype: "T"
+        """
         item = self[index]
 
         # Try to delete it, but do it the long way if weakly-referenced thing doesn't exist
@@ -123,6 +161,14 @@ class RelationProxy(Generic[T], List[T]):
         return super().pop(index)
 
     def __contains__(self, item: object) -> bool:
+        """
+        Checks whether the item exists in self. This relies
+        on the relation cache, which is a hashmap of values
+        in the list. It runs in O(1) time.
+
+        :param item: The item to check if the list contains
+        :type item: object
+        """
         try:
             return item.__hash__() in self._relation_cache
         except ReferenceError:
