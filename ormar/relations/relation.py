@@ -128,15 +128,20 @@ class Relation(Generic[T]):
         """
         if not isinstance(self.related_models, RelationProxy):  # pragma nocover
             raise ValueError("Cannot find existing models in parent relation type")
-        if self._to_remove:
-            self._clean_related()
-        for ind, relation_child in enumerate(self.related_models[:]):
+
+        if child not in self.related_models:
+            return None
+        else:
+            # We need to clear the weakrefs that don't point to anything anymore
+            # There's an assumption here that if some of the related models went out of scope,
+            # then they all did, so we can just check the first one
             try:
-                if relation_child == child:
-                    return ind
-            except ReferenceError:  # pragma no cover
-                self._to_remove.add(ind)
-        return None
+                self.related_models[0].__repr__.__self__
+                return self.related_models.index(child)
+            except ReferenceError:
+                missing = self.related_models._get_list_of_missing_weakrefs()
+                self._to_remove.update(missing)
+            return self.related_models.index(child)
 
     def add(self, child: "Model") -> None:
         """
@@ -186,6 +191,8 @@ class Relation(Generic[T]):
         :return: related model/models if set
         :rtype: Optional[Union[List[Model], Model]]
         """
+        if self._to_remove:
+            self._clean_related()
         return self.related_models
 
     def __repr__(self) -> str:  # pragma no cover

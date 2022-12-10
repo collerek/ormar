@@ -112,6 +112,8 @@ dataclasses = { version = ">=0.6.0,<0.8 || >0.8,<1.0.0" }
 
 # Performance testing
 yappi = "^1.4.0"
+pytest-benchmark = "^4.0.0"
+nest-asyncio = "^1.5.6"
 
 pre-commit = "^2.20.0"
 
@@ -146,7 +148,7 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
-module = "tests.*"
+module = ["tests.*", "benchmarks.*"]
 disallow_untyped_calls = false
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
@@ -156,11 +158,10 @@ module = "docs_src.*"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = ["sqlalchemy.*", "asyncpg"]
+module = ["sqlalchemy.*", "asyncpg", "nest_asyncio"]
 ignore_missing_imports = true
 
 [tool.yapf]
 based_on_style = "pep8"
 disable_ending_comma_heuristic = true
 split_arguments_when_comma_terminated = true
-
