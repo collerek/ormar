@@ -104,7 +104,7 @@ types-toml = "^0.10.8"
 mkdocs = "^1.4.2"
 mkdocs-material = ">=8.1.2,<8.6"
 mkdocs-material-extensions = "^1.1"
-mkdocstrings = {version = "==0.19.0", extras = ["python"]}
+mkdocstrings = {version = "==0.19.1", extras = ["python"]}
 mkdocs-gen-files = "^0.4.0"
 mkdocs-literate-nav = "^0.5.0"
 mkdocs-section-index = "^0.3.4"
