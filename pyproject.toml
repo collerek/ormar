@@ -115,7 +115,7 @@ yappi = "^1.4.0"
 pytest-benchmark = "^4.0.0"
 nest-asyncio = "^1.5.6"
 
-pre-commit = "^2.20.0"
+pre-commit = "^2.21.0"
 
 [tool.poetry.extras]
 postgresql = ["asyncpg", "psycopg2-binary"]
