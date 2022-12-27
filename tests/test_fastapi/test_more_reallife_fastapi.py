@@ -147,7 +147,7 @@ def test_all_endpoints():
         assert len(items) == 1
 
         item = Item(**items[0])
-        response = client.delete(f"/items/{item.pk}", json=item.dict())
+        response = client.delete(f"/items/{item.pk}")
         assert response.json().get("deleted_rows", "__UNDEFINED__") != "__UNDEFINED__"
 
         response = client.get("/docs/")

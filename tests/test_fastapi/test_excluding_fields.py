@@ -115,14 +115,14 @@ def test_all_endpoints():
         assert item_check.id is not None
         assert item_check.categories[0].id is not None
 
-        no_pk_item = client.get(f"/items/{item_check.id}", json=item).json()
+        no_pk_item = client.get(f"/items/{item_check.id}").json()
         assert no_pk_item == item
 
-        no_pk_item2 = client.get(f"/items/fex/{item_check.id}", json=item).json()
+        no_pk_item2 = client.get(f"/items/fex/{item_check.id}").json()
         assert no_pk_item2 == item
 
         no_pk_category = client.get(
-            f"/categories/{item_check.categories[0].id}", json=item
+            f"/categories/{item_check.categories[0].id}"
         ).json()
         assert no_pk_category == {
             "items": [
@@ -135,7 +135,7 @@ def test_all_endpoints():
         }
 
         no_through_category = client.get(
-            f"/categories/nt/{item_check.categories[0].id}", json=item
+            f"/categories/nt/{item_check.categories[0].id}"
         ).json()
         assert no_through_category == {
             "id": 1,
@@ -144,6 +144,6 @@ def test_all_endpoints():
         }
 
         no_through_category = client.get(
-            f"/categories/ntp/{item_check.categories[0].id}", json=item
+            f"/categories/ntp/{item_check.categories[0].id}"
         ).json()
         assert no_through_category == {"items": [{"name": "test"}], "name": "test cat"}
