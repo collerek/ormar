@@ -2,7 +2,7 @@ import datetime
 import decimal
 import uuid
 from enum import Enum as E, EnumMeta
-from typing import Any, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union, overload
+from typing import Any, Optional, Set, List, TYPE_CHECKING, Type, TypeVar, Union, overload
 
 import pydantic
 import sqlalchemy
@@ -68,7 +68,8 @@ def convert_choices_if_needed(
     nullable: bool,
     scale: int = None,
     represent_as_str: bool = False,
-) -> Set:
+    sort_choices: bool = True,
+) -> List:
     """
     Converts dates to isoformat as fastapi can check this condition in routes
     and the fields are not yet parsed.
@@ -102,7 +103,12 @@ def convert_choices_if_needed(
         choices = {encoder(o) for o in choices}
     if nullable:
         choices.add(None)
-    return choices
+    
+    result = list(choices)
+    if sort_choices:
+        result.sort()
+    
+    return result
 
 
 class ModelFieldFactory:
@@ -149,6 +155,7 @@ class ModelFieldFactory:
                 nullable=nullable,
                 scale=kwargs.get("scale", None),
                 represent_as_str=kwargs.get("represent_as_base64_str", False),
+                sort_choices=kwargs.get("sort_choices", True)
             )
         enum_class = kwargs.pop("enum_class", None)
         field_type = cls._type if enum_class is None else enum_class
