@@ -255,6 +255,8 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     sql_nullable = kwargs.pop("sql_nullable", None)
     sql_nullable = nullable if sql_nullable is None else sql_nullable
 
+    index = kwargs.pop("index", False)
+
     validate_not_allowed_fields(kwargs)
 
     if to.__class__ == ForwardRef:
@@ -283,7 +285,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
         related_name=related_name,
         virtual=virtual,
         primary_key=False,
-        index=False,
+        index=index,
         pydantic_only=False,
         default=None,
         server_default=None,
