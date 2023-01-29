@@ -61,7 +61,7 @@ def translate_list_to_dict(  # noqa: CCR001
     :rtype: Dict
     """
     @lru_cache(maxsize=128)
-    def _translate(translate_set: str):
+    def _translate(translate_set: str) -> Dict:
         new_dict: Dict = dict()
         for path in translate_set.split(":"):
             current_level = new_dict
