@@ -298,8 +298,8 @@ def ForeignKey(  # type: ignore # noqa CFQ002
         skip_field=skip_field,
     )
 
-    Field = type("ForeignKey", (ForeignKeyField, BaseField), {})
-    return Field(**namespace)
+    field_class = type("ForeignKey", (ForeignKeyField, BaseField), {})
+    return field_class(**namespace)
 
 
 class ForeignKeyField(BaseField):

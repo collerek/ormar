@@ -99,7 +99,7 @@ class Signal:
 class SignalEmitter(dict):
     """
     Emitter that registers the signals in internal dictionary.
-    If signal with given name does not exist it's auto added on access.
+    If signal with given name does not exist its auto added on access.
     """
 
     def __getattr__(self, item: str) -> Signal:
