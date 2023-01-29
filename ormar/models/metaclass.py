@@ -67,7 +67,7 @@ PARSED_FIELDS_KEY = "__parsed_fields__"
 class ModelMeta:
     """
     Class used for type hinting.
-    Users can subclass this one for convenience, but it's not required.
+    Users can subclass this one for convenience but it's not required.
     The only requirement is that ormar.Model has to have inner class with name Meta.
     """
 
@@ -142,7 +142,7 @@ def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa:
 
 def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
     """
-    Registers on model's SignalEmitter and sets pre_defined signals.
+    Registers on model's SignalEmmiter and sets pre defined signals.
     Predefined signals are (pre/post) + (save/update/delete).
 
     Signals are emitted in both model own methods and in selected queryset ones.
@@ -204,8 +204,8 @@ def get_constraint_copy(
     Copy the constraint and unpacking its values
 
     :raises ValueError: if non subclass of ColumnCollectionConstraint
-    :param constraint: an instance of the ColumnCollectionConstraint class
-    :type constraint: Instance of ColumnCollectionConstraint child
+    :param value: an instance of the ColumnCollectionConstraint class
+    :type value: Instance of ColumnCollectionConstraint child
     :return: copy ColumnCollectionConstraint ormar constraints
     :rtype: Union[UniqueColumns, IndexColumns, CheckColumns]
     """
@@ -258,23 +258,6 @@ def update_attrs_from_base_meta(  # noqa: CCR001
                 setattr(attrs["Meta"], param, parent_value)
 
 
-def _get_copy_field(
-    field: Union[ManyToManyField, ForeignKeyField], table_name: str,
-    copy_field_type: Union[BaseField, ForeignKeyField, ManyToManyField]
-) -> Union[ForeignKeyField, ManyToManyField]:
-    """
-    Copy field by field and table_name.
-    """
-
-    field_class: Type[copy_field_type] = type(  # type: ignore
-        field.__class__.__name__, (copy_field_type, BaseField), {}
-    )
-    copy_field = field_class(**dict(field.__dict__))
-    related_name = field.related_name + "_" + table_name
-    copy_field.related_name = related_name  # type: ignore
-    return copy_field
-
-
 def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     field: ManyToManyField,
     field_name: str,
@@ -311,8 +294,12 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     :param meta: metaclass of currently created model
     :type meta: ModelMeta
     """
-
-    copy_field: ManyToManyField = _get_copy_field(field, table_name, ManyToManyField)
+    Field: Type[BaseField] = type(  # type: ignore
+        field.__class__.__name__, (ManyToManyField, BaseField), {}
+    )
+    copy_field = Field(**dict(field.__dict__))
+    related_name = field.related_name + "_" + table_name
+    copy_field.related_name = related_name  # type: ignore
 
     through_class = field.through
     if not through_class:
@@ -415,8 +402,12 @@ def copy_data_from_parent_model(  # noqa: CCR001
                 )
 
             elif field.is_relation and field.related_name:
-                copy_field: ForeignKeyField = _get_copy_field(
-                    field, table_name, ForeignKeyField)
+                Field = type(  # type: ignore
+                    field.__class__.__name__, (ForeignKeyField, BaseField), {}
+                )
+                copy_field = Field(**dict(field.__dict__))
+                related_name = field.related_name + "_" + table_name
+                copy_field.related_name = related_name  # type: ignore
                 parent_fields[field_name] = copy_field
             else:
                 parent_fields[field_name] = field
