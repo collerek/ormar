@@ -12,6 +12,7 @@ from typing import (
     Type,
     Union,
 )
+from functools import lru_cache
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model, BaseField
@@ -41,6 +42,7 @@ def check_node_not_dict_or_not_last_node(
     )
 
 
+@lru_cache(maxsize=128)
 def translate_list_to_dict(  # noqa: CCR001
     list_to_trans: Union[List, Set], is_order: bool = False
 ) -> Dict:
