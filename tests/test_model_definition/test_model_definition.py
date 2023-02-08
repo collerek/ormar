@@ -279,5 +279,3 @@ def test_foreign_key_index():
 
     assert Account.Meta.table.columns.user.index is False  # type: ignore
     assert Purchase.Meta.table.columns.user.index is True  # type: ignore
-
-
