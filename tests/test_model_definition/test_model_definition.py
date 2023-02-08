@@ -248,3 +248,36 @@ def test_json_conversion_in_model():
             test_string="test",
             test_bool=True,
         )
+
+
+def test_foreign_key_index():
+
+    class User(ormar.Model):
+        class Meta:
+            tablename = "users"
+            database = database
+            metadata = metadata
+
+        id: int = ormar.Integer(primary_key=True)
+
+    class Account(ormar.Model):
+        class Meta:
+            tablename = "accounts"
+            database = database
+            metadata = metadata
+        id: int = ormar.Integer(primary_key=True)
+        user: User = ormar.ForeignKey(User, index=False)
+
+    class Purchase(ormar.Model):
+        class Meta:
+            tablename = "purchases"
+            database = database
+            metadata = metadata
+
+        id: int = ormar.Integer(primary_key=True)
+        user: User = ormar.ForeignKey(User, index=True)
+
+    assert Account.Meta.table.columns.user.index is False  # type: ignore
+    assert Purchase.Meta.table.columns.user.index is True  # type: ignore
+
+
