@@ -35,7 +35,7 @@ class OrderAction(QueryAction):
         if self.source_model == self.target_model and "__" not in self.related_str:
             self.is_source_model_order = True
 
-        self.nulls = nulls_ordering if nulls_ordering is not None else None
+        self.nulls_ordering = nulls_ordering
 
     @property
     def field_alias(self) -> str:
@@ -124,9 +124,9 @@ class OrderAction(QueryAction):
         """
 
         if not self.is_mysql_bool:
-            return result + f" nulls {self.nulls}"  # pragma: no cover
+            return result + f" nulls {self.nulls_ordering}"  # pragma: no cover
 
-        condition: str = "not" if self.nulls == "first" else ""  # pragma: no cover
+        condition: str = "not" if self.nulls_ordering == "first" else ""  # pragma: no cover
         return f"{field_name} is {condition} null, {result}"  # pragma: no cover
 
     def _get_field_name_direction_nulls(self, field_name: str) -> str:
@@ -140,7 +140,7 @@ class OrderAction(QueryAction):
         """
 
         result: str = f"{field_name} {self.direction}"
-        if self.nulls is not None:
+        if self.nulls_ordering is not None:
             return self._generate_field_nulls_query(field_name=field_name, result=result)
 
         return result
