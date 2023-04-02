@@ -1,3 +1,4 @@
+import asyncio
 from typing import (
     Any,
     Dict,
@@ -173,7 +174,7 @@ class QuerySet(Generic[T]):
         )
         return await query.prefetch_related(models=models, rows=rows)  # type: ignore
 
-    def _process_query_result_rows(self, rows: List) -> List["T"]:
+    async def _process_query_result_rows(self, rows: List) -> List["T"]:
         """
         Process database rows and initialize ormar Model from each of the rows.
 
@@ -182,16 +183,19 @@ class QuerySet(Generic[T]):
         :return: list of models
         :rtype: List[Model]
         """
-        result_rows = [
-            self.model.from_row(
-                row=row,
-                select_related=self._select_related,
-                excludable=self._excludable,
-                source_model=self.model,
-                proxy_source_model=self.proxy_source_model,
+        result_rows = []
+        for row in rows:
+            result_rows.append(
+                self.model.from_row(
+                    row=row,
+                    select_related=self._select_related,
+                    excludable=self._excludable,
+                    source_model=self.model,
+                    proxy_source_model=self.proxy_source_model,
+                )
             )
-            for row in rows
-        ]
+            await asyncio.sleep(0)
+
         if result_rows:
             return self.model.merge_instances_list(result_rows)  # type: ignore
         return cast(List["T"], result_rows)
@@ -914,7 +918,7 @@ class QuerySet(Generic[T]):
             + self.order_bys,
         )
         rows = await self.database.fetch_all(expr)
-        processed_rows = self._process_query_result_rows(rows)
+        processed_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and processed_rows:
             processed_rows = await self._prefetch_related_models(processed_rows, rows)
         self.check_single_result_rows_count(processed_rows)
@@ -979,7 +983,7 @@ class QuerySet(Generic[T]):
             expr = self.build_select_expression()
 
         rows = await self.database.fetch_all(expr)
-        processed_rows = self._process_query_result_rows(rows)
+        processed_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and processed_rows:
             processed_rows = await self._prefetch_related_models(processed_rows, rows)
         self.check_single_result_rows_count(processed_rows)
@@ -1050,7 +1054,7 @@ class QuerySet(Generic[T]):
 
         expr = self.build_select_expression()
         rows = await self.database.fetch_all(expr)
-        result_rows = self._process_query_result_rows(rows)
+        result_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and result_rows:
             result_rows = await self._prefetch_related_models(result_rows, rows)
 
@@ -1098,12 +1102,12 @@ class QuerySet(Generic[T]):
                 rows.append(row)
                 continue
 
-            yield self._process_query_result_rows(rows)[0]
+            yield (await self._process_query_result_rows(rows))[0]
             last_primary_key = current_primary_key
             rows = [row]
 
         if rows:
-            yield self._process_query_result_rows(rows)[0]
+            yield (await self._process_query_result_rows(rows))[0]
 
     async def create(self, **kwargs: Any) -> "T":
         """
@@ -1138,7 +1142,10 @@ class QuerySet(Generic[T]):
         if not objects:
             raise ModelListEmptyError("Bulk create objects are empty!")
 
-        ready_objects = [obj.prepare_model_to_save(obj.dict()) for obj in objects]
+        ready_objects = []
+        for obj in objects:
+            ready_objects.append(obj.prepare_model_to_save(obj.dict()))
+            await asyncio.sleep(0)  # Allow context switching to prevent blocking
 
         # don't use execute_many, as in databases it's executed in a loop
         # instead of using execute_many from drivers
@@ -1196,6 +1203,7 @@ class QuerySet(Generic[T]):
             ready_objects.append(
                 {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
             )
+            await asyncio.sleep(0)
 
         pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
         pk_column_name = self.model.get_column_alias(pk_name)
