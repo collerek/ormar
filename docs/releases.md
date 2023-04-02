@@ -1,3 +1,12 @@
+# 0.12.1
+
+## ✨ Features
+* Massive performance improvements in area of loading the models due to recursive loads and caching of the models and related models. (by @erichaydel - thanks!) [#853](https://github.com/collerek/ormar/pull/948)
+
+## 💬 Internals
+* Benchmarks for comparing performance effect of implemented changes in regard of trends (again, by @erichaydel - thanks!) [#853](https://github.com/collerek/ormar/pull/948)
+
+
 # 0.12.0
 
 ## ✨ Breaking Changes
