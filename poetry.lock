@@ -2369,14 +2369,14 @@ files = [
 
 [[package]]
 name = "types-aiofiles"
-version = "22.1.0.9"
+version = "23.1.0.1"
 description = "Typing stubs for aiofiles"
 category = "dev"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-aiofiles-22.1.0.9.tar.gz", hash = "sha256:d46712556746cb4c9b63f86217c8cc0e9c54b5cf228ed9d8c1c21e38c2d9de99"},
-    {file = "types_aiofiles-22.1.0.9-py3-none-any.whl", hash = "sha256:d0bdc4d978528c6df37816879b7ff9dc0096dd70483d885e9c8624a560f31cc5"},
+    {file = "types-aiofiles-23.1.0.1.tar.gz", hash = "sha256:be8030019f7be67f4b0f0c00acd28f4942b34cf719e1715f5d99d868c7b1a776"},
+    {file = "types_aiofiles-23.1.0.1-py3-none-any.whl", hash = "sha256:9f04650092b1f3423bd6834c850f20916d499e3b59ea5bab64d8de95b9e6b196"},
 ]
 
 [[package]]
@@ -2678,4 +2678,4 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.0"
-content-hash = "466944d0bc4c7edfdb1559dac887b1a7399fc4ecbf25433c0a849b39d7fc9654"
+content-hash = "9080e928a89e8a2f36e04171ecb40e57e8efa210e95c33c73846954b080282f8"
