@@ -1391,14 +1391,14 @@ mkdocs = ">=1.0.3"
 
 [[package]]
 name = "mkdocstrings"
-version = "0.21.1"
+version = "0.21.2"
 description = "Automatic documentation from sources, for MkDocs."
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "mkdocstrings-0.21.1-py3-none-any.whl", hash = "sha256:cf5a2d50bb0ee9c008e714a55ecce5acb7fa1ec9add5d8ad5bc2df6b2cdd3e21"},
-    {file = "mkdocstrings-0.21.1.tar.gz", hash = "sha256:68cb64b9c8e474f654856cd889371f321bed16dfe20f0922c7191efa60a94e5e"},
+    {file = "mkdocstrings-0.21.2-py3-none-any.whl", hash = "sha256:949ef8da92df9d692ca07be50616459a6b536083a25520fd54b00e8814ce019b"},
+    {file = "mkdocstrings-0.21.2.tar.gz", hash = "sha256:304e56a2e90595708a38a13a278e538a67ad82052dd5c8b71f77a604a4f3d911"},
 ]
 
 [package.dependencies]
@@ -2765,4 +2765,4 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.0"
-content-hash = "e052d82af95a3dfcedcd4fb6091e02570c042a325f7b3af784e2bad8767704cd"
+content-hash = "1e9e13d13b3e2cf20d2a5c96a607a6450ecd4703bcbc4899574a8cb3d5d26a8d"
