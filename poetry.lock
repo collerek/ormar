@@ -850,14 +850,14 @@ flake8 = "*"
 
 [[package]]
 name = "flake8-functions"
-version = "0.0.7"
+version = "0.0.8"
 description = "A flake8 extension that checks functions"
 category = "dev"
 optional = false
 python-versions = "*"
 files = [
-    {file = "flake8_functions-0.0.7-py3-none-any.whl", hash = "sha256:f2f75545c2b0df9eeba0ad316e2ac38c101676970b4441300fc07af3226a44f6"},
-    {file = "flake8_functions-0.0.7.tar.gz", hash = "sha256:40584b05d57e5ab185545bcfa08aa0edca52b04646d0df266e2b1667d6437184"},
+    {file = "flake8_functions-0.0.8-py3-none-any.whl", hash = "sha256:e1a88aa634d1aff6973f8c9dd64f30ab2beaac661e52eea96929ccc7ee7f64df"},
+    {file = "flake8_functions-0.0.8.tar.gz", hash = "sha256:5446626673a9faecbf389fb411b90bdc87b002c387b72dc097b208e7a58f2a1c"},
 ]
 
 [package.dependencies]
@@ -2775,4 +2775,4 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.0"
-content-hash = "fad12c43416bb97d174b3c2487f9f4bdf45818564fca9fd72958de2a3d136d91"
+content-hash = "141e7eb7986f6ae896d4e91f6295563dd812924c6926bd831d7945d4773d45af"
