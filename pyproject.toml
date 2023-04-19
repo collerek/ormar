@@ -84,7 +84,7 @@ flake8-bandit = "^3.0.0"
 flake8-builtins = "^2.1.0"
 flake8-variables-names = "^0.0.5"
 flake8-cognitive-complexity = "^0.1.0"
-flake8-functions = "^0.0.7"
+flake8-functions = "^0.0.8"
 flake8-expression-complexity = "^0.0.11"
 
 # types
