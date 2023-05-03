@@ -108,9 +108,7 @@ def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> D
     """
     example: Dict[str, Any] = dict()
     relation_map = (
-        relation_map
-        if relation_map is not None
-        else translate_list_to_dict(model._iterate_related_models())
+        relation_map if relation_map is not None else model._related_models_dict()
     )
     for name, field in model.Meta.model_fields.items():
         populates_sample_fields_values(

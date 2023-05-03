@@ -1,7 +1,8 @@
-from typing import Callable, Dict, List, Optional, Set, TYPE_CHECKING, cast
+from typing import Any, Callable, Dict, List, Optional, Set, TYPE_CHECKING, cast
 
 from ormar import BaseField, ForeignKeyField
 from ormar.models.traversible import NodeList
+from ormar.queryset.utils import translate_list_to_dict
 
 
 class RelationMixin:
@@ -14,6 +15,7 @@ class RelationMixin:
 
         Meta: ModelMeta
         __relation_map__: Optional[List[str]]
+        __relation_map_dict__: Optional[Dict[str, Any]]
         _related_names: Optional[Set]
         _through_names: Optional[Set]
         _related_fields: Optional[List]
@@ -111,6 +113,13 @@ class RelationMixin:
             if cls.Meta.model_fields[name].is_valid_uni_relation()
         }
         return related_names
+
+    @classmethod
+    def _related_models_dict(cls) -> dict[str, Any]:
+        if not cls.__relation_map_dict__:
+            cls.__relation_map_dict__ = translate_list_to_dict(cls._iterate_related_models())
+
+        return cls.__relation_map_dict__
 
     @classmethod
     def _iterate_related_models(  # noqa: CCR001

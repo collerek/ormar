@@ -153,9 +153,7 @@ class Model(ModelRow):
         :rtype: int
         """
         relation_map = (
-            relation_map
-            if relation_map is not None
-            else translate_list_to_dict(self._iterate_related_models())
+            relation_map if relation_map is not None else self._related_models_dict()
         )
         if exclude and isinstance(exclude, Set):
             exclude = translate_list_to_dict(exclude)
