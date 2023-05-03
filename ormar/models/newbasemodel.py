@@ -87,6 +87,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         __metadata__: sqlalchemy.MetaData
         __database__: databases.Database
         __relation_map__: Optional[List[str]]
+        __relation_map_dict__: Optional[dict[str, Any]]
         __cached_hash__: Optional[int]
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
@@ -734,6 +735,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             except ReferenceError:
                 dict_instance[field] = None
         return dict_instance
+    
+
+    @classmethod
+    def _related_models_dict(cls) -> dict:
+        if not cls.__relation_map_dict__:
+            cls.__relation_map_dict__ = translate_list_to_dict(
+                cls._iterate_related_models()
+                )
+        return cls.__relation_map_dict__
+        
 
     def dict(  # type: ignore # noqa A003
         self,
@@ -813,7 +824,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         relation_map = (
             relation_map
             if relation_map is not None
-            else translate_list_to_dict(self._iterate_related_models())
+            else self._related_models_dict()
         )
         pk_only = getattr(self, "__pk_only__", False)
         if relation_map and not pk_only:

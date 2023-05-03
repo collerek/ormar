@@ -78,6 +78,7 @@ def populate_default_options_values(  # noqa: CCR001
     }
 
     new_model.__relation_map__ = None
+    new_model.__relation_map_dict__ = None
 
 
 class Connection(sqlite3.Connection):
