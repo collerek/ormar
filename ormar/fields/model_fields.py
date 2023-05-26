@@ -98,7 +98,7 @@ def convert_choices_if_needed(
         choices = {encoder(o, precision) for o in choices}
     elif field_type == bytes:
         choices = {encoder(o, represent_as_str) for o in choices}
-    elif encoder:
+    else:
         choices = {encoder(o) for o in choices}
     if nullable:
         choices.add(None)

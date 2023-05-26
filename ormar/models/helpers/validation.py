@@ -66,7 +66,7 @@ def convert_value_if_needed(field: "BaseField", value: Any) -> Any:
     elif field.__type__ == bytes:
         represent_as_string = field.represent_as_base64_str
         value = encoder(value, represent_as_string)
-    elif encoder:
+    else:
         value = encoder(value)
     return value
 
