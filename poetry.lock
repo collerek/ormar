@@ -2528,14 +2528,14 @@ files = [
 
 [[package]]
 name = "types-pymysql"
-version = "1.0.19.6"
+version = "1.0.19.7"
 description = "Typing stubs for PyMySQL"
 category = "dev"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-PyMySQL-1.0.19.6.tar.gz", hash = "sha256:797f3da31be54778cd814ae1401940b7501004b5780bef53d5ef6de22138dae9"},
-    {file = "types_PyMySQL-1.0.19.6-py3-none-any.whl", hash = "sha256:9cbd61c6b478b9d024e56837f846533af9c86d76aed4fed03ba9fa2687eb402a"},
+    {file = "types-PyMySQL-1.0.19.7.tar.gz", hash = "sha256:8ea7083a3bd37c4e77f38d8d93e488fba3bb03e3d3d41cc52cd92110375ed517"},
+    {file = "types_PyMySQL-1.0.19.7-py3-none-any.whl", hash = "sha256:672f0e3e5070da2dc58448d289b878c5c99febb37c9f2cbe309779301ae914fb"},
 ]
 
 [[package]]
