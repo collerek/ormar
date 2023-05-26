@@ -25,10 +25,10 @@ class SqlJoin:
         main_model: Type["Model"],
         relation_name: str,
         relation_str: str,
-        related_models: Any = None,
+        related_models: Optional[Any] = None,
         own_alias: str = "",
-        source_model: Type["Model"] = None,
-        already_sorted: Dict = None,
+        source_model: Optional[Type["Model"]] = None,
+        already_sorted: Optional[Dict] = None,
     ) -> None:
         self.relation_name = relation_name
         self.related_models = related_models or []

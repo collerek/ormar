@@ -60,14 +60,14 @@ class QuerySet(Generic[T]):
     def __init__(  # noqa CFQ002
         self,
         model_cls: Optional[Type["T"]] = None,
-        filter_clauses: List = None,
-        exclude_clauses: List = None,
-        select_related: List = None,
-        limit_count: int = None,
-        offset: int = None,
-        excludable: "ExcludableItems" = None,
-        order_bys: List = None,
-        prefetch_related: List = None,
+        filter_clauses: Optional[List] = None,
+        exclude_clauses: Optional[List] = None,
+        select_related: Optional[List] = None,
+        limit_count: Optional[int] = None,
+        offset: Optional[int] = None,
+        excludable: Optional["ExcludableItems"] = None,
+        order_bys: Optional[List] = None,
+        prefetch_related: Optional[List] = None,
         limit_raw_sql: bool = False,
         proxy_source_model: Optional[Type["Model"]] = None,
     ) -> None:
@@ -109,15 +109,15 @@ class QuerySet(Generic[T]):
 
     def rebuild_self(  # noqa: CFQ002
         self,
-        filter_clauses: List = None,
-        exclude_clauses: List = None,
-        select_related: List = None,
-        limit_count: int = None,
-        offset: int = None,
-        excludable: "ExcludableItems" = None,
-        order_bys: List = None,
-        prefetch_related: List = None,
-        limit_raw_sql: bool = None,
+        filter_clauses: Optional[List] = None,
+        exclude_clauses: Optional[List] = None,
+        select_related: Optional[List] = None,
+        limit_count: Optional[int] = None,
+        offset: Optional[int] = None,
+        excludable: Optional["ExcludableItems"] = None,
+        order_bys: Optional[List] = None,
+        prefetch_related: Optional[List] = None,
+        limit_raw_sql: Optional[bool] = None,
         proxy_source_model: Optional[Type["Model"]] = None,
     ) -> "QuerySet":
         """
@@ -265,7 +265,10 @@ class QuerySet(Generic[T]):
         return self.model_meta.table
 
     def build_select_expression(
-        self, limit: int = None, offset: int = None, order_bys: List = None
+        self,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        order_bys: Optional[List] = None,
     ) -> sqlalchemy.sql.select:
         """
         Constructs the actual database query used in the QuerySet.
@@ -586,7 +589,7 @@ class QuerySet(Generic[T]):
 
     async def values(
         self,
-        fields: Union[List, str, Set, Dict] = None,
+        fields: Optional[Union[List, str, Set, Dict]] = None,
         exclude_through: bool = False,
         _as_dict: bool = True,
         _flatten: bool = False,
@@ -641,7 +644,7 @@ class QuerySet(Generic[T]):
 
     async def values_list(
         self,
-        fields: Union[List, str, Set, Dict] = None,
+        fields: Optional[Union[List, str, Set, Dict]] = None,
         flatten: bool = False,
         exclude_through: bool = False,
     ) -> List:
@@ -855,7 +858,9 @@ class QuerySet(Generic[T]):
         query_offset = (page - 1) * page_size
         return self.rebuild_self(limit_count=limit_count, offset=query_offset)
 
-    def limit(self, limit_count: int, limit_raw_sql: bool = None) -> "QuerySet[T]":
+    def limit(
+        self, limit_count: int, limit_raw_sql: Optional[bool] = None
+    ) -> "QuerySet[T]":
         """
         You can limit the results to desired number of parent models.
 
@@ -872,7 +877,9 @@ class QuerySet(Generic[T]):
         limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
         return self.rebuild_self(limit_count=limit_count, limit_raw_sql=limit_raw_sql)
 
-    def offset(self, offset: int, limit_raw_sql: bool = None) -> "QuerySet[T]":
+    def offset(
+        self, offset: int, limit_raw_sql: Optional[bool] = None
+    ) -> "QuerySet[T]":
         """
         You can also offset the results by desired number of main models.
 
@@ -1156,7 +1163,7 @@ class QuerySet(Generic[T]):
             obj.set_save_status(True)
 
     async def bulk_update(  # noqa:  CCR001
-        self, objects: List["T"], columns: List[str] = None
+        self, objects: List["T"], columns: Optional[List[str]] = None
     ) -> None:
         """
         Performs bulk update in one database session to speed up the process.

@@ -27,7 +27,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.fields import ManyToManyField
 
 
-def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
+def create_dummy_instance(fk: Type["T"], pk: Optional[Any] = None) -> "T":
     """
     Ormar never returns you a raw data.
     So if you have a related field that has a value populated
@@ -86,7 +86,10 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-    to: Type["T"], nullable: bool, onupdate: str = None, ondelete: str = None
+    to: Type["T"],
+    nullable: bool,
+    onupdate: Optional[str] = None,
+    ondelete: Optional[str] = None,
 ) -> Tuple[Any, List, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
@@ -200,13 +203,13 @@ def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":  # pragma: no cover
 def ForeignKey(  # type: ignore # noqa CFQ002
     to: Union[Type["T"], "ForwardRef"],
     *,
-    name: str = None,
+    name: Optional[str] = None,
     unique: bool = False,
     nullable: bool = True,
-    related_name: str = None,
+    related_name: Optional[str] = None,
     virtual: bool = False,
-    onupdate: Union[ReferentialAction, str] = None,
-    ondelete: Union[ReferentialAction, str] = None,
+    onupdate: Optional[Union[ReferentialAction, str]] = None,
+    ondelete: Optional[Union[ReferentialAction, str]] = None,
     **kwargs: Any,
 ) -> "T":
     """

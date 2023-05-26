@@ -1,7 +1,7 @@
 import string
 import uuid
 from random import choices
-from typing import Any, Dict, List, TYPE_CHECKING, Type, Union
+from typing import Optional, Any, Dict, List, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
 from sqlalchemy import text
@@ -59,7 +59,7 @@ class AliasManager:
 
     @staticmethod
     def prefixed_columns(
-        alias: str, table: sqlalchemy.Table, fields: List = None
+        alias: str, table: sqlalchemy.Table, fields: Optional[List] = None
     ) -> List[text]:
         """
         Creates a list of aliases sqlalchemy text clauses from
@@ -106,7 +106,10 @@ class AliasManager:
         return self._prefixed_tables.setdefault(key, table.alias(full_alias))
 
     def add_relation_type(
-        self, source_model: Type["Model"], relation_name: str, reverse_name: str = None
+        self,
+        source_model: Type["Model"],
+        relation_name: str,
+        reverse_name: Optional[str] = None,
     ) -> None:
         """
         Registers the relations defined in ormar models.

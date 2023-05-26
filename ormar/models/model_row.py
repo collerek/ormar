@@ -21,13 +21,13 @@ class ModelRow(NewBaseModel):
         cls,
         row: ResultProxy,
         source_model: Type["Model"],
-        select_related: List = None,
-        related_models: Any = None,
-        related_field: "ForeignKeyField" = None,
-        excludable: ExcludableItems = None,
+        select_related: Optional[List] = None,
+        related_models: Optional[Any] = None,
+        related_field: Optional["ForeignKeyField"] = None,
+        excludable: Optional[ExcludableItems] = None,
         current_relation_str: str = "",
         proxy_source_model: Optional[Type["Model"]] = None,
-        used_prefixes: List[str] = None,
+        used_prefixes: Optional[List[str]] = None,
     ) -> Optional["Model"]:
         """
         Model method to convert raw sql row from database into ormar.Model instance.
@@ -153,8 +153,8 @@ class ModelRow(NewBaseModel):
         excludable: ExcludableItems,
         table_prefix: str,
         used_prefixes: List[str],
-        current_relation_str: str = None,
-        proxy_source_model: Type["Model"] = None,
+        current_relation_str: Optional[str] = None,
+        proxy_source_model: Optional[Type["Model"]] = None,
     ) -> dict:
         """
         Traverses structure of related models and populates the nested models

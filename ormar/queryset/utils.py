@@ -236,7 +236,7 @@ def extract_models_to_dict_of_lists(
     model_type: Type["Model"],
     models: Sequence["Model"],
     select_dict: Dict,
-    extracted: Dict = None,
+    extracted: Optional[Dict] = None,
 ) -> Dict:
     """
     Receives a list of models and extracts all of the children and their children

@@ -32,7 +32,10 @@ class PydanticMixin(RelationMixin):
 
     @classmethod
     def get_pydantic(
-        cls, *, include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None
+        cls,
+        *,
+        include: Optional[Union[Set, Dict]] = None,
+        exclude: Optional[Union[Set, Dict]] = None,
     ) -> Type[pydantic.BaseModel]:
         """
         Returns a pydantic model out of ormar model.
@@ -56,8 +59,8 @@ class PydanticMixin(RelationMixin):
     def _convert_ormar_to_pydantic(
         cls,
         relation_map: Dict[str, Any],
-        include: Union[Set, Dict] = None,
-        exclude: Union[Set, Dict] = None,
+        include: Optional[Union[Set, Dict]] = None,
+        exclude: Optional[Union[Set, Dict]] = None,
     ) -> Type[pydantic.BaseModel]:
         if include and isinstance(include, Set):
             include = translate_list_to_dict(include)

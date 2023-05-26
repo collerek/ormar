@@ -96,7 +96,7 @@ async def update_item(item_id: int, item: Item):
 
 
 @app.delete("/items/{item_id}")
-async def delete_item(item_id: int, item: Item = None):
+async def delete_item(item_id: int, item: Optional[Item] = None):
     if item:
         return {"deleted_rows": await item.delete()}
     item_db = await Item.objects.get(pk=item_id)

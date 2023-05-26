@@ -21,7 +21,7 @@ def encode_bool(value: bool) -> str:
     return "true" if value else "false"
 
 
-def encode_decimal(value: decimal.Decimal, precision: int = None) -> float:
+def encode_decimal(value: decimal.Decimal, precision: Optional[int] = None) -> float:
     if precision:
         return (
             round(float(value), precision)

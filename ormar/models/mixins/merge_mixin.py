@@ -69,7 +69,7 @@ class MergeModelMixin:
 
     @classmethod
     def merge_two_instances(
-        cls, one: "Model", other: "Model", relation_map: Dict = None
+        cls, one: "Model", other: "Model", relation_map: Optional[Dict] = None
     ) -> "Model":
         """
         Merges current (other) Model and previous one (one) and returns the current

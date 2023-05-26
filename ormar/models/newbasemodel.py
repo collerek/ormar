@@ -18,13 +18,11 @@ from typing import (
     Union,
     cast,
 )
-import functools
 
 import databases
 import pydantic
 import sqlalchemy
 from pydantic import BaseModel
-
 
 import ormar  # noqa I100
 from ormar.exceptions import ModelError, ModelPersistenceError
@@ -242,6 +240,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :param new_hash: The hash to update to
         :type new_hash: int
         """
+
         def _update_cache(relations: List[Relation], recurse: bool = True) -> None:
             for relation in relations:
                 relation_proxy = relation.get()
@@ -249,7 +248,13 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 if hasattr(relation_proxy, "update_cache"):
                     relation_proxy.update_cache(prev_hash, new_hash)  # type: ignore
                 elif recurse and hasattr(relation_proxy, "_orm"):
-                    _update_cache(relation_proxy._orm._relations.values(), recurse=False)  # type: ignore
+                    relation_values = cast(
+                        "Model", relation_proxy
+                    )._orm._relations.values()
+                    _update_cache(
+                        relation_values,  # type: ignore
+                        recurse=False,
+                    )
 
         _update_cache(list(self._orm._relations.values()))
 
@@ -638,7 +643,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     @classmethod
     def _skip_ellipsis(
-        cls, items: Union[Set, Dict, None], key: str, default_return: Any = None
+        cls,
+        items: Union[Set, Dict, None],
+        key: str,
+        default_return: Optional[Any] = None,
     ) -> Union[Set, Dict, None]:
         """
         Helper to traverse the include/exclude dictionaries.
@@ -738,17 +746,17 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def dict(  # type: ignore # noqa A003
         self,
         *,
-        include: Union[Set, Dict] = None,
-        exclude: Union[Set, Dict] = None,
+        include: Optional[Union[Set, Dict]] = None,
+        exclude: Optional[Union[Set, Dict]] = None,
         by_alias: bool = False,
-        skip_defaults: bool = None,
+        skip_defaults: Optional[bool] = None,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         exclude_none: bool = False,
         exclude_primary_keys: bool = False,
         exclude_through_models: bool = False,
         exclude_list: bool = False,
-        relation_map: Dict = None,
+        relation_map: Optional[Dict] = None,
     ) -> "DictStrAny":  # noqa: A003'
         """
 
@@ -838,10 +846,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def json(  # type: ignore # noqa A003
         self,
         *,
-        include: Union[Set, Dict] = None,
-        exclude: Union[Set, Dict] = None,
+        include: Optional[Union[Set, Dict]] = None,
+        exclude: Optional[Union[Set, Dict]] = None,
         by_alias: bool = False,
-        skip_defaults: bool = None,
+        skip_defaults: Optional[bool] = None,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         exclude_none: bool = False,

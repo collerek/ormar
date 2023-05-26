@@ -2,6 +2,7 @@ import base64
 import decimal
 import numbers
 from typing import (
+    Optional,
     Any,
     Callable,
     Dict,
@@ -95,7 +96,9 @@ def generate_validator(ormar_field: "BaseField") -> Callable:
     return validate_choices
 
 
-def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> Dict:
+def generate_model_example(
+    model: Type["Model"], relation_map: Optional[Dict] = None
+) -> Dict:
     """
     Generates example to be included in schema in fastapi.
 
@@ -124,7 +127,10 @@ def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> D
 
 
 def populates_sample_fields_values(
-    example: Dict[str, Any], name: str, field: "BaseField", relation_map: Dict = None
+    example: Dict[str, Any],
+    name: str,
+    field: "BaseField",
+    relation_map: Optional[Dict] = None,
 ) -> None:
     """
     Iterates the field and sets fields to sample values
@@ -168,7 +174,7 @@ def get_nested_model_example(
 
 
 def generate_pydantic_example(
-    pydantic_model: Type[pydantic.BaseModel], exclude: Set = None
+    pydantic_model: Type[pydantic.BaseModel], exclude: Optional[Set] = None
 ) -> Dict:
     """
     Generates dict with example.

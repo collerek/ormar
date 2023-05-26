@@ -1,4 +1,5 @@
 from typing import (
+    Optional,
     AbstractSet,
     Any,
     Dict,
@@ -35,7 +36,7 @@ class ExcludableMixin(RelationMixin):
 
     @staticmethod
     def get_child(
-        items: Union[Set, Dict, None], key: str = None
+        items: Union[Set, Dict, None], key: Optional[str] = None
     ) -> Union[Set, Dict, None]:
         """
         Used to get nested dictionaries keys if they exists otherwise returns

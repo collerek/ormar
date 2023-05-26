@@ -48,7 +48,7 @@ class Relation(Generic[T]):
         type_: RelationType,
         field_name: str,
         to: Type["T"],
-        through: Type["Model"] = None,
+        through: Optional[Type["Model"]] = None,
     ) -> None:
         """
         Initialize the Relation and keep the related models either as instances of
@@ -133,8 +133,8 @@ class Relation(Generic[T]):
             return None
         else:
             # We need to clear the weakrefs that don't point to anything anymore
-            # There's an assumption here that if some of the related models went out of scope,
-            # then they all did, so we can just check the first one
+            # There's an assumption here that if some of the related models went
+            # out of scope, then they all did, so we can just check the first one
             try:
                 self.related_models[0].__repr__.__self__
                 return self.related_models.index(child)

@@ -35,7 +35,7 @@ class RelationProxy(Generic[T], List[T]):
         type_: "RelationType",
         to: Type["T"],
         field_name: str,
-        data_: Any = None,
+        data_: Optional[Any] = None,
     ) -> None:
         self.relation: "Relation[T]" = relation
         self.type_: "RelationType" = type_
@@ -145,7 +145,7 @@ class RelationProxy(Generic[T], List[T]):
         """
         item = self[index]
 
-        # Try to delete it, but do it the long way if weakly-referenced thing doesn't exist
+        # Try to delete it, do it the long way if weakly-referenced thing doesn't exist
         try:
             self._relation_cache.pop(item.__hash__())
         except ReferenceError:

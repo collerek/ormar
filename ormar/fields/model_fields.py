@@ -66,7 +66,7 @@ def convert_choices_if_needed(
     field_type: "Type",
     choices: Set,
     nullable: bool,
-    scale: int = None,
+    scale: Optional[int] = None,
     represent_as_str: bool = False,
 ) -> Set:
     """
@@ -216,8 +216,8 @@ class String(ModelFieldFactory, str):
         cls,
         *,
         max_length: int,
-        min_length: int = None,
-        regex: str = None,
+        min_length: Optional[int] = None,
+        regex: Optional[str] = None,
         **kwargs: Any
     ) -> BaseField:  # type: ignore
         kwargs = {
@@ -268,9 +268,9 @@ class Integer(ModelFieldFactory, int):
     def __new__(  # type: ignore
         cls,
         *,
-        minimum: int = None,
-        maximum: int = None,
-        multiple_of: int = None,
+        minimum: Optional[int] = None,
+        maximum: Optional[int] = None,
+        multiple_of: Optional[int] = None,
         **kwargs: Any
     ) -> BaseField:
         autoincrement = kwargs.pop("autoincrement", None)
@@ -349,9 +349,9 @@ class Float(ModelFieldFactory, float):
     def __new__(  # type: ignore
         cls,
         *,
-        minimum: float = None,
-        maximum: float = None,
-        multiple_of: int = None,
+        minimum: Optional[float] = None,
+        maximum: Optional[float] = None,
+        multiple_of: Optional[int] = None,
         **kwargs: Any
     ) -> BaseField:
         kwargs = {
@@ -614,9 +614,9 @@ class BigInteger(Integer, int):
     def __new__(  # type: ignore
         cls,
         *,
-        minimum: int = None,
-        maximum: int = None,
-        multiple_of: int = None,
+        minimum: Optional[int] = None,
+        maximum: Optional[int] = None,
+        multiple_of: Optional[int] = None,
         **kwargs: Any
     ) -> BaseField:
         autoincrement = kwargs.pop("autoincrement", None)
@@ -662,9 +662,9 @@ class SmallInteger(Integer, int):
     def __new__(  # type: ignore
         cls,
         *,
-        minimum: int = None,
-        maximum: int = None,
-        multiple_of: int = None,
+        minimum: Optional[int] = None,
+        maximum: Optional[int] = None,
+        multiple_of: Optional[int] = None,
         **kwargs: Any
     ) -> BaseField:
         autoincrement = kwargs.pop("autoincrement", None)
@@ -710,13 +710,13 @@ class Decimal(ModelFieldFactory, decimal.Decimal):
     def __new__(  # type: ignore # noqa CFQ002
         cls,
         *,
-        minimum: float = None,
-        maximum: float = None,
-        multiple_of: int = None,
-        precision: int = None,
-        scale: int = None,
-        max_digits: int = None,
-        decimal_places: int = None,
+        minimum: Optional[float] = None,
+        maximum: Optional[float] = None,
+        multiple_of: Optional[int] = None,
+        precision: Optional[int] = None,
+        scale: Optional[int] = None,
+        max_digits: Optional[int] = None,
+        decimal_places: Optional[int] = None,
         **kwargs: Any
     ) -> BaseField:
         kwargs = {

@@ -1,7 +1,7 @@
 import itertools
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Generator, List, TYPE_CHECKING, Tuple, Type
+from typing import Optional, Any, Generator, List, TYPE_CHECKING, Tuple, Type
 
 import sqlalchemy
 
@@ -52,8 +52,8 @@ class FilterGroup:
     def resolve(
         self,
         model_cls: Type["Model"],
-        select_related: List = None,
-        filter_clauses: List = None,
+        select_related: Optional[List] = None,
+        filter_clauses: Optional[List] = None,
     ) -> Tuple[List[FilterAction], List[str]]:
         """
         Resolves the FilterGroups actions to use proper target model, replace
