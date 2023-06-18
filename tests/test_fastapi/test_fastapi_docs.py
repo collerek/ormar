@@ -5,6 +5,7 @@ import databases
 import pydantic
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -101,7 +102,7 @@ async def create_category(category: Category):
 @pytest.mark.asyncio
 async def test_all_endpoints():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         response = await client.post("/categories/", json={"name": "test cat"})
         category = response.json()
         response = await client.post("/categories/", json={"name": "test cat2"})

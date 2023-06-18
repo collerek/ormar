@@ -1,5 +1,6 @@
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -71,7 +72,7 @@ async def get_selfref(ref_id: int):
 @pytest.mark.asyncio
 async def test_read_main():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         test_category = dict(name="Foo", id=12)
         response = await client.post("/categories/", json=test_category)
         assert response.status_code == 200

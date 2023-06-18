@@ -3,6 +3,7 @@ from typing import List
 
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -121,7 +122,7 @@ def create_test_database():
 @pytest.mark.asyncio
 async def test_read_main():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         test_category = dict(name="Foo", code=123, created_by="Sam", updated_by="Max")
         test_subject = dict(name="Bar")
 
@@ -152,7 +153,7 @@ async def test_read_main():
 @pytest.mark.asyncio
 async def test_inheritance_with_relation():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         sam = Person(**(await client.post("/persons/", json={"name": "Sam"})).json())
         joe = Person(**(await client.post("/persons/", json={"name": "Joe"})).json())
 
@@ -195,7 +196,7 @@ async def test_inheritance_with_relation():
 @pytest.mark.asyncio
 async def test_inheritance_with_m2m_relation():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         sam = Person(**(await client.post("/persons/", json={"name": "Sam"})).json())
         joe = Person(**(await client.post("/persons/", json={"name": "Joe"})).json())
         alex = Person(**(await client.post("/persons/", json={"name": "Alex"})).json())

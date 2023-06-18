@@ -3,6 +3,7 @@ from typing import List
 import databases
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -106,7 +107,7 @@ async def get_item_excl(item_id: int):
 @pytest.mark.asyncio
 async def test_all_endpoints():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         item = {
             "name": "test",
             "categories": [{"name": "test cat"}, {"name": "test cat2"}],

@@ -6,6 +6,7 @@ from typing import List
 import databases
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import Depends, FastAPI
 from httpx import AsyncClient
 from pydantic import BaseModel, Json
@@ -124,7 +125,7 @@ async def create_quiz_lol(
 @pytest.mark.asyncio
 async def test_quiz_creation():
     client = AsyncClient(app=router, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(router):
         payload = {
             "title": "Some test question",
             "description": "A description",

@@ -3,6 +3,7 @@ from typing import List, Optional
 import databases
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from pydantic.schema import ForwardRef
 from starlette import status
@@ -93,7 +94,7 @@ async def create_country(country: Country):  # if this is ormar
 @pytest.mark.asyncio
 async def test_payload():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         payload = {
             "name": "Thailand",
             "iso2": "TH",

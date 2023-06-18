@@ -4,6 +4,7 @@ import databases
 import pytest
 import pytest_asyncio
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -97,7 +98,7 @@ async def get_book_with_author_by_id(book_id: int):
 @pytest.mark.asyncio
 async def test_related_with_defaults(sample_data):
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         response = await client.get("/books/1")
         assert response.json() == {
             "author": {"id": 1},

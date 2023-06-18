@@ -3,6 +3,7 @@ from typing import List, Optional
 import databases
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -103,7 +104,7 @@ async def get_posts():
 @pytest.mark.asyncio
 async def test_queries():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         right_category = {"name": "Test category"}
         wrong_category = {"name": "Test category2", "posts": [{"title": "Test Post"}]}
 

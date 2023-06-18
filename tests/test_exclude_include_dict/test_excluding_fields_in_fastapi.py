@@ -6,6 +6,7 @@ import databases
 import pydantic
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -156,7 +157,7 @@ async def create_user7(user: RandomModel):
 @pytest.mark.asyncio
 async def test_excluding_fields_in_endpoints():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         user = {
             "email": "test@domain.com",
             "password": "^*^%A*DA*IAAA",
@@ -230,7 +231,7 @@ async def test_excluding_fields_in_endpoints():
 @pytest.mark.asyncio
 async def test_adding_fields_in_endpoints():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         user3 = {"last_name": "Test", "full_name": "deleted"}
         response = await client.post("/random/", json=user3)
         assert list(response.json().keys()) == [
@@ -259,7 +260,7 @@ async def test_adding_fields_in_endpoints():
 @pytest.mark.asyncio
 async def test_adding_fields_in_endpoints2():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         user3 = {"last_name": "Test"}
         response = await client.post("/random2/", json=user3)
         assert list(response.json().keys()) == [
@@ -283,7 +284,7 @@ async def test_excluding_property_field_in_endpoints2():
         dummy_registry[instance.pk] = instance.dict()
 
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         user3 = {"last_name": "Test"}
         response = await client.post("/random3/", json=user3)
         assert list(response.json().keys()) == [

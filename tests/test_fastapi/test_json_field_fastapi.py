@@ -6,6 +6,7 @@ import databases
 import pydantic
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -130,7 +131,7 @@ async def test_setting_values_after_init():
 @pytest.mark.asyncio
 async def test_read_main():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         response = await client.get("/things_with_sample")
         assert response.status_code == 200
 

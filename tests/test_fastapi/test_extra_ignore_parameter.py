@@ -3,6 +3,7 @@ import json
 import databases
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -56,7 +57,7 @@ async def create_item(item: Item):
 @pytest.mark.asyncio
 async def test_extra_parameters_in_request():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         data = {"name": "Name", "extraname": "to ignore"}
         resp = await client.post("item/", json=data)
         assert resp.status_code == 200

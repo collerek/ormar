@@ -5,6 +5,7 @@ import databases
 import pydantic
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -136,7 +137,7 @@ async def get_weakref():
 @pytest.mark.asyncio
 async def test_endpoints():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client:
+    async with client, LifespanManager(app):
         resp = await client.post("/test/1")
         assert resp.status_code == 200
 

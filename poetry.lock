@@ -81,6 +81,21 @@ test = ["anyio[trio]", "coverage[toml] (>=4.5)", "hypothesis (>=4.0)", "mock (>=
 trio = ["trio (<0.22)"]
 
 [[package]]
+name = "asgi-lifespan"
+version = "2.1.0"
+description = "Programmatic startup/shutdown of ASGI apps."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "asgi-lifespan-2.1.0.tar.gz", hash = "sha256:5e2effaf0bfe39829cf2d64e7ecc47c7d86d676a6599f7afba378c31f5e3a308"},
+    {file = "asgi_lifespan-2.1.0-py3-none-any.whl", hash = "sha256:ed840706680e28428c01e14afb3875d7d76d3206f3d5b2f2294e059b5c23804f"},
+]
+
+[package.dependencies]
+sniffio = "*"
+
+[[package]]
 name = "astpretty"
 version = "2.1.0"
 description = "Pretty print the output of python stdlib `ast.parse`."
@@ -2834,4 +2849,4 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.0"
-content-hash = "848ca972ef0ebb1c17dfc5a67f9076bbb247acebeb9a666ae5e0e1a7f4747c38"
+content-hash = "39337ed19ac9524b35615bceff0afffb4306efb592316c63359d1015c837c872"

@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 import databases
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -64,7 +65,7 @@ async def get_cb2():  # pragma: no cover
 @pytest.mark.asyncio
 async def test_all_endpoints():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         response = await client.get("/openapi.json")
         assert response.status_code == 200, response.text
         schema = response.json()

@@ -2,6 +2,7 @@ import datetime
 
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -48,7 +49,7 @@ def create_test_database():
 @pytest.mark.asyncio
 async def test_read_main():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         test_category = dict(name="Foo", code=123, created_by="Sam", updated_by="Max")
         test_subject = dict(name="Bar")
 

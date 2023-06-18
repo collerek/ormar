@@ -7,6 +7,7 @@ import databases
 import pydantic
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -96,7 +97,7 @@ async def create_item(item: Organisation):
 @pytest.mark.asyncio
 async def test_all_endpoints():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         response = await client.post(
             "/items/",
             json={"id": 1, "ident": "", "priority": 4, "expire_date": "2022-05-01"},

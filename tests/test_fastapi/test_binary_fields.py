@@ -6,6 +6,7 @@ from typing import List
 import databases
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -81,7 +82,7 @@ def create_test_database():
 @pytest.mark.asyncio
 async def test_read_main():
     client = AsyncClient(app=app, base_url="http://testserver")
-    async with client as client:
+    async with client as client, LifespanManager(app):
         response = await client.post(
             "/things",
             json={"bt": base64.b64encode(blob3).decode()},
