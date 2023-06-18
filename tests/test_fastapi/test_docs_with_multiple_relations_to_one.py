@@ -2,9 +2,10 @@ from typing import Optional
 from uuid import UUID, uuid4
 
 import databases
+import pytest
 import sqlalchemy
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 import ormar
 
@@ -60,10 +61,11 @@ async def get_cb2():  # pragma: no cover
     return None
 
 
-def test_all_endpoints():
-    client = TestClient(app)
-    with client as client:
-        response = client.get("/openapi.json")
+@pytest.mark.asyncio
+async def test_all_endpoints():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client:
+        response = await client.get("/openapi.json")
         assert response.status_code == 200, response.text
         schema = response.json()
         components = schema["components"]["schemas"]

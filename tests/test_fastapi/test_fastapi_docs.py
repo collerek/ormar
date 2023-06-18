@@ -6,7 +6,7 @@ import pydantic
 import pytest
 import sqlalchemy
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -98,37 +98,38 @@ async def create_category(category: Category):
     return category
 
 
-def test_all_endpoints():
-    client = TestClient(app)
-    with client as client:
-        response = client.post("/categories/", json={"name": "test cat"})
+@pytest.mark.asyncio
+async def test_all_endpoints():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client:
+        response = await client.post("/categories/", json={"name": "test cat"})
         category = response.json()
-        response = client.post("/categories/", json={"name": "test cat2"})
+        response = await client.post("/categories/", json={"name": "test cat2"})
         category2 = response.json()
 
-        response = client.post("/items/", json={"name": "test", "id": 1})
+        response = await client.post("/items/", json={"name": "test", "id": 1})
         item = Item(**response.json())
         assert item.pk is not None
 
-        response = client.post(
+        response = await client.post(
             "/items/add_category/", json={"item": item.dict(), "category": category}
         )
         item = Item(**response.json())
         assert len(item.categories) == 1
         assert item.categories[0].name == "test cat"
 
-        client.post(
+        await client.post(
             "/items/add_category/", json={"item": item.dict(), "category": category2}
         )
 
-        response = client.get("/items/")
+        response = await client.get("/items/")
         items = [Item(**item) for item in response.json()]
         assert items[0] == item
         assert len(items[0].categories) == 2
         assert items[0].categories[0].name == "test cat"
         assert items[0].categories[1].name == "test cat2"
 
-        response = client.get("/docs/")
+        response = await client.get("/docs")
         assert response.status_code == 200
         assert b"<title>FastAPI - Swagger UI</title>" in response.content
 

@@ -3,7 +3,7 @@ import datetime
 import pytest
 import sqlalchemy
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 from tests.settings import DATABASE_URL
 from tests.test_inheritance_and_pydantic_generation.test_inheritance_mixins import Category, Subject, metadata, db as database  # type: ignore
@@ -45,13 +45,14 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-def test_read_main():
-    client = TestClient(app)
-    with client as client:
+@pytest.mark.asyncio
+async def test_read_main():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client:
         test_category = dict(name="Foo", code=123, created_by="Sam", updated_by="Max")
         test_subject = dict(name="Bar")
 
-        response = client.post("/categories/", json=test_category)
+        response = await client.post("/categories/", json=test_category)
         assert response.status_code == 200
         cat = Category(**response.json())
         assert cat.name == "Foo"
@@ -67,7 +68,7 @@ def test_read_main():
             "%Y-%m-%d %H:%M:%S.%f"
         )
         test_subject["category"] = cat_dict
-        response = client.post("/subjects/", json=test_subject)
+        response = await client.post("/subjects/", json=test_subject)
         assert response.status_code == 200
         sub = Subject(**response.json())
         assert sub.name == "Bar"

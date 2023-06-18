@@ -8,7 +8,7 @@ import pydantic
 import pytest
 import sqlalchemy
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -93,16 +93,17 @@ async def create_item(item: Organisation):
     return item
 
 
-def test_all_endpoints():
-    client = TestClient(app)
-    with client as client:
-        response = client.post(
+@pytest.mark.asyncio
+async def test_all_endpoints():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client:
+        response = await client.post(
             "/items/",
             json={"id": 1, "ident": "", "priority": 4, "expire_date": "2022-05-01"},
         )
 
         assert response.status_code == 422
-        response = client.post(
+        response = await client.post(
             "/items/",
             json={
                 "id": 1,
@@ -124,7 +125,7 @@ def test_all_endpoints():
         assert response.status_code == 200
         item = Organisation(**response.json())
         assert item.pk is not None
-        response = client.get("/docs/")
+        response = await client.get("/docs")
         assert response.status_code == 200
         assert b"<title>FastAPI - Swagger UI</title>" in response.content
 

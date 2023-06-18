@@ -1,7 +1,7 @@
 import pytest
 import sqlalchemy
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 from tests.settings import DATABASE_URL
 from tests.test_inheritance_and_pydantic_generation.test_geting_pydantic_models import (
@@ -68,11 +68,12 @@ async def get_selfref(ref_id: int):
     return selfr
 
 
-def test_read_main():
-    client = TestClient(app)
-    with client as client:
+@pytest.mark.asyncio
+async def test_read_main():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client:
         test_category = dict(name="Foo", id=12)
-        response = client.post("/categories/", json=test_category)
+        response = await client.post("/categories/", json=test_category)
         assert response.status_code == 200
         cat = Category(**response.json())
         assert cat.name == "Foo"
@@ -83,7 +84,7 @@ def test_read_main():
         test_selfref2 = dict(name="test2", parent={"id": 1})
         test_selfref3 = dict(name="test3", children=[{"name": "aaa"}])
 
-        response = client.post("/selfrefs/", json=test_selfref)
+        response = await client.post("/selfrefs/", json=test_selfref)
         assert response.status_code == 200
         self_ref = SelfRef(**response.json())
         assert self_ref.id == 1
@@ -91,7 +92,7 @@ def test_read_main():
         assert self_ref.parent is None
         assert self_ref.children == []
 
-        response = client.post("/selfrefs/", json=test_selfref2)
+        response = await client.post("/selfrefs/", json=test_selfref2)
         assert response.status_code == 200
         self_ref = SelfRef(**response.json())
         assert self_ref.id == 2
@@ -99,7 +100,7 @@ def test_read_main():
         assert self_ref.parent is None
         assert self_ref.children == []
 
-        response = client.post("/selfrefs/", json=test_selfref3)
+        response = await client.post("/selfrefs/", json=test_selfref3)
         assert response.status_code == 200
         self_ref = SelfRef(**response.json())
         assert self_ref.id == 3
@@ -107,7 +108,7 @@ def test_read_main():
         assert self_ref.parent is None
         assert self_ref.children[0].dict() == {"id": 4}
 
-        response = client.get("/selfrefs/3/")
+        response = await client.get("/selfrefs/3/")
         assert response.status_code == 200
         check_children = SelfRef(**response.json())
         assert check_children.children[0].dict() == {
@@ -117,7 +118,7 @@ def test_read_main():
             "parent": {"id": 3, "name": "test3"},
         }
 
-        response = client.get("/selfrefs/2/")
+        response = await client.get("/selfrefs/2/")
         assert response.status_code == 200
         check_children = SelfRef(**response.json())
         assert check_children.dict() == {

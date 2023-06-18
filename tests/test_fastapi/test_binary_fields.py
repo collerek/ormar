@@ -7,7 +7,7 @@ import databases
 import pytest
 import sqlalchemy
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -78,16 +78,17 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-def test_read_main():
-    client = TestClient(app)
-    with client as client:
-        response = client.post(
+@pytest.mark.asyncio
+async def test_read_main():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client:
+        response = await client.post(
             "/things",
-            data=json.dumps({"bt": base64.b64encode(blob3).decode()}),
+            json={"bt": base64.b64encode(blob3).decode()},
             headers=headers,
         )
         assert response.status_code == 200
-        response = client.get("/things")
+        response = await client.get("/things")
         assert response.json()[0]["bt"] == base64.b64encode(blob3).decode()
         thing = BinaryThing(**response.json()[0])
         assert thing.__dict__["bt"] == blob3

@@ -1,11 +1,10 @@
-import json
 from typing import List, Optional
 
 import databases
 import pytest
 import sqlalchemy
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -101,30 +100,31 @@ async def get_posts():
     return posts
 
 
-def test_queries():
-    client = TestClient(app)
-    with client as client:
+@pytest.mark.asyncio
+async def test_queries():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client:
         right_category = {"name": "Test category"}
         wrong_category = {"name": "Test category2", "posts": [{"title": "Test Post"}]}
 
         # cannot add posts if skipped, will be ignored (with extra=ignore by default)
-        response = client.post(
-            "/categories/", data=json.dumps(wrong_category), headers=headers
+        response = await client.post(
+            "/categories/", json=wrong_category, headers=headers
         )
         assert response.status_code == 200
-        response = client.get("/categories/")
+        response = await client.get("/categories/")
         assert response.status_code == 200
         assert not "posts" in response.json()
         categories = [Category(**x) for x in response.json()]
         assert categories[0] is not None
         assert categories[0].name == "Test category2"
 
-        response = client.post(
-            "/categories/", data=json.dumps(right_category), headers=headers
+        response = await client.post(
+            "/categories/", json=right_category, headers=headers
         )
         assert response.status_code == 200
 
-        response = client.get("/categories/")
+        response = await client.get("/categories/")
         assert response.status_code == 200
         categories = [Category(**x) for x in response.json()]
         assert categories[1] is not None
@@ -135,11 +135,11 @@ def test_queries():
             "author": {"first_name": "John", "last_name": "Smith"},
             "categories": [{"name": "New cat"}],
         }
-        response = client.post("/posts/", data=json.dumps(right_post), headers=headers)
+        response = await client.post("/posts/", json=right_post, headers=headers)
         assert response.status_code == 200
 
         Category.__config__.extra = "allow"
-        response = client.get("/posts/")
+        response = await client.get("/posts/")
         assert response.status_code == 200
         posts = [Post(**x) for x in response.json()]
         assert posts[0].title == "ok post"
@@ -150,5 +150,5 @@ def test_queries():
 
         # cannot add posts if skipped, will be error with extra forbid
         Category.__config__.extra = "forbid"
-        response = client.post("/categories/", data=json.dumps(wrong_category))
+        response = await client.post("/categories/", json=wrong_category)
         assert response.status_code == 422

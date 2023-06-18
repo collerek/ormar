@@ -4,7 +4,7 @@ name = "ormar"
 [tool.poetry]
 name = "ormar"
 version = "0.12.1"
-description = "A simple async ORM with fastapi in mind and pydantic validation."
+description = "An async ORM with fastapi in mind and pydantic validation."
 authors = ["Radosław Drążkiewicz <collerek@gmail.com>"]
 license = "MIT"
 readme = "README.md"
@@ -56,6 +56,7 @@ psycopg2-binary = { version = "^2.9.1", optional = true }
 mysqlclient = { version = "^2.1.0", optional = true }
 PyMySQL = { version = ">=0.9", optional = true }
 
+
 [tool.poetry.dependencies.orjson]
 version = ">=3.6.4"
 optional = true
@@ -75,7 +76,7 @@ pytest = "^7.3.1"
 pytest-cov = "^4.0.0"
 codecov = "^2.1.13"
 pytest-asyncio = "^0.21.0"
-fastapi = ">=0.70.1,<0.86"
+fastapi = ">=0.70.1,<=0.97"
 flake8 = "^3.9.2"
 flake8-black = "^0.3.6"
 flake8-bugbear = "^23.3.12"
@@ -136,6 +137,9 @@ all = [
     "orjson",
     "cryptography",
 ]
+
+[tool.poetry.group.dev.dependencies]
+httpx = "^0.24.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

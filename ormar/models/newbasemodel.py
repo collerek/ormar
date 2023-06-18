@@ -18,7 +18,6 @@ from typing import (
     Union,
     cast,
 )
-import functools
 
 import databases
 import pydantic
@@ -242,6 +241,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :param new_hash: The hash to update to
         :type new_hash: int
         """
+
         def _update_cache(relations: List[Relation], recurse: bool = True) -> None:
             for relation in relations:
                 relation_proxy = relation.get()
@@ -249,7 +249,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 if hasattr(relation_proxy, "update_cache"):
                     relation_proxy.update_cache(prev_hash, new_hash)  # type: ignore
                 elif recurse and hasattr(relation_proxy, "_orm"):
-                    _update_cache(relation_proxy._orm._relations.values(), recurse=False)  # type: ignore
+                    _update_cache(
+                        relation_proxy._orm._relations.values(),  # type: ignore
+                        recurse=False,
+                    )
 
         _update_cache(list(self._orm._relations.values()))
 

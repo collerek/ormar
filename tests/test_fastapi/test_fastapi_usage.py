@@ -1,9 +1,10 @@
 from typing import Optional
 
 import databases
+import pytest
 import sqlalchemy
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -40,10 +41,11 @@ async def create_item(item: Item):
     return item
 
 
-def test_read_main():
-    client = TestClient(app)
-    with client as client:
-        response = client.post(
+@pytest.mark.asyncio
+async def test_read_main():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client:
+        response = await client.post(
             "/items/", json={"name": "test", "id": 1, "category": {"name": "test cat"}}
         )
         assert response.status_code == 200

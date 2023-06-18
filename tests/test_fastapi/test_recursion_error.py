@@ -1,14 +1,14 @@
 import json
-from datetime import datetime
 import uuid
+from datetime import datetime
 from typing import List
 
 import databases
 import pytest
 import sqlalchemy
 from fastapi import Depends, FastAPI
+from httpx import AsyncClient
 from pydantic import BaseModel, Json
-from starlette.testclient import TestClient
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -121,9 +121,10 @@ async def create_quiz_lol(
     return await quiz.save()
 
 
-def test_quiz_creation():
-    client = TestClient(app=router)
-    with client as client:
+@pytest.mark.asyncio
+async def test_quiz_creation():
+    client = AsyncClient(app=router, base_url="http://testserver")
+    async with client as client:
         payload = {
             "title": "Some test question",
             "description": "A description",
@@ -145,5 +146,5 @@ def test_quiz_creation():
                 },
             ],
         }
-        response = client.post("/create", data=json.dumps(payload))
+        response = await client.post("/create", json=payload)
         assert response.status_code == 200
