@@ -3,8 +3,9 @@ import json
 import databases
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 import ormar
 from ormar import Extra
@@ -53,11 +54,12 @@ async def create_item(item: Item):
     return await item.save()
 
 
-def test_extra_parameters_in_request():
-    client = TestClient(app)
-    with client as client:
+@pytest.mark.asyncio
+async def test_extra_parameters_in_request():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client, LifespanManager(app):
         data = {"name": "Name", "extraname": "to ignore"}
-        resp = client.post("item/", data=json.dumps(data))
+        resp = await client.post("item/", json=data)
         assert resp.status_code == 200
         assert "name" in resp.json()
         assert resp.json().get("name") == "Name"

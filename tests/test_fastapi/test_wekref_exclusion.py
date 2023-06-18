@@ -5,8 +5,9 @@ import databases
 import pydantic
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -133,29 +134,30 @@ async def get_weakref():
     return ts
 
 
-def test_endpoints():
-    client = TestClient(app)
-    with client:
-        resp = client.post("/test/1")
+@pytest.mark.asyncio
+async def test_endpoints():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client, LifespanManager(app):
+        resp = await client.post("/test/1")
         assert resp.status_code == 200
 
-        resp2 = client.get("/test/2")
+        resp2 = await client.get("/test/2")
         assert resp2.status_code == 200
         assert len(resp2.json()) == 3
 
-        resp3 = client.get("/test/3")
+        resp3 = await client.get("/test/3")
         assert resp3.status_code == 200
         assert len(resp3.json()) == 3
 
-        resp4 = client.get("/test/4")
+        resp4 = await client.get("/test/4")
         assert resp4.status_code == 200
         assert len(resp4.json()) == 3
 
-        ot = OtherThing(**client.get("/get_ot/").json())
-        resp5 = client.get(f"/test/5/{ot.id}")
+        ot = OtherThing(**(await client.get("/get_ot/")).json())
+        resp5 = await client.get(f"/test/5/{ot.id}")
         assert resp5.status_code == 200
         assert len(resp5.json()) == 3
 
-        resp6 = client.get("/test/error")
+        resp6 = await client.get("/test/error")
         assert resp6.status_code == 200
         assert len(resp6.json()) == 3
