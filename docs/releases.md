@@ -1,3 +1,10 @@
+# 0.12.2
+
+## ✨ Features
+* Bump support for `FastAPI` up to the newest version (0.97.0) [#1110](https://github.com/collerek/ormar/pull/1110)
+* Add support and tests for `Python 3.11` [#1110](https://github.com/collerek/ormar/pull/1110)
+
+
 # 0.12.1
 
 ## ✨ Features
