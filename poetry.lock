@@ -884,13 +884,13 @@ flake8 = "*"
 
 [[package]]
 name = "flake8-variables-names"
-version = "0.0.5"
+version = "0.0.6"
 description = "A flake8 extension that helps to make more readable variables names"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "flake8_variables_names-0.0.5-py3-none-any.whl", hash = "sha256:e3277031696bbe10b5132b49938cde1d70fcae9561533b7bd7ab8e69cb27addb"},
-    {file = "flake8_variables_names-0.0.5.tar.gz", hash = "sha256:30133e14ee2300e13a60393a00f74d98110c76070ac67d1ab91606f02824a7e1"},
+    {file = "flake8_variables_names-0.0.6-py3-none-any.whl", hash = "sha256:4aff935d54b3f7afcd026b4dae55029877bd05a7c507b294b45bc7bf577d7b47"},
+    {file = "flake8_variables_names-0.0.6.tar.gz", hash = "sha256:292c50e4813d632aa3adcd02c185e7bb583f5fc8ebe02e70f13c958bfe46ad91"},
 ]
 
 [[package]]
@@ -2724,4 +2724,4 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.0"
-content-hash = "c66d18e5cd3501ddd486e88b2a48cfe56055c640b92fc5493b640bb41073c75e"
+content-hash = "3f2f9629c4a18f75c21fda1a8a034a6d68d01143c8af0db8185d1e8f9841d606"
