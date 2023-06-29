@@ -2497,13 +2497,13 @@ files = [
 
 [[package]]
 name = "types-pymysql"
-version = "1.0.19.7"
+version = "1.1.0.0"
 description = "Typing stubs for PyMySQL"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-PyMySQL-1.0.19.7.tar.gz", hash = "sha256:8ea7083a3bd37c4e77f38d8d93e488fba3bb03e3d3d41cc52cd92110375ed517"},
-    {file = "types_PyMySQL-1.0.19.7-py3-none-any.whl", hash = "sha256:672f0e3e5070da2dc58448d289b878c5c99febb37c9f2cbe309779301ae914fb"},
+    {file = "types-PyMySQL-1.1.0.0.tar.gz", hash = "sha256:e350c8920455eb5cb3f8a65fd95a1350340e396f6f1451f0fe1d035240929969"},
+    {file = "types_PyMySQL-1.1.0.0-py3-none-any.whl", hash = "sha256:cbd0c123a8116f7b99970a7c663399bb3b4bb9d97b8f843909c5cc27abea064f"},
 ]
 
 [[package]]
@@ -2724,4 +2724,4 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.0"
-content-hash = "2c519f2e430d9063d0045fcf3e2ae3c5f1f2b24195509a5e9068274a57f66d96"
+content-hash = "c84e8d72aebe0b1d4d69d6ad16d415d76307f3c185ca4869ac6649853d78416e"
