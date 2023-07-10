@@ -894,7 +894,6 @@ class QuerySet(Generic[T]):
         Gets the first row from the db ordered by primary key column ascending.
 
         :raises NoMatch: if no rows are returned
-        :raises MultipleMatches: if more than 1 row is returned.
         :param kwargs: fields names and proper value types
         :type kwargs: Any
         :return: returned model
@@ -924,17 +923,34 @@ class QuerySet(Generic[T]):
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
+    async def first_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
+        """
+        Gets the first row from the db ordered by primary key column ascending.
+
+        If no match is found None will be returned.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: returned model
+        :rtype: Model
+        """
+        try:
+            return await self.first(*args, **kwargs)
+        except ormar.NoMatch:
+            return None
+
     async def get_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
         """
-        Get's the first row from the db meeting the criteria set by kwargs.
+        Get's the row from the db meeting the criteria set by kwargs.
 
         If no criteria set it will return the last row in db sorted by pk.
 
         Passing a criteria is actually calling filter(*args, **kwargs) method described
         below.
 
-        If not match is found None will be returned.
+        If no match is found None will be returned.
 
+        :raises MultipleMatches: if more than 1 row is returned.
         :param kwargs: fields names and proper value types
         :type kwargs: Any
         :return: returned model
@@ -947,7 +963,7 @@ class QuerySet(Generic[T]):
 
     async def get(self, *args: Any, **kwargs: Any) -> "T":  # noqa: CCR001
         """
-        Get's the first row from the db meeting the criteria set by kwargs.
+        Get's the row from the db meeting the criteria set by kwargs.
 
         If no criteria set it will return the last row in db sorted by pk.
 
