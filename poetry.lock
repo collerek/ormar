@@ -2508,13 +2508,13 @@ files = [
 
 [[package]]
 name = "types-pymysql"
-version = "1.1.0.0"
+version = "1.1.0.1"
 description = "Typing stubs for PyMySQL"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-PyMySQL-1.1.0.0.tar.gz", hash = "sha256:e350c8920455eb5cb3f8a65fd95a1350340e396f6f1451f0fe1d035240929969"},
-    {file = "types_PyMySQL-1.1.0.0-py3-none-any.whl", hash = "sha256:cbd0c123a8116f7b99970a7c663399bb3b4bb9d97b8f843909c5cc27abea064f"},
+    {file = "types-PyMySQL-1.1.0.1.tar.gz", hash = "sha256:72bdaecb88de4a30bc3e1842e1d4522ceb3c4b2e883a6a2a7a7162775dd27b93"},
+    {file = "types_PyMySQL-1.1.0.1-py3-none-any.whl", hash = "sha256:9aec9ee0453314d477ef26e5832b4a992bc4cc3557358d62b0fe4af760a7728f"},
 ]
 
 [[package]]
