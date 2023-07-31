@@ -800,7 +800,12 @@ assert owner.toys[1].name == "Toy 1"
 
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
-    Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
+    Something like `Track.objects.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
+
+!!!note 
+    You can use the parameter `nulls_ordering` to determine the behavior in dealing with `NULL` values.
+
+    Something like `Owner.objects.order_by(Owner.toys.name.desc(nulls_ordering=ormar.NullsOrdering.LAST)).all()`
 
 ### Default sorting in ormar
 

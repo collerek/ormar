@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Type
+from typing import Optional, TYPE_CHECKING, Type
 
 import sqlalchemy
 from sqlalchemy import text
@@ -20,8 +20,13 @@ class OrderAction(QueryAction):
     """
 
     def __init__(
-        self, order_str: str, model_cls: Type["Model"], alias: str = None
+        self,
+        order_str: str,
+        model_cls: Type["Model"],
+        alias: str = None,
+        nulls_ordering: Optional[str] = None,
     ) -> None:
+
         self.direction: str = ""
         super().__init__(query_str=order_str, model_cls=model_cls)
         self.is_source_model_order = False
@@ -30,9 +35,15 @@ class OrderAction(QueryAction):
         if self.source_model == self.target_model and "__" not in self.related_str:
             self.is_source_model_order = True
 
+        self.nulls_ordering = nulls_ordering
+
     @property
     def field_alias(self) -> str:
         return self.target_model.get_column_alias(self.field_name)
+
+    @property
+    def is_mysql_bool(self) -> bool:
+        return self.target_model.Meta.database._backend._dialect.name == "mysql"
 
     @property
     def is_postgres_bool(self) -> bool:
@@ -78,6 +89,7 @@ class OrderAction(QueryAction):
         :return: complied and escaped clause
         :rtype: sqlalchemy.sql.elements.TextClause
         """
+
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
         table_name = self.table.name
         field_name = self.field_alias
@@ -85,7 +97,11 @@ class OrderAction(QueryAction):
             dialect = self.target_model.Meta.database._backend._dialect
             table_name = dialect.identifier_preparer.quote(table_name)
             field_name = dialect.identifier_preparer.quote(field_name)
-        return text(f"{prefix}{table_name}" f".{field_name} {self.direction}")
+
+        return text(
+            f"{prefix}{table_name}"
+            f".{self._get_field_name_direction_nulls(field_name=field_name)}"
+        )
 
     def _split_value_into_parts(self, order_str: str) -> None:
         if order_str.startswith("-"):
@@ -94,6 +110,40 @@ class OrderAction(QueryAction):
         parts = order_str.split("__")
         self.field_name = parts[-1]
         self.related_parts = parts[:-1]
+
+    def _generate_field_nulls_query(self, field_name: str, result: str) -> str:
+        """
+        Generate the Final Query with handling mysql syntax for nulls value
+
+        :param field_name: string name of this field for order
+        :type field_name: str
+        :param result: query generated in previous stage without nulls value
+        :type result: str
+        :return: result of the final query by field name and direction and nulls value
+        :rtype: str
+        """
+
+        if not self.is_mysql_bool:
+            return result + f" nulls {self.nulls_ordering}"  # pragma: no cover
+
+        condition: str = "not" if self.nulls_ordering == "first" else ""  # pragma: no cover
+        return f"{field_name} is {condition} null, {result}"  # pragma: no cover
+
+    def _get_field_name_direction_nulls(self, field_name: str) -> str:
+        """
+        Generate the Query of Order for this field name by direction and nulls value
+
+        :param field_name: string name of this field for order
+        :type field_name: str
+        :return: result of the query by field name and direction and nulls value
+        :rtype: str
+        """
+
+        result: str = f"{field_name} {self.direction}"
+        if self.nulls_ordering is not None:
+            return self._generate_field_nulls_query(field_name=field_name, result=result)
+
+        return result
 
     def check_if_filter_apply(self, target_model: Type["Model"], alias: str) -> bool:
         """

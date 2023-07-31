@@ -19,7 +19,7 @@ class Song(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    sort_order: int = ormar.Integer()
+    sort_order: Optional[int] = ormar.Integer(nullable=True)
 
 
 class Owner(ormar.Model):
@@ -30,6 +30,7 @@ class Owner(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
+    age: Optional[int] = ormar.Integer(nullable=True)
 
 
 class AliasNested(ormar.Model):
@@ -163,6 +164,50 @@ async def test_sort_order_on_main_model():
         assert songs[2].name == "Song 2"
         assert songs[3].name == "Song 3"
 
+        await Song.objects.create(name="Song 5")
+
+        songs = await Song.objects.order_by(
+            Song.sort_order.asc(nulls_ordering=ormar.NullsOrdering.LAST)
+        ).all()
+        assert songs[0].name in ("Song 1", "Song 4")
+        assert songs[1].name in ("Song 1", "Song 4")
+        assert songs[2].name == "Song 2"
+        assert songs[3].name == "Song 3"
+        assert songs[4].name == "Song 5"
+
+        songs = await Song.objects.order_by(
+            Song.sort_order.asc(nulls_ordering=ormar.NullsOrdering.FIRST)
+        ).all()
+        assert songs[0].name == "Song 5"
+        assert songs[1].name in ("Song 1", "Song 4")
+        assert songs[2].name in ("Song 1", "Song 4")
+        assert songs[3].name == "Song 2"
+        assert songs[4].name == "Song 3"
+
+        songs = await Song.objects.order_by(
+            Song.sort_order.desc(nulls_ordering=ormar.NullsOrdering.LAST)
+        ).all()
+        assert songs[0].name == "Song 3"
+        assert songs[1].name == "Song 2"
+        assert songs[2].name in ("Song 1", "Song 4")
+        assert songs[3].name in ("Song 1", "Song 4")
+        assert songs[4].name == "Song 5"
+
+        songs = await Song.objects.order_by(
+            Song.sort_order.desc(nulls_ordering=ormar.NullsOrdering.FIRST)
+        ).all()
+        assert songs[0].name == "Song 5"
+        assert songs[1].name == "Song 3"
+        assert songs[2].name == "Song 2"
+        assert songs[3].name in ("Song 1", "Song 4")
+        assert songs[4].name in ("Song 1", "Song 4")
+
+        with pytest.raises(ValueError):
+            await Song.objects.order_by(Song.sort_order.asc(nulls_ordering=False)).all()
+
+        with pytest.raises(ValueError):
+            await Song.objects.order_by(Song.sort_order.desc(nulls_ordering=True)).all()
+
 
 @pytest.mark.asyncio
 async def test_sort_order_on_related_model():
@@ -248,6 +293,21 @@ async def test_sort_order_on_related_model():
         assert len(toys) == 2
         assert toys[0].name == "Toy 2"
         assert toys[1].name == "Toy 3"
+
+        akbar = await Owner.objects.create(name="Akbar", age=22)
+        asqar = await Owner.objects.create(name="Asqar", age=18)
+
+        await Toy.objects.create(name="Toy 8", owner=akbar)
+        await Toy.objects.create(name="Toy 9", owner=asqar)
+
+        toys = (
+            await Toy.objects.select_related("owner")
+            .order_by(Toy.owner.age.desc(nulls_ordering=ormar.NullsOrdering.LAST))
+            .all()
+        )
+        assert len(toys) == 9
+        assert toys[0].name == "Toy 8"
+        assert toys[1].name == "Toy 9"
 
 
 @pytest.mark.asyncio

@@ -1,8 +1,8 @@
-from typing import Any, TYPE_CHECKING, Type, cast
+from typing import Any, Optional, TYPE_CHECKING, Type, cast
 
 from ormar.queryset.actions import OrderAction
 from ormar.queryset.actions.filter_action import METHODS_TO_OPERATORS
-from ormar.queryset.clause import FilterGroup
+from ormar.queryset.clause import FilterGroup, NullsOrdering
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import BaseField, Model
@@ -268,22 +268,40 @@ class FieldAccessor:
         """
         return self._select_operator(op="isnull", other=other)
 
-    def asc(self) -> OrderAction:
+    def asc(self, nulls_ordering: Optional[NullsOrdering] = None) -> OrderAction:
         """
         works as sql `column asc`
 
+        :param nulls_ordering: nulls ordering option first or last, defaults to None
+        :type nulls_ordering: Optional[NullsOrdering], optional
+        :raises ValueError: if nulls_ordering is not None or NullsOrdering Enum
         :return: OrderGroup for operator
         :rtype: ormar.queryset.actions.OrderGroup
         """
-        return OrderAction(order_str=self._access_chain, model_cls=self._source_model)
+        if nulls_ordering is not None and not isinstance(nulls_ordering, NullsOrdering):
+            raise ValueError("Invalid option for ordering nulls values.")
 
-    def desc(self) -> OrderAction:
+        return OrderAction(
+            order_str=self._access_chain,
+            model_cls=self._source_model,
+            nulls_ordering=nulls_ordering.value if nulls_ordering is not None else None,
+        )
+
+    def desc(self, nulls_ordering: Optional[NullsOrdering] = None) -> OrderAction:
         """
         works as sql `column desc`
 
+        :param nulls_ordering: nulls ordering option first or last, defaults to None
+        :type nulls_ordering: Optional[NullsOrdering], optional
+        :raises ValueError: if nulls_ordering is not None or NullsOrdering Enum
         :return: OrderGroup for operator
         :rtype: ormar.queryset.actions.OrderGroup
         """
+        if nulls_ordering is not None and not isinstance(nulls_ordering, NullsOrdering):
+            raise ValueError("Invalid option for ordering nulls values.")
+
         return OrderAction(
-            order_str="-" + self._access_chain, model_cls=self._source_model
+            order_str="-" + self._access_chain,
+            model_cls=self._source_model,
+            nulls_ordering=nulls_ordering.value if nulls_ordering is not None else None,
         )
