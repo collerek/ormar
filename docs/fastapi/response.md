@@ -36,7 +36,7 @@ class User(ormar.Model):
     category: str = ormar.String(max_length=255, default="User")
 ```
 
-In above example fields `id` (is an `autoincrement` `Integer`), `first_name` ( has `nullable=True`) and `category` (has `default`) are optional and can be skipped in response and model wil still validate.
+In above example fields `id` (is an `autoincrement` `Integer`), `first_name` ( has `nullable=True`) and `category` (has `default`) are optional and can be skipped in response and model will still validate.
 
 If the field is nullable you don't have to include it in payload during creation as well as in response, so given example above you can:
 
@@ -143,7 +143,7 @@ async def create_user(user: User):
     return await user.save()
 ```
 
-Note that you can go in deeper models with double underscore, and if you wan't to exclude multiple fields from nested model you need to prefix them with full path.
+Note that you can go in deeper models with double underscore, and if you want to exclude multiple fields from nested model you need to prefix them with full path.
 In example `response_model_exclude={"category__priority", "category__other_field", category__nested_model__nested_model_field}` etc.
 
 !!!Note
@@ -215,9 +215,9 @@ async def create_user3(user: User):
 !!!Warning
         The `get_pydantic` method generates all models in a tree of nested models according to an algorithm that allows to avoid loops in models (same algorithm that is used in `dict()`, `select_all()` etc.)
         
-        That means that nested models won't have reference to parent model (by default ormar relation is biderectional).
+        That means that nested models won't have reference to parent model (by default ormar relation is bidirectional).
         
-        Note also that if given model exists in a tree more than once it will be doubled in pydantic models (each occurance will have separate own model). That way you can exclude/include different fields on different leafs of the tree.
+        Note also that if given model exists in a tree more than once it will be doubled in pydantic models (each occurrence will have separate own model). That way you can exclude/include different fields on different leafs of the tree.
 
 ### Separate `pydantic` model
 

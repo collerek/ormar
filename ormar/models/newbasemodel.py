@@ -64,7 +64,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     Constructed with ModelMetaclass which in turn also inherits pydantic metaclass.
 
     Abstracts away all internals and helper functions, so final Model class has only
-    the logic concerned with database connection and data persistance.
+    the logic concerned with database connection and data persistence.
     """
 
     __slots__ = (

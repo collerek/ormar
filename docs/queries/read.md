@@ -23,7 +23,7 @@ Following methods allow you to load data from the database.
 
 `get(*args, **kwargs) -> Model`
 
-Get's the first row from the db meeting the criteria set by kwargs.
+Gets the first row from the db meeting the criteria set by kwargs.
 
 If no criteria set it will return the last row in db sorted by pk column.
 
@@ -99,7 +99,7 @@ assert album == album2
 !!!warning 
     Despite being an equivalent row from database the `album` and `album2` in
     example above are 2 different python objects!
-    Updating one of them will not refresh the second one until you excplicitly load() the
+    Updating one of them will not refresh the second one until you explicitly load() the
     fresh data from db.
 
 !!!note 
