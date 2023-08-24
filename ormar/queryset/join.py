@@ -92,15 +92,17 @@ class SqlJoin:
         """
         return self.next_model.Meta.table
 
-    def _on_clause(self, previous_alias: str, from_clause: str, to_clause: str) -> text:
+    def _on_clause(self, previous_alias: str, from_table_name:str, from_column_name: str, to_clause: str) -> text:
         """
         Receives aliases and names of both ends of the join and combines them
         into one text clause used in joins.
 
         :param previous_alias: alias of previous table
         :type previous_alias: str
-        :param from_clause: from table name
-        :type from_clause: str
+        :param from_table_name: from table name
+        :type from_table_name: str
+        :param from_column_name: from column name
+        :type from_column_name: str
         :param to_clause: to table name
         :type to_clause: str
         :return: clause combining all strings
@@ -109,11 +111,10 @@ class SqlJoin:
         left_part = f"{self.next_alias}_{to_clause}"
         if not previous_alias:
             dialect = self.main_model.Meta.database._backend._dialect
-            table, column = from_clause.split(".")
             quotter = dialect.identifier_preparer.quote
-            right_part = f"{quotter(table)}.{quotter(column)}"
+            right_part = f"{quotter(from_table_name)}.{quotter(from_column_name)}"
         else:
-            right_part = f"{previous_alias}_{from_clause}"
+            right_part = f"{previous_alias}_{from_table_name}.{from_column_name}"
 
         return text(f"{left_part}={right_part}")
 
@@ -278,7 +279,8 @@ class SqlJoin:
 
         on_clause = self._on_clause(
             previous_alias=self.own_alias,
-            from_clause=f"{self.target_field.owner.Meta.tablename}.{from_key}",
+            from_table_name=self.target_field.owner.Meta.tablename,
+            from_column_name=from_key,
             to_clause=f"{self.to_table.name}.{to_key}",
         )
         target_table = self.alias_manager.prefixed_table_name(
