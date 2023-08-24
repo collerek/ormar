@@ -78,14 +78,17 @@ class OrderAction(QueryAction):
         :return: complied and escaped clause
         :rtype: sqlalchemy.sql.elements.TextClause
         """
+        dialect = self.target_model.Meta.database._backend._dialect
+        quoter = dialect.identifier_preparer.quote
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
         table_name = self.table.name
         field_name = self.field_alias
         if not prefix:
-            dialect = self.target_model.Meta.database._backend._dialect
-            table_name = dialect.identifier_preparer.quote(table_name)
-            field_name = dialect.identifier_preparer.quote(field_name)
-        return text(f"{prefix}{table_name}" f".{field_name} {self.direction}")
+            table_name = quoter(table_name)
+        else:
+            table_name = quoter(f"{prefix}{table_name}")
+        field_name = quoter(field_name)
+        return text(f"{table_name}.{field_name} {self.direction}")
 
     def _split_value_into_parts(self, order_str: str) -> None:
         if order_str.startswith("-"):
