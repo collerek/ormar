@@ -21,7 +21,7 @@ async def test_initializing_models(aio_benchmark, num_models: int):
         ]
         assert len(authors) == num_models
 
-    await initialize_models(num_models)
+    initialize_models(num_models)
 
 
 @pytest.mark.parametrize("num_models", [10, 20, 40])
