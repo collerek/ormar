@@ -103,18 +103,20 @@ class SqlJoin:
         :type from_table_name: str
         :param from_column_name: from column name
         :type from_column_name: str
-        :param to_clause: to table name
-        :type to_clause: str
+        :param to_table_name: to table name
+        :type to_table_name: str
+        :param to_column_name: to column name
+        :type to_column_name: str
         :return: clause combining all strings
         :rtype: sqlalchemy.text
         """
         dialect = self.main_model.Meta.database._backend._dialect
         quoter = dialect.identifier_preparer.quote
-        left_part = f"{quoter(self.next_alias + '_' + to_table_name)}.{quoter(to_column_name)}"
+        left_part = f"{quoter(f'{self.next_alias}_{to_table_name}')}.{quoter(to_column_name)}"
         if not previous_alias:
             right_part = f"{quoter(from_table_name)}.{quoter(from_column_name)}"
         else:
-            right_part = f"{previous_alias}_{from_table_name}.{from_column_name}"
+            right_part = f"{quoter(f'{previous_alias}_{from_table_name}')}.{from_column_name}"
 
         return text(f"{left_part}={right_part}")
 
