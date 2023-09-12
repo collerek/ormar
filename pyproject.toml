@@ -107,7 +107,7 @@ mkdocs-material = ">=8.1.2,<9.3"
 mkdocs-material-extensions = "^1.1"
 mkdocstrings = {version = "==0.22.0", extras = ["python"]}
 mkdocs-gen-files = "^0.5.0"
-mkdocs-literate-nav = "^0.6.0"
+mkdocs-literate-nav = "^0.6.1"
 mkdocs-section-index = "^0.3.6"
 dataclasses = { version = ">=0.6.0,<0.8 || >0.8,<1.0.0" }
 

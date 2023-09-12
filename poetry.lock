@@ -1391,13 +1391,13 @@ mkdocs = ">=1.0.3"
 
 [[package]]
 name = "mkdocs-literate-nav"
-version = "0.6.0"
+version = "0.6.1"
 description = "MkDocs plugin to specify the navigation in Markdown instead of YAML"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "mkdocs_literate_nav-0.6.0-py3-none-any.whl", hash = "sha256:8c1b84714e5974da5e44e011ec0069275ae7647270c13a679662cf6ffce675a4"},
-    {file = "mkdocs_literate_nav-0.6.0.tar.gz", hash = "sha256:81ccbea18163ae8e10bd0bd39237fe70c32a1f2dff6c170779f5d52dd98a0470"},
+    {file = "mkdocs_literate_nav-0.6.1-py3-none-any.whl", hash = "sha256:e70bdc4a07050d32da79c0b697bd88e9a104cf3294282e9cb20eec94c6b0f401"},
+    {file = "mkdocs_literate_nav-0.6.1.tar.gz", hash = "sha256:78a7ab6d878371728acb0cdc6235c9b0ffc6e83c997b037f4a5c6ff7cef7d759"},
 ]
 
 [package.dependencies]
@@ -2801,4 +2801,4 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.0"
-content-hash = "f85893b05d3a444edfd48867018241101f497901a30767d3073e387df7a65cf8"
+content-hash = "a2c5f4e8a041374856bc3889254135e3d3acbb24ac2a483110088b0500832039"
