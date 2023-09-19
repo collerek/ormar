@@ -106,45 +106,46 @@ def create_test_database():
     yield
     metadata.drop_all(engine)
 
+async def create_sample_data():
+    album = Album(name="Malibu")
+    await album.save()
+    ton1 = await Tonation.objects.create(name="B-mol")
+    await Track.objects.create(
+        album=album, title="The Bird", position=1, tonation=ton1
+    )
+    await Track.objects.create(
+        album=album,
+        title="Heart don't stand a chance",
+        position=2,
+        tonation=ton1,
+    )
+    await Track.objects.create(
+        album=album, title="The Waters", position=3, tonation=ton1
+    )
+    await Cover.objects.create(title="Cover1", album=album, artist="Artist 1")
+    await Cover.objects.create(title="Cover2", album=album, artist="Artist 2")
+
+    fantasies = Album(name="Fantasies")
+    await fantasies.save()
+    await Track.objects.create(
+        album=fantasies, title="Help I'm Alive", position=1
+    )
+    await Track.objects.create(album=fantasies, title="Sick Muse", position=2)
+    await Track.objects.create(
+        album=fantasies, title="Satellite Mind", position=3
+    )
+    await Cover.objects.create(
+        title="Cover3", album=fantasies, artist="Artist 3"
+    )
+    await Cover.objects.create(
+        title="Cover4", album=fantasies, artist="Artist 4"
+    )
 
 @pytest.mark.asyncio
 async def test_prefetch_related():
     async with database:
         async with database.transaction(force_rollback=True):
-            album = Album(name="Malibu")
-            await album.save()
-            ton1 = await Tonation.objects.create(name="B-mol")
-            await Track.objects.create(
-                album=album, title="The Bird", position=1, tonation=ton1
-            )
-            await Track.objects.create(
-                album=album,
-                title="Heart don't stand a chance",
-                position=2,
-                tonation=ton1,
-            )
-            await Track.objects.create(
-                album=album, title="The Waters", position=3, tonation=ton1
-            )
-            await Cover.objects.create(title="Cover1", album=album, artist="Artist 1")
-            await Cover.objects.create(title="Cover2", album=album, artist="Artist 2")
-
-            fantasies = Album(name="Fantasies")
-            await fantasies.save()
-            await Track.objects.create(
-                album=fantasies, title="Help I'm Alive", position=1
-            )
-            await Track.objects.create(album=fantasies, title="Sick Muse", position=2)
-            await Track.objects.create(
-                album=fantasies, title="Satellite Mind", position=3
-            )
-            await Cover.objects.create(
-                title="Cover3", album=fantasies, artist="Artist 3"
-            )
-            await Cover.objects.create(
-                title="Cover4", album=fantasies, artist="Artist 4"
-            )
-
+            await create_sample_data()
             album = (
                 await Album.objects.filter(name="Malibu")
                 .prefetch_related(["tracks__tonation", "cover_pictures"])
@@ -173,6 +174,14 @@ async def test_prefetch_related():
             assert len(track.album.cover_pictures) == 2
             assert track.album.cover_pictures[0].artist == "Artist 1"
 
+            tracks = await Track.objects.prefetch_related("album").all()
+            assert len(tracks) == 6
+
+@pytest.mark.asyncio
+async def test_prefetch_related_with_exclude():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            await create_sample_data()
             track = (
                 await Track.objects.prefetch_related(["album__cover_pictures"])
                 .exclude_fields("album__cover_pictures__artist")
@@ -181,10 +190,6 @@ async def test_prefetch_related():
             assert track.album.name == "Malibu"
             assert len(track.album.cover_pictures) == 2
             assert track.album.cover_pictures[0].artist is None
-
-            tracks = await Track.objects.prefetch_related("album").all()
-            assert len(tracks) == 6
-
 
 @pytest.mark.asyncio
 async def test_prefetch_related_with_many_to_many():

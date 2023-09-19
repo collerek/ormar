@@ -39,7 +39,7 @@ from ormar.exceptions import (
 from ormar.queryset import FieldAccessor, FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
-from ormar.queryset.queries.prefetch_query import PrefetchQuery
+from ormar.queryset.queries.new_prefetch_query import PrefetchQuery
 from ormar.queryset.queries.query import Query
 from ormar.queryset.reverse_alias_resolver import ReverseAliasResolver
 
@@ -172,7 +172,7 @@ class QuerySet(Generic[T]):
             select_related=self._select_related,
             orders_by=self.order_bys,
         )
-        return await query.prefetch_related(models=models, rows=rows)  # type: ignore
+        return await query.prefetch_related(models=models)  # type: ignore
 
     async def _process_query_result_rows(self, rows: List) -> List["T"]:
         """

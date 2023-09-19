@@ -114,6 +114,11 @@ class ExcludableItems:
             self.items[key] = excludable
         return excludable
 
+    def copy_for_alias(self, model_cls: Type["Model"], alias: str, target_alias: str):
+        target_key = f"{target_alias + '_' if target_alias else ''}{model_cls.get_name(lower=True)}"
+        excludable = self.get(model_cls=model_cls, alias=alias)
+        self.items[target_key] = excludable.get_copy()
+
     def build(
         self,
         items: Union[List[str], str, Tuple[str], Set[str], Dict],

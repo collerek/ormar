@@ -1,7 +1,7 @@
 import sys
 from typing import (
     Any,
-    List,
+    Dict, List,
     Optional,
     TYPE_CHECKING,
     Tuple,
@@ -255,6 +255,56 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :return: source model
         :rtype: Type["Model"]
         """
+        return self.through
+
+    def get_model_relation_fields(
+            self, use_alias: bool = False
+    ) -> str:
+        """
+        Extract names of the database columns or model fields that are connected
+        with given relation based on use_alias switch.
+
+        :param use_alias: use db names aliases or model fields
+        :type use_alias: bool
+        :return: name or names of the related columns/ fields
+        :rtype: Union[str, List[str]]
+        """
+        pk_alias = (
+            self.owner.get_column_alias(self.owner.Meta.pkname)
+            if use_alias
+            else self.owner.Meta.pkname
+        )
+        return pk_alias
+
+    def get_related_field_alias(self) -> Union[str, Dict[str, str]]:
+        """
+        Extract names of the related database columns or that are connected
+        with given relation based to use as a target in filter clause.
+
+        :return: name or names of the related columns/ fields
+        :rtype: Union[str, Dict[str, str]]
+        """
+        if self.self_reference and self.self_reference_primary == self.name:
+            field_name = self.default_target_field_name()
+        else:
+            field_name = self.default_source_field_name()
+        sub_field = self.through.Meta.model_fields[field_name]
+        return sub_field.get_alias()
+
+    def get_related_field_name(self) -> Union[str, List[str]]:
+        """
+        Returns name of the relation field that should be used in prefetch query.
+        This field is later used to register relation in prefetch query,
+        populate relations dict, and populate nested model in prefetch query.
+
+        :return: name(s) of the field
+        :rtype: Union[str, List[str]]
+        """
+        if self.self_reference and self.self_reference_primary == self.name:
+            return self.default_target_field_name()
+        return self.default_source_field_name()
+
+    def get_filter_clause_target(self) -> Type["Model"]:
         return self.through
 
     def create_default_through_model(self) -> None:

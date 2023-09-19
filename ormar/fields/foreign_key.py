@@ -334,6 +334,64 @@ class ForeignKeyField(BaseField):
         """
         return self.related_name or self.owner.get_name() + "s"
 
+    def get_filter_clause_target(self) -> Type["Model"]:
+        return self.to
+
+    def get_model_relation_fields(
+            self, use_alias: bool = False
+    ) -> Union[str, List[str]]:
+        """
+        Extract names of the database columns or model fields that are connected
+        with given relation based on use_alias switch and which side of the relation
+        the current field is - reverse or normal.
+
+        :param use_alias: use db names aliases or model fields
+        :type use_alias: bool
+        :return: name or names of the related columns/ fields
+        :rtype: Union[str, List[str]]
+        """
+        if use_alias:
+            return self._get_model_relation_fields_aliases()
+        return self._get_model_relation_fields_names()
+
+    def _get_model_relation_fields_names(self) -> Union[str, List[str]]:
+        if self.virtual:
+            return self.owner.Meta.pkname
+        return self.name
+
+    def _get_model_relation_fields_aliases(self) -> Union[str, List[str]]:
+        if self.virtual:
+            return self.owner.get_column_alias(self.owner.Meta.pkname)
+        return self.get_alias()
+
+    def get_related_field_alias(self) -> str:
+        """
+        Extract names of the related database columns or that are connected
+        with given relation based to use as a target in filter clause.
+
+        :return: name or names of the related columns/ fields
+        :rtype: Union[str, Dict[str, str]]
+        """
+        if self.virtual:
+            field_name = self.get_related_name()
+            field = self.to.Meta.model_fields[field_name]
+            return field.get_alias()
+        target_field = self.to.get_column_alias(self.to.Meta.pkname)
+        return target_field
+
+    def get_related_field_name(self) -> Union[str, List[str]]:
+        """
+        Returns name of the relation field that should be used in prefetch query.
+        This field is later used to register relation in prefetch query,
+        populate relations dict, and populate nested model in prefetch query.
+
+        :return: name(s) of the field
+        :rtype: Union[str, List[str]]
+        """
+        if self.virtual:
+            return self.get_related_name()
+        return self.to.Meta.pkname
+
     def default_target_field_name(self) -> str:
         """
         Returns default target model name on through model.
