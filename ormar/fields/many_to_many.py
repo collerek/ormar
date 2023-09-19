@@ -1,6 +1,7 @@
 import sys
 from typing import (
     Any,
+    ForwardRef,
     List,
     Optional,
     TYPE_CHECKING,
@@ -11,7 +12,7 @@ from typing import (
     overload,
 )
 
-from pydantic.typing import ForwardRef, evaluate_forwardref
+from pydantic._internal._typing_extra import evaluate_fwd_ref
 import ormar  # noqa: I100
 from ormar import ModelDefinitionError
 from ormar.fields import BaseField
@@ -222,7 +223,7 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :rtype: None
         """
         if self.to.__class__ == ForwardRef:
-            self.to = evaluate_forwardref(
+            self.to = evaluate_fwd_ref(
                 self.to, globalns, localns or None  # type: ignore
             )
 
@@ -231,7 +232,7 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
             )
 
         if self.through.__class__ == ForwardRef:
-            self.through = evaluate_forwardref(
+            self.through = evaluate_fwd_ref(
                 self.through, globalns, localns or None  # type: ignore
             )
             forbid_through_relations(self.through)

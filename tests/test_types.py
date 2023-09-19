@@ -12,23 +12,23 @@ database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
-
 class Publisher(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "publishers"
+
+    model_config = dict(
+        metadata=metadata,
+        database=database,
+        table_name="publishers",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
-        order_by = ["-name"]
+
+    model_config = dict(
+        metadata=metadata, database=database, table_name="authors", order_by=["-name"]
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -36,9 +36,13 @@ class Author(ormar.Model):
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
-        order_by = ["year", "-ranking"]
+
+    model_config = dict(
+        metadata=metadata,
+        database=database,
+        table_name="books",
+        order_by=["year", "-ranking"],
+    )
 
     id: int = ormar.Integer(primary_key=True)
     author = ormar.ForeignKey(Author)

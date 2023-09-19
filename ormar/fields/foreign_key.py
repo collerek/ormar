@@ -5,6 +5,7 @@ from random import choices
 from typing import (
     Any,
     Dict,
+    ForwardRef,
     List,
     Optional,
     TYPE_CHECKING,
@@ -14,13 +15,14 @@ from typing import (
     overload,
 )
 
+from pydantic._internal._typing_extra import evaluate_fwd_ref
+
 import ormar  # noqa I101
 import sqlalchemy
 from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
 from ormar.fields.base import BaseField
 from ormar.fields.referential_actions import ReferentialAction
 from pydantic import BaseModel, create_model
-from pydantic.typing import ForwardRef, evaluate_forwardref
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, NewBaseModel, T
@@ -364,7 +366,7 @@ class ForeignKeyField(BaseField):
         :rtype: None
         """
         if self.to.__class__ == ForwardRef:
-            self.to = evaluate_forwardref(
+            self.to = evaluate_fwd_ref(
                 self.to, globalns, localns or None  # type: ignore
             )
             (

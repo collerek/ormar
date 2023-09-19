@@ -2,7 +2,7 @@ import logging
 from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import sqlalchemy
-from pydantic.typing import ForwardRef
+from typing import ForwardRef
 
 import ormar  # noqa: I100, I202
 from ormar.models.descriptors import RelationDescriptor

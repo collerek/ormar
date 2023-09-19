@@ -549,7 +549,7 @@ def add_field_descriptor(
         setattr(new_model, name, PydanticDescriptor(name=name))
 
 
-class ModelMetaclass(pydantic.main.ModelMetaclass):
+class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
     def __new__(  # type: ignore # noqa: CCR001
         mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
     ) -> "ModelMetaclass":

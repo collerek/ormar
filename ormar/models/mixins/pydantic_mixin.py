@@ -15,7 +15,7 @@ from typing import (
 )
 
 import pydantic
-from pydantic.fields import ModelField
+from pydantic.fields import Field
 
 from ormar.models.mixins.relation_mixin import RelationMixin  # noqa: I100, I202
 from ormar.queryset.utils import translate_list_to_dict
@@ -26,7 +26,7 @@ class PydanticMixin(RelationMixin):
     __cache__: Dict[str, Type[pydantic.BaseModel]] = {}
 
     if TYPE_CHECKING:  # pragma: no cover
-        __fields__: Dict[str, ModelField]
+        __fields__: Dict[str, Field]
         _skip_ellipsis: Callable
         _get_not_excluded_fields: Callable
 

@@ -12,14 +12,15 @@ from typing import (
     Union,
 )
 
+from pydantic import model_validator, typing
+
 try:
     import orjson as json
 except ImportError:  # pragma: no cover
     import json  # type: ignore  # noqa: F401
 
 import pydantic
-from pydantic.class_validators import make_generic_validator
-from pydantic.fields import ModelField, SHAPE_LIST
+from pydantic.fields import Field
 
 import ormar  # noqa: I100, I202
 from ormar.models.helpers.models import meta_field_not_set
@@ -73,7 +74,7 @@ def convert_value_if_needed(field: "BaseField", value: Any) -> Any:
 def generate_validator(ormar_field: "BaseField") -> Callable:
     choices = ormar_field.choices
 
-    def validate_choices(cls: type, value: Any, field: "ModelField") -> None:
+    def validate_choices(cls: type, value: Any, field: "Field") -> None:
         """
         Validates if given value is in provided choices.
 
@@ -182,11 +183,13 @@ def generate_pydantic_example(
     """
     example: Dict[str, Any] = dict()
     exclude = exclude or set()
-    name_to_check = [name for name in pydantic_model.__fields__ if name not in exclude]
+    name_to_check = [
+        name for name in pydantic_model.model_fields if name not in exclude
+    ]
     for name in name_to_check:
-        field = pydantic_model.__fields__[name]
-        type_ = field.type_
-        if field.shape == SHAPE_LIST:
+        field = pydantic_model.model_fields[name]
+        type_ = field.annotation
+        if typing.get_origin(type_) is list:
             example[name] = [get_pydantic_example_repr(type_)]
         else:
             example[name] = get_pydantic_example_repr(type_)
@@ -307,7 +310,7 @@ def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
         for name, field in model.Meta.model_fields.items():
             if check_if_field_has_choices(field) and name not in model._choices_fields:
                 fields_with_choices.append(name)
-                validator = make_generic_validator(generate_validator(field))
+                validator = model_validator(mode="before")(generate_validator(field))
                 model.__fields__[name].validators.append(validator)
                 model._choices_fields.add(name)
 
@@ -316,4 +319,6 @@ def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
                 fields_with_choices=fields_with_choices
             )
         else:
-            model.Config.schema_extra = construct_schema_function_without_choices()
+            model.model_config[
+                "schema_extra"
+            ] = construct_schema_function_without_choices()

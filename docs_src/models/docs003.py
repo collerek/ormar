@@ -20,15 +20,15 @@ class Course(ormar.Model):
 print(Course.__fields__)
 """
 Will produce:
-{'id':        ModelField(name='id', 
+{'id':        Field(name='id', 
                          type=Optional[int], 
                          required=False, 
                          default=None),
- 'name':      ModelField(name='name', 
+ 'name':      Field(name='name', 
                          type=Optional[str], 
                          required=False, 
                          default=None),
-'completed':  ModelField(name='completed', 
+'completed':  Field(name='completed', 
                          type=bool, 
                          required=False, 
                          default=False)}

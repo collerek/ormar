@@ -2,8 +2,8 @@ import warnings
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
-from pydantic import Json, typing
-from pydantic.fields import FieldInfo, Required, Undefined
+from pydantic import typing
+from pydantic.fields import FieldInfo, _Undefined
 
 import ormar  # noqa I101
 from ormar import ModelDefinitionError
@@ -145,9 +145,7 @@ class BaseField(FieldInfo):
         """
         base = self.default_value()
         if base is None:
-            base = dict(default=None) if self.nullable else dict(default=Undefined)
-        if self.__type__ == Json and base.get("default") is Undefined:
-            base["default"] = Required
+            base = dict(default=None) if self.nullable else dict(default=_Undefined)
         return base
 
     def default_value(self, use_server: bool = False) -> Optional[Dict]:
@@ -181,7 +179,9 @@ class BaseField(FieldInfo):
             return dict(default=default)
         return None
 
-    def get_default(self, use_server: bool = False) -> Any:  # noqa CCR001
+    def get_default(
+        self, use_server: bool = False, call_default_factory: bool = True
+    ) -> Any:  # noqa CCR001
         """
         Return default value for a field.
         If the field is Callable the function is called and actual result is returned.
@@ -199,7 +199,7 @@ class BaseField(FieldInfo):
                 if self.ormar_default is not None
                 else (self.server_default if use_server else None)
             )
-            if callable(default):  # pragma: no cover
+            if callable(default) and call_default_factory:  # pragma: no cover
                 default = default()
             return default
 

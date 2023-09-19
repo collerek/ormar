@@ -35,7 +35,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         _skip_ellipsis: Callable
         _json_fields: Set[str]
         _bytes_fields: Set[str]
-        __fields__: Dict[str, pydantic.fields.ModelField]
+        __fields__: Dict[str, pydantic.fields.Field]
 
     @classmethod
     def prepare_model_to_save(cls, new_kwargs: dict) -> dict:

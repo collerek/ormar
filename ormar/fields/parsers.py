@@ -5,7 +5,7 @@ import uuid
 from typing import Any, Callable, Dict, Optional, Union
 
 import pydantic
-from pydantic.datetime_parse import parse_date, parse_datetime, parse_time
+from pydantic_core import SchemaValidator, core_schema
 
 try:
     import orjson as json
@@ -72,11 +72,12 @@ ENCODERS_MAP: Dict[type, Callable] = {
 
 SQL_ENCODERS_MAP: Dict[type, Callable] = {bool: encode_bool, **ENCODERS_MAP}
 
+
 DECODERS_MAP = {
     bool: parse_bool,
-    datetime.datetime: parse_datetime,
-    datetime.date: parse_date,
-    datetime.time: parse_time,
+    datetime.datetime: SchemaValidator(core_schema.datetime_schema()).validate_python,
+    datetime.date: SchemaValidator(core_schema.date_schema()).validate_python,
+    datetime.time: SchemaValidator(core_schema.time_schema()).validate_python,
     pydantic.Json: json.loads,
     decimal.Decimal: decimal.Decimal,
 }

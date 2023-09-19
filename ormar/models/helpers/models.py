@@ -3,7 +3,7 @@ import sqlite3
 from typing import Any, Dict, List, TYPE_CHECKING, Tuple, Type
 
 import pydantic
-from pydantic.typing import ForwardRef
+from typing import ForwardRef
 import ormar  # noqa: I100
 from ormar.models.helpers.pydantic import populate_pydantic_default_values
 from ormar.models.utils import Extra

@@ -3,7 +3,8 @@ from types import MappingProxyType
 from typing import Dict, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import pydantic
-from pydantic.fields import ModelField
+from pydantic import ConfigDict
+from pydantic.fields import Field
 from pydantic.utils import lenient_issubclass
 
 from ormar.exceptions import ModelDefinitionError  # noqa: I100, I202
@@ -30,7 +31,7 @@ def create_pydantic_field(
     :param model_field: relation field from which through model is extracted
     :type model_field: ManyToManyField class
     """
-    model_field.through.__fields__[field_name] = ModelField(
+    model_field.through.__fields__[field_name] = Field(
         name=field_name,
         type_=model,
         model_config=model.__config__,
@@ -39,7 +40,7 @@ def create_pydantic_field(
     )
 
 
-def get_pydantic_field(field_name: str, model: Type["Model"]) -> "ModelField":
+def get_pydantic_field(field_name: str, model: Type["Model"]) -> "Field":
     """
     Extracts field type and if it's required from Model model_fields by passed
     field_name. Returns a pydantic field with type of field_name field type.
@@ -49,10 +50,10 @@ def get_pydantic_field(field_name: str, model: Type["Model"]) -> "ModelField":
     :param model: type of field to register
     :type model: Model class
     :return: newly created pydantic field
-    :rtype: pydantic.ModelField
+    :rtype: pydantic.Field
     """
     type_ = model.Meta.model_fields[field_name].__type__
-    return ModelField(
+    return Field(
         name=field_name,
         type_=type_,  # type: ignore
         model_config=model.__config__,
@@ -107,23 +108,21 @@ def merge_or_generate_pydantic_config(attrs: Dict, name: str) -> None:
 
     :rtype: None
     """
-    DefaultConfig = get_pydantic_base_orm_config()
-    if "Config" in attrs:
-        ProvidedConfig = attrs["Config"]
-        if not inspect.isclass(ProvidedConfig):
+    default_config = get_pydantic_base_orm_config()
+    if "model_config" in attrs:
+        provided_config = attrs["model_config"]
+        if not isinstance(provided_config, dict):
             raise ModelDefinitionError(
-                f"Config provided for class {name} has to be a class."
+                f"Config provided for class {name} has to be a dictionary."
             )
 
-        class Config(ProvidedConfig, DefaultConfig):  # type: ignore
-            pass
-
-        attrs["Config"] = Config
+        config = default_config.update(provided_config)
+        attrs["model_config"] = config
     else:
-        attrs["Config"] = DefaultConfig
+        attrs["model_config"] = default_config
 
 
-def get_pydantic_base_orm_config() -> Type[pydantic.BaseConfig]:
+def get_pydantic_base_orm_config() -> pydantic.ConfigDict:
     """
     Returns empty pydantic Config with orm_mode set to True.
 
@@ -131,11 +130,7 @@ def get_pydantic_base_orm_config() -> Type[pydantic.BaseConfig]:
     :rtype: pydantic Config
     """
 
-    class Config(pydantic.BaseConfig):
-        orm_mode = True
-        validate_assignment = True
-
-    return Config
+    return ConfigDict(validate_assignment=True)
 
 
 def get_potential_fields(attrs: Union[Dict, MappingProxyType]) -> Dict:
