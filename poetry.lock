@@ -1440,13 +1440,13 @@ files = [
 
 [[package]]
 name = "mkdocs-section-index"
-version = "0.3.7"
+version = "0.3.8"
 description = "MkDocs plugin to allow clickable sections that lead to an index page"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "mkdocs_section_index-0.3.7-py3-none-any.whl", hash = "sha256:747758a71c5dce3519076b8067d2c64edbc17ec1af59e7aed6a6e79d20d37e6d"},
-    {file = "mkdocs_section_index-0.3.7.tar.gz", hash = "sha256:de490d07e46ad6a49e79d7e74a98bfec73539f159381223ed07b315ee96009a0"},
+    {file = "mkdocs_section_index-0.3.8-py3-none-any.whl", hash = "sha256:823d298d78bc1e73e23678ff60889f3c369c2167b03dba73fea88bd0e268a60d"},
+    {file = "mkdocs_section_index-0.3.8.tar.gz", hash = "sha256:bbd209f0da79441baf136ef3a9c40665bb9681d1fb62c73ca2f116fd1388a404"},
 ]
 
 [package.dependencies]
@@ -2801,4 +2801,4 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.0"
-content-hash = "5eca582ce151959a6f0ab6cc5f718e6bd4ffa52342cd0c2e8614b79c55dad75a"
+content-hash = "11d93dd32144b3b038c52721cb57cc77b0ababf0a11bffcf2bcf3e3afc95d525"
