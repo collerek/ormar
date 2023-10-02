@@ -2585,17 +2585,17 @@ files = [
 
 [[package]]
 name = "types-requests"
-version = "2.31.0.6"
+version = "2.31.0.7"
 description = "Typing stubs for requests"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "types-requests-2.31.0.6.tar.gz", hash = "sha256:cd74ce3b53c461f1228a9b783929ac73a666658f223e28ed29753771477b3bd0"},
-    {file = "types_requests-2.31.0.6-py3-none-any.whl", hash = "sha256:a2db9cb228a81da8348b49ad6db3f5519452dd20a9c1e1a868c83c5fe88fd1a9"},
+    {file = "types-requests-2.31.0.7.tar.gz", hash = "sha256:4d930dcabbc2452e3d70728e581ac4ac8c2d13f62509ad9114673f542af8cb4e"},
+    {file = "types_requests-2.31.0.7-py3-none-any.whl", hash = "sha256:39844effefca88f4f824dcdc4127b813d3b86a56b2248d3d1afa58832040d979"},
 ]
 
 [package.dependencies]
-types-urllib3 = "*"
+urllib3 = ">=2"
 
 [[package]]
 name = "types-toml"
@@ -2617,17 +2617,6 @@ python-versions = "*"
 files = [
     {file = "types-ujson-5.8.0.1.tar.gz", hash = "sha256:2b14388248ab4cd1f5efa8c464761112597ccd57c0d84238f73631abe0e20cfd"},
     {file = "types_ujson-5.8.0.1-py3-none-any.whl", hash = "sha256:1923f373ba5df0eaa4e3fe5c85dbf4c0b475e2cce3f77f5f4b773347ea1a62c9"},
-]
-
-[[package]]
-name = "types-urllib3"
-version = "1.26.25.13"
-description = "Typing stubs for urllib3"
-optional = false
-python-versions = "*"
-files = [
-    {file = "types-urllib3-1.26.25.13.tar.gz", hash = "sha256:3300538c9dc11dad32eae4827ac313f5d986b8b21494801f1bf97a1ac6c03ae5"},
-    {file = "types_urllib3-1.26.25.13-py3-none-any.whl", hash = "sha256:5dbd1d2bef14efee43f5318b5d36d805a489f6600252bb53626d4bfafd95e27c"},
 ]
 
 [[package]]
