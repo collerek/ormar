@@ -83,6 +83,7 @@ class ModelMeta:
     property_fields: Set
     signals: SignalEmitter
     abstract: bool
+    proxy: bool
     requires_ref_update: bool
     orders_by: List[str]
     exclude_parent_fields: List[str]
@@ -344,12 +345,12 @@ def copy_data_from_parent_model(  # noqa: CCR001
     Copy the key parameters [database, metadata, property_fields and constraints]
     and fields from parent models. Overwrites them if needed.
 
-    Only abstract classes can be subclassed.
+    Only abstract or proxy classes can be subclassed.
 
     Since relation fields requires different related_name for different children
 
 
-    :raises ModelDefinitionError: if non abstract model is subclassed
+    :raises ModelDefinitionError: if non abstract model is subclassed or not proxy model
     :param base_class: one of the parent classes
     :type base_class: Model or model parent class
     :param curr_class: current constructed class
@@ -361,11 +362,17 @@ def copy_data_from_parent_model(  # noqa: CCR001
     :return: updated attrs and model_fields
     :rtype: Tuple[Dict, Dict]
     """
-    if attrs.get("Meta"):
-        if model_fields and not base_class.Meta.abstract:  # type: ignore
+    meta: Optional[ModelMeta] = attrs.get("Meta")
+    if meta is not None:
+        if (  # type: ignore
+            model_fields
+            and not base_class.Meta.abstract
+            and not getattr(meta, "proxy", False)
+        ):
             raise ModelDefinitionError(
                 f"{curr_class.__name__} cannot inherit "
                 f"from non abstract class {base_class.__name__}"
+                "except for the proxy model mode without adding new model fields."
             )
         update_attrs_from_base_meta(
             base_class=base_class,  # type: ignore
@@ -604,7 +611,9 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             register_signals(new_model=new_model)
             populate_choices_validators(new_model)
 
-            if not new_model.Meta.abstract:
+            if new_model.Meta.proxy:
+                new_model.Meta.table = attrs.get("table")
+            elif not new_model.Meta.abstract:
                 new_model = populate_meta_tablename_columns_and_pk(name, new_model)
                 populate_meta_sqlalchemy_table_if_required(new_model.Meta)
                 expand_reverse_relationships(new_model)

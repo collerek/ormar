@@ -1,9 +1,10 @@
 # Inheritance
 
-Out of various types of ORM models inheritance `ormar` currently supports two of them:
+Out of various types of ORM models inheritance `ormar` currently supports three of them:
 
 * **Mixins**
 * **Concrete table inheritance** (with parents set to `abstract=True`)
+* **Proxy models** (with children's set to `proxy=True`)
 
 ## Types of inheritance
 
@@ -15,6 +16,8 @@ The short summary of different types of inheritance is:
 * **Concrete table inheritance [SUPPORTED]** - means that parent is marked as abstract
   and each child has its own table with columns from a parent and own child columns, kind
   of similar to Mixins but parent also is a Model
+* **Proxy models [SUPPORTED]** - means that only parent has an actual table,
+  children just add methods, modify settings etc.
 * **Single table inheritance [NOT SUPPORTED]** - means that only one table is created
   with fields that are combination/sum of the parent and all children models but child
   models use only subset of column in db (all parent and own ones, skipping the other
@@ -23,8 +26,6 @@ The short summary of different types of inheritance is:
   is saved on parent model and part is saved on child model that are connected to each
   other by kind of one to one relation and under the hood you operate on two models at
   once
-* **Proxy models [NOT SUPPORTED]** - means that only parent has an actual table,
-  children just add methods, modify settings etc.
 
 ## Mixins
 
