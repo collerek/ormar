@@ -117,6 +117,8 @@ class RelationDescriptor:
         else:
             # foreign key relation
             instance.__dict__[self.name] = model
+            if value is None and instance.Meta.model_fields[self.name].nullable:
+                instance._orm.remove(self.name, getattr(instance, self.name))
             instance.set_save_status(False)
 
 
