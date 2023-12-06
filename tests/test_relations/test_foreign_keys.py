@@ -440,3 +440,15 @@ async def test_bulk_update_model_with_children():
                 is_best_seller=True
             ).all()
             assert len(best_seller_albums_db) == 2
+
+
+@pytest.mark.asyncio
+async def test_fk_update_to_none():
+    async with database:
+        async with database.transaction(force_rollback=True):
+            fantasies = await Album.objects.create(name="Limitless")
+            track = await Track.objects.create(album=fantasies, title="Test1", position=1)
+            assert track.album.name == "Limitless"
+            track.album = None
+            updated_track = await track.update(_columns=["album"])
+            assert updated_track.album is None
