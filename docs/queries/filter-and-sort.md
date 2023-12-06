@@ -583,7 +583,7 @@ books = (
 
 `get(*args, **kwargs) -> Model`
 
-Get's the first row from the db meeting the criteria set by kwargs.
+Gets the first row from the db meeting the criteria set by kwargs.
 
 When any args and/or kwargs are passed it's a shortcut equivalent to calling `filter(*args, **kwargs).get()`
 
@@ -713,7 +713,7 @@ Ordering in sql will be applied in order of names you provide in order_by.
     will result in 2 rows of result:
     ```
     MODEL: 1 - Child Models: [3, 1] # encountered first in result, all children rows combined
-    MODEL: 2 - Child Modles: [2]
+    MODEL: 2 - Child Models: [2]
     ```
     
     The main model will never duplicate in the result

@@ -222,7 +222,7 @@ It will add both: validation in `pydantic` model and will display available opti
 therefore it will be available in docs of `fastapi`.
 
 If you still want to use `Enum` in your application you can do this by passing a `Enum` into choices
-and later pass value of given option to a given field (note tha Enum is not JsonSerializable).
+and later pass value of given option to a given field (note that Enum is not JsonSerializable).
 
 ```python
 # note that imports and endpoints declaration 

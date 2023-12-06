@@ -28,7 +28,7 @@ class PrefetchQueryMixin(RelationMixin):
 
         :param parent_model: related model that the relation lead to
         :type parent_model: Type[Model]
-        :param target_model: model on which query should be perfomed
+        :param target_model: model on which query should be performed
         :type target_model: Type[Model]
         :param reverse: flag if the relation is reverse
         :type reverse: bool

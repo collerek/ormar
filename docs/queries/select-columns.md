@@ -100,7 +100,7 @@ for those models in fields
 ```python hl_lines="1"
 all_cars = await Car.objects.select_related('manufacturer').fields('id').fields(
     ['name']).all()
-# all fiels from company model are selected
+# all fields from company model are selected
 assert all_cars[0].manufacturer.name == 'Toyota'
 assert all_cars[0].manufacturer.founded == 1937
 ```
@@ -263,7 +263,7 @@ for car in all_cars:
 # models selected in select_related but with no columns in fields list implies all fields
 all_cars = await Car.objects.select_related('manufacturer').exclude_fields('year').exclude_fields(
     ['gear', 'gearbox_type']).all()
-# all fiels from company model are selected
+# all fields from company model are selected
 assert all_cars[0].manufacturer.name == 'Toyota'
 assert all_cars[0].manufacturer.founded == 1937
 

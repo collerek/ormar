@@ -6,8 +6,9 @@ import databases
 import pydantic
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -127,10 +128,11 @@ async def test_setting_values_after_init():
         assert '["thing1"]' in (await Thing.objects.get(id=t1.id)).json()
 
 
-def test_read_main():
-    client = TestClient(app)
-    with client as client:
-        response = client.get("/things_with_sample")
+@pytest.mark.asyncio
+async def test_read_main():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client, LifespanManager(app):
+        response = await client.get("/things_with_sample")
         assert response.status_code == 200
 
         # check if raw response not double encoded
@@ -142,11 +144,13 @@ def test_read_main():
         assert resp[1].get("js") == ["asdf", "asdf", "bobby", "nigel"]
 
         # create a new one
-        response = client.post("/things", json={"js": ["test", "test2"], "name": "c"})
+        response = await client.post(
+            "/things", json={"js": ["test", "test2"], "name": "c"}
+        )
         assert response.json().get("js") == ["test", "test2"]
 
         # get all with new one
-        response = client.get("/things")
+        response = await client.get("/things")
         assert response.status_code == 200
         assert '["test","test2"]' in response.text
         resp = response.json()
@@ -154,26 +158,26 @@ def test_read_main():
         assert resp[1].get("js") == ["asdf", "asdf", "bobby", "nigel"]
         assert resp[2].get("js") == ["test", "test2"]
 
-        response = client.get("/things_with_sample_after_init")
+        response = await client.get("/things_with_sample_after_init")
         assert response.status_code == 200
         resp = response.json()
         assert resp.get("js") == ["js", "set", "after", "constructor"]
 
         # test new with after constructor
-        response = client.get("/things")
+        response = await client.get("/things")
         resp = response.json()
         assert resp[0].get("js") == ["lemon", "raspberry", "lime", "pumice"]
         assert resp[1].get("js") == ["asdf", "asdf", "bobby", "nigel"]
         assert resp[2].get("js") == ["test", "test2"]
         assert resp[3].get("js") == ["js", "set", "after", "constructor"]
 
-        response = client.put("/update_thing", json=resp[3])
+        response = await client.put("/update_thing", json=resp[3])
         assert response.status_code == 200
         resp = response.json()
         assert resp.get("js") == ["js", "set", "after", "update"]
 
         # test new with after constructor
-        response = client.get("/things_untyped")
+        response = await client.get("/things_untyped")
         resp = response.json()
         assert resp[0].get("js") == ["lemon", "raspberry", "lime", "pumice"]
         assert resp[1].get("js") == ["asdf", "asdf", "bobby", "nigel"]

@@ -29,7 +29,7 @@ The benefit of using construct is the speed of execution due to skipped validati
 
 !!!warning
         Bear in mind that due to skipped validation the `construct` method does not perform any conversions, checks etc. 
-        So it's your responsibility to provide tha data that is valid and can be consumed by the database.
+        So it's your responsibility to provide that data that is valid and can be consumed by the database.
         
         The only two things that construct still performs are:
 
@@ -45,7 +45,7 @@ therefore it's listed here for clarity.
 
 Explanation of dict parameters:
 
-### include (`ormar` modifed)
+### include (`ormar` modified)
 
 `include: Union[Set, Dict] = None`
 
@@ -639,7 +639,7 @@ to_save = {
                  },
             ],
         }
-# initializa whole tree
+# initialize whole tree
 department = Department(**to_save)
 
 # save all at once (one after another)
