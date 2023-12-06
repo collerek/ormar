@@ -394,7 +394,7 @@ class Bus2(Car2):
 ```
 
 `Ormar` automatically modifies related_name of the fields to include the **table** name 
-of the children models. The dafault name is original related_name + '_' + child table name.
+of the children models. The default name is original related_name + '_' + child table name.
 
 That way for class Truck2 the relation defined in 
 `owner: Person = ormar.ForeignKey(Person, related_name="owned")` becomes `owned_trucks2`
@@ -509,13 +509,13 @@ class Category(DateFieldsModel, AuditModel):
     code: int = ormar.Integer()
 
 # Note that now the update fields in Category are gone in all places -> ormar fields, pydantic fields and sqlachemy table columns
-# so full list of available fileds in Category is: ["created_by", "created_date", "id", "name", "code"]
+# so full list of available fields in Category is: ["created_by", "created_date", "id", "name", "code"]
 ```
 
 Note how you simply need to provide field names and it will exclude the parent field regardless of from which parent model the field is coming from.
 
 !!!Note
-    Note that if you want to overwrite a field in child model you do not have to exclude it, simpy overwrite the field declaration in child model with same field name.
+    Note that if you want to overwrite a field in child model you do not have to exclude it, simply overwrite the field declaration in child model with same field name.
 
 !!!Warning
     Note that this kind of behavior can confuse mypy and static type checkers, yet accessing the non existing fields will fail at runtime. That's why splitting the base classes is preferred.

@@ -4,8 +4,9 @@ from typing import Any, Dict, Optional, Set, Type, Union, cast
 import databases
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 import ormar
 from ormar.queryset.utils import translate_list_to_dict
@@ -135,9 +136,10 @@ async def get_department_exclude_all(department_name: str):
     return department.dict(exclude=exclude_all)
 
 
-def test_saving_related_in_fastapi():
-    client = TestClient(app)
-    with client as client:
+@pytest.mark.asyncio
+async def test_saving_related_in_fastapi():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client, LifespanManager(app):
         payload = {
             "department_name": "Ormar",
             "courses": [
@@ -153,9 +155,7 @@ def test_saving_related_in_fastapi():
                 },
             ],
         }
-        response = client.post(
-            "/departments/", data=json.dumps(payload), headers=headers
-        )
+        response = await client.post("/departments/", json=payload, headers=headers)
         department = Department(**response.json())
 
         assert department.id is not None
@@ -166,9 +166,9 @@ def test_saving_related_in_fastapi():
         assert department.courses[1].course_name == "basic2"
         assert department.courses[1].completed
 
-        response = client.get("/departments/Ormar")
-        response2 = client.get("/departments/Ormar/second")
+        response = await client.get("/departments/Ormar")
+        response2 = await client.get("/departments/Ormar/second")
         assert response.json() == response2.json() == payload
 
-        response3 = client.get("/departments/Ormar/exclude")
+        response3 = await client.get("/departments/Ormar/exclude")
         assert response3.json() == {"department_name": "Ormar"}
