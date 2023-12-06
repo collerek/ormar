@@ -57,7 +57,6 @@ As part of the fastapi ecosystem `ormar` is supported in libraries that somehow 
 
 As of now `ormar` is supported by:
 
-*  [`fastapi-users`](https://github.com/frankie567/fastapi-users)
 *  [`fastapi-crudrouter`](https://github.com/awtkns/fastapi-crudrouter)
 *  [`fastapi-pagination`](https://github.com/uriyyo/fastapi-pagination)
 
