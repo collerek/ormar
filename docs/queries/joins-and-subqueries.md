@@ -33,7 +33,7 @@ To chain related `Models` relation use double underscores between names.
 !!!note 
     If you are coming from `django` note that `ormar` `select_related` differs ->
     in `django` you can `select_related`
-    only singe relation types, while in `ormar` you can select related across `ForeignKey`
+    only single relation types, while in `ormar` you can select related across `ForeignKey`
     relation, reverse side of `ForeignKey` (so virtual auto generated keys) and `ManyToMany`
     fields (so all relations as of current version).
 

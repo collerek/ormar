@@ -238,7 +238,7 @@ def test_excluding_property_field_in_endpoints2():
             "last_name",
             "created_date",
         ]
-        # despite being decorated with property_field if you explictly exclude it it will be gone
+        # despite being decorated with property_field if you explicitly exclude it it will be gone
         assert response.json().get("full_name") is None
 
 # <==related of code removed for clarity==>

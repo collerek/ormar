@@ -941,7 +941,7 @@ class QuerySet(Generic[T]):
 
     async def get_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
         """
-        Get's the row from the db meeting the criteria set by kwargs.
+        Gets the first row from the db meeting the criteria set by kwargs.
 
         If no criteria set it will return the last row in db sorted by pk.
 
@@ -963,7 +963,7 @@ class QuerySet(Generic[T]):
 
     async def get(self, *args: Any, **kwargs: Any) -> "T":  # noqa: CCR001
         """
-        Get's the row from the db meeting the criteria set by kwargs.
+        Gets the first row from the db meeting the criteria set by kwargs.
 
         If no criteria set it will return the last row in db sorted by pk.
 

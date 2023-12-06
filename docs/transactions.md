@@ -8,7 +8,7 @@ To use transactions use `database.transaction` as async context manager:
 
 ```python
 async with database.transaction():
-    # everyting called here will be one transaction
+    # everything called here will be one transaction
     await Model1().save()
     await Model2().save()
     ...

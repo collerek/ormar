@@ -93,7 +93,7 @@ assert album == album2
 !!!warning 
     Despite being a equivalent row from database the `album` and `album2` in
     example above are 2 different python objects!
-    Updating one of them will not refresh the second one until you excplicitly load() the
+    Updating one of them will not refresh the second one until you explicitly load() the
     fresh data from db.
 
 !!!note 

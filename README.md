@@ -420,7 +420,7 @@ async def filter_and_sort():
 
 async def subset_of_columns():
     # to exclude some columns from loading when querying the database
-    # you can use fileds() method
+    # you can use fields() method
     hobbit = await Book.objects.fields(["title"]).get(title="The Hobbit")
     # note that fields not included in fields are empty (set to None)
     assert hobbit.year is None
