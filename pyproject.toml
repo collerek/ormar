@@ -112,7 +112,7 @@ mkdocs-section-index = "^0.3.7"
 dataclasses = { version = ">=0.6.0,<0.8 || >0.8,<1.0.0" }
 
 # Performance testing
-yappi = "^1.5.1"
+yappi = "^1.6.0"
 pytest-benchmark = "^4.0.0"
 nest-asyncio = "^1.5.8"
 
