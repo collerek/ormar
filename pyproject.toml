@@ -90,7 +90,7 @@ flake8-expression-complexity = "^0.0.11"
 
 # types
 mypy = "^0.982"
-types-ujson = "^5.8.0"
+types-ujson = "^5.9.0"
 types-PyMySQL = "^1.1.0"
 types-ipaddress = "^1.0.1"
 types-enum34 = "^1.1.1"
@@ -112,7 +112,7 @@ mkdocs-section-index = "^0.3.7"
 dataclasses = { version = ">=0.6.0,<0.8 || >0.8,<1.0.0" }
 
 # Performance testing
-yappi = "^1.4.0"
+yappi = "^1.6.0"
 pytest-benchmark = "^4.0.0"
 nest-asyncio = "^1.5.8"
 
