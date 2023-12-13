@@ -2653,13 +2653,13 @@ files = [
 
 [[package]]
 name = "types-ujson"
-version = "5.8.0.1"
+version = "5.9.0.0"
 description = "Typing stubs for ujson"
 optional = false
-python-versions = "*"
+python-versions = ">=3.7"
 files = [
-    {file = "types-ujson-5.8.0.1.tar.gz", hash = "sha256:2b14388248ab4cd1f5efa8c464761112597ccd57c0d84238f73631abe0e20cfd"},
-    {file = "types_ujson-5.8.0.1-py3-none-any.whl", hash = "sha256:1923f373ba5df0eaa4e3fe5c85dbf4c0b475e2cce3f77f5f4b773347ea1a62c9"},
+    {file = "types-ujson-5.9.0.0.tar.gz", hash = "sha256:7e7042454dc7cd7f31b09c420d7caf36b93d30bdf4b8db93791bd0561713d017"},
+    {file = "types_ujson-5.9.0.0-py3-none-any.whl", hash = "sha256:f274fa604ed6317effcd1c424ef4cf292c3b0689cb118fb3180689d40ed1f4ed"},
 ]
 
 [[package]]
@@ -2840,4 +2840,4 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.0"
-content-hash = "15009bdba1d70201c952e633b4121ee93bea6a7f690ac447e1ddea05636959cd"
+content-hash = "b31eb7a3597ce74beba19bd5ce00e53de6d4f0553995080ee744f5ac4e99b849"
