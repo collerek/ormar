@@ -15,7 +15,6 @@ from typing import (
     overload,
 )
 
-from pydantic._internal._typing_extra import evaluate_fwd_ref
 
 import ormar  # noqa I101
 import sqlalchemy
@@ -49,10 +48,10 @@ def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
     :rtype: Model
     """
     init_dict = {
-        **{fk.Meta.pkname: pk or -1, "__pk_only__": True},
+        **{fk.ormar_config.pkname: pk or -1, "__pk_only__": True},
         **{
             k: create_dummy_instance(v.to)
-            for k, v in fk.Meta.model_fields.items()
+            for k, v in fk.ormar_config.model_fields.items()
             if v.is_relation and not v.nullable and not v.virtual
         },
     }
@@ -107,8 +106,10 @@ def populate_fk_params_based_on_to_model(
     :return: tuple with target pydantic type, list of fk constraints and target col type
     :rtype: Tuple[Any, List, Any]
     """
-    fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
-    to_field = to.Meta.model_fields[to.Meta.pkname]
+    fk_string = (
+        to.ormar_config.tablename + "." + to.get_column_alias(to.ormar_config.pkname)
+    )
+    to_field = to.ormar_config.model_fields[to.ormar_config.pkname]
     pk_only_model = create_dummy_model(to, to_field)
     __type__ = (
         Union[to_field.__type__, to, pk_only_model]
@@ -366,9 +367,7 @@ class ForeignKeyField(BaseField):
         :rtype: None
         """
         if self.to.__class__ == ForwardRef:
-            self.to = evaluate_fwd_ref(
-                self.to, globalns, localns or None  # type: ignore
-            )
+            self.to.model_rebuild(force=True)
             (
                 self.__type__,
                 self.constraints,
@@ -446,7 +445,10 @@ class ForeignKeyField(BaseField):
         :return: (if needed) registered Model
         :rtype: Model
         """
-        if len(value.keys()) == 1 and list(value.keys())[0] == self.to.Meta.pkname:
+        if (
+            len(value.keys()) == 1
+            and list(value.keys())[0] == self.to.ormar_config.pkname
+        ):
             value["__pk_only__"] = True
         model = self.to(**value)
         if to_register:

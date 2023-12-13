@@ -4,7 +4,7 @@ NewBaseModel __getattribute__ calls to speed the calls.
 """
 quick_access_set = {
     "Config",
-    "Meta",
+    "model_config",
     "__class__",
     "__config__",
     "__custom_root_type__",

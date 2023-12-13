@@ -36,8 +36,10 @@ class OrderAction(QueryAction):
 
     @property
     def is_postgres_bool(self) -> bool:
-        dialect = self.target_model.Meta.database._backend._dialect.name
-        field_type = self.target_model.Meta.model_fields[self.field_name].__type__
+        dialect = self.target_model.ormar_config.database._backend._dialect.name
+        field_type = self.target_model.ormar_config.model_fields[
+            self.field_name
+        ].__type__
         return dialect == "postgresql" and field_type == bool
 
     def get_field_name_text(self) -> str:
@@ -82,7 +84,7 @@ class OrderAction(QueryAction):
         table_name = self.table.name
         field_name = self.field_alias
         if not prefix:
-            dialect = self.target_model.Meta.database._backend._dialect
+            dialect = self.target_model.ormar_config.database._backend._dialect
             table_name = dialect.identifier_preparer.quote(table_name)
             field_name = dialect.identifier_preparer.quote(field_name)
         return text(f"{prefix}{table_name}" f".{field_name} {self.direction}")

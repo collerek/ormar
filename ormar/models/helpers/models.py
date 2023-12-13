@@ -11,6 +11,7 @@ from ormar.models.utils import Extra
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.fields import BaseField
+    from ormar.queryset import QuerySet
 
 
 def is_field_an_forward_ref(field: "BaseField") -> bool:
@@ -46,35 +47,15 @@ def populate_default_options_values(  # noqa: CCR001
     :param model_fields: dict of model fields
     :type model_fields: Union[Dict[str, type], Dict]
     """
-    defaults = {
-        "queryset_class": ormar.QuerySet,
-        "constraints": [],
-        "model_fields": model_fields,
-        "abstract": False,
-        "extra": Extra.forbid,
-        "orders_by": [],
-        "exclude_parent_fields": [],
-    }
-    for key, value in defaults.items():
-        if not hasattr(new_model.Meta, key):
-            setattr(new_model.Meta, key, value)
-
-    if any(
-        is_field_an_forward_ref(field) for field in new_model.Meta.model_fields.values()
-    ):
-        new_model.Meta.requires_ref_update = True
-    else:
-        new_model.Meta.requires_ref_update = False
+    new_model.ormar_config.model_fields = model_fields
+    if any(is_field_an_forward_ref(field) for field in model_fields.values()):
+        new_model.ormar_config.requires_ref_update = True
 
     new_model._json_fields = {
-        name
-        for name, field in new_model.Meta.model_fields.items()
-        if field.__type__ == pydantic.Json
+        name for name, field in model_fields.items() if field.__type__ == pydantic.Json
     }
     new_model._bytes_fields = {
-        name
-        for name, field in new_model.Meta.model_fields.items()
-        if field.__type__ == bytes
+        name for name, field in model_fields.items() if field.__type__ == bytes
     }
 
     new_model.__relation_map__ = None
@@ -94,7 +75,7 @@ def substitue_backend_pool_for_sqlite(new_model: Type["Model"]) -> None:
     :param new_model: newly declared ormar Model
     :type new_model: Model class
     """
-    backend = new_model.Meta.database._backend
+    backend = new_model.ormar_config.database._backend
     if (
         backend._dialect.name == "sqlite" and "factory" not in backend._options
     ):  # pragma: no cover
@@ -112,20 +93,17 @@ def check_required_meta_parameters(new_model: Type["Model"]) -> None:
     :param new_model: newly declared ormar Model
     :type new_model: Model class
     """
-    if not hasattr(new_model.Meta, "database"):
-        if not getattr(new_model.Meta, "abstract", False):
-            raise ormar.ModelDefinitionError(
-                f"{new_model.__name__} does not have database defined."
-            )
-
+    if new_model.ormar_config.database is None and not new_model.ormar_config.abstract:
+        raise ormar.ModelDefinitionError(
+            f"{new_model.__name__} does not have database defined."
+        )
     else:
         substitue_backend_pool_for_sqlite(new_model=new_model)
 
-    if not hasattr(new_model.Meta, "metadata"):
-        if not getattr(new_model.Meta, "abstract", False):
-            raise ormar.ModelDefinitionError(
-                f"{new_model.__name__} does not have metadata defined."
-            )
+    if new_model.ormar_config.metadata is None and not new_model.ormar_config.abstract:
+        raise ormar.ModelDefinitionError(
+            f"{new_model.__name__} does not have metadata defined."
+        )
 
 
 def extract_annotations_and_default_vals(attrs: Dict) -> Tuple[Dict, Dict]:
@@ -176,7 +154,7 @@ def group_related_list(list_: List) -> Dict:
     return dict(sorted(result_dict.items(), key=lambda item: len(item[1])))
 
 
-def meta_field_not_set(model: Type["Model"], field_name: str) -> bool:
+def config_field_not_set(model: Type["Model"], field_name: str) -> bool:
     """
     Checks if field with given name is already present in model.Meta.
     Then check if it's set to something truthful
@@ -189,4 +167,4 @@ def meta_field_not_set(model: Type["Model"], field_name: str) -> bool:
     :return: result of the check
     :rtype: bool
     """
-    return not hasattr(model.Meta, field_name) or not getattr(model.Meta, field_name)
+    return not getattr(model.ormar_config, field_name)

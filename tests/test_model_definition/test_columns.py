@@ -24,10 +24,11 @@ class MyEnum(Enum):
 
 
 class Example(ormar.Model):
-    class Meta:
-        tablename = "example"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="example",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200, default="aaa")
@@ -41,10 +42,11 @@ class Example(ormar.Model):
 
 
 class EnumExample(ormar.Model):
-    class Meta:
-        tablename = "enum_example"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="enum_example",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     size: MyEnum = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
@@ -59,7 +61,7 @@ def create_test_database():
 
 
 def test_proper_enum_column_type():
-    assert Example.__fields__["size"].type_ == MyEnum
+    assert Example.model_fields["size"].__type__ == MyEnum
 
 
 def test_accepts_only_proper_enums():
@@ -135,10 +137,11 @@ async def test_invalid_enum_field():
         with pytest.raises(ModelDefinitionError):
 
             class Example2(ormar.Model):
-                class Meta:
-                    tablename = "example"
-                    metadata = metadata
-                    database = database
+                ormar_config = ormar.OrmarConfig(
+                    tablename="example",
+                    metadata=metadata,
+                    database=database,
+                )
 
                 id: int = ormar.Integer(primary_key=True)
                 size: MyEnum = ormar.Enum(enum_class=[])

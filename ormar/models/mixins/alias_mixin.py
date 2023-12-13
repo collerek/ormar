@@ -7,9 +7,9 @@ class AliasMixin:
     """
 
     if TYPE_CHECKING:  # pragma: no cover
-        from ormar import ModelMeta
+        from ormar.models.ormar_config import OrmarConfig
 
-        Meta: ModelMeta
+        ormar_config: OrmarConfig
 
     @classmethod
     def get_column_alias(cls, field_name: str) -> str:
@@ -21,7 +21,7 @@ class AliasMixin:
         :return: alias (db name) if set, otherwise passed name
         :rtype: str
         """
-        field = cls.Meta.model_fields.get(field_name)
+        field = cls.ormar_config.model_fields.get(field_name)
         return field.get_alias() if field is not None else field_name
 
     @classmethod
@@ -34,7 +34,7 @@ class AliasMixin:
         :return: field name if set, otherwise passed alias (db name)
         :rtype: str
         """
-        for field_name, field in cls.Meta.model_fields.items():
+        for field_name, field in cls.ormar_config.model_fields.items():
             if field.get_alias() == alias:
                 return field_name
         return alias  # if not found it's not an alias but actual name
@@ -50,7 +50,7 @@ class AliasMixin:
         :return: dict with aliases and their values
         :rtype: Dict
         """
-        for field_name, field in cls.Meta.model_fields.items():
+        for field_name, field in cls.ormar_config.model_fields.items():
             if field_name in new_kwargs:
                 new_kwargs[field.get_alias()] = new_kwargs.pop(field_name)
         return new_kwargs
@@ -66,7 +66,7 @@ class AliasMixin:
         :return: dict with fields names and their values
         :rtype: Dict
         """
-        for field_name, field in cls.Meta.model_fields.items():
+        for field_name, field in cls.ormar_config.model_fields.items():
             if field.get_alias() and field.get_alias() in new_kwargs:
                 new_kwargs[field_name] = new_kwargs.pop(field.get_alias())
         return new_kwargs

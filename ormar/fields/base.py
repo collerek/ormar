@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
 from pydantic import typing
-from pydantic.fields import FieldInfo, _Undefined
+from pydantic.fields import FieldInfo, _Unset
 
 import ormar  # noqa I101
 from ormar import ModelDefinitionError
@@ -145,7 +145,7 @@ class BaseField(FieldInfo):
         """
         base = self.default_value()
         if base is None:
-            base = dict(default=None) if self.nullable else dict(default=_Undefined)
+            base = dict(default=None) if self.nullable else dict(default=_Unset)
         return base
 
     def default_value(self, use_server: bool = False) -> Optional[Dict]:
@@ -244,8 +244,8 @@ class BaseField(FieldInfo):
                 con.reference,
                 ondelete=con.ondelete,
                 onupdate=con.onupdate,
-                name=f"fk_{self.owner.Meta.tablename}_{self.to.Meta.tablename}"
-                f"_{self.to.get_column_alias(self.to.Meta.pkname)}_{self.name}",
+                name=f"fk_{self.owner.ormar_config.tablename}_{self.to.ormar_config.tablename}"
+                f"_{self.to.get_column_alias(self.to.ormar_config.pkname)}_{self.name}",
             )
             for con in self.constraints
         ]
@@ -339,7 +339,7 @@ class BaseField(FieldInfo):
         :rtype: None
         """
         if self.owner is not None and (
-            self.owner == self.to or self.owner.Meta == self.to.Meta
+            self.owner == self.to or self.owner.ormar_config == self.to.ormar_config
         ):
             self.self_reference = True
             self.self_reference_primary = self.name

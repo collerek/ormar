@@ -13,10 +13,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class User(ormar.Model):
-    class Meta:
-        tablename = "users"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="users",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -24,10 +25,11 @@ class User(ormar.Model):
 
 
 class Post(ormar.Model):
-    class Meta:
-        tablename = "posts"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="posts",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

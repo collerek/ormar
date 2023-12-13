@@ -46,7 +46,7 @@ from ormar.queryset.reverse_alias_resolver import ReverseAliasResolver
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.models import T
-    from ormar.models.metaclass import ModelMeta
+    from ormar.models.ormar_config import OrmarConfig
     from ormar.models.excludable import ExcludableItems
 else:
     T = TypeVar("T", bound="Model")
@@ -84,7 +84,7 @@ class QuerySet(Generic[T]):
         self.limit_sql_raw = limit_raw_sql
 
     @property
-    def model_meta(self) -> "ModelMeta":
+    def model_meta(self) -> "OrmarConfig":
         """
         Shortcut to model class Meta set on QuerySet model.
 
@@ -93,7 +93,7 @@ class QuerySet(Generic[T]):
         """
         if not self.model_cls:  # pragma nocover
             raise ValueError("Model class of QuerySet is not initialized")
-        return self.model_cls.Meta
+        return self.model_cls.ormar_config
 
     @property
     def model(self) -> Type["T"]:
@@ -908,7 +908,7 @@ class QuerySet(Generic[T]):
             order_bys=(
                 [
                     OrderAction(
-                        order_str=f"{self.model.Meta.pkname}",
+                        order_str=f"{self.model.ormar_config.pkname}",
                         model_cls=self.model_cls,  # type: ignore
                     )
                 ]
@@ -970,7 +970,7 @@ class QuerySet(Generic[T]):
                 order_bys=(
                     [
                         OrderAction(
-                            order_str=f"-{self.model.Meta.pkname}",
+                            order_str=f"-{self.model.ormar_config.pkname}",
                             model_cls=self.model_cls,  # type: ignore
                         )
                     ]
@@ -1226,6 +1226,8 @@ class QuerySet(Generic[T]):
         for obj in objects:
             obj.set_save_status(True)
 
-        await cast(Type["Model"], self.model_cls).Meta.signals.post_bulk_update.send(
+        await cast(
+            Type["Model"], self.model_cls
+        ).ormar_config.signals.post_bulk_update.send(
             sender=self.model_cls, instances=objects  # type: ignore
         )

@@ -12,20 +12,22 @@ metadata = sqlalchemy.MetaData()
 
 
 class User(ormar.Model):
-    class Meta:
-        tablename = "users3"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="users3",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="")
 
 
 class User2(ormar.Model):
-    class Meta:
-        tablename = "users4"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="users4",
+        metadata=metadata,
+        database=database,
+    )
 
     id: uuid.UUID = ormar.UUID(
         uuid_format="string", primary_key=True, default=uuid.uuid4
@@ -34,10 +36,11 @@ class User2(ormar.Model):
 
 
 class Task(ormar.Model):
-    class Meta:
-        tablename = "tasks"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="tasks",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="")
@@ -45,10 +48,11 @@ class Task(ormar.Model):
 
 
 class Task2(ormar.Model):
-    class Meta:
-        tablename = "tasks2"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="tasks2",
+        metadata=metadata,
+        database=database,
+    )
 
     id: uuid.UUID = ormar.UUID(
         uuid_format="string", primary_key=True, default=uuid.uuid4

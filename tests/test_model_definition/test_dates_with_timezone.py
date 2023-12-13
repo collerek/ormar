@@ -13,9 +13,10 @@ metadata = sqlalchemy.MetaData()
 
 
 class DateFieldsModel(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     created_date: datetime = ormar.DateTime(
@@ -29,27 +30,30 @@ class DateFieldsModel(ormar.Model):
 
 
 class SampleModel(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     updated_at: datetime = ormar.DateTime()
 
 
 class TimeModel(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     elapsed: time = ormar.Time()
 
 
 class DateModel(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     creation_date: date = ormar.Date()
@@ -59,10 +63,9 @@ class MyModel(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     created_at: datetime = ormar.DateTime(timezone=True, nullable=False)
 
-    class Meta:
-        tablename = "mymodels"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="mymodels", metadata=metadata, database=database
+    )
 
 
 @pytest.fixture(autouse=True, scope="module")

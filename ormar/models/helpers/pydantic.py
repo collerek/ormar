@@ -6,6 +6,7 @@ import pydantic
 from pydantic import ConfigDict
 from pydantic.fields import Field
 from pydantic.utils import lenient_issubclass
+from pydantic_core import PydanticUndefined
 
 from ormar.exceptions import ModelDefinitionError  # noqa: I100, I202
 from ormar.fields import BaseField
@@ -34,7 +35,7 @@ def create_pydantic_field(
     model_field.through.__fields__[field_name] = Field(
         name=field_name,
         type_=model,
-        model_config=model.__config__,
+        model_config=model.model_config,
         required=False,
         class_validators={},
     )
@@ -52,12 +53,14 @@ def get_pydantic_field(field_name: str, model: Type["Model"]) -> "Field":
     :return: newly created pydantic field
     :rtype: pydantic.Field
     """
-    type_ = model.Meta.model_fields[field_name].__type__
+    type_ = model.ormar_config.model_fields[field_name].__type__
     return Field(
         name=field_name,
         type_=type_,  # type: ignore
-        model_config=model.__config__,
-        required=not model.Meta.model_fields[field_name].nullable,
+        model_config=model.model_config,
+        default=None
+        if model.ormar_config.model_fields[field_name].nullable
+        else PydanticUndefined,
         class_validators={},
     )
 
@@ -156,7 +159,9 @@ def remove_excluded_parent_fields(model: Type["Model"]) -> None:
     :param model:
     :type model: Type["Model"]
     """
-    excludes = {*model.Meta.exclude_parent_fields} - {*model.Meta.model_fields.keys()}
+    excludes = {*model.ormar_config.exclude_parent_fields} - {
+        *model.ormar_config.model_fields.keys()
+    }
     if excludes:
         model.__fields__ = {
             k: v for k, v in model.__fields__.items() if k not in excludes

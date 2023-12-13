@@ -134,7 +134,7 @@ class AliasManager:
         if parent_key not in self._aliases_new:
             self.add_alias(parent_key)
 
-        to_field = source_model.Meta.model_fields[relation_name]
+        to_field = source_model.ormar_config.model_fields[relation_name]
         child_model = to_field.to
         child_key = f"{child_model.get_name()}_{reverse_name}"
         if child_key not in self._aliases_new:

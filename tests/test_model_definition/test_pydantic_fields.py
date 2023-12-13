@@ -12,20 +12,19 @@ from tests.settings import DATABASE_URL
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class ModelTest(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)
     url: HttpUrl = "https://www.example.com"  # type: ignore
-    number: Optional[PaymentCardNumber]
+    number: Optional[PaymentCardNumber] = None
 
 
 CARD_NUMBERS = [
@@ -42,8 +41,7 @@ def get_number():
 
 
 class ModelTest2(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)
@@ -57,8 +55,7 @@ class PydanticTest(BaseModel):
 
 
 class ModelTest3(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     def __init__(self, **kwargs):
         kwargs["number"] = get_number()

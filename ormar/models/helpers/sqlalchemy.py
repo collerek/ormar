@@ -14,6 +14,7 @@ from ormar.models.helpers.related_names_validation import (
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model, ModelMeta, ManyToManyField, BaseField, ForeignKeyField
     from ormar.models import NewBaseModel
+    from ormar.models.ormar_config import OrmarConfig
 
 
 def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
@@ -28,7 +29,7 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
     """
     parent_name = model_field.default_target_field_name()
     child_name = model_field.default_source_field_name()
-    model_fields = model_field.through.Meta.model_fields
+    model_fields = model_field.through.ormar_config.model_fields
     model_fields[parent_name] = ormar.ForeignKey(  # type: ignore
         model_field.to,
         real_name=parent_name,
@@ -72,8 +73,10 @@ def create_and_append_m2m_fk(
     :param model_field: field with ManyToMany relation
     :type model_field: ManyToManyField field
     """
-    pk_alias = model.get_column_alias(model.Meta.pkname)
-    pk_column = next((col for col in model.Meta.columns if col.name == pk_alias), None)
+    pk_alias = model.get_column_alias(model.ormar_config.pkname)
+    pk_column = next(
+        (col for col in model.ormar_config.columns if col.name == pk_alias), None
+    )
     if pk_column is None:  # pragma: no cover
         raise ormar.ModelDefinitionError(
             "ManyToMany relation cannot lead to field without pk"
@@ -82,15 +85,15 @@ def create_and_append_m2m_fk(
         field_name,
         pk_column.type,
         sqlalchemy.schema.ForeignKey(
-            model.Meta.tablename + "." + pk_alias,
+            model.ormar_config.tablename + "." + pk_alias,
             ondelete="CASCADE",
             onupdate="CASCADE",
-            name=f"fk_{model_field.through.Meta.tablename}_{model.Meta.tablename}"
+            name=f"fk_{model_field.through.ormar_config.tablename}_{model.ormar_config.tablename}"
             f"_{field_name}_{pk_alias}",
         ),
     )
-    model_field.through.Meta.columns.append(column)
-    model_field.through.Meta.table.append_column(column)
+    model_field.through.ormar_config.columns.append(column)
+    model_field.through.ormar_config.table.append_column(column)
 
 
 def check_pk_column_validity(
@@ -152,7 +155,7 @@ def sqlalchemy_columns_from_model_fields(
     if len(model_fields.keys()) == 0:
         model_fields["id"] = ormar.Integer(name="id", primary_key=True)
         logging.warning(
-            f"Table {new_model.Meta.tablename} had no fields so auto "
+            f"Table {new_model.ormar_config.tablename} had no fields so auto "
             "Integer primary key named `id` created."
         )
     validate_related_names_in_relations(model_fields, new_model)
@@ -240,31 +243,33 @@ def populate_meta_tablename_columns_and_pk(
     :rtype: ormar.models.metaclass.ModelMetaclass
     """
     tablename = name.lower() + "s"
-    new_model.Meta.tablename = (
-        new_model.Meta.tablename if hasattr(new_model.Meta, "tablename") else tablename
+    new_model.ormar_config.tablename = (
+        new_model.ormar_config.tablename
+        if new_model.ormar_config.tablename
+        else tablename
     )
     pkname: Optional[str]
 
-    if hasattr(new_model.Meta, "columns"):
-        columns = new_model.Meta.columns
-        pkname = new_model.Meta.pkname
+    if new_model.ormar_config.columns:
+        columns = new_model.ormar_config.columns
+        pkname = new_model.ormar_config.pkname
     else:
         pkname, columns = sqlalchemy_columns_from_model_fields(
-            new_model.Meta.model_fields, new_model
+            new_model.ormar_config.model_fields, new_model
         )
 
     if pkname is None:
         raise ormar.ModelDefinitionError("Table has to have a primary key.")
 
-    new_model.Meta.columns = columns
-    new_model.Meta.pkname = pkname
-    if not new_model.Meta.orders_by:
+    new_model.ormar_config.columns = columns
+    new_model.ormar_config.pkname = pkname
+    if not new_model.ormar_config.orders_by:
         # by default we sort by pk name if other option not provided
-        new_model.Meta.orders_by.append(pkname)
+        new_model.ormar_config.orders_by.append(pkname)
     return new_model
 
 
-def check_for_null_type_columns_from_forward_refs(meta: "ModelMeta") -> bool:
+def check_for_null_type_columns_from_forward_refs(meta: "OrmarConfig") -> bool:
     """
     Check is any column is of NUllType() meaning it's empty column from ForwardRef
 
@@ -278,7 +283,7 @@ def check_for_null_type_columns_from_forward_refs(meta: "ModelMeta") -> bool:
     )
 
 
-def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
+def populate_meta_sqlalchemy_table_if_required(meta: "OrmarConfig") -> None:
     """
     Constructs sqlalchemy table out of columns and parameters set on Meta class.
     It populates name, metadata, columns and constraints.
@@ -286,9 +291,7 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
     :param meta: Meta class of the Model without sqlalchemy table constructed
     :type meta: Model class Meta
     """
-    if not hasattr(meta, "table") and check_for_null_type_columns_from_forward_refs(
-        meta
-    ):
+    if not meta.table and check_for_null_type_columns_from_forward_refs(meta):
         set_constraint_names(meta=meta)
         table = sqlalchemy.Table(
             meta.tablename, meta.metadata, *meta.columns, *meta.constraints
@@ -296,7 +299,7 @@ def populate_meta_sqlalchemy_table_if_required(meta: "ModelMeta") -> None:
         meta.table = table
 
 
-def set_constraint_names(meta: "ModelMeta") -> None:
+def set_constraint_names(meta: "OrmarConfig") -> None:
     """
     Populates the names on IndexColumns and UniqueColumns and CheckColumns constraints.
 
@@ -335,7 +338,7 @@ def update_column_definition(
     :return: None
     :rtype: None
     """
-    columns = model.Meta.columns
+    columns = model.ormar_config.columns
     for ind, column in enumerate(columns):
         if column.name == field.get_alias():
             new_column = field.get_column(field.get_alias())

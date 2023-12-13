@@ -96,7 +96,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :rtype: Dict[str, str]
         """
         ormar_fields = {
-            k for k, v in cls.Meta.model_fields.items() if not v.pydantic_only
+            k for k, v in cls.ormar_config.model_fields.items() if not v.pydantic_only
         }
         new_kwargs = {k: v for k, v in new_kwargs.items() if k in ormar_fields}
         return new_kwargs
@@ -112,8 +112,8 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict[str, str]
         """
-        pkname = cls.Meta.pkname
-        pk = cls.Meta.model_fields[pkname]
+        pkname = cls.ormar_config.pkname
+        pk = cls.ormar_config.model_fields[pkname]
         if new_kwargs.get(pkname, ormar.Undefined) is None and (
             pk.nullable or pk.autoincrement
         ):
@@ -131,7 +131,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict
         """
-        for name, field in cls.Meta.model_fields.items():
+        for name, field in cls.ormar_config.model_fields.items():
             if field.__type__ == uuid.UUID and name in model_dict:
                 parsers = {"string": lambda x: str(x), "hex": lambda x: "%.32x" % x.int}
                 uuid_format = field.column_type.uuid_format
@@ -153,8 +153,8 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         for field in cls.extract_related_names():
             field_value = model_dict.get(field, None)
             if field_value is not None:
-                target_field = cls.Meta.model_fields[field]
-                target_pkname = target_field.to.Meta.pkname
+                target_field = cls.ormar_config.model_fields[field]
+                target_pkname = target_field.to.ormar_config.pkname
                 if isinstance(field_value, ormar.Model):  # pragma: no cover
                     pk_value = getattr(field_value, target_pkname)
                     if not pk_value:
@@ -187,7 +187,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         """
         bytes_base64_fields = {
             name
-            for name, field in cls.Meta.model_fields.items()
+            for name, field in cls.ormar_config.model_fields.items()
             if field.represent_as_base64_str
         }
         for key, value in model_dict.items():
@@ -227,7 +227,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict
         """
-        for field_name, field in cls.Meta.model_fields.items():
+        for field_name, field in cls.ormar_config.model_fields.items():
             if (
                 field_name not in new_kwargs
                 and field.has_default(use_server=False)
@@ -253,21 +253,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict
         """
-        if not cls._choices_fields:
-            return new_kwargs
-
-        fields_to_check = [
-            field
-            for field in cls.Meta.model_fields.values()
-            if field.name in cls._choices_fields and field.name in new_kwargs
-        ]
-        for field in fields_to_check:
-            if new_kwargs[field.name] not in field.choices:
-                raise ValueError(
-                    f"{field.name}: '{new_kwargs[field.name]}' "
-                    f"not in allowed choices set:"
-                    f" {field.choices}"
-                )
+        cls.__pydantic_validator__.validate_python(new_kwargs)  # type: ignore
         return new_kwargs
 
     @staticmethod
@@ -329,7 +315,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :param previous_model: previous model from which method came
         :type previous_model: Model
         """
-        through_name = previous_model.Meta.model_fields[
+        through_name = previous_model.ormar_config.model_fields[
             relation_field.name
         ].through.get_name()
         through = getattr(instance, through_name)

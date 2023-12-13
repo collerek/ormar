@@ -15,10 +15,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class Product(ormar.Model):
-    class Meta:
-        tablename = "product"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="product",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -37,9 +38,11 @@ def create_test_database():
 
 
 def test_table_defined_properly():
-    assert Product.Meta.model_fields["created"].nullable
-    assert not Product.__fields__["created"].required
-    assert Product.Meta.table.columns["created"].server_default.arg.name == "now"
+    assert Product.ormar_config.model_fields["created"].nullable
+    assert not Product.model_fields["created"].is_required()
+    assert (
+        Product.ormar_config.table.columns["created"].server_default.arg.name == "now"
+    )
 
 
 @pytest.mark.asyncio

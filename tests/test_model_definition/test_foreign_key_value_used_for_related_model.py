@@ -12,14 +12,14 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class PageLink(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "pagelinks"
+    ormar_config = base_ormar_config.copy(tablename="pagelinks")
 
     id: int = ormar.Integer(primary_key=True)
     value: str = ormar.String(max_length=2048)
@@ -27,8 +27,7 @@ class PageLink(ormar.Model):
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "posts"
+    ormar_config = base_ormar_config.copy(tablename="posts")
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=500)
@@ -38,16 +37,14 @@ class Post(ormar.Model):
 
 
 class Department(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4())
     name: str = ormar.String(max_length=100)
 
 
 class Course(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

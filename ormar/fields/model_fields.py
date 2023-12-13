@@ -62,49 +62,6 @@ def is_auto_primary_key(primary_key: bool, autoincrement: bool) -> bool:
     return primary_key and autoincrement
 
 
-def convert_choices_if_needed(
-    field_type: "Type",
-    choices: Set,
-    nullable: bool,
-    scale: int = None,
-    represent_as_str: bool = False,
-) -> Set:
-    """
-    Converts dates to isoformat as fastapi can check this condition in routes
-    and the fields are not yet parsed.
-    Converts enums to list of it's values.
-    Converts uuids to strings.
-    Converts decimal to float with given scale.
-
-    :param field_type: type o the field
-    :type field_type: Type
-    :param choices: set of choices
-    :type choices: Set
-    :param scale: scale for decimals
-    :type scale: int
-    :param nullable: flag if field_nullable
-    :type nullable: bool
-    :param represent_as_str: flag for bytes fields
-    :type represent_as_str: bool
-    :param scale: scale for decimals
-    :type scale: int
-    :return: value, choices list
-    :rtype: Tuple[Any, Set]
-    """
-    choices = {o.value if isinstance(o, E) else o for o in choices}
-    encoder = ormar.ENCODERS_MAP.get(field_type, lambda x: x)
-    if field_type == decimal.Decimal:
-        precision = scale
-        choices = {encoder(o, precision) for o in choices}
-    elif field_type == bytes:
-        choices = {encoder(o, represent_as_str) for o in choices}
-    elif encoder:
-        choices = {encoder(o) for o in choices}
-    if nullable:
-        choices.add(None)
-    return choices
-
-
 class ModelFieldFactory:
     """
     Default field factory that construct Field classes and populated their values.
@@ -141,15 +98,6 @@ class ModelFieldFactory:
             else (nullable if sql_nullable is None else sql_nullable)
         )
 
-        choices = set(kwargs.pop("choices", []))
-        if choices:
-            choices = convert_choices_if_needed(
-                field_type=cls._type,
-                choices=choices,
-                nullable=nullable,
-                scale=kwargs.get("scale", None),
-                represent_as_str=kwargs.get("represent_as_base64_str", False),
-            )
         enum_class = kwargs.pop("enum_class", None)
         field_type = cls._type if enum_class is None else enum_class
 
@@ -173,7 +121,6 @@ class ModelFieldFactory:
             column_type=cls.get_column_type(
                 **kwargs, sql_nullable=sql_nullable, enum_class=enum_class
             ),
-            choices=choices,
             encrypt_secret=encrypt_secret,
             encrypt_backend=encrypt_backend,
             encrypt_custom_backend=encrypt_custom_backend,

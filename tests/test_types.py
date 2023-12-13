@@ -1,10 +1,12 @@
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING, TypedDict
 
 import databases
 import pytest
 import sqlalchemy
 
 import ormar
+from ormar.models.metaclass import ModelMeta
+from ormar.models.ormar_config import OrmarConfig
 from ormar.relations.querysetproxy import QuerysetProxy
 from tests.settings import DATABASE_URL
 
@@ -14,10 +16,10 @@ metadata = sqlalchemy.MetaData()
 
 class Publisher(ormar.Model):
 
-    model_config = dict(
+    ormar_config = OrmarConfig(
         metadata=metadata,
         database=database,
-        table_name="publishers",
+        tablename="publishers",
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -26,8 +28,8 @@ class Publisher(ormar.Model):
 
 class Author(ormar.Model):
 
-    model_config = dict(
-        metadata=metadata, database=database, table_name="authors", order_by=["-name"]
+    ormar_config = OrmarConfig(
+        metadata=metadata, database=database, tablename="authors", order_by=["-name"]
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -37,10 +39,10 @@ class Author(ormar.Model):
 
 class Book(ormar.Model):
 
-    model_config = dict(
+    ormar_config = OrmarConfig(
         metadata=metadata,
         database=database,
-        table_name="books",
+        tablename="books",
         order_by=["year", "-ranking"],
     )
 

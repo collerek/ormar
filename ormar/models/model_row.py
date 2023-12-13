@@ -97,7 +97,7 @@ class ModelRow(NewBaseModel):
         )
 
         instance: Optional["Model"] = None
-        if item.get(cls.Meta.pkname, None) is not None:
+        if item.get(cls.ormar_config.pkname, None) is not None:
             item["__excluded__"] = cls.get_names_to_exclude(
                 excludable=excludable, alias=table_prefix
             )
@@ -130,11 +130,11 @@ class ModelRow(NewBaseModel):
             previous_model = related_field.through
         else:
             previous_model = related_field.owner
-        table_prefix = cls.Meta.alias_manager.resolve_relation_alias(
+        table_prefix = cls.ormar_config.alias_manager.resolve_relation_alias(
             from_model=previous_model, relation_name=related_field.name
         )
         if not table_prefix or table_prefix in used_prefixes:
-            manager = cls.Meta.alias_manager
+            manager = cls.ormar_config.alias_manager
             table_prefix = manager.resolve_relation_alias_after_complex(
                 source_model=source_model,
                 relation_str=current_relation_str,
@@ -186,7 +186,7 @@ class ModelRow(NewBaseModel):
         """
 
         for related in related_models:
-            field = cls.Meta.model_fields[related]
+            field = cls.ormar_config.model_fields[related]
             field = cast("ForeignKeyField", field)
             model_cls = field.to
             model_excludable = excludable.get(
@@ -281,7 +281,7 @@ class ModelRow(NewBaseModel):
         :param proxy_source_model: source model from which querysetproxy is constructed
         :type proxy_source_model: Type["Model"]
         """
-        through_name = cls.Meta.model_fields[related].through.get_name()
+        through_name = cls.ormar_config.model_fields[related].through.get_name()
         through_child = cls._create_through_instance(
             row=row, related=related, through_name=through_name, excludable=excludable
         )
@@ -315,8 +315,8 @@ class ModelRow(NewBaseModel):
         :return: initialized through model without relation
         :rtype: "ModelRow"
         """
-        model_cls = cls.Meta.model_fields[through_name].to
-        table_prefix = cls.Meta.alias_manager.resolve_relation_alias(
+        model_cls = cls.ormar_config.model_fields[through_name].to
+        table_prefix = cls.ormar_config.alias_manager.resolve_relation_alias(
             from_model=cls, relation_name=related
         )
         # remove relations on through field
@@ -372,7 +372,7 @@ class ModelRow(NewBaseModel):
         )
 
         column_prefix = table_prefix + "_" if table_prefix else ""
-        for column in cls.Meta.table.columns:
+        for column in cls.ormar_config.table.columns:
             alias = cls.get_column_name_from_alias(column.name)
             if alias not in item and alias in selected_columns:
                 prefixed_name = f"{column_prefix}{column.name}"

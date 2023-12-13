@@ -13,10 +13,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class NickNames(ormar.Model):
-    class Meta:
-        tablename = "nicks"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="nicks",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -24,17 +25,19 @@ class NickNames(ormar.Model):
 
 
 class NicksHq(ormar.Model):
-    class Meta:
-        tablename = "nicks_x_hq"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="nicks_x_hq",
+        metadata=metadata,
+        database=database,
+    )
 
 
 class HQ(ormar.Model):
-    class Meta:
-        tablename = "hqs"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="hqs",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -42,10 +45,11 @@ class HQ(ormar.Model):
 
 
 class Company(ormar.Model):
-    class Meta:
-        tablename = "companies"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="companies",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")

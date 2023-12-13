@@ -11,14 +11,14 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class Subscription(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "subscriptions"
+    ormar_config = base_ormar_config.copy(tablename="subscriptions")
 
     id: int = ormar.Integer(primary_key=True)
     stripe_subscription_id: str = ormar.String(nullable=False, max_length=256)

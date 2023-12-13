@@ -54,13 +54,13 @@ class QueryAction(abc.ABC):
     @property
     def table(self) -> sqlalchemy.Table:
         """Shortcut to sqlalchemy Table of filtered target model"""
-        return self.target_model.Meta.table
+        return self.target_model.ormar_config.table
 
     @property
     def column(self) -> sqlalchemy.Column:
         """Shortcut to sqlalchemy column of filtered target model"""
         aliased_name = self.target_model.get_column_alias(self.field_name)
-        return self.target_model.Meta.table.columns[aliased_name]
+        return self.target_model.ormar_config.table.columns[aliased_name]
 
     def update_select_related(self, select_related: List[str]) -> List[str]:
         """

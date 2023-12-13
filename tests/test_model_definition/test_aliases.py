@@ -12,10 +12,12 @@ metadata = sqlalchemy.MetaData()
 
 
 class Child(ormar.Model):
-    class Meta:
-        tablename = "children"
-        metadata = metadata
-        database = database
+
+    ormar_config = ormar.OrmarConfig(
+        tablename="children",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(name="child_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)
@@ -24,10 +26,12 @@ class Child(ormar.Model):
 
 
 class Artist(ormar.Model):
-    class Meta:
-        tablename = "artists"
-        metadata = metadata
-        database = database
+
+    ormar_config = ormar.OrmarConfig(
+        tablename="artists",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(name="artist_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)
@@ -37,10 +41,11 @@ class Artist(ormar.Model):
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "music_albums"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="music_albums",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(name="album_id", primary_key=True)
     name: str = ormar.String(name="album_name", max_length=100)
@@ -57,11 +62,11 @@ def create_test_database():
 
 
 def test_table_structure():
-    assert "album_id" in [x.name for x in Album.Meta.table.columns]
-    assert "album_name" in [x.name for x in Album.Meta.table.columns]
-    assert "fname" in [x.name for x in Artist.Meta.table.columns]
-    assert "lname" in [x.name for x in Artist.Meta.table.columns]
-    assert "year" in [x.name for x in Artist.Meta.table.columns]
+    assert "album_id" in [x.name for x in Album.ormar_config.table.columns]
+    assert "album_name" in [x.name for x in Album.ormar_config.table.columns]
+    assert "fname" in [x.name for x in Artist.ormar_config.table.columns]
+    assert "lname" in [x.name for x in Artist.ormar_config.table.columns]
+    assert "year" in [x.name for x in Artist.ormar_config.table.columns]
 
 
 @pytest.mark.asyncio

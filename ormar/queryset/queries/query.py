@@ -37,7 +37,7 @@ class Query:
         self.excludable = excludable
 
         self.model_cls = model_cls
-        self.table = self.model_cls.Meta.table
+        self.table = self.model_cls.ormar_config.table
 
         self.used_aliases: List[str] = []
 
@@ -78,7 +78,7 @@ class Query:
         Applies orders_by from model Meta class (if provided), if it was not provided
         it was filled by metaclass so it's always there and falls back to pk column
         """
-        for order_by in self.model_cls.Meta.orders_by:
+        for order_by in self.model_cls.ormar_config.orders_by:
             clause = ormar.OrderAction(order_str=order_by, model_cls=self.model_cls)
             self.sorted_orders[clause] = clause.get_text_clause()
 
@@ -113,7 +113,7 @@ class Query:
         self_related_fields = self.model_cls.own_table_columns(
             model=self.model_cls, excludable=self.excludable, use_alias=True
         )
-        self.columns = self.model_cls.Meta.alias_manager.prefixed_columns(
+        self.columns = self.model_cls.ormar_config.alias_manager.prefixed_columns(
             "", self.table, self_related_fields
         )
         self.apply_order_bys_for_primary_model()
@@ -179,7 +179,7 @@ class Query:
         The condition is added to filters to filter out desired number of main model
         primary key values. Whole query is used to determine the values.
         """
-        pk_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
+        pk_alias = self.model_cls.get_column_alias(self.model_cls.ormar_config.pkname)
         pk_aliased_name = f"{self.table.name}.{pk_alias}"
         qry_text = sqlalchemy.text(f"{pk_aliased_name}")
         maxes = {}

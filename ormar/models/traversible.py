@@ -108,7 +108,7 @@ class Node:
         :return: result of the check
         :rtype: bool
         """
-        target_model = self.node_class.Meta.model_fields[relation_name].to
+        target_model = self.node_class.ormar_config.model_fields[relation_name].to
         if self.parent_node:
             node = self
             while node.parent_node:

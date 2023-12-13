@@ -49,11 +49,11 @@ class QuerysetProxy(Generic[T]):
         self._queryset: Optional["QuerySet[T]"] = qryset
         self.type_: "RelationType" = type_
         self._owner: Union[CallableProxyType, "Model"] = self.relation.manager.owner
-        self.related_field_name = self._owner.Meta.model_fields[
+        self.related_field_name = self._owner.ormar_config.model_fields[
             self.relation.field_name
         ].get_related_name()
         self.to: Type[T] = to
-        self.related_field = to.Meta.model_fields[self.related_field_name]
+        self.related_field = to.ormar_config.model_fields[self.related_field_name]
         self.owner_pk_value = self._owner.pk
         self.through_model_name = (
             self.related_field.through.get_name()

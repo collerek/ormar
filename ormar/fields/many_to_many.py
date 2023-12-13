@@ -12,7 +12,6 @@ from typing import (
     overload,
 )
 
-from pydantic._internal._typing_extra import evaluate_fwd_ref
 import ormar  # noqa: I100
 from ormar import ModelDefinitionError
 from ormar.fields import BaseField
@@ -37,7 +36,7 @@ def forbid_through_relations(through: Type["Model"]) -> None:
     :param through: through Model to be checked
     :type through: Type['Model]
     """
-    if any(field.is_relation for field in through.Meta.model_fields.values()):
+    if any(field.is_relation for field in through.ormar_config.model_fields.values()):
         raise ModelDefinitionError(
             f"Through Models cannot have explicit relations "
             f"defined. Remove the relations from Model "
@@ -59,7 +58,7 @@ def populate_m2m_params_based_on_to_model(
     :return: Tuple[List, Any]
     :rtype: tuple with target pydantic type and target col type
     """
-    to_field = to.Meta.model_fields[to.Meta.pkname]
+    to_field = to.ormar_config.model_fields[to.ormar_config.pkname]
     __type__ = (
         Union[to_field.__type__, to, List[to]]  # type: ignore
         if not nullable
@@ -195,7 +194,7 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :rtype: str
         """
         return (
-            self.through.Meta.model_fields[
+            self.through.ormar_config.model_fields[
                 self.default_source_field_name()
             ].related_name
             or self.name
@@ -223,18 +222,14 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :rtype: None
         """
         if self.to.__class__ == ForwardRef:
-            self.to = evaluate_fwd_ref(
-                self.to, globalns, localns or None  # type: ignore
-            )
+            self.to.model_rebuild(force=True)
 
             (self.__type__, self.column_type) = populate_m2m_params_based_on_to_model(
                 to=self.to, nullable=self.nullable
             )
 
         if self.through.__class__ == ForwardRef:
-            self.through = evaluate_fwd_ref(
-                self.through, globalns, localns or None  # type: ignore
-            )
+            self.through.model_rebuild(force=True)
             forbid_through_relations(self.through)
 
     def get_relation_name(self) -> str:
@@ -266,15 +261,23 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         to_name = self.to.get_name(lower=False)
         class_name = f"{owner_name}{to_name}"
         table_name = f"{owner_name.lower()}s_{to_name.lower()}s"
+        base_namespace = {
+            "__module__": self.owner.__module__,
+            "__qualname__": f"{self.owner.__qualname__}.{class_name}",
+        }
         new_meta_namespace = {
             "tablename": table_name,
-            "database": self.owner.Meta.database,
-            "metadata": self.owner.Meta.metadata,
+            "database": self.owner.ormar_config.database,
+            "metadata": self.owner.ormar_config.metadata,
         }
-        new_meta = type("Meta", (), new_meta_namespace)
+        new_meta = ormar.models.ormar_config.OrmarConfig(**new_meta_namespace)
         through_model = type(
             class_name,
             (ormar.Model,),
-            {"Meta": new_meta, "id": ormar.Integer(name="id", primary_key=True)},
+            {
+                **base_namespace,
+                "ormar_config": new_meta,
+                "id": ormar.Integer(name="id", primary_key=True),
+            },
         )
         self.through = cast(Type["Model"], through_model)

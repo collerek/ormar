@@ -53,7 +53,7 @@ class BytesDescriptor:
 
     def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
         value = instance.__dict__.get(self.name, None)
-        field = instance.Meta.model_fields[self.name]
+        field = instance.ormar_config.model_fields[self.name]
         if (
             value is not None
             and field.represent_as_base64_str
@@ -63,7 +63,7 @@ class BytesDescriptor:
         return value
 
     def __set__(self, instance: "Model", value: Any) -> None:
-        field = instance.Meta.model_fields[self.name]
+        field = instance.ormar_config.model_fields[self.name]
         if isinstance(value, str):
             if field.represent_as_base64_str:
                 value = base64.b64decode(value)
@@ -107,7 +107,7 @@ class RelationDescriptor:
         return None  # pragma no cover
 
     def __set__(self, instance: "Model", value: Any) -> None:
-        model = instance.Meta.model_fields[self.name].expand_relationship(
+        model = instance.ormar_config.model_fields[self.name].expand_relationship(
             value=value, child=instance
         )
         if isinstance(instance.__dict__.get(self.name), list):

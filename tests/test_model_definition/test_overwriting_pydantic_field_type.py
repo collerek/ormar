@@ -13,16 +13,15 @@ metadata = sqlalchemy.MetaData()
 
 
 class OverwriteTest(ormar.Model):
-    class Meta:
-        tablename = "overwrites"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="overwrites",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     my_int: int = ormar.Integer(overwrite_pydantic_type=PositiveInt)
-    constraint_dict: Json = ormar.JSON(
-        overwrite_pydantic_type=Optional[Json[Dict[str, int]]]  # type: ignore
-    )
+    constraint_dict: Json = ormar.JSON(overwrite_pydantic_type=Optional[Json[Dict[str, int]]])  # type: ignore
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -37,11 +36,14 @@ def create_test_database():
 def test_constraints():
     with pytest.raises(ValidationError) as e:
         OverwriteTest(my_int=-10)
-    assert "ensure this value is greater than 0" in str(e.value)
+    assert "Input should be greater than 0" in str(e.value)
 
     with pytest.raises(ValidationError) as e:
         OverwriteTest(my_int=10, constraint_dict={"aa": "ab"})
-    assert "value is not a valid integer" in str(e.value)
+    assert (
+        "Input should be a valid integer, unable to parse string as an integer"
+        in str(e.value)
+    )
 
 
 @pytest.mark.asyncio

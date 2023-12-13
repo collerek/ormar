@@ -43,7 +43,9 @@ class SqlJoin:
         self.main_model = main_model
         self.own_alias = own_alias
         self.used_aliases = used_aliases
-        self.target_field = self.main_model.Meta.model_fields[self.relation_name]
+        self.target_field = self.main_model.ormar_config.model_fields[
+            self.relation_name
+        ]
 
         self._next_model: Optional[Type["Model"]] = None
         self._next_alias: Optional[str] = None
@@ -81,7 +83,7 @@ class SqlJoin:
         :return: alias manager from model's Meta
         :rtype: AliasManager
         """
-        return self.main_model.Meta.alias_manager
+        return self.main_model.ormar_config.alias_manager
 
     @property
     def to_table(self) -> sqlalchemy.Table:
@@ -90,7 +92,7 @@ class SqlJoin:
         :return: name of the target table
         :rtype: str
         """
-        return self.next_model.Meta.table
+        return self.next_model.ormar_config.table
 
     def _on_clause(self, previous_alias: str, from_clause: str, to_clause: str) -> text:
         """
@@ -108,7 +110,7 @@ class SqlJoin:
         """
         left_part = f"{self.next_alias}_{to_clause}"
         if not previous_alias:
-            dialect = self.main_model.Meta.database._backend._dialect
+            dialect = self.main_model.ormar_config.database._backend._dialect
             table, column = from_clause.split(".")
             quotter = dialect.identifier_preparer.quote
             right_part = f"{quotter(table)}.{quotter(column)}"
@@ -232,7 +234,9 @@ class SqlJoin:
 
         self.relation_name = new_part
         self.own_alias = self.next_alias
-        self.target_field = self.next_model.Meta.model_fields[self.relation_name]
+        self.target_field = self.next_model.ormar_config.model_fields[
+            self.relation_name
+        ]
 
     def _process_m2m_related_name_change(self, reverse: bool = False) -> str:
         """
@@ -278,7 +282,7 @@ class SqlJoin:
 
         on_clause = self._on_clause(
             previous_alias=self.own_alias,
-            from_clause=f"{self.target_field.owner.Meta.tablename}.{from_key}",
+            from_clause=f"{self.target_field.owner.ormar_config.tablename}.{from_key}",
             to_clause=f"{self.to_table.name}.{to_key}",
         )
         target_table = self.alias_manager.prefixed_table_name(
@@ -304,7 +308,7 @@ class SqlJoin:
         self.used_aliases.append(self.next_alias)
 
     def _set_default_primary_key_order_by(self) -> None:
-        for order_by in self.next_model.Meta.orders_by:
+        for order_by in self.next_model.ormar_config.orders_by:
             clause = ormar.OrderAction(
                 order_str=order_by, model_cls=self.next_model, alias=self.next_alias
             )
@@ -394,16 +398,20 @@ class SqlJoin:
         """
         if self.target_field.is_multi:
             to_key = self._process_m2m_related_name_change(reverse=True)
-            from_key = self.main_model.get_column_alias(self.main_model.Meta.pkname)
+            from_key = self.main_model.get_column_alias(
+                self.main_model.ormar_config.pkname
+            )
 
         elif self.target_field.virtual:
             to_field = self.target_field.get_related_name()
             to_key = self.target_field.to.get_column_alias(to_field)
-            from_key = self.main_model.get_column_alias(self.main_model.Meta.pkname)
+            from_key = self.main_model.get_column_alias(
+                self.main_model.ormar_config.pkname
+            )
 
         else:
             to_key = self.target_field.to.get_column_alias(
-                self.target_field.to.Meta.pkname
+                self.target_field.to.ormar_config.pkname
             )
             from_key = self.main_model.get_column_alias(self.relation_name)
 

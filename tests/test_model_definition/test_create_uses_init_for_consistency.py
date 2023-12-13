@@ -4,7 +4,7 @@ from typing import ClassVar
 import databases
 import pytest
 import sqlalchemy
-from pydantic import root_validator
+from pydantic import model_validator, root_validator
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -13,19 +13,15 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
-
-
 class Mol(ormar.Model):
     # fixed namespace to generate always unique uuid from the smiles
     _UUID_NAMESPACE: ClassVar[uuid.UUID] = uuid.UUID(
         "12345678-abcd-1234-abcd-123456789abc"
     )
 
-    class Meta(BaseMeta):
-        tablename = "mols"
+    ormar_config = ormar.OrmarConfig(
+        database=database, metadata=metadata, tablename="mols"
+    )
 
     id: uuid.UUID = ormar.UUID(primary_key=True, index=True, uuid_format="hex")
     smiles: str = ormar.String(nullable=False, unique=True, max_length=256)
@@ -36,7 +32,7 @@ class Mol(ormar.Model):
             kwargs["id"] = self._UUID_NAMESPACE
         super().__init__(**kwargs)
 
-    @root_validator()
+    @model_validator(mode="before")
     def make_canonical_smiles_and_uuid(cls, values):
         values["id"], values["smiles"] = cls.uuid(values["smiles"])
         return values

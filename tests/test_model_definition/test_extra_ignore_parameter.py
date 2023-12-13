@@ -10,11 +10,12 @@ metadata = sqlalchemy.MetaData()
 
 
 class Child(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "children"
-        metadata = metadata
-        database = database
-        extra = Extra.ignore
+    ormar_config = ormar.OrmarConfig(
+        tablename="children",
+        metadata=metadata,
+        database=database,
+        extra=Extra.ignore,
+    )
 
     id: int = ormar.Integer(name="child_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)

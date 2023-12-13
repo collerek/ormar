@@ -12,10 +12,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class Song(ormar.Model):
-    class Meta:
-        tablename = "songs"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="songs",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

@@ -78,6 +78,7 @@ from ormar.models.metaclass import ModelMeta
 from ormar.queryset import OrderAction, QuerySet, and_, or_
 from ormar.relations import RelationType
 from ormar.signals import Signal
+from ormar.models import OrmarConfig
 
 
 class UndefinedType:  # pragma no cover

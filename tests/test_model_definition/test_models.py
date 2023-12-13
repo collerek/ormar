@@ -3,6 +3,7 @@ import base64
 import datetime
 import os
 import uuid
+from enum import Enum, Flag
 from typing import List
 
 import databases
@@ -19,10 +20,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class JsonSample(ormar.Model):
-    class Meta:
-        tablename = "jsons"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="jsons",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     test_json = ormar.JSON(nullable=True)
@@ -33,10 +35,11 @@ blob2 = b"test2icac89uc98"
 
 
 class LargeBinarySample(ormar.Model):
-    class Meta:
-        tablename = "my_bolbs"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="my_bolbs",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     test_binary: bytes = ormar.LargeBinary(max_length=100000, choices=[blob, blob2])
@@ -47,10 +50,11 @@ blob4 = os.urandom(100)
 
 
 class LargeBinaryStr(ormar.Model):
-    class Meta:
-        tablename = "my_str_blobs"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="my_str_blobs",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     test_binary: str = ormar.LargeBinary(
@@ -59,10 +63,11 @@ class LargeBinaryStr(ormar.Model):
 
 
 class LargeBinaryNullableStr(ormar.Model):
-    class Meta:
-        tablename = "my_str_blobs2"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="my_str_blobs2",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     test_binary: str = ormar.LargeBinary(
@@ -74,20 +79,22 @@ class LargeBinaryNullableStr(ormar.Model):
 
 
 class UUIDSample(ormar.Model):
-    class Meta:
-        tablename = "uuids"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="uuids",
+        metadata=metadata,
+        database=database,
+    )
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     test_text: str = ormar.Text()
 
 
 class UUIDSample2(ormar.Model):
-    class Meta:
-        tablename = "uuids2"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="uuids2",
+        metadata=metadata,
+        database=database,
+    )
 
     id: uuid.UUID = ormar.UUID(
         primary_key=True, default=uuid.uuid4, uuid_format="string"
@@ -96,77 +103,88 @@ class UUIDSample2(ormar.Model):
 
 
 class User(ormar.Model):
-    class Meta:
-        tablename = "users"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="users",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="")
 
 
 class User2(ormar.Model):
-    class Meta:
-        tablename = "users2"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="users2",
+        metadata=metadata,
+        database=database,
+    )
 
     id: str = ormar.String(primary_key=True, max_length=100)
     name: str = ormar.String(max_length=100, default="")
 
 
 class Product(ormar.Model):
-    class Meta:
-        tablename = "product"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="product",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     rating: int = ormar.Integer(minimum=1, maximum=5)
     in_stock: bool = ormar.Boolean(default=False)
-    last_delivery: datetime.date = ormar.Date(default=datetime.datetime.now)
+    last_delivery: datetime.date = ormar.Date(default=datetime.date.today)
 
 
-country_name_choices = ("Canada", "Algeria", "United States", "Belize")
-country_taxed_choices = (True,)
-country_country_code_choices = (-10, 1, 213, 1200)
+class CountryNameEnum(Enum):
+    CANADA = "Canada"
+    ALGERIA = "Algeria"
+    USA = "United States"
+    BELIZE = "Belize"
+
+
+class CountryCodeEnum(int, Enum):
+    MINUS_TEN = -10
+    ONE = 1
+    TWO_HUNDRED_THIRTEEN = 213
+    THOUSAND_TWO_HUNDRED = 1200
 
 
 class Country(ormar.Model):
-    class Meta:
-        tablename = "country"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="country",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(
-        max_length=9, choices=country_name_choices, default="Canada"
-    )
-    taxed: bool = ormar.Boolean(choices=country_taxed_choices, default=True)
-    country_code: int = ormar.Integer(
-        minimum=0, maximum=1000, choices=country_country_code_choices, default=1
-    )
+    name: str = ormar.Enum(enum_class=CountryNameEnum, default="Canada")
+    taxed: bool = ormar.Boolean(default=True)
+    country_code: int = ormar.Enum(enum_class=CountryCodeEnum, default=1)
 
 
 class NullableCountry(ormar.Model):
-    class Meta:
-        tablename = "country2"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="country2",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=9, choices=country_name_choices, nullable=True)
+    name: str = ormar.Enum(enum_class=CountryNameEnum, nullable=True)
 
 
 class NotNullableCountry(ormar.Model):
-    class Meta:
-        tablename = "country3"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="country3",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=9, choices=country_name_choices, nullable=False)
+    name: str = ormar.Enum(enum_class=CountryNameEnum, nullable=False)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -179,12 +197,14 @@ def create_test_database():
 
 
 def test_model_class():
-    assert list(User.Meta.model_fields.keys()) == ["id", "name"]
-    assert issubclass(User.Meta.model_fields["id"].__class__, pydantic.fields.FieldInfo)
-    assert User.Meta.model_fields["id"].primary_key is True
-    assert isinstance(User.Meta.model_fields["name"], pydantic.fields.FieldInfo)
-    assert User.Meta.model_fields["name"].max_length == 100
-    assert isinstance(User.Meta.table, sqlalchemy.Table)
+    assert list(User.ormar_config.model_fields.keys()) == ["id", "name"]
+    assert issubclass(
+        User.ormar_config.model_fields["id"].__class__, pydantic.fields.FieldInfo
+    )
+    assert User.ormar_config.model_fields["id"].primary_key is True
+    assert isinstance(User.ormar_config.model_fields["name"], pydantic.fields.FieldInfo)
+    assert User.ormar_config.model_fields["name"].max_length == 100
+    assert isinstance(User.ormar_config.table, sqlalchemy.Table)
 
 
 def test_wrong_field_name():
@@ -508,14 +528,6 @@ def contains(a, b):
     return a in b
 
 
-def check_choices(values: tuple, ops: List):
-    ops_dict = {"in": contains, "out": not_contains}
-    checks = (country_name_choices, country_taxed_choices, country_country_code_choices)
-    assert all(
-        [ops_dict[op](value, check) for value, op, check in zip(values, ops, checks)]
-    )
-
-
 @pytest.mark.asyncio
 async def test_model_choices():
     """Test that choices work properly for various types of fields."""
@@ -529,54 +541,12 @@ async def test_model_choices():
 
         with pytest.raises(ValueError):
             name, taxed, country_code = "Saudi Arabia", True, 1
-            check_choices((name, taxed, country_code), ["out", "in", "in"])
-            await Country.objects.create(
-                name=name, taxed=taxed, country_code=country_code
-            )
-
-        with pytest.raises(ValueError):
-            name, taxed, country_code = "Algeria", False, 1
-            check_choices((name, taxed, country_code), ["in", "out", "in"])
             await Country.objects.create(
                 name=name, taxed=taxed, country_code=country_code
             )
 
         with pytest.raises(ValueError):
             name, taxed, country_code = "Algeria", True, 967
-            check_choices((name, taxed, country_code), ["in", "in", "out"])
-            await Country.objects.create(
-                name=name, taxed=taxed, country_code=country_code
-            )
-
-        with pytest.raises(ValueError):
-            name, taxed, country_code = (
-                "United States",
-                True,
-                1,
-            )  # name is too long but is a valid choice
-            check_choices((name, taxed, country_code), ["in", "in", "in"])
-            await Country.objects.create(
-                name=name, taxed=taxed, country_code=country_code
-            )
-
-        with pytest.raises(ValueError):
-            name, taxed, country_code = (
-                "Algeria",
-                True,
-                -10,
-            )  # country code is too small but is a valid choice
-            check_choices((name, taxed, country_code), ["in", "in", "in"])
-            await Country.objects.create(
-                name=name, taxed=taxed, country_code=country_code
-            )
-
-        with pytest.raises(ValueError):
-            name, taxed, country_code = (
-                "Algeria",
-                True,
-                1200,
-            )  # country code is too large but is a valid choice
-            check_choices((name, taxed, country_code), ["in", "in", "in"])
             await Country.objects.create(
                 name=name, taxed=taxed, country_code=country_code
             )
@@ -584,26 +554,16 @@ async def test_model_choices():
         # test setting after init also triggers validation
         with pytest.raises(ValueError):
             name, taxed, country_code = "Algeria", True, 967
-            check_choices((name, taxed, country_code), ["in", "in", "out"])
             country = Country()
             country.country_code = country_code
 
         with pytest.raises(ValueError):
             name, taxed, country_code = "Saudi Arabia", True, 1
-            check_choices((name, taxed, country_code), ["out", "in", "in"])
             country = Country()
             country.name = name
 
-        with pytest.raises(ValueError):
-            name, taxed, country_code = "Algeria", False, 1
-            check_choices((name, taxed, country_code), ["in", "out", "in"])
-            country = Country()
-            country.taxed = taxed
-
         # check also update from queryset
         with pytest.raises(ValueError):
-            name, taxed, country_code = "Algeria", False, 1
-            check_choices((name, taxed, country_code), ["in", "out", "in"])
             await Country(name="Belize").save()
             await Country.objects.filter(name="Belize").update(name="Vietnam")
 
@@ -681,4 +641,4 @@ async def test_get_and_first():
 def test_constraints():
     with pytest.raises(pydantic.ValidationError) as e:
         Product(name="T-Shirt", rating=50, in_stock=True)
-    assert "ensure this value is less than or equal to 5" in str(e.value)
+    assert "Input should be less than or equal to 5 " in str(e.value)

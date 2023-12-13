@@ -12,7 +12,7 @@ from typing import (
     Union,
 )
 
-from pydantic import model_validator, typing
+from pydantic import BeforeValidator, typing
 
 try:
     import orjson as json
@@ -23,25 +23,12 @@ import pydantic
 from pydantic.fields import Field
 
 import ormar  # noqa: I100, I202
-from ormar.models.helpers.models import meta_field_not_set
+from ormar.models.helpers.models import config_field_not_set
 from ormar.queryset.utils import translate_list_to_dict
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.fields import BaseField
-
-
-def check_if_field_has_choices(field: "BaseField") -> bool:
-    """
-    Checks if given field has choices populated.
-    A if it has one, a validator for this field needs to be attached.
-
-    :param field: ormar field to check
-    :type field: BaseField
-    :return: result of the check
-    :rtype: bool
-    """
-    return hasattr(field, "choices") and bool(field.choices)
 
 
 def convert_value_if_needed(field: "BaseField", value: Any) -> Any:
@@ -69,31 +56,6 @@ def convert_value_if_needed(field: "BaseField", value: Any) -> Any:
     elif encoder:
         value = encoder(value)
     return value
-
-
-def generate_validator(ormar_field: "BaseField") -> Callable:
-    choices = ormar_field.choices
-
-    def validate_choices(cls: type, value: Any, field: "Field") -> None:
-        """
-        Validates if given value is in provided choices.
-
-        :raises ValueError: If value is not in choices.
-        :param field:field to validate
-        :type field: BaseField
-        :param value: value of the field
-        :type value: Any
-        """
-        adjusted_value = convert_value_if_needed(field=ormar_field, value=value)
-        if adjusted_value is not ormar.Undefined and adjusted_value not in choices:
-            raise ValueError(
-                f"{field.name}: '{adjusted_value}' "
-                f"not in allowed choices set:"
-                f" {choices}"
-            )
-        return value
-
-    return validate_choices
 
 
 def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> Dict:
@@ -295,7 +257,7 @@ def construct_schema_function_without_choices() -> Callable:
     return staticmethod(schema_extra)  # type: ignore
 
 
-def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
+def modify_schema_example(model: Type["Model"]) -> None:  # noqa CCR001
     """
     Checks if Model has any fields with choices set.
     If yes it adds choices validation into pre root validators.
@@ -303,22 +265,5 @@ def populate_choices_validators(model: Type["Model"]) -> None:  # noqa CCR001
     :param model: newly constructed Model
     :type model: Model class
     """
-    fields_with_choices = []
-    if not meta_field_not_set(model=model, field_name="model_fields"):
-        if not hasattr(model, "_choices_fields"):
-            model._choices_fields = set()
-        for name, field in model.Meta.model_fields.items():
-            if check_if_field_has_choices(field) and name not in model._choices_fields:
-                fields_with_choices.append(name)
-                validator = model_validator(mode="before")(generate_validator(field))
-                model.__fields__[name].validators.append(validator)
-                model._choices_fields.add(name)
-
-        if fields_with_choices:
-            model.Config.schema_extra = construct_modify_schema_function(
-                fields_with_choices=fields_with_choices
-            )
-        else:
-            model.model_config[
-                "schema_extra"
-            ] = construct_schema_function_without_choices()
+    if not config_field_not_set(model=model, field_name="model_fields"):
+        model.model_config["schema_extra"] = construct_schema_function_without_choices()

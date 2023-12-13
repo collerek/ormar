@@ -82,7 +82,7 @@ def expand_reverse_relationships(model: Type["Model"]) -> None:
     :param model: model on which relation should be checked and registered
     :type model: Model class
     """
-    model_fields = list(model.Meta.model_fields.values())
+    model_fields = list(model.ormar_config.model_fields.values())
     for model_field in model_fields:
         if model_field.is_relation and not model_field.has_unresolved_forward_refs():
             model_field = cast("ForeignKeyField", model_field)
@@ -103,7 +103,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
     related_name = model_field.get_related_name()
     # TODO: Reverse relations does not register pydantic fields?
     if model_field.is_multi:
-        model_field.to.Meta.model_fields[related_name] = ManyToMany(  # type: ignore
+        model_field.to.ormar_config.model_fields[related_name] = ManyToMany(  # type: ignore
             model_field.owner,
             through=model_field.through,
             name=related_name,
@@ -122,7 +122,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
         register_through_shortcut_fields(model_field=model_field)
         adjust_through_many_to_many_model(model_field=model_field)
     else:
-        model_field.to.Meta.model_fields[related_name] = ForeignKey(  # type: ignore
+        model_field.to.ormar_config.model_fields[related_name] = ForeignKey(  # type: ignore
             model_field.owner,
             real_name=related_name,
             virtual=True,
@@ -147,7 +147,7 @@ def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:
     through_name = through_model.get_name(lower=True)
     related_name = model_field.get_related_name()
 
-    model_field.owner.Meta.model_fields[through_name] = Through(
+    model_field.owner.ormar_config.model_fields[through_name] = Through(
         through_model,
         real_name=through_name,
         virtual=True,
@@ -156,7 +156,7 @@ def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:
         nullable=True,
     )
 
-    model_field.to.Meta.model_fields[through_name] = Through(
+    model_field.to.ormar_config.model_fields[through_name] = Through(
         through_model,
         real_name=through_name,
         virtual=True,
@@ -209,10 +209,13 @@ def verify_related_name_dont_duplicate(
     :return: None
     :rtype: None
     """
-    fk_field = model_field.to.Meta.model_fields.get(related_name)
+    fk_field = model_field.to.ormar_config.model_fields.get(related_name)
     if not fk_field:  # pragma: no cover
         return
-    if fk_field.to != model_field.owner and fk_field.to.Meta != model_field.owner.Meta:
+    if (
+        fk_field.to != model_field.owner
+        and fk_field.to.ormar_config != model_field.owner.ormar_config
+    ):
         raise ormar.ModelDefinitionError(
             f"Relation with related_name "
             f"'{related_name}' "
@@ -237,8 +240,10 @@ def reverse_field_not_already_registered(model_field: "ForeignKeyField") -> bool
     :rtype: bool
     """
     related_name = model_field.get_related_name()
-    check_result = related_name not in model_field.to.Meta.model_fields
-    check_result2 = model_field.owner.get_name() not in model_field.to.Meta.model_fields
+    check_result = related_name not in model_field.to.ormar_config.model_fields
+    check_result2 = (
+        model_field.owner.get_name() not in model_field.to.ormar_config.model_fields
+    )
 
     if not check_result:
         verify_related_name_dont_duplicate(

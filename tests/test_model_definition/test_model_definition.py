@@ -16,15 +16,15 @@ from ormar.models import Model
 from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()
-
 database = databases.Database(DATABASE_URL, force_rollback=True)
 
 
 class ExampleModel(Model):
-    class Meta:
-        tablename = "example"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="example",
+        metadata=metadata,
+        database=database,
+    )
 
     test: int = ormar.Integer(primary_key=True)
     test_string: str = ormar.String(max_length=250)
@@ -55,10 +55,11 @@ fields_to_check = [
 
 
 class ExampleModel2(Model):
-    class Meta:
-        tablename = "examples"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="examples",
+        metadata=metadata,
+        database=database,
+    )
 
     test: int = ormar.Integer(primary_key=True)
     test_string: str = ormar.String(max_length=250)
@@ -84,7 +85,7 @@ def example():
 
 
 def test_not_nullable_field_is_required():
-    with pytest.raises(pydantic.error_wrappers.ValidationError):
+    with pytest.raises(pydantic.ValidationError):
         ExampleModel(test=1, test_string="test")
 
 
@@ -116,9 +117,10 @@ def test_missing_metadata():
     with pytest.raises(ModelDefinitionError):
 
         class JsonSample2(ormar.Model):
-            class Meta:
-                tablename = "jsons2"
-                database = database
+            ormar_config = ormar.OrmarConfig(
+                tablename="jsons2",
+                database=database,
+            )
 
             id: int = ormar.Integer(primary_key=True)
             test_json = ormar.JSON(nullable=True)
@@ -128,8 +130,7 @@ def test_missing_database():
     with pytest.raises(ModelDefinitionError):
 
         class JsonSample3(ormar.Model):
-            class Meta:
-                tablename = "jsons3"
+            ormar_config = ormar.OrmarConfig(tablename="jsons3")
 
             id: int = ormar.Integer(primary_key=True)
             test_json = ormar.JSON(nullable=True)
@@ -155,8 +156,10 @@ def test_pydantic_model_is_created(example):
 
 
 def test_sqlalchemy_table_is_created(example):
-    assert issubclass(example.Meta.table.__class__, sqlalchemy.Table)
-    assert all([field in example.Meta.table.columns for field in fields_to_check])
+    assert issubclass(example.ormar_config.table.__class__, sqlalchemy.Table)
+    assert all(
+        [field in example.ormar_config.table.columns for field in fields_to_check]
+    )
 
 
 @typing.no_type_check
@@ -164,10 +167,11 @@ def test_no_pk_in_model_definition():
     with pytest.raises(ModelDefinitionError):  # type: ignore
 
         class ExampleModel2(Model):  # type: ignore
-            class Meta:
-                tablename = "example2"
-                database = database
-                metadata = metadata
+            ormar_config = ormar.OrmarConfig(
+                tablename="example2",
+                database=database,
+                metadata=metadata,
+            )
 
             test_string: str = ormar.String(max_length=250)  # type: ignore
 
@@ -178,10 +182,11 @@ def test_two_pks_in_model_definition():
 
         @typing.no_type_check
         class ExampleModel2(Model):
-            class Meta:
-                tablename = "example3"
-                database = database
-                metadata = metadata
+            ormar_config = ormar.OrmarConfig(
+                tablename="example3",
+                database=database,
+                metadata=metadata,
+            )
 
             id: int = ormar.Integer(primary_key=True)
             test_string: str = ormar.String(max_length=250, primary_key=True)
@@ -192,10 +197,11 @@ def test_setting_pk_column_as_pydantic_only_in_model_definition():
     with pytest.raises(ModelDefinitionError):
 
         class ExampleModel2(Model):
-            class Meta:
-                tablename = "example4"
-                database = database
-                metadata = metadata
+            ormar_config = ormar.OrmarConfig(
+                tablename="example4",
+                database=database,
+                metadata=metadata,
+            )
 
             test: int = ormar.Integer(primary_key=True, pydantic_only=True)
 
@@ -205,10 +211,11 @@ def test_decimal_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
 
         class ExampleModel2(Model):
-            class Meta:
-                tablename = "example5"
-                database = database
-                metadata = metadata
+            ormar_config = ormar.OrmarConfig(
+                tablename="example5",
+                database=database,
+                metadata=metadata,
+            )
 
             test: decimal.Decimal = ormar.Decimal(primary_key=True)
 
@@ -218,10 +225,11 @@ def test_binary_error_without_length_model_definition():
     with pytest.raises(ModelDefinitionError):
 
         class ExampleModel2(Model):
-            class Meta:
-                tablename = "example6"
-                database = database
-                metadata = metadata
+            ormar_config = ormar.OrmarConfig(
+                tablename="example6",
+                database=database,
+                metadata=metadata,
+            )
 
             test: bytes = ormar.LargeBinary(primary_key=True, max_length=-1)
 
@@ -231,10 +239,11 @@ def test_string_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
 
         class ExampleModel2(Model):
-            class Meta:
-                tablename = "example6"
-                database = database
-                metadata = metadata
+            ormar_config = ormar.OrmarConfig(
+                tablename="example6",
+                database=database,
+                metadata=metadata,
+            )
 
             test: str = ormar.String(primary_key=True, max_length=0)
 

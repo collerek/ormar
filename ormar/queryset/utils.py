@@ -216,7 +216,7 @@ def extract_nested_models(  # noqa: CCR001
         child = getattr(model, related)
         if not child:
             continue
-        target_model = model_type.Meta.model_fields[related].to
+        target_model = model_type.ormar_config.model_fields[related].to
         if isinstance(child, list):
             extracted.setdefault(target_model.get_name(), []).extend(child)
             if select_dict[related] is not Ellipsis:
@@ -279,9 +279,9 @@ def get_relationship_alias_model_and_str(
     target_model = source_model
     previous_model = target_model
     previous_models = [target_model]
-    manager = target_model.Meta.alias_manager
+    manager = target_model.ormar_config.alias_manager
     for relation in related_parts[:]:
-        related_field = target_model.Meta.model_fields[relation]
+        related_field = target_model.ormar_config.model_fields[relation]
 
         if related_field.is_through:
             (previous_model, relation, is_through) = _process_through_field(
@@ -331,7 +331,7 @@ def _process_through_field(
     """
     is_through = True
     related_parts.remove(relation)
-    through_field = related_field.owner.Meta.model_fields[
+    through_field = related_field.owner.ormar_config.model_fields[
         related_field.related_name or ""
     ]
     if len(previous_models) > 1 and previous_models[-2] == through_field.to:

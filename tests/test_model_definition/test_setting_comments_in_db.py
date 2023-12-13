@@ -12,10 +12,11 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 
 
 class Comment(Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "comments"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="comments",
+        metadata=metadata,
+        database=database,
+    )
 
     test: int = ormar.Integer(primary_key=True, comment="primary key of comments")
     test_string: str = ormar.String(max_length=250, comment="test that it works")
@@ -31,6 +32,6 @@ def create_test_database():
 
 @pytest.mark.asyncio
 async def test_comments_are_set_in_db():
-    columns = Comment.Meta.table.c
+    columns = Comment.ormar_config.table.c
     for c in columns:
-        assert c.comment == Comment.Meta.model_fields[c.name].comment
+        assert c.comment == Comment.ormar_config.model_fields[c.name].comment
