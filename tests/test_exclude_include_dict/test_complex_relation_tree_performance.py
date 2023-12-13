@@ -14,101 +14,89 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
-class MainMeta(orm.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = orm.OrmarConfig(
+    database=database,
+    metadata=metadata,
+)
 
 
 class ChagenlogRelease(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "changelog_release"
+    ormar_config = base_ormar_config.copy(tablename="changelog_release")
 
 
 class CommitIssue(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "commit_issues"
+    ormar_config = base_ormar_config.copy(tablename="commit_issues")
 
 
 class CommitLabel(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "commit_label"
+    ormar_config = base_ormar_config.copy(tablename="commit_label")
 
 
 class MergeRequestCommit(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "merge_request_commits"
+    ormar_config = base_ormar_config.copy(tablename="merge_request_commits")
 
 
 class MergeRequestIssue(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "merge_request_issues"
+    ormar_config = base_ormar_config.copy(tablename="merge_request_issues")
 
 
 class MergeRequestLabel(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "merge_request_labels"
+    ormar_config = base_ormar_config.copy(tablename="merge_request_labels")
 
 
 class ProjectLabel(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "project_label"
+    ormar_config = base_ormar_config.copy(tablename="project_label")
 
 
 class PushCommit(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "push_commit"
+    ormar_config = base_ormar_config.copy(tablename="push_commit")
 
 
 class PushLabel(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "push_label"
+    ormar_config = base_ormar_config.copy(tablename="push_label")
 
 
 class TagCommit(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "tag_commits"
+    ormar_config = base_ormar_config.copy(tablename="tag_commits")
 
 
 class TagIssue(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "tag_issue"
+    ormar_config = base_ormar_config.copy(tablename="tag_issue")
 
 
 class TagLabel(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "tag_label"
+    ormar_config = base_ormar_config.copy(tablename="tag_label")
 
 
 class UserProject(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
     access_level: int = orm.Integer(default=0)
 
-    class Meta(MainMeta):
-        tablename = "user_project"
+    ormar_config = base_ormar_config.copy(tablename="user_project")
 
 
 class Label(orm.Model):
@@ -117,8 +105,7 @@ class Label(orm.Model):
     description: str = orm.Text(default="")
     type: str = orm.String(max_length=100, default="")
 
-    class Meta(MainMeta):
-        tablename = "labels"
+    ormar_config = base_ormar_config.copy(tablename="labels")
 
 
 class Project(orm.Model):
@@ -139,8 +126,7 @@ class Project(orm.Model):
     changelog_file: str = orm.String(max_length=250, default="")
     version_file: str = orm.String(max_length=250, default="")
 
-    class Meta(MainMeta):
-        tablename = "projects"
+    ormar_config = base_ormar_config.copy(tablename="projects")
 
 
 class Issue(orm.Model):
@@ -154,8 +140,7 @@ class Issue(orm.Model):
     change_type: str = orm.String(max_length=100, default="")
     data: pydantic.Json = orm.JSON(default={})
 
-    class Meta(MainMeta):
-        tablename = "issues"
+    ormar_config = base_ormar_config.copy(tablename="issues")
 
 
 class User(orm.Model):
@@ -163,8 +148,7 @@ class User(orm.Model):
     username: str = orm.String(max_length=100, unique=True)
     name: str = orm.String(max_length=200, default="")
 
-    class Meta(MainMeta):
-        tablename = "users"
+    ormar_config = base_ormar_config.copy(tablename="users")
 
 
 class Branch(orm.Model):
@@ -177,8 +161,7 @@ class Branch(orm.Model):
     postfix_tag: str = orm.String(max_length=50, default="")
     project: Project = orm.ForeignKey(Project, ondelete="CASCADE", onupdate="CASCADE")
 
-    class Meta(MainMeta):
-        tablename = "branches"
+    ormar_config = base_ormar_config.copy(tablename="branches")
 
 
 class Changelog(orm.Model):
@@ -186,14 +169,11 @@ class Changelog(orm.Model):
     content: str = orm.Text(default="")
     version: str = orm.Text(default="")
     past_changelog: int = orm.Integer(default=0)
-    label: Label = orm.ForeignKey(
-        Label, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
-    )
+    label: Label = orm.ForeignKey(Label, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
     project: Project = orm.ForeignKey(Project, ondelete="CASCADE", onupdate="CASCADE")
     created_date: datetime = orm.DateTime(default=datetime.utcnow())
 
-    class Meta(MainMeta):
-        tablename = "changelogs"
+    ormar_config = base_ormar_config.copy(tablename="changelogs")
 
 
 class Commit(orm.Model):
@@ -210,8 +190,7 @@ class Commit(orm.Model):
         Issue, through=CommitIssue, ondelete="CASCADE", onupdate="CASCADE"
     )
 
-    class Meta(MainMeta):
-        tablename = "commits"
+    ormar_config = base_ormar_config.copy(tablename="commits")
 
 
 class MergeRequest(orm.Model):
@@ -234,15 +213,12 @@ class MergeRequest(orm.Model):
     )
     project: Project = orm.ForeignKey(Project, ondelete="CASCADE", onupdate="CASCADE")
 
-    class Meta(MainMeta):
-        tablename = "merge_requests"
+    ormar_config = base_ormar_config.copy(tablename="merge_requests")
 
 
 class Push(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
-    branch: Branch = orm.ForeignKey(
-        Branch, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
-    )
+    branch: Branch = orm.ForeignKey(Branch, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
     has_locking_changes: bool = orm.Boolean(default=False)
     sha: str = orm.String(max_length=200)
     labels: Optional[Union[List[Label], Label]] = orm.ManyToMany(
@@ -259,8 +235,7 @@ class Push(orm.Model):
     author: User = orm.ForeignKey(User, ondelete="CASCADE", onupdate="CASCADE")
     project: Project = orm.ForeignKey(Project, ondelete="CASCADE", onupdate="CASCADE")
 
-    class Meta(MainMeta):
-        tablename = "pushes"
+    ormar_config = base_ormar_config.copy(tablename="pushes")
 
 
 class Tag(orm.Model):
@@ -284,15 +259,10 @@ class Tag(orm.Model):
     labels: Optional[Union[List[Label], Label]] = orm.ManyToMany(
         Label, through=TagLabel, ondelete="CASCADE", onupdate="CASCADE"
     )
-    user: User = orm.ForeignKey(
-        User, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
-    )
-    branch: Branch = orm.ForeignKey(
-        Branch, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
-    )
+    user: User = orm.ForeignKey(User, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
+    branch: Branch = orm.ForeignKey(Branch, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
 
-    class Meta(MainMeta):
-        tablename = "tags"
+    ormar_config = base_ormar_config.copy(tablename="tags")
 
 
 class Release(orm.Model):
@@ -305,23 +275,16 @@ class Release(orm.Model):
     )
     data: pydantic.Json = orm.JSON(default={})
 
-    class Meta(MainMeta):
-        tablename = "releases"
+    ormar_config = base_ormar_config.copy(tablename="releases")
 
 
 class Webhook(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
     object_kind = orm.String(max_length=100)
     project: Project = orm.ForeignKey(Project, ondelete="CASCADE", onupdate="CASCADE")
-    merge_request: MergeRequest = orm.ForeignKey(
-        MergeRequest, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
-    )
-    tag: Tag = orm.ForeignKey(
-        Tag, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
-    )
-    push: Push = orm.ForeignKey(
-        Push, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
-    )
+    merge_request: MergeRequest = orm.ForeignKey(MergeRequest, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
+    tag: Tag = orm.ForeignKey(Tag, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
+    push: Push = orm.ForeignKey(Push, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
     created_at: datetime = orm.DateTime(default=datetime.now())
     data: pydantic.Json = orm.JSON(default={})
     status: int = orm.Integer(default=200)

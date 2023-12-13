@@ -14,36 +14,40 @@ engine = create_engine(DATABASE_URL)
 
 
 class User(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "users"
-        metadata = metadata
-        database = db
+    ormar_config = ormar.OrmarConfig(
+        tablename = "users",
+        metadata = metadata,
+        database = db,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
 
 
 class RelationalAuditModel(ormar.Model):
-    class Meta:
+    ormar_config = ormar.OrmarConfig(
         abstract = True
+    )
 
     created_by: User = ormar.ForeignKey(User, nullable=False)
     updated_by: User = ormar.ForeignKey(User, nullable=False)
 
 
 class AuditModel(ormar.Model):
-    class Meta:
+    ormar_config = ormar.OrmarConfig(
         abstract = True
+    )
 
     created_by: str = ormar.String(max_length=100)
     updated_by: str = ormar.String(max_length=100, default="Sam")
 
 
 class DateFieldsModel(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        abstract = True
-        metadata = metadata
-        database = db
+    ormar_config = ormar.OrmarConfig(
+        abstract = True,
+        metadata = metadata,
+        database = db,
+    )
 
     created_date: datetime.datetime = ormar.DateTime(
         default=datetime.datetime.now, name="creation_date"
@@ -54,9 +58,10 @@ class DateFieldsModel(ormar.Model):
 
 
 class Category(DateFieldsModel, AuditModel):
-    class Meta(ormar.ModelMeta):
-        tablename = "categories"
-        exclude_parent_fields = ["updated_by", "updated_date"]
+    ormar_config = ormar.OrmarConfig(
+        tablename = "categories",
+        exclude_parent_fields = ["updated_by", "updated_date"],
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
@@ -64,9 +69,10 @@ class Category(DateFieldsModel, AuditModel):
 
 
 class Item(DateFieldsModel, AuditModel):
-    class Meta(ormar.ModelMeta):
-        tablename = "items"
-        exclude_parent_fields = ["updated_by", "updated_date"]
+    ormar_config = ormar.OrmarConfig(
+        tablename = "items",
+        exclude_parent_fields = ["updated_by", "updated_date"],
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
@@ -75,9 +81,10 @@ class Item(DateFieldsModel, AuditModel):
 
 
 class Gun(RelationalAuditModel, DateFieldsModel):
-    class Meta(ormar.ModelMeta):
-        tablename = "guns"
-        exclude_parent_fields = ["updated_by"]
+    ormar_config = ormar.OrmarConfig(
+        tablename = "guns",
+        exclude_parent_fields = ["updated_by"],
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50)
@@ -91,8 +98,8 @@ def create_test_database():
 
 
 def test_model_definition():
-    model_fields = Category.Meta.model_fields
-    sqlalchemy_columns = Category.Meta.table.c
+    model_fields = Category.ormar_config.model_fields
+    sqlalchemy_columns = Category.ormar_config.table.c
     pydantic_columns = Category.__fields__
     assert "updated_by" not in model_fields
     assert "updated_by" not in sqlalchemy_columns
@@ -101,8 +108,8 @@ def test_model_definition():
     assert "updated_date" not in sqlalchemy_columns
     assert "updated_date" not in pydantic_columns
 
-    assert "updated_by" not in Gun.Meta.model_fields
-    assert "updated_by" not in Gun.Meta.table.c
+    assert "updated_by" not in Gun.ormar_config.model_fields
+    assert "updated_by" not in Gun.ormar_config.table.c
     assert "updated_by" not in Gun.__fields__
 
 

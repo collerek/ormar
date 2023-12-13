@@ -17,10 +17,11 @@ def get_position() -> int:
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="albums",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -28,10 +29,11 @@ class Album(ormar.Model):
 
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="tracks",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -101,9 +103,7 @@ async def test_excluding_field_with_default():
 
             album = (
                 await Album.objects.select_related("tracks")
-                .exclude_fields(
-                    {"is_best_seller": ..., "tracks": {"play_count", "position"}}
-                )
+                .exclude_fields({"is_best_seller": ..., "tracks": {"play_count", "position"}})
                 .get(name="Miami")
             )
             assert album.is_best_seller is None

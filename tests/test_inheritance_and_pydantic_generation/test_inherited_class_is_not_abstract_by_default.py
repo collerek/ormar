@@ -12,10 +12,11 @@ database = databases.Database(DATABASE_URL)
 
 
 class TableBase(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        abstract = True
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        abstract = True,
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     created_by: str = ormar.String(max_length=20, default="test")
@@ -27,8 +28,9 @@ class TableBase(ormar.Model):
 
 
 class NationBase(ormar.Model):
-    class Meta(ormar.ModelMeta):
+    ormar_config = ormar.OrmarConfig(
         abstract = True
+    )
 
     name: str = ormar.String(max_length=50)
     alpha2_code: str = ormar.String(max_length=2)
@@ -37,8 +39,7 @@ class NationBase(ormar.Model):
 
 
 class Nation(NationBase, TableBase):
-    class Meta(ormar.ModelMeta):
-        pass
+    ormar_config = ormar.OrmarConfig()
 
 
 @pytest.fixture(autouse=True, scope="module")

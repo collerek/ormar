@@ -61,18 +61,17 @@ def gen_pass():
 
 
 class RandomModel(ormar.Model):
-    class Meta:
-        tablename: str = "random_users"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="random_users",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     password: str = ormar.String(max_length=255, default=gen_pass)
     first_name: str = ormar.String(max_length=255, default="John")
     last_name: str = ormar.String(max_length=255)
-    created_date: datetime.datetime = ormar.DateTime(
-        server_default=sqlalchemy.func.now()
-    )
+    created_date: datetime.datetime = ormar.DateTime(server_default=sqlalchemy.func.now())
 
     @property_field
     def full_name(self) -> str:
@@ -80,10 +79,11 @@ class RandomModel(ormar.Model):
 
 
 class User(ormar.Model):
-    class Meta:
-        tablename: str = "users"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="users",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255)
@@ -94,10 +94,11 @@ class User(ormar.Model):
 
 
 class User2(ormar.Model):
-    class Meta:
-        tablename: str = "users2"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="users2",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255, nullable=False)
@@ -105,9 +106,7 @@ class User2(ormar.Model):
     first_name: str = ormar.String(max_length=255)
     last_name: str = ormar.String(max_length=255)
     category: str = ormar.String(max_length=255, nullable=True)
-    timestamp: datetime.datetime = ormar.DateTime(
-        pydantic_only=True, default=datetime.datetime.now
-    )
+    timestamp: datetime.datetime = ormar.DateTime(pydantic_only=True, default=datetime.datetime.now)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -220,12 +219,7 @@ async def test_excluding_fields_in_endpoints():
             "category",
             "timestamp",
         ]
-        assert (
-            datetime.datetime.strptime(
-                response.json().get("timestamp"), "%Y-%m-%dT%H:%M:%S.%f"
-            )
-            == timestamp
-        )
+        assert datetime.datetime.strptime(response.json().get("timestamp"), "%Y-%m-%dT%H:%M:%S.%f") == timestamp
 
 
 @pytest.mark.asyncio

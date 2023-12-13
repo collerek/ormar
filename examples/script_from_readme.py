@@ -14,10 +14,10 @@ metadata = sqlalchemy.MetaData()
 # note that this step is optional -> all ormar cares is a internal
 # class with name Meta and proper parameters, but this way you do not
 # have to repeat the same parameters if you use only one database
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 # Note that all type hints are optional
 # below is a perfectly valid model declaration

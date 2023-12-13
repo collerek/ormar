@@ -16,10 +16,11 @@ class MyEnum(Enum):
 
 
 class EnumExample(ormar.Model):
-    class Meta:
-        tablename = "enum_example"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="enum_example",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     size: MyEnum = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
@@ -27,7 +28,4 @@ class EnumExample(ormar.Model):
 
 def test_proper_schema():
     schema = EnumExample.schema_json()
-    assert (
-        '{"MyEnum": {"title": "MyEnum", "description": "An enumeration.", '
-        '"enum": [1, 2]}}' in schema
-    )
+    assert '{"MyEnum": {"title": "MyEnum", "description": "An enumeration.", ' '"enum": [1, 2]}}' in schema

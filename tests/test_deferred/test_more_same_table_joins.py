@@ -13,30 +13,33 @@ metadata = sqlalchemy.MetaData()
 
 
 class Department(ormar.Model):
-    class Meta:
-        tablename = "departments"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "departments",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True, autoincrement=False)
     name: str = ormar.String(max_length=100)
 
 
 class SchoolClass(ormar.Model):
-    class Meta:
-        tablename = "schoolclasses"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "schoolclasses",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "categories",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -44,10 +47,11 @@ class Category(ormar.Model):
 
 
 class Student(ormar.Model):
-    class Meta:
-        tablename = "students"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "students",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -56,10 +60,11 @@ class Student(ormar.Model):
 
 
 class Teacher(ormar.Model):
-    class Meta:
-        tablename = "teachers"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "teachers",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

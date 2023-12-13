@@ -16,22 +16,20 @@ database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 class CA(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "cas"
+    ormar_config = base_ormar_config.copy( tablename = "cas")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     ca_name: str = ormar.Text(default="")
 
 
 class CB1(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "cb1s"
+    ormar_config = base_ormar_config.copy( tablename = "cb1s")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     cb1_name: str = ormar.Text(default="")
@@ -39,8 +37,7 @@ class CB1(ormar.Model):
 
 
 class CB2(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "cb2s"
+    ormar_config = base_ormar_config.copy(tablename = "cb2s")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     cb2_name: str = ormar.Text(default="")

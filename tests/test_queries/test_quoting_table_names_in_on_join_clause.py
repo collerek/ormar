@@ -16,10 +16,11 @@ engine = create_engine(DATABASE_URL)
 
 
 class Team(ormar.Model):
-    class Meta:
-        tablename: str = "team"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "team",
+        database = database,
+        metadata = metadata,
+    )
 
     id: uuid.UUID = ormar.UUID(default=uuid.uuid4, primary_key=True, index=True)
     name = ormar.Text(nullable=True)
@@ -29,10 +30,11 @@ class Team(ormar.Model):
 
 
 class User(ormar.Model):
-    class Meta:
-        tablename: str = "user"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "user",
+        database = database,
+        metadata = metadata,
+    )
 
     id: uuid.UUID = ormar.UUID(default=uuid.uuid4, primary_key=True, index=True)
     client_user_id = ormar.Text()
@@ -41,10 +43,11 @@ class User(ormar.Model):
 
 
 class Order(ormar.Model):
-    class Meta:
-        tablename: str = "order"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "order",
+        database = database,
+        metadata = metadata,
+    )
 
     id: uuid.UUID = ormar.UUID(default=uuid.uuid4, primary_key=True, index=True)
     user: Optional[Union[User, Dict]] = ormar.ForeignKey(User)

@@ -12,10 +12,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class Song(ormar.Model):
-    class Meta:
-        tablename = "songs"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "songs",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -23,30 +24,33 @@ class Song(ormar.Model):
 
 
 class Owner(ormar.Model):
-    class Meta:
-        tablename = "owners"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "owners",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class AliasNested(ormar.Model):
-    class Meta:
-        tablename = "aliases_nested"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "aliases_nested",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(name="alias_id", primary_key=True)
     name: str = ormar.String(name="alias_name", max_length=100)
 
 
 class AliasTest(ormar.Model):
-    class Meta:
-        tablename = "aliases"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "aliases",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(name="alias_id", primary_key=True)
     name: str = ormar.String(name="alias_name", max_length=100)
@@ -54,10 +58,11 @@ class AliasTest(ormar.Model):
 
 
 class Toy(ormar.Model):
-    class Meta:
-        tablename = "toys"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "toys",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -65,20 +70,22 @@ class Toy(ormar.Model):
 
 
 class Factory(ormar.Model):
-    class Meta:
-        tablename = "factories"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "factories",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Car(ormar.Model):
-    class Meta:
-        tablename = "cars"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "cars",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -86,10 +93,11 @@ class Car(ormar.Model):
 
 
 class User(ormar.Model):
-    class Meta:
-        tablename = "users"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "users",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

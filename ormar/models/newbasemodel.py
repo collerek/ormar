@@ -203,6 +203,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: Any
         :rtype: Any
         """
+        # TODO: To many fields land here - descriptors problem?
         return super().__getattr__(item)
 
     def __getstate__(self) -> Dict[Any, Any]:

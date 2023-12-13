@@ -19,8 +19,7 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     first_name: str = ormar.String(max_length=80)
@@ -28,16 +27,14 @@ class Author(ormar.Model):
 
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename = "categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -57,7 +54,7 @@ def create_test_database():
 async def cleanup():
     yield
     async with database:
-        PostCategory = Post.Meta.model_fields["categories"].through
+        PostCategory = Post.ormar_config.model_fields["categories"].through
         await PostCategory.objects.delete(each=True)
         await Post.objects.delete(each=True)
         await Category.objects.delete(each=True)

@@ -36,7 +36,7 @@ class SelectAction(QueryAction):
         return self.get_target_field_type() in [int, float, decimal.Decimal]
 
     def get_target_field_type(self) -> Any:
-        return self.target_model.Meta.model_fields[self.field_name].__type__
+        return self.target_model.ormar_config.model_fields[self.field_name].__type__
 
     def get_text_clause(self) -> sqlalchemy.sql.expression.TextClause:
         alias = f"{self.table_prefix}_" if self.table_prefix else ""

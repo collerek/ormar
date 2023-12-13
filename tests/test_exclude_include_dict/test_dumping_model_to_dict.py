@@ -11,22 +11,21 @@ metadata = sqlalchemy.MetaData()
 database = databases.Database(DATABASE_URL, force_rollback=True)
 
 
-class MainMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class Role(ormar.Model):
-    class Meta(MainMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255, nullable=False)
 
 
 class User(ormar.Model):
-    class Meta(MainMeta):
-        tablename: str = "users"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255, nullable=False)
@@ -36,20 +35,14 @@ class User(ormar.Model):
 
 
 class Tier(ormar.Model):
-    class Meta:
-        tablename = "tiers"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -57,10 +50,7 @@ class Category(ormar.Model):
 
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -141,9 +131,7 @@ def test_dumping_to_dict_exclude_nested_dict(sample_data):
 
 def test_dumping_to_dict_exclude_and_include_nested_dict(sample_data):
     item1, item2 = sample_data
-    dict1 = item2.dict(
-        exclude={"category": {"tier": {"name"}}}, include={"name", "category"}
-    )
+    dict1 = item2.dict(exclude={"category": {"tier": {"name"}}}, include={"name", "category"})
     assert dict1.get("name") == "M16"
     assert "category" in dict1
     assert dict1["category"]["name"] == "Weapons"

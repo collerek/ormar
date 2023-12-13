@@ -13,10 +13,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "albums",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True, name="album_id")
     name: str = ormar.String(max_length=100)
@@ -24,20 +25,22 @@ class Album(ormar.Model):
 
 
 class Writer(ormar.Model):
-    class Meta:
-        tablename = "writers"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "writers",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True, name="writer_id")
     name: str = ormar.String(max_length=100)
 
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "tracks",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album, name="album_id")

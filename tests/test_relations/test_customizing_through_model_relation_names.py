@@ -10,18 +10,20 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 
 
 class Course(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     course_name: str = ormar.String(max_length=100)
 
 
 class Student(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -42,7 +44,7 @@ def create_test_database():
 
 
 def test_tables_columns():
-    through_meta = Student.Meta.model_fields["courses"].through.Meta
+    through_meta = Student.ormar_config.model_fields["courses"].through.ormar_config
     assert "course_id" in through_meta.table.c
     assert "student_id" in through_meta.table.c
     assert "course_id" in through_meta.model_fields
@@ -70,15 +72,9 @@ async def test_working_with_changed_through_names():
             student = await course_check.students.get(name="Jack")
             assert student.name == "Jack"
 
-            students = await Student.objects.select_related("courses").all(
-                courses__course_name="basic1"
-            )
+            students = await Student.objects.select_related("courses").all(courses__course_name="basic1")
             assert len(students) == 2
 
-            course_check = (
-                await Course.objects.select_related("students")
-                .order_by("students__name")
-                .get()
-            )
+            course_check = await Course.objects.select_related("students").order_by("students__name").get()
             assert course_check.students[0].name == "Abi"
             assert course_check.students[1].name == "Jack"

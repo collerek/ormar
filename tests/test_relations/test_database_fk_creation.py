@@ -14,20 +14,22 @@ engine = sqlalchemy.create_engine(DATABASE_URL)
 
 
 class Artist(ormar.Model):
-    class Meta:
-        tablename = "artists"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="artists",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="albums",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -35,18 +37,20 @@ class Album(ormar.Model):
 
 
 class A(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=64, nullalbe=False)
 
 
 class B(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=64, nullalbe=False)
@@ -54,9 +58,10 @@ class B(ormar.Model):
 
 
 class C(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=64, nullalbe=False)

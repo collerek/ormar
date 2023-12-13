@@ -15,6 +15,7 @@ from typing import (
     overload,
 )
 
+from pydantic.v1.typing import evaluate_forwardref
 
 import ormar  # noqa I101
 import sqlalchemy
@@ -367,7 +368,9 @@ class ForeignKeyField(BaseField):
         :rtype: None
         """
         if self.to.__class__ == ForwardRef:
-            self.to.model_rebuild(force=True)
+            self.to = evaluate_forwardref(
+                self.to, globalns, localns or None  # type: ignore
+            )
             (
                 self.__type__,
                 self.constraints,

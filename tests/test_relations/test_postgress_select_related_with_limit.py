@@ -28,9 +28,10 @@ class Level(Enum):
     STAFF = "1"
 
 
-class MainMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = ormar.OrmarConfig(
+    database = database,
+    metadata = metadata,
+)
 
 
 class User(PrimaryKeyMixin, ormar.Model):
@@ -46,9 +47,9 @@ class User(PrimaryKeyMixin, ormar.Model):
     fullname: Optional[str] = ormar.String(max_length=64, nullable=True, default=None)
     is_active: bool = ormar.Boolean(index=True, nullable=False, default=True)
 
-    class Meta(MainMeta):
-        orders_by = ["-is_active", "-level"]
-
+    ormar_config = base_ormar_config.copy(
+        order_by = ["-is_active", "-level"]
+    )
 
 class Task(PrimaryKeyMixin, ormar.Model):
     """Task Model Class to Implement Method for Operations of Task Entity"""
@@ -60,11 +61,12 @@ class Task(PrimaryKeyMixin, ormar.Model):
     is_halted: bool = ormar.Boolean(index=True, nullable=False, default=True)
     user: User = ormar.ForeignKey(to=User)
 
-    class Meta(MainMeta):
-        orders_by = ["-end_date", "-start_date"]
+    ormar_config = base_ormar_config.copy(
+        order_by = ["-end_date", "-start_date"],
         constraints = [
             ormar.UniqueColumns("user", "name"),
         ]
+        )
 
 
 @pytest.fixture(autouse=True, scope="module")

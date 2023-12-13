@@ -14,10 +14,11 @@ db = databases.Database(DATABASE_URL)
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = db
+    ormar_config = ormar.OrmarConfig(
+        tablename = "categories",
+        metadata = metadata,
+        database = db,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
@@ -25,10 +26,11 @@ class Category(ormar.Model):
 
 
 class Workshop(ormar.Model):
-    class Meta:
-        tablename = "workshops"
-        metadata = metadata
-        database = db
+    ormar_config = ormar.OrmarConfig(
+        tablename = "workshops",
+        metadata = metadata,
+        database = db,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     topic: str = ormar.String(max_length=255, index=True)

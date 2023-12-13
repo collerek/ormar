@@ -187,7 +187,7 @@ def verify_constraint_names(
     :type parent_value: List
     """
     new_aliases = {x.name: x.get_alias() for x in model_fields.values()}
-    old_aliases = {x.name: x.get_alias() for x in base_class.Meta.model_fields.values()}
+    old_aliases = {x.name: x.get_alias() for x in base_class.ormar_config.model_fields.values()}
     old_aliases.update(new_aliases)
     constraints_columns = [x._pending_colargs for x in parent_value]
     for column_set in constraints_columns:
@@ -245,9 +245,9 @@ def update_attrs_from_base_meta(  # noqa: CCR001
 
     params_to_update = ["metadata", "database", "constraints", "property_fields"]
     for param in params_to_update:
-        current_value = attrs.get("Meta", {}).__dict__.get(param, ormar.Undefined)
+        current_value = attrs.get("ormar_config", {}).__dict__.get(param, ormar.Undefined)
         parent_value = (
-            base_class.Meta.__dict__.get(param) if hasattr(base_class, "Meta") else None
+            base_class.ormar_config.__dict__.get(param) if hasattr(base_class, "ormar_config") else None
         )
         if parent_value:
             if param == "constraints":
@@ -260,7 +260,7 @@ def update_attrs_from_base_meta(  # noqa: CCR001
             if isinstance(current_value, list):
                 current_value.extend(parent_value)
             else:
-                setattr(attrs["Meta"], param, parent_value)
+                setattr(attrs["ormar_config"], param, parent_value)
 
 
 def copy_and_replace_m2m_through_model(  # noqa: CFQ002
@@ -311,16 +311,16 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
         field.owner = base_class
         field.create_default_through_model()
         through_class = field.through
-    new_meta: ormar.ModelMeta = type(  # type: ignore
-        "Meta", (), dict(through_class.Meta.__dict__)
-    )
+    # TODO: CHECK PKNAME
+    new_meta = ormar.OrmarConfig()
+    new_meta.__dict__ = through_class.ormar_config.__dict__.copy()
     copy_name = through_class.__name__ + attrs.get("__name__", "")
-    copy_through = type(copy_name, (ormar.Model,), {"Meta": new_meta})
+    copy_through = type(copy_name, (ormar.Model,), {"ormar_config": new_meta})
     new_meta.tablename += "_" + meta.tablename
     # create new table with copied columns but remove foreign keys
     # they will be populated later in expanding reverse relation
     if hasattr(new_meta, "table"):
-        del new_meta.table
+        new_meta.table = None
     new_meta.model_fields = {
         name: field
         for name, field in new_meta.model_fields.items()
@@ -335,8 +335,8 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
 
     parent_fields[field_name] = copy_field
 
-    if through_class.Meta.table in through_class.Meta.metadata:
-        through_class.Meta.metadata.remove(through_class.Meta.table)
+    if through_class.ormar_config.table in through_class.ormar_config.metadata:
+        through_class.ormar_config.metadata.remove(through_class.ormar_config.table)
 
 
 def copy_data_from_parent_model(  # noqa: CCR001
@@ -366,8 +366,8 @@ def copy_data_from_parent_model(  # noqa: CCR001
     :return: updated attrs and model_fields
     :rtype: Tuple[Dict, Dict]
     """
-    if attrs.get("Meta"):
-        if model_fields and not base_class.Meta.abstract:  # type: ignore
+    if attrs.get("ormar_config"):
+        if model_fields and not base_class.ormar_config.abstract:  # type: ignore
             raise ModelDefinitionError(
                 f"{curr_class.__name__} cannot inherit "
                 f"from non abstract class {base_class.__name__}"
@@ -378,7 +378,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
             model_fields=model_fields,
         )
         parent_fields: Dict = dict()
-        meta = attrs.get("Meta")
+        meta = attrs.get("ormar_config")
         if not meta:  # pragma: no cover
             raise ModelDefinitionError(
                 f"Model {curr_class.__name__} declared without Meta"
@@ -388,7 +388,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
             if hasattr(meta, "tablename") and meta.tablename
             else attrs.get("__name__", "").lower() + "s"
         )
-        for field_name, field in base_class.Meta.model_fields.items():
+        for field_name, field in base_class.ormar_config.model_fields.items():
             if (
                 hasattr(meta, "exclude_parent_fields")
                 and field_name in meta.exclude_parent_fields
@@ -508,7 +508,7 @@ def update_attrs_and_fields(
 ) -> Dict:
     """
     Updates __annotations__, values of model fields (so pydantic FieldInfos)
-    as well as model.Meta.model_fields definitions from parents.
+    as well as model.ormar_config.model_fields definitions from parents.
 
     :param attrs: new namespace for class being constructed
     :type attrs: Dict

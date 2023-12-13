@@ -97,7 +97,7 @@ def check_required_meta_parameters(new_model: Type["Model"]) -> None:
         raise ormar.ModelDefinitionError(
             f"{new_model.__name__} does not have database defined."
         )
-    else:
+    elif not new_model.ormar_config.abstract:
         substitue_backend_pool_for_sqlite(new_model=new_model)
 
     if new_model.ormar_config.metadata is None and not new_model.ormar_config.abstract:

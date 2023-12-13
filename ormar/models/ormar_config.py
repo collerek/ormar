@@ -23,6 +23,7 @@ class OrmarConfig:
         exclude_parent_fields: Optional[List[str]] = None,
         queryset_class: Type[QuerySet] = QuerySet,
         extra: Extra = Extra.forbid,
+        constraints: Optional[List[ColumnCollectionConstraint]] = None,
     ) -> None:
         self.pkname: str = None
         self.metadata = metadata
@@ -30,7 +31,7 @@ class OrmarConfig:
         self.tablename = tablename
         self.orders_by = order_by or []
         self.columns: List[sqlalchemy.Column] = []
-        self.constraints: List[ColumnCollectionConstraint] = []
+        self.constraints= constraints or []
         self.model_fields: Dict[
             str, Union[BaseField, ForeignKeyField, ManyToManyField]
         ] = {}
@@ -54,6 +55,7 @@ class OrmarConfig:
         exclude_parent_fields: Optional[List[str]] = None,
         queryset_class: Optional[Type[QuerySet]] = None,
         extra: Optional[Extra] = None,
+        constraints: Optional[List[ColumnCollectionConstraint]] = None,
     ) -> "OrmarConfig":
         return OrmarConfig(
             metadata=metadata or self.metadata,
@@ -64,4 +66,5 @@ class OrmarConfig:
             exclude_parent_fields=exclude_parent_fields,
             queryset_class=queryset_class or self.queryset_class,
             extra=extra or self.extra,
+            constraints=constraints
         )

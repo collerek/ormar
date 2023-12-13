@@ -20,10 +20,10 @@ metadata = sqlalchemy.MetaData()
 pytestmark = pytest.mark.asyncio
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 class Author(ormar.Model):
     class Meta(BaseMeta):

@@ -42,14 +42,13 @@ blob5 = b"\xee"
 blob6 = b"\xff"
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 class BinaryThing(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "things"
+    ormar_config = base_ormar_config.copy(tablename = "things")
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     name: str = ormar.Text(default="")

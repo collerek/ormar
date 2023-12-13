@@ -14,11 +14,12 @@ metadata = sqlalchemy.MetaData()
 
 
 class Product(ormar.Model):
-    class Meta:
-        tablename = "products"
-        metadata = metadata
-        database = database
-        constraints = [ormar.fields.constraints.UniqueColumns("name", "company")]
+    ormar_config = ormar.OrmarConfig(
+        tablename = "products",
+        metadata = metadata,
+        database = database,
+        constraints = [ormar.fields.constraints.UniqueColumns("name", "company")],
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

@@ -26,10 +26,11 @@ class MySize(Enum):
 
 
 class Book(ormar.Model):
-    class Meta:
-        tablename = "books"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "books",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -42,10 +43,11 @@ class Book(ormar.Model):
 
 
 class ToDo(ormar.Model):
-    class Meta:
-        tablename = "todos"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "todos",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     text: str = ormar.String(max_length=500)
@@ -55,20 +57,22 @@ class ToDo(ormar.Model):
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "categories",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=500)
 
 
 class Note(ormar.Model):
-    class Meta:
-        tablename = "notes"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "notes",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     text: str = ormar.String(max_length=500)
@@ -76,10 +80,11 @@ class Note(ormar.Model):
 
 
 class ItemConfig(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        metadata = metadata
-        database = database
-        tablename = "item_config"
+    ormar_config = ormar.OrmarConfig(
+        metadata = metadata,
+        database = database,
+        tablename = "item_config",
+    )
 
     id: Optional[int] = ormar.Integer(primary_key=True)
     item_id: str = ormar.String(max_length=32, index=True)
@@ -97,21 +102,23 @@ class QuerySetCls(QuerySet):
 
 
 class Customer(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = database
-        tablename = "customer"
-        queryset_class = QuerySetCls
+    ormar_config = ormar.OrmarConfig(
+        metadata = metadata,
+        database = database,
+        tablename = "customer",
+        queryset_class = QuerySetCls,
+    )
 
     id: Optional[int] = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=32)
 
 
 class JsonTestModel(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        metadata = metadata
-        database = database
-        tablename = "test_model"
+    ormar_config = ormar.OrmarConfig(
+        metadata = metadata,
+        database = database,
+        tablename = "test_model",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     json_field: Json = ormar.JSON()
@@ -308,7 +315,7 @@ async def test_bulk_create_json_field():
         assert test_model_1.json_field == test_model_2.json_field  # True
 
         # try to query the json field
-        table = JsonTestModel.Meta.table
+        table = JsonTestModel.ormar_config.table
         query = table.select().where(table.c.json_field["a"].as_integer() == 1)
         res = [
             JsonTestModel.from_row(record, source_model=JsonTestModel)
@@ -469,7 +476,7 @@ async def test_bulk_operations_with_json():
         items = await ItemConfig.objects.filter(ItemConfig.id > 1).all()
         assert all(x.pairs == {"b": 2} for x in items)
 
-        table = ItemConfig.Meta.table
+        table = ItemConfig.ormar_config.table
         query = table.select().where(table.c.pairs["b"].as_integer() == 2)
         res = [
             ItemConfig.from_row(record, source_model=ItemConfig)

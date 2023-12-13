@@ -291,7 +291,7 @@ def populate_meta_sqlalchemy_table_if_required(meta: "OrmarConfig") -> None:
     :param meta: Meta class of the Model without sqlalchemy table constructed
     :type meta: Model class Meta
     """
-    if not meta.table and check_for_null_type_columns_from_forward_refs(meta):
+    if meta.table is None and check_for_null_type_columns_from_forward_refs(meta):
         set_constraint_names(meta=meta)
         table = sqlalchemy.Table(
             meta.tablename, meta.metadata, *meta.columns, *meta.constraints

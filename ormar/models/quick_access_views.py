@@ -5,6 +5,7 @@ NewBaseModel __getattribute__ calls to speed the calls.
 quick_access_set = {
     "Config",
     "model_config",
+    "__cached_hash__",
     "__class__",
     "__config__",
     "__custom_root_type__",

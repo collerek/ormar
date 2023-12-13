@@ -11,8 +11,8 @@ database = databases.Database(DATABASE_URL)
 
 
 class BaseFoo(ormar.Model):
-    class Meta:
-        abstract = True
+    ormar_config = ormar.OrmarConfig(
+        abstract = True)
 
     name: str = ormar.String(max_length=100)
 
@@ -22,9 +22,10 @@ class BaseFoo(ormar.Model):
 
 
 class Foo(BaseFoo):
-    class Meta:
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        metadata = metadata,
+        database = database,
+    )
 
     @ormar.property_field
     def double_prefixed_name(self) -> str:
@@ -34,9 +35,10 @@ class Foo(BaseFoo):
 
 
 class Bar(BaseFoo):
-    class Meta:
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        metadata = metadata,
+        database = database,
+    )
 
     @ormar.property_field
     def prefixed_name(self) -> str:

@@ -13,10 +13,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class Company(ormar.Model):
-    class Meta:
-        tablename = "companies"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "companies",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False)
@@ -24,10 +25,11 @@ class Company(ormar.Model):
 
 
 class Car(ormar.Model):
-    class Meta:
-        tablename = "cars"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "cars",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     manufacturer: Optional[Company] = ormar.ForeignKey(Company)
@@ -173,7 +175,7 @@ async def test_selecting_subset():
                 assert car.manufacturer.name == "Toyota"
                 assert car.manufacturer.founded is None
 
-            with pytest.raises(pydantic.error_wrappers.ValidationError):
+            with pytest.raises(pydantic.ValidationError):
                 # cannot exclude mandatory model columns - company__name in this example
                 await Car.objects.select_related("manufacturer").exclude_fields(
                     ["manufacturer__name"]

@@ -19,14 +19,12 @@ database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
-
-default_fernet = dict(
-    encrypt_secret="asd123", encrypt_backend=ormar.EncryptBackends.FERNET
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
 )
+
+default_fernet = dict(encrypt_secret="asd123", encrypt_backend=ormar.EncryptBackends.FERNET)
 
 
 class DummyBackend(ormar.fields.EncryptBackend):
@@ -41,8 +39,7 @@ class DummyBackend(ormar.fields.EncryptBackend):
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, **default_fernet)
@@ -79,8 +76,7 @@ class Author(ormar.Model):
 
 
 class Hash(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "hashes"
+    ormar_config = base_ormar_config.copy(tablename="hashes")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(
@@ -91,8 +87,7 @@ class Hash(ormar.Model):
 
 
 class Filter(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "filters"
+    ormar_config = base_ormar_config.copy(tablename="filters")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, **default_fernet)
@@ -100,8 +95,7 @@ class Filter(ormar.Model):
 
 
 class Report(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "reports"
+    ormar_config = base_ormar_config.copy(tablename="reports")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -121,8 +115,7 @@ def test_error_on_encrypted_pk():
     with pytest.raises(ModelDefinitionError):
 
         class Wrong(ormar.Model):
-            class Meta(BaseMeta):
-                tablename = "wrongs"
+            ormar_config = base_ormar_config.copy(tablename="wrongs")
 
             id: int = ormar.Integer(
                 primary_key=True,
@@ -135,8 +128,7 @@ def test_error_on_encrypted_relation():
     with pytest.raises(ModelDefinitionError):
 
         class Wrong2(ormar.Model):
-            class Meta(BaseMeta):
-                tablename = "wrongs2"
+            ormar_config = base_ormar_config.copy(tablename="wrongs2")
 
             id: int = ormar.Integer(primary_key=True)
             author = ormar.ForeignKey(
@@ -150,8 +142,7 @@ def test_error_on_encrypted_m2m_relation():
     with pytest.raises(ModelDefinitionError):
 
         class Wrong3(ormar.Model):
-            class Meta(BaseMeta):
-                tablename = "wrongs3"
+            ormar_config = base_ormar_config.copy(tablename="wrongs3")
 
             id: int = ormar.Integer(primary_key=True)
             author = ormar.ManyToMany(
@@ -165,8 +156,7 @@ def test_wrong_backend():
     with pytest.raises(ModelDefinitionError):
 
         class Wrong3(ormar.Model):
-            class Meta(BaseMeta):
-                tablename = "wrongs3"
+            ormar_config = base_ormar_config.copy(tablename="wrongs3")
 
             id: int = ormar.Integer(primary_key=True)
             author = ormar.Integer(
@@ -177,7 +167,7 @@ def test_wrong_backend():
 
 
 def test_db_structure():
-    assert Author.Meta.table.c.get("name").type.__class__ == EncryptedString
+    assert Author.ormar_config.table.c.get("name").type.__class__ == EncryptedString
 
 
 @pytest.mark.asyncio

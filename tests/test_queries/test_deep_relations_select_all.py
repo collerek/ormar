@@ -11,10 +11,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class Chart(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "charts"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "charts",
+        database = database,
+        metadata = metadata,
+    )
 
     chart_id = ormar.Integer(primary_key=True, autoincrement=True)
     name = ormar.String(max_length=200, unique=True, index=True)
@@ -28,10 +29,11 @@ class Chart(ormar.Model):
 
 
 class Report(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "reports"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "reports",
+        database = database,
+        metadata = metadata,
+    )
 
     report_id = ormar.Integer(primary_key=True, autoincrement=True)
     name = ormar.String(max_length=200, unique=True, index=True)
@@ -40,10 +42,11 @@ class Report(ormar.Model):
 
 
 class Language(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "languages"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "languages",
+        database = database,
+        metadata = metadata,
+    )
 
     language_id = ormar.Integer(primary_key=True, autoincrement=True)
     code = ormar.String(max_length=5)
@@ -51,20 +54,22 @@ class Language(ormar.Model):
 
 
 class TranslationNode(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "translation_nodes"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "translation_nodes",
+        database = database,
+        metadata = metadata,
+    )
 
     node_id = ormar.Integer(primary_key=True, autoincrement=True)
     node_type = ormar.String(max_length=200)
 
 
 class Translation(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "translations"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "translations",
+        database = database,
+        metadata = metadata,
+    )
 
     translation_id = ormar.Integer(primary_key=True, autoincrement=True)
     node_id = ormar.ForeignKey(TranslationNode, related_name="translations")
@@ -73,10 +78,11 @@ class Translation(ormar.Model):
 
 
 class Filter(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "filters"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "filters",
+        database = database,
+        metadata = metadata,
+    )
 
     filter_id = ormar.Integer(primary_key=True, autoincrement=True)
     name = ormar.String(max_length=200, unique=True, index=True)
@@ -90,10 +96,11 @@ class Filter(ormar.Model):
 
 
 class FilterValue(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "filter_values"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "filter_values",
+        database = database,
+        metadata = metadata,
+    )
 
     value_id = ormar.Integer(primary_key=True, autoincrement=True)
     value = ormar.String(max_length=300)
@@ -103,10 +110,11 @@ class FilterValue(ormar.Model):
 
 
 class FilterXReport(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "filters_x_reports"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "filters_x_reports",
+        database = database,
+        metadata = metadata,
+    )
 
     filter_x_report_id = ormar.Integer(primary_key=True)
     filter = ormar.ForeignKey(Filter, name="filter_id", related_name="reports")
@@ -117,10 +125,11 @@ class FilterXReport(ormar.Model):
 
 
 class ChartXReport(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "charts_x_reports"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "charts_x_reports",
+        database = database,
+        metadata = metadata,
+    )
 
     chart_x_report_id = ormar.Integer(primary_key=True)
     chart = ormar.ForeignKey(Chart, name="chart_id", related_name="reports")
@@ -130,10 +139,11 @@ class ChartXReport(ormar.Model):
 
 
 class ChartColumn(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "charts_columns"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "charts_columns",
+        database = database,
+        metadata = metadata,
+    )
 
     column_id = ormar.Integer(primary_key=True, autoincrement=True)
     chart = ormar.ForeignKey(Chart, name="chart_id", related_name="columns")

@@ -11,22 +11,20 @@ database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 class Chart(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename = "authors")
 
     id: int = ormar.Integer(primary_key=True)
     datasets = ormar.JSON()
 
 
 class Config(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
+    ormar_config = base_ormar_config.copy(tablename = "books")
 
     id: int = ormar.Integer(primary_key=True)
     chart: Optional[Chart] = ormar.ForeignKey(Chart)

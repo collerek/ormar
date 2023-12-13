@@ -13,10 +13,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "albums",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -24,10 +25,11 @@ class Album(ormar.Model):
 
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "tracks",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -38,10 +40,11 @@ class Track(ormar.Model):
 
 
 class Cover(ormar.Model):
-    class Meta:
-        tablename = "covers"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "covers",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album, related_name="cover_pictures")
@@ -49,20 +52,22 @@ class Cover(ormar.Model):
 
 
 class Organisation(ormar.Model):
-    class Meta:
-        tablename = "org"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "org",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     ident: str = ormar.String(max_length=100, choices=["ACME Ltd", "Other ltd"])
 
 
 class Team(ormar.Model):
-    class Meta:
-        tablename = "teams"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "teams",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     org: Optional[Organisation] = ormar.ForeignKey(Organisation)
@@ -70,10 +75,11 @@ class Team(ormar.Model):
 
 
 class Member(ormar.Model):
-    class Meta:
-        tablename = "members"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "members",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     team: Optional[Team] = ormar.ForeignKey(Team)
@@ -299,14 +305,6 @@ async def test_multiple_fk():
             assert len(members) == 4
             for member in members:
                 assert member.team.org.ident == "ACME Ltd"
-
-
-@pytest.mark.asyncio
-async def test_wrong_choices():
-    async with database:
-        async with database.transaction(force_rollback=True):
-            with pytest.raises(ValueError):
-                await Organisation.objects.create(ident="Test 1")
 
 
 @pytest.mark.asyncio

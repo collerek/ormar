@@ -16,9 +16,10 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class NewTestModel(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database = database,
+        metadata = metadata,
+    )
 
     a: int = ormar.Integer(primary_key=True)
     b: str = ormar.String(max_length=1)

@@ -34,7 +34,7 @@ def receiver(
         else:
             _senders = senders
         for sender in _senders:
-            signals = getattr(sender.Meta.signals, signal)
+            signals = getattr(sender.ormar_config.signals, signal)
             signals.connect(func)
         return func
 

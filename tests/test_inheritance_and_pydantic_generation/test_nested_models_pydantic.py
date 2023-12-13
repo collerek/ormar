@@ -8,22 +8,20 @@ metadata = sqlalchemy.MetaData()
 database = databases.Database(DATABASE_URL, force_rollback=True)
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 class Library(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Package(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     library: Library = ormar.ForeignKey(Library, related_name="packages")
@@ -31,8 +29,7 @@ class Package(ormar.Model):
 
 
 class Ticket(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     number: int = ormar.Integer()
@@ -40,8 +37,7 @@ class Ticket(ormar.Model):
 
 
 class TicketPackage(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     status: str = ormar.String(max_length=100)

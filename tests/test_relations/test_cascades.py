@@ -13,29 +13,32 @@ metadata = sqlalchemy.MetaData()
 
 
 class Band(ormar.Model):
-    class Meta:
-        tablename = "bands"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="bands",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class ArtistsBands(ormar.Model):
-    class Meta:
-        tablename = "artists_x_bands"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="artists_x_bands",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
 
 
 class Artist(ormar.Model):
-    class Meta:
-        tablename = "artists"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="artists",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -43,10 +46,11 @@ class Artist(ormar.Model):
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="albums",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -54,10 +58,11 @@ class Album(ormar.Model):
 
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="tracks",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album, ondelete="CASCADE")

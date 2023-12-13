@@ -39,8 +39,7 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     first_name: str = ormar.String(max_length=80)
@@ -48,16 +47,14 @@ class Author(ormar.Model):
 
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename = "categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -140,7 +137,7 @@ async def test_queries():
         response = await client.post("/posts/", json=right_post, headers=headers)
         assert response.status_code == 200
 
-        Category.__config__.extra = "allow"
+        Category.model_config["extra"] = "allow"
         response = await client.get("/posts/")
         assert response.status_code == 200
         posts = [Post(**x) for x in response.json()]

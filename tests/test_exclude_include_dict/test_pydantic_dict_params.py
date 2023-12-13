@@ -12,10 +12,11 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="categories",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="Test", nullable=True)
@@ -23,10 +24,11 @@ class Category(ormar.Model):
 
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="items",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -63,7 +65,7 @@ async def test_exclude_default():
             "visibility": True,
         }
         assert category2.dict(exclude_defaults=True) == {"id": 1, "items": []}
-        assert category2.json(exclude_defaults=True) == '{"id": 1, "items": []}'
+        assert category2.json(exclude_defaults=True) == '{"id":1,"items":[]}'
 
 
 @pytest.mark.asyncio
@@ -95,10 +97,7 @@ async def test_exclude_none():
             "items": [],
             "visibility": True,
         }
-        assert (
-            category2.json(exclude_none=True)
-            == '{"id": 2, "visibility": true, "items": []}'
-        )
+        assert category2.json(exclude_none=True) == '{"id":2,"visibility":true,"items":[]}'
 
 
 @pytest.mark.asyncio

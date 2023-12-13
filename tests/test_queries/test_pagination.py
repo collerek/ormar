@@ -3,7 +3,6 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar import ModelMeta
 from ormar.exceptions import QueryDefinitionError
 from tests.settings import DATABASE_URL
 
@@ -11,27 +10,25 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class Car(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class UsersCar(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "cars_x_users"
+    ormar_config = base_ormar_config.copy(tablename="cars_x_users")
 
 
 class User(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

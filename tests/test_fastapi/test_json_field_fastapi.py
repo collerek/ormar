@@ -34,14 +34,13 @@ async def shutdown() -> None:
         await database_.disconnect()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 class Thing(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "things"
+    ormar_config = base_ormar_config.copy(tablename = "things")
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     name: str = ormar.Text(default="")
@@ -104,8 +103,7 @@ async def test_json_is_required_if_not_nullable():
 @pytest.mark.asyncio
 async def test_json_is_not_required_if_nullable():
     class Thing2(ormar.Model):
-        class Meta(BaseMeta):
-            tablename = "things2"
+        ormar_config = base_ormar_config.copy(  tablename = "things2")
 
         id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
         name: str = ormar.Text(default="")

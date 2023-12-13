@@ -8,14 +8,13 @@ database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename = "authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

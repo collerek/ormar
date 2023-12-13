@@ -19,8 +19,7 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class BaseModel(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        abstract = True
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     id: uuid.UUID = ormar.UUID(
         primary_key=True, default=uuid.uuid4, uuid_format="string"
@@ -30,8 +29,7 @@ class BaseModel(ormar.Model):
 
 
 class Member(BaseModel):
-    class Meta(BaseMeta):
-        tablename = "members"
+    ormar_config = base_ormar_config.copy(tablename="members")
 
     first_name: str = ormar.String(max_length=50)
     last_name: str = ormar.String(max_length=50)
@@ -48,13 +46,13 @@ def create_test_database():
 
 def test_model_structure():
     assert "id" in BaseModel.__fields__
-    assert "id" in BaseModel.Meta.model_fields
-    assert BaseModel.Meta.model_fields["id"].has_default()
+    assert "id" in BaseModel.ormar_config.model_fields
+    assert BaseModel.ormar_config.model_fields["id"].has_default()
     assert BaseModel.__fields__["id"].default_factory is not None
 
     assert "id" in Member.__fields__
-    assert "id" in Member.Meta.model_fields
-    assert Member.Meta.model_fields["id"].has_default()
+    assert "id" in Member.ormar_config.model_fields
+    assert Member.ormar_config.model_fields["id"].has_default()
     assert Member.__fields__["id"].default_factory is not None
 
 

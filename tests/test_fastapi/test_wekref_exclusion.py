@@ -49,8 +49,7 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class OtherThing(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "other_things"
+    ormar_config = base_ormar_config.copy( tablename = "other_things")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
@@ -58,8 +57,7 @@ class OtherThing(ormar.Model):
 
 
 class Thing(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "things"
+    ormar_config = base_ormar_config.copy(tablename = "things")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")

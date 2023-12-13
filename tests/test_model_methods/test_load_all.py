@@ -18,8 +18,7 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class Language(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "languages"
+    ormar_config = base_ormar_config.copy(tablename = "languages")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -27,8 +26,7 @@ class Language(ormar.Model):
 
 
 class CringeLevel(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "levels"
+    ormar_config = base_ormar_config.copy(tablename = "levels")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -36,8 +34,7 @@ class CringeLevel(ormar.Model):
 
 
 class NickName(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "nicks"
+    ormar_config = base_ormar_config.copy(tablename = "nicks")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -46,8 +43,7 @@ class NickName(ormar.Model):
 
 
 class HQ(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "hqs"
+    ormar_config = base_ormar_config.copy(tablename = "hqs")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -55,8 +51,7 @@ class HQ(ormar.Model):
 
 
 class Company(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "companies"
+    ormar_config = base_ormar_config.copy(tablename = "companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")

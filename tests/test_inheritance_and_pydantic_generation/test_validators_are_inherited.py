@@ -20,8 +20,9 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class BaseModel(ormar.Model):
-    class Meta:
+    ormar_config = ormar.OrmarConfig(
         abstract = True
+    )
 
     id: int = ormar.Integer(primary_key=True)
 
@@ -33,8 +34,7 @@ class EnumExample(str, enum.Enum):
 
 
 class ModelExample(BaseModel):
-    class Meta(BaseMeta):
-        tablename = "examples"
+    ormar_config = base_ormar_config.copy(tablename = "examples")
 
     str_field: str = ormar.String(min_length=5, max_length=10, nullable=False)
     enum_field: str = ormar.String(

@@ -49,10 +49,11 @@ class User(ormar.Model):
     verify_key: str = ormar.String(unique=True, max_length=100, nullable=True)
     created_at: datetime = ormar.DateTime(default=datetime.now())
 
-    class Meta:
-        tablename = "users"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "users",
+        metadata = metadata,
+        database = database,
+    )
 
 
 class UserSession(ormar.Model):
@@ -65,10 +66,11 @@ class UserSession(ormar.Model):
     session_key: str = ormar.String(unique=True, max_length=64)
     created_at: datetime = ormar.DateTime(default=datetime.now())
 
-    class Meta:
-        tablename = "user_sessions"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "user_sessions",
+        metadata = metadata,
+        database = database,
+    )
 
 
 class QuizAnswer(BaseModel):
@@ -96,10 +98,11 @@ class Quiz(ormar.Model):
     user_id: uuid.UUID = ormar.UUID(foreign_key=User.id)
     questions: Json = ormar.JSON(nullable=False)
 
-    class Meta:
-        tablename = "quiz"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "quiz",
+        metadata = metadata,
+        database = database,
+    )
 
 
 @pytest.fixture(autouse=True, scope="module")

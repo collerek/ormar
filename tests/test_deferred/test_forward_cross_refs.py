@@ -4,7 +4,7 @@ from typing import List, Optional
 import databases
 import pytest
 import sqlalchemy as sa
-from pydantic.typing import ForwardRef
+from typing import ForwardRef
 from sqlalchemy import create_engine
 
 import ormar
@@ -18,14 +18,14 @@ engine = create_engine(DATABASE_URL)
 TeacherRef = ForwardRef("Teacher")
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = db
+base_ormar_config = ormar.OrmarConfig(
+    metadata = metadata,
+    database = db,
+)
 
 
 class Student(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -35,14 +35,10 @@ class Student(ormar.Model):
 
 
 class StudentTeacher(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "students_x_teachers"
-
+    ormar_config = base_ormar_config.copy(tablename = "students_x_teachers")
 
 class Teacher(ormar.Model):
-    class Meta(ModelMeta):
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -58,8 +54,7 @@ CountryRef = ForwardRef("Country")
 
 
 class Country(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "countries"
+    ormar_config = base_ormar_config.copy(tablename = "countries")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128)
@@ -70,8 +65,7 @@ class Country(ormar.Model):
 
 
 class City(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "cities"
+    ormar_config = base_ormar_config.copy(tablename = "cities")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128)

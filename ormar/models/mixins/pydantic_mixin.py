@@ -26,7 +26,7 @@ class PydanticMixin(RelationMixin):
     __cache__: Dict[str, Type[pydantic.BaseModel]] = {}
 
     if TYPE_CHECKING:  # pragma: no cover
-        __fields__: Dict[str, Field]
+        model_fields: Dict[str, Field]
         _skip_ellipsis: Callable
         _get_not_excluded_fields: Callable
 
@@ -66,10 +66,10 @@ class PydanticMixin(RelationMixin):
         fields_dict: Dict[str, Any] = dict()
         defaults: Dict[str, Any] = dict()
         fields_to_process = cls._get_not_excluded_fields(
-            fields={*cls.Meta.model_fields.keys()}, include=include, exclude=exclude
+            fields={*cls.ormar_config.model_fields.keys()}, include=include, exclude=exclude
         )
         fields_to_process.sort(
-            key=lambda x: list(cls.Meta.model_fields.keys()).index(x)
+            key=lambda x: list(cls.ormar_config.model_fields.keys()).index(x)
         )
 
         cache_key = f"{cls.__name__}_{str(include)}_{str(exclude)}"
@@ -105,7 +105,7 @@ class PydanticMixin(RelationMixin):
         exclude: Union[Set, Dict, None],
         relation_map: Dict[str, Any],
     ) -> Any:
-        field = cls.Meta.model_fields[name]
+        field = cls.ormar_config.model_fields[name]
         target: Any = None
         if field.is_relation and name in relation_map:  # type: ignore
             target = field.to._convert_ormar_to_pydantic(
@@ -118,7 +118,7 @@ class PydanticMixin(RelationMixin):
             if field.is_multi or field.virtual:
                 target = List[target]  # type: ignore
         elif not field.is_relation:
-            defaults[name] = cls.__fields__[name].field_info
+            defaults[name] = cls.model_fields[name].default
             target = field.__type__
         if target is not None and field.nullable:
             target = Optional[target]
@@ -129,27 +129,28 @@ class PydanticMixin(RelationMixin):
         """
         Copy field validators from ormar model to generated pydantic model.
         """
-        for field_name, field in model.__fields__.items():
-            if (
-                field_name not in cls.__fields__
-                or cls.Meta.model_fields[field_name].is_relation
-            ):
-                continue
-            validators = cls.__fields__[field_name].validators
-            already_attached = [
-                validator.__wrapped__ for validator in field.validators  # type: ignore
-            ]
-            validators_to_copy = [
-                validator
-                for validator in validators
-                if validator.__wrapped__ not in already_attached  # type: ignore
-            ]
-            field.validators.extend(copy.deepcopy(validators_to_copy))
-            class_validators = cls.__fields__[field_name].class_validators
-            field.class_validators.update(copy.deepcopy(class_validators))
-            field.pre_validators = copy.deepcopy(
-                cls.__fields__[field_name].pre_validators
-            )
-            field.post_validators = copy.deepcopy(
-                cls.__fields__[field_name].post_validators
-            )
+        # TODO: FIX THIS
+        # for field_name, field in model.model_fields.items():
+        #     if (
+        #         field_name not in cls.model_fields
+        #         or cls.ormar_config.model_fields[field_name].is_relation
+        #     ):
+        #         continue
+        #     validators = cls.model_fields[field_name].validators
+        #     already_attached = [
+        #         validator.__wrapped__ for validator in field.validators  # type: ignore
+        #     ]
+        #     validators_to_copy = [
+        #         validator
+        #         for validator in validators
+        #         if validator.__wrapped__ not in already_attached  # type: ignore
+        #     ]
+        #     field.validators.extend(copy.deepcopy(validators_to_copy))
+        #     class_validators = cls.model_fields[field_name].class_validators
+        #     field.class_validators.update(copy.deepcopy(class_validators))
+        #     field.pre_validators = copy.deepcopy(
+        #         cls.model_fields[field_name].pre_validators
+        #     )
+        #     field.post_validators = copy.deepcopy(
+        #         cls.model_fields[field_name].post_validators
+        #     )

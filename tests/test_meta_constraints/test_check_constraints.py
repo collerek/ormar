@@ -13,13 +13,13 @@ metadata = sqlalchemy.MetaData()
 
 
 class Product(ormar.Model):
-    class Meta:
-        tablename = "products"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "products",
+        metadata = metadata,
+        database = database,
         constraints = [
             ormar.fields.constraints.CheckColumns("inventory > buffer"),
-        ]
+        ])
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -39,7 +39,7 @@ def create_test_database():
 
 @pytest.mark.asyncio
 async def test_check_columns_exclude_mysql():
-    if Product.Meta.database._backend._dialect.name != "mysql":
+    if Product.ormar_config.database._backend._dialect.name != "mysql":
         async with database:  # pragma: no cover
             async with database.transaction(force_rollback=True):
                 await Product.objects.create(

@@ -11,14 +11,15 @@ metadata = sqlalchemy.MetaData()
 
 
 class Product(ormar.Model):
-    class Meta:
-        tablename = "products"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "products",
+        metadata = metadata,
+        database = database,
         constraints = [
             ormar.fields.constraints.IndexColumns("company", "name", name="my_index"),
             ormar.fields.constraints.IndexColumns("location", "company_type"),
         ]
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -37,9 +38,9 @@ def create_test_database():
 
 
 def test_table_structure():
-    assert len(Product.Meta.table.indexes) > 0
+    assert len(Product.ormar_config.table.indexes) > 0
     indexes = sorted(
-        list(Product.Meta.table.indexes), key=lambda x: x.name, reverse=True
+        list(Product.ormar_config.table.indexes), key=lambda x: x.name, reverse=True
     )
     test_index = indexes[0]
     assert test_index.name == "my_index"

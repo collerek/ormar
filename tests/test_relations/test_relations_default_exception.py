@@ -14,10 +14,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class Author(ormar.Model):
-    class Meta:
-        tablename = "authors"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "authors",
+        database = database,
+        metadata = metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     first_name: str = ormar.String(max_length=80)
@@ -25,10 +26,11 @@ class Author(ormar.Model):
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "categories",
+        database = database,
+        metadata = metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
@@ -38,10 +40,11 @@ def test_fk_error():
     with pytest.raises(ModelDefinitionError):
 
         class Post(ormar.Model):
-            class Meta:
-                tablename = "posts"
-                database = database
-                metadata = metadata
+            ormar_config = ormar.OrmarConfig(
+                tablename = "posts",
+                database = database,
+                metadata = metadata,
+            )
 
             id: int = ormar.Integer(primary_key=True)
             title: str = ormar.String(max_length=200)
@@ -53,10 +56,11 @@ def test_m2m_error():
     with pytest.raises(ModelDefinitionError):
 
         class Post(ormar.Model):
-            class Meta:
-                tablename = "posts"
-                database = database
-                metadata = metadata
+            ormar_config = ormar.OrmarConfig(
+                tablename = "posts",
+                database = database,
+                metadata = metadata,
+            )
 
             id: int = ormar.Integer(primary_key=True)
             title: str = ormar.String(max_length=200)

@@ -5,7 +5,7 @@ import pytest
 import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from pydantic.schema import ForwardRef
+from typing import ForwardRef
 from starlette import status
 from httpx import AsyncClient
 
@@ -46,8 +46,8 @@ CountryRef = ForwardRef("Country")
 
 # models.py
 class Country(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "countries"
+    ormar_config = base_ormar_config.copy(tablename = "countries")
+
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128, unique=True)
@@ -65,8 +65,8 @@ class Country(ormar.Model):
 
 
 class City(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "cities"
+    ormar_config = base_ormar_config.copy(tablename = "cities")
+
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128)

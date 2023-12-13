@@ -15,14 +15,14 @@ database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-class MainMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata = metadata,
+    database = database,
+)
 
 
 class Role(ormar.Model):
-    class Meta(MainMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     name: str = ormar.String(primary_key=True, max_length=1000)
     order: int = ormar.Integer(default=0, name="sort_order")
@@ -30,20 +30,17 @@ class Role(ormar.Model):
 
 
 class Company(ormar.Model):
-    class Meta(MainMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     name: str = ormar.String(primary_key=True, max_length=1000)
 
 
 class UserRoleCompany(ormar.Model):
-    class Meta(MainMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
 
 class User(ormar.Model):
-    class Meta(MainMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     registrationnumber: str = ormar.String(primary_key=True, max_length=1000)
     company: Company = ormar.ForeignKey(Company)
@@ -68,8 +65,7 @@ def test_wrong_model():
     with pytest.raises(ModelDefinitionError):
 
         class User(ormar.Model):
-            class Meta(MainMeta):
-                pass
+            ormar_config = base_ormar_config.copy()
 
             registrationnumber: str = ormar.Text(primary_key=True)
             company: Company = ormar.ForeignKey(Company)

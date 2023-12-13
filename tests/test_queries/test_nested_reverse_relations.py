@@ -11,22 +11,22 @@ database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 class DataSource(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "datasources"
+    ormar_config = base_ormar_config.copy(tablename = "datasources")
+
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200, unique=True, index=True)
 
 
 class DataSourceTable(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "source_tables"
+    ormar_config = base_ormar_config.copy(tablename = "source_tables")
+
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200, index=True)
@@ -36,8 +36,7 @@ class DataSourceTable(ormar.Model):
 
 
 class DataSourceTableColumn(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "source_columns"
+    ormar_config = base_ormar_config.copy(tablename = "source_columns")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200, index=True)

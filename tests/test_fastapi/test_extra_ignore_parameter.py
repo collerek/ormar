@@ -32,10 +32,11 @@ async def shutdown() -> None:
 
 
 class Item(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
-        extra = Extra.ignore
+    ormar_config = ormar.OrmarConfig(
+        database = database,
+        metadata = metadata,
+        extra = Extra.ignore,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

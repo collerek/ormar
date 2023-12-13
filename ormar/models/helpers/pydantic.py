@@ -163,6 +163,6 @@ def remove_excluded_parent_fields(model: Type["Model"]) -> None:
         *model.ormar_config.model_fields.keys()
     }
     if excludes:
-        model.__fields__ = {
-            k: v for k, v in model.__fields__.items() if k not in excludes
+        model.model_fields = {
+            k: v for k, v in model.model_fields.items() if k not in excludes
         }

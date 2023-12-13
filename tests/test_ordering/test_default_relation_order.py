@@ -13,35 +13,31 @@ database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
-    author: Optional[Author] = ormar.ForeignKey(
-        Author, orders_by=["name"], related_orders_by=["-year"]
-    )
+    author: Optional[Author] = ormar.ForeignKey(Author, orders_by=["name"], related_orders_by=["-year"])
     title: str = ormar.String(max_length=100)
     year: int = ormar.Integer(nullable=True)
     ranking: int = ormar.Integer(nullable=True)
 
 
 class Animal(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "animals"
+    ormar_config = base_ormar_config.copy(tablename="animals")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.String(max_length=200)
@@ -49,8 +45,7 @@ class Animal(ormar.Model):
 
 
 class Human(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "humans"
+    ormar_config = base_ormar_config.copy(tablename="humans")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
@@ -84,12 +79,8 @@ async def test_default_orders_is_applied_from_reverse_relation():
     async with database:
         tolkien = await Author(name="J.R.R. Tolkien").save()
         hobbit = await Book(author=tolkien, title="The Hobbit", year=1933).save()
-        silmarillion = await Book(
-            author=tolkien, title="The Silmarillion", year=1977
-        ).save()
-        lotr = await Book(
-            author=tolkien, title="The Lord of the Rings", year=1955
-        ).save()
+        silmarillion = await Book(author=tolkien, title="The Silmarillion", year=1977).save()
+        lotr = await Book(author=tolkien, title="The Lord of the Rings", year=1955).save()
 
         tolkien = await Author.objects.select_related("books").get()
         assert tolkien.books[2] == hobbit
@@ -101,13 +92,9 @@ async def test_default_orders_is_applied_from_reverse_relation():
 async def test_default_orders_is_applied_from_relation():
     async with database:
         bret = await Author(name="Peter V. Bret").save()
-        tds = await Book(
-            author=bret, title="The Desert Spear", year=2010, ranking=9
-        ).save()
+        tds = await Book(author=bret, title="The Desert Spear", year=2010, ranking=9).save()
         sanders = await Author(name="Brandon Sanderson").save()
-        twok = await Book(
-            author=sanders, title="The Way of Kings", year=2010, ranking=10
-        ).save()
+        twok = await Book(author=sanders, title="The Way of Kings", year=2010, ranking=10).save()
 
         books = await Book.objects.order_by("year").select_related("author").all()
         assert books[0] == twok

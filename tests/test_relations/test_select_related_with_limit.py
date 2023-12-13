@@ -14,29 +14,32 @@ metadata = sqlalchemy.MetaData()
 
 
 class Keyword(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = db
-        tablename = "keywords"
+    ormar_config = ormar.OrmarConfig(
+        metadata = metadata,
+        database = db,
+        tablename = "keywords",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50)
 
 
 class KeywordPrimaryModel(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = db
-        tablename = "primary_models_keywords"
+    ormar_config = ormar.OrmarConfig(
+        metadata = metadata,
+        database = db,
+        tablename = "primary_models_keywords",
+    )
 
     id: int = ormar.Integer(primary_key=True)
 
 
 class PrimaryModel(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = db
-        tablename = "primary_models"
+    ormar_config = ormar.OrmarConfig(
+        metadata = metadata,
+        database = db,
+        tablename = "primary_models",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255, index=True)
@@ -48,10 +51,11 @@ class PrimaryModel(ormar.Model):
 
 
 class SecondaryModel(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = db
-        tablename = "secondary_models"
+    ormar_config = ormar.OrmarConfig(
+        metadata = metadata,
+        database = db,
+        tablename = "secondary_models",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

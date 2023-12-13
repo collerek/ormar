@@ -12,10 +12,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class Node(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "node"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "node",
+        database = database,
+        metadata = metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=120)
@@ -24,10 +25,11 @@ class Node(ormar.Model):
 
 
 class Edge(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "edge"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "edge",
+        database = database,
+        metadata = metadata,
+    )
 
     id: str = ormar.String(primary_key=True, max_length=12)
     src_node: Node = ormar.ForeignKey(Node, related_name="next_edges")

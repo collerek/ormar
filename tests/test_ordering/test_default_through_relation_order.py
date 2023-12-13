@@ -14,14 +14,14 @@ database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class Animal(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "animals"
+    ormar_config = base_ormar_config.copy(tablename="animals")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
@@ -29,8 +29,7 @@ class Animal(ormar.Model):
 
 
 class Link(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "link_table"
+    ormar_config = base_ormar_config.copy(tablename="link_table")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     animal_order: int = ormar.Integer(nullable=True)
@@ -38,8 +37,7 @@ class Link(ormar.Model):
 
 
 class Human(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "humans"
+    ormar_config = base_ormar_config.copy(tablename="humans")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
@@ -53,8 +51,7 @@ class Human(ormar.Model):
 
 
 class Human2(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "humans2"
+    ormar_config = base_ormar_config.copy(tablename="humans2")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
@@ -82,9 +79,7 @@ async def test_ordering_by_through_fail():
             await alice.load_all()
 
 
-def _get_filtered_query(
-    sender: Type[Model], instance: Model, to_class: Type[Model]
-) -> QuerySet:
+def _get_filtered_query(sender: Type[Model], instance: Model, to_class: Type[Model]) -> QuerySet:
     """
     Helper function.
     Gets the query filtered by the appropriate class name.
@@ -95,12 +90,10 @@ def _get_filtered_query(
     return query
 
 
-def _get_through_model_relations(
-    sender: Type[Model], instance: Model
-) -> Tuple[Type[Model], Type[Model]]:
+def _get_through_model_relations(sender: Type[Model], instance: Model) -> Tuple[Type[Model], Type[Model]]:
     relations = list(instance.extract_related_names())
-    rel_one = sender.Meta.model_fields[relations[0]].to
-    rel_two = sender.Meta.model_fields[relations[1]].to
+    rel_one = sender.ormar_config.model_fields[relations[0]].to
+    rel_two = sender.ormar_config.model_fields[relations[1]].to
     return rel_one, rel_two
 
 
@@ -158,9 +151,7 @@ async def _reorder_on_update(
                     setattr(link, order, ind)
                 else:
                     setattr(link, order, ind + 1)
-            await sender.objects.bulk_update(
-                cast(List[Model], to_reorder), columns=[order]
-            )
+            await sender.objects.bulk_update(cast(List[Model], to_reorder), columns=[order])
 
 
 @pre_save(Link)
@@ -171,18 +162,12 @@ async def order_link_on_insert(sender: Type[Model], instance: Model, **kwargs: A
     sender class, instance and have to accept **kwargs even if it's empty as of now.
     """
     rel_one, rel_two = _get_through_model_relations(sender, instance)
-    await _populate_order_on_insert(
-        sender=sender, instance=instance, from_class=rel_one, to_class=rel_two
-    )
-    await _populate_order_on_insert(
-        sender=sender, instance=instance, from_class=rel_two, to_class=rel_one
-    )
+    await _populate_order_on_insert(sender=sender, instance=instance, from_class=rel_one, to_class=rel_two)
+    await _populate_order_on_insert(sender=sender, instance=instance, from_class=rel_two, to_class=rel_one)
 
 
 @pre_update(Link)
-async def reorder_links_on_update(
-    sender: Type[ormar.Model], instance: ormar.Model, passed_args: Dict, **kwargs: Any
-):
+async def reorder_links_on_update(sender: Type[ormar.Model], instance: ormar.Model, passed_args: Dict, **kwargs: Any):
     """
     Signal receiver registered on Link model, triggered every time before one is updated
     by calling update() on a model. Note that signal functions for pre_update signal
@@ -223,7 +208,7 @@ async def reorder_links_on_remove(
 
     Note that if classes have many relations you need to check if current one is ordered
     """
-    through_class = sender.Meta.model_fields[relation_name].through
+    through_class = sender.ormar_config.model_fields[relation_name].through
     through_instance = getattr(instance, through_class.get_name())
     if not through_instance:
         parent_pk = instance.pk
@@ -252,16 +237,12 @@ async def test_ordering_by_through_on_m2m_field():
     async with database:
 
         def verify_order(instance, expected):
-            field_name = (
-                "favoriteAnimals" if isinstance(instance, Human) else "favoriteHumans"
-            )
-            order_field_name = (
-                "animal_order" if isinstance(instance, Human) else "human_order"
-            )
+            field_name = "favoriteAnimals" if isinstance(instance, Human) else "favoriteHumans"
+            order_field_name = "animal_order" if isinstance(instance, Human) else "human_order"
             assert [x.name for x in getattr(instance, field_name)] == expected
-            assert [
-                getattr(x.link, order_field_name) for x in getattr(instance, field_name)
-            ] == [i for i in range(len(expected))]
+            assert [getattr(x.link, order_field_name) for x in getattr(instance, field_name)] == [
+                i for i in range(len(expected))
+            ]
 
         alice = await Human(name="Alice").save()
         bob = await Human(name="Bob").save()
@@ -325,8 +306,6 @@ async def test_ordering_by_through_on_m2m_field():
         bob = await noodle.favoriteHumans.get(pk=bob.pk)
         assert bob.link.human_order == 1
 
-        await noodle.favoriteHumans.remove(
-            await noodle.favoriteHumans.filter(link__human_order=2).get()
-        )
+        await noodle.favoriteHumans.remove(await noodle.favoriteHumans.filter(link__human_order=2).get())
         await noodle.load_all()
         verify_order(noodle, ["Alice", "Bob", "Zack"])

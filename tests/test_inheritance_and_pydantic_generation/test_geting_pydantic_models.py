@@ -3,8 +3,7 @@ from typing import List, Optional
 import databases
 import pydantic
 import sqlalchemy
-from pydantic import ConstrainedStr
-from pydantic.typing import ForwardRef
+from typing import ForwardRef
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -13,14 +12,13 @@ metadata = sqlalchemy.MetaData()
 database = databases.Database(DATABASE_URL, force_rollback=True)
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 class SelfRef(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "self_refs"
+    ormar_config = base_ormar_config.copy(tablename = "self_refs")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="selfref")
@@ -31,16 +29,14 @@ SelfRef.update_forward_refs()
 
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename = "categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="test")
@@ -48,16 +44,14 @@ class Item(ormar.Model):
 
 
 class MutualA(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "mutual_a"
+    ormar_config = base_ormar_config.copy(tablename = "mutual_a")
 
     id: int = ormar.Integer(primary_key=True)
     mutual_b = ormar.ForeignKey(ForwardRef("MutualB"), related_name="mutuals_a")
 
 
 class MutualB(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "mutual_b"
+    ormar_config = base_ormar_config.copy(tablename = "mutual_b")
 
     id: int = ormar.Integer(primary_key=True)
     name = ormar.String(max_length=100, default="test")
@@ -77,7 +71,7 @@ def test_getting_pydantic_model():
     assert PydanticCategory.__fields__["id"].default is None
 
     assert PydanticCategory.__fields__["name"].required
-    assert issubclass(PydanticCategory.__fields__["name"].outer_type_, ConstrainedStr)
+    assert issubclass(PydanticCategory.__fields__["name"].outer_type_, str)
     assert PydanticCategory.__fields__["name"].default in [None, Ellipsis]
 
     PydanticItem = PydanticCategory.__fields__["items"].type_
@@ -85,7 +79,7 @@ def test_getting_pydantic_model():
     assert issubclass(PydanticItem, pydantic.BaseModel)
     assert not PydanticItem.__fields__["name"].required
     assert PydanticItem.__fields__["name"].default == "test"
-    assert issubclass(PydanticItem.__fields__["name"].outer_type_, ConstrainedStr)
+    assert issubclass(PydanticItem.__fields__["name"].outer_type_, str)
     assert "category" not in PydanticItem.__fields__
 
 

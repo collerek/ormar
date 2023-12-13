@@ -3,7 +3,7 @@ from typing import Any, Sequence, cast
 import databases
 import pytest
 import sqlalchemy
-from pydantic.typing import ForwardRef
+from typing import ForwardRef
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -19,16 +19,16 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename = "categories")
+
 
     id = ormar.Integer(primary_key=True)
     name = ormar.String(max_length=40)
 
 
 class PostCategory(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "posts_x_categories"
+    ormar_config = base_ormar_config.copy(tablename = "posts_x_categories")
+
 
     id: int = ormar.Integer(primary_key=True)
     sort_order: int = ormar.Integer(nullable=True)
@@ -36,16 +36,14 @@ class PostCategory(ormar.Model):
 
 
 class Blog(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -63,16 +61,15 @@ def create_test_database():
 
 
 class PostCategory2(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "posts_x_categories2"
+    ormar_config = base_ormar_config.copy(tablename = "posts_x_categories2")
+
 
     id: int = ormar.Integer(primary_key=True)
     sort_order: int = ormar.Integer(nullable=True)
 
 
 class Post2(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -82,10 +79,10 @@ class Post2(ormar.Model):
 @pytest.mark.asyncio
 async def test_forward_ref_is_updated():
     async with database:
-        assert Post2.Meta.requires_ref_update
+        assert Post2.ormar_config.requires_ref_update
         Post2.update_forward_refs()
 
-        assert Post2.Meta.model_fields["postcategory2"].to == PostCategory2
+        assert Post2.ormar_config.model_fields["postcategory2"].to == PostCategory2
 
 
 @pytest.mark.asyncio

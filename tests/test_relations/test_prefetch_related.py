@@ -12,20 +12,22 @@ metadata = sqlalchemy.MetaData()
 
 
 class RandomSet(ormar.Model):
-    class Meta:
-        tablename = "randoms"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "randoms",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(name="random_id", primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Tonation(ormar.Model):
-    class Meta:
-        tablename = "tonations"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "tonations",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(name="tonation_name", max_length=100)
@@ -33,20 +35,22 @@ class Tonation(ormar.Model):
 
 
 class Division(ormar.Model):
-    class Meta:
-        tablename = "divisions"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "divisions",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(name="division_id", primary_key=True)
     name: str = ormar.String(max_length=100, nullable=True)
 
 
 class Shop(ormar.Model):
-    class Meta:
-        tablename = "shops"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "shops",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=True)
@@ -54,17 +58,19 @@ class Shop(ormar.Model):
 
 
 class AlbumShops(ormar.Model):
-    class Meta:
-        tablename = "albums_x_shops"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "albums_x_shops",
+        metadata = metadata,
+        database = database,
+    )
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "albums",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=True)
@@ -72,10 +78,11 @@ class Album(ormar.Model):
 
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "tracks",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(name="track_id", primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -85,10 +92,11 @@ class Track(ormar.Model):
 
 
 class Cover(ormar.Model):
-    class Meta:
-        tablename = "covers"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "covers",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(

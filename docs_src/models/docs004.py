@@ -17,7 +17,7 @@ class Course(ormar.Model):
     completed: bool = ormar.Boolean(default=False)
 
 
-print(Course.Meta.table.columns)
+print(Course.ormar_config.table.columns)
 """
 Will produce:
 ['courses.id', 'courses.name', 'courses.completed']

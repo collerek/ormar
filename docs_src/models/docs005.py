@@ -17,7 +17,7 @@ class Course(ormar.Model):
     completed: bool = ormar.Boolean(default=False)
 
 
-print({x: v.__dict__ for x, v in Course.Meta.model_fields.items()})
+print({x: v.__dict__ for x, v in Course.ormar_config.model_fields.items()})
 """
 Will produce:
 {'completed': mappingproxy({'autoincrement': False,

@@ -98,7 +98,7 @@ class PrefetchQuery:
     ) -> None:
 
         self.model = model_cls
-        self.database = self.model.Meta.database
+        self.database = self.model.ormar_config.database
         self._prefetch_related = prefetch_related
         self._select_related = select_related
         self.excludable = excludable
@@ -279,7 +279,7 @@ class PrefetchQuery:
         )
 
         for related in related_to_extract:
-            target_field = model.Meta.model_fields[related]
+            target_field = model.ormar_config.model_fields[related]
             target_field = cast("ForeignKeyField", target_field)
             target_model = target_field.to.get_name()
             model_id = model.get_relation_model_id(target_field=target_field)
@@ -381,7 +381,7 @@ class PrefetchQuery:
         :return: None
         :rtype: None
         """
-        target_field = target_model.Meta.model_fields[related]
+        target_field = target_model.ormar_config.model_fields[related]
         target_field = cast("ForeignKeyField", target_field)
         reverse = False
         if target_field.virtual or target_field.is_multi:
@@ -473,13 +473,13 @@ class PrefetchQuery:
         select_related = []
         query_target = target_model
         table_prefix = ""
-        exclude_prefix = target_field.to.Meta.alias_manager.resolve_relation_alias(
+        exclude_prefix = target_field.to.ormar_config.alias_manager.resolve_relation_alias(
             from_model=target_field.owner, relation_name=target_field.name
         )
         if target_field.is_multi:
             query_target = target_field.through
             select_related = [target_name]
-            table_prefix = target_field.to.Meta.alias_manager.resolve_relation_alias(
+            table_prefix = target_field.to.ormar_config.alias_manager.resolve_relation_alias(
                 from_model=query_target, relation_name=target_name
             )
             exclude_prefix = table_prefix

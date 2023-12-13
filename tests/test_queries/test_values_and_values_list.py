@@ -21,16 +21,14 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class User(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Role(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -38,8 +36,7 @@ class Role(ormar.Model):
 
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy( tablename = "categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
@@ -48,8 +45,7 @@ class Category(ormar.Model):
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "posts"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)

@@ -178,10 +178,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class SortModel(ormar.Model):
-    class Meta:
-        tablename = "sorts"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "sorts",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

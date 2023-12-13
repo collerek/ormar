@@ -13,10 +13,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class Author(ormar.Model):
-    class Meta:
-        tablename = "authors"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "authors",
+        database = database,
+        metadata = metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     first_name: str = ormar.String(max_length=80)
@@ -24,20 +25,22 @@ class Author(ormar.Model):
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "categories",
+        database = database,
+        metadata = metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
 
 
 class Post(ormar.Model):
-    class Meta:
-        tablename = "posts"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename = "posts",
+        database = database,
+        metadata = metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -57,7 +60,7 @@ def create_test_database():
 async def cleanup():
     yield
     async with database:
-        PostCategory = Post.Meta.model_fields["categories"].through
+        PostCategory = Post.ormar_config.model_fields["categories"].through
         await PostCategory.objects.delete(each=True)
         await Post.objects.delete(each=True)
         await Category.objects.delete(each=True)

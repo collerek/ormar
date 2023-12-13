@@ -75,11 +75,11 @@ def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> D
         if relation_map is not None
         else translate_list_to_dict(model._iterate_related_models())
     )
-    for name, field in model.Meta.model_fields.items():
+    for name, field in model.ormar_config.model_fields.items():
         populates_sample_fields_values(
             example=example, name=name, field=field, relation_map=relation_map
         )
-    to_exclude = {name for name in model.Meta.model_fields}
+    to_exclude = {name for name in model.ormar_config.model_fields}
     pydantic_repr = generate_pydantic_example(pydantic_model=model, exclude=to_exclude)
     example.update(pydantic_repr)
 
@@ -204,7 +204,7 @@ def overwrite_binary_format(schema: Dict[str, Any], model: Type["Model"]) -> Non
     for field_id, prop in schema.get("properties", {}).items():
         if (
             field_id in model._bytes_fields
-            and model.Meta.model_fields[field_id].represent_as_base64_str
+            and model.ormar_config.model_fields[field_id].represent_as_base64_str
         ):
             prop["format"] = "base64"
             if prop.get("enum"):
@@ -231,7 +231,7 @@ def construct_modify_schema_function(fields_with_choices: List) -> Callable:
     def schema_extra(schema: Dict[str, Any], model: Type["Model"]) -> None:
         for field_id, prop in schema.get("properties", {}).items():
             if field_id in fields_with_choices:
-                prop["enum"] = list(model.Meta.model_fields[field_id].choices)
+                prop["enum"] = list(model.ormar_config.model_fields[field_id].choices)
                 prop["description"] = prop.get("description", "") + "An enumeration."
         overwrite_example_and_description(schema=schema, model=model)
         overwrite_binary_format(schema=schema, model=model)

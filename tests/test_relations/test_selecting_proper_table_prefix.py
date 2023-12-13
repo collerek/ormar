@@ -13,29 +13,32 @@ metadata = sqlalchemy.MetaData()
 
 
 class User(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = database
-        tablename = "test_users"
+    ormar_config = ormar.OrmarConfig(
+        metadata = metadata,
+        database = database,
+        tablename = "test_users",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50)
 
 
 class Signup(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = database
-        tablename = "test_signup"
+    ormar_config = ormar.OrmarConfig(
+        metadata = metadata,
+        database = database,
+        tablename = "test_signup",
+    )
 
     id: int = ormar.Integer(primary_key=True)
 
 
 class Session(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = database
-        tablename = "test_sessions"
+    ormar_config = ormar.OrmarConfig(
+        metadata = metadata,
+        database = database,
+        tablename = "test_sessions",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255, index=True)

@@ -25,10 +25,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class AuditLog(ormar.Model):
-    class Meta:
-        tablename = "audits"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "audits",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     event_type: str = ormar.String(max_length=100)
@@ -36,20 +37,22 @@ class AuditLog(ormar.Model):
 
 
 class Cover(ormar.Model):
-    class Meta:
-        tablename = "covers"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "covers",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=100)
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "albums",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -364,7 +367,7 @@ async def test_custom_signal(cleanup):
                     instance.is_best_seller = False
                 await instance.update()
 
-            Album.Meta.signals.custom.connect(after_update)
+            Album.ormar_config.signals.custom.connect(after_update)
 
             # here album.play_count ans is_best_seller get default values
             album = await Album.objects.create(name="Venice")
@@ -379,13 +382,13 @@ async def test_custom_signal(cleanup):
             album.play_count = 60
             await album.update()
             assert not album.is_best_seller
-            await Album.Meta.signals.custom.send(sender=Album, instance=album)
+            await Album.ormar_config.signals.custom.send(sender=Album, instance=album)
             assert album.is_best_seller
 
             album.play_count = 30
             await album.update()
             assert album.is_best_seller
-            await Album.Meta.signals.custom.send(sender=Album, instance=album)
+            await Album.ormar_config.signals.custom.send(sender=Album, instance=album)
             assert not album.is_best_seller
 
-            Album.Meta.signals.custom.disconnect(after_update)
+            Album.ormar_config.signals.custom.disconnect(after_update)

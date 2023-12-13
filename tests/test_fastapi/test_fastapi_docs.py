@@ -32,9 +32,10 @@ async def shutdown() -> None:
         await database_.disconnect()
 
 
-class LocalMeta:
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class PTestA(pydantic.BaseModel):
@@ -49,21 +50,19 @@ class PTestP(pydantic.BaseModel):
 
 
 class Category(ormar.Model):
-    class Meta(LocalMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    class Meta(LocalMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    pydantic_int: Optional[int]
-    test_P: Optional[List[PTestP]]
+    pydantic_int: Optional[int] = None
+    test_P: Optional[List[PTestP]] = None
     categories = ormar.ManyToMany(Category)
 
 
@@ -112,16 +111,12 @@ async def test_all_endpoints():
         item = Item(**response.json())
         assert item.pk is not None
 
-        response = await client.post(
-            "/items/add_category/", json={"item": item.dict(), "category": category}
-        )
+        response = await client.post("/items/add_category/", json={"item": item.dict(), "category": category})
         item = Item(**response.json())
         assert len(item.categories) == 1
         assert item.categories[0].name == "test cat"
 
-        await client.post(
-            "/items/add_category/", json={"item": item.dict(), "category": category2}
-        )
+        await client.post("/items/add_category/", json={"item": item.dict(), "category": category2})
 
         response = await client.get("/items/")
         items = [Item(**item) for item in response.json()]
@@ -137,9 +132,7 @@ async def test_all_endpoints():
 
 def test_schema_modification():
     schema = Item.schema()
-    assert any(
-        x.get("type") == "array" for x in schema["properties"]["categories"]["anyOf"]
-    )
+    assert any(x.get("type") == "array" for x in schema["properties"]["categories"]["anyOf"])
     assert schema["properties"]["categories"]["title"] == "Categories"
     assert schema["example"] == {
         "categories": [{"id": 0, "name": "string"}],
@@ -158,9 +151,7 @@ def test_schema_modification():
                 "id": 0,
                 "name": "string",
                 "pydantic_int": 0,
-                "test_P": [
-                    {"a": 0, "b": {"c": "string", "d": "string", "e": "string"}}
-                ],
+                "test_P": [{"a": 0, "b": {"c": "string", "d": "string", "e": "string"}}],
             }
         ],
     }

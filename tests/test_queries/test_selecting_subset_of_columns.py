@@ -16,10 +16,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class NickNames(ormar.Model):
-    class Meta:
-        tablename = "nicks"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "nicks",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -27,17 +28,19 @@ class NickNames(ormar.Model):
 
 
 class NicksHq(ormar.Model):
-    class Meta:
-        tablename = "nicks_x_hq"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "nicks_x_hq",
+        metadata = metadata,
+        database = database,
+    )
 
 
 class HQ(ormar.Model):
-    class Meta:
-        tablename = "hqs"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "hqs",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -45,10 +48,11 @@ class HQ(ormar.Model):
 
 
 class Company(ormar.Model):
-    class Meta:
-        tablename = "companies"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "companies",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
@@ -57,10 +61,11 @@ class Company(ormar.Model):
 
 
 class Car(ormar.Model):
-    class Meta:
-        tablename = "cars"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "cars",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     manufacturer: Optional[Company] = ormar.ForeignKey(Company)
@@ -226,7 +231,7 @@ async def test_selecting_subset():
 
             assert all_cars_dummy[0].manufacturer.founded is None
 
-            with pytest.raises(pydantic.error_wrappers.ValidationError):
+            with pytest.raises(pydantic.ValidationError):
                 # cannot exclude mandatory model columns - company__name in this example
                 await Car.objects.select_related("manufacturer").fields(
                     ["id", "name", "manufacturer__founded"]

@@ -20,10 +20,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class AuditLog(ormar.Model):
-    class Meta:
-        tablename = "audits"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "audits",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     event_type: str = ormar.String(max_length=100)
@@ -31,30 +32,33 @@ class AuditLog(ormar.Model):
 
 
 class Cover(ormar.Model):
-    class Meta:
-        tablename = "covers"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "covers",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=100)
 
 
 class Artist(ormar.Model):
-    class Meta:
-        tablename = "artists"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "artists",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(name="artist_id", primary_key=True)
     name: str = ormar.String(name="fname", max_length=100)
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename = "albums",
+        metadata = metadata,
+        database = database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=100)

@@ -12,22 +12,21 @@ database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
@@ -124,10 +123,7 @@ async def test_or_filters():
                 (
                     (
                         (Book.year > 1960) & (Book.author.name == "J.R.R. Tolkien")
-                        | (
-                            (Book.year < 2000)
-                            & (Book.author.name == "Andrzej Sapkowski")
-                        )
+                        | ((Book.year < 2000) & (Book.author.name == "Andrzej Sapkowski"))
                     )
                     & (Book.title.startswith("The"))
                 )
@@ -183,9 +179,7 @@ async def test_or_filters():
             .all()
         )
         assert len(books) == 3
-        assert not any(
-            [x.title in ["The Tower of Fools", "The Lord of the Rings"] for x in books]
-        )
+        assert not any([x.title in ["The Tower of Fools", "The Lord of the Rings"] for x in books])
 
         books = (
             await Book.objects.select_related("author")
@@ -233,24 +227,16 @@ async def test_or_filters():
         with pytest.raises(QueryDefinitionError):
             await Book.objects.select_related("author").filter("wrong").all()
 
-        books = await tolkien.books.filter(
-            ormar.or_(year__lt=1940, year__gt=1960)
-        ).all()
+        books = await tolkien.books.filter(ormar.or_(year__lt=1940, year__gt=1960)).all()
         assert len(books) == 2
 
         books = await tolkien.books.filter(
-            ormar.and_(
-                ormar.or_(year__lt=1940, year__gt=1960), title__icontains="hobbit"
-            )
+            ormar.and_(ormar.or_(year__lt=1940, year__gt=1960), title__icontains="hobbit")
         ).all()
         assert len(books) == 1
         assert tolkien.books[0].title == "The Hobbit"
 
-        books = (
-            await Book.objects.select_related("author")
-            .filter(ormar.or_(author__name="J.R.R. Tolkien"))
-            .all()
-        )
+        books = await Book.objects.select_related("author").filter(ormar.or_(author__name="J.R.R. Tolkien")).all()
         assert len(books) == 3
 
         books = (
