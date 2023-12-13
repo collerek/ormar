@@ -12,20 +12,22 @@ metadata = sqlalchemy.MetaData()
 
 
 class CringeLevel(ormar.Model):
-    class Meta:
-        tablename = "levels"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="levels",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class NickName(ormar.Model):
-    class Meta:
-        tablename = "nicks"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="nicks",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -34,20 +36,22 @@ class NickName(ormar.Model):
 
 
 class NicksHq(ormar.Model):
-    class Meta:
-        tablename = "nicks_x_hq"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="nicks_x_hq",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     new_field: str = ormar.String(max_length=200, nullable=True)
 
 
 class HQ(ormar.Model):
-    class Meta:
-        tablename = "hqs"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="hqs",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -55,10 +59,11 @@ class HQ(ormar.Model):
 
 
 class Company(ormar.Model):
-    class Meta:
-        tablename = "companies"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="companies",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
@@ -241,9 +246,7 @@ async def test_saving_nested_with_m2m_and_rev_fk_and_through():
             count = await company.save_related(follow=True, save_all=True)
             assert count == 6
 
-            company_check = await Company.objects.select_related(
-                "hq__nicks__level"
-            ).get()
+            company_check = await Company.objects.select_related("hq__nicks__level").get()
             assert company_check.pk is not None
             assert company_check.name == "Main"
             assert company_check.hq.name == "Yoko"

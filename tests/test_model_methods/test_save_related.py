@@ -12,20 +12,22 @@ metadata = sqlalchemy.MetaData()
 
 
 class CringeLevel(ormar.Model):
-    class Meta:
-        tablename = "levels"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="levels",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class NickName(ormar.Model):
-    class Meta:
-        tablename = "nicks"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="nicks",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -34,17 +36,19 @@ class NickName(ormar.Model):
 
 
 class NicksHq(ormar.Model):
-    class Meta:
-        tablename = "nicks_x_hq"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="nicks_x_hq",
+        metadata=metadata,
+        database=database,
+    )
 
 
 class HQ(ormar.Model):
-    class Meta:
-        tablename = "hqs"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="hqs",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -52,10 +56,11 @@ class HQ(ormar.Model):
 
 
 class Company(ormar.Model):
-    class Meta:
-        tablename = "companies"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="companies",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
@@ -189,12 +194,8 @@ async def test_saving_nested():
         async with database.transaction(force_rollback=True):
             level = await CringeLevel.objects.create(name="High")
             level2 = await CringeLevel.objects.create(name="Low")
-            nick1 = await NickName.objects.create(
-                name="BazingaO", is_lame=False, level=level
-            )
-            nick2 = await NickName.objects.create(
-                name="Bazinga20", is_lame=True, level=level2
-            )
+            nick1 = await NickName.objects.create(name="BazingaO", is_lame=False, level=level)
+            nick2 = await NickName.objects.create(name="Bazinga20", is_lame=True, level=level2)
 
             hq = await HQ.objects.create(name="Main")
             assert hq.saved

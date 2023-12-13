@@ -34,9 +34,10 @@ async def shutdown() -> None:
         await database_.disconnect()
 
 
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 CityRef = ForwardRef("City")

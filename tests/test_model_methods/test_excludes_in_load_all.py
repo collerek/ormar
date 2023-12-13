@@ -13,42 +13,31 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta:
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class JimmyUser(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "jimmy_users"
+    ormar_config = base_ormar_config.copy(tablename="jimmy_users")
 
-    id: uuid.UUID = ormar.UUID(
-        primary_key=True, default=uuid.uuid4(), uuid_format="string"
-    )
+    id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4(), uuid_format="string")
 
 
 class JimmyProfile(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "jimmy_profiles"
+    ormar_config = base_ormar_config.copy(tablename="jimmy_profiles")
 
-    id: uuid.UUID = ormar.UUID(
-        primary_key=True, default=uuid.uuid4(), uuid_format="string"
-    )
+    id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4(), uuid_format="string")
     name = ormar.String(max_length=42, default="JimmyProfile")
-
     user: JimmyUser = ormar.ForeignKey(to=JimmyUser)
 
 
 class JimmyAccount(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "jimmy_accounts"
+    ormar_config = base_ormar_config.copy(tablename="jimmy_accounts")
 
-    id: uuid.UUID = ormar.UUID(
-        primary_key=True, default=uuid.uuid4(), uuid_format="string"
-    )
-
+    id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4(), uuid_format="string")
     name = ormar.String(max_length=42, default="JimmyAccount")
-
     user: JimmyUser = ormar.ForeignKey(to=JimmyUser)
 
 

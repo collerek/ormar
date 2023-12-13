@@ -13,18 +13,20 @@ metadata = sqlalchemy.MetaData()
 
 
 class Department(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     department_name: str = ormar.String(max_length=100)
 
 
 class Course(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     course_name: str = ormar.String(max_length=100)
@@ -33,9 +35,10 @@ class Course(ormar.Model):
 
 
 class Student(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     name: str = ormar.String(max_length=100)
@@ -72,9 +75,7 @@ async def test_uuid_pk_in_save_related():
         department = Department(**to_save)
         await department.save_related(follow=True, save_all=True)
         department_check = (
-            await Department.objects.select_all(follow=True)
-            .order_by(Department.courses.students.name.asc())
-            .get()
+            await Department.objects.select_all(follow=True).order_by(Department.courses.students.name.asc()).get()
         )
         to_exclude = {
             "id": ...,

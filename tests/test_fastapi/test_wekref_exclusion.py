@@ -42,9 +42,10 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class OtherThing(ormar.Model):

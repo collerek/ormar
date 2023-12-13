@@ -19,14 +19,14 @@ def get_id() -> str:
     return "".join(choice(ascii_uppercase) for _ in range(12))
 
 
-class MainMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class PositionOrm(ormar.Model):
-    class Meta(MainMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     name: str = String(primary_key=True, max_length=50)
     x: float = Float()
@@ -35,8 +35,7 @@ class PositionOrm(ormar.Model):
 
 
 class PositionOrmDef(ormar.Model):
-    class Meta(MainMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     name: str = String(primary_key=True, max_length=50, default=get_id)
     x: float = Float()

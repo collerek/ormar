@@ -10,14 +10,14 @@ database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class Task(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "tasks"
+    ormar_config = base_ormar_config.copy(tablename="tasks")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(

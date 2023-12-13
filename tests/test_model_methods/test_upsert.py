@@ -12,10 +12,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class Director(ormar.Model):
-    class Meta:
-        tablename = "directors"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="directors",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="first_name")
@@ -23,10 +24,11 @@ class Director(ormar.Model):
 
 
 class Movie(ormar.Model):
-    class Meta:
-        tablename = "movies"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="movies",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="title")
@@ -49,16 +51,14 @@ async def test_updating_selected_columns():
     async with database:
         director1 = await Director(name="Peter", last_name="Jackson").save()
 
-        await Movie(
-            id=1, name="Lord of The Rings", year=2003, director=director1, profit=1.212
-        ).upsert()
+        await Movie(id=1, name="Lord of The Rings", year=2003, director=director1, profit=1.212).upsert()
 
         with pytest.raises(ormar.NoMatch):
             await Movie.objects.get()
 
-        await Movie(
-            id=1, name="Lord of The Rings", year=2003, director=director1, profit=1.212
-        ).upsert(__force_save__=True)
+        await Movie(id=1, name="Lord of The Rings", year=2003, director=director1, profit=1.212).upsert(
+            __force_save__=True
+        )
         lotr = await Movie.objects.get()
         assert lotr.year == 2003
         assert lotr.name == "Lord of The Rings"

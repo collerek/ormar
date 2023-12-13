@@ -13,10 +13,11 @@ db = databases.Database(DATABASE_URL)
 
 
 class User(ormar.Model):
-    class Meta:
-        tablename = "user"
-        metadata = metadata
-        database = db
+    ormar_config = ormar.OrmarConfig(
+        tablename = "user",
+        metadata = metadata,
+        database = db,
+    )
 
     id: uuid.UUID = ormar.UUID(
         primary_key=True, default=uuid.uuid4, uuid_format="string"
@@ -29,10 +30,11 @@ class User(ormar.Model):
 
 
 class Token(ormar.Model):
-    class Meta:
-        tablename = "token"
-        metadata = metadata
-        database = db
+    ormar_config = ormar.OrmarConfig(
+        tablename = "token",
+        metadata = metadata,
+        database = db,
+    )
 
     id = ormar.Integer(primary_key=True)
     text = ormar.String(max_length=4, unique=True)

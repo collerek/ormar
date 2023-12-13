@@ -16,10 +16,11 @@ def key():
 
 
 class Model(ormar.Model):
-    class Meta:
-        tablename = "models"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="models",
+        metadata=metadata,
+        database=database,
+    )
 
     id: str = ormar.String(primary_key=True, default=key, max_length=8)
     name: str = ormar.String(max_length=32)

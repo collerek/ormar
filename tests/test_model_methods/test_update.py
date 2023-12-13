@@ -12,10 +12,11 @@ metadata = sqlalchemy.MetaData()
 
 
 class Director(ormar.Model):
-    class Meta:
-        tablename = "directors"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="directors",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="first_name")
@@ -23,10 +24,11 @@ class Director(ormar.Model):
 
 
 class Movie(ormar.Model):
-    class Meta:
-        tablename = "movies"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="movies",
+        metadata=metadata,
+        database=database,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="title")
@@ -50,9 +52,7 @@ async def test_updating_selected_columns():
         director1 = await Director(name="Peter", last_name="Jackson").save()
         director2 = await Director(name="James", last_name="Cameron").save()
 
-        lotr = await Movie(
-            name="LOTR", year=2001, director=director1, profit=1.140
-        ).save()
+        lotr = await Movie(name="LOTR", year=2001, director=director1, profit=1.140).save()
 
         lotr.name = "Lord of The Rings"
         lotr.year = 2003
@@ -84,9 +84,7 @@ async def test_updating_selected_columns():
 async def test_not_passing_columns_or_empty_list_saves_all():
     async with database:
         director = await Director(name="James", last_name="Cameron").save()
-        terminator = await Movie(
-            name="Terminator", year=1984, director=director, profit=0.078
-        ).save()
+        terminator = await Movie(name="Terminator", year=1984, director=director, profit=0.078).save()
 
         terminator.name = "Terminator 2"
         terminator.year = 1991

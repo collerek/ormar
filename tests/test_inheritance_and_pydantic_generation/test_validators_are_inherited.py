@@ -13,9 +13,10 @@ metadata = sqlalchemy.MetaData()
 database = databases.Database(DATABASE_URL)
 
 
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 class BaseModel(ormar.Model):
