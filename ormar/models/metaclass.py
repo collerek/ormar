@@ -381,7 +381,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
         meta = attrs.get("ormar_config")
         if not meta:  # pragma: no cover
             raise ModelDefinitionError(
-                f"Model {curr_class.__name__} declared without Meta"
+                f"Model {curr_class.__name__} declared without ormar_config"
             )
         table_name = (
             meta.tablename

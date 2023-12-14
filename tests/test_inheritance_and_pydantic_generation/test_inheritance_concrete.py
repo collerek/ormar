@@ -186,13 +186,6 @@ def test_duplicated_related_name_on_different_model():
             max_persons: int = ormar.Integer()
 
 
-def test_config_is_not_a_class_raises_error():
-    with pytest.raises(ModelDefinitionError):
-
-        class ImmutablePerson2(Person):
-            Config = dict(allow_mutation=False, validate_assignment=False)
-
-
 def test_field_redefining_in_concrete_models():
     class RedefinedField(DateFieldsModel):
         ormar_config = ormar.OrmarConfig(
@@ -484,9 +477,9 @@ async def test_inheritance_with_multi_relation():
 
 def test_custom_config():
     # Custom config inherits defaults
-    assert getattr(ImmutablePerson.__config__, "orm_mode") is True
+    assert getattr(ImmutablePerson.model_config, "orm_mode") is True
     # Custom config can override defaults
-    assert getattr(ImmutablePerson.__config__, "validate_assignment") is False
+    assert getattr(ImmutablePerson.model_config, "validate_assignment") is False
     sam = ImmutablePerson(name="Sam")
     with pytest.raises(TypeError):
         sam.name = "Not Sam"

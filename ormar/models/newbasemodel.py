@@ -1,10 +1,8 @@
 import base64
 import sys
-import warnings
 from typing import (
     AbstractSet,
     Any,
-    Callable,
     Dict,
     List,
     Mapping,
@@ -23,7 +21,6 @@ import databases
 import pydantic
 import sqlalchemy
 from pydantic import BaseModel
-from pydantic_core import SchemaValidator
 
 
 import ormar  # noqa I100
@@ -206,6 +203,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :rtype: Any
         """
         # TODO: To many fields land here - descriptors problem?
+        # TODO: Check __pydantic_extra__
+        if item == "__pydantic_extra__":
+            return None
         return super().__getattr__(item)
 
     def __getstate__(self) -> Dict[Any, Any]:
