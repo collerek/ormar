@@ -27,5 +27,7 @@ class EnumExample(ormar.Model):
 
 
 def test_proper_schema():
-    schema = EnumExample.schema_json()
-    assert '{"MyEnum": {"title": "MyEnum", "description": "An enumeration.", ' '"enum": [1, 2]}}' in schema
+    schema = EnumExample.model_json_schema()
+    assert {"MyEnum": {"title": "MyEnum", "enum": [1, 2], "type": "integer"}} == schema[
+        "$defs"
+    ]
