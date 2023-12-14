@@ -75,6 +75,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         "_pk_column",
         "__pk_only__",
         "__cached_hash__",
+        "__pydantic_extra__",
+        "__pydantic_fields_set__"
     )
 
     if TYPE_CHECKING:  # pragma no cover

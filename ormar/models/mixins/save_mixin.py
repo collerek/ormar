@@ -14,6 +14,7 @@ from typing import (
 )
 
 import pydantic
+from pydantic.plugin._schema_validator import create_schema_validator
 
 import ormar  # noqa: I100, I202
 from ormar.exceptions import ModelPersistenceError
@@ -253,8 +254,32 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict
         """
-        cls.__pydantic_validator__.validate_python(new_kwargs)  # type: ignore
+        validators = cls._build_individual_schema_validator()
+        for key, value in new_kwargs.items():
+            if key in validators:
+                validators[key].validate_python(value)
         return new_kwargs
+
+    @classmethod
+    def _build_individual_schema_validator(cls) -> Any:
+        if cls.__ormar_fields_validators__ is not None:
+            return cls.__ormar_fields_validators__
+        field_validators = {}
+        for key, field in cls._extract_pydantic_fields().items():
+            if cls.__pydantic_core_schema__["type"] == "definitions":
+                schema = {"type": "definitions", "schema": field["schema"], "definitions": cls.__pydantic_core_schema__["definitions"]}
+            else:
+                schema = field["schema"]
+            field_validators[key] = create_schema_validator(schema, cls, cls.__module__, cls.__qualname__,'BaseModel')
+        cls.__ormar_fields_validators__ = field_validators
+        return cls.__ormar_fields_validators__
+
+    @classmethod
+    def _extract_pydantic_fields(cls):
+        if cls.__pydantic_core_schema__["type"] == "model":
+            return cls.__pydantic_core_schema__["schema"]["fields"]
+        elif cls.__pydantic_core_schema__["type"] == "definitions":
+            return cls.__pydantic_core_schema__["schema"]["schema"]["fields"]
 
     @staticmethod
     async def _upsert_model(
