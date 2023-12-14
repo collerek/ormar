@@ -1,5 +1,5 @@
 # type: ignore
-from typing import List
+from typing import List, Optional
 
 import databases
 import pytest
@@ -193,8 +193,8 @@ def test_proper_field_init():
     assert "supervisor" in Person.ormar_config.model_fields
     assert Person.ormar_config.model_fields["supervisor"].to == Person
 
-    assert "supervisor" in Person.__fields__
-    assert Person.__fields__["supervisor"].type_ == Person
+    assert "supervisor" in Person.model_fields
+    assert Person.model_fields["supervisor"].annotation == Optional[Person]
 
     assert "supervisor" in Person.ormar_config.table.columns
     assert isinstance(

@@ -224,18 +224,15 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :rtype: None
         """
         if self.to.__class__ == ForwardRef:
-            self.to = evaluate_forwardref(
-                self.to, globalns, localns or None  # type: ignore
-            )
+            self.to = self.to._evaluate(globalns, localns, set())
 
             (self.__type__, self.column_type) = populate_m2m_params_based_on_to_model(
                 to=self.to, nullable=self.nullable
             )
 
         if self.through.__class__ == ForwardRef:
-            self.through = evaluate_forwardref(
-                self.through, globalns, localns or None  # type: ignore
-            )
+            self.through = self.through._evaluate(globalns, localns, set())
+
             forbid_through_relations(self.through)
 
     def get_relation_name(self) -> str:

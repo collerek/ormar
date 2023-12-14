@@ -15,7 +15,7 @@ from typing import (
 )
 
 import pydantic
-from pydantic.fields import Field
+from pydantic.fields import Field, FieldInfo
 
 from ormar.models.mixins.relation_mixin import RelationMixin  # noqa: I100, I202
 from ormar.queryset.utils import translate_list_to_dict
@@ -117,6 +117,8 @@ class PydanticMixin(RelationMixin):
             )
             if field.is_multi or field.virtual:
                 target = List[target]  # type: ignore
+            if field.nullable:
+                defaults[name] = None
         elif not field.is_relation:
             defaults[name] = cls.model_fields[name].default
             target = field.__type__

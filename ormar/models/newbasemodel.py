@@ -567,7 +567,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 register_relation_in_alias_manager(field=field)
                 update_column_definition(model=cls, field=field)
         populate_meta_sqlalchemy_table_if_required(meta=cls.ormar_config)
-        super().update_forward_refs(**localns)
+        # super().update_forward_refs(**localns)
+        cls.model_rebuild(force=True)
         cls.ormar_config.requires_ref_update = False
 
     @staticmethod
