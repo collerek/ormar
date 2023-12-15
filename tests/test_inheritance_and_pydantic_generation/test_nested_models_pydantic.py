@@ -47,9 +47,9 @@ class TicketPackage(ormar.Model):
 
 def test_have_proper_children():
     TicketPackageOut = TicketPackage.get_pydantic(exclude={"ticket"})
-    assert "package" in TicketPackageOut.__fields__
-    PydanticPackage = TicketPackageOut.__fields__["package"].type_
-    assert "library" in PydanticPackage.__fields__
+    assert "package" in TicketPackageOut.model_fields
+    PydanticPackage = TicketPackageOut.__pydantic_core_schema__["schema"]["fields"]["package"]["schema"]["schema"]["schema"]["cls"]
+    assert "library" in PydanticPackage.model_fields
 
 
 def test_casts_properly():

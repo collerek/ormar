@@ -5,6 +5,8 @@ import pydantic
 import sqlalchemy
 from typing import ForwardRef
 
+from pydantic_core import PydanticUndefined
+
 import ormar
 from tests.settings import DATABASE_URL
 
@@ -76,16 +78,17 @@ def test_getting_pydantic_model():
 
     assert PydanticCategory.model_fields["name"].is_required()
     assert PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["name"]["schema"]["type"] == "str"
-    assert PydanticCategory.model_fields["name"].default in [None, Ellipsis]
+    assert PydanticCategory.model_fields["name"].default == PydanticUndefined
 
-    PydanticItem = PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["items"]["schema"]["schema"][
+    PydanticItem = PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["items"]["schema"]["schema"]["schema"][
         "items_schema"
     ]["cls"]
-    assert PydanticCategory.model_fields["items"].outer_type_ == List[PydanticItem]
+    assert PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["items"]["schema"]["schema"]["schema"]["type"] == "list"
+    assert PydanticCategory.model_fields["items"].annotation == Optional[List[PydanticItem]]
     assert issubclass(PydanticItem, pydantic.BaseModel)
     assert not PydanticItem.model_fields["name"].is_required()
     assert PydanticItem.model_fields["name"].default == "test"
-    assert issubclass(PydanticItem.model_fields["name"].outer_type_, str)
+    assert PydanticItem.model_fields["name"].annotation == Optional[str]
     assert "category" not in PydanticItem.model_fields
 
 
@@ -238,8 +241,14 @@ def test_getting_pydantic_model_mutual_rels():
     assert len(MutualAPydantic.model_fields) == 3
     assert set(MutualAPydantic.model_fields.keys()) == {"id", "mutual_b", "mutuals_b"}
 
-    MutualB1 = MutualAPydantic.model_fields["mutual_b"].type_
-    MutualB2 = MutualAPydantic.model_fields["mutuals_b"].type_
+    mutual_ref_1 = MutualAPydantic.__pydantic_core_schema__["schema"]["schema"]["fields"]["mutual_b"]["schema"]["schema"]["schema"]["schema_ref"]
+    MutualB1 = next(
+        (x for x in MutualAPydantic.__pydantic_core_schema__["definitions"] if x["ref"] == mutual_ref_1)
+    )["cls"]
+    mutual_ref_2 = MutualAPydantic.__pydantic_core_schema__["schema"]["schema"]["fields"]["mutuals_b"]["schema"]["schema"]["schema"]["items_schema"]["schema_ref"]
+    MutualB2 = next(
+        (x for x in MutualAPydantic.__pydantic_core_schema__["definitions"] if x["ref"] == mutual_ref_2)
+    )["cls"]
     assert len(MutualB1.model_fields) == 2
     assert set(MutualB1.model_fields.keys()) == {"id", "name"}
     assert len(MutualB2.model_fields) == 2
@@ -252,8 +261,12 @@ def test_getting_pydantic_model_mutual_rels_exclude():
     assert len(MutualAPydantic.model_fields) == 3
     assert set(MutualAPydantic.model_fields.keys()) == {"id", "mutual_b", "mutuals_b"}
 
-    MutualB1 = MutualAPydantic.model_fields["mutual_b"].type_
-    MutualB2 = MutualAPydantic.model_fields["mutuals_b"].type_
+    MutualB1 = MutualAPydantic.__pydantic_core_schema__["schema"]["fields"]["mutual_b"]["schema"][
+        "schema"
+    ]["schema"]["cls"]
+    MutualB2 = MutualAPydantic.__pydantic_core_schema__["schema"]["fields"]["mutuals_b"]["schema"][
+        "schema"
+    ]["schema"]["items_schema"]["cls"]
 
     assert len(MutualB1.model_fields) == 1
     assert set(MutualB1.model_fields.keys()) == {"id"}

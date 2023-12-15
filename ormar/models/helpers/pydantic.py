@@ -137,3 +137,4 @@ def remove_excluded_parent_fields(model: Type["Model"]) -> None:
         model.model_fields = {
             k: v for k, v in model.model_fields.items() if k not in excludes
         }
+        model.model_rebuild(force=True)
