@@ -279,7 +279,11 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         if cls.__pydantic_core_schema__["type"] == "model":
             return cls.__pydantic_core_schema__["schema"]["fields"]
         elif cls.__pydantic_core_schema__["type"] == "definitions":
-            return cls.__pydantic_core_schema__["schema"]["schema"]["fields"]
+            main_schema = cls.__pydantic_core_schema__["schema"]
+            if "schema_ref" in main_schema:
+                reference_id = main_schema["schema_ref"]
+                return next(ref for ref in cls.__pydantic_core_schema__["definitions"] if ref["ref"] == reference_id)["schema"]["fields"]
+            return main_schema["schema"]["fields"]
 
     @staticmethod
     async def _upsert_model(

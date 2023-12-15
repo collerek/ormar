@@ -346,9 +346,6 @@ async def test_very_complex_relation_map():
                 "data": {},
                 "tag": {
                     "id": 18,
-                    "taglabel": None,
-                    "tagcommit": None,
-                    "tagissue": None,
                 },
                 "changelogs": [],
             },
@@ -359,9 +356,6 @@ async def test_very_complex_relation_map():
                 "data": {},
                 "tag": {
                     "id": 17,
-                    "taglabel": None,
-                    "tagcommit": None,
-                    "tagissue": None,
                 },
                 "changelogs": [],
             },
@@ -372,9 +366,6 @@ async def test_very_complex_relation_map():
                 "data": {},
                 "tag": {
                     "id": 12,
-                    "taglabel": None,
-                    "tagcommit": None,
-                    "tagissue": None,
                 },
                 "changelogs": [],
             },

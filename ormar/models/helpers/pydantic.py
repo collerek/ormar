@@ -33,8 +33,12 @@ def create_pydantic_field(
     :type model_field: ManyToManyField class
     """
     model_field.through.model_fields[field_name] = FieldInfo.from_annotated_attribute(
-        annotation=model, default=None
+        annotation=Optional[model], default=None
     )
+    # model.model_fields[model_field.through.get_name()] = FieldInfo.from_annotated_attribute(
+    #     annotation=Optional[model_field.through], default=None
+    # )
+    # model.model_rebuild(force=True)
     model_field.through.model_rebuild(force=True)
 
 

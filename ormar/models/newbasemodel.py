@@ -626,18 +626,61 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         result = []
         for model in models:
             try:
-                result.append(
-                    model.dict(
+                model_dict = model.dict(
                         relation_map=relation_map,
                         include=include,
                         exclude=exclude,
                         exclude_primary_keys=exclude_primary_keys,
                         exclude_through_models=exclude_through_models,
                     )
+                model.populate_through_models(
+                    model=model,
+                    model_dict=model_dict,
+                    include=include,
+                    exclude=exclude,
+                    relation_map=relation_map,
                 )
+                result.append(model_dict)
             except ReferenceError:  # pragma no cover
                 continue
         return result
+
+    @staticmethod
+    def populate_through_models(
+        model: "Model",
+        model_dict: Dict,
+        include: Union[Set, Dict],
+        exclude: Union[Set, Dict],
+        relation_map: Dict = None,
+    ) -> None:
+        """
+        Populates through models with values from dict representation.
+
+        :param model: model to populate through models
+        :type model: Model
+        :param values: dict representation of the model
+        :type values: Dict
+        :return: None
+        :rtype: None
+        """
+        if include and isinstance(include, Set):
+            include = translate_list_to_dict(include)
+        if exclude and isinstance(exclude, Set):
+            exclude = translate_list_to_dict(exclude)
+        models_to_populate = model._get_not_excluded_fields(
+            fields=model.extract_through_names(),
+            include=include,
+            exclude=exclude
+        )
+        for through_model in models_to_populate:
+            through_field = model.ormar_config.model_fields[through_model]
+            if through_field.related_name in relation_map:
+                continue
+            through_instance = getattr(model, through_model)
+            if through_instance:
+                model_dict[through_model] = through_instance.dict()
+            else:
+                model_dict[through_model] = None
 
     @classmethod
     def _skip_ellipsis(
@@ -723,7 +766,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     )
                 elif nested_model is not None:
 
-                    dict_instance[field] = nested_model.dict(
+                    model_dict = nested_model.dict(
                         relation_map=self._skip_ellipsis(
                             relation_map, field, default_return=dict()
                         ),
@@ -732,6 +775,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                         exclude_primary_keys=exclude_primary_keys,
                         exclude_through_models=exclude_through_models,
                     )
+                    nested_model.populate_through_models(
+                        model=nested_model,
+                        model_dict=model_dict,
+                        include=self._convert_all(self._skip_ellipsis(include, field)),
+                        exclude=self._convert_all(self._skip_ellipsis(exclude, field)),
+                        relation_map=self._skip_ellipsis(
+                            relation_map, field, default_return=dict()
+                        ),
+                    )
+                    dict_instance[field] = model_dict
                 else:
                     dict_instance[field] = None
             except ReferenceError:
@@ -759,7 +812,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         Nested models are also parsed to dictionaries.
 
-        Additionally fields decorated with @property_field are also added.
+        Additionally, fields decorated with @property_field are also added.
 
         :param exclude_through_models: flag to exclude through models from dict
         :type exclude_through_models: bool
