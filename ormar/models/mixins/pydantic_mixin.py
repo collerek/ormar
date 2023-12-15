@@ -66,7 +66,9 @@ class PydanticMixin(RelationMixin):
         fields_dict: Dict[str, Any] = dict()
         defaults: Dict[str, Any] = dict()
         fields_to_process = cls._get_not_excluded_fields(
-            fields={*cls.ormar_config.model_fields.keys()}, include=include, exclude=exclude
+            fields={*cls.ormar_config.model_fields.keys()},
+            include=include,
+            exclude=exclude,
         )
         fields_to_process.sort(
             key=lambda x: list(cls.ormar_config.model_fields.keys()).index(x)
@@ -131,28 +133,40 @@ class PydanticMixin(RelationMixin):
         """
         Copy field validators from ormar model to generated pydantic model.
         """
-        # TODO: FIX THIS
-        # for field_name, field in model.model_fields.items():
-        #     if (
-        #         field_name not in cls.model_fields
-        #         or cls.ormar_config.model_fields[field_name].is_relation
-        #     ):
-        #         continue
-        #     validators = cls.model_fields[field_name].validators
-        #     already_attached = [
-        #         validator.__wrapped__ for validator in field.validators  # type: ignore
-        #     ]
-        #     validators_to_copy = [
-        #         validator
-        #         for validator in validators
-        #         if validator.__wrapped__ not in already_attached  # type: ignore
-        #     ]
-        #     field.validators.extend(copy.deepcopy(validators_to_copy))
-        #     class_validators = cls.model_fields[field_name].class_validators
-        #     field.class_validators.update(copy.deepcopy(class_validators))
-        #     field.pre_validators = copy.deepcopy(
-        #         cls.model_fields[field_name].pre_validators
-        #     )
-        #     field.post_validators = copy.deepcopy(
-        #         cls.model_fields[field_name].post_validators
-        #     )
+        filed_names = list(model.model_fields.keys())
+        cls.copy_selected_validators_type(
+            model=model, fields=filed_names, validator_type="field_validators"
+        )
+        cls.copy_selected_validators_type(
+            model=model, fields=filed_names, validator_type="validators"
+        )
+
+        class_validators = cls.__pydantic_decorators__.root_validators
+        model.__pydantic_decorators__.root_validators.update(
+            copy.deepcopy(class_validators)
+        )
+        model_validators = cls.__pydantic_decorators__.model_validators
+        model.__pydantic_decorators__.model_validators.update(
+            copy.deepcopy(model_validators)
+        )
+        model.model_rebuild(force=True)
+
+    @classmethod
+    def copy_selected_validators_type(
+        cls, model: Type[pydantic.BaseModel], fields: List[str], validator_type: str
+    ) -> None:
+        """
+        Copy field validators from ormar model to generated pydantic model.
+        """
+        validators = getattr(cls.__pydantic_decorators__, validator_type)
+        for name, decorator in validators.items():
+            if any(field_name in decorator.info.fields for field_name in fields):
+                copied_decorator = copy.deepcopy(decorator)
+                copied_decorator.info.fields = [
+                    field_name
+                    for field_name in decorator.info.fields
+                    if field_name in fields
+                ]
+                getattr(model.__pydantic_decorators__, validator_type)[
+                    name
+                ] = copied_decorator
