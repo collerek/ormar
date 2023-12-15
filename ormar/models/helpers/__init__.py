@@ -7,7 +7,6 @@ from ormar.models.helpers.models import (
 from ormar.models.helpers.pydantic import (
     get_potential_fields,
     get_pydantic_base_orm_config,
-    get_pydantic_field,
     merge_or_generate_pydantic_config,
     remove_excluded_parent_fields,
 )
@@ -31,7 +30,6 @@ __all__ = [
     "populate_default_options_values",
     "alias_manager",
     "register_relation_in_alias_manager",
-    "get_pydantic_field",
     "get_potential_fields",
     "get_pydantic_base_orm_config",
     "merge_or_generate_pydantic_config",

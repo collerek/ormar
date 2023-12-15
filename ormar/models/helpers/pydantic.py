@@ -4,7 +4,7 @@ from typing import Dict, Optional, TYPE_CHECKING, Tuple, Type, Union
 
 import pydantic
 from pydantic import ConfigDict
-from pydantic.fields import Field
+from pydantic.fields import Field, FieldInfo
 from pydantic.utils import lenient_issubclass
 from pydantic_core import PydanticUndefined
 
@@ -32,37 +32,8 @@ def create_pydantic_field(
     :param model_field: relation field from which through model is extracted
     :type model_field: ManyToManyField class
     """
-    model_field.through.__fields__[field_name] = Field(
-        name=field_name,
-        type_=model,
-        model_config=model.model_config,
-        required=False,
-        class_validators={},
-    )
-
-
-def get_pydantic_field(field_name: str, model: Type["Model"]) -> "Field":
-    """
-    Extracts field type and if it's required from Model model_fields by passed
-    field_name. Returns a pydantic field with type of field_name field type.
-
-    :param field_name: field name to fetch from Model and name of pydantic field
-    :type field_name: str
-    :param model: type of field to register
-    :type model: Model class
-    :return: newly created pydantic field
-    :rtype: pydantic.Field
-    """
-    type_ = model.ormar_config.model_fields[field_name].__type__
-    return Field(
-        name=field_name,
-        type_=type_,  # type: ignore
-        model_config=model.model_config,
-        default=None
-        if model.ormar_config.model_fields[field_name].nullable
-        else PydanticUndefined,
-        class_validators={},
-    )
+    model_field.through.model_fields[field_name] = FieldInfo.from_annotated_attribute(annotation=model, default=None)
+    model_field.through.model_rebuild(force=True)
 
 
 def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
@@ -119,7 +90,7 @@ def merge_or_generate_pydantic_config(attrs: Dict, name: str) -> None:
                 f"Config provided for class {name} has to be a dictionary."
             )
 
-        config = default_config.update(provided_config)
+        config = {**default_config, **provided_config}
         attrs["model_config"] = config
     else:
         attrs["model_config"] = default_config

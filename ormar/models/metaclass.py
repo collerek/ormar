@@ -1,3 +1,4 @@
+import copy
 from typing import (
     Any,
     Dict,
@@ -42,7 +43,6 @@ from ormar.models.helpers import (
     expand_reverse_relationships,
     extract_annotations_and_default_vals,
     get_potential_fields,
-    get_pydantic_field,
     merge_or_generate_pydantic_config,
     config_field_not_set,
     populate_default_options_values,
@@ -312,15 +312,33 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
         field.create_default_through_model()
         through_class = field.through
     # TODO: CHECK PKNAME
-    new_meta = ormar.OrmarConfig()
-    new_meta.__dict__ = through_class.ormar_config.__dict__.copy()
+    new_meta = ormar.OrmarConfig(
+        tablename=through_class.ormar_config.tablename,
+        metadata=through_class.ormar_config.metadata,
+        database=through_class.ormar_config.database,
+        abstract=through_class.ormar_config.abstract,
+        exclude_parent_fields=through_class.ormar_config.exclude_parent_fields,
+        queryset_class=through_class.ormar_config.queryset_class,
+        extra=through_class.ormar_config.extra,
+        constraints=through_class.ormar_config.constraints,
+        order_by=through_class.ormar_config.orders_by,
+
+    )
+    new_meta.columns = None
+    new_meta.table = through_class.ormar_config.pkname
+    new_meta.pkname = through_class.ormar_config.pkname
+    new_meta.alias_manager = through_class.ormar_config.alias_manager
+    new_meta.signals = through_class.ormar_config.signals
+    new_meta.requires_ref_update = through_class.ormar_config.requires_ref_update
+    new_meta.model_fields = copy.deepcopy(through_class.ormar_config.model_fields)
+    new_meta.property_fields = copy.deepcopy(through_class.ormar_config.property_fields)
     copy_name = through_class.__name__ + attrs.get("__name__", "")
     copy_through = type(copy_name, (ormar.Model,), {"ormar_config": new_meta})
-    new_meta.tablename += "_" + meta.tablename
     # create new table with copied columns but remove foreign keys
     # they will be populated later in expanding reverse relation
-    if hasattr(new_meta, "table"):
-        new_meta.table = None
+    # if hasattr(new_meta, "table"):
+    new_meta.tablename += "_" + meta.tablename
+    new_meta.table = None
     new_meta.model_fields = {
         name: field
         for name, field in new_meta.model_fields.items()
@@ -600,12 +618,14 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
             )
         if "ormar_config" in attrs:
             attrs["model_config"]["ignored_types"] = (OrmarConfig,)
+            attrs["model_config"]["from_attributes"] = True
         new_model = super().__new__(mcs, name, bases, attrs)  # type: ignore
 
         add_cached_properties(new_model)
 
         if hasattr(new_model, "ormar_config"):
-            populate_default_options_values(new_model, model_fields)
+            if model_fields:
+                populate_default_options_values(new_model, model_fields)
             check_required_meta_parameters(new_model)
             add_property_fields(new_model, attrs)
             register_signals(new_model=new_model)
@@ -628,10 +648,9 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
                     and new_model.ormar_config.pkname not in new_model.model_fields
                 ):
                     field_name = new_model.ormar_config.pkname
-                    new_model.model_fields[field_name] = FieldInfo.from_annotation(
-                        Optional[int]
+                    new_model.model_fields[field_name] = FieldInfo.from_annotated_attribute(
+                        Optional[int], None
                     )
-                    new_model.model_fields[field_name].default = None
                     new_model.model_rebuild(force=True)
 
                 for item in new_model.ormar_config.property_fields:

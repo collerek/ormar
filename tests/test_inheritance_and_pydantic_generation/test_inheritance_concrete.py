@@ -4,6 +4,7 @@ from typing import List, Optional
 from collections import Counter
 
 import databases
+import pydantic
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import create_engine
@@ -160,7 +161,7 @@ class Bus2(Car2):
 
 class ImmutablePerson(Person):
     model_config = dict(
-        allow_mutation = False,
+        frozen = True,
         validate_assignment = False)
 
 
@@ -477,11 +478,11 @@ async def test_inheritance_with_multi_relation():
 
 def test_custom_config():
     # Custom config inherits defaults
-    assert getattr(ImmutablePerson.model_config, "orm_mode") is True
+    assert ImmutablePerson.model_config["from_attributes"] is True
     # Custom config can override defaults
-    assert getattr(ImmutablePerson.model_config, "validate_assignment") is False
+    assert ImmutablePerson.model_config["validate_assignment"] is False
     sam = ImmutablePerson(name="Sam")
-    with pytest.raises(TypeError):
+    with pytest.raises(pydantic.ValidationError):
         sam.name = "Not Sam"
 
 
