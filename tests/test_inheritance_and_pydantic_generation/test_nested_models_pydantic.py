@@ -13,6 +13,7 @@ base_ormar_config = ormar.OrmarConfig(
     database=database,
 )
 
+
 class Library(ormar.Model):
     ormar_config = base_ormar_config.copy()
 
@@ -48,7 +49,9 @@ class TicketPackage(ormar.Model):
 def test_have_proper_children():
     TicketPackageOut = TicketPackage.get_pydantic(exclude={"ticket"})
     assert "package" in TicketPackageOut.model_fields
-    PydanticPackage = TicketPackageOut.__pydantic_core_schema__["schema"]["fields"]["package"]["schema"]["schema"]["schema"]["cls"]
+    PydanticPackage = TicketPackageOut.__pydantic_core_schema__["schema"]["fields"][
+        "package"
+    ]["schema"]["schema"]["schema"]["cls"]
     assert "library" in PydanticPackage.model_fields
 
 

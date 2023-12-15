@@ -32,7 +32,9 @@ def create_pydantic_field(
     :param model_field: relation field from which through model is extracted
     :type model_field: ManyToManyField class
     """
-    model_field.through.model_fields[field_name] = FieldInfo.from_annotated_attribute(annotation=model, default=None)
+    model_field.through.model_fields[field_name] = FieldInfo.from_annotated_attribute(
+        annotation=model, default=None
+    )
     model_field.through.model_rebuild(force=True)
 
 

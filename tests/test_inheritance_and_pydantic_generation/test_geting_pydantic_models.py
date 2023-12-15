@@ -71,20 +71,35 @@ def test_getting_pydantic_model():
 
     assert not PydanticCategory.model_fields["id"].is_required()
     assert (
-        PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["id"]["schema"]["schema"]["schema"]["type"]
+        PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["id"]["schema"][
+            "schema"
+        ]["schema"]["type"]
         == "int"
     )
     assert PydanticCategory.model_fields["id"].default is None
 
     assert PydanticCategory.model_fields["name"].is_required()
-    assert PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["name"]["schema"]["type"] == "str"
+    assert (
+        PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["name"]["schema"][
+            "type"
+        ]
+        == "str"
+    )
     assert PydanticCategory.model_fields["name"].default == PydanticUndefined
 
-    PydanticItem = PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["items"]["schema"]["schema"]["schema"][
-        "items_schema"
-    ]["cls"]
-    assert PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["items"]["schema"]["schema"]["schema"]["type"] == "list"
-    assert PydanticCategory.model_fields["items"].annotation == Optional[List[PydanticItem]]
+    PydanticItem = PydanticCategory.__pydantic_core_schema__["schema"]["fields"][
+        "items"
+    ]["schema"]["schema"]["schema"]["items_schema"]["cls"]
+    assert (
+        PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["items"][
+            "schema"
+        ]["schema"]["schema"]["type"]
+        == "list"
+    )
+    assert (
+        PydanticCategory.model_fields["items"].annotation
+        == Optional[List[PydanticItem]]
+    )
     assert issubclass(PydanticItem, pydantic.BaseModel)
     assert not PydanticItem.model_fields["name"].is_required()
     assert PydanticItem.model_fields["name"].default == "test"
@@ -119,9 +134,9 @@ def test_getting_pydantic_model_nested_include_set():
     PydanticCategory = Category.get_pydantic(include={"id", "items__id"})
     assert len(PydanticCategory.model_fields) == 2
     assert "name" not in PydanticCategory.model_fields
-    PydanticItem = PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["items"]["schema"]["schema"]["schema"][
-        "items_schema"
-    ]["cls"]
+    PydanticItem = PydanticCategory.__pydantic_core_schema__["schema"]["fields"][
+        "items"
+    ]["schema"]["schema"]["schema"]["items_schema"]["cls"]
     assert len(PydanticItem.model_fields) == 1
     assert "id" in PydanticItem.model_fields
 
@@ -130,9 +145,9 @@ def test_getting_pydantic_model_nested_include_dict():
     PydanticCategory = Category.get_pydantic(include={"id": ..., "items": {"id"}})
     assert len(PydanticCategory.model_fields) == 2
     assert "name" not in PydanticCategory.model_fields
-    PydanticItem = PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["items"]["schema"]["schema"]["schema"][
-        "items_schema"
-    ]["cls"]
+    PydanticItem = PydanticCategory.__pydantic_core_schema__["schema"]["fields"][
+        "items"
+    ]["schema"]["schema"]["schema"]["items_schema"]["cls"]
     assert len(PydanticItem.model_fields) == 1
     assert "id" in PydanticItem.model_fields
 
@@ -141,20 +156,22 @@ def test_getting_pydantic_model_nested_include_nested_dict():
     PydanticCategory = Category.get_pydantic(include={"id": ..., "items": {"id": ...}})
     assert len(PydanticCategory.model_fields) == 2
     assert "name" not in PydanticCategory.model_fields
-    PydanticItem = PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["items"]["schema"]["schema"]["schema"][
-        "items_schema"
-    ]["cls"]
+    PydanticItem = PydanticCategory.__pydantic_core_schema__["schema"]["fields"][
+        "items"
+    ]["schema"]["schema"]["schema"]["items_schema"]["cls"]
     assert len(PydanticItem.model_fields) == 1
     assert "id" in PydanticItem.model_fields
 
 
 def test_getting_pydantic_model_include_exclude():
-    PydanticCategory = Category.get_pydantic(include={"id": ..., "items": {"id", "name"}}, exclude={"items__name"})
+    PydanticCategory = Category.get_pydantic(
+        include={"id": ..., "items": {"id", "name"}}, exclude={"items__name"}
+    )
     assert len(PydanticCategory.model_fields) == 2
     assert "name" not in PydanticCategory.model_fields
-    PydanticItem = PydanticCategory.__pydantic_core_schema__["schema"]["fields"]["items"]["schema"]["schema"]["schema"][
-        "items_schema"
-    ]["cls"]
+    PydanticItem = PydanticCategory.__pydantic_core_schema__["schema"]["fields"][
+        "items"
+    ]["schema"]["schema"]["schema"]["items_schema"]["cls"]
     assert len(PydanticItem.model_fields) == 1
     assert "id" in PydanticItem.model_fields
 
@@ -163,9 +180,9 @@ def test_getting_pydantic_model_exclude():
     PydanticItem = Item.get_pydantic(exclude={"category__name"})
     assert len(PydanticItem.model_fields) == 3
     assert "category" in PydanticItem.model_fields
-    PydanticCategory = PydanticItem.__pydantic_core_schema__["schema"]["fields"]["category"]["schema"]["schema"][
-        "schema"
-    ]["cls"]
+    PydanticCategory = PydanticItem.__pydantic_core_schema__["schema"]["fields"][
+        "category"
+    ]["schema"]["schema"]["schema"]["cls"]
     assert len(PydanticCategory.model_fields) == 1
     assert "name" not in PydanticCategory.model_fields
 
@@ -175,9 +192,9 @@ def test_getting_pydantic_model_exclude_dict():
     assert len(PydanticItem.model_fields) == 2
     assert "category" in PydanticItem.model_fields
     assert "id" not in PydanticItem.model_fields
-    PydanticCategory = PydanticItem.__pydantic_core_schema__["schema"]["fields"]["category"]["schema"]["schema"][
-        "schema"
-    ]["cls"]
+    PydanticCategory = PydanticItem.__pydantic_core_schema__["schema"]["fields"][
+        "category"
+    ]["schema"]["schema"]["schema"]["cls"]
     assert len(PydanticCategory.model_fields) == 1
     assert "name" not in PydanticCategory.model_fields
 
@@ -191,20 +208,28 @@ def test_getting_pydantic_model_self_ref():
         "parent",
         "children",
     }
-    inner_self_ref_id = PydanticSelfRef.__pydantic_core_schema__["schema"]["schema"]["fields"]["parent"]["schema"][
-        "schema"
-    ]["schema"]["schema_ref"]
+    inner_self_ref_id = PydanticSelfRef.__pydantic_core_schema__["schema"]["schema"][
+        "fields"
+    ]["parent"]["schema"]["schema"]["schema"]["schema_ref"]
     InnerSelf = next(
-        (x for x in PydanticSelfRef.__pydantic_core_schema__["definitions"] if x["ref"] == inner_self_ref_id)
+        (
+            x
+            for x in PydanticSelfRef.__pydantic_core_schema__["definitions"]
+            if x["ref"] == inner_self_ref_id
+        )
     )["cls"]
     assert len(InnerSelf.model_fields) == 2
     assert set(InnerSelf.model_fields.keys()) == {"id", "name"}
 
-    inner_self_ref_id2 = PydanticSelfRef.__pydantic_core_schema__["schema"]["schema"]["fields"]["children"]["schema"][
-        "schema"
-    ]["schema"]["items_schema"]["schema_ref"]
+    inner_self_ref_id2 = PydanticSelfRef.__pydantic_core_schema__["schema"]["schema"][
+        "fields"
+    ]["children"]["schema"]["schema"]["schema"]["items_schema"]["schema_ref"]
     InnerSelf2 = next(
-        (x for x in PydanticSelfRef.__pydantic_core_schema__["definitions"] if x["ref"] == inner_self_ref_id2)
+        (
+            x
+            for x in PydanticSelfRef.__pydantic_core_schema__["definitions"]
+            if x["ref"] == inner_self_ref_id2
+        )
     )["cls"]
     assert len(InnerSelf2.model_fields) == 2
     assert set(InnerSelf2.model_fields.keys()) == {"id", "name"}
@@ -220,16 +245,16 @@ def test_getting_pydantic_model_self_ref_exclude():
         "children",
     }
 
-    InnerSelf = PydanticSelfRef.__pydantic_core_schema__["schema"]["fields"]["parent"]["schema"][
+    InnerSelf = PydanticSelfRef.__pydantic_core_schema__["schema"]["fields"]["parent"][
         "schema"
-    ]["schema"]["cls"]
+    ]["schema"]["schema"]["cls"]
     assert len(InnerSelf.model_fields) == 2
     assert set(InnerSelf.model_fields.keys()) == {"id", "name"}
 
     # PydanticSelfRefChildren = PydanticSelfRef.model_fields["children"].type_
-    PydanticSelfRefChildren = PydanticSelfRef.__pydantic_core_schema__["schema"]["fields"]["children"]["schema"][
-        "schema"
-    ]["schema"]["items_schema"]["cls"]
+    PydanticSelfRefChildren = PydanticSelfRef.__pydantic_core_schema__["schema"][
+        "fields"
+    ]["children"]["schema"]["schema"]["schema"]["items_schema"]["cls"]
     assert len(PydanticSelfRefChildren.model_fields) == 1
     assert set(PydanticSelfRefChildren.model_fields.keys()) == {"id"}
     assert PydanticSelfRef != PydanticSelfRefChildren
@@ -241,13 +266,25 @@ def test_getting_pydantic_model_mutual_rels():
     assert len(MutualAPydantic.model_fields) == 3
     assert set(MutualAPydantic.model_fields.keys()) == {"id", "mutual_b", "mutuals_b"}
 
-    mutual_ref_1 = MutualAPydantic.__pydantic_core_schema__["schema"]["schema"]["fields"]["mutual_b"]["schema"]["schema"]["schema"]["schema_ref"]
+    mutual_ref_1 = MutualAPydantic.__pydantic_core_schema__["schema"]["schema"][
+        "fields"
+    ]["mutual_b"]["schema"]["schema"]["schema"]["schema_ref"]
     MutualB1 = next(
-        (x for x in MutualAPydantic.__pydantic_core_schema__["definitions"] if x["ref"] == mutual_ref_1)
+        (
+            x
+            for x in MutualAPydantic.__pydantic_core_schema__["definitions"]
+            if x["ref"] == mutual_ref_1
+        )
     )["cls"]
-    mutual_ref_2 = MutualAPydantic.__pydantic_core_schema__["schema"]["schema"]["fields"]["mutuals_b"]["schema"]["schema"]["schema"]["items_schema"]["schema_ref"]
+    mutual_ref_2 = MutualAPydantic.__pydantic_core_schema__["schema"]["schema"][
+        "fields"
+    ]["mutuals_b"]["schema"]["schema"]["schema"]["items_schema"]["schema_ref"]
     MutualB2 = next(
-        (x for x in MutualAPydantic.__pydantic_core_schema__["definitions"] if x["ref"] == mutual_ref_2)
+        (
+            x
+            for x in MutualAPydantic.__pydantic_core_schema__["definitions"]
+            if x["ref"] == mutual_ref_2
+        )
     )["cls"]
     assert len(MutualB1.model_fields) == 2
     assert set(MutualB1.model_fields.keys()) == {"id", "name"}
@@ -261,12 +298,12 @@ def test_getting_pydantic_model_mutual_rels_exclude():
     assert len(MutualAPydantic.model_fields) == 3
     assert set(MutualAPydantic.model_fields.keys()) == {"id", "mutual_b", "mutuals_b"}
 
-    MutualB1 = MutualAPydantic.__pydantic_core_schema__["schema"]["fields"]["mutual_b"]["schema"][
+    MutualB1 = MutualAPydantic.__pydantic_core_schema__["schema"]["fields"]["mutual_b"][
         "schema"
-    ]["schema"]["cls"]
-    MutualB2 = MutualAPydantic.__pydantic_core_schema__["schema"]["fields"]["mutuals_b"]["schema"][
-        "schema"
-    ]["schema"]["items_schema"]["cls"]
+    ]["schema"]["schema"]["cls"]
+    MutualB2 = MutualAPydantic.__pydantic_core_schema__["schema"]["fields"][
+        "mutuals_b"
+    ]["schema"]["schema"]["schema"]["items_schema"]["cls"]
 
     assert len(MutualB1.model_fields) == 1
     assert set(MutualB1.model_fields.keys()) == {"id"}
