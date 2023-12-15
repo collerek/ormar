@@ -267,10 +267,16 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         field_validators = {}
         for key, field in cls._extract_pydantic_fields().items():
             if cls.__pydantic_core_schema__["type"] == "definitions":
-                schema = {"type": "definitions", "schema": field["schema"], "definitions": cls.__pydantic_core_schema__["definitions"]}
+                schema = {
+                    "type": "definitions",
+                    "schema": field["schema"],
+                    "definitions": cls.__pydantic_core_schema__["definitions"],
+                }
             else:
                 schema = field["schema"]
-            field_validators[key] = create_schema_validator(schema, cls, cls.__module__, cls.__qualname__,'BaseModel')
+            field_validators[key] = create_schema_validator(
+                schema, cls, cls.__module__, cls.__qualname__, "BaseModel"
+            )
         cls.__ormar_fields_validators__ = field_validators
         return cls.__ormar_fields_validators__
 
@@ -282,7 +288,11 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
             main_schema = cls.__pydantic_core_schema__["schema"]
             if "schema_ref" in main_schema:
                 reference_id = main_schema["schema_ref"]
-                return next(ref for ref in cls.__pydantic_core_schema__["definitions"] if ref["ref"] == reference_id)["schema"]["fields"]
+                return next(
+                    ref
+                    for ref in cls.__pydantic_core_schema__["definitions"]
+                    if ref["ref"] == reference_id
+                )["schema"]["fields"]
             return main_schema["schema"]["fields"]
 
     @staticmethod

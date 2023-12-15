@@ -131,7 +131,9 @@ def test_dumping_to_dict_exclude_nested_dict(sample_data):
 
 def test_dumping_to_dict_exclude_and_include_nested_dict(sample_data):
     item1, item2 = sample_data
-    dict1 = item2.dict(exclude={"category": {"tier": {"name"}}}, include={"name", "category"})
+    dict1 = item2.dict(
+        exclude={"category": {"tier": {"name"}}}, include={"name", "category"}
+    )
     assert dict1.get("name") == "M16"
     assert "category" in dict1
     assert dict1["category"]["name"] == "Weapons"
@@ -159,7 +161,10 @@ def test_dumping_dict_without_primary_keys(sample_data):
             "email": "test@test.com",
             "first_name": "Anna",
             "password": "ijacids7^*&",
-            "roles": [{"name": "User", 'userrole': None}, {"name": "Admin", 'userrole': None}],
+            "roles": [
+                {"name": "User", "userrole": None},
+                {"name": "Admin", "userrole": None},
+            ],
         },
         "name": "M16",
     }
@@ -170,7 +175,10 @@ def test_dumping_dict_without_primary_keys(sample_data):
             "email": "test@test.com",
             "first_name": "Anna",
             "password": "ijacids7^*&",
-            "roles": [{"name": "User", 'userrole': None}, {"name": "Admin", 'userrole': None}],
+            "roles": [
+                {"name": "User", "userrole": None},
+                {"name": "Admin", "userrole": None},
+            ],
         },
         "name": "Teddy Bear",
     }
