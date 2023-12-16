@@ -69,4 +69,4 @@ async def test_all_endpoints():
         components = schema["components"]["schemas"]
         assert all(x in components for x in ["CA", "CB1", "CB2"])
         pk_onlys = [x for x in list(components.keys()) if x.startswith("PkOnly")]
-        assert len(pk_onlys) == 2
+        assert len(pk_onlys) == 4

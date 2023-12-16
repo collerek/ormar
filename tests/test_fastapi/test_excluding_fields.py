@@ -82,7 +82,8 @@ async def get_category(category_id: int):
 @app.get("/categories/nt/{category_id}")
 async def get_category_no_through(category_id: int):
     category = await Category.objects.select_related("items").get(pk=category_id)
-    return category.dict(exclude_through_models=True)
+    result = category.dict(exclude_through_models=True)
+    return result
 
 
 @app.get("/categories/ntp/{category_id}")
@@ -122,9 +123,6 @@ async def test_all_endpoints():
         no_pk_item = (await client.get(f"/items/{item_check.id}")).json()
         assert no_pk_item == item
 
-        no_pk_item2 = (await client.get(f"/items/fex/{item_check.id}")).json()
-        assert no_pk_item2 == item
-
         no_pk_category = (
             await client.get(f"/categories/{item_check.categories[0].id}")
         ).json()
@@ -151,3 +149,6 @@ async def test_all_endpoints():
             await client.get(f"/categories/ntp/{item_check.categories[0].id}")
         ).json()
         assert no_through_category == {"items": [{"name": "test"}], "name": "test cat"}
+
+        no_pk_item2 = (await client.get(f"/items/fex/{item_check.id}")).json()
+        assert no_pk_item2 == item

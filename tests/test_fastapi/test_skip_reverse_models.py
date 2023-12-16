@@ -53,6 +53,10 @@ class Category(ormar.Model):
     name: str = ormar.String(max_length=40)
 
 
+class Category2(Category):
+    model_config = dict(extra="forbid")
+
+
 class Post(ormar.Model):
     ormar_config = base_ormar_config.copy()
 
@@ -72,6 +76,12 @@ def create_test_database():
 
 @app.post("/categories/", response_model=Category)
 async def create_category(category: Category):
+    await category.save()
+    await category.save_related(follow=True, save_all=True)
+    return category
+
+@app.post("/categories/forbid/", response_model=Category2)
+async def create_category(category: Category2):
     await category.save()
     await category.save_related(follow=True, save_all=True)
     return category
@@ -148,6 +158,6 @@ async def test_queries():
         wrong_category = {"name": "Test category3", "posts": [{"title": "Test Post"}]}
 
         # cannot add posts if skipped, will be error with extra forbid
-        Category.__config__.extra = "forbid"
-        response = await client.post("/categories/", json=wrong_category)
+        assert Category2.model_config["extra"] == "forbid"
+        response = await client.post("/categories/forbid/", json=wrong_category)
         assert response.status_code == 422

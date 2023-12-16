@@ -1,4 +1,8 @@
-from typing import TYPE_CHECKING, Type, cast
+import inspect
+from typing import List, TYPE_CHECKING, Type, Union, cast
+
+from pydantic import BaseModel, create_model
+from pydantic.fields import FieldInfo
 
 import ormar
 from ormar import ForeignKey, ManyToMany
@@ -133,7 +137,45 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
             skip_field=model_field.skip_reverse,
         )
     if not model_field.skip_reverse:
+        field_type = model_field.to.ormar_config.model_fields[related_name].__type__
+        field_type = replace_models_with_copy(annotation=field_type)
+        if not model_field.is_multi:
+            field_type = Union[field_type, List[field_type], None]
+        model_field.to.model_fields[related_name] = FieldInfo.from_annotated_attribute(
+        annotation=field_type, default=None
+        )
+        model_field.to.model_rebuild(force=True)
         setattr(model_field.to, related_name, RelationDescriptor(name=related_name))
+
+
+def replace_models_with_copy(annotation: Type) -> Type:
+    """
+    Replaces all models in annotation with their copies to avoid circular references.
+
+    :param annotation: annotation to replace models in
+    :type annotation: Type
+    :return: annotation with replaced models
+    :rtype: Type
+    """
+    if inspect.isclass(annotation) and issubclass(annotation, BaseModel):
+        return create_copy_to_avoid_circular_references(model=annotation)
+    elif hasattr(annotation, "__origin__"):
+        if annotation.__origin__ == list:
+            return List[
+                replace_models_with_copy(annotation=annotation.__args__[0])
+            ]  # type: ignore
+        elif annotation.__origin__ == Union:
+            args = annotation.__args__
+            new_args = [replace_models_with_copy(annotation=arg) for arg in args]
+            return Union[tuple(new_args)]
+        else:
+            return annotation
+    else:
+        return annotation
+
+
+def create_copy_to_avoid_circular_references(model: Type["Model"]) -> Type["BaseModel"]:
+    return cast(Type[BaseModel], type(model.__name__, (model,), {}))
 
 
 def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:

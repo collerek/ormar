@@ -162,8 +162,8 @@ def test_dumping_dict_without_primary_keys(sample_data):
             "first_name": "Anna",
             "password": "ijacids7^*&",
             "roles": [
-                {"name": "User", "userrole": None},
-                {"name": "Admin", "userrole": None},
+                {"name": "User"},
+                {"name": "Admin"},
             ],
         },
         "name": "M16",
@@ -176,8 +176,8 @@ def test_dumping_dict_without_primary_keys(sample_data):
             "first_name": "Anna",
             "password": "ijacids7^*&",
             "roles": [
-                {"name": "User", "userrole": None},
-                {"name": "Admin", "userrole": None},
+                {"name": "User"},
+                {"name": "Admin"},
             ],
         },
         "name": "Teddy Bear",

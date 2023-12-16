@@ -18,8 +18,6 @@ import pydantic
 import sqlalchemy
 from pydantic._internal._model_construction import complete_model_class
 from pydantic.fields import FieldInfo
-from pydantic.plugin._schema_validator import create_schema_validator
-from pydantic_core import SchemaSerializer
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
@@ -624,8 +622,7 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
         add_cached_properties(new_model)
 
         if hasattr(new_model, "ormar_config"):
-            if model_fields:
-                populate_default_options_values(new_model, model_fields)
+            populate_default_options_values(new_model, model_fields)
             check_required_meta_parameters(new_model)
             add_property_fields(new_model, attrs)
             register_signals(new_model=new_model)

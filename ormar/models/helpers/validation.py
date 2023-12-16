@@ -1,6 +1,7 @@
 import base64
 import decimal
 import numbers
+from types import NoneType
 from typing import (
     Any,
     Callable,
@@ -167,6 +168,14 @@ def get_pydantic_example_repr(type_: Any) -> Any:
     :return: representation to include in example
     :rtype: Any
     """
+    if hasattr(type_, "__origin__"):
+        if type_.__origin__ == Union:
+            values = tuple(get_pydantic_example_repr(x) for x in type_.__args__ if x is not NoneType)
+            if len(values) == 1:
+                return values[0]
+            return values
+        if type_.__origin__ == list:
+            return [get_pydantic_example_repr(type_.__args__[0])]
     if issubclass(type_, (numbers.Number, decimal.Decimal)):
         return 0
     if issubclass(type_, pydantic.BaseModel):
@@ -266,4 +275,4 @@ def modify_schema_example(model: Type["Model"]) -> None:  # noqa CCR001
     :type model: Model class
     """
     if not config_field_not_set(model=model, field_name="model_fields"):
-        model.model_config["schema_extra"] = construct_schema_function_without_choices()
+        model.model_config["json_schema_extra"] = construct_schema_function_without_choices()

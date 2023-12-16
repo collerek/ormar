@@ -1,5 +1,5 @@
 import base64
-from typing import Any, TYPE_CHECKING, Type
+from typing import Any, List, TYPE_CHECKING, Type
 
 from ormar.fields.parsers import encode_json
 
@@ -110,14 +110,33 @@ class RelationDescriptor:
         model = instance.ormar_config.model_fields[self.name].expand_relationship(
             value=value, child=instance
         )
+
         if isinstance(instance.__dict__.get(self.name), list):
             # virtual foreign key or many to many
             # TODO: Fix double items in dict, no effect on real action just ugly repr
-            instance.__dict__[self.name].append(model)
+            self._populate_models_dict_if_not_present(instance=instance, model=model)
         else:
             # foreign key relation
             instance.__dict__[self.name] = model
             instance.set_save_status(False)
+
+    def _populate_models_dict_if_not_present(self, instance: "Model", model: Any) -> None:
+        models = instance.__dict__[self.name]
+        if isinstance(model, list):
+            for model_ in model:
+                self._append_to_list_if_not_present(models=models, model=model_)
+            return
+
+        self._append_to_list_if_not_present(models=models, model=model)
+
+    @staticmethod
+    def _append_to_list_if_not_present(models: List["Model"], model: Any) -> None:
+        try:
+            if model not in models:
+                models.append(model)
+        except ReferenceError:
+            models.clear()
+            models.append(model)
 
 
 class PropertyDescriptor:

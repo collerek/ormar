@@ -47,7 +47,7 @@ def populate_default_options_values(  # noqa: CCR001
     :param model_fields: dict of model fields
     :type model_fields: Union[Dict[str, type], Dict]
     """
-    new_model.ormar_config.model_fields = model_fields
+    new_model.ormar_config.model_fields.update(model_fields)
     if any(is_field_an_forward_ref(field) for field in model_fields.values()):
         new_model.ormar_config.requires_ref_update = True
 

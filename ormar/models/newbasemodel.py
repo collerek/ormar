@@ -206,6 +206,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         # TODO: Check __pydantic_extra__
         if item == "__pydantic_extra__":
             return None
+        if item =="__pydantic_serializer__":
+            breakpoint()
         return super().__getattr__(item)
 
     def __getstate__(self) -> Dict[Any, Any]:
@@ -633,13 +635,14 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                         exclude_primary_keys=exclude_primary_keys,
                         exclude_through_models=exclude_through_models,
                     )
-                model.populate_through_models(
-                    model=model,
-                    model_dict=model_dict,
-                    include=include,
-                    exclude=exclude,
-                    relation_map=relation_map,
-                )
+                if not exclude_through_models:
+                    model.populate_through_models(
+                        model=model,
+                        model_dict=model_dict,
+                        include=include,
+                        exclude=exclude,
+                        relation_map=relation_map,
+                    )
                 result.append(model_dict)
             except ReferenceError:  # pragma no cover
                 continue
@@ -679,8 +682,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             through_instance = getattr(model, through_model)
             if through_instance:
                 model_dict[through_model] = through_instance.dict()
-            else:
-                model_dict[through_model] = None
+            # else:
+            #     model_dict[through_model] = None
 
     @classmethod
     def _skip_ellipsis(
@@ -775,15 +778,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                         exclude_primary_keys=exclude_primary_keys,
                         exclude_through_models=exclude_through_models,
                     )
-                    nested_model.populate_through_models(
-                        model=nested_model,
-                        model_dict=model_dict,
-                        include=self._convert_all(self._skip_ellipsis(include, field)),
-                        exclude=self._convert_all(self._skip_ellipsis(exclude, field)),
-                        relation_map=self._skip_ellipsis(
-                            relation_map, field, default_return=dict()
-                        ),
-                    )
+                    if not exclude_through_models:
+                        nested_model.populate_through_models(
+                            model=nested_model,
+                            model_dict=model_dict,
+                            include=self._convert_all(self._skip_ellipsis(include, field)),
+                            exclude=self._convert_all(self._skip_ellipsis(exclude, field)),
+                            relation_map=self._skip_ellipsis(
+                                relation_map, field, default_return=dict()
+                            ),
+                        )
                     dict_instance[field] = model_dict
                 else:
                     dict_instance[field] = None

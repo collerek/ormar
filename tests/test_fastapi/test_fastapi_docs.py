@@ -131,7 +131,7 @@ async def test_all_endpoints():
 
 
 def test_schema_modification():
-    schema = Item.schema()
+    schema = Item.model_json_schema()
     assert any(x.get("type") == "array" for x in schema["properties"]["categories"]["anyOf"])
     assert schema["properties"]["categories"]["title"] == "Categories"
     assert schema["example"] == {
@@ -142,7 +142,7 @@ def test_schema_modification():
         "test_P": [{"a": 0, "b": {"c": "string", "d": "string", "e": "string"}}],
     }
 
-    schema = Category.schema()
+    schema = Category.model_json_schema()
     assert schema["example"] == {
         "id": 0,
         "name": "string",
