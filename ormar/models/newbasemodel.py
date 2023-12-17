@@ -206,8 +206,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         # TODO: Check __pydantic_extra__
         if item == "__pydantic_extra__":
             return None
-        if item =="__pydantic_serializer__":
-            breakpoint()
         return super().__getattr__(item)
 
     def __getstate__(self) -> Dict[Any, Any]:

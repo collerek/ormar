@@ -1,6 +1,7 @@
 import base64
 import json
 import uuid
+from enum import Enum
 from typing import List
 
 import databases
@@ -47,15 +48,20 @@ base_ormar_config = ormar.OrmarConfig(
     database=database,
 )
 
+
+class BinaryEnum(Enum):
+    blob3 = blob3
+    blob4 = blob4
+    blob5 = blob5
+    blob6 = blob6
+
+
 class BinaryThing(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename = "things")
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     name: str = ormar.Text(default="")
-    bt: str = ormar.LargeBinary(
-        max_length=1000,
-        choices=[blob3, blob4, blob5, blob6],
-        represent_as_base64_str=True,
+    bt: str = ormar.Enum(enum_class=BinaryEnum, represent_as_base64_str=True,
     )
 
 

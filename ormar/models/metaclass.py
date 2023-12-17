@@ -16,6 +16,7 @@ from typing import (
 import databases
 import pydantic
 import sqlalchemy
+from pydantic._internal._generics import PydanticGenericMetadata
 from pydantic._internal._model_construction import complete_model_class
 from pydantic.fields import ComputedFieldInfo, FieldInfo
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
@@ -569,7 +570,14 @@ def add_field_descriptor(
 
 class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
     def __new__(  # type: ignore # noqa: CCR001
-        mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
+        mcs: "ModelMetaclass",
+        name: str,
+        bases: Any,
+        attrs: dict,
+        __pydantic_generic_metadata__: PydanticGenericMetadata | None = None,
+        __pydantic_reset_parent_namespace__: bool = True,
+        _create_model_module: str | None = None,
+        **kwargs
     ) -> "ModelMetaclass":
         """
         Metaclass used by ormar Models that performs configuration
@@ -614,7 +622,15 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
         if "ormar_config" in attrs:
             attrs["model_config"]["ignored_types"] = (OrmarConfig,)
             attrs["model_config"]["from_attributes"] = True
-        new_model = super().__new__(mcs, name, bases, attrs)  # type: ignore
+        new_model = super().__new__(
+            mcs,  # type: ignore
+            name,
+            bases,
+            attrs,
+            __pydantic_generic_metadata__=__pydantic_generic_metadata__,
+            __pydantic_reset_parent_namespace__=__pydantic_reset_parent_namespace__,
+            _create_model_module=_create_model_module,
+            **kwargs)
 
         add_cached_properties(new_model)
 

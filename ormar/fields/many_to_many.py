@@ -12,7 +12,6 @@ from typing import (
     overload,
 )
 
-from pydantic.v1.typing import evaluate_forwardref
 
 import ormar  # noqa: I100
 from ormar import ModelDefinitionError

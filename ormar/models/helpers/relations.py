@@ -1,5 +1,5 @@
 import inspect
-from typing import List, TYPE_CHECKING, Type, Union, cast
+from typing import List, TYPE_CHECKING, Optional, Type, Union, cast
 
 from pydantic import BaseModel, create_model
 from pydantic.fields import FieldInfo
@@ -138,7 +138,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
         )
     if not model_field.skip_reverse:
         field_type = model_field.to.ormar_config.model_fields[related_name].__type__
-        field_type = replace_models_with_copy(annotation=field_type)
+        field_type = replace_models_with_copy(annotation=field_type, source_model_field=model_field.name)
         if not model_field.is_multi:
             field_type = Union[field_type, List[field_type], None]
         model_field.to.model_fields[related_name] = FieldInfo.from_annotated_attribute(
@@ -148,7 +148,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
         setattr(model_field.to, related_name, RelationDescriptor(name=related_name))
 
 
-def replace_models_with_copy(annotation: Type) -> Type:
+def replace_models_with_copy(annotation: Type, source_model_field: Optional[str] = None) -> Type:
     """
     Replaces all models in annotation with their copies to avoid circular references.
 
@@ -157,16 +157,16 @@ def replace_models_with_copy(annotation: Type) -> Type:
     :return: annotation with replaced models
     :rtype: Type
     """
-    if inspect.isclass(annotation) and issubclass(annotation, BaseModel):
-        return create_copy_to_avoid_circular_references(model=annotation)
+    if inspect.isclass(annotation) and issubclass(annotation, ormar.Model):
+        return create_copy_to_avoid_circular_references(model=annotation, source_model_field=source_model_field)
     elif hasattr(annotation, "__origin__"):
         if annotation.__origin__ == list:
             return List[
-                replace_models_with_copy(annotation=annotation.__args__[0])
+                replace_models_with_copy(annotation=annotation.__args__[0], source_model_field=source_model_field)
             ]  # type: ignore
         elif annotation.__origin__ == Union:
             args = annotation.__args__
-            new_args = [replace_models_with_copy(annotation=arg) for arg in args]
+            new_args = [replace_models_with_copy(annotation=arg, source_model_field=source_model_field) for arg in args]
             return Union[tuple(new_args)]
         else:
             return annotation
@@ -174,8 +174,14 @@ def replace_models_with_copy(annotation: Type) -> Type:
         return annotation
 
 
-def create_copy_to_avoid_circular_references(model: Type["Model"]) -> Type["BaseModel"]:
-    return cast(Type[BaseModel], type(model.__name__, (model,), {}))
+def create_copy_to_avoid_circular_references(model: Type["Model"], source_model_field: Optional[str] = None) -> Type["BaseModel"]:
+    new_model = create_model(
+        model.__name__,
+        __base__=model,
+        **{k: (v.annotation, v.default) for k, v in model.model_fields.items() if k != source_model_field},
+    )
+    new_model.model_fields.pop(source_model_field, None)
+    return new_model
 
 
 def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:

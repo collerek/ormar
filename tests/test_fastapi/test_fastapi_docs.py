@@ -5,6 +5,7 @@ import databases
 import pydantic
 import pytest
 import sqlalchemy
+import uvicorn
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
@@ -160,4 +161,6 @@ def test_schema_modification():
 def test_schema_gen():
     schema = app.openapi()
     assert "Category" in schema["components"]["schemas"]
-    assert "Item" in schema["components"]["schemas"]
+    subschemas = [x.split("__")[-1] for x in schema["components"]["schemas"]]
+    assert "Item-Input" in subschemas
+    assert "Item-Output" in subschemas
