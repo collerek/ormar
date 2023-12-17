@@ -3,9 +3,9 @@ import datetime
 import databases
 import pytest
 import sqlalchemy
+from pydantic import computed_field
 
 import ormar
-from ormar import property_field
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -23,11 +23,11 @@ class Album(ormar.Model):
     name: str = ormar.String(max_length=100)
     timestamp: datetime.datetime = ormar.DateTime(pydantic_only=True)
 
-    @property_field
+    @computed_field
     def name10(self) -> str:
         return self.name + "_10"
 
-    @property_field
+    @computed_field
     def name20(self) -> str:
         return self.name + "_20"
 
@@ -35,7 +35,7 @@ class Album(ormar.Model):
     def name30(self) -> str:
         return self.name + "_30"
 
-    @property_field
+    @computed_field
     def name40(self) -> str:
         return self.name + "_40"
 

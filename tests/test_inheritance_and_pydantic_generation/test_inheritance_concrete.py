@@ -7,11 +7,12 @@ import databases
 import pydantic
 import pytest
 import sqlalchemy as sa
+from pydantic import computed_field
 from sqlalchemy import create_engine
 
 import ormar
 import ormar.fields.constraints
-from ormar import ModelDefinitionError, property_field
+from ormar import ModelDefinitionError
 from ormar.exceptions import ModelError
 from ormar.models.metaclass import get_constraint_copy
 from tests.settings import DATABASE_URL
@@ -29,8 +30,8 @@ class AuditModel(ormar.Model):
     created_by: str = ormar.String(max_length=100)
     updated_by: str = ormar.String(max_length=100, default="Sam")
 
-    @property_field
-    def audit(self):  # pragma: no cover
+    @computed_field
+    def audit(self) -> str:  # pragma: no cover
         return f"{self.created_by} {self.updated_by}"
 
 
@@ -75,12 +76,12 @@ class Category(DateFieldsModel, AuditModel):
     name: str = ormar.String(max_length=50, unique=True, index=True)
     code: int = ormar.Integer()
 
-    @property_field
-    def code_name(self):
+    @computed_field
+    def code_name(self) -> str:
         return f"{self.code}:{self.name}"
 
-    @property_field
-    def audit(self):
+    @computed_field
+    def audit(self) -> str:
         return f"{self.created_by} {self.updated_by}"
 
 

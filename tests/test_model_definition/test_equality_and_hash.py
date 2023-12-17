@@ -4,7 +4,6 @@ import pytest
 import sqlalchemy
 
 import ormar
-from ormar import ModelDefinitionError, property_field
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

@@ -67,6 +67,7 @@ async def test_all_endpoints():
         assert response.status_code == 200, response.text
         schema = response.json()
         components = schema["components"]["schemas"]
-        assert all(x in components for x in ["CA", "CB1", "CB2"])
-        pk_onlys = [x for x in list(components.keys()) if x.startswith("PkOnly")]
+        raw_names_w_o_modules = [x.split("__")[-1] for x in components.keys()]
+        assert all(x in raw_names_w_o_modules for x in ["CA", "CB1", "CB2"])
+        pk_onlys = [x for x in list(raw_names_w_o_modules) if x.startswith("PkOnly")]
         assert len(pk_onlys) == 4

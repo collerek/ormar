@@ -2,6 +2,7 @@ import databases
 import pytest
 import sqlalchemy
 import sqlalchemy as sa
+from pydantic import computed_field
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -16,7 +17,7 @@ class BaseFoo(ormar.Model):
 
     name: str = ormar.String(max_length=100)
 
-    @ormar.property_field
+    @computed_field
     def prefixed_name(self) -> str:
         return "prefix_" + self.name
 
@@ -27,7 +28,7 @@ class Foo(BaseFoo):
         database = database,
     )
 
-    @ormar.property_field
+    @computed_field
     def double_prefixed_name(self) -> str:
         return "prefix2_" + self.name
 
@@ -40,7 +41,7 @@ class Bar(BaseFoo):
         database = database,
     )
 
-    @ormar.property_field
+    @computed_field
     def prefixed_name(self) -> str:
         return "baz_" + self.name
 

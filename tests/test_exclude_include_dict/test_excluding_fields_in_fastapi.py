@@ -9,9 +9,10 @@ import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
+from pydantic import computed_field
 
 import ormar
-from ormar import post_save, property_field
+from ormar import post_save
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -73,7 +74,7 @@ class RandomModel(ormar.Model):
     last_name: str = ormar.String(max_length=255)
     created_date: datetime.datetime = ormar.DateTime(server_default=sqlalchemy.func.now())
 
-    @property_field
+    @computed_field
     def full_name(self) -> str:
         return " ".join([self.first_name, self.last_name])
 

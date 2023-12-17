@@ -36,7 +36,6 @@ from ormar.decorators import (  # noqa: I100
     pre_relation_remove,
     pre_save,
     pre_update,
-    property_field,
 )
 from ormar.exceptions import (  # noqa: I100
     ModelDefinitionError,

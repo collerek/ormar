@@ -17,7 +17,7 @@ import databases
 import pydantic
 import sqlalchemy
 from pydantic._internal._model_construction import complete_model_class
-from pydantic.fields import FieldInfo
+from pydantic.fields import ComputedFieldInfo, FieldInfo
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
@@ -130,10 +130,7 @@ def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa:
     """
     props = set()
     for var_name, value in attrs.items():
-        if isinstance(value, property):
-            value = value.fget
-        field_config = getattr(value, "__property_field__", None)
-        if field_config:
+        if hasattr(value, "decorator_info") and isinstance(value.decorator_info, ComputedFieldInfo):
             props.add(var_name)
 
     if config_field_not_set(model=new_model, field_name="property_fields"):

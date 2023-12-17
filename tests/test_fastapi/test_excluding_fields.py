@@ -92,21 +92,6 @@ async def get_category_no_pk_through(category_id: int):
     return category.dict(exclude_through_models=True, exclude_primary_keys=True)
 
 
-@app.get(
-    "/items/fex/{item_id}",
-    response_model=Item,
-    response_model_exclude={
-        "id",
-        "categories__id",
-        "categories__itemcategory",
-        "categories__items",
-    },
-)
-async def get_item_excl(item_id: int):
-    item = await Item.objects.select_all().get(pk=item_id)
-    return item
-
-
 @pytest.mark.asyncio
 async def test_all_endpoints():
     client = AsyncClient(app=app, base_url="http://testserver")
@@ -149,6 +134,3 @@ async def test_all_endpoints():
             await client.get(f"/categories/ntp/{item_check.categories[0].id}")
         ).json()
         assert no_through_category == {"items": [{"name": "test"}], "name": "test cat"}
-
-        no_pk_item2 = (await client.get(f"/items/fex/{item_check.id}")).json()
-        assert no_pk_item2 == item

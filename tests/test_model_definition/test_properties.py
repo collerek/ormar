@@ -2,9 +2,10 @@
 import databases
 import pytest
 import sqlalchemy
+from pydantic import PydanticUserError, computed_field
 
 import ormar
-from ormar import ModelDefinitionError, property_field
+from ormar import ModelDefinitionError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -22,16 +23,16 @@ class Song(ormar.Model):
     name: str = ormar.String(max_length=100)
     sort_order: int = ormar.Integer()
 
-    @property_field
-    def sorted_name(self):
+    @computed_field
+    def sorted_name(self) -> str:
         return f"{self.sort_order}: {self.name}"
 
-    @property_field
-    def sample(self):
+    @computed_field
+    def sample(self) -> str:
         return "sample"
 
-    @property_field
-    def sample2(self):
+    @computed_field
+    def sample2(self) -> str:
         return "sample2"
 
 
@@ -72,9 +73,9 @@ async def test_sort_order_on_main_model():
 
 
 def test_wrong_definition():
-    with pytest.raises(ModelDefinitionError):
+    with pytest.raises(PydanticUserError):
 
         class WrongModel(ormar.Model):  # pragma: no cover
-            @property_field
+            @computed_field
             def test(self, aa=10, bb=30):
                 pass
