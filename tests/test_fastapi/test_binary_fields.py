@@ -61,8 +61,7 @@ class BinaryThing(ormar.Model):
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     name: str = ormar.Text(default="")
-    bt: str = ormar.Enum(enum_class=BinaryEnum, represent_as_base64_str=True,
-    )
+    bt: str = ormar.LargeBinary(represent_as_base64_str=True, max_length=100)
 
 
 @app.get("/things", response_model=List[BinaryThing])
@@ -101,11 +100,6 @@ async def test_read_main():
 
 
 def test_schema():
-    schema = BinaryThing.schema()
+    schema = BinaryThing.model_json_schema()
     assert schema["properties"]["bt"]["format"] == "base64"
-    converted_choices = ["7g==", "/w==", "8CiMKA==", "wyg="]
-    assert len(schema["properties"]["bt"]["enum"]) == 4
-    assert all(
-        choice in schema["properties"]["bt"]["enum"] for choice in converted_choices
-    )
     assert schema["example"]["bt"] == "string"

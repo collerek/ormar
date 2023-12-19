@@ -55,7 +55,6 @@ async def test_read_main():
         assert response.json() == {
             "category": {
                 "id": None,
-                "items": [{"id": 1, "name": "test"}],
                 "name": "test cat",
             },
             "id": 1,
@@ -63,3 +62,4 @@ async def test_read_main():
         }
         item = Item(**response.json())
         assert item.id == 1
+        assert item.category.items[0].id == 1

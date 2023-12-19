@@ -110,7 +110,7 @@ def get_pydantic_base_orm_config() -> pydantic.ConfigDict:
     :rtype: pydantic Config
     """
 
-    return ConfigDict(validate_assignment=True)
+    return ConfigDict(validate_assignment=True, ser_json_bytes="base64")
 
 
 def get_potential_fields(attrs: Union[Dict, MappingProxyType]) -> Dict:
