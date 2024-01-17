@@ -88,7 +88,7 @@ def create_dummy_model(
 
 def populate_fk_params_based_on_to_model(
     to: Type["T"], nullable: bool, onupdate: str = None, ondelete: str = None
-) -> Tuple[Any, List, Any]:
+) -> Tuple[Any, List, Any, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
     pydantic field to use, ForeignKey constraint and type of the target column field.
@@ -122,7 +122,7 @@ def populate_fk_params_based_on_to_model(
         )
     ]
     column_type = to_field.column_type
-    return __type__, constraints, column_type
+    return __type__, constraints, column_type, pk_only_model
 
 
 def validate_not_allowed_fields(kwargs: Dict) -> None:
@@ -259,13 +259,18 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     sql_nullable = nullable if sql_nullable is None else sql_nullable
 
     validate_not_allowed_fields(kwargs)
-
+    pk_only_model = None
     if to.__class__ == ForwardRef:
         __type__ = to if not nullable else Optional[to]
         constraints: List = []
         column_type = None
     else:
-        __type__, constraints, column_type = populate_fk_params_based_on_to_model(
+        (
+            __type__,
+            constraints,
+            column_type,
+            pk_only_model,
+        ) = populate_fk_params_based_on_to_model(
             to=to,  # type: ignore
             nullable=nullable,
             ondelete=ondelete,
@@ -275,6 +280,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     namespace = dict(
         __type__=__type__,
         to=to,
+        to_pk_only=pk_only_model,
         through=None,
         alias=name,
         name=kwargs.pop("real_name", None),
@@ -372,6 +378,7 @@ class ForeignKeyField(BaseField):
                 self.__type__,
                 self.constraints,
                 self.column_type,
+                self.to_pk_only,
             ) = populate_fk_params_based_on_to_model(
                 to=self.to,
                 nullable=self.nullable,
@@ -445,15 +452,17 @@ class ForeignKeyField(BaseField):
         :return: (if needed) registered Model
         :rtype: Model
         """
+        pk_only_model = None
         if (
             len(value.keys()) == 1
             and list(value.keys())[0] == self.to.ormar_config.pkname
         ):
             value["__pk_only__"] = True
+            pk_only_model = self.to_pk_only(**value)
         model = self.to(**value)
         if to_register:
             self.register_relation(model=model, child=child)
-        return model
+        return pk_only_model if pk_only_model is not None else model
 
     def _construct_model_from_pk(
         self, value: Any, child: "Model", to_register: bool
@@ -476,11 +485,14 @@ class ForeignKeyField(BaseField):
         if self.to.pk_type() == uuid.UUID and isinstance(value, str):  # pragma: nocover
             value = uuid.UUID(value)
         if not isinstance(value, self.to.pk_type()):
-            raise RelationshipInstanceError(
-                f"Relationship error - ForeignKey {self.to.__name__} "
-                f"is of type {self.to.pk_type()} "
-                f"while {type(value)} passed as a parameter."
-            )
+            if isinstance(value, self.to_pk_only):
+                value = getattr(value, self.to.ormar_config.pkname)
+            else:
+                raise RelationshipInstanceError(
+                    f"Relationship error - ForeignKey {self.to.__name__} "
+                    f"is of type {self.to.pk_type()} "
+                    f"while {type(value)} passed as a parameter."
+                )
         model = create_dummy_instance(fk=self.to, pk=value)
         if to_register:
             self.register_relation(model=model, child=child)

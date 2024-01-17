@@ -37,17 +37,16 @@ base_ormar_config = ormar.OrmarConfig(
     database=database,
 )
 
-class Country(ormar.Model):
-    ormar_config = base_ormar_config.copy( tablename = "countries")
 
+class Country(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="countries")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="Poland")
 
 
 class Author(ormar.Model):
-    ormar_config = base_ormar_config.copy( tablename = "authors")
-
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -56,8 +55,7 @@ class Author(ormar.Model):
 
 
 class Book(ormar.Model):
-    ormar_config = base_ormar_config.copy( tablename = "books")
-
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)

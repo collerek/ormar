@@ -16,7 +16,11 @@ from typing import (
 import ormar  # noqa: I100
 from ormar import ModelDefinitionError
 from ormar.fields import BaseField
-from ormar.fields.foreign_key import ForeignKeyField, validate_not_allowed_fields
+from ormar.fields.foreign_key import (
+    ForeignKeyField,
+    validate_not_allowed_fields,
+    create_dummy_model,
+)
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, T
@@ -47,7 +51,7 @@ def forbid_through_relations(through: Type["Model"]) -> None:
 
 def populate_m2m_params_based_on_to_model(
     to: Type["Model"], nullable: bool
-) -> Tuple[Any, Any]:
+) -> Tuple[Any, Any, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
     pydantic field to use and type of the target column field.
@@ -60,13 +64,15 @@ def populate_m2m_params_based_on_to_model(
     :rtype: tuple with target pydantic type and target col type
     """
     to_field = to.ormar_config.model_fields[to.ormar_config.pkname]
+    pk_only_model = create_dummy_model(to, to_field)
+    base_type = Union[to_field.__type__, to, pk_only_model, List[to], List[pk_only_model]]  # type: ignore
     __type__ = (
-        Union[to_field.__type__, to, List[to]]  # type: ignore
+        base_type  # type: ignore
         if not nullable
-        else Optional[Union[to_field.__type__, to, List[to]]]  # type: ignore
+        else Optional[base_type]  # type: ignore
     )
     column_type = to_field.column_type
-    return __type__, column_type
+    return __type__, column_type, pk_only_model
 
 
 @overload
@@ -130,7 +136,7 @@ def ManyToMany(  # type: ignore
         forbid_through_relations(cast(Type["Model"], through))
 
     validate_not_allowed_fields(kwargs)
-
+    pk_only_model = None
     if to.__class__ == ForwardRef:
         __type__ = (
             Union[to, List[to]]  # type: ignore
@@ -139,12 +145,13 @@ def ManyToMany(  # type: ignore
         )
         column_type = None
     else:
-        __type__, column_type = populate_m2m_params_based_on_to_model(
+        __type__, column_type, pk_only_model = populate_m2m_params_based_on_to_model(
             to=to, nullable=nullable  # type: ignore
         )
     namespace = dict(
         __type__=__type__,
         to=to,
+        to_pk_only=pk_only_model,
         through=through,
         alias=name,
         name=name,
@@ -225,9 +232,14 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         if self.to.__class__ == ForwardRef:
             self.to = self.to._evaluate(globalns, localns, set())
 
-            (self.__type__, self.column_type) = populate_m2m_params_based_on_to_model(
+            (
+                self.__type__,
+                self.column_type,
+                pk_only_model,
+            ) = populate_m2m_params_based_on_to_model(
                 to=self.to, nullable=self.nullable
             )
+            self.to_pk_only = pk_only_model
 
         if self.through.__class__ == ForwardRef:
             self.through = self.through._evaluate(globalns, localns, set())

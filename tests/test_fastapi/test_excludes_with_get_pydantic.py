@@ -126,5 +126,5 @@ async def test_read_main():
             "children": [],
             "id": 2,
             "name": "test2",
-            "parent": {"id": 1},
+            "parent": {"id": 1, "name": "selfref"},
         }

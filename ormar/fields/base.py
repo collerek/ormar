@@ -76,6 +76,7 @@ class BaseField(FieldInfo):
 
         self.owner: Type["Model"] = kwargs.pop("owner", None)
         self.to: Type["Model"] = kwargs.pop("to", None)
+        self.to_pk_only: Type["Model"] = kwargs.pop("to_pk_only", None)
         self.through: Type["Model"] = kwargs.pop("through", None)
         self.self_reference: bool = kwargs.pop("self_reference", False)
         self.self_reference_primary: Optional[str] = kwargs.pop(

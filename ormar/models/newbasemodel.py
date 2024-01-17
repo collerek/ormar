@@ -73,7 +73,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         "__pk_only__",
         "__cached_hash__",
         "__pydantic_extra__",
-        "__pydantic_fields_set__"
+        "__pydantic_fields_set__",
     )
 
     if TYPE_CHECKING:  # pragma no cover
@@ -207,6 +207,11 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if item == "__pydantic_extra__":
             return None
         return super().__getattr__(item)
+
+    def __getattribute__(self, item: str) -> Any:
+        if item == "__dict__":
+            print(item, sys._getframe(1))
+        return super().__getattribute__(item)
 
     def __getstate__(self) -> Dict[Any, Any]:
         state = super().__getstate__()
@@ -627,12 +632,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         for model in models:
             try:
                 model_dict = model.dict(
-                        relation_map=relation_map,
-                        include=include,
-                        exclude=exclude,
-                        exclude_primary_keys=exclude_primary_keys,
-                        exclude_through_models=exclude_through_models,
-                    )
+                    relation_map=relation_map,
+                    include=include,
+                    exclude=exclude,
+                    exclude_primary_keys=exclude_primary_keys,
+                    exclude_through_models=exclude_through_models,
+                )
                 if not exclude_through_models:
                     model.populate_through_models(
                         model=model,
@@ -669,9 +674,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if exclude and isinstance(exclude, Set):
             exclude = translate_list_to_dict(exclude)
         models_to_populate = model._get_not_excluded_fields(
-            fields=model.extract_through_names(),
-            include=include,
-            exclude=exclude
+            fields=model.extract_through_names(), include=include, exclude=exclude
         )
         for through_model in models_to_populate:
             through_field = model.ormar_config.model_fields[through_model]
@@ -780,8 +783,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                         nested_model.populate_through_models(
                             model=nested_model,
                             model_dict=model_dict,
-                            include=self._convert_all(self._skip_ellipsis(include, field)),
-                            exclude=self._convert_all(self._skip_ellipsis(exclude, field)),
+                            include=self._convert_all(
+                                self._skip_ellipsis(include, field)
+                            ),
+                            exclude=self._convert_all(
+                                self._skip_ellipsis(exclude, field)
+                            ),
                             relation_map=self._skip_ellipsis(
                                 relation_map, field, default_return=dict()
                             ),
