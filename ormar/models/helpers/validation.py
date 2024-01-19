@@ -1,7 +1,6 @@
 import base64
 import decimal
 import numbers
-from types import NoneType
 from typing import (
     Any,
     Callable,
@@ -170,7 +169,7 @@ def get_pydantic_example_repr(type_: Any) -> Any:
     """
     if hasattr(type_, "__origin__"):
         if type_.__origin__ == Union:
-            values = tuple(get_pydantic_example_repr(x) for x in type_.__args__ if x is not NoneType)
+            values = tuple(get_pydantic_example_repr(x) for x in type_.__args__ if x is not type(None))
             if len(values) == 1:
                 return values[0]
             return values

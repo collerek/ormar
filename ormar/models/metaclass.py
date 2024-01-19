@@ -265,7 +265,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     table_name: str,
     parent_fields: Dict,
     attrs: Dict,
-    meta: ModelMeta,
+    ormar_config: OrmarConfig,
     base_class: Type["Model"],
 ) -> None:
     """
@@ -292,8 +292,8 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     :type parent_fields: Dict
     :param attrs: new namespace for class being constructed
     :type attrs: Dict
-    :param meta: metaclass of currently created model
-    :type meta: ModelMeta
+    :param ormar_config: metaclass of currently created model
+    :type ormar_config: OrmarConfig
     """
     Field: Type[BaseField] = type(  # type: ignore
         field.__class__.__name__, (ManyToManyField, BaseField), {}
@@ -333,7 +333,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     # create new table with copied columns but remove foreign keys
     # they will be populated later in expanding reverse relation
     # if hasattr(new_meta, "table"):
-    new_meta.tablename += "_" + meta.tablename
+    new_meta.tablename += "_" + ormar_config.tablename
     new_meta.table = None
     new_meta.model_fields = {
         name: field
@@ -392,20 +392,20 @@ def copy_data_from_parent_model(  # noqa: CCR001
             model_fields=model_fields,
         )
         parent_fields: Dict = dict()
-        meta = attrs.get("ormar_config")
-        if not meta:  # pragma: no cover
+        ormar_config = attrs.get("ormar_config")
+        if not ormar_config:  # pragma: no cover
             raise ModelDefinitionError(
                 f"Model {curr_class.__name__} declared without ormar_config"
             )
         table_name = (
-            meta.tablename
-            if hasattr(meta, "tablename") and meta.tablename
+            ormar_config.tablename
+            if hasattr(ormar_config, "tablename") and ormar_config.tablename
             else attrs.get("__name__", "").lower() + "s"
         )
         for field_name, field in base_class.ormar_config.model_fields.items():
             if (
-                hasattr(meta, "exclude_parent_fields")
-                and field_name in meta.exclude_parent_fields
+                hasattr(ormar_config, "exclude_parent_fields")
+                and field_name in ormar_config.exclude_parent_fields
             ):
                 continue
             if field.is_multi:
@@ -416,7 +416,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
                     table_name=table_name,
                     parent_fields=parent_fields,
                     attrs=attrs,
-                    meta=meta,
+                    ormar_config=ormar_config,
                     base_class=base_class,  # type: ignore
                 )
 
@@ -574,9 +574,9 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
         name: str,
         bases: Any,
         attrs: dict,
-        __pydantic_generic_metadata__: PydanticGenericMetadata | None = None,
+        __pydantic_generic_metadata__: Union[PydanticGenericMetadata, None] = None,
         __pydantic_reset_parent_namespace__: bool = True,
-        _create_model_module: str | None = None,
+        _create_model_module: Union[str, None] = None,
         **kwargs
     ) -> "ModelMetaclass":
         """
