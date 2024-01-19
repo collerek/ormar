@@ -3,6 +3,7 @@ import json
 import uuid
 from enum import Enum
 from typing import List
+import codecs
 
 import databases
 import pytest
@@ -95,8 +96,11 @@ async def test_read_main():
         assert response.status_code == 200
         response = await client.get("/things")
         assert response.json()[0]["bt"] == blob3.decode()
-        thing = BinaryThing(**response.json()[0])
+        resp_json = response.json()
+        resp_json[0]["bt"] = resp_json[0]["bt"].encode()
+        thing = BinaryThing(**resp_json[0])
         assert thing.__dict__["bt"] == blob3
+        assert thing.bt == base64.b64encode(blob3).decode()
 
 
 def test_schema():
