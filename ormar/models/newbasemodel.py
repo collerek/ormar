@@ -20,7 +20,7 @@ from typing import (
 import databases
 import pydantic
 import sqlalchemy
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 import ormar  # noqa I100
@@ -144,15 +144,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         new_kwargs, through_tmp_dict = self._process_kwargs(kwargs)
 
         if not pk_only:
-            self.__pydantic_validator__.validate_python(
+            values = self.__pydantic_validator__.validate_python(
                 new_kwargs, self_instance=self  # type: ignore
-            )
+            ).__dict__
+            fields_set = set(values.keys())
         else:
             fields_set = {self.ormar_config.pkname}
             values = new_kwargs
-            object.__setattr__(self, "__dict__", values)
-            object.__setattr__(self, "__pydantic_fields_set__", fields_set)
-
+        for key, item in values.items():
+            setattr(self, key, item)
+        object.__setattr__(self, "__pydantic_fields_set__", fields_set)
         # add back through fields
         new_kwargs.update(through_tmp_dict)
         model_fields = object.__getattribute__(self, "ormar_config").model_fields
@@ -162,9 +163,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 new_kwargs.get(related), self, to_register=True
             )
 
-        if hasattr(self, "_init_private_attributes"):
-            # introduced in pydantic 1.7
-            self._init_private_attributes()
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
         """
@@ -207,11 +205,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if item == "__pydantic_extra__":
             return None
         return super().__getattr__(item)
-
-    def __getattribute__(self, item: str) -> Any:
-        if item == "__dict__":
-            print(item, sys._getframe(1))
-        return super().__getattribute__(item)
 
     def __getstate__(self) -> Dict[Any, Any]:
         state = super().__getstate__()
@@ -293,7 +286,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         Removes property_fields
 
-        Checks if field is in the model fields or pydatnic fields.
+        Checks if field is in the model fields or pydantic fields.
 
         Nullifies fields that should be excluded.
 
@@ -1003,7 +996,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         field = self.ormar_config.model_fields[column_name]
         if not isinstance(value, bytes) and value is not None:
             if field.represent_as_base64_str:
-                value = base64.b64decode(value)
+                value = base64.b64decode(value.encode())
             else:
                 value = value.encode("utf-8")
         return value

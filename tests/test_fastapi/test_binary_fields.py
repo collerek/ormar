@@ -37,7 +37,7 @@ async def shutdown() -> None:
         await database_.disconnect()
 
 
-blob3 = b"\xc3\x28"
+blob3 = b"\xc3\x83\x28"
 blob4 = b"\xf0\x28\x8c\x28"
 blob5 = b"\xee"
 blob6 = b"\xff"
@@ -94,7 +94,7 @@ async def test_read_main():
         )
         assert response.status_code == 200
         response = await client.get("/things")
-        assert response.json()[0]["bt"] == base64.b64encode(blob3).decode()
+        assert response.json()[0]["bt"] == blob3.decode()
         thing = BinaryThing(**response.json()[0])
         assert thing.__dict__["bt"] == blob3
 
