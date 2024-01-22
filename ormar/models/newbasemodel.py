@@ -144,16 +144,14 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         new_kwargs, through_tmp_dict = self._process_kwargs(kwargs)
 
         if not pk_only:
-            values = self.__pydantic_validator__.validate_python(
+            self.__pydantic_validator__.validate_python(
                 new_kwargs, self_instance=self  # type: ignore
             ).__dict__
-            fields_set = set(values.keys())
         else:
             fields_set = {self.ormar_config.pkname}
             values = new_kwargs
-        for key, item in values.items():
-            setattr(self, key, item)
-        object.__setattr__(self, "__pydantic_fields_set__", fields_set)
+            object.__setattr__(self, "__dict__", values)
+            object.__setattr__(self, "__pydantic_fields_set__", fields_set)
         # add back through fields
         new_kwargs.update(through_tmp_dict)
         model_fields = object.__getattribute__(self, "ormar_config").model_fields
@@ -996,7 +994,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         field = self.ormar_config.model_fields[column_name]
         if not isinstance(value, bytes) and value is not None:
             if field.represent_as_base64_str:
-                value = base64.b64decode(value.encode())
+                value = base64.b64decode(value)
             else:
                 value = value.encode("utf-8")
         return value
