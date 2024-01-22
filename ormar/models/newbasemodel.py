@@ -146,7 +146,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if not pk_only:
             self.__pydantic_validator__.validate_python(
                 new_kwargs, self_instance=self  # type: ignore
-            ).__dict__
+            )
         else:
             fields_set = {self.ormar_config.pkname}
             values = new_kwargs
@@ -209,6 +209,11 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         self_dict = self.dict()
         state["__dict__"].update(**self_dict)
         return state
+
+    def __getattribute__(self, item: str) -> Any:
+        if item == "__dict__":
+            print(item, sys._getframe(1))
+        return super().__getattribute__(item)
 
     def __setstate__(self, state: Dict[Any, Any]) -> None:
         relations = {
