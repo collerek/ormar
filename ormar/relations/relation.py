@@ -155,6 +155,9 @@ class Relation(Generic[T]):
         if self._type in (RelationType.PRIMARY, RelationType.THROUGH):
             self.related_models = child
             self._owner.__dict__[relation_name] = child
+        elif self._type == RelationType.REVERSE:
+            # TODO: Define what to do with reverse relations
+            pass
         else:
             if self._find_existing(child) is None:
                 self.related_models.append(child)  # type: ignore
