@@ -36,7 +36,6 @@ def encode_bytes(value: Union[str, bytes], represent_as_string: bool = False) ->
         value=  value if isinstance(value, bytes) else base64.b64decode(value)
     else:
         value = value if isinstance(value, bytes) else value.encode("utf-8")
-    print(' encode_bytes: value =', value)
     return value
 
 
@@ -45,7 +44,6 @@ def encode_json(value: Any) -> Optional[str]:
         value = value.isoformat()
     value = json.dumps(value) if not isinstance(value, str) else re_dump_value(value)
     value = value.decode("utf-8") if isinstance(value, bytes) else value
-    print(' encode_json: value =', value)
     return value
 
 
