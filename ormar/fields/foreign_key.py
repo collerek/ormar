@@ -373,7 +373,7 @@ class ForeignKeyField(BaseField):
         :rtype: None
         """
         if self.to.__class__ == ForwardRef:
-            self.to = self.to._evaluate(globalns, localns, set())
+            self.to = self.to._evaluate(globalns, localns)
             (
                 self.__type__,
                 self.constraints,

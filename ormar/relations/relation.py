@@ -165,7 +165,7 @@ class Relation(Generic[T]):
                 self._populate_owner_side_dict(rel=rel, child=child)
                 self._owner.__dict__[relation_name] = rel
 
-    def _populate_owner_side_dict(self, rel:List["Model"], child: "Model") -> None:
+    def _populate_owner_side_dict(self, rel: List["Model"], child: "Model") -> None:
         try:
             if child not in rel:
                 rel.append(child)

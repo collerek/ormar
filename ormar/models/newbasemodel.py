@@ -20,7 +20,7 @@ from typing import (
 import databases
 import pydantic
 import sqlalchemy
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 import ormar  # noqa I100
@@ -152,7 +152,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             values = new_kwargs
             object.__setattr__(self, "__dict__", values)
             object.__setattr__(self, "__pydantic_fields_set__", fields_set)
-
         # add back through fields
         new_kwargs.update(through_tmp_dict)
         model_fields = object.__getattribute__(self, "ormar_config").model_fields
@@ -162,9 +161,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 new_kwargs.get(related), self, to_register=True
             )
 
-        if hasattr(self, "_init_private_attributes"):
-            # introduced in pydantic 1.7
-            self._init_private_attributes()
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
         """
@@ -208,16 +204,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             return None
         return super().__getattr__(item)
 
-    def __getattribute__(self, item: str) -> Any:
-        if item == "__dict__":
-            print(item, sys._getframe(1))
-        return super().__getattribute__(item)
-
     def __getstate__(self) -> Dict[Any, Any]:
         state = super().__getstate__()
         self_dict = self.dict()
         state["__dict__"].update(**self_dict)
         return state
+
+    def __getattribute__(self, item: str) -> Any:
+        if item == "__dict__":
+            print(item, sys._getframe(1))
+        return super().__getattribute__(item)
 
     def __setstate__(self, state: Dict[Any, Any]) -> None:
         relations = {
@@ -293,7 +289,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         Removes property_fields
 
-        Checks if field is in the model fields or pydatnic fields.
+        Checks if field is in the model fields or pydantic fields.
 
         Nullifies fields that should be excluded.
 
