@@ -210,11 +210,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         state["__dict__"].update(**self_dict)
         return state
 
-    def __getattribute__(self, item: str) -> Any:
-        if item == "__dict__":
-            print(item, sys._getframe(1))
-        return super().__getattribute__(item)
-
     def __setstate__(self, state: Dict[Any, Any]) -> None:
         relations = {
             k: v

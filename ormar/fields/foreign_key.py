@@ -373,7 +373,7 @@ class ForeignKeyField(BaseField):
         :rtype: None
         """
         if self.to.__class__ == ForwardRef:
-            self.to = self.to._evaluate(globalns, localns)
+            self.to = self.to._evaluate(globalns, localns, set())
             (
                 self.__type__,
                 self.constraints,
@@ -453,9 +453,12 @@ class ForeignKeyField(BaseField):
         :rtype: Model
         """
         pk_only_model = None
+        keys = set(value.keys())
+        own_keys = keys - self.to.extract_related_names()
         if (
-            len(value.keys()) == 1
-            and list(value.keys())[0] == self.to.ormar_config.pkname
+            len(own_keys) == 1
+            and list(own_keys)[0] == self.to.ormar_config.pkname
+            and not self.is_through
         ):
             value["__pk_only__"] = True
             pk_only_model = self.to_pk_only(**value)

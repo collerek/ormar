@@ -1,9 +1,11 @@
 import copy
 import inspect
-from typing import List, TYPE_CHECKING, Optional, Type, Union, cast, Dict
+from typing import List, TYPE_CHECKING, Optional, Type, Union, cast, Dict, Any
 
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, create_model, field_serializer
+from pydantic._internal._decorators import Decorator, DecoratorInfos
 from pydantic.fields import FieldInfo
+from pydantic_core.core_schema import SerializerFunctionWrapHandler
 
 import ormar
 from ormar import ForeignKey, ManyToMany
@@ -147,8 +149,40 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
         model_field.to.model_fields[related_name] = FieldInfo.from_annotated_attribute(
             annotation=field_type, default=None
         )
+        add_field_serializer_for_reverse_relations(to_model=model_field.to, related_name=related_name)
         model_field.to.model_rebuild(force=True)
         setattr(model_field.to, related_name, RelationDescriptor(name=related_name))
+
+
+def add_field_serializer_for_reverse_relations(to_model: "Model", related_name: str) -> None:
+    def serialize(self, children: List['BaseModel'], handler: SerializerFunctionWrapHandler) -> Any:
+        """
+        Serialize a list of nodes, handling circular references by excluding the children.
+        """
+        try:
+            return handler(children)
+        except ValueError as exc:
+            if not str(exc).startswith('Circular reference'):
+                raise exc
+
+            result = []
+            for child in children:
+                try:
+                    serialized = handler([child])
+                except ValueError as exc:
+                    if not str(exc).startswith('Circular reference'):
+                        raise exc
+                    result.append({child.ormar_config.pkname: child.pk})
+                else:
+                    result.append(serialized)
+            return result
+
+    decorator = field_serializer(related_name, mode="wrap", check_fields=False)(serialize)
+    setattr(to_model, f"serialize_{related_name}", decorator)
+    DecoratorInfos.build(to_model)
+    # to_model.__pydantic_decorators__.field_serializers["serialize"] = Decorator.build(
+    #                     to_model, cls_var_name="serialize", shim=decorator.shim, info=decorator.decorator_info
+    #                 )
 
 
 def replace_models_with_copy(

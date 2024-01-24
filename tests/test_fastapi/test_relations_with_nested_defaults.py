@@ -99,7 +99,7 @@ async def test_related_with_defaults(sample_data):
     async with client as client, LifespanManager(app):
         response = await client.get("/books/1")
         assert response.json() == {
-            "author": {"id": 1},
+            "author": {"id": 1, "books": [{"id": 1}]},
             "id": 1,
             "title": "Bug caused by default value",
             "year": 2021,
@@ -109,9 +109,9 @@ async def test_related_with_defaults(sample_data):
         assert response.json() == {
             "author": {
                 "books": [
-                    {"id": 1, "title": "Bug caused by default value", "year": 2021}
+                    {"id": 1}
                 ],
-                "country": {"id": 1},
+                "country": {"id": 1, 'authors': [{'id': 1}]},
                 "id": 1,
                 "name": "bug",
                 "rating": 5,
