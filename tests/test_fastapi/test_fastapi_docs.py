@@ -143,7 +143,7 @@ def test_schema_modification():
     }
 
     schema = Category.model_json_schema()
-    assert schema["example"] == {
+    assert schema["$defs"]["Category"]["example"] == {
         "id": 0,
         "name": "string",
         "items": [

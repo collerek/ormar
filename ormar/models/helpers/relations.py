@@ -180,9 +180,6 @@ def add_field_serializer_for_reverse_relations(to_model: "Model", related_name: 
     decorator = field_serializer(related_name, mode="wrap", check_fields=False)(serialize)
     setattr(to_model, f"serialize_{related_name}", decorator)
     DecoratorInfos.build(to_model)
-    # to_model.__pydantic_decorators__.field_serializers["serialize"] = Decorator.build(
-    #                     to_model, cls_var_name="serialize", shim=decorator.shim, info=decorator.decorator_info
-    #                 )
 
 
 def replace_models_with_copy(

@@ -98,25 +98,24 @@ async def test_related_with_defaults(sample_data):
     client = AsyncClient(app=app, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         response = await client.get("/books/1")
-        assert response.json() == {
-            "author": {"id": 1, "books": [{"id": 1}]},
-            "id": 1,
-            "title": "Bug caused by default value",
-            "year": 2021,
-        }
+        assert response.json() == {'author': {'books': [{'author': {'id': 1},
+                                                         'id': 1,
+                                                         'title': 'Bug caused by default value',
+                                                         'year': 2021}],
+                                              'id': 1},
+                                   'id': 1,
+                                   'title': 'Bug caused by default value',
+                                   'year': 2021}
 
         response = await client.get("/books_with_author/1")
-        assert response.json() == {
-            "author": {
-                "books": [
-                    {"id": 1}
-                ],
-                "country": {"id": 1, 'authors': [{'id': 1}]},
-                "id": 1,
-                "name": "bug",
-                "rating": 5,
-            },
-            "id": 1,
-            "title": "Bug caused by default value",
-            "year": 2021,
-        }
+        assert response.json() == {'author': {'books': [{'author': {'id': 1},
+                                                         'id': 1,
+                                                         'title': 'Bug caused by default value',
+                                                         'year': 2021}],
+                                              'country': {'authors': [{'id': 1}], 'id': 1},
+                                              'id': 1,
+                                              'name': 'bug',
+                                              'rating': 5},
+                                   'id': 1,
+                                   'title': 'Bug caused by default value',
+                                   'year': 2021}

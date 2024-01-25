@@ -51,9 +51,9 @@ app.post("/categories/", response_model=Category)(create_category)
     response_model=SelfRef.get_pydantic(exclude={"parent", "children__name"}),
 )
 async def create_selfref(
-    selfref: SelfRef.get_pydantic(  # type: ignore
-        exclude={"children__name"}  # noqa: F821
-    ),
+        selfref: SelfRef.get_pydantic(  # type: ignore
+            exclude={"children__name"}  # noqa: F821
+        ),
 ):
     selfr = SelfRef(**selfref.dict())
     await selfr.save()
@@ -126,5 +126,15 @@ async def test_read_main():
             "children": [],
             "id": 2,
             "name": "test2",
-            "parent": {"id": 1, "name": "selfref"},
+            "parent": {"id": 1},
+        }
+
+        response = await client.get("/selfrefs/1/")
+        assert response.status_code == 200
+        check_children = SelfRef(**response.json())
+        assert check_children.dict() == {
+            'children': [{'id': 2, 'name': 'test2'}],
+            'id': 1,
+            'name': 'test',
+            'parent': None
         }

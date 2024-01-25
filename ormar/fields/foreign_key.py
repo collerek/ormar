@@ -458,6 +458,7 @@ class ForeignKeyField(BaseField):
         if (
             len(own_keys) == 1
             and list(own_keys)[0] == self.to.ormar_config.pkname
+            and value.get(self.to.ormar_config.pkname) is not None
             and not self.is_through
         ):
             value["__pk_only__"] = True

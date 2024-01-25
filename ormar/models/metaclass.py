@@ -16,9 +16,11 @@ from typing import (
 import databases
 import pydantic
 import sqlalchemy
+from pydantic import field_serializer
 from pydantic._internal._generics import PydanticGenericMetadata
 from pydantic._internal._model_construction import complete_model_class
 from pydantic.fields import ComputedFieldInfo, FieldInfo
+from pydantic_core.core_schema import SerializerFunctionWrapHandler
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
@@ -567,6 +569,23 @@ def add_field_descriptor(
     else:
         setattr(new_model, name, PydanticDescriptor(name=name))
 
+def get_serializer():
+    def serialize(self, value: Optional[pydantic.BaseModel], handler: SerializerFunctionWrapHandler) -> Any:
+        """
+        Serialize a value if it's not expired weak reference.
+        """
+        try:
+            return handler(value)
+        except ReferenceError:
+            return None
+        except ValueError as exc:
+            if not str(exc).startswith('Circular reference'):
+                raise exc
+            return {value.ormar_config.pkname: value.pk}
+
+    return serialize
+
+
 
 class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
     def __new__(  # type: ignore # noqa: CCR001
@@ -622,6 +641,11 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
         if "ormar_config" in attrs:
             attrs["model_config"]["ignored_types"] = (OrmarConfig,)
             attrs["model_config"]["from_attributes"] = True
+            for field_name, field in model_fields.items():
+                if field.is_relation:
+                    decorator = field_serializer(field_name, mode="wrap", check_fields=False)(get_serializer())
+                    attrs[f"serialize_{field_name}"] = decorator
+
         new_model = super().__new__(
             mcs,  # type: ignore
             name,
