@@ -1,4 +1,5 @@
 import string
+import sys
 import uuid
 from dataclasses import dataclass
 from random import choices
@@ -361,6 +362,15 @@ class ForeignKeyField(BaseField):
         prefix = "to_" if self.self_reference else ""
         return self.through_relation_name or f"{prefix}{self.owner.get_name()}"
 
+    def _evaluate_forward_ref(self,  globalns: Any, localns: Any, is_through: bool = False) -> None:
+        target = "through" if is_through else "to"
+        target_obj = getattr(self, target)
+        if sys.version_info.minor <= 8:
+            evaluated = target_obj._evaluate(globalns, localns)
+        else:
+            evaluated = target_obj._evaluate(globalns, localns, set())
+        setattr(self, target, evaluated)
+
     def evaluate_forward_ref(self, globalns: Any, localns: Any) -> None:
         """
         Evaluates the ForwardRef to actual Field based on global and local namespaces
@@ -373,7 +383,7 @@ class ForeignKeyField(BaseField):
         :rtype: None
         """
         if self.to.__class__ == ForwardRef:
-            self.to = self.to._evaluate(globalns, localns, set())
+            self._evaluate_forward_ref(globalns, localns)
             (
                 self.__type__,
                 self.constraints,

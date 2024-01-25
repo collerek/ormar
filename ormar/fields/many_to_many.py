@@ -229,8 +229,7 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :rtype: None
         """
         if self.to.__class__ == ForwardRef:
-            self.to = self.to._evaluate(globalns, localns, set())
-
+            self._evaluate_forward_ref(globalns, localns)
             (
                 self.__type__,
                 self.column_type,
@@ -241,7 +240,7 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
             self.to_pk_only = pk_only_model
 
         if self.through.__class__ == ForwardRef:
-            self.through = self.through._evaluate(globalns, localns, set())
+            self._evaluate_forward_ref(globalns, localns, is_through=True)
 
             forbid_through_relations(self.through)
 
