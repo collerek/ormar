@@ -27,5 +27,5 @@ jobs:
         poetry install --extras "all"
       env:
         POETRY_VIRTUALENVS_CREATE: false
-    - name: Lint
+    - name: Type check
       run: python -m mypy . --ignore-missing-imports --install-types --non-interactive
