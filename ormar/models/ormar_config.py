@@ -4,7 +4,7 @@ import databases
 import sqlalchemy
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
-from ormar import BaseField, ForeignKeyField, ManyToManyField
+from ormar.fields import BaseField, ForeignKeyField, ManyToManyField
 from ormar.models.helpers import alias_manager
 from ormar.models.utils import Extra
 from ormar.queryset.queryset import QuerySet

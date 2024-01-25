@@ -35,7 +35,7 @@ class Artist(ormar.Model):
 def test_weakref_init():
     band = Band(name="Band")
     artist1 = Artist(name="Artist 1", band=band)
-    Artist(name="Artist 2", band=band)
+    artist2 = Artist(name="Artist 2", band=band)
     artist3 = Artist(name="Artist 3", band=band)
 
     del artist1
