@@ -175,7 +175,7 @@ def add_field_serializer_for_reverse_relations(
                 try:
                     serialized = handler([child])
                 except ValueError as exc:
-                    if not str(exc).startswith("Circular reference"):
+                    if not str(exc).startswith("Circular reference"):  # pragma: no cover
                         raise exc
                     result.append({child.ormar_config.pkname: child.pk})
                 else:

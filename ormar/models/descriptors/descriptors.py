@@ -1,7 +1,7 @@
 import base64
 from typing import TYPE_CHECKING, Any, List, Type
 
-from ormar.fields.parsers import encode_json
+from ormar.fields.parsers import encode_json, decode_bytes
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
@@ -65,10 +65,7 @@ class BytesDescriptor:
     def __set__(self, instance: "Model", value: Any) -> None:
         field = instance.ormar_config.model_fields[self.name]
         if isinstance(value, str):
-            if field.represent_as_base64_str:
-                value = base64.b64decode(value)
-            else:
-                value = value.encode("utf-8")
+            value = decode_bytes(value=value, represent_as_string=field.represent_as_base64_str)
         instance._internal_set(self.name, value)
         instance.set_save_status(False)
 

@@ -162,7 +162,10 @@ class EncryptedString(types.TypeDecorator):
         except AttributeError:
             encoder = ormar.SQL_ENCODERS_MAP.get(self.type_, None)
             if encoder:
-                value = encoder(value)  # type: ignore
+                if self.type_ == bytes:
+                    value = encoder(value, self._field_type.represent_as_base64_str)
+                else:
+                    value = encoder(value)  # type: ignore
 
         encrypted_value = self.backend.encrypt(value)
         return encrypted_value
@@ -177,6 +180,8 @@ class EncryptedString(types.TypeDecorator):
         except AttributeError:
             decoder = ormar.DECODERS_MAP.get(self.type_, None)
             if decoder:
+                if self.type_ == bytes:
+                    return decoder(decrypted_value, self._field_type.represent_as_base64_str)
                 return decoder(decrypted_value)  # type: ignore
 
             return self._field_type.__type__(decrypted_value)  # type: ignore

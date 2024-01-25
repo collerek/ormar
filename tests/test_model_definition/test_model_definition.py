@@ -134,6 +134,17 @@ def test_missing_database():
             test_json = ormar.JSON(nullable=True)
 
 
+def test_wrong_pydantic_config():
+    with pytest.raises(ModelDefinitionError):
+
+        class ErrorSample(ormar.Model):
+            model_config = ["test"]
+            ormar_config = ormar.OrmarConfig(tablename="jsons3")
+
+            id: int = ormar.Integer(primary_key=True)
+            test_json = ormar.JSON(nullable=True)
+
+
 def test_non_existing_attr(example):
     with pytest.raises(ValueError):
         example.new_attr = 12

@@ -26,15 +26,6 @@ class FieldAccessor:
         self._model = model
         self._access_chain = access_chain
 
-    def __bool__(self) -> bool:
-        """
-        Hack to avoid pydantic name check from parent model, returns false
-
-        :return: False
-        :rtype: bool
-        """
-        return False
-
     def __getattr__(self, item: str) -> Any:
         """
         Accessor return new accessor for each field and nested models.

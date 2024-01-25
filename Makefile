@@ -19,7 +19,7 @@ test:
 	pytest
 
 coverage:
-	pytest --cov=ormar --cov=tests --cov-fail-under=100 --cov-report=term-missing
+	pytest --cov=ormar --cov=tests --cov-fail-under=100 --cov-report=term-missing tests
 
 type_check:
 	mkdir -p .mypy_cache && poetry run python -m mypy . --ignore-missing-imports --install-types --non-interactive

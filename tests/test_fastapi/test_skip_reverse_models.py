@@ -74,15 +74,13 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
+@app.post("/categories/forbid/", response_model=Category2)
+async def create_category_forbid(category: Category2):  # pragma: no cover
+    pass
+
+
 @app.post("/categories/", response_model=Category)
 async def create_category(category: Category):
-    await category.save()
-    await category.save_related(follow=True, save_all=True)
-    return category
-
-
-@app.post("/categories/forbid/", response_model=Category2)
-async def create_category_forbid(category: Category2):
     await category.save()
     await category.save_related(follow=True, save_all=True)
     return category

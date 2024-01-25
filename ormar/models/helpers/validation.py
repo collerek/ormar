@@ -21,40 +21,12 @@ except ImportError:  # pragma: no cover
 
 import pydantic
 
-import ormar  # noqa: I100, I202
 from ormar.models.helpers.models import config_field_not_set
 from ormar.queryset.utils import translate_list_to_dict
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.fields import BaseField
-
-
-def convert_value_if_needed(field: "BaseField", value: Any) -> Any:
-    """
-    Converts dates to isoformat as fastapi can check this condition in routes
-    and the fields are not yet parsed.
-    Converts enums to list of it's values.
-    Converts uuids to strings.
-    Converts decimal to float with given scale.
-
-    :param field: ormar field to check with choices
-    :type field: BaseField
-    :param value: current values of the model to verify
-    :type value: Any
-    :return: value, choices list
-    :rtype: Any
-    """
-    encoder = ormar.ENCODERS_MAP.get(field.__type__, lambda x: x)
-    if field.__type__ == decimal.Decimal:
-        precision = field.scale  # type: ignore
-        value = encoder(value, precision)
-    elif field.__type__ == bytes:
-        represent_as_string = field.represent_as_base64_str
-        value = encoder(value, represent_as_string)
-    elif encoder:
-        value = encoder(value)
-    return value
 
 
 def generate_model_example(model: Type["Model"], relation_map: Dict = None) -> Dict:
@@ -198,8 +170,6 @@ def overwrite_example_and_description(
     :type model: Type["Model"]
     """
     schema["example"] = generate_model_example(model=model)
-    if "Main base class of ormar Model." in schema.get("description", ""):
-        schema["description"] = f"{model.__name__}"
 
 
 def overwrite_binary_format(schema: Dict[str, Any], model: Type["Model"]) -> None:
@@ -218,36 +188,6 @@ def overwrite_binary_format(schema: Dict[str, Any], model: Type["Model"]) -> Non
             and model.ormar_config.model_fields[field_id].represent_as_base64_str
         ):
             prop["format"] = "base64"
-            if prop.get("enum"):
-                prop["enum"] = [
-                    base64.b64encode(choice).decode() for choice in prop.get("enum", [])
-                ]
-
-
-def construct_modify_schema_function(fields_with_choices: List) -> Callable:
-    """
-    Modifies the schema to include fields with choices validator.
-    Those fields will be displayed in schema as Enum types with available choices
-    values listed next to them.
-
-    Note that schema extra has to be a function, otherwise it's called to soon
-    before all the relations are expanded.
-
-    :param fields_with_choices: list of fields with choices validation
-    :type fields_with_choices: List
-    :return: callable that will be run by pydantic to modify the schema
-    :rtype: Callable
-    """
-
-    def schema_extra(schema: Dict[str, Any], model: Type["Model"]) -> None:
-        for field_id, prop in schema.get("properties", {}).items():
-            if field_id in fields_with_choices:
-                prop["enum"] = list(model.ormar_config.model_fields[field_id].choices)
-                prop["description"] = prop.get("description", "") + "An enumeration."
-        overwrite_example_and_description(schema=schema, model=model)
-        overwrite_binary_format(schema=schema, model=model)
-
-    return staticmethod(schema_extra)  # type: ignore
 
 
 def construct_schema_function_without_choices() -> Callable:

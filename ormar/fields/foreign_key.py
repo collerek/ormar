@@ -365,9 +365,9 @@ class ForeignKeyField(BaseField):
     def _evaluate_forward_ref(self,  globalns: Any, localns: Any, is_through: bool = False) -> None:
         target = "through" if is_through else "to"
         target_obj = getattr(self, target)
-        if sys.version_info.minor <= 8:
+        if sys.version_info.minor <= 8:  # pragma: no cover
             evaluated = target_obj._evaluate(globalns, localns)
-        else:
+        else: # pragma: no cover
             evaluated = target_obj._evaluate(globalns, localns, set())
         setattr(self, target, evaluated)
 

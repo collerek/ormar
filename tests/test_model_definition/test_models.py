@@ -41,7 +41,7 @@ class LargeBinarySample(ormar.Model):
     )
 
     id: int = ormar.Integer(primary_key=True)
-    test_binary: bytes = ormar.LargeBinary(max_length=100000, choices=[blob, blob2])
+    test_binary: bytes = ormar.LargeBinary(max_length=100000)
 
 
 blob3 = os.urandom(64)
@@ -517,15 +517,6 @@ async def test_model_first():
                 await User.objects.filter(name="Lucy").first()
 
             assert await User.objects.order_by("name").first() == jane
-
-
-def not_contains(a, b):
-    return a not in b
-
-
-def contains(a, b):
-    return a in b
-
 
 @pytest.mark.asyncio
 async def test_model_choices():

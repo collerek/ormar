@@ -31,7 +31,15 @@ def encode_decimal(value: decimal.Decimal, precision: int = None) -> float:
     return float(value)
 
 
-def encode_bytes(value: Union[str, bytes], represent_as_string: bool = False) -> bytes:
+def encode_bytes(value: Union[str, bytes], represent_as_string: bool = False) -> str:
+    if represent_as_string:
+        value = value if isinstance(value, str) else base64.b64encode(value).decode("utf-8")
+    else:
+        value = value if isinstance(value, str) else value.decode("utf-8")
+    return value
+
+
+def decode_bytes(value: str, represent_as_string: bool = False) -> bytes:
     if represent_as_string:
         value = value if isinstance(value, bytes) else base64.b64decode(value)
     else:
@@ -74,6 +82,11 @@ ENCODERS_MAP: Dict[type, Callable] = {
 
 SQL_ENCODERS_MAP: Dict[type, Callable] = {bool: encode_bool, **ENCODERS_MAP}
 
+ADDITIONAL_PARAMETERS_MAP: Dict[type, str] = {
+    bytes: "",
+    decimal.Decimal: "precision"
+}
+
 
 DECODERS_MAP = {
     bool: parse_bool,
@@ -82,4 +95,5 @@ DECODERS_MAP = {
     datetime.time: SchemaValidator(core_schema.time_schema()).validate_python,
     pydantic.Json: json.loads,
     decimal.Decimal: decimal.Decimal,
+    bytes: decode_bytes,
 }

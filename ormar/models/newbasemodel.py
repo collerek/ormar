@@ -26,7 +26,7 @@ import ormar  # noqa I100
 from ormar.exceptions import ModelError, ModelPersistenceError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
-from ormar.fields.parsers import encode_json
+from ormar.fields.parsers import encode_json, decode_bytes
 from ormar.models.helpers import register_relation_in_alias_manager
 from ormar.models.helpers.relations import expand_reverse_relationship
 from ormar.models.helpers.sqlalchemy import (
@@ -424,22 +424,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             return False
         else:
             return hash(self) == other.__hash__()
-
-    def _copy_and_set_values(
-        self: "NewBaseModel", values: "DictStrAny", fields_set: "SetStr", *, deep: bool
-    ) -> "NewBaseModel":
-        """
-        Overwrite related models values with dict representation to avoid infinite
-        recursion through related fields.
-        """
-        self_dict = values
-        self_dict.update(self.dict(exclude_list=True))
-        return cast(
-            "NewBaseModel",
-            super()._copy_and_set_values(
-                values=self_dict, fields_set=fields_set, deep=deep
-            ),
-        )
 
     @classmethod
     def get_name(cls, lower: bool = True) -> str:
@@ -989,11 +973,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if column_name not in self._bytes_fields:
             return value
         field = self.ormar_config.model_fields[column_name]
-        if not isinstance(value, bytes) and value is not None:
-            if field.represent_as_base64_str:
-                value = base64.b64decode(value)
-            else:
-                value = value.encode("utf-8")
+        if value is not None:
+            value = decode_bytes(value=value, represent_as_string=field.represent_as_base64_str)
         return value
 
     def _convert_bytes_to_str(self, column_name: str, value: Any) -> Union[str, Dict]:
