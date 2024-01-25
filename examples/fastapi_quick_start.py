@@ -1,11 +1,10 @@
 from typing import List, Optional
 
 import databases
+import ormar
 import sqlalchemy
 import uvicorn
 from fastapi import FastAPI
-
-import ormar
 
 app = FastAPI()
 metadata = sqlalchemy.MetaData()

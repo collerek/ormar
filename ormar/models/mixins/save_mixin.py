@@ -2,6 +2,7 @@ import base64
 import uuid
 from enum import Enum
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Collection,
@@ -9,7 +10,6 @@ from typing import (
     List,
     Optional,
     Set,
-    TYPE_CHECKING,
     cast,
 )
 

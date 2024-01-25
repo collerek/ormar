@@ -7,9 +7,9 @@ from sqlalchemy.sql.schema import ColumnCollectionConstraint
 from ormar import BaseField, ForeignKeyField, ManyToManyField
 from ormar.models.helpers import alias_manager
 from ormar.models.utils import Extra
+from ormar.queryset.queryset import QuerySet
 from ormar.relations import AliasManager
 from ormar.signals import SignalEmitter
-from ormar.queryset.queryset import QuerySet
 
 
 class OrmarConfig:
@@ -31,7 +31,7 @@ class OrmarConfig:
         self.tablename = tablename
         self.orders_by = order_by or []
         self.columns: List[sqlalchemy.Column] = []
-        self.constraints= constraints or []
+        self.constraints = constraints or []
         self.model_fields: Dict[
             str, Union[BaseField, ForeignKeyField, ManyToManyField]
         ] = {}
@@ -66,5 +66,5 @@ class OrmarConfig:
             exclude_parent_fields=exclude_parent_fields,
             queryset_class=queryset_class or self.queryset_class,
             extra=extra or self.extra,
-            constraints=constraints
+            constraints=constraints,
         )

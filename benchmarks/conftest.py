@@ -5,11 +5,10 @@ import time
 
 import databases
 import nest_asyncio
+import ormar
 import pytest
 import pytest_asyncio
 import sqlalchemy
-
-import ormar
 from tests.settings import DATABASE_URL
 
 nest_asyncio.apply()
@@ -24,6 +23,7 @@ base_ormar_config = ormar.OrmarConfig(
     metadata=metadata,
     database=database,
 )
+
 
 class Author(ormar.Model):
     class Meta(BaseMeta):

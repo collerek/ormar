@@ -1,9 +1,8 @@
-import copy
 import inspect
-from typing import List, TYPE_CHECKING, Optional, Type, Union, cast, Dict, Any
+from typing import TYPE_CHECKING, Any, List, Optional, Type, Union, cast
 
 from pydantic import BaseModel, create_model, field_serializer
-from pydantic._internal._decorators import Decorator, DecoratorInfos
+from pydantic._internal._decorators import DecoratorInfos
 from pydantic.fields import FieldInfo
 from pydantic_core.core_schema import SerializerFunctionWrapHandler
 
@@ -16,7 +15,7 @@ from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
-    from ormar.fields import ManyToManyField, ForeignKeyField
+    from ormar.fields import ForeignKeyField, ManyToManyField
 
 alias_manager = AliasManager()
 
@@ -149,20 +148,26 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
         model_field.to.model_fields[related_name] = FieldInfo.from_annotated_attribute(
             annotation=field_type, default=None
         )
-        add_field_serializer_for_reverse_relations(to_model=model_field.to, related_name=related_name)
+        add_field_serializer_for_reverse_relations(
+            to_model=model_field.to, related_name=related_name
+        )
         model_field.to.model_rebuild(force=True)
         setattr(model_field.to, related_name, RelationDescriptor(name=related_name))
 
 
-def add_field_serializer_for_reverse_relations(to_model: "Model", related_name: str) -> None:
-    def serialize(self, children: List['BaseModel'], handler: SerializerFunctionWrapHandler) -> Any:
+def add_field_serializer_for_reverse_relations(
+    to_model: "Model", related_name: str
+) -> None:
+    def serialize(
+        self, children: List["BaseModel"], handler: SerializerFunctionWrapHandler
+    ) -> Any:
         """
         Serialize a list of nodes, handling circular references by excluding the children.
         """
         try:
             return handler(children)
         except ValueError as exc:
-            if not str(exc).startswith('Circular reference'):
+            if not str(exc).startswith("Circular reference"):
                 raise exc
 
             result = []
@@ -170,14 +175,16 @@ def add_field_serializer_for_reverse_relations(to_model: "Model", related_name: 
                 try:
                     serialized = handler([child])
                 except ValueError as exc:
-                    if not str(exc).startswith('Circular reference'):
+                    if not str(exc).startswith("Circular reference"):
                         raise exc
                     result.append({child.ormar_config.pkname: child.pk})
                 else:
                     result.append(serialized)
             return result
 
-    decorator = field_serializer(related_name, mode="wrap", check_fields=False)(serialize)
+    decorator = field_serializer(related_name, mode="wrap", check_fields=False)(
+        serialize
+    )
     setattr(to_model, f"serialize_{related_name}", decorator)
     DecoratorInfos.build(to_model)
 

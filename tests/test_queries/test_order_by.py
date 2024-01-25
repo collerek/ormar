@@ -1,10 +1,10 @@
 from typing import List, Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -13,9 +13,9 @@ metadata = sqlalchemy.MetaData()
 
 class Song(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "songs",
-        metadata = metadata,
-        database = database,
+        tablename="songs",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -25,9 +25,9 @@ class Song(ormar.Model):
 
 class Owner(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "owners",
-        metadata = metadata,
-        database = database,
+        tablename="owners",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -36,9 +36,9 @@ class Owner(ormar.Model):
 
 class AliasNested(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "aliases_nested",
-        metadata = metadata,
-        database = database,
+        tablename="aliases_nested",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(name="alias_id", primary_key=True)
@@ -47,9 +47,9 @@ class AliasNested(ormar.Model):
 
 class AliasTest(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "aliases",
-        metadata = metadata,
-        database = database,
+        tablename="aliases",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(name="alias_id", primary_key=True)
@@ -59,9 +59,9 @@ class AliasTest(ormar.Model):
 
 class Toy(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "toys",
-        metadata = metadata,
-        database = database,
+        tablename="toys",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -71,9 +71,9 @@ class Toy(ormar.Model):
 
 class Factory(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "factories",
-        metadata = metadata,
-        database = database,
+        tablename="factories",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -82,9 +82,9 @@ class Factory(ormar.Model):
 
 class Car(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "cars",
-        metadata = metadata,
-        database = database,
+        tablename="cars",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -94,9 +94,9 @@ class Car(ormar.Model):
 
 class User(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "users",
-        metadata = metadata,
-        database = database,
+        tablename="users",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)

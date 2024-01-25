@@ -3,12 +3,12 @@ from datetime import date
 from typing import List, Optional, Union
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
+from ormar import ModelDefinitionError
 from sqlalchemy import create_engine
 
-import ormar
-from ormar import ModelDefinitionError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -16,8 +16,8 @@ metadata = sqlalchemy.MetaData()
 
 
 base_ormar_config = ormar.OrmarConfig(
-    metadata = metadata,
-    database = database,
+    metadata=metadata,
+    database=database,
 )
 
 

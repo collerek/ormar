@@ -23,7 +23,6 @@ try:
     from importlib.metadata import version  # type: ignore
 except ImportError:  # pragma: no cover
     from importlib_metadata import version  # type: ignore
-from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
 from ormar.decorators import (  # noqa: I100
     post_bulk_update,
     post_delete,
@@ -43,41 +42,43 @@ from ormar.exceptions import (  # noqa: I100
     NoMatch,
 )
 from ormar.fields import (
+    DECODERS_MAP,
+    ENCODERS_MAP,
+    JSON,
+    SQL_ENCODERS_MAP,
+    UUID,
     BaseField,
     BigInteger,
     Boolean,
-    DECODERS_MAP,
+    CheckColumns,
     Date,
     DateTime,
     Decimal,
-    ENCODERS_MAP,
     EncryptBackends,
     Enum,
     Float,
     ForeignKey,
     ForeignKeyField,
+    IndexColumns,
     Integer,
-    JSON,
     LargeBinary,
     ManyToMany,
     ManyToManyField,
-    SQL_ENCODERS_MAP,
+    ReferentialAction,
     SmallInteger,
     String,
     Text,
     Time,
-    UUID,
     UniqueColumns,
-    IndexColumns,
-    CheckColumns,
-    ReferentialAction,
-)  # noqa: I100
+)
+
+# noqa: I100
 from ormar.models import ExcludableItems, Extra, Model
 from ormar.models.metaclass import ModelMeta
+from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
 from ormar.queryset import OrderAction, QuerySet, and_, or_
 from ormar.relations import RelationType
 from ormar.signals import Signal
-from ormar.models import OrmarConfig
 
 
 class UndefinedType:  # pragma no cover

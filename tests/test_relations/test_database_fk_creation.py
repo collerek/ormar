@@ -1,11 +1,11 @@
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
-
-import ormar
 from ormar.fields.foreign_key import validate_referential_action
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -93,7 +93,7 @@ def test_simple_cascade():
 def test_validations_referential_action():
     CASCADE = ormar.ReferentialAction.CASCADE.value
 
-    assert validate_referential_action(None) == None
+    assert validate_referential_action(None) is None
     assert validate_referential_action("cascade") == CASCADE
     assert validate_referential_action(ormar.ReferentialAction.CASCADE) == CASCADE
 
@@ -107,7 +107,7 @@ async def test_cascade_clear():
         async with database.transaction(force_rollback=True):
             a = await A.objects.create(name="a")
             b = await B.objects.create(name="b", a=a)
-            c = await C.objects.create(name="c", b=b)
+            await C.objects.create(name="c", b=b)
 
             await a.bs.clear(keep_reversed=False)
 

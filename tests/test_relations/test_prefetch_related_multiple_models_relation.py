@@ -1,11 +1,10 @@
 from typing import List, Optional
 
 import databases
-import sqlalchemy
-from sqlalchemy import create_engine
-
 import ormar
 import pytest
+import sqlalchemy
+from sqlalchemy import create_engine
 
 from tests.settings import DATABASE_URL
 
@@ -15,9 +14,9 @@ metadata = sqlalchemy.MetaData()
 
 class User(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = db,
-        tablename = "test_users",
+        metadata=metadata,
+        database=db,
+        tablename="test_users",
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -26,9 +25,9 @@ class User(ormar.Model):
 
 class Signup(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = db,
-        tablename = "test_signup",
+        metadata=metadata,
+        database=db,
+        tablename="test_signup",
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -36,9 +35,9 @@ class Signup(ormar.Model):
 
 class Session(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = db,
-        tablename = "test_sessions",
+        metadata=metadata,
+        database=db,
+        tablename="test_sessions",
     )
 
     id: int = ormar.Integer(primary_key=True)

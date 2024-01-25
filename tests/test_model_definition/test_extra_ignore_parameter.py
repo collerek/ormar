@@ -1,8 +1,8 @@
 import databases
-import sqlalchemy
-
 import ormar
+import sqlalchemy
 from ormar import Extra
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

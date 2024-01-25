@@ -2,27 +2,26 @@ import copy
 import string
 from random import choices
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
     List,
     Optional,
     Set,
-    TYPE_CHECKING,
     Type,
     Union,
     cast,
 )
 
 import pydantic
-from pydantic.fields import Field, FieldInfo
+from pydantic.fields import Field
 
 from ormar.models.mixins.relation_mixin import RelationMixin  # noqa: I100, I202
 from ormar.queryset.utils import translate_list_to_dict
 
 
 class PydanticMixin(RelationMixin):
-
     __cache__: Dict[str, Type[pydantic.BaseModel]] = {}
 
     if TYPE_CHECKING:  # pragma: no cover

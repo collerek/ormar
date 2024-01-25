@@ -1,18 +1,16 @@
 # type: ignore
-import asyncio
 import datetime
 import decimal
-
-import databases
-import pydantic
-import pytest
-import pytest_asyncio
-import sqlalchemy
 import typing
 
+import databases
 import ormar
+import pydantic
+import pytest
+import sqlalchemy
 from ormar.exceptions import ModelDefinitionError
 from ormar.models import Model
+
 from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()

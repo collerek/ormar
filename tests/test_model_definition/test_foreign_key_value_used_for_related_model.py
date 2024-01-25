@@ -1,11 +1,11 @@
 import uuid
-from typing import List, Optional
+from typing import Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

@@ -1,5 +1,5 @@
 import abc
-from typing import Any, List, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Any, List, Type
 
 import sqlalchemy
 

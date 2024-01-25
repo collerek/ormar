@@ -1,20 +1,20 @@
 import collections.abc
 import copy
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     List,
     Optional,
     Sequence,
     Set,
-    TYPE_CHECKING,
     Tuple,
     Type,
     Union,
 )
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model, BaseField
+    from ormar import BaseField, Model
 
 
 def check_node_not_dict_or_not_last_node(

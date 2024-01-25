@@ -2,6 +2,7 @@ import datetime
 from typing import List, Optional
 
 import databases
+import ormar
 import pydantic
 import pytest
 import sqlalchemy
@@ -9,7 +10,6 @@ from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-import ormar
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -111,12 +111,16 @@ async def test_all_endpoints():
         item = Item(**response.json())
         assert item.pk is not None
 
-        response = await client.post("/items/add_category/", json={"item": item.dict(), "category": category})
+        response = await client.post(
+            "/items/add_category/", json={"item": item.dict(), "category": category}
+        )
         item = Item(**response.json())
         assert len(item.categories) == 1
         assert item.categories[0].name == "test cat"
 
-        await client.post("/items/add_category/", json={"item": item.dict(), "category": category2})
+        await client.post(
+            "/items/add_category/", json={"item": item.dict(), "category": category2}
+        )
 
         response = await client.get("/items/")
         items = [Item(**item) for item in response.json()]
@@ -132,7 +136,9 @@ async def test_all_endpoints():
 
 def test_schema_modification():
     schema = Item.model_json_schema()
-    assert any(x.get("type") == "array" for x in schema["properties"]["categories"]["anyOf"])
+    assert any(
+        x.get("type") == "array" for x in schema["properties"]["categories"]["anyOf"]
+    )
     assert schema["properties"]["categories"]["title"] == "Categories"
     assert schema["example"] == {
         "categories": [{"id": 0, "name": "string"}],
@@ -151,7 +157,9 @@ def test_schema_modification():
                 "id": 0,
                 "name": "string",
                 "pydantic_int": 0,
-                "test_P": [{"a": 0, "b": {"c": "string", "d": "string", "e": "string"}}],
+                "test_P": [
+                    {"a": 0, "b": {"c": "string", "d": "string", "e": "string"}}
+                ],
             }
         ],
     }

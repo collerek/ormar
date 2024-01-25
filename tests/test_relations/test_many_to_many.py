@@ -2,12 +2,12 @@ import asyncio
 from typing import List, Optional
 
 import databases
+import ormar
 import pytest
 import pytest_asyncio
 import sqlalchemy
-
-import ormar
 from ormar.exceptions import ModelPersistenceError, NoMatch, RelationshipInstanceError
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -151,7 +151,9 @@ async def test_quering_of_the_m2m_models(cleanup):
         category = await Category.objects.filter(posts__author=guido).get()
         assert category == news
         # or:
-        category2 = await Category.objects.filter(posts__author__first_name="Guido").get()
+        category2 = await Category.objects.filter(
+            posts__author__first_name="Guido"
+        ).get()
         assert category2 == news
 
 

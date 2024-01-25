@@ -1,11 +1,11 @@
 import uuid
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 from sqlalchemy import create_engine
 
-import ormar
 from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()
@@ -14,9 +14,9 @@ db = databases.Database(DATABASE_URL)
 
 class User(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "user",
-        metadata = metadata,
-        database = db,
+        tablename="user",
+        metadata=metadata,
+        database=db,
     )
 
     id: uuid.UUID = ormar.UUID(
@@ -31,9 +31,9 @@ class User(ormar.Model):
 
 class Token(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "token",
-        metadata = metadata,
-        database = db,
+        tablename="token",
+        metadata=metadata,
+        database=db,
     )
 
     id = ormar.Integer(primary_key=True)

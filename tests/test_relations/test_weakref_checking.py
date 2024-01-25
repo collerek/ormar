@@ -1,11 +1,7 @@
-from typing import Optional, Type
-
 import databases
-import pytest
-import pytest_asyncio
+import ormar
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -14,9 +10,9 @@ metadata = sqlalchemy.MetaData()
 
 class Band(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "bands",
-        metadata = metadata,
-        database = database,
+        tablename="bands",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -25,9 +21,9 @@ class Band(ormar.Model):
 
 class Artist(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "artists",
-        metadata = metadata,
-        database = database,
+        tablename="artists",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -39,7 +35,7 @@ class Artist(ormar.Model):
 def test_weakref_init():
     band = Band(name="Band")
     artist1 = Artist(name="Artist 1", band=band)
-    artist2 = Artist(name="Artist 2", band=band)
+    Artist(name="Artist 2", band=band)
     artist3 = Artist(name="Artist 3", band=band)
 
     del artist1

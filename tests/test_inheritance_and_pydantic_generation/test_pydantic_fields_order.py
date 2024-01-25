@@ -1,8 +1,8 @@
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()
@@ -17,8 +17,8 @@ base_ormar_config = ormar.OrmarConfig(
 
 class NewTestModel(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        database = database,
-        metadata = metadata,
+        database=database,
+        metadata=metadata,
     )
 
     a: int = ormar.Integer(primary_key=True)

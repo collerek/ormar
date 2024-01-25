@@ -1,20 +1,20 @@
 # type: ignore
 import datetime
-from typing import List, Optional
 from collections import Counter
+from typing import List, Optional
 
 import databases
+import ormar
+import ormar.fields.constraints
 import pydantic
 import pytest
 import sqlalchemy as sa
-from pydantic import computed_field
-from sqlalchemy import create_engine
-
-import ormar
-import ormar.fields.constraints
 from ormar import ModelDefinitionError
 from ormar.exceptions import ModelError
 from ormar.models.metaclass import get_constraint_copy
+from pydantic import computed_field
+from sqlalchemy import create_engine
+
 from tests.settings import DATABASE_URL
 
 metadata = sa.MetaData()
@@ -63,13 +63,18 @@ class DateFieldsModel(ormar.Model):
         ],
     )
 
-    created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now, name="creation_date")
-    updated_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now, name="modification_date")
+    created_date: datetime.datetime = ormar.DateTime(
+        default=datetime.datetime.now, name="creation_date"
+    )
+    updated_date: datetime.datetime = ormar.DateTime(
+        default=datetime.datetime.now, name="modification_date"
+    )
 
 
 class Category(DateFieldsModel, AuditModel):
     ormar_config = ormar.OrmarConfig(
-        tablename="categories", constraints=[ormar.fields.constraints.UniqueColumns("name", "code")]
+        tablename="categories",
+        constraints=[ormar.fields.constraints.UniqueColumns("name", "code")],
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -161,9 +166,7 @@ class Bus2(Car2):
 
 
 class ImmutablePerson(Person):
-    model_config = dict(
-        frozen = True,
-        validate_assignment = False)
+    model_config = dict(frozen=True, validate_assignment=False)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -202,8 +205,13 @@ def test_field_redefining_in_concrete_models():
     changed_field = RedefinedField.ormar_config.model_fields["created_date"]
     assert changed_field.ormar_default is None
     assert changed_field.get_alias() == "creation_date"
-    assert any(x.name == "creation_date" for x in RedefinedField.ormar_config.table.columns)
-    assert isinstance(RedefinedField.ormar_config.table.columns["creation_date"].type, sa.sql.sqltypes.String)
+    assert any(
+        x.name == "creation_date" for x in RedefinedField.ormar_config.table.columns
+    )
+    assert isinstance(
+        RedefinedField.ormar_config.table.columns["creation_date"].type,
+        sa.sql.sqltypes.String,
+    )
 
 
 def test_model_subclassing_that_redefines_constraints_column_names():
@@ -256,25 +264,38 @@ def round_date_to_seconds(
 async def test_fields_inherited_from_mixin():
     async with db:
         async with db.transaction(force_rollback=True):
-            cat = await Category(name="Foo", code=123, created_by="Sam", updated_by="Max").save()
+            cat = await Category(
+                name="Foo", code=123, created_by="Sam", updated_by="Max"
+            ).save()
             sub = await Subject(name="Bar", category=cat).save()
             mixin_columns = ["created_date", "updated_date"]
             mixin_db_columns = ["creation_date", "modification_date"]
             mixin2_columns = ["created_by", "updated_by"]
-            assert all(field in Category.ormar_config.model_fields for field in mixin_columns)
+            assert all(
+                field in Category.ormar_config.model_fields for field in mixin_columns
+            )
             assert cat.created_date is not None
             assert cat.updated_date is not None
-            assert all(field in Subject.ormar_config.model_fields for field in mixin_columns)
+            assert all(
+                field in Subject.ormar_config.model_fields for field in mixin_columns
+            )
             assert sub.created_date is not None
             assert sub.updated_date is not None
 
-            assert all(field in Category.ormar_config.model_fields for field in mixin2_columns)
-            assert all(field not in Subject.ormar_config.model_fields for field in mixin2_columns)
+            assert all(
+                field in Category.ormar_config.model_fields for field in mixin2_columns
+            )
+            assert all(
+                field not in Subject.ormar_config.model_fields
+                for field in mixin2_columns
+            )
 
             inspector = sa.inspect(engine)
             assert "categories" in inspector.get_table_names()
             table_columns = [x.get("name") for x in inspector.get_columns("categories")]
-            assert all(col in table_columns for col in mixin_db_columns)  # + mixin2_columns)
+            assert all(
+                col in table_columns for col in mixin_db_columns
+            )  # + mixin2_columns)
 
             assert "subjects" in inspector.get_table_names()
             table_columns = [x.get("name") for x in inspector.get_columns("subjects")]
@@ -286,9 +307,13 @@ async def test_fields_inherited_from_mixin():
                 .exclude_fields("updated_date")
                 .get()
             )
-            assert round_date_to_seconds(sub2.created_date) == round_date_to_seconds(sub.created_date)
+            assert round_date_to_seconds(sub2.created_date) == round_date_to_seconds(
+                sub.created_date
+            )
             assert sub2.category.updated_date is not None
-            assert round_date_to_seconds(sub2.category.created_date) == round_date_to_seconds(cat.created_date)
+            assert round_date_to_seconds(
+                sub2.category.created_date
+            ) == round_date_to_seconds(cat.created_date)
             assert sub2.updated_date is None
             assert sub2.category.created_by == "Sam"
             assert sub2.category.updated_by == cat.updated_by
@@ -299,9 +324,13 @@ async def test_fields_inherited_from_mixin():
                 .exclude_fields({"updated_date": ..., "category": {"updated_date"}})
                 .get()
             )
-            assert round_date_to_seconds(sub3.created_date) == round_date_to_seconds(sub.created_date)
+            assert round_date_to_seconds(sub3.created_date) == round_date_to_seconds(
+                sub.created_date
+            )
             assert sub3.category.updated_date is None
-            assert round_date_to_seconds(sub3.category.created_date) == round_date_to_seconds(cat.created_date)
+            assert round_date_to_seconds(
+                sub3.category.created_date
+            ) == round_date_to_seconds(cat.created_date)
             assert sub3.updated_date is None
             assert sub3.category.created_by == "Sam"
             assert sub3.category.updated_by == cat.updated_by
@@ -313,7 +342,9 @@ async def test_inheritance_with_relation():
         async with db.transaction(force_rollback=True):
             sam = await Person(name="Sam").save()
             joe = await Person(name="Joe").save()
-            await Truck(name="Shelby wanna be", max_capacity=1400, owner=sam, co_owner=joe).save()
+            await Truck(
+                name="Shelby wanna be", max_capacity=1400, owner=sam, co_owner=joe
+            ).save()
             await Bus(name="Unicorn", max_persons=50, owner=sam, co_owner=joe).save()
 
             shelby = await Truck.objects.select_related(["owner", "co_owner"]).get()
@@ -328,7 +359,9 @@ async def test_inheritance_with_relation():
             assert unicorn.co_owner.name == "Joe"
             assert unicorn.max_persons == 50
 
-            joe_check = await Person.objects.select_related(["coowned_trucks", "coowned_buses"]).get(name="Joe")
+            joe_check = await Person.objects.select_related(
+                ["coowned_trucks", "coowned_buses"]
+            ).get(name="Joe")
             assert joe_check.pk == joe.pk
             assert joe_check.coowned_trucks[0] == shelby
             assert joe_check.coowned_trucks[0].created_date is not None
@@ -359,7 +392,9 @@ async def test_inheritance_with_multi_relation():
             sam = await Person(name="Sam").save()
             joe = await Person(name="Joe").save()
             alex = await Person(name="Alex").save()
-            truck = await Truck2(name="Shelby wanna be 2", max_capacity=1400, owner=sam).save()
+            truck = await Truck2(
+                name="Shelby wanna be 2", max_capacity=1400, owner=sam
+            ).save()
             await truck.co_owners.add(joe)
             await truck.co_owners.add(alex)
 
@@ -377,26 +412,38 @@ async def test_inheritance_with_multi_relation():
             assert len(shelby.co_owners) == 2
             assert shelby.max_capacity == 1400
 
-            unicorn = await Bus2.objects.select_related(["owner", "co_owners"]).get(name="Unicorn 2")
+            unicorn = await Bus2.objects.select_related(["owner", "co_owners"]).get(
+                name="Unicorn 2"
+            )
             assert unicorn.name == "Unicorn 2"
             assert unicorn.owner.name == "Sam"
             assert unicorn.co_owners[0].name == "Joe"
             assert len(unicorn.co_owners) == 2
             assert unicorn.max_persons == 50
 
-            unicorn = await Bus2.objects.select_related(["owner", "co_owners"]).order_by("-co_owners__name").get()
+            unicorn = (
+                await Bus2.objects.select_related(["owner", "co_owners"])
+                .order_by("-co_owners__name")
+                .get()
+            )
             assert unicorn.name == "Unicorn 2"
             assert unicorn.owner.name == "Sam"
             assert len(unicorn.co_owners) == 2
             assert unicorn.co_owners[0].name == "Joe"
 
-            unicorn = await Bus2.objects.select_related(["owner", "co_owners"]).order_by("co_owners__name").get()
+            unicorn = (
+                await Bus2.objects.select_related(["owner", "co_owners"])
+                .order_by("co_owners__name")
+                .get()
+            )
             assert unicorn.name == "Unicorn 2"
             assert unicorn.owner.name == "Sam"
             assert len(unicorn.co_owners) == 2
             assert unicorn.co_owners[0].name == "Alex"
 
-            joe_check = await Person.objects.select_related(["coowned_trucks2", "coowned_buses2"]).get(name="Joe")
+            joe_check = await Person.objects.select_related(
+                ["coowned_trucks2", "coowned_buses2"]
+            ).get(name="Joe")
             assert joe_check.pk == joe.pk
             assert joe_check.coowned_trucks2[0] == shelby
             assert joe_check.coowned_trucks2[0].created_date is not None
@@ -423,14 +470,22 @@ async def test_inheritance_with_multi_relation():
             await shelby.co_owners.remove(alex)
             await Truck2.objects.delete(name="Shelby wanna be 2")
 
-            unicorn = await Bus2.objects.select_related(["owner", "co_owners"]).filter(co_owners__name="Joe").get()
+            unicorn = (
+                await Bus2.objects.select_related(["owner", "co_owners"])
+                .filter(co_owners__name="Joe")
+                .get()
+            )
             assert unicorn.name == "Unicorn 2"
             assert unicorn.owner.name == "Sam"
             assert unicorn.co_owners[0].name == "Joe"
             assert len(unicorn.co_owners) == 1
             assert unicorn.max_persons == 50
 
-            unicorn = await Bus2.objects.select_related(["owner", "co_owners"]).exclude(co_owners__name="Joe").get()
+            unicorn = (
+                await Bus2.objects.select_related(["owner", "co_owners"])
+                .exclude(co_owners__name="Joe")
+                .get()
+            )
             assert unicorn.name == "Unicorn 2"
             assert unicorn.owner.name == "Sam"
             assert unicorn.co_owners[0].name == "Alex"

@@ -1,11 +1,10 @@
 from typing import List, Optional
 
 import databases
-import sqlalchemy
-from sqlalchemy import create_engine
-
 import ormar
 import pytest
+import sqlalchemy
+from sqlalchemy import create_engine
 
 from tests.settings import DATABASE_URL
 
@@ -15,9 +14,9 @@ metadata = sqlalchemy.MetaData()
 
 class Keyword(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = db,
-        tablename = "keywords",
+        metadata=metadata,
+        database=db,
+        tablename="keywords",
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -26,9 +25,9 @@ class Keyword(ormar.Model):
 
 class KeywordPrimaryModel(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = db,
-        tablename = "primary_models_keywords",
+        metadata=metadata,
+        database=db,
+        tablename="primary_models_keywords",
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -36,9 +35,9 @@ class KeywordPrimaryModel(ormar.Model):
 
 class PrimaryModel(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = db,
-        tablename = "primary_models",
+        metadata=metadata,
+        database=db,
+        tablename="primary_models",
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -52,9 +51,9 @@ class PrimaryModel(ormar.Model):
 
 class SecondaryModel(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = db,
-        tablename = "secondary_models",
+        metadata=metadata,
+        database=db,
+        tablename="secondary_models",
     )
 
     id: int = ormar.Integer(primary_key=True)

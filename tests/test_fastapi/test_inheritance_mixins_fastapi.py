@@ -7,7 +7,14 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 
 from tests.settings import DATABASE_URL
-from tests.test_inheritance_and_pydantic_generation.test_inheritance_mixins import Category, Subject, metadata, db as database  # type: ignore
+from tests.test_inheritance_and_pydantic_generation.test_inheritance_mixins import (  # type: ignore
+    Category,
+    Subject,
+    metadata,
+)
+from tests.test_inheritance_and_pydantic_generation.test_inheritance_mixins import (
+    db as database,
+)
 
 app = FastAPI()
 app.state.database = database

@@ -1,7 +1,7 @@
 import databases
+import ormar
 import sqlalchemy
 
-import ormar
 from .docs008 import Child
 
 database = databases.Database("sqlite:///test.db", force_rollback=True)

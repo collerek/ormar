@@ -1,13 +1,9 @@
-from typing import Any, Optional, TYPE_CHECKING, TypedDict
-
 import databases
+import ormar
 import pytest
 import sqlalchemy
-
-import ormar
-from ormar.models.metaclass import ModelMeta
 from ormar.models.ormar_config import OrmarConfig
-from ormar.relations.querysetproxy import QuerysetProxy
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -15,7 +11,6 @@ metadata = sqlalchemy.MetaData()
 
 
 class Publisher(ormar.Model):
-
     ormar_config = OrmarConfig(
         metadata=metadata,
         database=database,
@@ -27,7 +22,6 @@ class Publisher(ormar.Model):
 
 
 class Author(ormar.Model):
-
     ormar_config = OrmarConfig(
         metadata=metadata, database=database, tablename="authors", order_by=["-name"]
     )
@@ -38,7 +32,6 @@ class Author(ormar.Model):
 
 
 class Book(ormar.Model):
-
     ormar_config = OrmarConfig(
         metadata=metadata,
         database=database,
@@ -69,12 +62,10 @@ def assert_type(book: Book):
 @pytest.mark.asyncio
 async def test_types() -> None:
     async with database:
-        query = Book.objects
         publisher = await Publisher(name="Test publisher").save()
         author = await Author.objects.create(name="Test Author")
         await author.publishers.add(publisher)
-        author2 = await Author.objects.select_related("publishers").get()
-        publishers = author2.publishers
+        await Author.objects.select_related("publishers").get()
         publisher2 = await Publisher.objects.select_related("authors").get()
         authors = publisher2.authors
         assert authors[0] == author
@@ -84,8 +75,8 @@ async def test_types() -> None:
             #     reveal_type(author)  # iter of relation proxy
         book = await Book.objects.create(title="Test", author=author)
         book2 = await Book.objects.select_related("author").get()
-        books = await Book.objects.select_related("author").all()
-        author_books = await author.books.all()
+        await Book.objects.select_related("author").all()
+        await author.books.all()
         assert book.author.name == "Test Author"
         assert book2.author.name == "Test Author"
         # if TYPE_CHECKING:  # pragma: no cover

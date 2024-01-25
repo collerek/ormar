@@ -2,10 +2,10 @@ import sqlite3
 
 import asyncpg  # type: ignore
 import databases
+import ormar.fields.constraints
 import pytest
 import sqlalchemy
 
-import ormar.fields.constraints
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -14,12 +14,13 @@ metadata = sqlalchemy.MetaData()
 
 class Product(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "products",
-        metadata = metadata,
-        database = database,
-        constraints = [
+        tablename="products",
+        metadata=metadata,
+        database=database,
+        constraints=[
             ormar.fields.constraints.CheckColumns("inventory > buffer"),
-        ])
+        ],
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

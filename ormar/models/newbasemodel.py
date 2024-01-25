@@ -1,6 +1,7 @@
 import base64
 import sys
 from typing import (
+    TYPE_CHECKING,
     AbstractSet,
     Any,
     Dict,
@@ -9,7 +10,6 @@ from typing import (
     MutableSequence,
     Optional,
     Set,
-    TYPE_CHECKING,
     Tuple,
     Type,
     TypeVar,
@@ -20,8 +20,7 @@ from typing import (
 import databases
 import pydantic
 import sqlalchemy
-from pydantic import BaseModel, ConfigDict
-
+from pydantic import BaseModel
 
 import ormar  # noqa I100
 from ormar.exceptions import ModelError, ModelPersistenceError
@@ -160,7 +159,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             model_fields[related].expand_relationship(
                 new_kwargs.get(related), self, to_register=True
             )
-
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
         """
@@ -760,7 +758,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                         exclude_through_models=exclude_through_models,
                     )
                 elif nested_model is not None:
-
                     model_dict = nested_model.dict(
                         relation_map=self._skip_ellipsis(
                             relation_map, field, default_return=dict()

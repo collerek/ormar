@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
 
 import sqlalchemy
 from pydantic import typing
@@ -14,8 +14,7 @@ from ormar.fields.sqlalchemy_encrypted import (
 )
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model
-    from ormar.models import NewBaseModel
+    from ormar.models import Model, NewBaseModel
 
 
 class BaseField(FieldInfo):

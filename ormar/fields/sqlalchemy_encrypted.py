@@ -2,7 +2,7 @@
 import abc
 import base64
 from enum import Enum
-from typing import Any, Callable, Optional, TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Type, Union
 
 import sqlalchemy.types as types
 from pydantic.utils import lenient_issubclass

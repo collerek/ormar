@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Any, List, Optional, Type
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models.mixins.relation_mixin import RelationMixin

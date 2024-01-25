@@ -1,13 +1,12 @@
 import enum
 
 import databases
+import ormar
 import pydantic
 import pytest
 import sqlalchemy
 from pydantic import ValidationError
 
-
-import ormar
 from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()

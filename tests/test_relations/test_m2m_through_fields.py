@@ -1,11 +1,10 @@
-from typing import Any, Sequence, cast
+from typing import Any, ForwardRef
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
-from typing import ForwardRef
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -19,16 +18,14 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class Category(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "categories")
-
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id = ormar.Integer(primary_key=True)
     name = ormar.String(max_length=40)
 
 
 class PostCategory(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "posts_x_categories")
-
+    ormar_config = base_ormar_config.copy(tablename="posts_x_categories")
 
     id: int = ormar.Integer(primary_key=True)
     sort_order: int = ormar.Integer(nullable=True)
@@ -61,8 +58,7 @@ def create_test_database():
 
 
 class PostCategory2(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "posts_x_categories2")
-
+    ormar_config = base_ormar_config.copy(tablename="posts_x_categories2")
 
     id: int = ormar.Integer(primary_key=True)
     sort_order: int = ormar.Integer(nullable=True)

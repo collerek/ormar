@@ -1,15 +1,13 @@
-from typing import List, Optional
+from typing import ForwardRef, List, Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from typing import ForwardRef
-from starlette import status
 from httpx import AsyncClient
-
-import ormar
+from starlette import status
 
 app = FastAPI()
 from tests.settings import DATABASE_URL
@@ -46,8 +44,7 @@ CountryRef = ForwardRef("Country")
 
 # models.py
 class Country(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "countries")
-
+    ormar_config = base_ormar_config.copy(tablename="countries")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128, unique=True)
@@ -65,8 +62,7 @@ class Country(ormar.Model):
 
 
 class City(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "cities")
-
+    ormar_config = base_ormar_config.copy(tablename="cities")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128)

@@ -1,10 +1,10 @@
 import databases
+import ormar
 import pytest
 import sqlalchemy
 import sqlalchemy as sa
 from pydantic import computed_field
 
-import ormar
 from tests.settings import DATABASE_URL
 
 metadata = sa.MetaData()
@@ -12,8 +12,7 @@ database = databases.Database(DATABASE_URL)
 
 
 class BaseFoo(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        abstract = True)
+    ormar_config = ormar.OrmarConfig(abstract=True)
 
     name: str = ormar.String(max_length=100)
 
@@ -24,8 +23,8 @@ class BaseFoo(ormar.Model):
 
 class Foo(BaseFoo):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = database,
+        metadata=metadata,
+        database=database,
     )
 
     @computed_field
@@ -37,8 +36,8 @@ class Foo(BaseFoo):
 
 class Bar(BaseFoo):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = database,
+        metadata=metadata,
+        database=database,
     )
 
     @computed_field

@@ -1,11 +1,9 @@
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
-import asyncio
-
-import ormar
 
 from tests.settings import DATABASE_URL
 
@@ -15,8 +13,8 @@ metadata = sqlalchemy.MetaData()
 
 class Department(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        database = database,
-        metadata = metadata,
+        database=database,
+        metadata=metadata,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -25,8 +23,8 @@ class Department(ormar.Model):
 
 class Course(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        database = database,
-        metadata = metadata,
+        database=database,
+        metadata=metadata,
     )
 
     id: int = ormar.Integer(primary_key=True)

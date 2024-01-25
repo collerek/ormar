@@ -1,11 +1,11 @@
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
-
-import ormar
 from ormar import NoMatch
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -14,9 +14,9 @@ metadata = sqlalchemy.MetaData()
 
 class Album(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "albums",
-        metadata = metadata,
-        database = database,
+        tablename="albums",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True, name="album_id")
@@ -26,9 +26,9 @@ class Album(ormar.Model):
 
 class Writer(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "writers",
-        metadata = metadata,
-        database = database,
+        tablename="writers",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True, name="writer_id")
@@ -37,9 +37,9 @@ class Writer(ormar.Model):
 
 class Track(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "tracks",
-        metadata = metadata,
-        database = database,
+        tablename="tracks",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)

@@ -1,10 +1,10 @@
 from typing import List, Optional
 
 import databases
-import sqlalchemy
-
 import ormar
+import sqlalchemy
 from ormar.models.excludable import ExcludableItems
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -65,7 +65,9 @@ def compare_results(excludable):
 
     assert car_excludable.is_excluded("year")
 
-    alias = Company.ormar_config.alias_manager.resolve_relation_alias(Car, "manufacturer")
+    alias = Company.ormar_config.alias_manager.resolve_relation_alias(
+        Car, "manufacturer"
+    )
     manu_excludable = excludable.get(Company, alias=alias)
     assert manu_excludable.exclude == {"founded"}
     assert manu_excludable.include == set()
@@ -200,7 +202,9 @@ def test_includes_and_excludes_combo():
     assert car_excludable.is_excluded("aircon_type")
     assert car_excludable.is_included("name")
 
-    alias = Company.ormar_config.alias_manager.resolve_relation_alias(Car, "manufacturer")
+    alias = Company.ormar_config.alias_manager.resolve_relation_alias(
+        Car, "manufacturer"
+    )
     manu_excludable = excludable.get(Company, alias=alias)
     assert manu_excludable.include == {"name"}
     assert manu_excludable.exclude == {"founded"}

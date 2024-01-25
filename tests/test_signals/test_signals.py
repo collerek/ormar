@@ -1,12 +1,11 @@
 from typing import Optional
 
 import databases
+import ormar
 import pydantic
 import pytest
 import pytest_asyncio
 import sqlalchemy
-
-import ormar
 from ormar import (
     post_bulk_update,
     post_delete,
@@ -16,8 +15,9 @@ from ormar import (
     pre_save,
     pre_update,
 )
-from ormar.signals import SignalEmitter
 from ormar.exceptions import SignalDefinitionError
+from ormar.signals import SignalEmitter
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -26,9 +26,9 @@ metadata = sqlalchemy.MetaData()
 
 class AuditLog(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "audits",
-        metadata = metadata,
-        database = database,
+        tablename="audits",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -38,9 +38,9 @@ class AuditLog(ormar.Model):
 
 class Cover(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "covers",
-        metadata = metadata,
-        database = database,
+        tablename="covers",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -49,9 +49,9 @@ class Cover(ormar.Model):
 
 class Album(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "albums",
-        metadata = metadata,
-        database = database,
+        tablename="albums",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)

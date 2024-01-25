@@ -1,14 +1,15 @@
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Generic,
     List,
     Optional,
-    TYPE_CHECKING,
     Set,
     Type,
     TypeVar,
 )
+
 from typing_extensions import SupportsIndex
 
 import ormar
@@ -18,8 +19,8 @@ from ormar.relations.querysetproxy import QuerysetProxy
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model, RelationType
     from ormar.models import T
-    from ormar.relations import Relation
     from ormar.queryset import QuerySet
+    from ormar.relations import Relation
 else:
     T = TypeVar("T", bound="Model")
 

@@ -1,8 +1,7 @@
 import logging
-from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import TYPE_CHECKING, Dict, ForwardRef, List, Optional, Tuple, Type, Union
 
 import sqlalchemy
-from typing import ForwardRef
 
 import ormar  # noqa: I100, I202
 from ormar.models.descriptors import RelationDescriptor
@@ -12,7 +11,7 @@ from ormar.models.helpers.related_names_validation import (
 )
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model, ModelMeta, ManyToManyField, BaseField, ForeignKeyField
+    from ormar import BaseField, ForeignKeyField, ManyToManyField, Model
     from ormar.models import NewBaseModel
     from ormar.models.ormar_config import OrmarConfig
 

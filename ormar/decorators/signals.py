@@ -1,4 +1,4 @@
-from typing import Callable, List, TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING, Callable, List, Type, Union
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model

@@ -1,13 +1,13 @@
 from typing import List, Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-import ormar
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -47,7 +47,7 @@ class Author(ormar.Model):
 
 
 class Category(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "categories")
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
@@ -80,8 +80,9 @@ async def create_category(category: Category):
     await category.save_related(follow=True, save_all=True)
     return category
 
+
 @app.post("/categories/forbid/", response_model=Category2)
-async def create_category(category: Category2):
+async def create_category_forbid(category: Category2):
     await category.save()
     await category.save_related(follow=True, save_all=True)
     return category
@@ -123,7 +124,7 @@ async def test_queries():
         assert response.status_code == 200
         response = await client.get("/categories/")
         assert response.status_code == 200
-        assert not "posts" in response.json()
+        assert "posts" not in response.json()
         categories = [Category(**x) for x in response.json()]
         assert categories[0] is not None
         assert categories[0].name == "Test category2"

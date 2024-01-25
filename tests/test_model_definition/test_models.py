@@ -3,16 +3,15 @@ import base64
 import datetime
 import os
 import uuid
-from enum import Enum, Flag
-from typing import List
+from enum import Enum
 
 import databases
+import ormar
 import pydantic
 import pytest
 import sqlalchemy
-
-import ormar
 from ormar.exceptions import ModelError, NoMatch, QueryDefinitionError
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

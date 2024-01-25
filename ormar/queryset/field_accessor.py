@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING, Type, cast
+from typing import TYPE_CHECKING, Any, Type, cast
 
 from ormar.queryset.actions import OrderAction
 from ormar.queryset.actions.filter_action import METHODS_TO_OPERATORS

@@ -9,15 +9,17 @@ from httpx import AsyncClient
 
 from tests.settings import DATABASE_URL
 from tests.test_inheritance_and_pydantic_generation.test_inheritance_concrete import (  # type: ignore
-    Category,
-    Subject,
-    Person,
     Bus,
-    Truck,
     Bus2,
+    Category,
+    Person,
+    Subject,
+    Truck,
     Truck2,
-    db as database,
     metadata,
+)
+from tests.test_inheritance_and_pydantic_generation.test_inheritance_concrete import (
+    db as database,
 )
 
 app = FastAPI()

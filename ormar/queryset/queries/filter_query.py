@@ -1,6 +1,7 @@
 from typing import List
 
 import sqlalchemy
+
 from ormar.queryset.actions.filter_action import FilterAction
 
 

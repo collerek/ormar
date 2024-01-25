@@ -1,10 +1,9 @@
-from datetime import timezone, timedelta, datetime, date, time
+from datetime import date, datetime, time, timedelta, timezone
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
-
-import ormar
 
 from tests.settings import DATABASE_URL
 

@@ -1,9 +1,8 @@
 import databases
-import pytest
+import ormar
 import sqlalchemy
 from sqlalchemy import text
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

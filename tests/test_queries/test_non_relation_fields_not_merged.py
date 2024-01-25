@@ -1,10 +1,10 @@
-from typing import Dict, List, Optional
+from typing import Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -16,15 +16,16 @@ base_ormar_config = ormar.OrmarConfig(
     database=database,
 )
 
+
 class Chart(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "authors")
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     datasets = ormar.JSON()
 
 
 class Config(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "books")
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
     chart: Optional[Chart] = ormar.ForeignKey(Chart)

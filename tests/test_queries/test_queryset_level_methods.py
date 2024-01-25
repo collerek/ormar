@@ -2,18 +2,18 @@ from enum import Enum
 from typing import Optional
 
 import databases
+import ormar
 import pydantic
 import pytest
 import sqlalchemy
-from pydantic import Json
-
-import ormar
 from ormar import QuerySet
 from ormar.exceptions import (
+    ModelListEmptyError,
     ModelPersistenceError,
     QueryDefinitionError,
-    ModelListEmptyError,
 )
+from pydantic import Json
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -27,9 +27,9 @@ class MySize(Enum):
 
 class Book(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "books",
-        metadata = metadata,
-        database = database,
+        tablename="books",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -44,9 +44,9 @@ class Book(ormar.Model):
 
 class ToDo(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "todos",
-        metadata = metadata,
-        database = database,
+        tablename="todos",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -58,9 +58,9 @@ class ToDo(ormar.Model):
 
 class Category(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "categories",
-        metadata = metadata,
-        database = database,
+        tablename="categories",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -69,9 +69,9 @@ class Category(ormar.Model):
 
 class Note(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "notes",
-        metadata = metadata,
-        database = database,
+        tablename="notes",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -81,9 +81,9 @@ class Note(ormar.Model):
 
 class ItemConfig(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = database,
-        tablename = "item_config",
+        metadata=metadata,
+        database=database,
+        tablename="item_config",
     )
 
     id: Optional[int] = ormar.Integer(primary_key=True)
@@ -103,10 +103,10 @@ class QuerySetCls(QuerySet):
 
 class Customer(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = database,
-        tablename = "customer",
-        queryset_class = QuerySetCls,
+        metadata=metadata,
+        database=database,
+        tablename="customer",
+        queryset_class=QuerySetCls,
     )
 
     id: Optional[int] = ormar.Integer(primary_key=True)
@@ -115,9 +115,9 @@ class Customer(ormar.Model):
 
 class JsonTestModel(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = database,
-        tablename = "test_model",
+        metadata=metadata,
+        database=database,
+        tablename="test_model",
     )
 
     id: int = ormar.Integer(primary_key=True)

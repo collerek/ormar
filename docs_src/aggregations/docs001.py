@@ -1,9 +1,8 @@
 from typing import Optional
 
 import databases
-import sqlalchemy
-
 import ormar
+import sqlalchemy
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -14,6 +13,7 @@ base_ormar_config = ormar.OrmarConfig(
     metadata=metadata,
     database=database,
 )
+
 
 class Author(ormar.Model):
     class Meta(BaseMeta):

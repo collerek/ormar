@@ -3,12 +3,11 @@ from typing import Optional
 
 import asyncpg
 import databases
+import ormar
 import pymysql
+import pytest
 import sqlalchemy
 from sqlalchemy import create_engine, text
-
-import ormar
-import pytest
 
 from tests.settings import DATABASE_URL
 

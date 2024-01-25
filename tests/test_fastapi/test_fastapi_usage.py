@@ -1,13 +1,13 @@
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-import ormar
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -18,9 +18,9 @@ metadata = sqlalchemy.MetaData()
 
 class Category(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "categories",
-        metadata = metadata,
-        database = database,
+        tablename="categories",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -29,9 +29,9 @@ class Category(ormar.Model):
 
 class Item(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "items",
-        metadata = metadata,
-        database = database,
+        tablename="items",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)

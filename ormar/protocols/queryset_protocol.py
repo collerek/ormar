@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Sequence, Set, TYPE_CHECKING, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 try:
     from typing import Protocol

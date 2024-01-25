@@ -1,11 +1,10 @@
 # type: ignore
 import databases
+import ormar
 import pytest
 import sqlalchemy
 from pydantic import PydanticUserError, computed_field
 
-import ormar
-from ormar import ModelDefinitionError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

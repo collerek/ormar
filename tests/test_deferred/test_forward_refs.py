@@ -1,16 +1,14 @@
 # type: ignore
-from typing import List, Optional
+from typing import ForwardRef, List, Optional
 
 import databases
+import ormar
 import pytest
 import pytest_asyncio
 import sqlalchemy as sa
-from typing import ForwardRef
+from ormar.exceptions import ModelError
 from sqlalchemy import create_engine
 
-import ormar
-from ormar import ModelMeta
-from ormar.exceptions import ModelError
 from tests.settings import DATABASE_URL
 
 metadata = sa.MetaData()
@@ -22,8 +20,8 @@ PersonRef = ForwardRef("Person")
 
 class Person(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = db,
+        metadata=metadata,
+        database=db,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -40,8 +38,8 @@ ChildFriendRef = ForwardRef("ChildFriend")
 
 class Child(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = db,
+        metadata=metadata,
+        database=db,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -57,15 +55,15 @@ class Child(ormar.Model):
 
 class ChildFriend(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = db,
+        metadata=metadata,
+        database=db,
     )
 
 
 class Game(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = db,
+        metadata=metadata,
+        database=db,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -98,8 +96,8 @@ async def test_not_updated_model_raises_errors():
 
     class Person2(ormar.Model):
         ormar_config = ormar.OrmarConfig(
-            metadata = metadata,
-            database = db,
+            metadata=metadata,
+            database=db,
         )
 
         id: int = ormar.Integer(primary_key=True)
@@ -122,14 +120,14 @@ async def test_not_updated_model_m2m_raises_errors():
 
     class PersonFriend(ormar.Model):
         ormar_config = ormar.OrmarConfig(
-            metadata = metadata,
-            database = db,
+            metadata=metadata,
+            database=db,
         )
 
     class Person3(ormar.Model):
         ormar_config = ormar.OrmarConfig(
-            metadata = metadata,
-            database = db,
+            metadata=metadata,
+            database=db,
         )
 
         id: int = ormar.Integer(primary_key=True)
@@ -154,8 +152,8 @@ async def test_not_updated_model_m2m_through_raises_errors():
 
     class Pet(ormar.Model):
         ormar_config = ormar.OrmarConfig(
-            metadata = metadata,
-            database = db,
+            metadata=metadata,
+            database=db,
         )
 
         id: int = ormar.Integer(primary_key=True)
@@ -163,8 +161,8 @@ async def test_not_updated_model_m2m_through_raises_errors():
 
     class Person4(ormar.Model):
         ormar_config = ormar.OrmarConfig(
-            metadata = metadata,
-            database = db,
+            metadata=metadata,
+            database=db,
         )
 
         id: int = ormar.Integer(primary_key=True)
@@ -175,8 +173,8 @@ async def test_not_updated_model_m2m_through_raises_errors():
 
     class PersonPet(ormar.Model):
         ormar_config = ormar.OrmarConfig(
-            metadata = metadata,
-            database = db,
+            metadata=metadata,
+            database=db,
         )
 
     with pytest.raises(ModelError):

@@ -1,14 +1,12 @@
-import json
-
 import databases
+import ormar
 import pytest
 import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
-
-import ormar
 from ormar import Extra
+
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -33,9 +31,9 @@ async def shutdown() -> None:
 
 class Item(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        database = database,
-        metadata = metadata,
-        extra = Extra.ignore,
+        database=database,
+        metadata=metadata,
+        extra=Extra.ignore,
     )
 
     id: int = ormar.Integer(primary_key=True)

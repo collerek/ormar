@@ -5,10 +5,12 @@ as well as relation Fields (ForeignKey, ManyToMany).
 Also a definition for custom CHAR based sqlalchemy UUID field
 """
 from ormar.fields.base import BaseField
-from ormar.fields.constraints import IndexColumns, UniqueColumns, CheckColumns
+from ormar.fields.constraints import CheckColumns, IndexColumns, UniqueColumns
 from ormar.fields.foreign_key import ForeignKey, ForeignKeyField
 from ormar.fields.many_to_many import ManyToMany, ManyToManyField
 from ormar.fields.model_fields import (
+    JSON,
+    UUID,
     BigInteger,
     Boolean,
     Date,
@@ -17,18 +19,16 @@ from ormar.fields.model_fields import (
     Enum,
     Float,
     Integer,
-    JSON,
     LargeBinary,
     SmallInteger,
     String,
     Text,
     Time,
-    UUID,
 )
 from ormar.fields.parsers import DECODERS_MAP, ENCODERS_MAP, SQL_ENCODERS_MAP
+from ormar.fields.referential_actions import ReferentialAction
 from ormar.fields.sqlalchemy_encrypted import EncryptBackend, EncryptBackends
 from ormar.fields.through_field import Through, ThroughField
-from ormar.fields.referential_actions import ReferentialAction
 
 __all__ = [
     "Decimal",

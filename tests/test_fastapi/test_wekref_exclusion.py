@@ -2,6 +2,7 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 
 import databases
+import ormar
 import pydantic
 import pytest
 import sqlalchemy
@@ -9,7 +10,6 @@ from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-import ormar
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -49,7 +49,7 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class OtherThing(ormar.Model):
-    ormar_config = base_ormar_config.copy( tablename = "other_things")
+    ormar_config = base_ormar_config.copy(tablename="other_things")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
@@ -57,7 +57,7 @@ class OtherThing(ormar.Model):
 
 
 class Thing(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "things")
+    ormar_config = base_ormar_config.copy(tablename="things")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")

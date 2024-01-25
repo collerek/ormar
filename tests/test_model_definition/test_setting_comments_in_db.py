@@ -1,9 +1,9 @@
 import databases
+import ormar
 import pytest
 import sqlalchemy
-
-import ormar
 from ormar.models import Model
+
 from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()

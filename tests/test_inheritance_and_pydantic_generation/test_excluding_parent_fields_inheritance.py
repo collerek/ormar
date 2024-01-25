@@ -1,11 +1,11 @@
 import datetime
 
 import databases
+import ormar
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 
-import ormar
 from tests.settings import DATABASE_URL
 
 metadata = sa.MetaData()
@@ -15,9 +15,9 @@ engine = create_engine(DATABASE_URL)
 
 class User(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "users",
-        metadata = metadata,
-        database = db,
+        tablename="users",
+        metadata=metadata,
+        database=db,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -25,18 +25,14 @@ class User(ormar.Model):
 
 
 class RelationalAuditModel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        abstract = True
-    )
+    ormar_config = ormar.OrmarConfig(abstract=True)
 
     created_by: User = ormar.ForeignKey(User, nullable=False)
     updated_by: User = ormar.ForeignKey(User, nullable=False)
 
 
 class AuditModel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        abstract = True
-    )
+    ormar_config = ormar.OrmarConfig(abstract=True)
 
     created_by: str = ormar.String(max_length=100)
     updated_by: str = ormar.String(max_length=100, default="Sam")
@@ -44,9 +40,9 @@ class AuditModel(ormar.Model):
 
 class DateFieldsModel(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        abstract = True,
-        metadata = metadata,
-        database = db,
+        abstract=True,
+        metadata=metadata,
+        database=db,
     )
 
     created_date: datetime.datetime = ormar.DateTime(
@@ -59,8 +55,8 @@ class DateFieldsModel(ormar.Model):
 
 class Category(DateFieldsModel, AuditModel):
     ormar_config = ormar.OrmarConfig(
-        tablename = "categories",
-        exclude_parent_fields = ["updated_by", "updated_date"],
+        tablename="categories",
+        exclude_parent_fields=["updated_by", "updated_date"],
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -70,8 +66,8 @@ class Category(DateFieldsModel, AuditModel):
 
 class Item(DateFieldsModel, AuditModel):
     ormar_config = ormar.OrmarConfig(
-        tablename = "items",
-        exclude_parent_fields = ["updated_by", "updated_date"],
+        tablename="items",
+        exclude_parent_fields=["updated_by", "updated_date"],
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -82,8 +78,8 @@ class Item(DateFieldsModel, AuditModel):
 
 class Gun(RelationalAuditModel, DateFieldsModel):
     ormar_config = ormar.OrmarConfig(
-        tablename = "guns",
-        exclude_parent_fields = ["updated_by"],
+        tablename="guns",
+        exclude_parent_fields=["updated_by"],
     )
 
     id: int = ormar.Integer(primary_key=True)

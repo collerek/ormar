@@ -1,14 +1,15 @@
 import databases
-import sqlalchemy
-
 import ormar
+import sqlalchemy
 
 database = databases.Database("sqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
 
 class Course(ormar.Model):
-    class Meta(ormar.ModelMeta):  # note you don't have to subclass - but it's recommended for ide completion and mypy
+    class Meta(
+        ormar.ModelMeta
+    ):  # note you don't have to subclass - but it's recommended for ide completion and mypy
         database = database
         metadata = metadata
 

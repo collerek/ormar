@@ -1,18 +1,18 @@
 import datetime
-import string
 import random
+import string
 
 import databases
+import ormar
 import pydantic
 import pytest
 import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
+from ormar import post_save
 from pydantic import computed_field
 
-import ormar
-from ormar import post_save
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -72,7 +72,9 @@ class RandomModel(ormar.Model):
     password: str = ormar.String(max_length=255, default=gen_pass)
     first_name: str = ormar.String(max_length=255, default="John")
     last_name: str = ormar.String(max_length=255)
-    created_date: datetime.datetime = ormar.DateTime(server_default=sqlalchemy.func.now())
+    created_date: datetime.datetime = ormar.DateTime(
+        server_default=sqlalchemy.func.now()
+    )
 
     @computed_field
     def full_name(self) -> str:
@@ -107,7 +109,9 @@ class User2(ormar.Model):
     first_name: str = ormar.String(max_length=255)
     last_name: str = ormar.String(max_length=255)
     category: str = ormar.String(max_length=255, nullable=True)
-    timestamp: datetime.datetime = ormar.DateTime(pydantic_only=True, default=datetime.datetime.now)
+    timestamp: datetime.datetime = ormar.DateTime(
+        pydantic_only=True, default=datetime.datetime.now
+    )
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -220,7 +224,12 @@ async def test_excluding_fields_in_endpoints():
             "category",
             "timestamp",
         ]
-        assert datetime.datetime.strptime(response.json().get("timestamp"), "%Y-%m-%dT%H:%M:%S.%f") == timestamp
+        assert (
+            datetime.datetime.strptime(
+                response.json().get("timestamp"), "%Y-%m-%dT%H:%M:%S.%f"
+            )
+            == timestamp
+        )
 
 
 @pytest.mark.asyncio
@@ -271,7 +280,6 @@ async def test_adding_fields_in_endpoints2():
 
 @pytest.mark.asyncio
 async def test_excluding_property_field_in_endpoints2():
-
     dummy_registry = {}
 
     @post_save(RandomModel)

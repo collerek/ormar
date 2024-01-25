@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Type, Union
 
 import sqlalchemy
 from sqlalchemy import Table, text
@@ -6,14 +6,14 @@ from sqlalchemy.sql import Join
 
 import ormar  # noqa I100
 from ormar.models.helpers.models import group_related_list
-from ormar.queryset.queries import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
 from ormar.queryset.actions.filter_action import FilterAction
 from ormar.queryset.join import SqlJoin
+from ormar.queryset.queries import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
-    from ormar.queryset import OrderAction
     from ormar.models.excludable import ExcludableItems
+    from ormar.queryset import OrderAction
 
 
 class Query:

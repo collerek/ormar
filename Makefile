@@ -21,14 +21,8 @@ test:
 coverage:
 	pytest --cov=ormar --cov=tests --cov-fail-under=100 --cov-report=term-missing
 
-
-fmt:
-	poetry run python -m black --line-length=120 .
-
 type_check:
 	mkdir -p .mypy_cache && poetry run python -m mypy . --ignore-missing-imports --install-types --non-interactive
 
 lint:
 	poetry run python -m ruff . --fix
-
-style: fmt lint

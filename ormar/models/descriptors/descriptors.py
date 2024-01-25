@@ -1,5 +1,5 @@
 import base64
-from typing import Any, List, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Any, List, Type
 
 from ormar.fields.parsers import encode_json
 
@@ -120,7 +120,9 @@ class RelationDescriptor:
             instance.__dict__[self.name] = model
             instance.set_save_status(False)
 
-    def _populate_models_dict_if_not_present(self, instance: "Model", model: Any) -> None:
+    def _populate_models_dict_if_not_present(
+        self, instance: "Model", model: Any
+    ) -> None:
         models = instance.__dict__[self.name]
         if isinstance(model, list):
             for model_ in model:

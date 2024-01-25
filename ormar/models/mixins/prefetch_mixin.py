@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, TYPE_CHECKING, Tuple, Type, cast
+from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, Type, cast
 
 from ormar.models.mixins.relation_mixin import RelationMixin
 
@@ -38,7 +38,9 @@ class PrefetchQueryMixin(RelationMixin):
         :rtype: Tuple[Type[Model], str]
         """
         if reverse:
-            field_name = parent_model.ormar_config.model_fields[related].get_related_name()
+            field_name = parent_model.ormar_config.model_fields[
+                related
+            ].get_related_name()
             field = target_model.ormar_config.model_fields[field_name]
             if field.is_multi:
                 field = cast("ManyToManyField", field)

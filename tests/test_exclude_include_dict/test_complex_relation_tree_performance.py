@@ -2,11 +2,10 @@ from datetime import datetime
 from typing import List, Optional, Union
 
 import databases
+import ormar as orm
 import pydantic
 import pytest
 import sqlalchemy
-
-import ormar as orm
 
 from tests.settings import DATABASE_URL
 
@@ -169,7 +168,9 @@ class Changelog(orm.Model):
     content: str = orm.Text(default="")
     version: str = orm.Text(default="")
     past_changelog: int = orm.Integer(default=0)
-    label: Label = orm.ForeignKey(Label, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
+    label: Label = orm.ForeignKey(
+        Label, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
+    )
     project: Project = orm.ForeignKey(Project, ondelete="CASCADE", onupdate="CASCADE")
     created_date: datetime = orm.DateTime(default=datetime.utcnow())
 
@@ -218,7 +219,9 @@ class MergeRequest(orm.Model):
 
 class Push(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
-    branch: Branch = orm.ForeignKey(Branch, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
+    branch: Branch = orm.ForeignKey(
+        Branch, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
+    )
     has_locking_changes: bool = orm.Boolean(default=False)
     sha: str = orm.String(max_length=200)
     labels: Optional[Union[List[Label], Label]] = orm.ManyToMany(
@@ -259,8 +262,12 @@ class Tag(orm.Model):
     labels: Optional[Union[List[Label], Label]] = orm.ManyToMany(
         Label, through=TagLabel, ondelete="CASCADE", onupdate="CASCADE"
     )
-    user: User = orm.ForeignKey(User, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
-    branch: Branch = orm.ForeignKey(Branch, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
+    user: User = orm.ForeignKey(
+        User, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
+    )
+    branch: Branch = orm.ForeignKey(
+        Branch, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
+    )
 
     ormar_config = base_ormar_config.copy(tablename="tags")
 
@@ -282,9 +289,15 @@ class Webhook(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
     object_kind = orm.String(max_length=100)
     project: Project = orm.ForeignKey(Project, ondelete="CASCADE", onupdate="CASCADE")
-    merge_request: MergeRequest = orm.ForeignKey(MergeRequest, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
-    tag: Tag = orm.ForeignKey(Tag, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
-    push: Push = orm.ForeignKey(Push, nullable=True, ondelete="CASCADE", onupdate="CASCADE")
+    merge_request: MergeRequest = orm.ForeignKey(
+        MergeRequest, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
+    )
+    tag: Tag = orm.ForeignKey(
+        Tag, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
+    )
+    push: Push = orm.ForeignKey(
+        Push, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
+    )
     created_at: datetime = orm.DateTime(default=datetime.now())
     data: pydantic.Json = orm.JSON(default={})
     status: int = orm.Integer(default=200)
@@ -312,7 +325,14 @@ async def test_very_complex_relation_map():
             {
                 "id": 9,
                 "title": "prueba-2321",
-                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->\n### [v.1.3.0.0] - 2021-08-19\n#### Resolved Issues\n\n#### Task\n\n- Probar flujo de changelog Automatic  Jira: [SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    Description: Se probara el flujo de changelog automatic.  \n\n    Changelog: Se agrega función para extraer texto del campo changelog del dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio. \n\n\n            \n<!--- end changelog ver.v.1.3.0.0 -->\n",
+                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->\n### [v.1.3.0.0] - 2021-08-19\n"
+                "#### Resolved Issues\n\n"
+                "#### Task\n\n- Probar flujo de changelog Automatic  Jira: "
+                "[SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    "
+                "Description: Se probara el flujo de changelog automatic.  \n\n    "
+                "Changelog: Se agrega función para extraer texto del campo changelog del "
+                "dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio."
+                " \n\n\n            \n<!--- end changelog ver.v.1.3.0.0 -->\n",
                 "data": {},
             },
             {

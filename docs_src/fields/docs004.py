@@ -1,10 +1,9 @@
 from datetime import datetime
 
 import databases
+import ormar
 import sqlalchemy
 from sqlalchemy import func, text
-
-import ormar
 
 database = databases.Database("sqlite:///test.db")
 metadata = sqlalchemy.MetaData()

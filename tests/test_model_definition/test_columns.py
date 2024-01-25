@@ -2,12 +2,12 @@ import datetime
 from enum import Enum
 
 import databases
+import ormar
 import pydantic
 import pytest
 import sqlalchemy
-
-import ormar
 from ormar import ModelDefinitionError
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

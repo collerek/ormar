@@ -1,10 +1,10 @@
 from typing import List
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -194,8 +194,12 @@ async def test_saving_nested():
         async with database.transaction(force_rollback=True):
             level = await CringeLevel.objects.create(name="High")
             level2 = await CringeLevel.objects.create(name="Low")
-            nick1 = await NickName.objects.create(name="BazingaO", is_lame=False, level=level)
-            nick2 = await NickName.objects.create(name="Bazinga20", is_lame=True, level=level2)
+            nick1 = await NickName.objects.create(
+                name="BazingaO", is_lame=False, level=level
+            )
+            nick2 = await NickName.objects.create(
+                name="Bazinga20", is_lame=True, level=level2
+            )
 
             hq = await HQ.objects.create(name="Main")
             assert hq.saved

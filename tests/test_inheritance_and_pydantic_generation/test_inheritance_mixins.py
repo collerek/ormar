@@ -3,11 +3,11 @@ import datetime
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 
-import ormar
 from tests.settings import DATABASE_URL
 
 metadata = sa.MetaData()
@@ -27,9 +27,9 @@ class DateFieldsMixins:
 
 class Category(ormar.Model, DateFieldsMixins, AuditMixin):
     ormar_config = ormar.OrmarConfig(
-        tablename = "categories",
-        metadata = metadata,
-        database = db,
+        tablename="categories",
+        metadata=metadata,
+        database=db,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -39,9 +39,9 @@ class Category(ormar.Model, DateFieldsMixins, AuditMixin):
 
 class Subject(ormar.Model, DateFieldsMixins):
     ormar_config = ormar.OrmarConfig(
-        tablename = "subjects",
-        metadata = metadata,
-        database = db,
+        tablename="subjects",
+        metadata=metadata,
+        database=db,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -59,48 +59,59 @@ def create_test_database():
 def test_field_redefining():
     class RedefinedField(ormar.Model, DateFieldsMixins):
         ormar_config = ormar.OrmarConfig(
-            tablename = "redefined",
-            metadata = metadata,
-            database = db,
+            tablename="redefined",
+            metadata=metadata,
+            database=db,
         )
 
         id: int = ormar.Integer(primary_key=True)
         created_date: datetime.datetime = ormar.DateTime(name="creation_date")
 
-    assert RedefinedField.ormar_config.model_fields["created_date"].ormar_default is None
     assert (
-        RedefinedField.ormar_config.model_fields["created_date"].get_alias() == "creation_date"
+        RedefinedField.ormar_config.model_fields["created_date"].ormar_default is None
     )
-    assert any(x.name == "creation_date" for x in RedefinedField.ormar_config.table.columns)
+    assert (
+        RedefinedField.ormar_config.model_fields["created_date"].get_alias()
+        == "creation_date"
+    )
+    assert any(
+        x.name == "creation_date" for x in RedefinedField.ormar_config.table.columns
+    )
 
 
 def test_field_redefining_in_second_raises_error():
     class OkField(ormar.Model, DateFieldsMixins):  # pragma: no cover
         ormar_config = ormar.OrmarConfig(
-            tablename = "oks",
-            metadata = metadata,
-            database = db,
+            tablename="oks",
+            metadata=metadata,
+            database=db,
         )
 
         id: int = ormar.Integer(primary_key=True)
 
     class RedefinedField2(ormar.Model, DateFieldsMixins):
         ormar_config = ormar.OrmarConfig(
-            tablename = "redefines2",
-            metadata = metadata,
-            database = db,
+            tablename="redefines2",
+            metadata=metadata,
+            database=db,
         )
 
         id: int = ormar.Integer(primary_key=True)
         created_date: str = ormar.String(max_length=200, name="creation_date")
 
-    assert RedefinedField2.ormar_config.model_fields["created_date"].ormar_default is None
     assert (
-        RedefinedField2.ormar_config.model_fields["created_date"].get_alias() == "creation_date"
+        RedefinedField2.ormar_config.model_fields["created_date"].ormar_default is None
     )
-    assert any(x.name == "creation_date" for x in RedefinedField2.ormar_config.table.columns)
+    assert (
+        RedefinedField2.ormar_config.model_fields["created_date"].get_alias()
+        == "creation_date"
+    )
+    assert any(
+        x.name == "creation_date" for x in RedefinedField2.ormar_config.table.columns
+    )
     assert isinstance(
-        RedefinedField2.ormar_config.table.columns["creation_date"].type, sa.sql.sqltypes.String
+        RedefinedField2.ormar_config.table.columns["creation_date"].type,
+        sa.sql.sqltypes.String,
     )
 
 
@@ -122,16 +133,23 @@ async def test_fields_inherited_from_mixin():
             sub = await Subject(name="Bar", category=cat).save()
             mixin_columns = ["created_date", "updated_date"]
             mixin2_columns = ["created_by", "updated_by"]
-            assert all(field in Category.ormar_config.model_fields for field in mixin_columns)
+            assert all(
+                field in Category.ormar_config.model_fields for field in mixin_columns
+            )
             assert cat.created_date is not None
             assert cat.updated_date is not None
-            assert all(field in Subject.ormar_config.model_fields for field in mixin_columns)
+            assert all(
+                field in Subject.ormar_config.model_fields for field in mixin_columns
+            )
             assert sub.created_date is not None
             assert sub.updated_date is not None
 
-            assert all(field in Category.ormar_config.model_fields for field in mixin2_columns)
             assert all(
-                field not in Subject.ormar_config.model_fields for field in mixin2_columns
+                field in Category.ormar_config.model_fields for field in mixin2_columns
+            )
+            assert all(
+                field not in Subject.ormar_config.model_fields
+                for field in mixin2_columns
             )
 
             inspector = sa.inspect(engine)

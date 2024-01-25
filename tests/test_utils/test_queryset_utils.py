@@ -1,14 +1,14 @@
 import databases
-import sqlalchemy
-
 import ormar
+import sqlalchemy
 from ormar.queryset.queries.prefetch_query import sort_models
 from ormar.queryset.utils import (
     subtract_dict,
     translate_list_to_dict,
-    update_dict_from_list,
     update,
+    update_dict_from_list,
 )
+
 from tests.settings import DATABASE_URL
 
 
@@ -179,9 +179,9 @@ metadata = sqlalchemy.MetaData()
 
 class SortModel(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "sorts",
-        metadata = metadata,
-        database = database,
+        tablename="sorts",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)

@@ -1,12 +1,12 @@
 from typing import Union
 
 import databases
+import ormar
 import pytest
 import sqlalchemy as sa
+from ormar.exceptions import ModelPersistenceError
 from sqlalchemy import create_engine
 
-import ormar
-from ormar.exceptions import ModelPersistenceError
 from tests.settings import DATABASE_URL
 
 metadata = sa.MetaData()
@@ -15,9 +15,9 @@ db = databases.Database(DATABASE_URL)
 
 class Category(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "categories",
-        metadata = metadata,
-        database = db,
+        tablename="categories",
+        metadata=metadata,
+        database=db,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -27,9 +27,9 @@ class Category(ormar.Model):
 
 class Workshop(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "workshops",
-        metadata = metadata,
-        database = db,
+        tablename="workshops",
+        metadata=metadata,
+        database=db,
     )
 
     id: int = ormar.Integer(primary_key=True)

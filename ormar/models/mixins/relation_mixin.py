@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Set, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, cast
 
 from ormar import BaseField, ForeignKeyField
 from ormar.models.traversible import NodeList

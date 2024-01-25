@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, cast
 
 import ormar
 from ormar.queryset.utils import translate_list_to_dict

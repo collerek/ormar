@@ -1,10 +1,10 @@
 from typing import List
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -68,7 +68,7 @@ def create_test_database():
 async def test_construct_with_empty_relation():
     async with database:
         async with database.transaction(force_rollback=True):
-            hq = await HQ.objects.create(name="Main")
+            await HQ.objects.create(name="Main")
             comp = Company(name="Banzai", hq=None, founded=1988)
             comp2 = Company.construct(**dict(name="Banzai", hq=None, founded=1988))
             assert comp.dict() == comp2.dict()

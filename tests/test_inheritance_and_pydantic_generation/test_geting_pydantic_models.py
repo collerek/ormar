@@ -1,13 +1,11 @@
-from typing import List, Optional
+from typing import ForwardRef, List, Optional
 
 import databases
+import ormar
 import pydantic
 import sqlalchemy
-from typing import ForwardRef
-
 from pydantic_core import PydanticUndefined
 
-import ormar
 from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()

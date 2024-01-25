@@ -3,29 +3,29 @@ import uuid
 from dataclasses import dataclass
 from random import choices
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     ForwardRef,
     List,
     Optional,
-    TYPE_CHECKING,
     Tuple,
     Type,
     Union,
     overload,
 )
 
+import sqlalchemy
+from pydantic import BaseModel, create_model
 
 import ormar  # noqa I101
-import sqlalchemy
 from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
 from ormar.fields.base import BaseField
 from ormar.fields.referential_actions import ReferentialAction
-from pydantic import BaseModel, create_model
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model, NewBaseModel, T
     from ormar.fields import ManyToManyField
+    from ormar.models import Model, NewBaseModel, T
 
 
 def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":

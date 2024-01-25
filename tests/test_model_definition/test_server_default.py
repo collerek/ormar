@@ -1,13 +1,12 @@
-import asyncio
 import time
 from datetime import datetime
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 from sqlalchemy import func, text
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

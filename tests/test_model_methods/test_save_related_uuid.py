@@ -2,10 +2,10 @@ import uuid
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -75,7 +75,9 @@ async def test_uuid_pk_in_save_related():
         department = Department(**to_save)
         await department.save_related(follow=True, save_all=True)
         department_check = (
-            await Department.objects.select_all(follow=True).order_by(Department.courses.students.name.asc()).get()
+            await Department.objects.select_all(follow=True)
+            .order_by(Department.courses.students.name.asc())
+            .get()
         )
         to_exclude = {
             "id": ...,

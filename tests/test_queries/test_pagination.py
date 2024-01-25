@@ -1,9 +1,9 @@
 import databases
+import ormar
 import pytest
 import sqlalchemy
-
-import ormar
 from ormar.exceptions import QueryDefinitionError
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

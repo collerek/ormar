@@ -2,11 +2,11 @@ import uuid
 from typing import ClassVar
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
-from pydantic import model_validator, root_validator
+from pydantic import model_validator
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

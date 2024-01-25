@@ -1,9 +1,8 @@
-import asyncpg  # type: ignore
 import databases
+import ormar.fields.constraints
 import pytest
 import sqlalchemy
 
-import ormar.fields.constraints
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -12,13 +11,13 @@ metadata = sqlalchemy.MetaData()
 
 class Product(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "products",
-        metadata = metadata,
-        database = database,
-        constraints = [
+        tablename="products",
+        metadata=metadata,
+        database=database,
+        constraints=[
             ormar.fields.constraints.IndexColumns("company", "name", name="my_index"),
             ormar.fields.constraints.IndexColumns("location", "company_type"),
-        ]
+        ],
     )
 
     id: int = ormar.Integer(primary_key=True)

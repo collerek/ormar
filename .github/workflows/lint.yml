@@ -28,4 +28,4 @@ jobs:
       env:
         POETRY_VIRTUALENVS_CREATE: false
     - name: Lint
-      run: make style
+      run: python -m ruff . --fix

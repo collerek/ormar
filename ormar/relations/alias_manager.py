@@ -1,15 +1,15 @@
 import string
 import uuid
 from random import choices
-from typing import Any, Dict, List, TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Type, Union
 
 import sqlalchemy
 from sqlalchemy import text
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
-    from ormar.models import ModelRow
     from ormar.fields import ForeignKeyField
+    from ormar.models import ModelRow
 
 
 def get_table_alias() -> str:

@@ -1,11 +1,11 @@
 from typing import Optional
 
 import databases
+import ormar
 import pydantic
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -14,9 +14,9 @@ metadata = sqlalchemy.MetaData()
 
 class Company(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "companies",
-        metadata = metadata,
-        database = database,
+        tablename="companies",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -26,9 +26,9 @@ class Company(ormar.Model):
 
 class Car(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "cars",
-        metadata = metadata,
-        database = database,
+        tablename="cars",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)

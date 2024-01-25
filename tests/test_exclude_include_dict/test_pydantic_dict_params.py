@@ -1,10 +1,10 @@
 from typing import List
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()
@@ -97,7 +97,9 @@ async def test_exclude_none():
             "items": [],
             "visibility": True,
         }
-        assert category2.json(exclude_none=True) == '{"id":2,"visibility":true,"items":[]}'
+        assert (
+            category2.json(exclude_none=True) == '{"id":2,"visibility":true,"items":[]}'
+        )
 
 
 @pytest.mark.asyncio

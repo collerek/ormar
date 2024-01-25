@@ -1,7 +1,6 @@
 import databases
-import sqlalchemy
-
 import ormar
+import sqlalchemy
 
 DATABASE_URL = "sqlite:///db.sqlite"
 database = databases.Database(DATABASE_URL)
@@ -13,8 +12,9 @@ base_ormar_config = ormar.OrmarConfig(
     database=database,
 )
 
+
 class Author(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "authors")
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

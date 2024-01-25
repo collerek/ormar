@@ -1,7 +1,6 @@
 import databases
-import sqlalchemy
-
 import ormar
+import sqlalchemy
 
 database = databases.Database("sqlite:///test.db", force_rollback=True)
 metadata = sqlalchemy.MetaData()

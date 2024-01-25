@@ -4,14 +4,11 @@ from datetime import date
 from enum import Enum
 from typing import Optional
 
-from pydantic import EmailStr
-
 import databases
-import sqlalchemy
-from sqlalchemy import create_engine
-
 import ormar
 import pytest
+import sqlalchemy
+from sqlalchemy import create_engine
 
 from tests.settings import DATABASE_URL
 
@@ -29,8 +26,8 @@ class Level(Enum):
 
 
 base_ormar_config = ormar.OrmarConfig(
-    database = database,
-    metadata = metadata,
+    database=database,
+    metadata=metadata,
 )
 
 
@@ -47,9 +44,8 @@ class User(PrimaryKeyMixin, ormar.Model):
     fullname: Optional[str] = ormar.String(max_length=64, nullable=True, default=None)
     is_active: bool = ormar.Boolean(index=True, nullable=False, default=True)
 
-    ormar_config = base_ormar_config.copy(
-        order_by = ["-is_active", "-level"]
-    )
+    ormar_config = base_ormar_config.copy(order_by=["-is_active", "-level"])
+
 
 class Task(PrimaryKeyMixin, ormar.Model):
     """Task Model Class to Implement Method for Operations of Task Entity"""
@@ -62,11 +58,11 @@ class Task(PrimaryKeyMixin, ormar.Model):
     user: User = ormar.ForeignKey(to=User)
 
     ormar_config = base_ormar_config.copy(
-        order_by = ["-end_date", "-start_date"],
-        constraints = [
+        order_by=["-end_date", "-start_date"],
+        constraints=[
             ormar.UniqueColumns("user", "name"),
-        ]
-        )
+        ],
+    )
 
 
 @pytest.fixture(autouse=True, scope="module")

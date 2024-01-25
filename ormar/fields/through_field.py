@@ -1,12 +1,13 @@
 import sys
-from typing import Any, TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING, Any, Type, Union
 
 from ormar.fields.base import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
     from pydantic.typing import ForwardRef
+
+    from ormar import Model
 
     if sys.version_info < (3, 7):
         ToType = Type[Model]

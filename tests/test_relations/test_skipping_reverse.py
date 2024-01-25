@@ -1,11 +1,11 @@
 from typing import List, Optional
 
 import databases
+import ormar
 import pytest
 import pytest_asyncio
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -27,7 +27,7 @@ class Author(ormar.Model):
 
 
 class Category(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "categories")
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)

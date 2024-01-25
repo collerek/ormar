@@ -1,10 +1,10 @@
 from typing import List
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -246,7 +246,9 @@ async def test_saving_nested_with_m2m_and_rev_fk_and_through():
             count = await company.save_related(follow=True, save_all=True)
             assert count == 6
 
-            company_check = await Company.objects.select_related("hq__nicks__level").get()
+            company_check = await Company.objects.select_related(
+                "hq__nicks__level"
+            ).get()
             assert company_check.pk is not None
             assert company_check.name == "Main"
             assert company_check.hq.name == "Yoko"

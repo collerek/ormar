@@ -1,14 +1,14 @@
 import asyncio
 import itertools
-from typing import Optional, List
+from typing import List, Optional
 
 import databases
+import ormar
 import pydantic
 import pytest
 import pytest_asyncio
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -17,9 +17,9 @@ metadata = sqlalchemy.MetaData()
 
 class NickNames(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "nicks",
-        metadata = metadata,
-        database = database,
+        tablename="nicks",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -29,17 +29,17 @@ class NickNames(ormar.Model):
 
 class NicksHq(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "nicks_x_hq",
-        metadata = metadata,
-        database = database,
+        tablename="nicks_x_hq",
+        metadata=metadata,
+        database=database,
     )
 
 
 class HQ(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "hqs",
-        metadata = metadata,
-        database = database,
+        tablename="hqs",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -49,9 +49,9 @@ class HQ(ormar.Model):
 
 class Company(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "companies",
-        metadata = metadata,
-        database = database,
+        tablename="companies",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -62,9 +62,9 @@ class Company(ormar.Model):
 
 class Car(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "cars",
-        metadata = metadata,
-        database = database,
+        tablename="cars",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)

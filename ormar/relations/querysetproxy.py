@@ -1,6 +1,7 @@
-from _weakref import CallableProxyType
 from typing import (  # noqa: I100, I201
+    TYPE_CHECKING,
     Any,
+    AsyncGenerator,
     Dict,
     Generic,
     List,
@@ -8,23 +9,23 @@ from typing import (  # noqa: I100, I201
     Optional,
     Sequence,
     Set,
-    TYPE_CHECKING,
     Tuple,
     Type,
     TypeVar,
     Union,
     cast,
-    AsyncGenerator,
 )
+
+from _weakref import CallableProxyType
 
 import ormar  # noqa: I100, I202
 from ormar.exceptions import ModelPersistenceError, NoMatch, QueryDefinitionError
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.relations import Relation
+    from ormar import OrderAction, RelationType
     from ormar.models import Model, T
     from ormar.queryset import QuerySet
-    from ormar import OrderAction, RelationType
+    from ormar.relations import Relation
 else:
     T = TypeVar("T", bound="Model")
 

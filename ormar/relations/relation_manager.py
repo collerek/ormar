@@ -1,12 +1,12 @@
-from typing import Dict, List, Optional, Sequence, TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Type, Union
 from weakref import proxy
 
 from ormar.relations.relation import Relation, RelationType
 from ormar.relations.utils import get_relations_sides_and_names
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import NewBaseModel, Model
-    from ormar.fields import ForeignKeyField, BaseField
+    from ormar.fields import BaseField, ForeignKeyField
+    from ormar.models import Model, NewBaseModel
 
 
 class RelationsManager:

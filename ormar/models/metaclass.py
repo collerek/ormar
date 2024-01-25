@@ -1,16 +1,16 @@
 import copy
 from typing import (
+    TYPE_CHECKING,
     Any,
+    Callable,
     Dict,
     List,
     Optional,
     Set,
-    TYPE_CHECKING,
     Tuple,
     Type,
     Union,
     cast,
-    Callable,
 )
 
 import databases
@@ -18,17 +18,16 @@ import pydantic
 import sqlalchemy
 from pydantic import field_serializer
 from pydantic._internal._generics import PydanticGenericMetadata
-from pydantic._internal._model_construction import complete_model_class
 from pydantic.fields import ComputedFieldInfo, FieldInfo
 from pydantic_core.core_schema import SerializerFunctionWrapHandler
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
 import ormar.fields.constraints
-from ormar.fields.constraints import UniqueColumns, IndexColumns, CheckColumns
 from ormar import ModelDefinitionError  # noqa I100
 from ormar.exceptions import ModelError
 from ormar.fields import BaseField
+from ormar.fields.constraints import CheckColumns, IndexColumns, UniqueColumns
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.models.descriptors import (
@@ -41,13 +40,13 @@ from ormar.models.descriptors import (
 from ormar.models.descriptors.descriptors import BytesDescriptor
 from ormar.models.helpers import (
     check_required_meta_parameters,
+    config_field_not_set,
     expand_reverse_relationships,
     extract_annotations_and_default_vals,
     get_potential_fields,
     merge_or_generate_pydantic_config,
-    config_field_not_set,
-    populate_default_options_values,
     modify_schema_example,
+    populate_default_options_values,
     populate_meta_sqlalchemy_table_if_required,
     populate_meta_tablename_columns_and_pk,
     register_relation_in_alias_manager,
@@ -133,7 +132,9 @@ def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa:
     """
     props = set()
     for var_name, value in attrs.items():
-        if hasattr(value, "decorator_info") and isinstance(value.decorator_info, ComputedFieldInfo):
+        if hasattr(value, "decorator_info") and isinstance(
+            value.decorator_info, ComputedFieldInfo
+        ):
             props.add(var_name)
 
     if config_field_not_set(model=new_model, field_name="property_fields"):
@@ -185,7 +186,9 @@ def verify_constraint_names(
     :type parent_value: List
     """
     new_aliases = {x.name: x.get_alias() for x in model_fields.values()}
-    old_aliases = {x.name: x.get_alias() for x in base_class.ormar_config.model_fields.values()}
+    old_aliases = {
+        x.name: x.get_alias() for x in base_class.ormar_config.model_fields.values()
+    }
     old_aliases.update(new_aliases)
     constraints_columns = [x._pending_colargs for x in parent_value]
     for column_set in constraints_columns:
@@ -243,9 +246,13 @@ def update_attrs_from_base_meta(  # noqa: CCR001
 
     params_to_update = ["metadata", "database", "constraints", "property_fields"]
     for param in params_to_update:
-        current_value = attrs.get("ormar_config", {}).__dict__.get(param, ormar.Undefined)
+        current_value = attrs.get("ormar_config", {}).__dict__.get(
+            param, ormar.Undefined
+        )
         parent_value = (
-            base_class.ormar_config.__dict__.get(param) if hasattr(base_class, "ormar_config") else None
+            base_class.ormar_config.__dict__.get(param)
+            if hasattr(base_class, "ormar_config")
+            else None
         )
         if parent_value:
             if param == "constraints":
@@ -320,7 +327,6 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
         extra=through_class.ormar_config.extra,
         constraints=through_class.ormar_config.constraints,
         order_by=through_class.ormar_config.orders_by,
-
     )
     new_meta.columns = None
     new_meta.table = through_class.ormar_config.pkname
@@ -569,8 +575,13 @@ def add_field_descriptor(
     else:
         setattr(new_model, name, PydanticDescriptor(name=name))
 
+
 def get_serializer():
-    def serialize(self, value: Optional[pydantic.BaseModel], handler: SerializerFunctionWrapHandler) -> Any:
+    def serialize(
+        self,
+        value: Optional[pydantic.BaseModel],
+        handler: SerializerFunctionWrapHandler,
+    ) -> Any:
         """
         Serialize a value if it's not expired weak reference.
         """
@@ -579,12 +590,11 @@ def get_serializer():
         except ReferenceError:
             return None
         except ValueError as exc:
-            if not str(exc).startswith('Circular reference'):
+            if not str(exc).startswith("Circular reference"):
                 raise exc
             return {value.ormar_config.pkname: value.pk}
 
     return serialize
-
 
 
 class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
@@ -596,7 +606,7 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
         __pydantic_generic_metadata__: Union[PydanticGenericMetadata, None] = None,
         __pydantic_reset_parent_namespace__: bool = True,
         _create_model_module: Union[str, None] = None,
-        **kwargs
+        **kwargs,
     ) -> "ModelMetaclass":
         """
         Metaclass used by ormar Models that performs configuration
@@ -643,7 +653,9 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
             attrs["model_config"]["from_attributes"] = True
             for field_name, field in model_fields.items():
                 if field.is_relation:
-                    decorator = field_serializer(field_name, mode="wrap", check_fields=False)(get_serializer())
+                    decorator = field_serializer(
+                        field_name, mode="wrap", check_fields=False
+                    )(get_serializer())
                     attrs[f"serialize_{field_name}"] = decorator
 
         new_model = super().__new__(
@@ -654,7 +666,8 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
             __pydantic_generic_metadata__=__pydantic_generic_metadata__,
             __pydantic_reset_parent_namespace__=__pydantic_reset_parent_namespace__,
             _create_model_module=_create_model_module,
-            **kwargs)
+            **kwargs,
+        )
 
         add_cached_properties(new_model)
 
@@ -682,9 +695,9 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
                     and new_model.ormar_config.pkname not in new_model.model_fields
                 ):
                     field_name = new_model.ormar_config.pkname
-                    new_model.model_fields[field_name] = FieldInfo.from_annotated_attribute(
-                        Optional[int], None
-                    )
+                    new_model.model_fields[
+                        field_name
+                    ] = FieldInfo.from_annotated_attribute(Optional[int], None)
                     new_model.model_rebuild(force=True)
 
                 for item in new_model.ormar_config.property_fields:

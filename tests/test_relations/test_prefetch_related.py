@@ -1,10 +1,10 @@
 from typing import List, Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -13,9 +13,9 @@ metadata = sqlalchemy.MetaData()
 
 class RandomSet(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "randoms",
-        metadata = metadata,
-        database = database,
+        tablename="randoms",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(name="random_id", primary_key=True)
@@ -24,9 +24,9 @@ class RandomSet(ormar.Model):
 
 class Tonation(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "tonations",
-        metadata = metadata,
-        database = database,
+        tablename="tonations",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -36,9 +36,9 @@ class Tonation(ormar.Model):
 
 class Division(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "divisions",
-        metadata = metadata,
-        database = database,
+        tablename="divisions",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(name="division_id", primary_key=True)
@@ -47,9 +47,9 @@ class Division(ormar.Model):
 
 class Shop(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "shops",
-        metadata = metadata,
-        database = database,
+        tablename="shops",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -59,17 +59,17 @@ class Shop(ormar.Model):
 
 class AlbumShops(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "albums_x_shops",
-        metadata = metadata,
-        database = database,
+        tablename="albums_x_shops",
+        metadata=metadata,
+        database=database,
     )
 
 
 class Album(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "albums",
-        metadata = metadata,
-        database = database,
+        tablename="albums",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -79,9 +79,9 @@ class Album(ormar.Model):
 
 class Track(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "tracks",
-        metadata = metadata,
-        database = database,
+        tablename="tracks",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(name="track_id", primary_key=True)
@@ -93,9 +93,9 @@ class Track(ormar.Model):
 
 class Cover(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "covers",
-        metadata = metadata,
-        database = database,
+        tablename="covers",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)

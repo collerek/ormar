@@ -2,13 +2,13 @@ from random import choice
 from string import ascii_uppercase
 
 import databases
+import ormar
 import pytest
 import pytest_asyncio
 import sqlalchemy
+from ormar import Float, String
 from sqlalchemy import create_engine
 
-import ormar
-from ormar import Float, String
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

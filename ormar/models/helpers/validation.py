@@ -2,17 +2,17 @@ import base64
 import decimal
 import numbers
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
     List,
     Set,
-    TYPE_CHECKING,
     Type,
     Union,
 )
 
-from pydantic import BeforeValidator, typing
+from pydantic import typing
 
 try:
     import orjson as json
@@ -20,7 +20,6 @@ except ImportError:  # pragma: no cover
     import json  # type: ignore  # noqa: F401
 
 import pydantic
-from pydantic.fields import Field
 
 import ormar  # noqa: I100, I202
 from ormar.models.helpers.models import config_field_not_set
@@ -169,7 +168,11 @@ def get_pydantic_example_repr(type_: Any) -> Any:
     """
     if hasattr(type_, "__origin__"):
         if type_.__origin__ == Union:
-            values = tuple(get_pydantic_example_repr(x) for x in type_.__args__ if x is not type(None))
+            values = tuple(
+                get_pydantic_example_repr(x)
+                for x in type_.__args__
+                if x is not type(None)
+            )
             if len(values) == 1:
                 return values[0]
             return values
@@ -274,4 +277,6 @@ def modify_schema_example(model: Type["Model"]) -> None:  # noqa CCR001
     :type model: Model class
     """
     if not config_field_not_set(model=model, field_name="model_fields"):
-        model.model_config["json_schema_extra"] = construct_schema_function_without_choices()
+        model.model_config[
+            "json_schema_extra"
+        ] = construct_schema_function_without_choices()

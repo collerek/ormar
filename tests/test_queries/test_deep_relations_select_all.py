@@ -1,9 +1,9 @@
 import databases
+import ormar
 import pytest
+import sqlalchemy
 from sqlalchemy import func
 
-import ormar
-import sqlalchemy
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -12,9 +12,9 @@ metadata = sqlalchemy.MetaData()
 
 class Chart(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "charts",
-        database = database,
-        metadata = metadata,
+        tablename="charts",
+        database=database,
+        metadata=metadata,
     )
 
     chart_id = ormar.Integer(primary_key=True, autoincrement=True)
@@ -30,9 +30,9 @@ class Chart(ormar.Model):
 
 class Report(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "reports",
-        database = database,
-        metadata = metadata,
+        tablename="reports",
+        database=database,
+        metadata=metadata,
     )
 
     report_id = ormar.Integer(primary_key=True, autoincrement=True)
@@ -43,9 +43,9 @@ class Report(ormar.Model):
 
 class Language(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "languages",
-        database = database,
-        metadata = metadata,
+        tablename="languages",
+        database=database,
+        metadata=metadata,
     )
 
     language_id = ormar.Integer(primary_key=True, autoincrement=True)
@@ -55,9 +55,9 @@ class Language(ormar.Model):
 
 class TranslationNode(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "translation_nodes",
-        database = database,
-        metadata = metadata,
+        tablename="translation_nodes",
+        database=database,
+        metadata=metadata,
     )
 
     node_id = ormar.Integer(primary_key=True, autoincrement=True)
@@ -66,9 +66,9 @@ class TranslationNode(ormar.Model):
 
 class Translation(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "translations",
-        database = database,
-        metadata = metadata,
+        tablename="translations",
+        database=database,
+        metadata=metadata,
     )
 
     translation_id = ormar.Integer(primary_key=True, autoincrement=True)
@@ -79,9 +79,9 @@ class Translation(ormar.Model):
 
 class Filter(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "filters",
-        database = database,
-        metadata = metadata,
+        tablename="filters",
+        database=database,
+        metadata=metadata,
     )
 
     filter_id = ormar.Integer(primary_key=True, autoincrement=True)
@@ -97,9 +97,9 @@ class Filter(ormar.Model):
 
 class FilterValue(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "filter_values",
-        database = database,
-        metadata = metadata,
+        tablename="filter_values",
+        database=database,
+        metadata=metadata,
     )
 
     value_id = ormar.Integer(primary_key=True, autoincrement=True)
@@ -111,9 +111,9 @@ class FilterValue(ormar.Model):
 
 class FilterXReport(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "filters_x_reports",
-        database = database,
-        metadata = metadata,
+        tablename="filters_x_reports",
+        database=database,
+        metadata=metadata,
     )
 
     filter_x_report_id = ormar.Integer(primary_key=True)
@@ -126,9 +126,9 @@ class FilterXReport(ormar.Model):
 
 class ChartXReport(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "charts_x_reports",
-        database = database,
-        metadata = metadata,
+        tablename="charts_x_reports",
+        database=database,
+        metadata=metadata,
     )
 
     chart_x_report_id = ormar.Integer(primary_key=True)
@@ -140,9 +140,9 @@ class ChartXReport(ormar.Model):
 
 class ChartColumn(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "charts_columns",
-        database = database,
-        metadata = metadata,
+        tablename="charts_columns",
+        database=database,
+        metadata=metadata,
     )
 
     column_id = ormar.Integer(primary_key=True, autoincrement=True)

@@ -1,9 +1,9 @@
 from typing import Optional
 
 import databases
+import ormar
 import sqlalchemy
 
-import ormar
 from .docs010 import Artist  # previous example
 
 database = databases.Database("sqlite:///test.db", force_rollback=True)

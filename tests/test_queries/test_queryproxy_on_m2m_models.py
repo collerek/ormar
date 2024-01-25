@@ -1,12 +1,11 @@
-import asyncio
 from typing import List, Optional, Union
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
-
-import ormar
 from ormar.exceptions import QueryDefinitionError
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -15,9 +14,9 @@ metadata = sqlalchemy.MetaData()
 
 class Subject(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "subjects",
-        database = database,
-        metadata = metadata,
+        tablename="subjects",
+        database=database,
+        metadata=metadata,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -26,9 +25,9 @@ class Subject(ormar.Model):
 
 class Author(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "authors",
-        database = database,
-        metadata = metadata,
+        tablename="authors",
+        database=database,
+        metadata=metadata,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -38,9 +37,9 @@ class Author(ormar.Model):
 
 class Category(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "categories",
-        database = database,
-        metadata = metadata,
+        tablename="categories",
+        database=database,
+        metadata=metadata,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -51,17 +50,17 @@ class Category(ormar.Model):
 
 class PostCategory(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "posts_categories",
-        database = database,
-        metadata = metadata,
+        tablename="posts_categories",
+        database=database,
+        metadata=metadata,
     )
 
 
 class Post(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "posts",
-        database = database,
-        metadata = metadata,
+        tablename="posts",
+        database=database,
+        metadata=metadata,
     )
 
     id: int = ormar.Integer(primary_key=True)

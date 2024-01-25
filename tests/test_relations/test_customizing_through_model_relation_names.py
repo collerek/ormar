@@ -1,8 +1,8 @@
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()
@@ -72,9 +72,15 @@ async def test_working_with_changed_through_names():
             student = await course_check.students.get(name="Jack")
             assert student.name == "Jack"
 
-            students = await Student.objects.select_related("courses").all(courses__course_name="basic1")
+            students = await Student.objects.select_related("courses").all(
+                courses__course_name="basic1"
+            )
             assert len(students) == 2
 
-            course_check = await Course.objects.select_related("students").order_by("students__name").get()
+            course_check = (
+                await Course.objects.select_related("students")
+                .order_by("students__name")
+                .get()
+            )
             assert course_check.students[0].name == "Abi"
             assert course_check.students[1].name == "Jack"

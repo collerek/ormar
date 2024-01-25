@@ -1,9 +1,9 @@
 import databases
+import ormar
 import pytest
 import sqlalchemy
-
-import ormar
 from ormar import BaseField
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -17,7 +17,6 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class PriceList(ormar.Model):
-
     ormar_config = base_ormar_config.copy(tablename="price_lists")
 
     id: int = ormar.Integer(primary_key=True)

@@ -4,13 +4,13 @@ from enum import Enum
 from typing import List
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-import ormar
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -56,7 +56,7 @@ class BinaryEnum(Enum):
 
 
 class BinaryThing(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "things")
+    ormar_config = base_ormar_config.copy(tablename="things")
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     name: str = ormar.Text(default="")

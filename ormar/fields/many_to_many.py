@@ -1,10 +1,10 @@
 import sys
 from typing import (
+    TYPE_CHECKING,
     Any,
     ForwardRef,
     List,
     Optional,
-    TYPE_CHECKING,
     Tuple,
     Type,
     Union,
@@ -12,14 +12,13 @@ from typing import (
     overload,
 )
 
-
 import ormar  # noqa: I100
 from ormar import ModelDefinitionError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import (
     ForeignKeyField,
-    validate_not_allowed_fields,
     create_dummy_model,
+    validate_not_allowed_fields,
 )
 
 if TYPE_CHECKING:  # pragma no cover

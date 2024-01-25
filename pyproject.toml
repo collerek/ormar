@@ -167,5 +167,5 @@ split_arguments_when_comma_terminated = true
 [tool.ruff]
 select = ["E", "F", "I"]
 ignore = ["E402"]
-line-length = 120
+line-length = 88
 src = ["ormar", "tests"]

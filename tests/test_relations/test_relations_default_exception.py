@@ -2,11 +2,11 @@
 from typing import List, Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
-
-import ormar
 from ormar.exceptions import ModelDefinitionError
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -15,9 +15,9 @@ metadata = sqlalchemy.MetaData()
 
 class Author(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "authors",
-        database = database,
-        metadata = metadata,
+        tablename="authors",
+        database=database,
+        metadata=metadata,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -27,9 +27,9 @@ class Author(ormar.Model):
 
 class Category(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "categories",
-        database = database,
-        metadata = metadata,
+        tablename="categories",
+        database=database,
+        metadata=metadata,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -41,9 +41,9 @@ def test_fk_error():
 
         class Post(ormar.Model):
             ormar_config = ormar.OrmarConfig(
-                tablename = "posts",
-                database = database,
-                metadata = metadata,
+                tablename="posts",
+                database=database,
+                metadata=metadata,
             )
 
             id: int = ormar.Integer(primary_key=True)
@@ -57,9 +57,9 @@ def test_m2m_error():
 
         class Post(ormar.Model):
             ormar_config = ormar.OrmarConfig(
-                tablename = "posts",
-                database = database,
-                metadata = metadata,
+                tablename="posts",
+                database=database,
+                metadata=metadata,
             )
 
             id: int = ormar.Integer(primary_key=True)

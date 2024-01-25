@@ -1,12 +1,10 @@
-import inspect
 from types import MappingProxyType
-from typing import Dict, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, Type, Union
 
 import pydantic
 from pydantic import ConfigDict
-from pydantic.fields import Field, FieldInfo
+from pydantic.fields import FieldInfo
 from pydantic.utils import lenient_issubclass
-from pydantic_core import PydanticUndefined
 
 from ormar.exceptions import ModelDefinitionError  # noqa: I100, I202
 from ormar.fields import BaseField

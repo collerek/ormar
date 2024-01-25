@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, List, Set, TYPE_CHECKING, Tuple, Type, Union
+from typing import TYPE_CHECKING, Dict, List, Set, Tuple, Type, Union
 
 from ormar.queryset.utils import get_relationship_alias_model_and_str
 

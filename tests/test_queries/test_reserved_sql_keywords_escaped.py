@@ -1,8 +1,7 @@
 import databases
+import ormar
 import pytest
 import sqlalchemy
-
-import ormar
 
 from tests.settings import DATABASE_URL
 
@@ -15,8 +14,9 @@ base_ormar_config = ormar.OrmarConfig(
     database=database,
 )
 
+
 class User(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "user")
+    ormar_config = base_ormar_config.copy(tablename="user")
 
     id: int = ormar.Integer(primary_key=True, autoincrement=True, nullable=False)
     user: str = ormar.String(
@@ -32,7 +32,7 @@ class User(ormar.Model):
 
 
 class Task(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "task")
+    ormar_config = base_ormar_config.copy(tablename="task")
 
     id: int = ormar.Integer(primary_key=True, autoincrement=True, nullable=False)
     from_: str = ormar.String(name="from", nullable=True, max_length=200)

@@ -3,11 +3,11 @@ import uuid
 from typing import Dict, Optional, Union
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 from sqlalchemy import create_engine
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -17,9 +17,9 @@ engine = create_engine(DATABASE_URL)
 
 class Team(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "team",
-        database = database,
-        metadata = metadata,
+        tablename="team",
+        database=database,
+        metadata=metadata,
     )
 
     id: uuid.UUID = ormar.UUID(default=uuid.uuid4, primary_key=True, index=True)
@@ -31,9 +31,9 @@ class Team(ormar.Model):
 
 class User(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "user",
-        database = database,
-        metadata = metadata,
+        tablename="user",
+        database=database,
+        metadata=metadata,
     )
 
     id: uuid.UUID = ormar.UUID(default=uuid.uuid4, primary_key=True, index=True)
@@ -44,9 +44,9 @@ class User(ormar.Model):
 
 class Order(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "order",
-        database = database,
-        metadata = metadata,
+        tablename="order",
+        database=database,
+        metadata=metadata,
     )
 
     id: uuid.UUID = ormar.UUID(default=uuid.uuid4, primary_key=True, index=True)

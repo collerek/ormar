@@ -1,5 +1,5 @@
 import decimal
-from typing import Any, Callable, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Any, Callable, Type
 
 import sqlalchemy
 

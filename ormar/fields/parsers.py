@@ -33,7 +33,7 @@ def encode_decimal(value: decimal.Decimal, precision: int = None) -> float:
 
 def encode_bytes(value: Union[str, bytes], represent_as_string: bool = False) -> bytes:
     if represent_as_string:
-        value=  value if isinstance(value, bytes) else base64.b64decode(value)
+        value = value if isinstance(value, bytes) else base64.b64decode(value)
     else:
         value = value if isinstance(value, bytes) else value.encode("utf-8")
     return value

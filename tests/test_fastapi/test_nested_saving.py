@@ -1,15 +1,14 @@
-import json
 from typing import Any, Dict, Optional, Set, Type, Union, cast
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
-
-import ormar
 from ormar.queryset.utils import translate_list_to_dict
+
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -36,8 +35,8 @@ async def shutdown() -> None:
 
 class Department(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        database = database,
-        metadata = metadata,
+        database=database,
+        metadata=metadata,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -46,8 +45,8 @@ class Department(ormar.Model):
 
 class Course(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        database = database,
-        metadata = metadata,
+        database=database,
+        metadata=metadata,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -58,8 +57,8 @@ class Course(ormar.Model):
 
 class Student(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        database = database,
-        metadata = metadata,
+        database=database,
+        metadata=metadata,
     )
 
     id: int = ormar.Integer(primary_key=True)

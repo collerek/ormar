@@ -1,8 +1,9 @@
 import datetime
 import decimal
 import uuid
-from enum import Enum as E, EnumMeta
-from typing import Any, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union, overload
+from enum import Enum as E
+from enum import EnumMeta
+from typing import TYPE_CHECKING, Any, Optional, Type, TypeVar, Union, overload
 
 import pydantic
 import sqlalchemy
@@ -757,7 +758,6 @@ class UUID(ModelFieldFactory, uuid.UUID):
 
 
 if TYPE_CHECKING:  # pragma: nocover
-
     T = TypeVar("T", bound=E)
 
     def Enum(enum_class: Type[T], **kwargs: Any) -> T:
@@ -776,7 +776,6 @@ else:
         def __new__(  # type: ignore # noqa CFQ002
             cls, *, enum_class: Type[E], **kwargs: Any
         ) -> BaseField:
-
             kwargs = {
                 **kwargs,
                 **{

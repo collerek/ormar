@@ -1,18 +1,18 @@
 # type: ignore
 import base64
+import datetime
 import decimal
 import hashlib
 import uuid
-import datetime
 from typing import Any
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
-
-import ormar
 from ormar import ModelDefinitionError, NoMatch
 from ormar.fields.sqlalchemy_encrypted import EncryptedString
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -24,7 +24,9 @@ base_ormar_config = ormar.OrmarConfig(
     database=database,
 )
 
-default_fernet = dict(encrypt_secret="asd123", encrypt_backend=ormar.EncryptBackends.FERNET)
+default_fernet = dict(
+    encrypt_secret="asd123", encrypt_backend=ormar.EncryptBackends.FERNET
+)
 
 
 class DummyBackend(ormar.fields.EncryptBackend):

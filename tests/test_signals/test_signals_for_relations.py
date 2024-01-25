@@ -1,18 +1,18 @@
 from typing import Optional
 
 import databases
+import ormar
+import pydantic
 import pytest
 import pytest_asyncio
 import sqlalchemy
-
-import ormar
 from ormar import (
     post_relation_add,
     post_relation_remove,
     pre_relation_add,
     pre_relation_remove,
 )
-import pydantic
+
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -21,9 +21,9 @@ metadata = sqlalchemy.MetaData()
 
 class AuditLog(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "audits",
-        metadata = metadata,
-        database = database,
+        tablename="audits",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -33,9 +33,9 @@ class AuditLog(ormar.Model):
 
 class Cover(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "covers",
-        metadata = metadata,
-        database = database,
+        tablename="covers",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -44,9 +44,9 @@ class Cover(ormar.Model):
 
 class Artist(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "artists",
-        metadata = metadata,
-        database = database,
+        tablename="artists",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(name="artist_id", primary_key=True)
@@ -55,9 +55,9 @@ class Artist(ormar.Model):
 
 class Album(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "albums",
-        metadata = metadata,
-        database = database,
+        tablename="albums",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)

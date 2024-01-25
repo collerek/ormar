@@ -3,6 +3,7 @@ import uuid
 from typing import List
 
 import databases
+import ormar
 import pydantic
 import pytest
 import sqlalchemy
@@ -10,7 +11,6 @@ from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-import ormar
 from tests.settings import DATABASE_URL
 
 app = FastAPI()
@@ -39,8 +39,9 @@ base_ormar_config = ormar.OrmarConfig(
     database=database,
 )
 
+
 class Thing(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "things")
+    ormar_config = base_ormar_config.copy(tablename="things")
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     name: str = ormar.Text(default="")
@@ -103,7 +104,7 @@ async def test_json_is_required_if_not_nullable():
 @pytest.mark.asyncio
 async def test_json_is_not_required_if_nullable():
     class Thing2(ormar.Model):
-        ormar_config = base_ormar_config.copy(  tablename = "things2")
+        ormar_config = base_ormar_config.copy(tablename="things2")
 
         id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
         name: str = ormar.Text(default="")

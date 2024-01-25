@@ -1,11 +1,11 @@
 from typing import (
+    TYPE_CHECKING,
     AbstractSet,
     Any,
     Dict,
     List,
     Mapping,
     Set,
-    TYPE_CHECKING,
     Type,
     TypeVar,
     Union,

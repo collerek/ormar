@@ -1,11 +1,11 @@
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import pytest_asyncio
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -26,7 +26,9 @@ class Author(ormar.Model):
 
 
 class Book(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename="books", order_by=["year", "-ranking"])
+    ormar_config = base_ormar_config.copy(
+        tablename="books", order_by=["year", "-ranking"]
+    )
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
@@ -77,8 +79,12 @@ async def test_default_orders_is_applied():
 async def test_default_orders_is_applied_on_related():
     async with database:
         tolkien = await Author(name="J.R.R. Tolkien").save()
-        silmarillion = await Book(author=tolkien, title="The Silmarillion", year=1977).save()
-        lotr = await Book(author=tolkien, title="The Lord of the Rings", year=1955).save()
+        silmarillion = await Book(
+            author=tolkien, title="The Silmarillion", year=1977
+        ).save()
+        lotr = await Book(
+            author=tolkien, title="The Lord of the Rings", year=1955
+        ).save()
         hobbit = await Book(author=tolkien, title="The Hobbit", year=1933).save()
 
         await tolkien.books.all()
@@ -96,9 +102,13 @@ async def test_default_orders_is_applied_on_related():
 async def test_default_orders_is_applied_on_related_two_fields():
     async with database:
         sanders = await Author(name="Brandon Sanderson").save()
-        twok = await Book(author=sanders, title="The Way of Kings", year=2010, ranking=10).save()
+        twok = await Book(
+            author=sanders, title="The Way of Kings", year=2010, ranking=10
+        ).save()
         bret = await Author(name="Peter V. Bret").save()
-        tds = await Book(author=bret, title="The Desert Spear", year=2010, ranking=9).save()
+        tds = await Book(
+            author=bret, title="The Desert Spear", year=2010, ranking=9
+        ).save()
 
         books = await Book.objects.all()
         assert books[0] == twok

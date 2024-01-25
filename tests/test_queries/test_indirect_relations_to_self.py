@@ -1,10 +1,10 @@
 from datetime import datetime
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -13,9 +13,9 @@ metadata = sqlalchemy.MetaData()
 
 class Node(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "node",
-        database = database,
-        metadata = metadata,
+        tablename="node",
+        database=database,
+        metadata=metadata,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -26,9 +26,9 @@ class Node(ormar.Model):
 
 class Edge(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "edge",
-        database = database,
-        metadata = metadata,
+        tablename="edge",
+        database=database,
+        metadata=metadata,
     )
 
     id: str = ormar.String(primary_key=True, max_length=12)

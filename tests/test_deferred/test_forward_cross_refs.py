@@ -1,14 +1,12 @@
 # type: ignore
-from typing import List, Optional
+from typing import ForwardRef, List, Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy as sa
-from typing import ForwardRef
 from sqlalchemy import create_engine
 
-import ormar
-from ormar import ModelMeta
 from tests.settings import DATABASE_URL
 
 metadata = sa.MetaData()
@@ -19,8 +17,8 @@ TeacherRef = ForwardRef("Teacher")
 
 
 base_ormar_config = ormar.OrmarConfig(
-    metadata = metadata,
-    database = db,
+    metadata=metadata,
+    database=db,
 )
 
 
@@ -35,7 +33,8 @@ class Student(ormar.Model):
 
 
 class StudentTeacher(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "students_x_teachers")
+    ormar_config = base_ormar_config.copy(tablename="students_x_teachers")
+
 
 class Teacher(ormar.Model):
     ormar_config = base_ormar_config.copy()
@@ -54,7 +53,7 @@ CountryRef = ForwardRef("Country")
 
 
 class Country(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "countries")
+    ormar_config = base_ormar_config.copy(tablename="countries")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128)
@@ -65,7 +64,7 @@ class Country(ormar.Model):
 
 
 class City(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "cities")
+    ormar_config = base_ormar_config.copy(tablename="cities")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128)

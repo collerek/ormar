@@ -1,7 +1,6 @@
 import databases
-import sqlalchemy
-
 import ormar
+import sqlalchemy
 from ormar import property_field
 
 database = databases.Database("sqlite:///db.sqlite")

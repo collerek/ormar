@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, cast
 
 import sqlalchemy
 from sqlalchemy import text
@@ -8,9 +8,9 @@ from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
 from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model, ManyToManyField
-    from ormar.queryset import OrderAction
+    from ormar import ManyToManyField, Model
     from ormar.models.excludable import ExcludableItems
+    from ormar.queryset import OrderAction
 
 
 class SqlJoin:

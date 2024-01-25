@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import Index, UniqueConstraint, CheckConstraint
+from sqlalchemy import CheckConstraint, Index, UniqueConstraint
 
 
 class UniqueColumns(UniqueConstraint):

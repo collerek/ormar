@@ -1,11 +1,11 @@
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import pytest_asyncio
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -17,18 +17,16 @@ base_ormar_config = ormar.OrmarConfig(
     database=database,
 )
 
-class Author(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "authors")
 
+class Author(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "books",
-        order_by = ["-ranking"])
-
+    ormar_config = base_ormar_config.copy(tablename="books", order_by=["-ranking"])
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(

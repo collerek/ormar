@@ -1,17 +1,15 @@
 import itertools
 import sqlite3
-from typing import Any, Dict, List, TYPE_CHECKING, Tuple, Type
+from typing import TYPE_CHECKING, Any, Dict, ForwardRef, List, Tuple, Type
 
 import pydantic
-from typing import ForwardRef
+
 import ormar  # noqa: I100
 from ormar.models.helpers.pydantic import populate_pydantic_default_values
-from ormar.models.utils import Extra
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.fields import BaseField
-    from ormar.queryset import QuerySet
 
 
 def is_field_an_forward_ref(field: "BaseField") -> bool:

@@ -1,19 +1,19 @@
 import asyncio
 from typing import (
+    TYPE_CHECKING,
     Any,
+    AsyncGenerator,
     Dict,
     Generic,
     List,
     Optional,
     Sequence,
     Set,
-    TYPE_CHECKING,
     Tuple,
     Type,
     TypeVar,
     Union,
     cast,
-    AsyncGenerator,
 )
 
 import databases
@@ -46,8 +46,8 @@ from ormar.queryset.reverse_alias_resolver import ReverseAliasResolver
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.models import T
-    from ormar.models.ormar_config import OrmarConfig
     from ormar.models.excludable import ExcludableItems
+    from ormar.models.ormar_config import OrmarConfig
 else:
     T = TypeVar("T", bound="Model")
 

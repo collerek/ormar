@@ -1,11 +1,10 @@
-import asyncio
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -14,9 +13,9 @@ metadata = sqlalchemy.MetaData()
 
 class Department(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "departments",
-        metadata = metadata,
-        database = database,
+        tablename="departments",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True, autoincrement=False)
@@ -25,9 +24,9 @@ class Department(ormar.Model):
 
 class SchoolClass(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "schoolclasses",
-        metadata = metadata,
-        database = database,
+        tablename="schoolclasses",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -37,9 +36,9 @@ class SchoolClass(ormar.Model):
 
 class Category(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "categories",
-        metadata = metadata,
-        database = database,
+        tablename="categories",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -48,9 +47,9 @@ class Category(ormar.Model):
 
 class Student(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "students",
-        metadata = metadata,
-        database = database,
+        tablename="students",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -61,9 +60,9 @@ class Student(ormar.Model):
 
 class Teacher(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "teachers",
-        metadata = metadata,
-        database = database,
+        tablename="teachers",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)

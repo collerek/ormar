@@ -2,10 +2,10 @@ import random
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -103,7 +103,9 @@ async def test_excluding_field_with_default():
 
             album = (
                 await Album.objects.select_related("tracks")
-                .exclude_fields({"is_best_seller": ..., "tracks": {"play_count", "position"}})
+                .exclude_fields(
+                    {"is_best_seller": ..., "tracks": {"play_count", "position"}}
+                )
                 .get(name="Miami")
             )
             assert album.is_best_seller is None

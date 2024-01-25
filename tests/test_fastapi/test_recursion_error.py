@@ -1,9 +1,9 @@
-import json
 import uuid
 from datetime import datetime
 from typing import List
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 from asgi_lifespan import LifespanManager
@@ -11,7 +11,6 @@ from fastapi import Depends, FastAPI
 from httpx import AsyncClient
 from pydantic import BaseModel, Json
 
-import ormar
 from tests.settings import DATABASE_URL
 
 router = FastAPI()
@@ -50,9 +49,9 @@ class User(ormar.Model):
     created_at: datetime = ormar.DateTime(default=datetime.now())
 
     ormar_config = ormar.OrmarConfig(
-        tablename = "users",
-        metadata = metadata,
-        database = database,
+        tablename="users",
+        metadata=metadata,
+        database=database,
     )
 
 
@@ -67,9 +66,9 @@ class UserSession(ormar.Model):
     created_at: datetime = ormar.DateTime(default=datetime.now())
 
     ormar_config = ormar.OrmarConfig(
-        tablename = "user_sessions",
-        metadata = metadata,
-        database = database,
+        tablename="user_sessions",
+        metadata=metadata,
+        database=database,
     )
 
 
@@ -99,9 +98,9 @@ class Quiz(ormar.Model):
     questions: Json = ormar.JSON(nullable=False)
 
     ormar_config = ormar.OrmarConfig(
-        tablename = "quiz",
-        metadata = metadata,
-        database = database,
+        tablename="quiz",
+        metadata=metadata,
+        database=database,
     )
 
 

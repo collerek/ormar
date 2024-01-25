@@ -1,7 +1,7 @@
 import itertools
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Generator, List, TYPE_CHECKING, Tuple, Type
+from typing import TYPE_CHECKING, Any, Generator, List, Tuple, Type
 
 import sqlalchemy
 
@@ -180,7 +180,6 @@ class QueryClause:
     def __init__(
         self, model_cls: Type["Model"], filter_clauses: List, select_related: List
     ) -> None:
-
         self._select_related = select_related[:]
         self.filter_clauses = filter_clauses[:]
 

@@ -1,11 +1,9 @@
-import asyncio
 import uuid
 
-import pytest
-
-import ormar
-import sqlalchemy
 import databases
+import ormar
+import pytest
+import sqlalchemy
 
 from tests.settings import DATABASE_URL
 
@@ -22,13 +20,17 @@ base_ormar_config = ormar.OrmarConfig(
 class JimmyUser(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="jimmy_users")
 
-    id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4(), uuid_format="string")
+    id: uuid.UUID = ormar.UUID(
+        primary_key=True, default=uuid.uuid4(), uuid_format="string"
+    )
 
 
 class JimmyProfile(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="jimmy_profiles")
 
-    id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4(), uuid_format="string")
+    id: uuid.UUID = ormar.UUID(
+        primary_key=True, default=uuid.uuid4(), uuid_format="string"
+    )
     name = ormar.String(max_length=42, default="JimmyProfile")
     user: JimmyUser = ormar.ForeignKey(to=JimmyUser)
 
@@ -36,7 +38,9 @@ class JimmyProfile(ormar.Model):
 class JimmyAccount(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="jimmy_accounts")
 
-    id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4(), uuid_format="string")
+    id: uuid.UUID = ormar.UUID(
+        primary_key=True, default=uuid.uuid4(), uuid_format="string"
+    )
     name = ormar.String(max_length=42, default="JimmyAccount")
     user: JimmyUser = ormar.ForeignKey(to=JimmyUser)
 

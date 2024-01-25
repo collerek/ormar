@@ -1,6 +1,7 @@
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import pytest_asyncio
 import sqlalchemy
@@ -8,7 +9,6 @@ from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -98,24 +98,40 @@ async def test_related_with_defaults(sample_data):
     client = AsyncClient(app=app, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         response = await client.get("/books/1")
-        assert response.json() == {'author': {'books': [{'author': {'id': 1},
-                                                         'id': 1,
-                                                         'title': 'Bug caused by default value',
-                                                         'year': 2021}],
-                                              'id': 1},
-                                   'id': 1,
-                                   'title': 'Bug caused by default value',
-                                   'year': 2021}
+        assert response.json() == {
+            "author": {
+                "books": [
+                    {
+                        "author": {"id": 1},
+                        "id": 1,
+                        "title": "Bug caused by default value",
+                        "year": 2021,
+                    }
+                ],
+                "id": 1,
+            },
+            "id": 1,
+            "title": "Bug caused by default value",
+            "year": 2021,
+        }
 
         response = await client.get("/books_with_author/1")
-        assert response.json() == {'author': {'books': [{'author': {'id': 1},
-                                                         'id': 1,
-                                                         'title': 'Bug caused by default value',
-                                                         'year': 2021}],
-                                              'country': {'authors': [{'id': 1}], 'id': 1},
-                                              'id': 1,
-                                              'name': 'bug',
-                                              'rating': 5},
-                                   'id': 1,
-                                   'title': 'Bug caused by default value',
-                                   'year': 2021}
+        assert response.json() == {
+            "author": {
+                "books": [
+                    {
+                        "author": {"id": 1},
+                        "id": 1,
+                        "title": "Bug caused by default value",
+                        "year": 2021,
+                    }
+                ],
+                "country": {"authors": [{"id": 1}], "id": 1},
+                "id": 1,
+                "name": "bug",
+                "rating": 5,
+            },
+            "id": 1,
+            "title": "Bug caused by default value",
+            "year": 2021,
+        }

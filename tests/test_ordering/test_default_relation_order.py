@@ -2,11 +2,11 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 
 import databases
+import ormar
 import pytest
 import pytest_asyncio
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -30,7 +30,9 @@ class Book(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
-    author: Optional[Author] = ormar.ForeignKey(Author, orders_by=["name"], related_orders_by=["-year"])
+    author: Optional[Author] = ormar.ForeignKey(
+        Author, orders_by=["name"], related_orders_by=["-year"]
+    )
     title: str = ormar.String(max_length=100)
     year: int = ormar.Integer(nullable=True)
     ranking: int = ormar.Integer(nullable=True)
@@ -79,8 +81,12 @@ async def test_default_orders_is_applied_from_reverse_relation():
     async with database:
         tolkien = await Author(name="J.R.R. Tolkien").save()
         hobbit = await Book(author=tolkien, title="The Hobbit", year=1933).save()
-        silmarillion = await Book(author=tolkien, title="The Silmarillion", year=1977).save()
-        lotr = await Book(author=tolkien, title="The Lord of the Rings", year=1955).save()
+        silmarillion = await Book(
+            author=tolkien, title="The Silmarillion", year=1977
+        ).save()
+        lotr = await Book(
+            author=tolkien, title="The Lord of the Rings", year=1955
+        ).save()
 
         tolkien = await Author.objects.select_related("books").get()
         assert tolkien.books[2] == hobbit
@@ -92,9 +98,13 @@ async def test_default_orders_is_applied_from_reverse_relation():
 async def test_default_orders_is_applied_from_relation():
     async with database:
         bret = await Author(name="Peter V. Bret").save()
-        tds = await Book(author=bret, title="The Desert Spear", year=2010, ranking=9).save()
+        tds = await Book(
+            author=bret, title="The Desert Spear", year=2010, ranking=9
+        ).save()
         sanders = await Author(name="Brandon Sanderson").save()
-        twok = await Book(author=sanders, title="The Way of Kings", year=2010, ranking=10).save()
+        twok = await Book(
+            author=sanders, title="The Way of Kings", year=2010, ranking=10
+        ).save()
 
         books = await Book.objects.order_by("year").select_related("author").all()
         assert books[0] == twok
@@ -123,7 +133,6 @@ async def test_default_orders_is_applied_from_relation_on_m2m():
 @pytest.mark.asyncio
 async def test_default_orders_is_applied_from_reverse_relation_on_m2m():
     async with database:
-
         max = await Animal(name="Max", specie="Dog").save()
         joe = await Human(name="Joe").save()
         zack = await Human(name="Zack").save()

@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Any, Type
 
 import sqlalchemy
 

@@ -1,10 +1,10 @@
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -52,7 +52,9 @@ async def test_updating_selected_columns():
         director1 = await Director(name="Peter", last_name="Jackson").save()
         director2 = await Director(name="James", last_name="Cameron").save()
 
-        lotr = await Movie(name="LOTR", year=2001, director=director1, profit=1.140).save()
+        lotr = await Movie(
+            name="LOTR", year=2001, director=director1, profit=1.140
+        ).save()
 
         lotr.name = "Lord of The Rings"
         lotr.year = 2003
@@ -84,7 +86,9 @@ async def test_updating_selected_columns():
 async def test_not_passing_columns_or_empty_list_saves_all():
     async with database:
         director = await Director(name="James", last_name="Cameron").save()
-        terminator = await Movie(name="Terminator", year=1984, director=director, profit=0.078).save()
+        terminator = await Movie(
+            name="Terminator", year=1984, director=director, profit=0.078
+        ).save()
 
         terminator.name = "Terminator 2"
         terminator.year = 1991

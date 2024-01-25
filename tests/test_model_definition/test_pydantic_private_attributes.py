@@ -1,10 +1,10 @@
 from typing import List
 
 import databases
+import ormar
 import sqlalchemy
 from pydantic import PrivateAttr
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

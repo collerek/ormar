@@ -1,11 +1,10 @@
 from typing import Optional
 
 import databases
-import sqlalchemy
-from sqlalchemy import create_engine
-
 import ormar
 import pytest
+import sqlalchemy
+from sqlalchemy import create_engine
 
 from tests.settings import DATABASE_URL
 

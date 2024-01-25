@@ -1,10 +1,10 @@
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
@@ -16,17 +16,16 @@ base_ormar_config = ormar.OrmarConfig(
     database=database,
 )
 
-class Author(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "authors")
 
+class Author(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename = "books")
-
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
@@ -36,9 +35,9 @@ class Book(ormar.Model):
 
 class JsonModel(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        metadata = metadata,
-        database = database,
-        tablename = "jsons",
+        metadata=metadata,
+        database=database,
+        tablename="jsons",
     )
 
     id = ormar.Integer(primary_key=True)

@@ -1,10 +1,10 @@
 from typing import List, Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -12,7 +12,6 @@ metadata = sqlalchemy.MetaData()
 
 
 class Child(ormar.Model):
-
     ormar_config = ormar.OrmarConfig(
         tablename="children",
         metadata=metadata,
@@ -26,7 +25,6 @@ class Child(ormar.Model):
 
 
 class Artist(ormar.Model):
-
     ormar_config = ormar.OrmarConfig(
         tablename="artists",
         metadata=metadata,

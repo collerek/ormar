@@ -1,11 +1,11 @@
 from typing import Dict, Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
 from pydantic import Json, PositiveInt, ValidationError
 
-import ormar
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)

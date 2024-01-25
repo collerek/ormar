@@ -1,9 +1,8 @@
-from typing import Optional, Dict, Union
+from typing import Dict, Optional, Union
 
 import databases
-import sqlalchemy
-
 import ormar
+import sqlalchemy
 
 database = databases.Database("sqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()

@@ -1,10 +1,9 @@
 from typing import List, Optional
 
 import databases
+import ormar
 import sqlalchemy
 from fastapi import FastAPI
-
-import ormar
 
 app = FastAPI()
 metadata = sqlalchemy.MetaData()

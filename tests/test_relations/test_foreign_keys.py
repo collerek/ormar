@@ -1,11 +1,11 @@
 from typing import Optional
 
 import databases
+import ormar
 import pytest
 import sqlalchemy
+from ormar.exceptions import MultipleMatches, NoMatch, RelationshipInstanceError
 
-import ormar
-from ormar.exceptions import NoMatch, MultipleMatches, RelationshipInstanceError
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
@@ -14,9 +14,9 @@ metadata = sqlalchemy.MetaData()
 
 class Album(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "albums",
-        metadata = metadata,
-        database = database,
+        tablename="albums",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -26,9 +26,9 @@ class Album(ormar.Model):
 
 class Track(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "tracks",
-        metadata = metadata,
-        database = database,
+        tablename="tracks",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -41,9 +41,9 @@ class Track(ormar.Model):
 
 class Cover(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "covers",
-        metadata = metadata,
-        database = database,
+        tablename="covers",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -53,9 +53,9 @@ class Cover(ormar.Model):
 
 class Organisation(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "org",
-        metadata = metadata,
-        database = database,
+        tablename="org",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -64,9 +64,9 @@ class Organisation(ormar.Model):
 
 class Team(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "teams",
-        metadata = metadata,
-        database = database,
+        tablename="teams",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -76,9 +76,9 @@ class Team(ormar.Model):
 
 class Member(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "members",
-        metadata = metadata,
-        database = database,
+        tablename="members",
+        metadata=metadata,
+        database=database,
     )
 
     id: int = ormar.Integer(primary_key=True)
