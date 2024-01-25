@@ -21,12 +21,14 @@ test:
 coverage:
 	pytest --cov=ormar --cov=tests --cov-fail-under=100 --cov-report=term-missing
 
-black:
-	black ormar tests
+
+fmt:
+	poetry run python -m black --line-length=120 .
+
+type_check:
+	mkdir -p .mypy_cache && poetry run python -m mypy . --ignore-missing-imports --install-types --non-interactive
 
 lint:
-	black ormar tests
-	flake8 ormar
+	poetry run python -m ruff . --fix
 
-mypy:
-	mypy ormar tests
+style: fmt lint
