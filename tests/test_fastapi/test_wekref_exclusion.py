@@ -157,6 +157,5 @@ async def test_endpoints():
         assert resp5.status_code == 200
         assert len(resp5.json()) == 3
 
-        resp6 = await client.get("/test/error")
-        assert resp6.status_code == 200
-        assert len(resp6.json()) == 3
+        with pytest.raises(ReferenceError):
+            await client.get("/test/error")

@@ -452,7 +452,6 @@ class ForeignKeyField(BaseField):
         :return: (if needed) registered Model
         :rtype: Model
         """
-        pk_only_model = None
         keys = set(value.keys())
         own_keys = keys - self.to.extract_related_names()
         if (
@@ -461,11 +460,10 @@ class ForeignKeyField(BaseField):
             and not self.is_through
         ):
             value["__pk_only__"] = True
-            pk_only_model = self.to_pk_only(**value)
         model = self.to(**value)
         if to_register:
             self.register_relation(model=model, child=child)
-        return pk_only_model if pk_only_model is not None else model
+        return model
 
     def _construct_model_from_pk(
         self, value: Any, child: "Model", to_register: bool
