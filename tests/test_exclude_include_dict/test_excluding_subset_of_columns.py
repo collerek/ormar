@@ -219,4 +219,4 @@ async def test_excluding_nested_lists_in_dump():
                                            'founded': 1937,
                                            'id': toyota.id,
                                            'name': 'Toyota'}
-            assert manufacturer.dict(exclude_list=True) == {'founded': 1937, 'id': 1, 'name': 'Toyota'}
+            assert manufacturer.dict(exclude_list=True) == {'founded': 1937, 'id': toyota.id, 'name': 'Toyota'}
