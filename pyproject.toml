@@ -69,8 +69,27 @@ python = "<3.8"
 version = ">=3.1"
 python = "<3.8"
 
+[tool.poetry.extras]
+postgresql = ["asyncpg", "psycopg2-binary"]
+postgres = ["asyncpg", "psycopg2-binary"]
+aiopg = ["aiopg", "psycopg2-binary"]
+mysql = ["aiomysql", "PyMySQL"]
+sqlite = ["aiosqlite"]
+orjson = ["orjson"]
+crypto = ["cryptography"]
+all = [
+    "aiosqlite",
+    "asyncpg",
+    "aiopg",
+    "psycopg2-binary",
+    "aiomysql",
+    "mysqlclient",
+    "PyMySQL",
+    "orjson",
+    "cryptography",
+]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 # Testing
 pytest = "^7.4.0"
 pytest-cov = "^4.0.0"
@@ -78,7 +97,7 @@ codecov = "^2.1.13"
 pytest-asyncio = "^0.21.0"
 fastapi = ">=0.105.0"
 
-black = "^23.1.0"
+black = "^24.1.0"
 ruff = "^0.0.275"
 
 # types
@@ -110,31 +129,9 @@ pytest-benchmark = "^4.0.0"
 nest-asyncio = "^1.5.6"
 
 pre-commit = "^2.21.0"
-
-[tool.poetry.extras]
-postgresql = ["asyncpg", "psycopg2-binary"]
-postgres = ["asyncpg", "psycopg2-binary"]
-aiopg = ["aiopg", "psycopg2-binary"]
-mysql = ["aiomysql", "PyMySQL"]
-sqlite = ["aiosqlite"]
-orjson = ["orjson"]
-crypto = ["cryptography"]
-all = [
-    "aiosqlite",
-    "asyncpg",
-    "aiopg",
-    "psycopg2-binary",
-    "aiomysql",
-    "mysqlclient",
-    "PyMySQL",
-    "orjson",
-    "cryptography",
-]
-
-[tool.poetry.group.dev.dependencies]
 httpx = "^0.24.1"
 asgi-lifespan = "^2.1.0"
-black = "^24.1.0"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
