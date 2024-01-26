@@ -18,5 +18,5 @@ for dirpath, dirnames, filenames in os.walk(root_dir):
 
 @pytest.mark.parametrize("filepath", filepaths)
 def test_all_docs(filepath: str):
-    result = subprocess.run(["poetry", "run", "python", filepath])
+    result = subprocess.run(["python", filepath])
     assert result.returncode == 0
