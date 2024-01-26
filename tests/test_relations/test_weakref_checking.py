@@ -47,4 +47,4 @@ def test_weakref_init():
     band.artists  # Force it to clean
 
     assert len(band.artists) == 1
-    assert band.artists[0].name == "Artist 2"
+    assert band.artists[0].name == artist2.name

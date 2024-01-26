@@ -10,6 +10,7 @@ from sqlalchemy.engine import Dialect
 
 import ormar  # noqa: I100, I202
 from ormar import ModelDefinitionError  # noqa: I202, I100
+from ormar.fields.parsers import ADDITIONAL_PARAMETERS_MAP
 
 cryptography = None
 try:  # pragma: nocover
@@ -162,8 +163,9 @@ class EncryptedString(types.TypeDecorator):
         except AttributeError:
             encoder = ormar.SQL_ENCODERS_MAP.get(self.type_, None)
             if encoder:
-                if self.type_ == bytes:
-                    value = encoder(value, self._field_type.represent_as_base64_str)
+                if self.type_ in ADDITIONAL_PARAMETERS_MAP:
+                    additional_parameter = getattr(self._field_type, ADDITIONAL_PARAMETERS_MAP[self.type_])
+                    value = encoder(value, additional_parameter)
                 else:
                     value = encoder(value)  # type: ignore
 
@@ -180,8 +182,9 @@ class EncryptedString(types.TypeDecorator):
         except AttributeError:
             decoder = ormar.DECODERS_MAP.get(self.type_, None)
             if decoder:
-                if self.type_ == bytes:
-                    return decoder(decrypted_value, self._field_type.represent_as_base64_str)
+                if self.type_ in ADDITIONAL_PARAMETERS_MAP:
+                    additional_parameter = getattr(self._field_type, ADDITIONAL_PARAMETERS_MAP[self.type_])
+                    return decoder(decrypted_value, additional_parameter)
                 return decoder(decrypted_value)  # type: ignore
 
             return self._field_type.__type__(decrypted_value)  # type: ignore

@@ -172,14 +172,8 @@ def add_field_serializer_for_reverse_relations(
 
             result = []
             for child in children:
-                try:
-                    serialized = handler([child])
-                except ValueError as exc:
-                    if not str(exc).startswith("Circular reference"):  # pragma: no cover
-                        raise exc
-                    result.append({child.ormar_config.pkname: child.pk})
-                else:
-                    result.append(serialized)
+                # If there is one circular ref dump all children as pk only
+                result.append({child.ormar_config.pkname: child.pk})
             return result
 
     decorator = field_serializer(related_name, mode="wrap", check_fields=False)(
@@ -204,7 +198,7 @@ def replace_models_with_copy(
         return create_copy_to_avoid_circular_references(
             model=annotation, source_model_field=source_model_field
         )
-    elif hasattr(annotation, "__origin__"):
+    elif hasattr(annotation, "__origin__") and annotation.__origin__ in {list, Union}:
         if annotation.__origin__ == list:
             return List[
                 replace_models_with_copy(
@@ -221,8 +215,6 @@ def replace_models_with_copy(
                 for arg in args
             ]
             return Union[tuple(new_args)]
-        else:
-            return annotation
     else:
         return annotation
 

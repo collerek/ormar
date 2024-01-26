@@ -105,7 +105,6 @@ __all__ = [
     "Float",
     "ManyToMany",
     "Model",
-    "Action",
     "ModelDefinitionError",
     "MultipleMatches",
     "NoMatch",
@@ -121,7 +120,6 @@ __all__ = [
     "QuerySetProtocol",
     "RelationProtocol",
     "ModelMeta",
-    "property_field",
     "post_bulk_update",
     "post_delete",
     "post_save",
@@ -147,4 +145,5 @@ __all__ = [
     "DECODERS_MAP",
     "LargeBinary",
     "Extra",
+    "OrmarConfig",
 ]

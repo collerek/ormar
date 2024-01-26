@@ -1,7 +1,9 @@
 import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import databases
+from pydantic import Field
+
 import ormar
 import pydantic
 import pytest
@@ -62,7 +64,8 @@ class Item(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     pydantic_int: Optional[int] = None
-    test_P: Optional[List[PTestP]] = None
+    test_P: List[PTestP] = Field(default_factory=list)
+    test_P_or_A: Union[int, str] = None
     categories = ormar.ManyToMany(Category)
 
 
@@ -77,6 +80,8 @@ def create_test_database():
 @app.get("/items/", response_model=List[Item])
 async def get_items():
     items = await Item.objects.select_related("categories").all()
+    for item in items:
+        item.test_P_or_A = 2
     return items
 
 
@@ -103,17 +108,21 @@ async def test_all_endpoints():
     client = AsyncClient(app=app, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         response = await client.post("/categories/", json={"name": "test cat"})
+        assert response.status_code == 200
         category = response.json()
         response = await client.post("/categories/", json={"name": "test cat2"})
+        assert response.status_code == 200
         category2 = response.json()
 
-        response = await client.post("/items/", json={"name": "test", "id": 1})
+        response = await client.post("/items/", json={"name": "test", "id": 1, "test_P_or_A": 0})
+        assert response.status_code == 200
         item = Item(**response.json())
         assert item.pk is not None
 
         response = await client.post(
             "/items/add_category/", json={"item": item.dict(), "category": category}
         )
+        assert response.status_code == 200
         item = Item(**response.json())
         assert len(item.categories) == 1
         assert item.categories[0].name == "test cat"
@@ -123,6 +132,7 @@ async def test_all_endpoints():
         )
 
         response = await client.get("/items/")
+        assert response.status_code == 200
         items = [Item(**item) for item in response.json()]
         assert items[0] == item
         assert len(items[0].categories) == 2
@@ -146,6 +156,7 @@ def test_schema_modification():
         "name": "string",
         "pydantic_int": 0,
         "test_P": [{"a": 0, "b": {"c": "string", "d": "string", "e": "string"}}],
+        'test_P_or_A': (0, 'string')
     }
 
     schema = Category.model_json_schema()
@@ -160,6 +171,7 @@ def test_schema_modification():
                 "test_P": [
                     {"a": 0, "b": {"c": "string", "d": "string", "e": "string"}}
                 ],
+                'test_P_or_A': (0, 'string')
             }
         ],
     }

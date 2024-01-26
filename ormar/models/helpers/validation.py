@@ -1,4 +1,3 @@
-import base64
 import decimal
 import numbers
 from typing import (
@@ -122,10 +121,7 @@ def generate_pydantic_example(
     for name in name_to_check:
         field = pydantic_model.model_fields[name]
         type_ = field.annotation
-        if typing.get_origin(type_) is list:
-            example[name] = [get_pydantic_example_repr(type_)]
-        else:
-            example[name] = get_pydantic_example_repr(type_)
+        example[name] = get_pydantic_example_repr(type_)
     return example
 
 

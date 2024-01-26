@@ -26,7 +26,7 @@ import ormar  # noqa I100
 from ormar.exceptions import ModelError, ModelPersistenceError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
-from ormar.fields.parsers import encode_json, decode_bytes
+from ormar.fields.parsers import decode_bytes, encode_json
 from ormar.models.helpers import register_relation_in_alias_manager
 from ormar.models.helpers.relations import expand_reverse_relationship
 from ormar.models.helpers.sqlalchemy import (
@@ -768,7 +768,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     dict_instance[field] = model_dict
                 else:
                     dict_instance[field] = None
-            except ReferenceError:
+            except ReferenceError:  # pragma: no cover
                 dict_instance[field] = None
         return dict_instance
 

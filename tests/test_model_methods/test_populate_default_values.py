@@ -25,6 +25,7 @@ class Task(ormar.Model):
     points: int = ormar.Integer(
         default=0, minimum=0, server_default=text("0"), nullable=False
     )
+    score: int = ormar.Integer(default=5)
 
 
 def test_populate_default_values():
@@ -38,3 +39,4 @@ def test_populate_default_values():
     assert result["id"] is None
     assert result["name"] == ""
     assert result["points"] == 0
+    assert result["score"] == 5

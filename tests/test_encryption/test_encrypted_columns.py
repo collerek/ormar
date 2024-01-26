@@ -185,7 +185,7 @@ async def test_save_and_retrieve():
             uuid_test=test_uuid,
             test_float=1.2,
             test_bool=True,
-            test_decimal=decimal.Decimal(3.5),
+            test_decimal=3.57,
             test_decimal2=decimal.Decimal(5.5),
             test_json=dict(aa=12),
             custom_backend="test12",
@@ -210,7 +210,7 @@ async def test_save_and_retrieve():
         assert author.test_float2 is None
         assert author.test_bigint == 0
         assert author.test_json == {"aa": 12}
-        assert author.test_decimal == 3.5
+        assert float(author.test_decimal) == 3.57
         assert author.test_decimal2 == 5.5
         assert author.custom_backend == "test12"
         assert author.test_bytes == "test".encode("utf-8")
