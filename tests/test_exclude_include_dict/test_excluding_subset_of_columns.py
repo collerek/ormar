@@ -187,7 +187,7 @@ async def test_excluding_nested_lists_in_dump():
     async with database:
         async with database.transaction(force_rollback=True):
             toyota = await Company.objects.create(name="Toyota", founded=1937)
-            await Car.objects.create(
+            car1 = await Car.objects.create(
                 manufacturer=toyota,
                 name="Corolla",
                 year=2020,
@@ -195,7 +195,7 @@ async def test_excluding_nested_lists_in_dump():
                 gears=5,
                 aircon_type="Manual",
             )
-            await Car.objects.create(
+            car2 = await Car.objects.create(
                 manufacturer=toyota,
                 name="Yaris",
                 year=2019,
@@ -207,16 +207,16 @@ async def test_excluding_nested_lists_in_dump():
             assert manufacturer.dict() == {'cars': [{'aircon_type': 'Manual',
                                                      'gearbox_type': 'Manual',
                                                      'gears': 5,
-                                                     'id': 1,
+                                                     'id': car1.id,
                                                      'name': 'Corolla',
                                                      'year': 2020},
                                                     {'aircon_type': 'Manual',
                                                      'gearbox_type': 'Manual',
                                                      'gears': 5,
-                                                     'id': 2,
+                                                     'id': car2.id,
                                                      'name': 'Yaris',
                                                      'year': 2019}],
                                            'founded': 1937,
-                                           'id': 1,
+                                           'id': toyota.id,
                                            'name': 'Toyota'}
             assert manufacturer.dict(exclude_list=True) == {'founded': 1937, 'id': 1, 'name': 'Toyota'}
