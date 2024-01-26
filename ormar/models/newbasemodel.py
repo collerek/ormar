@@ -319,9 +319,13 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     k,
                     self._convert_json(
                         k,
-                        model_fields[k].expand_relationship(v, self, to_register=False)
-                        if k in model_fields
-                        else (v if k in pydantic_fields else model_fields[k]),
+                        (
+                            model_fields[k].expand_relationship(
+                                v, self, to_register=False
+                            )
+                            if k in model_fields
+                            else (v if k in pydantic_fields else model_fields[k])
+                        ),
                     ),
                 )
                 for k, v in kwargs.items()
@@ -974,7 +978,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             return value
         field = self.ormar_config.model_fields[column_name]
         if value is not None:
-            value = decode_bytes(value=value, represent_as_string=field.represent_as_base64_str)
+            value = decode_bytes(
+                value=value, represent_as_string=field.represent_as_base64_str
+            )
         return value
 
     def _convert_bytes_to_str(self, column_name: str, value: Any) -> Union[str, Dict]:

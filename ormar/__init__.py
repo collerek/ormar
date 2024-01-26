@@ -19,11 +19,12 @@ snakes, and ormar(e) in italian which means cabinet.
 And what's a better name for python ORM than snakes cabinet :)
 
 """
+
 try:
     from importlib.metadata import version  # type: ignore
 except ImportError:  # pragma: no cover
     from importlib_metadata import version  # type: ignore
-from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
+from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I001
 from ormar.decorators import (  # noqa: I100
     post_bulk_update,
     post_delete,

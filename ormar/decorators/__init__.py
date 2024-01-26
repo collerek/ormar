@@ -6,6 +6,7 @@ Currently only:
 * predefined signals decorators (pre/post + save/update/delete)
 
 """
+
 from ormar.decorators.signals import (
     post_bulk_update,
     post_delete,

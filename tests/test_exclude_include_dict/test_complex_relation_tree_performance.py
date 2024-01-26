@@ -325,26 +325,25 @@ async def test_very_complex_relation_map():
             {
                 "id": 9,
                 "title": "prueba-2321",
-                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->\n### [v.1.3.0.0] - 2021-08-19\n"
-                "#### Resolved Issues\n\n"
-                "#### Task\n\n- Probar flujo de changelog Automatic  Jira: "
-                "[SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    "
-                "Description: Se probara el flujo de changelog automatic.  \n\n    "
-                "Changelog: Se agrega función para extraer texto del campo changelog del "
-                "dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio."
-                " \n\n\n            \n<!--- end changelog ver.v.1.3.0.0 -->\n",
+                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->"
+                "Description 1"
+                "<!--- end changelog ver.v.1.3.0.0 -->\n",
                 "data": {},
             },
             {
                 "id": 8,
                 "title": "prueba-123-prod",
-                "description": "\n<!--- start changelog ver.v.1.2.0.0 -->\n### [v.1.2.0.0] - 2021-08-19\n#### Resolved Issues\n\n#### Task\n\n- Probar flujo de changelog Automatic  Jira: [SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    Description: Se probara el flujo de changelog automatic.  \n\n    Changelog: Se agrega función para extraer texto del campo changelog del dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio. \n\n\n            \n<!--- end changelog ver.v.1.2.0.0 -->\n",
+                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->"
+                "Description 2"
+                "<!--- end changelog ver.v.1.3.0.0 -->\n",
                 "data": {},
             },
             {
                 "id": 6,
                 "title": "prueba-3-2",
-                "description": "\n<!--- start changelog ver.v.1.1.0.0 -->\n### [v.1.1.0.0] - 2021-07-29\n#### Resolved Issues\n\n#### Task\n\n- Probar flujo de changelog Automatic  Jira: [SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    Description: Se probara el flujo de changelog automatic.  \n\n    Changelog: Se agrega función para extraer texto del campo changelog del dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio. \n\n\n            \n<!--- end changelog ver.v.1.1.0.0 -->\n",
+                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->"
+                "Description 3"
+                "<!--- end changelog ver.v.1.3.0.0 -->\n",
                 "data": {},
             },
         ]
@@ -362,7 +361,9 @@ async def test_very_complex_relation_map():
             {
                 "id": 9,
                 "title": "prueba-2321",
-                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->\n### [v.1.3.0.0] - 2021-08-19\n#### Resolved Issues\n\n#### Task\n\n- Probar flujo de changelog Automatic  Jira: [SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    Description: Se probara el flujo de changelog automatic.  \n\n    Changelog: Se agrega función para extraer texto del campo changelog del dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio. \n\n\n            \n<!--- end changelog ver.v.1.3.0.0 -->\n",
+                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->"
+                "Description 1"
+                "<!--- end changelog ver.v.1.3.0.0 -->\n",
                 "data": {},
                 "tag": {
                     "id": 18,
@@ -372,7 +373,9 @@ async def test_very_complex_relation_map():
             {
                 "id": 8,
                 "title": "prueba-123-prod",
-                "description": "\n<!--- start changelog ver.v.1.2.0.0 -->\n### [v.1.2.0.0] - 2021-08-19\n#### Resolved Issues\n\n#### Task\n\n- Probar flujo de changelog Automatic  Jira: [SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    Description: Se probara el flujo de changelog automatic.  \n\n    Changelog: Se agrega función para extraer texto del campo changelog del dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio. \n\n\n            \n<!--- end changelog ver.v.1.2.0.0 -->\n",
+                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->"
+                "Description 2"
+                "<!--- end changelog ver.v.1.3.0.0 -->\n",
                 "data": {},
                 "tag": {
                     "id": 17,
@@ -382,7 +385,9 @@ async def test_very_complex_relation_map():
             {
                 "id": 6,
                 "title": "prueba-3-2",
-                "description": "\n<!--- start changelog ver.v.1.1.0.0 -->\n### [v.1.1.0.0] - 2021-07-29\n#### Resolved Issues\n\n#### Task\n\n- Probar flujo de changelog Automatic  Jira: [SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    Description: Se probara el flujo de changelog automatic.  \n\n    Changelog: Se agrega función para extraer texto del campo changelog del dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio. \n\n\n            \n<!--- end changelog ver.v.1.1.0.0 -->\n",
+                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->"
+                "Description 3"
+                "<!--- end changelog ver.v.1.3.0.0 -->\n",
                 "data": {},
                 "tag": {
                     "id": 12,

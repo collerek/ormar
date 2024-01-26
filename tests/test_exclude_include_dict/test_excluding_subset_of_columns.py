@@ -203,20 +203,34 @@ async def test_excluding_nested_lists_in_dump():
                 gears=5,
                 aircon_type="Manual",
             )
-            manufacturer = await Company.objects.select_related("cars").get(name="Toyota")
-            assert manufacturer.dict() == {'cars': [{'aircon_type': 'Manual',
-                                                     'gearbox_type': 'Manual',
-                                                     'gears': 5,
-                                                     'id': car1.id,
-                                                     'name': 'Corolla',
-                                                     'year': 2020},
-                                                    {'aircon_type': 'Manual',
-                                                     'gearbox_type': 'Manual',
-                                                     'gears': 5,
-                                                     'id': car2.id,
-                                                     'name': 'Yaris',
-                                                     'year': 2019}],
-                                           'founded': 1937,
-                                           'id': toyota.id,
-                                           'name': 'Toyota'}
-            assert manufacturer.dict(exclude_list=True) == {'founded': 1937, 'id': toyota.id, 'name': 'Toyota'}
+            manufacturer = await Company.objects.select_related("cars").get(
+                name="Toyota"
+            )
+            assert manufacturer.dict() == {
+                "cars": [
+                    {
+                        "aircon_type": "Manual",
+                        "gearbox_type": "Manual",
+                        "gears": 5,
+                        "id": car1.id,
+                        "name": "Corolla",
+                        "year": 2020,
+                    },
+                    {
+                        "aircon_type": "Manual",
+                        "gearbox_type": "Manual",
+                        "gears": 5,
+                        "id": car2.id,
+                        "name": "Yaris",
+                        "year": 2019,
+                    },
+                ],
+                "founded": 1937,
+                "id": toyota.id,
+                "name": "Toyota",
+            }
+            assert manufacturer.dict(exclude_list=True) == {
+                "founded": 1937,
+                "id": toyota.id,
+                "name": "Toyota",
+            }

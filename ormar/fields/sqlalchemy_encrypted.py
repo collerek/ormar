@@ -5,7 +5,6 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, Optional, Type, Union
 
 import sqlalchemy.types as types
-from pydantic.utils import lenient_issubclass
 from sqlalchemy.engine import Dialect
 
 import ormar  # noqa: I100, I202
@@ -130,7 +129,11 @@ class EncryptedString(types.TypeDecorator):
                 "In order to encrypt a column 'cryptography' is required!"
             )
         backend = BACKENDS_MAP.get(encrypt_backend, encrypt_custom_backend)
-        if not backend or not lenient_issubclass(backend, EncryptBackend):
+        if (
+            not backend
+            or not isinstance(backend, type)
+            or not issubclass(backend, EncryptBackend)
+        ):
             raise ModelDefinitionError("Wrong or no encrypt backend provided!")
 
         self.backend: EncryptBackend = backend()
@@ -164,7 +167,9 @@ class EncryptedString(types.TypeDecorator):
             encoder = ormar.SQL_ENCODERS_MAP.get(self.type_, None)
             if encoder:
                 if self.type_ in ADDITIONAL_PARAMETERS_MAP:
-                    additional_parameter = getattr(self._field_type, ADDITIONAL_PARAMETERS_MAP[self.type_])
+                    additional_parameter = getattr(
+                        self._field_type, ADDITIONAL_PARAMETERS_MAP[self.type_]
+                    )
                     value = encoder(value, additional_parameter)
                 else:
                     value = encoder(value)  # type: ignore
@@ -183,7 +188,9 @@ class EncryptedString(types.TypeDecorator):
             decoder = ormar.DECODERS_MAP.get(self.type_, None)
             if decoder:
                 if self.type_ in ADDITIONAL_PARAMETERS_MAP:
-                    additional_parameter = getattr(self._field_type, ADDITIONAL_PARAMETERS_MAP[self.type_])
+                    additional_parameter = getattr(
+                        self._field_type, ADDITIONAL_PARAMETERS_MAP[self.type_]
+                    )
                     return decoder(decrypted_value, additional_parameter)
                 return decoder(decrypted_value)  # type: ignore
 

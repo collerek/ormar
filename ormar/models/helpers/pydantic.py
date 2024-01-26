@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Dict, Optional, Tuple, Type, Union
 import pydantic
 from pydantic import ConfigDict
 from pydantic.fields import FieldInfo
-from pydantic.utils import lenient_issubclass
 
 from ormar.exceptions import ModelDefinitionError  # noqa: I100, I202
 from ormar.fields import BaseField
@@ -33,10 +32,6 @@ def create_pydantic_field(
     model_field.through.model_fields[field_name] = FieldInfo.from_annotated_attribute(
         annotation=Optional[model], default=None
     )
-    # model.model_fields[model_field.through.get_name()] = FieldInfo.from_annotated_attribute(
-    #     annotation=Optional[model_field.through], default=None
-    # )
-    # model.model_rebuild(force=True)
     model_field.through.model_rebuild(force=True)
 
 
@@ -123,7 +118,10 @@ def get_potential_fields(attrs: Union[Dict, MappingProxyType]) -> Dict:
     return {
         k: v
         for k, v in attrs.items()
-        if (lenient_issubclass(v, BaseField) or isinstance(v, BaseField))
+        if (
+            (isinstance(v, type) and issubclass(v, BaseField))
+            or isinstance(v, BaseField)
+        )
     }
 
 

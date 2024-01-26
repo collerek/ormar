@@ -23,15 +23,15 @@ def encode_bool(value: bool) -> str:
 
 def encode_decimal(value: decimal.Decimal, precision: int = None) -> float:
     return (
-        round(float(value), precision)
-        if isinstance(value, decimal.Decimal)
-        else value
+        round(float(value), precision) if isinstance(value, decimal.Decimal) else value
     )
 
 
 def encode_bytes(value: Union[str, bytes], represent_as_string: bool = False) -> str:
     if represent_as_string:
-        value = value if isinstance(value, str) else base64.b64encode(value).decode("utf-8")
+        value = (
+            value if isinstance(value, str) else base64.b64encode(value).decode("utf-8")
+        )
     else:
         value = value if isinstance(value, str) else value.decode("utf-8")
     return value
@@ -82,7 +82,7 @@ SQL_ENCODERS_MAP: Dict[type, Callable] = {bool: encode_bool, **ENCODERS_MAP}
 
 ADDITIONAL_PARAMETERS_MAP: Dict[type, str] = {
     bytes: "represent_as_base64_str",
-    decimal.Decimal: "decimal_places"
+    decimal.Decimal: "decimal_places",
 }
 
 
@@ -92,6 +92,8 @@ DECODERS_MAP = {
     datetime.date: SchemaValidator(core_schema.date_schema()).validate_python,
     datetime.time: SchemaValidator(core_schema.time_schema()).validate_python,
     pydantic.Json: json.loads,
-    decimal.Decimal: lambda x, precision: decimal.Decimal(x, context=decimal.Context(prec=precision)),
+    decimal.Decimal: lambda x, precision: decimal.Decimal(
+        x, context=decimal.Context(prec=precision)
+    ),
     bytes: decode_bytes,
 }

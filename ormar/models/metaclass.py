@@ -1,4 +1,5 @@
 import copy
+import sys
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -695,9 +696,9 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
                     and new_model.ormar_config.pkname not in new_model.model_fields
                 ):
                     field_name = new_model.ormar_config.pkname
-                    new_model.model_fields[
-                        field_name
-                    ] = FieldInfo.from_annotated_attribute(Optional[int], None)
+                    new_model.model_fields[field_name] = (
+                        FieldInfo.from_annotated_attribute(Optional[int], None)
+                    )
                     new_model.model_rebuild(force=True)
 
                 for item in new_model.ormar_config.property_fields:
@@ -733,6 +734,13 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
         :return: FieldAccessor for given field
         :rtype: FieldAccessor
         """
+        # Ugly workaround for name shadowing warnings in pydantic
+        frame = sys._getframe(1)
+        if (
+            frame.f_code.co_name == "collect_model_fields"
+            and frame.f_code.co_filename.endswith("pydantic\_internal\_fields.py")
+        ):
+            raise AttributeError()
         if item == "pk":
             item = self.ormar_config.pkname
         if item in object.__getattribute__(self, "ormar_config").model_fields:

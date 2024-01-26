@@ -26,8 +26,7 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -41,8 +40,7 @@ class AuthorWithManyFields(Author):
 
 
 class Publisher(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "publishers"
+    ormar_config = base_ormar_config.copy(tablename="publishers")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -50,8 +48,7 @@ class Publisher(ormar.Model):
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
     author: Author = ormar.ForeignKey(Author, index=True)

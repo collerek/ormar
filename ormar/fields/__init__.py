@@ -4,6 +4,7 @@ Base Fields types (like String, Integer etc.)
 as well as relation Fields (ForeignKey, ManyToMany).
 Also a definition for custom CHAR based sqlalchemy UUID field
 """
+
 from ormar.fields.base import BaseField
 from ormar.fields.constraints import CheckColumns, IndexColumns, UniqueColumns
 from ormar.fields.foreign_key import ForeignKey, ForeignKeyField

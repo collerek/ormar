@@ -104,9 +104,11 @@ class ModelFieldFactory:
 
         namespace = dict(
             __type__=field_type,
-            __pydantic_type__=overwrite_pydantic_type
-            if overwrite_pydantic_type is not None
-            else field_type,
+            __pydantic_type__=(
+                overwrite_pydantic_type
+                if overwrite_pydantic_type is not None
+                else field_type
+            ),
             __sample__=cls._sample,
             alias=kwargs.pop("name", None),
             name=None,
@@ -114,6 +116,7 @@ class ModelFieldFactory:
             default=default,
             server_default=server_default,
             nullable=nullable,
+            annotation=field_type,
             sql_nullable=sql_nullable,
             index=kwargs.pop("index", False),
             unique=kwargs.pop("unique", False),
@@ -476,20 +479,17 @@ if TYPE_CHECKING:  # pragma: nocover # noqa: C901
     @overload
     def LargeBinary(  # type: ignore
         max_length: int, *, represent_as_base64_str: Literal[True], **kwargs: Any
-    ) -> str:
-        ...
+    ) -> str: ...
 
     @overload
     def LargeBinary(  # type: ignore
         max_length: int, *, represent_as_base64_str: Literal[False], **kwargs: Any
-    ) -> bytes:
-        ...
+    ) -> bytes: ...
 
     @overload
     def LargeBinary(
         max_length: int, represent_as_base64_str: Literal[False] = ..., **kwargs: Any
-    ) -> bytes:
-        ...
+    ) -> bytes: ...
 
     def LargeBinary(
         max_length: int, represent_as_base64_str: bool = False, **kwargs: Any

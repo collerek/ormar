@@ -65,7 +65,9 @@ class BytesDescriptor:
     def __set__(self, instance: "Model", value: Any) -> None:
         field = instance.ormar_config.model_fields[self.name]
         if isinstance(value, str):
-            value = decode_bytes(value=value, represent_as_string=field.represent_as_base64_str)
+            value = decode_bytes(
+                value=value, represent_as_string=field.represent_as_base64_str
+            )
         instance._internal_set(self.name, value)
         instance.set_save_status(False)
 

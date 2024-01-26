@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 
 from tests.settings import DATABASE_URL
-from tests.test_inheritance_and_pydantic_generation.test_inheritance_concrete import (  # type: ignore
+from tests.test_inheritance_and_pydantic_generation.test_inheritance_concrete import (  # noqa: E501
     Bus,
     Bus2,
     Category,

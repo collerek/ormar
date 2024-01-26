@@ -70,7 +70,9 @@ class Author(ormar.Model):
     test_decimal = ormar.Decimal(scale=2, precision=10, **default_fernet)
     test_decimal2 = ormar.Decimal(max_digits=10, decimal_places=2, **default_fernet)
     test_bytes = ormar.LargeBinary(max_length=100, **default_fernet)
-    test_b64bytes = ormar.LargeBinary(max_length=100, represent_as_base64_str=True, **default_fernet)
+    test_b64bytes = ormar.LargeBinary(
+        max_length=100, represent_as_base64_str=True, **default_fernet
+    )
     custom_backend: str = ormar.String(
         max_length=200,
         encrypt_secret="asda8",
@@ -190,7 +192,7 @@ async def test_save_and_retrieve():
             test_json=dict(aa=12),
             custom_backend="test12",
             test_bytes=b"test",
-            test_b64bytes=b"test2"
+            test_b64bytes=b"test2",
         ).save()
         author = await Author.objects.get()
 

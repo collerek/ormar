@@ -2,8 +2,6 @@ import datetime
 from typing import List, Optional, Union
 
 import databases
-from pydantic import Field
-
 import ormar
 import pydantic
 import pytest
@@ -11,6 +9,7 @@ import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
+from pydantic import Field
 
 from tests.settings import DATABASE_URL
 
@@ -114,7 +113,9 @@ async def test_all_endpoints():
         assert response.status_code == 200
         category2 = response.json()
 
-        response = await client.post("/items/", json={"name": "test", "id": 1, "test_P_or_A": 0})
+        response = await client.post(
+            "/items/", json={"name": "test", "id": 1, "test_P_or_A": 0}
+        )
         assert response.status_code == 200
         item = Item(**response.json())
         assert item.pk is not None
@@ -156,7 +157,7 @@ def test_schema_modification():
         "name": "string",
         "pydantic_int": 0,
         "test_P": [{"a": 0, "b": {"c": "string", "d": "string", "e": "string"}}],
-        'test_P_or_A': (0, 'string')
+        "test_P_or_A": (0, "string"),
     }
 
     schema = Category.model_json_schema()
@@ -171,7 +172,7 @@ def test_schema_modification():
                 "test_P": [
                     {"a": 0, "b": {"c": "string", "d": "string", "e": "string"}}
                 ],
-                'test_P_or_A': (0, 'string')
+                "test_P_or_A": (0, "string"),
             }
         ],
     }

@@ -518,6 +518,7 @@ async def test_model_first():
 
             assert await User.objects.order_by("name").first() == jane
 
+
 @pytest.mark.asyncio
 async def test_model_choices():
     """Test that choices work properly for various types of fields."""

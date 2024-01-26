@@ -4,6 +4,7 @@ All mixins are combined into ModelTableProxy which is one of the parents of Mode
 The split into mixins was done to ease the maintainability of the proxy class, as
 it became quite complicated over time.
 """
+
 from ormar.models.mixins.alias_mixin import AliasMixin
 from ormar.models.mixins.excludable_mixin import ExcludableMixin
 from ormar.models.mixins.merge_mixin import MergeModelMixin

@@ -11,8 +11,6 @@ from typing import (
     Union,
 )
 
-from pydantic import typing
-
 try:
     import orjson as json
 except ImportError:  # pragma: no cover
@@ -213,6 +211,6 @@ def modify_schema_example(model: Type["Model"]) -> None:  # noqa CCR001
     :type model: Model class
     """
     if not config_field_not_set(model=model, field_name="model_fields"):
-        model.model_config[
-            "json_schema_extra"
-        ] = construct_schema_function_without_choices()
+        model.model_config["json_schema_extra"] = (
+            construct_schema_function_without_choices()
+        )

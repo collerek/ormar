@@ -5,6 +5,12 @@ import ormar
 import sqlalchemy
 from fastapi import FastAPI
 
+DATABASE_URL = "sqlite:///test.db"
+
+ormar_base_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL), metadata=sqlalchemy.MetaData()
+)
+
 app = FastAPI()
 metadata = sqlalchemy.MetaData()
 database = databases.Database("sqlite:///test.db")
@@ -26,20 +32,14 @@ async def shutdown() -> None:
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = ormar_base_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    ormar_config = ormar_base_config.copy(tablename="items")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

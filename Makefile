@@ -15,6 +15,9 @@ test_mysql:
 test_sqlite:
 	bash scripts/test.sh -svv
 
+test_docs:
+	bash scripts/test_docs.sh -svv
+
 test:
 	pytest
 
@@ -26,3 +29,6 @@ type_check:
 
 lint:
 	poetry run python -m ruff . --fix
+
+fmt:
+	poetry run python -m black .

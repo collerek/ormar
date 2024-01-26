@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import databases
 import ormar
@@ -53,6 +53,7 @@ def create_test_database():
 @pytest.mark.asyncio
 async def test_model_is_replaced_by_a_copy():
     assert Album.model_fields["tracks"].annotation.__args__[1] != Track
-    assert Album.model_fields["tracks"].annotation.__args__[1].model_fields.keys() == Track.model_fields.keys()
-
-
+    assert (
+        Album.model_fields["tracks"].annotation.__args__[1].model_fields.keys()
+        == Track.model_fields.keys()
+    )

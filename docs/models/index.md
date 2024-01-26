@@ -306,15 +306,7 @@ book = await Book.objects.first_or_404(name="123")
 
 ### Type Hints & Legacy
 
-Before version 0.4.0 `ormar` supported only one way of defining `Fields` on a `Model` using python type hints as pydantic.
-
-```Python hl_lines="15-17"
---8<-- "../docs_src/models/docs011.py"
-```
-
-But that didn't play well with static type checkers like `mypy` and `pydantic` PyCharm plugin.
-
-Therefore from version >=0.4.0 `ormar` switched to new notation.
+From version >=0.4.0 `ormar` switched to new notation.
 
 ```Python hl_lines="15-17"
 --8<-- "../docs_src/models/docs001.py"

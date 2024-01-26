@@ -575,9 +575,11 @@ class QuerySet(Generic[T]):
             columns = [columns]
 
         orders_by = [
-            OrderAction(order_str=x, model_cls=self.model_cls)  # type: ignore
-            if not isinstance(x, OrderAction)
-            else x
+            (
+                OrderAction(order_str=x, model_cls=self.model_cls)  # type: ignore
+                if not isinstance(x, OrderAction)
+                else x
+            )
             for x in columns
         ]
 

@@ -1,20 +1,23 @@
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
+import databases
+import ormar
+import sqlalchemy
+
+DATABASE_URL = "sqlite:///test.db"
+
+ormar_base_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL), metadata=sqlalchemy.MetaData()
 )
 
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = ormar_base_config.copy(tablename="categories")
 
     id = ormar.Integer(primary_key=True)
     name = ormar.String(max_length=40)
 
 
 class PostCategory(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "posts_x_categories"
+    ormar_config = ormar_base_config.copy(tablename="posts_x_categories")
 
     id: int = ormar.Integer(primary_key=True)
     sort_order: int = ormar.Integer(nullable=True)
@@ -22,8 +25,7 @@ class PostCategory(ormar.Model):
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = ormar_base_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)

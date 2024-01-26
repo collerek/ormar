@@ -21,7 +21,9 @@ class OverwriteTest(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     my_int: int = ormar.Integer(overwrite_pydantic_type=PositiveInt)
-    constraint_dict: Json = ormar.JSON(overwrite_pydantic_type=Optional[Json[Dict[str, int]]])  # type: ignore
+    constraint_dict: Json = ormar.JSON(
+        overwrite_pydantic_type=Optional[Json[Dict[str, int]]]
+    )  # type: ignore
 
 
 @pytest.fixture(autouse=True, scope="module")

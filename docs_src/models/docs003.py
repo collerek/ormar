@@ -7,16 +7,17 @@ metadata = sqlalchemy.MetaData()
 
 
 class Course(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     completed: bool = ormar.Boolean(default=False)
 
 
-print(Course.__fields__)
+print(Course.model_fields)
 """
 Will produce:
 {'id':        Field(name='id', 

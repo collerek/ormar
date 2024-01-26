@@ -4,25 +4,22 @@ import databases
 import ormar
 import sqlalchemy
 
-database = databases.Database("sqlite:///db.sqlite")
-metadata = sqlalchemy.MetaData()
+DATABASE_URL = "sqlite:///test.db"
+
+ormar_base_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL), metadata=sqlalchemy.MetaData()
+)
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "album"
-        metadata = metadata
-        database = database
+    ormar_config = ormar_base_config.copy(tablename="album")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "track"
-        metadata = metadata
-        database = database
+    ormar_config = ormar_base_config.copy(tablename="track")
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)

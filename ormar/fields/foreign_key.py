@@ -362,12 +362,14 @@ class ForeignKeyField(BaseField):
         prefix = "to_" if self.self_reference else ""
         return self.through_relation_name or f"{prefix}{self.owner.get_name()}"
 
-    def _evaluate_forward_ref(self,  globalns: Any, localns: Any, is_through: bool = False) -> None:
+    def _evaluate_forward_ref(
+        self, globalns: Any, localns: Any, is_through: bool = False
+    ) -> None:
         target = "through" if is_through else "to"
         target_obj = getattr(self, target)
         if sys.version_info.minor <= 8:  # pragma: no cover
             evaluated = target_obj._evaluate(globalns, localns)
-        else: # pragma: no cover
+        else:  # pragma: no cover
             evaluated = target_obj._evaluate(globalns, localns, set())
         setattr(self, target, evaluated)
 

@@ -2,6 +2,7 @@
 Contains set of fields/methods etc names that are used to bypass the checks in
 NewBaseModel __getattribute__ calls to speed the calls.
 """
+
 quick_access_set = {
     "Config",
     "model_config",

@@ -107,9 +107,9 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
     :type model_field: relation Field
     """
     related_name = model_field.get_related_name()
-    # TODO: Reverse relations does not register pydantic fields?
+    related_model_fields = model_field.to.ormar_config.model_fields
     if model_field.is_multi:
-        model_field.to.ormar_config.model_fields[related_name] = ManyToMany(  # type: ignore
+        related_model_fields[related_name] = ManyToMany(  # type: ignore
             model_field.owner,
             through=model_field.through,
             name=related_name,
@@ -128,7 +128,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
         register_through_shortcut_fields(model_field=model_field)
         adjust_through_many_to_many_model(model_field=model_field)
     else:
-        model_field.to.ormar_config.model_fields[related_name] = ForeignKey(  # type: ignore
+        related_model_fields[related_name] = ForeignKey(  # type: ignore
             model_field.owner,
             real_name=related_name,
             virtual=True,
@@ -139,7 +139,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
             skip_field=model_field.skip_reverse,
         )
     if not model_field.skip_reverse:
-        field_type = model_field.to.ormar_config.model_fields[related_name].__type__
+        field_type = related_model_fields[related_name].__type__
         field_type = replace_models_with_copy(
             annotation=field_type, source_model_field=model_field.name
         )
@@ -162,7 +162,8 @@ def add_field_serializer_for_reverse_relations(
         self, children: List["BaseModel"], handler: SerializerFunctionWrapHandler
     ) -> Any:
         """
-        Serialize a list of nodes, handling circular references by excluding the children.
+        Serialize a list of nodes, handling circular references
+        by excluding the children.
         """
         try:
             return handler(children)
@@ -195,9 +196,7 @@ def replace_models_with_copy(
     :rtype: Type
     """
     if inspect.isclass(annotation) and issubclass(annotation, ormar.Model):
-        return create_copy_to_avoid_circular_references(
-            model=annotation, source_model_field=source_model_field
-        )
+        return create_copy_to_avoid_circular_references(model=annotation)
     elif hasattr(annotation, "__origin__") and annotation.__origin__ in {list, Union}:
         if annotation.__origin__ == list:
             return List[
@@ -219,19 +218,11 @@ def replace_models_with_copy(
         return annotation
 
 
-def create_copy_to_avoid_circular_references(
-    model: Type["Model"], source_model_field: Optional[str] = None
-) -> Type["BaseModel"]:
-    # original_field = model.model_fields.pop(source_model_field, None)
-    # original_annotation = model.__dict__.get("__annotations__", {}).pop(source_model_field, None)
-    # original_ormar_field = model.ormar_config.model_fields.pop(source_model_field, None)
+def create_copy_to_avoid_circular_references(model: Type["Model"]) -> Type["BaseModel"]:
     new_model = create_model(
         model.__name__,
         __base__=model,
     )
-    # model.model_fields[source_model_field] = original_field
-    # model.__dict__.get("__annotations__", {})[source_model_field] = original_annotation
-    # model.ormar_config.model_fields[source_model_field] = original_ormar_field
     return new_model
 
 

@@ -7,12 +7,14 @@ metadata = sqlalchemy.MetaData()
 
 
 class Course(ormar.Model):
-    class Meta:
+
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
         # if you omit this parameter it will be created automatically
         # as class.__name__.lower()+'s' -> "courses" in this example
-        tablename = "my_courses"
-        database = database
-        metadata = metadata
+        tablename="my_courses",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

@@ -2,16 +2,19 @@ import databases
 import ormar
 import sqlalchemy
 
-database = databases.Database("sqlite:///db.sqlite")
-metadata = sqlalchemy.MetaData()
+DATABASE_URL = "sqlite:///test.db"
+
+ormar_base_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL), metadata=sqlalchemy.MetaData()
+)
 
 
 class Course(ormar.Model):
-    class Meta(
-        ormar.ModelMeta
-    ):  # note you don't have to subclass - but it's recommended for ide completion and mypy
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        tablename="courses",
+        database=databases.Database(DATABASE_URL),
+        metadata=sqlalchemy.MetaData(),
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -21,5 +24,5 @@ class Course(ormar.Model):
 print(Course.ormar_config.table.columns)
 """
 Will produce:
-['courses.id', 'courses.name', 'courses.completed']
+ImmutableColumnCollection(courses.id, courses.name, courses.completed)
 """
