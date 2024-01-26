@@ -1,19 +1,16 @@
-import os
 import subprocess
+from pathlib import Path
 
 import pytest
 
 filepaths = []
-root_dir = os.getcwd()
-for dirpath, dirnames, filenames in os.walk(root_dir):
-    for filename in filenames:
-        if (
-            filename.endswith(".py")
-            and not filename.endswith("__init__.py")
-            and os.path.join(root_dir, filename) != __file__
-        ):
-            filepath_ = os.path.join(dirpath, filename)
-            filepaths.append(filepath_)
+path = Path(__file__).parent
+for p in path.rglob("*"):
+    print(p.name)
+for p in path.rglob("*"):
+    if p.name.endswith(".py") and not p.name == "__init__.py" and p != Path(__file__):
+        filepath_ = str(p.resolve())
+        filepaths.append(filepath_)
 
 
 @pytest.mark.parametrize("filepath", filepaths)
