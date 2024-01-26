@@ -1,5 +1,6 @@
 import copy
 import sys
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -736,9 +737,11 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
         """
         # Ugly workaround for name shadowing warnings in pydantic
         frame = sys._getframe(1)
+        file_name = Path(frame.f_code.co_filename)
         if (
             frame.f_code.co_name == "collect_model_fields"
-            and frame.f_code.co_filename.endswith("pydantic\_internal\_fields.py")
+            and file_name.name == "_fields.py"
+            and file_name.parent.parent.name == "pydantic"
         ):
             raise AttributeError()
         if item == "pk":
