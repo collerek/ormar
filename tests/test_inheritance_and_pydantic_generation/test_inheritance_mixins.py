@@ -1,4 +1,3 @@
-# type: ignore
 import datetime
 from typing import Optional
 
@@ -56,7 +55,7 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-def test_field_redefining():
+def test_field_redefining() -> None:
     class RedefinedField(ormar.Model, DateFieldsMixins):
         ormar_config = ormar.OrmarConfig(
             tablename="redefined",
@@ -79,7 +78,7 @@ def test_field_redefining():
     )
 
 
-def test_field_redefining_in_second_raises_error():
+def test_field_redefining_in_second_raises_error() -> None:
     class OkField(ormar.Model, DateFieldsMixins):  # pragma: no cover
         ormar_config = ormar.OrmarConfig(
             tablename="oks",
@@ -124,7 +123,7 @@ def round_date_to_seconds(
 
 
 @pytest.mark.asyncio
-async def test_fields_inherited_from_mixin():
+async def test_fields_inherited_from_mixin() -> None:
     async with db:
         async with db.transaction(force_rollback=True):
             cat = await Category(

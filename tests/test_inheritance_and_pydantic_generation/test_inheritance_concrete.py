@@ -1,4 +1,3 @@
-# type: ignore
 import datetime
 from collections import Counter
 from typing import List, Optional
@@ -15,6 +14,7 @@ from ormar.models.metaclass import get_constraint_copy
 from pydantic import computed_field
 from sqlalchemy import create_engine
 
+from ormar.relations.relation_proxy import RelationProxy
 from tests.settings import DATABASE_URL
 
 metadata = sa.MetaData()
@@ -149,7 +149,7 @@ class Car2(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50)
     owner: Person = ormar.ForeignKey(Person, related_name="owned")
-    co_owners: List[Person] = ormar.ManyToMany(Person, related_name="coowned")
+    co_owners: RelationProxy[Person] = ormar.ManyToMany(Person, related_name="coowned")
     created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
 
 
@@ -176,12 +176,12 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-def test_init_of_abstract_model():
+def test_init_of_abstract_model() -> None:
     with pytest.raises(ModelError):
         DateFieldsModel()
 
 
-def test_duplicated_related_name_on_different_model():
+def test_duplicated_related_name_on_different_model() -> None:
     with pytest.raises(ModelDefinitionError):
 
         class Bus3(Car2):  # pragma: no cover
@@ -191,7 +191,7 @@ def test_duplicated_related_name_on_different_model():
             max_persons: int = ormar.Integer()
 
 
-def test_field_redefining_in_concrete_models():
+def test_field_redefining_in_concrete_models() -> None:
     class RedefinedField(DateFieldsModel):
         ormar_config = ormar.OrmarConfig(
             tablename="redefines",
@@ -200,7 +200,7 @@ def test_field_redefining_in_concrete_models():
         )
 
         id: int = ormar.Integer(primary_key=True)
-        created_date: str = ormar.String(max_length=200, name="creation_date")
+        created_date: str = ormar.String(max_length=200, name="creation_date")  # type: ignore
 
     changed_field = RedefinedField.ormar_config.model_fields["created_date"]
     assert changed_field.ormar_default is None
@@ -214,7 +214,7 @@ def test_field_redefining_in_concrete_models():
     )
 
 
-def test_model_subclassing_that_redefines_constraints_column_names():
+def test_model_subclassing_that_redefines_constraints_column_names() -> None:
     with pytest.raises(ModelDefinitionError):
 
         class WrongField2(DateFieldsModel):  # pragma: no cover
@@ -228,7 +228,7 @@ def test_model_subclassing_that_redefines_constraints_column_names():
             created_date: str = ormar.String(max_length=200)
 
 
-def test_model_subclassing_non_abstract_raises_error():
+def test_model_subclassing_non_abstract_raises_error() -> None:
     with pytest.raises(ModelDefinitionError):
 
         class WrongField2(DateFieldsModelNoSubclass):  # pragma: no cover
@@ -241,7 +241,7 @@ def test_model_subclassing_non_abstract_raises_error():
             id: int = ormar.Integer(primary_key=True)
 
 
-def test_params_are_inherited():
+def test_params_are_inherited() -> None:
     assert Category.ormar_config.metadata == metadata
     assert Category.ormar_config.database == db
     assert len(Category.ormar_config.property_fields) == 2
@@ -261,7 +261,7 @@ def round_date_to_seconds(
 
 
 @pytest.mark.asyncio
-async def test_fields_inherited_from_mixin():
+async def test_fields_inherited_from_mixin() -> None:
     async with db:
         async with db.transaction(force_rollback=True):
             cat = await Category(
@@ -310,6 +310,7 @@ async def test_fields_inherited_from_mixin():
             assert round_date_to_seconds(sub2.created_date) == round_date_to_seconds(
                 sub.created_date
             )
+            assert sub2.category is not None
             assert sub2.category.updated_date is not None
             assert round_date_to_seconds(
                 sub2.category.created_date
@@ -337,7 +338,7 @@ async def test_fields_inherited_from_mixin():
 
 
 @pytest.mark.asyncio
-async def test_inheritance_with_relation():
+async def test_inheritance_with_relation() -> None:
     async with db:
         async with db.transaction(force_rollback=True):
             sam = await Person(name="Sam").save()
@@ -386,7 +387,7 @@ async def test_inheritance_with_relation():
 
 
 @pytest.mark.asyncio
-async def test_inheritance_with_multi_relation():
+async def test_inheritance_with_multi_relation() -> None:
     async with db:
         async with db.transaction(force_rollback=True):
             sam = await Person(name="Sam").save()
@@ -532,7 +533,7 @@ async def test_inheritance_with_multi_relation():
             assert len(unicorns[1].co_owners) == 1
 
 
-def test_custom_config():
+def test_custom_config() -> None:
     # Custom config inherits defaults
     assert ImmutablePerson.model_config["from_attributes"] is True
     # Custom config can override defaults
@@ -542,6 +543,6 @@ def test_custom_config():
         sam.name = "Not Sam"
 
 
-def test_get_constraint_copy():
+def test_get_constraint_copy() -> None:
     with pytest.raises(ValueError):
         get_constraint_copy("INVALID CONSTRAINT")
