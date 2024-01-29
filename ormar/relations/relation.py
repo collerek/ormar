@@ -48,7 +48,7 @@ class Relation(Generic[T]):
         type_: RelationType,
         field_name: str,
         to: Type["T"],
-        through: Type["Model"] = None,
+        through: Optional[Type["Model"]] = None,
     ) -> None:
         """
         Initialize the Relation and keep the related models either as instances of

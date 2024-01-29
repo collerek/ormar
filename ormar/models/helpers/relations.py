@@ -156,7 +156,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
 
 
 def add_field_serializer_for_reverse_relations(
-    to_model: "Model", related_name: str
+    to_model: Type["Model"], related_name: str
 ) -> None:
     def serialize(
         self, children: List["BaseModel"], handler: SerializerFunctionWrapHandler

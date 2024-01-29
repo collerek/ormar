@@ -25,7 +25,7 @@ coverage:
 	pytest --cov=ormar --cov=tests --cov-fail-under=100 --cov-report=term-missing tests
 
 type_check:
-	mkdir -p .mypy_cache && poetry run python -m mypy . --ignore-missing-imports --install-types --non-interactive
+	mkdir -p .mypy_cache && poetry run python -m mypy ormar tests --ignore-missing-imports --install-types --non-interactive
 
 lint:
 	poetry run python -m ruff . --fix

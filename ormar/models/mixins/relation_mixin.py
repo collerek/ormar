@@ -119,9 +119,9 @@ class RelationMixin:
     @classmethod
     def _iterate_related_models(  # noqa: CCR001
         cls,
-        node_list: NodeList = None,
-        parsed_map: Dict = None,
-        source_relation: str = None,
+        node_list: Optional[NodeList] = None,
+        parsed_map: Optional[Dict] = None,
+        source_relation: Optional[str] = None,
         recurrent: bool = False,
     ) -> List[str]:
         """

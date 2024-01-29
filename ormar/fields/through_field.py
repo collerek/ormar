@@ -1,5 +1,5 @@
 import sys
-from typing import TYPE_CHECKING, Any, Type, Union
+from typing import TYPE_CHECKING, Any, Type, Union, Optional
 
 from ormar.fields.base import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
@@ -16,7 +16,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def Through(  # noqa CFQ002
-    to: "ToType", *, name: str = None, related_name: str = None, **kwargs: Any
+    to: "ToType", *, name: Optional[str] = None, related_name: Optional[str] = None, **kwargs: Any
 ) -> Any:
     """
     Despite a name it's a function that returns constructed ThroughField.

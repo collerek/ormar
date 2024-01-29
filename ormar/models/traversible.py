@@ -18,8 +18,8 @@ class NodeList:
     def add(
         self,
         node_class: Type["RelationMixin"],
-        relation_name: str = None,
-        parent_node: "Node" = None,
+        relation_name: Optional[str] = None,
+        parent_node: Optional["Node"] = None,
     ) -> "Node":
         """
         Adds new Node or returns the existing one
@@ -50,7 +50,7 @@ class NodeList:
         self,
         node_class: Type["RelationMixin"],
         relation_name: Optional[str] = None,
-        parent_node: "Node" = None,
+        parent_node: Optional["Node"] = None,
     ) -> Optional["Node"]:
         """
         Searches for existing node with given parameters
@@ -78,8 +78,8 @@ class Node:
     def __init__(
         self,
         node_class: Type["RelationMixin"],
-        relation_name: str = None,
-        parent_node: "Node" = None,
+        relation_name: Optional[str] = None,
+        parent_node: Optional["Node"] = None,
     ) -> None:
         self.relation_name = relation_name
         self.node_class = node_class

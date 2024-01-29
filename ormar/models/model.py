@@ -114,10 +114,10 @@ class Model(ModelRow):
         self,
         follow: bool = False,
         save_all: bool = False,
-        relation_map: Dict = None,
-        exclude: Union[Set, Dict] = None,
+        relation_map: Optional[Dict] = None,
+        exclude: Union[Set, Dict, None] = None,
         update_count: int = 0,
-        previous_model: "Model" = None,
+        previous_model: Optional["Model"] = None,
         relation_field: Optional["ForeignKeyField"] = None,
     ) -> int:
         """
@@ -213,7 +213,7 @@ class Model(ModelRow):
 
         return update_count
 
-    async def update(self: T, _columns: List[str] = None, **kwargs: Any) -> T:
+    async def update(self: T, _columns: Optional[List[str]] = None, **kwargs: Any) -> T:
         """
         Performs update of Model instance in the database.
         Fields can be updated before or you can pass them as kwargs.
@@ -302,8 +302,8 @@ class Model(ModelRow):
     async def load_all(
         self: T,
         follow: bool = False,
-        exclude: Union[List, str, Set, Dict] = None,
-        order_by: Union[List, str] = None,
+        exclude: Union[List, str, Set, Dict, None] = None,
+        order_by: Union[List, str, None] = None,
     ) -> T:
         """
         Allow to refresh existing Models fields from database.

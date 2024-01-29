@@ -9,7 +9,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
+    cast, Optional,
 )
 
 from ormar.models.excludable import ExcludableItems
@@ -35,7 +35,7 @@ class ExcludableMixin(RelationMixin):
 
     @staticmethod
     def get_child(
-        items: Union[Set, Dict, None], key: str = None
+        items: Union[Set, Dict, None], key: Optional[str] = None
     ) -> Union[Set, Dict, None]:
         """
         Used to get nested dictionaries keys if they exists otherwise returns

@@ -15,6 +15,7 @@ from typing import (
 
 import pydantic
 from pydantic.plugin._schema_validator import create_schema_validator
+from pydantic_core import CoreSchema, SchemaValidator
 
 import ormar  # noqa: I100, I202
 from ormar.exceptions import ModelPersistenceError
@@ -32,11 +33,11 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
     """
 
     if TYPE_CHECKING:  # pragma: nocover
-        _choices_fields: Optional[Set]
         _skip_ellipsis: Callable
         _json_fields: Set[str]
         _bytes_fields: Set[str]
-        __fields__: Dict[str, pydantic.fields.Field]
+        __pydantic_core_schema__: CoreSchema
+        __ormar_fields_validators__: Dict[str, SchemaValidator]
 
     @classmethod
     def prepare_model_to_save(cls, new_kwargs: dict) -> dict:

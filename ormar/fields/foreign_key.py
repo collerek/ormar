@@ -204,13 +204,13 @@ def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":  # pragma: no cover
 def ForeignKey(  # type: ignore # noqa CFQ002
     to: Union[Type["T"], "ForwardRef"],
     *,
-    name: str = None,
+    name: Optional[str] = None,
     unique: bool = False,
     nullable: bool = True,
-    related_name: str = None,
+    related_name: Optional[str] = None,
     virtual: bool = False,
-    onupdate: Union[ReferentialAction, str] = None,
-    ondelete: Union[ReferentialAction, str] = None,
+    onupdate: Union[ReferentialAction, str, None] = None,
+    ondelete: Union[ReferentialAction, str, None] = None,
     **kwargs: Any,
 ) -> "T":
     """

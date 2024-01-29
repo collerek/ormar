@@ -28,4 +28,4 @@ jobs:
       env:
         POETRY_VIRTUALENVS_CREATE: false
     - name: Type check
-      run: python -m mypy . --ignore-missing-imports --install-types --non-interactive
+      run: python -m mypy ormar tests --ignore-missing-imports --install-types --non-interactive

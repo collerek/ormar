@@ -16,7 +16,7 @@ class RelationsManager:
 
     def __init__(
         self,
-        related_fields: List["ForeignKeyField"] = None,
+        related_fields: Optional[List["ForeignKeyField"]] = None,
         owner: Optional["Model"] = None,
     ) -> None:
         self.owner = proxy(owner)

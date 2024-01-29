@@ -90,7 +90,7 @@ def ManyToMany(  # type: ignore
     to: "ToType",
     through: Optional["ToType"] = None,
     *,
-    name: str = None,
+    name: Optional[str] = None,
     unique: bool = False,
     virtual: bool = False,
     **kwargs: Any,

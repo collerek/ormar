@@ -44,7 +44,7 @@ class QuerysetProxy(Generic[T]):
         relation: "Relation",
         to: Type["T"],
         type_: "RelationType",
-        qryset: "QuerySet[T]" = None,
+        qryset: Optional["QuerySet[T]"] = None,
     ) -> None:
         self.relation: "Relation" = relation
         self._queryset: Optional["QuerySet[T]"] = qryset
@@ -287,7 +287,7 @@ class QuerysetProxy(Generic[T]):
         return await queryset.delete(**kwargs)  # type: ignore
 
     async def values(
-        self, fields: Union[List, str, Set, Dict] = None, exclude_through: bool = False
+        self, fields: Union[List, str, Set, Dict, None] = None, exclude_through: bool = False
     ) -> List:
         """
         Return a list of dictionaries with column values in order of the fields
@@ -309,7 +309,7 @@ class QuerysetProxy(Generic[T]):
 
     async def values_list(
         self,
-        fields: Union[List, str, Set, Dict] = None,
+        fields: Union[List, str, Set, Dict, None] = None,
         flatten: bool = False,
         exclude_through: bool = False,
     ) -> List:

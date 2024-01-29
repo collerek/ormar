@@ -62,7 +62,7 @@ class OrmarConfig:
             database=database or self.database,
             tablename=tablename,
             order_by=order_by,
-            abstract=abstract,
+            abstract=abstract or self.abstract,
             exclude_parent_fields=exclude_parent_fields,
             queryset_class=queryset_class or self.queryset_class,
             extra=extra or self.extra,

@@ -42,7 +42,7 @@ from ormar.relations.relation import Relation
 from ormar.relations.relation_manager import RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model
+    from ormar.models import Model, OrmarConfig
     from ormar.signals import SignalEmitter
 
     T = TypeVar("T", bound="NewBaseModel")
@@ -77,13 +77,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     if TYPE_CHECKING:  # pragma no cover
         pk: Any
-        __model_fields__: Dict[str, BaseField]
-        __table__: sqlalchemy.Table
-        __pydantic_model__: Type[BaseModel]
-        __pkname__: str
-        __tablename__: str
-        __metadata__: sqlalchemy.MetaData
-        __database__: databases.Database
+        model_fields: Dict[str, BaseField]
         __relation_map__: Optional[List[str]]
         __cached_hash__: Optional[int]
         _orm_relationship_manager: AliasManager
@@ -93,12 +87,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         _related_names: Optional[Set]
         _through_names: Optional[Set]
         _related_names_hash: str
-        _choices_fields: Set
-        _pydantic_fields: Set
         _quick_access_fields: Set
         _json_fields: Set
         _bytes_fields: Set
-        Meta: ModelMeta
+        ormar_config: OrmarConfig
 
     # noinspection PyMissingConstructor
     def __init__(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
@@ -634,7 +626,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         model_dict: Dict,
         include: Union[Set, Dict],
         exclude: Union[Set, Dict],
-        relation_map: Dict = None,
+        relation_map: Optional[Dict] = None,
     ) -> None:
         """
         Populates through models with values from dict representation.
@@ -779,8 +771,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def dict(  # type: ignore # noqa A003
         self,
         *,
-        include: Union[Set, Dict] = None,
-        exclude: Union[Set, Dict] = None,
+        include: Union[Set, Dict, None] = None,
+        exclude: Union[Set, Dict, None] = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -788,7 +780,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude_primary_keys: bool = False,
         exclude_through_models: bool = False,
         exclude_list: bool = False,
-        relation_map: Dict = None,
+        relation_map: Optional[Dict] = None,
     ) -> "DictStrAny":  # noqa: A003'
         """
 
@@ -875,8 +867,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def json(  # type: ignore # noqa A003
         self,
         *,
-        include: Union[Set, Dict] = None,
-        exclude: Union[Set, Dict] = None,
+        include: Union[Set, Dict, None] = None,
+        exclude: Union[Set, Dict, None] = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,

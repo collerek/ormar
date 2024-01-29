@@ -15,7 +15,8 @@ from typing import (
 )
 
 import pydantic
-from pydantic.fields import Field
+from pydantic._internal._decorators import DecoratorInfos
+from pydantic.fields import Field, FieldInfo
 
 from ormar.models.mixins.relation_mixin import RelationMixin  # noqa: I100, I202
 from ormar.queryset.utils import translate_list_to_dict
@@ -25,13 +26,14 @@ class PydanticMixin(RelationMixin):
     __cache__: Dict[str, Type[pydantic.BaseModel]] = {}
 
     if TYPE_CHECKING:  # pragma: no cover
-        model_fields: Dict[str, Field]
+        __pydantic_decorators__: DecoratorInfos
+        model_fields: Dict[str, FieldInfo]
         _skip_ellipsis: Callable
         _get_not_excluded_fields: Callable
 
     @classmethod
     def get_pydantic(
-        cls, *, include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None
+        cls, *, include: Union[Set, Dict, None] = None, exclude: Union[Set, Dict, None] = None
     ) -> Type[pydantic.BaseModel]:
         """
         Returns a pydantic model out of ormar model.
@@ -55,8 +57,8 @@ class PydanticMixin(RelationMixin):
     def _convert_ormar_to_pydantic(
         cls,
         relation_map: Dict[str, Any],
-        include: Union[Set, Dict] = None,
-        exclude: Union[Set, Dict] = None,
+        include: Union[Set, Dict, None] = None,
+        exclude: Union[Set, Dict, None] = None,
     ) -> Type[pydantic.BaseModel]:
         if include and isinstance(include, Set):
             include = translate_list_to_dict(include)
