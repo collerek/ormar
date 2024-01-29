@@ -88,7 +88,10 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-    to: Type["T"], nullable: bool, onupdate: str = None, ondelete: str = None
+    to: Type["T"],
+    nullable: bool,
+    onupdate: Optional[str] = None,
+    ondelete: Optional[str] = None,
 ) -> Tuple[Any, List, Any, Any]:
     """
     Based on target to model to which relation leads to populates the type of the

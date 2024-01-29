@@ -132,7 +132,7 @@ async def test_model_crud():
 
 
 @pytest.mark.asyncio
-async def test_invalid_enum_field():
+async def test_invalid_enum_field() -> None:
     async with database:
         with pytest.raises(ModelDefinitionError):
 
@@ -144,4 +144,4 @@ async def test_invalid_enum_field():
                 )
 
                 id: int = ormar.Integer(primary_key=True)
-                size: MyEnum = ormar.Enum(enum_class=[])
+                size: MyEnum = ormar.Enum(enum_class=[])  # type: ignore

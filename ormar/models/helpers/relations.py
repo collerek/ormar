@@ -144,7 +144,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
             annotation=field_type, source_model_field=model_field.name
         )
         if not model_field.is_multi:
-            field_type = Union[field_type, List[field_type], None]
+            field_type = Union[field_type, List[field_type], None]  # type: ignore
         model_field.to.model_fields[related_name] = FieldInfo.from_annotated_attribute(
             annotation=field_type, default=None
         )
@@ -159,7 +159,7 @@ def add_field_serializer_for_reverse_relations(
     to_model: Type["Model"], related_name: str
 ) -> None:
     def serialize(
-        self, children: List["BaseModel"], handler: SerializerFunctionWrapHandler
+        self: "Model", children: List["Model"], handler: SerializerFunctionWrapHandler
     ) -> Any:
         """
         Serialize a list of nodes, handling circular references
@@ -186,7 +186,7 @@ def add_field_serializer_for_reverse_relations(
 
 def replace_models_with_copy(
     annotation: Type, source_model_field: Optional[str] = None
-) -> Type:
+) -> Any:
     """
     Replaces all models in annotation with their copies to avoid circular references.
 
@@ -199,12 +199,12 @@ def replace_models_with_copy(
         return create_copy_to_avoid_circular_references(model=annotation)
     elif hasattr(annotation, "__origin__") and annotation.__origin__ in {list, Union}:
         if annotation.__origin__ == list:
-            return List[
+            return List[  # type: ignore
                 replace_models_with_copy(
                     annotation=annotation.__args__[0],
                     source_model_field=source_model_field,
                 )
-            ]  # type: ignore
+            ]
         elif annotation.__origin__ == Union:
             args = annotation.__args__
             new_args = [

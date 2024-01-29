@@ -17,10 +17,8 @@ from typing import (
     cast,
 )
 
-import databases
 import pydantic
 import sqlalchemy
-from pydantic import BaseModel
 
 import ormar  # noqa I100
 from ormar.exceptions import ModelError, ModelPersistenceError
@@ -33,7 +31,7 @@ from ormar.models.helpers.sqlalchemy import (
     populate_meta_sqlalchemy_table_if_required,
     update_column_definition,
 )
-from ormar.models.metaclass import ModelMeta, ModelMetaclass
+from ormar.models.metaclass import ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
 from ormar.models.utils import Extra
 from ormar.queryset.utils import translate_list_to_dict
@@ -77,7 +75,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     if TYPE_CHECKING:  # pragma no cover
         pk: Any
-        model_fields: Dict[str, BaseField]
         __relation_map__: Optional[List[str]]
         __cached_hash__: Optional[int]
         _orm_relationship_manager: AliasManager
@@ -192,7 +189,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         # TODO: Check __pydantic_extra__
         if item == "__pydantic_extra__":
             return None
-        return super().__getattr__(item)
+        return super().__getattr__(item)  # type: ignore
 
     def __getstate__(self) -> Dict[Any, Any]:
         state = super().__getstate__()
@@ -549,7 +546,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     @staticmethod
     def _get_not_excluded_fields(
-        fields: Union[List, Set], include: Optional[Dict], exclude: Optional[Dict]
+        fields: Union[List, Set], include: Union[Set, Dict], exclude: Union[Set, Dict]
     ) -> List:
         """
         Returns related field names applying on them include and exclude set.

@@ -1,7 +1,7 @@
 import itertools
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Generator, List, Tuple, Type, Optional
+from typing import TYPE_CHECKING, Any, Generator, List, Optional, Tuple, Type
 
 import sqlalchemy
 

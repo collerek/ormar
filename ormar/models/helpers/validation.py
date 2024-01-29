@@ -6,9 +6,10 @@ from typing import (
     Callable,
     Dict,
     List,
+    Optional,
     Set,
     Type,
-    Union, Optional,
+    Union,
 )
 
 try:
@@ -26,7 +27,9 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.fields import BaseField
 
 
-def generate_model_example(model: Type["Model"], relation_map: Optional[Dict] = None) -> Dict:
+def generate_model_example(
+    model: Type["Model"], relation_map: Optional[Dict] = None
+) -> Dict:
     """
     Generates example to be included in schema in fastapi.
 
@@ -55,7 +58,10 @@ def generate_model_example(model: Type["Model"], relation_map: Optional[Dict] = 
 
 
 def populates_sample_fields_values(
-    example: Dict[str, Any], name: str, field: "BaseField", relation_map: Optional[Dict] = None
+    example: Dict[str, Any],
+    name: str,
+    field: "BaseField",
+    relation_map: Optional[Dict] = None,
 ) -> None:
     """
     Iterates the field and sets fields to sample values

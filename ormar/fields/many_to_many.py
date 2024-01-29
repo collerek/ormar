@@ -65,8 +65,12 @@ def populate_m2m_params_based_on_to_model(
     to_field = to.ormar_config.model_fields[to.ormar_config.pkname]
     pk_only_model = create_dummy_model(to, to_field)
     base_type = Union[
-        to_field.__type__, to, pk_only_model, List[to], List[pk_only_model]
-    ]  # type: ignore
+        to_field.__type__,
+        to,  # type: ignore
+        pk_only_model,  # type: ignore
+        List[to],  # type: ignore
+        List[pk_only_model],  # type: ignore
+    ]
     __type__ = (
         base_type  # type: ignore
         if not nullable
@@ -279,12 +283,11 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
             "__module__": self.owner.__module__,
             "__qualname__": f"{self.owner.__qualname__}.{class_name}",
         }
-        new_meta_namespace = {
-            "tablename": table_name,
-            "database": self.owner.ormar_config.database,
-            "metadata": self.owner.ormar_config.metadata,
-        }
-        new_meta = ormar.models.ormar_config.OrmarConfig(**new_meta_namespace)
+        new_meta = ormar.models.ormar_config.OrmarConfig(
+            tablename=table_name,
+            database=self.owner.ormar_config.database,
+            metadata=self.owner.ormar_config.metadata,
+        )
         through_model = type(
             class_name,
             (ormar.Model,),

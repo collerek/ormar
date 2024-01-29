@@ -16,7 +16,7 @@ from typing import (
 
 import pydantic
 from pydantic._internal._decorators import DecoratorInfos
-from pydantic.fields import Field, FieldInfo
+from pydantic.fields import FieldInfo
 
 from ormar.models.mixins.relation_mixin import RelationMixin  # noqa: I100, I202
 from ormar.queryset.utils import translate_list_to_dict
@@ -33,7 +33,10 @@ class PydanticMixin(RelationMixin):
 
     @classmethod
     def get_pydantic(
-        cls, *, include: Union[Set, Dict, None] = None, exclude: Union[Set, Dict, None] = None
+        cls,
+        *,
+        include: Union[Set, Dict, None] = None,
+        exclude: Union[Set, Dict, None] = None,
     ) -> Type[pydantic.BaseModel]:
         """
         Returns a pydantic model out of ormar model.

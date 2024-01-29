@@ -159,7 +159,7 @@ class Country(ormar.Model):
     )
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.Enum(enum_class=CountryNameEnum, default="Canada")
+    name: CountryNameEnum = ormar.Enum(enum_class=CountryNameEnum, default="Canada")
     taxed: bool = ormar.Boolean(default=True)
     country_code: int = ormar.Enum(enum_class=CountryCodeEnum, default=1)
 
@@ -172,7 +172,7 @@ class NullableCountry(ormar.Model):
     )
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.Enum(enum_class=CountryNameEnum, nullable=True)
+    name: CountryNameEnum = ormar.Enum(enum_class=CountryNameEnum, nullable=True)
 
 
 class NotNullableCountry(ormar.Model):
@@ -183,7 +183,7 @@ class NotNullableCountry(ormar.Model):
     )
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.Enum(enum_class=CountryNameEnum, nullable=False)
+    name: CountryNameEnum = ormar.Enum(enum_class=CountryNameEnum, nullable=False)
 
 
 @pytest.fixture(autouse=True, scope="module")

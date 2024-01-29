@@ -265,7 +265,10 @@ class QuerySet(Generic[T]):
         return self.model_meta.table
 
     def build_select_expression(
-        self, limit: Optional[int] = None, offset: Optional[int] = None, order_bys: Optional[List] = None
+        self,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        order_bys: Optional[List] = None,
     ) -> sqlalchemy.sql.select:
         """
         Constructs the actual database query used in the QuerySet.
@@ -857,7 +860,9 @@ class QuerySet(Generic[T]):
         query_offset = (page - 1) * page_size
         return self.rebuild_self(limit_count=limit_count, offset=query_offset)
 
-    def limit(self, limit_count: int, limit_raw_sql: Optional[bool] = None) -> "QuerySet[T]":
+    def limit(
+        self, limit_count: int, limit_raw_sql: Optional[bool] = None
+    ) -> "QuerySet[T]":
         """
         You can limit the results to desired number of parent models.
 
@@ -874,7 +879,9 @@ class QuerySet(Generic[T]):
         limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
         return self.rebuild_self(limit_count=limit_count, limit_raw_sql=limit_raw_sql)
 
-    def offset(self, offset: int, limit_raw_sql: Optional[bool] = None) -> "QuerySet[T]":
+    def offset(
+        self, offset: int, limit_raw_sql: Optional[bool] = None
+    ) -> "QuerySet[T]":
         """
         You can also offset the results by desired number of main models.
 

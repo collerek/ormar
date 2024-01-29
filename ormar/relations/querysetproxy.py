@@ -287,7 +287,9 @@ class QuerysetProxy(Generic[T]):
         return await queryset.delete(**kwargs)  # type: ignore
 
     async def values(
-        self, fields: Union[List, str, Set, Dict, None] = None, exclude_through: bool = False
+        self,
+        fields: Union[List, str, Set, Dict, None] = None,
+        exclude_through: bool = False,
     ) -> List:
         """
         Return a list of dictionaries with column values in order of the fields

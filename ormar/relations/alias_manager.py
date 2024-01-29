@@ -1,7 +1,7 @@
 import string
 import uuid
 from random import choices
-from typing import TYPE_CHECKING, Any, Dict, List, Type, Union, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
 
 import sqlalchemy
 from sqlalchemy import text
@@ -106,7 +106,10 @@ class AliasManager:
         return self._prefixed_tables.setdefault(key, table.alias(full_alias))
 
     def add_relation_type(
-        self, source_model: Type["Model"], relation_name: str, reverse_name: Optional[str] = None
+        self,
+        source_model: Type["Model"],
+        relation_name: str,
+        reverse_name: Optional[str] = None,
     ) -> None:
         """
         Registers the relations defined in ormar models.

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Type, Optional
+from typing import TYPE_CHECKING, Optional, Type
 
 import sqlalchemy
 from sqlalchemy import text

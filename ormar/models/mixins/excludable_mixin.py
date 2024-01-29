@@ -5,11 +5,12 @@ from typing import (
     Dict,
     List,
     Mapping,
+    Optional,
     Set,
     Type,
     TypeVar,
     Union,
-    cast, Optional,
+    cast,
 )
 
 from ormar.models.excludable import ExcludableItems

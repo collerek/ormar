@@ -64,7 +64,7 @@ class Item(ormar.Model):
     name: str = ormar.String(max_length=100)
     pydantic_int: Optional[int] = None
     test_P: List[PTestP] = Field(default_factory=list)
-    test_P_or_A: Union[int, str] = None
+    test_P_or_A: Union[int, str, None] = None
     categories = ormar.ManyToMany(Category)
 
 

@@ -339,7 +339,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     new_meta.model_fields = copy.deepcopy(through_class.ormar_config.model_fields)
     new_meta.property_fields = copy.deepcopy(through_class.ormar_config.property_fields)
     copy_name = through_class.__name__ + attrs.get("__name__", "")
-    copy_through = type(copy_name, (ormar.Model,), {"ormar_config": new_meta})
+    copy_through = cast(Type[ormar.Model], type(copy_name, (ormar.Model,), {"ormar_config": new_meta}))
     # create new table with copied columns but remove foreign keys
     # they will be populated later in expanding reverse relation
     # if hasattr(new_meta, "table"):
@@ -578,10 +578,10 @@ def add_field_descriptor(
         setattr(new_model, name, PydanticDescriptor(name=name))
 
 
-def get_serializer():
+def get_serializer() -> Callable:
     def serialize(
         self,
-        value: Optional[pydantic.BaseModel],
+        value: Optional["Model"],
         handler: SerializerFunctionWrapHandler,
     ) -> Any:
         """
