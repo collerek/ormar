@@ -1,6 +1,6 @@
 import datetime
 from collections import Counter
-from typing import List, Optional
+from typing import Optional
 
 import databases
 import ormar
@@ -11,10 +11,10 @@ import sqlalchemy as sa
 from ormar import ModelDefinitionError
 from ormar.exceptions import ModelError
 from ormar.models.metaclass import get_constraint_copy
+from ormar.relations.relation_proxy import RelationProxy
 from pydantic import computed_field
 from sqlalchemy import create_engine
 
-from ormar.relations.relation_proxy import RelationProxy
 from tests.settings import DATABASE_URL
 
 metadata = sa.MetaData()
@@ -200,7 +200,10 @@ def test_field_redefining_in_concrete_models() -> None:
         )
 
         id: int = ormar.Integer(primary_key=True)
-        created_date: str = ormar.String(max_length=200, name="creation_date")  # type: ignore
+        created_date: str = ormar.String(
+            max_length=200,
+            name="creation_date",
+        )  # type: ignore
 
     changed_field = RedefinedField.ormar_config.model_fields["created_date"]
     assert changed_field.ormar_default is None
@@ -225,7 +228,7 @@ def test_model_subclassing_that_redefines_constraints_column_names() -> None:
             )
 
             id: int = ormar.Integer(primary_key=True)
-            created_date: str = ormar.String(max_length=200)
+            created_date: str = ormar.String(max_length=200)  # type: ignore
 
 
 def test_model_subclassing_non_abstract_raises_error() -> None:

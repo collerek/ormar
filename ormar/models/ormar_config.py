@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Set, Type, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Set, Type, Union
 
 import databases
 import sqlalchemy
@@ -13,6 +13,17 @@ from ormar.signals import SignalEmitter
 
 
 class OrmarConfig:
+
+    if TYPE_CHECKING:
+        pkname: str
+        metadata: sqlalchemy.MetaData
+        database: databases.Database
+        tablename: str
+        order_by: List[str]
+        abstract: bool
+        exclude_parent_fields: List[str]
+        constraints: List[ColumnCollectionConstraint]
+
     def __init__(
         self,
         metadata: Optional[sqlalchemy.MetaData] = None,
@@ -25,10 +36,10 @@ class OrmarConfig:
         extra: Extra = Extra.forbid,
         constraints: Optional[List[ColumnCollectionConstraint]] = None,
     ) -> None:
-        self.pkname: str = None
+        self.pkname = None  # type: ignore
         self.metadata = metadata
-        self.database = database
-        self.tablename = tablename
+        self.database = database  # type: ignore
+        self.tablename = tablename  # type: ignore
         self.orders_by = order_by or []
         self.columns: List[sqlalchemy.Column] = []
         self.constraints = constraints or []

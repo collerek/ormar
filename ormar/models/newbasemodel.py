@@ -546,7 +546,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     @staticmethod
     def _get_not_excluded_fields(
-        fields: Union[List, Set], include: Union[Set, Dict], exclude: Union[Set, Dict]
+        fields: Union[List, Set], include: Optional[Dict], exclude: Optional[Dict]
     ) -> List:
         """
         Returns related field names applying on them include and exclude set.
@@ -623,24 +623,39 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         model_dict: Dict,
         include: Union[Set, Dict],
         exclude: Union[Set, Dict],
-        relation_map: Optional[Dict] = None,
+        relation_map: Dict,
     ) -> None:
         """
         Populates through models with values from dict representation.
 
         :param model: model to populate through models
         :type model: Model
-        :param values: dict representation of the model
-        :type values: Dict
+        :param model_dict: dict representation of the model
+        :type model_dict: Dict
+        :param include: fields to include
+        :type include: Dict
+        :param exclude: fields to exclude
+        :type exclude: Dict
+        :param relation_map: map of relations to follow to avoid circular refs
+        :type relation_map: Dict
         :return: None
         :rtype: None
         """
-        if include and isinstance(include, Set):
-            include = translate_list_to_dict(include)
-        if exclude and isinstance(exclude, Set):
-            exclude = translate_list_to_dict(exclude)
+
+        include_dict = (
+            translate_list_to_dict(include)
+            if (include and isinstance(include, Set))
+            else include
+        )
+        exclude_dict = (
+            translate_list_to_dict(exclude)
+            if (exclude and isinstance(exclude, Set))
+            else exclude
+        )
         models_to_populate = model._get_not_excluded_fields(
-            fields=model.extract_through_names(), include=include, exclude=exclude
+            fields=model.extract_through_names(),
+            include=cast(Optional[Dict], include_dict),
+            exclude=cast(Optional[Dict], exclude_dict),
         )
         for through_model in models_to_populate:
             through_field = model.ormar_config.model_fields[through_model]
@@ -831,10 +846,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             for k, v in dict_instance.items()
         }
 
-        if include and isinstance(include, Set):
-            include = translate_list_to_dict(include)
-        if exclude and isinstance(exclude, Set):
-            exclude = translate_list_to_dict(exclude)
+        include_dict = (
+            translate_list_to_dict(include) if isinstance(include, Set) else include
+        )
+        exclude_dict = (
+            translate_list_to_dict(exclude) if isinstance(exclude, Set) else exclude
+        )
 
         relation_map = (
             relation_map
@@ -846,8 +863,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             dict_instance = self._extract_nested_models(
                 relation_map=relation_map,
                 dict_instance=dict_instance,
-                include=include,  # type: ignore
-                exclude=exclude,  # type: ignore
+                include=include_dict,
+                exclude=exclude_dict,
                 exclude_primary_keys=exclude_primary_keys,
                 exclude_through_models=exclude_through_models,
                 exclude_list=exclude_list,
@@ -855,7 +872,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         # include model properties as fields in dict
         if object.__getattribute__(self, "ormar_config").property_fields:
-            props = self.get_properties(include=include, exclude=exclude)
+            props = self.get_properties(include=include_dict, exclude=exclude_dict)
             if props:
                 dict_instance.update({prop: getattr(self, prop) for prop in props})
 

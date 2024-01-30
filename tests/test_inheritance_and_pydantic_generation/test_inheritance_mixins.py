@@ -78,15 +78,7 @@ def test_field_redefining() -> None:
     )
 
 
-def test_field_redefining_in_second_raises_error() -> None:
-    class OkField(ormar.Model, DateFieldsMixins):  # pragma: no cover
-        ormar_config = ormar.OrmarConfig(
-            tablename="oks",
-            metadata=metadata,
-            database=db,
-        )
-
-        id: int = ormar.Integer(primary_key=True)
+def test_field_redefining_in_second() -> None:
 
     class RedefinedField2(ormar.Model, DateFieldsMixins):
         ormar_config = ormar.OrmarConfig(
@@ -96,7 +88,10 @@ def test_field_redefining_in_second_raises_error() -> None:
         )
 
         id: int = ormar.Integer(primary_key=True)
-        created_date: str = ormar.String(max_length=200, name="creation_date")
+        created_date: str = ormar.String(
+            max_length=200,
+            name="creation_date",
+        )  # type: ignore
 
     assert (
         RedefinedField2.ormar_config.model_fields["created_date"].ormar_default is None
@@ -169,6 +164,7 @@ async def test_fields_inherited_from_mixin() -> None:
             assert round_date_to_seconds(sub2.created_date) == round_date_to_seconds(
                 sub.created_date
             )
+            assert sub2.category is not None
             assert sub2.category.updated_date is not None
             assert round_date_to_seconds(
                 sub2.category.created_date

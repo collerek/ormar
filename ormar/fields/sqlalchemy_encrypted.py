@@ -191,7 +191,10 @@ class EncryptedString(types.TypeDecorator):
                     additional_parameter = getattr(
                         self._field_type, ADDITIONAL_PARAMETERS_MAP[self.type_]
                     )
-                    return decoder(decrypted_value, additional_parameter)
+                    return decoder(
+                        decrypted_value,
+                        additional_parameter,
+                    )  # type: ignore
                 return decoder(decrypted_value)  # type: ignore
 
             return self._field_type.__type__(decrypted_value)  # type: ignore

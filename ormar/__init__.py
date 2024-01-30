@@ -76,7 +76,6 @@ from ormar.fields import (
 
 # noqa: I100
 from ormar.models import ExcludableItems, Extra, Model, OrmarConfig
-from ormar.models.metaclass import ModelMeta
 from ormar.queryset import OrderAction, QuerySet, and_, or_
 from ormar.relations import RelationType
 from ormar.signals import Signal
@@ -120,7 +119,6 @@ __all__ = [
     "ReferentialAction",
     "QuerySetProtocol",
     "RelationProtocol",
-    "ModelMeta",
     "post_bulk_update",
     "post_delete",
     "post_save",

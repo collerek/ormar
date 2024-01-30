@@ -15,7 +15,6 @@ from typing import (
     cast,
 )
 
-import databases
 import pydantic
 import sqlalchemy
 from pydantic import field_serializer
@@ -57,10 +56,8 @@ from ormar.models.helpers import (
 )
 from ormar.models.ormar_config import OrmarConfig
 from ormar.models.quick_access_views import quick_access_set
-from ormar.models.utils import Extra
 from ormar.queryset import FieldAccessor, QuerySet
-from ormar.relations.alias_manager import AliasManager
-from ormar.signals import Signal, SignalEmitter
+from ormar.signals import Signal
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -68,32 +65,6 @@ if TYPE_CHECKING:  # pragma no cover
 
 CONFIG_KEY = "Config"
 PARSED_FIELDS_KEY = "__parsed_fields__"
-
-
-class ModelMeta:
-    """
-    Class used for type hinting.
-    Users can subclass this one for convenience but it's not required.
-    The only requirement is that ormar.Model has to have inner class with name Meta.
-    """
-
-    tablename: str
-    table: sqlalchemy.Table
-    metadata: sqlalchemy.MetaData
-    database: databases.Database
-    columns: List[sqlalchemy.Column]
-    constraints: List[ColumnCollectionConstraint]
-    pkname: str
-    model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]]
-    alias_manager: AliasManager
-    property_fields: Set
-    signals: SignalEmitter
-    abstract: bool
-    requires_ref_update: bool
-    orders_by: List[str]
-    exclude_parent_fields: List[str]
-    extra: Extra
-    queryset_class: Type[QuerySet]
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:
@@ -114,7 +85,6 @@ def add_cached_properties(new_model: Type["Model"]) -> None:
     new_model._related_names = None
     new_model._through_names = None
     new_model._related_fields = None
-    new_model._pydantic_fields = {name for name in new_model.model_fields.keys()}
     new_model._json_fields = set()
     new_model._bytes_fields = set()
 
@@ -330,7 +300,6 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
         constraints=through_class.ormar_config.constraints,
         order_by=through_class.ormar_config.orders_by,
     )
-    new_meta.columns = None
     new_meta.table = through_class.ormar_config.pkname
     new_meta.pkname = through_class.ormar_config.pkname
     new_meta.alias_manager = through_class.ormar_config.alias_manager
@@ -339,7 +308,9 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     new_meta.model_fields = copy.deepcopy(through_class.ormar_config.model_fields)
     new_meta.property_fields = copy.deepcopy(through_class.ormar_config.property_fields)
     copy_name = through_class.__name__ + attrs.get("__name__", "")
-    copy_through = cast(Type[ormar.Model], type(copy_name, (ormar.Model,), {"ormar_config": new_meta}))
+    copy_through = cast(
+        Type[ormar.Model], type(copy_name, (ormar.Model,), {"ormar_config": new_meta})
+    )
     # create new table with copied columns but remove foreign keys
     # they will be populated later in expanding reverse relation
     # if hasattr(new_meta, "table"):
@@ -580,7 +551,7 @@ def add_field_descriptor(
 
 def get_serializer() -> Callable:
     def serialize(
-        self,
+        self: "Model",
         value: Optional["Model"],
         handler: SerializerFunctionWrapHandler,
     ) -> Any:
@@ -594,7 +565,7 @@ def get_serializer() -> Callable:
         except ValueError as exc:
             if not str(exc).startswith("Circular reference"):
                 raise exc
-            return {value.ormar_config.pkname: value.pk}
+            return {value.ormar_config.pkname: value.pk} if value else None
 
     return serialize
 
@@ -609,7 +580,7 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
         __pydantic_reset_parent_namespace__: bool = True,
         _create_model_module: Union[str, None] = None,
         **kwargs,
-    ) -> "ModelMetaclass":
+    ) -> type:
         """
         Metaclass used by ormar Models that performs configuration
         and build of ormar Models.
@@ -698,7 +669,10 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
                 ):
                     field_name = new_model.ormar_config.pkname
                     new_model.model_fields[field_name] = (
-                        FieldInfo.from_annotated_attribute(Optional[int], None)
+                        FieldInfo.from_annotated_attribute(
+                            Optional[int],  # type: ignore
+                            None,
+                        )
                     )
                     new_model.model_rebuild(force=True)
 

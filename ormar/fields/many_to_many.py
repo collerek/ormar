@@ -64,8 +64,8 @@ def populate_m2m_params_based_on_to_model(
     """
     to_field = to.ormar_config.model_fields[to.ormar_config.pkname]
     pk_only_model = create_dummy_model(to, to_field)
-    base_type = Union[
-        to_field.__type__,
+    base_type = Union[  # type: ignore
+        to_field.__type__,  # type: ignore
         to,  # type: ignore
         pk_only_model,  # type: ignore
         List[to],  # type: ignore
