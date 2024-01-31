@@ -1,8 +1,7 @@
 import warnings
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union, Sequence
 
 import sqlalchemy
-from pydantic import typing
 from pydantic.fields import FieldInfo, _Unset
 
 import ormar  # noqa I101
@@ -15,6 +14,11 @@ from ormar.fields.sqlalchemy_encrypted import (
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, NewBaseModel
+    from pydantic.fields import FieldInfo
+
+    delattr(FieldInfo, "exclude")
+else:
+    from pydantic.fields import FieldInfo
 
 
 class BaseField(FieldInfo):
@@ -54,7 +58,7 @@ class BaseField(FieldInfo):
                 "https://collerek.github.io/ormar/fields/pydantic-fields",
                 DeprecationWarning,
             )
-        self.choices: typing.Sequence = kwargs.pop("choices", False)
+        self.choices: Sequence = kwargs.pop("choices", False)
 
         self.virtual: bool = kwargs.pop(
             "virtual", None

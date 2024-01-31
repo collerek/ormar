@@ -25,10 +25,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, T
     from ormar.relations.relation_proxy import RelationProxy
 
-    if sys.version_info < (3, 7):
-        ToType = Type["T"]
-    else:
-        ToType = Union[Type["T"], "ForwardRef"]
+    ToType = Union[Type["T"], "ForwardRef"]
 
 REF_PREFIX = "#/components/schemas/"
 
