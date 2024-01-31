@@ -14,11 +14,6 @@ from ormar.fields.sqlalchemy_encrypted import (
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, NewBaseModel
-    from pydantic.fields import FieldInfo
-
-    delattr(FieldInfo, "exclude")
-else:
-    from pydantic.fields import FieldInfo
 
 
 class BaseField(FieldInfo):
