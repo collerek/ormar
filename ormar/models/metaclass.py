@@ -288,7 +288,6 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
         field.owner = base_class
         field.create_default_through_model()
         through_class = field.through
-    # TODO: CHECK PKNAME
     new_meta = ormar.OrmarConfig(
         tablename=through_class.ormar_config.tablename,
         metadata=through_class.ormar_config.metadata,
@@ -655,7 +654,6 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
                 new_model = populate_meta_tablename_columns_and_pk(name, new_model)
                 populate_meta_sqlalchemy_table_if_required(new_model.ormar_config)
                 expand_reverse_relationships(new_model)
-                # TODO: iterate only related fields
                 for field_name, field in new_model.ormar_config.model_fields.items():
                     register_relation_in_alias_manager(field=field)
                     add_field_descriptor(

@@ -139,22 +139,33 @@ def get_pydantic_example_repr(type_: Any) -> Any:
     :rtype: Any
     """
     if hasattr(type_, "__origin__"):
-        if type_.__origin__ == Union:
-            values = tuple(
-                get_pydantic_example_repr(x)
-                for x in type_.__args__
-                if x is not type(None)
-            )
-            if len(values) == 1:
-                return values[0]
-            return values
-        if type_.__origin__ == list:
-            return [get_pydantic_example_repr(type_.__args__[0])]
+        return generate_example_for_nested_types(type_)
     if issubclass(type_, (numbers.Number, decimal.Decimal)):
         return 0
     if issubclass(type_, pydantic.BaseModel):
         return generate_pydantic_example(pydantic_model=type_)
     return "string"
+
+
+def generate_example_for_nested_types(type_: Any) -> Any:
+    """
+    Process nested types like Union[X, Y] or List[X]
+    """
+    if type_.__origin__ == Union:
+        return generate_example_for_union(type_=type_)
+    if type_.__origin__ == list:
+        return [get_pydantic_example_repr(type_.__args__[0])]
+
+
+def generate_example_for_union(type_: Any) -> Any:
+    """
+    Generates a pydantic example for Union[X, Y, ...].
+    Note that Optional can also be set as Union[X, None]
+    """
+    values = tuple(
+        get_pydantic_example_repr(x) for x in type_.__args__ if x is not type(None)
+    )
+    return values[0] if len(values) == 1 else values
 
 
 def overwrite_example_and_description(

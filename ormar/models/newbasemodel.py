@@ -1048,7 +1048,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: dictionary of fields names and values.
         :rtype: Dict
         """
-        # TODO: Cache this dictionary?
         self_fields = self._extract_own_model_fields()
         self_fields = {
             k: v

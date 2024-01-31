@@ -113,7 +113,7 @@ class PydanticMixin(RelationMixin):
     ) -> Any:
         field = cls.ormar_config.model_fields[name]
         target: Any = None
-        if field.is_relation and name in relation_map:  # type: ignore
+        if field.is_relation and name in relation_map:
             target = field.to._convert_ormar_to_pydantic(
                 include=cls._skip_ellipsis(include, name),
                 exclude=cls._skip_ellipsis(exclude, name),
