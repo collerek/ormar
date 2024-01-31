@@ -1,5 +1,5 @@
 import warnings
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union, Sequence
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Type, Union
 
 import sqlalchemy
 from pydantic.fields import FieldInfo, _Unset

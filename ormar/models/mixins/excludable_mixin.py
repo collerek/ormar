@@ -8,7 +8,6 @@ from typing import (
     Optional,
     Set,
     Type,
-    TypeVar,
     Union,
     cast,
 )
@@ -19,7 +18,6 @@ from ormar.models.mixins.relation_mixin import RelationMixin
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
-    T = TypeVar("T", bound=Model)
     IntStr = Union[int, str]
     AbstractSetIntStr = AbstractSet[IntStr]
     MappingIntStrAny = Mapping[IntStr, Any]

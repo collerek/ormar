@@ -1,4 +1,3 @@
-import sys
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -24,8 +23,6 @@ from ormar.fields.foreign_key import (
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, T
     from ormar.relations.relation_proxy import RelationProxy
-
-    ToType = Union[Type["T"], "ForwardRef"]
 
 REF_PREFIX = "#/components/schemas/"
 
@@ -88,8 +85,8 @@ def ManyToMany(to: ForwardRef, **kwargs: Any) -> "RelationProxy":  # pragma: no 
 
 
 def ManyToMany(  # type: ignore
-    to: "ToType",
-    through: Optional["ToType"] = None,
+    to: Union[Type["T"], "ForwardRef"],
+    through: Optional[Union[Type["T"], "ForwardRef"]] = None,
     *,
     name: Optional[str] = None,
     unique: bool = False,
@@ -183,7 +180,11 @@ def ManyToMany(  # type: ignore
     return Field(**namespace)
 
 
-class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationProtocol):
+class ManyToManyField(  # type: ignore
+    ForeignKeyField,
+    ormar.QuerySetProtocol,
+    ormar.RelationProtocol,
+):
     """
     Actual class returned from ManyToMany function call and stored in model_fields.
     """
