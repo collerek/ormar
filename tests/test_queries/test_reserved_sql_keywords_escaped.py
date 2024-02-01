@@ -1,18 +1,11 @@
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config(force_rollback=True)
 
 
 class User(ormar.Model):
@@ -39,18 +32,12 @@ class Task(ormar.Model):
     user = ormar.ForeignKey(User)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_single_model_quotes():
-    async with database:
+    async with base_ormar_config.database:
         await User.objects.create(
             user="test",
             first="first",
@@ -66,7 +53,7 @@ async def test_single_model_quotes():
 
 @pytest.mark.asyncio
 async def test_two_model_quotes():
-    async with database:
+    async with base_ormar_config.database:
         user = await User.objects.create(
             user="test",
             first="first",

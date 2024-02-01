@@ -6,24 +6,16 @@ import hashlib
 import uuid
 from typing import Any
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from ormar import ModelDefinitionError, NoMatch
 from ormar.fields.sqlalchemy_encrypted import EncryptedString
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
-
+base_ormar_config = create_config()
 default_fernet = dict(
     encrypt_secret="asd123", encrypt_backend=ormar.EncryptBackends.FERNET
 )
@@ -108,13 +100,7 @@ class Report(ormar.Model):
     filters = ormar.ManyToMany(Filter)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_error_on_encrypted_pk():
@@ -178,7 +164,7 @@ def test_db_structure():
 
 @pytest.mark.asyncio
 async def test_save_and_retrieve():
-    async with database:
+    async with base_ormar_config.database:
         test_uuid = uuid.uuid4()
         await Author(
             name="Test",
@@ -222,7 +208,7 @@ async def test_save_and_retrieve():
 
 @pytest.mark.asyncio
 async def test_fernet_filters_nomatch():
-    async with database:
+    async with base_ormar_config.database:
         await Filter(name="test1").save()
         await Filter(name="test1").save()
 
@@ -237,7 +223,7 @@ async def test_fernet_filters_nomatch():
 
 @pytest.mark.asyncio
 async def test_hash_filters_works():
-    async with database:
+    async with base_ormar_config.database:
         await Hash(name="test1").save()
         await Hash(name="test2").save()
 
@@ -254,7 +240,7 @@ async def test_hash_filters_works():
 
 @pytest.mark.asyncio
 async def test_related_model_fields_properly_decrypted():
-    async with database:
+    async with base_ormar_config.database:
         hash1 = await Hash(name="test1").save()
         report = await Report.objects.create(name="Report1")
         await report.filters.create(name="test1", hash=hash1)

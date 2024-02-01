@@ -1,41 +1,28 @@
 from typing import List
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class NickNames(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="nicks",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="nicks")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
 
 
 class NicksHq(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="nicks_x_hq",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="nicks_x_hq")
 
 
 class HQ(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="hqs",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="hqs")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -43,11 +30,7 @@ class HQ(ormar.Model):
 
 
 class Company(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="companies",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
@@ -55,19 +38,13 @@ class Company(ormar.Model):
     hq: HQ = ormar.ForeignKey(HQ)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_construct_with_empty_relation():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await HQ.objects.create(name="Main")
             comp = Company(name="Banzai", hq=None, founded=1988)
             comp2 = Company.model_construct(
@@ -78,8 +55,8 @@ async def test_construct_with_empty_relation():
 
 @pytest.mark.asyncio
 async def test_init_and_construct_has_same_effect():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             hq = await HQ.objects.create(name="Main")
             comp = Company(name="Banzai", hq=hq, founded=1988)
             comp2 = Company.model_construct(**dict(name="Banzai", hq=hq, founded=1988))
@@ -93,8 +70,8 @@ async def test_init_and_construct_has_same_effect():
 
 @pytest.mark.asyncio
 async def test_init_and_construct_has_same_effect_with_m2m():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             n1 = await NickNames(name="test").save()
             n2 = await NickNames(name="test2").save()
             hq = HQ(name="Main", nicks=[n1, n2])

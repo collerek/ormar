@@ -1,28 +1,24 @@
 # type: ignore
 from typing import ForwardRef, List, Optional
 
-import databases
 import ormar
 import pytest
 import pytest_asyncio
 import sqlalchemy as sa
 from ormar.exceptions import ModelError
-from sqlalchemy import create_engine
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-metadata = sa.MetaData()
-db = databases.Database(DATABASE_URL)
-engine = create_engine(DATABASE_URL)
+
+base_ormar_config = create_config()
+
 
 PersonRef = ForwardRef("Person")
 
 
 class Person(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -37,10 +33,7 @@ ChildFriendRef = ForwardRef("ChildFriend")
 
 
 class Child(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -54,17 +47,11 @@ class Child(ormar.Model):
 
 
 class ChildFriend(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy()
 
 
 class Game(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -73,17 +60,13 @@ class Game(ormar.Model):
 Child.update_forward_refs()
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest_asyncio.fixture(scope="function")
 async def cleanup():
     yield
-    async with db:
+    async with base_ormar_config.database:
         await ChildFriend.objects.delete(each=True)
         await Child.objects.delete(each=True)
         await Game.objects.delete(each=True)
@@ -95,10 +78,7 @@ async def test_not_updated_model_raises_errors():
     Person2Ref = ForwardRef("Person2")
 
     class Person2(ormar.Model):
-        ormar_config = ormar.OrmarConfig(
-            metadata=metadata,
-            database=db,
-        )
+        ormar_config = base_ormar_config.copy()
 
         id: int = ormar.Integer(primary_key=True)
         name: str = ormar.String(max_length=100)
@@ -119,16 +99,10 @@ async def test_not_updated_model_m2m_raises_errors():
     Person3Ref = ForwardRef("Person3")
 
     class PersonFriend(ormar.Model):
-        ormar_config = ormar.OrmarConfig(
-            metadata=metadata,
-            database=db,
-        )
+        ormar_config = base_ormar_config.copy()
 
     class Person3(ormar.Model):
-        ormar_config = ormar.OrmarConfig(
-            metadata=metadata,
-            database=db,
-        )
+        ormar_config = base_ormar_config.copy()
 
         id: int = ormar.Integer(primary_key=True)
         name: str = ormar.String(max_length=100)
@@ -151,19 +125,13 @@ async def test_not_updated_model_m2m_through_raises_errors():
     PersonPetRef = ForwardRef("PersonPet")
 
     class Pet(ormar.Model):
-        ormar_config = ormar.OrmarConfig(
-            metadata=metadata,
-            database=db,
-        )
+        ormar_config = base_ormar_config.copy()
 
         id: int = ormar.Integer(primary_key=True)
         name: str = ormar.String(max_length=100)
 
     class Person4(ormar.Model):
-        ormar_config = ormar.OrmarConfig(
-            metadata=metadata,
-            database=db,
-        )
+        ormar_config = base_ormar_config.copy()
 
         id: int = ormar.Integer(primary_key=True)
         name: str = ormar.String(max_length=100)
@@ -172,10 +140,7 @@ async def test_not_updated_model_m2m_through_raises_errors():
         )
 
     class PersonPet(ormar.Model):
-        ormar_config = ormar.OrmarConfig(
-            metadata=metadata,
-            database=db,
-        )
+        ormar_config = base_ormar_config.copy()
 
     with pytest.raises(ModelError):
         await Person4.objects.create(name="Test")
@@ -205,8 +170,8 @@ def test_proper_field_init():
 
 @pytest.mark.asyncio
 async def test_self_relation():
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             sam = await Person.objects.create(name="Sam")
             joe = await Person(name="Joe", supervisor=sam).save()
             assert joe.supervisor.name == "Sam"
@@ -223,8 +188,8 @@ async def test_self_relation():
 
 @pytest.mark.asyncio
 async def test_other_forwardref_relation(cleanup):
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             checkers = await Game.objects.create(name="checkers")
             uno = await Game(name="Uno").save()
 
@@ -250,8 +215,8 @@ async def test_other_forwardref_relation(cleanup):
 
 @pytest.mark.asyncio
 async def test_m2m_self_forwardref_relation(cleanup):
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             checkers = await Game.objects.create(name="Checkers")
             uno = await Game(name="Uno").save()
             jenga = await Game(name="Jenga").save()

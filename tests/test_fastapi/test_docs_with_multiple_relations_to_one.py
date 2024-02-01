@@ -1,24 +1,18 @@
 from typing import Optional
 from uuid import UUID, uuid4
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-app = FastAPI()
-DATABASE_URL = "sqlite:///db.sqlite"
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import lifespan, init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 class CA(ormar.Model):
@@ -42,6 +36,9 @@ class CB2(ormar.Model):
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     cb2_name: str = ormar.Text(default="")
     ca2: Optional[CA] = ormar.ForeignKey(CA, nullable=True)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 @app.get("/ca", response_model=CA)

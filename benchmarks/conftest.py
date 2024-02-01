@@ -3,26 +3,18 @@ import random
 import string
 import time
 
-import databases
 import nest_asyncio
 import ormar
 import pytest
 import pytest_asyncio
-import sqlalchemy
-from tests.settings import DATABASE_URL
 
+from tests.settings import create_config
+from tests.lifespan import init_tests
+
+
+base_ormar_config = create_config()
 nest_asyncio.apply()
-
-
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
 pytestmark = pytest.mark.asyncio
-
-
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
 
 
 class Author(ormar.Model):
@@ -57,13 +49,7 @@ class Book(ormar.Model):
     year: int = ormar.Integer(nullable=True)
 
 
-@pytest.fixture(autouse=True, scope="function")  # TODO: fix this to be module
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config, scope="function")
 
 
 @pytest_asyncio.fixture

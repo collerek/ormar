@@ -1,21 +1,14 @@
 from typing import Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from ormar.exceptions import QueryDefinitionError
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class Author(ormar.Model):
@@ -34,18 +27,12 @@ class Book(ormar.Model):
     year: int = ormar.Integer(nullable=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_or_filters():
-    async with database:
+    async with base_ormar_config.database:
         tolkien = await Author(name="J.R.R. Tolkien").save()
         await Book(author=tolkien, title="The Hobbit", year=1933).save()
         await Book(author=tolkien, title="The Lord of the Rings", year=1955).save()

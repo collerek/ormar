@@ -1,23 +1,18 @@
 import pickle
 from typing import Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class User(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="users",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="users")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -25,29 +20,19 @@ class User(ormar.Model):
 
 
 class Post(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="posts",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="posts")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     created_by: Optional[User] = ormar.ForeignKey(User)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_dumping_and_loading_model_works():
-    async with database:
+    async with base_ormar_config.database:
         user = await User(name="Test", properties={"aa": "bb"}).save()
         post = Post(name="Test post")
         await user.posts.add(post)

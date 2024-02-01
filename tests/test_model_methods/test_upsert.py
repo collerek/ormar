@@ -5,18 +5,15 @@ import ormar
 import pytest
 import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class Director(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="directors",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="directors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="first_name")
@@ -24,11 +21,7 @@ class Director(ormar.Model):
 
 
 class Movie(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="movies",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="movies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="title")
@@ -37,18 +30,12 @@ class Movie(ormar.Model):
     director: Optional[Director] = ormar.ForeignKey(Director)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_updating_selected_columns():
-    async with database:
+    async with base_ormar_config.database:
         director1 = await Director(name="Peter", last_name="Jackson").save()
 
         await Movie(

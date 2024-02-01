@@ -1,22 +1,17 @@
 from typing import List
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
+
+base_ormar_config = create_config()
 
 
 class Category(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="categories",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="Test", nullable=True)
@@ -24,11 +19,7 @@ class Category(ormar.Model):
 
 
 class Item(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="items",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="items")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -36,17 +27,12 @@ class Item(ormar.Model):
     categories: List[Category] = ormar.ManyToMany(Category)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_exclude_default():
-    async with database:
+    async with base_ormar_config.database:
         category = Category()
         assert category.model_dump() == {
             "id": None,
@@ -70,7 +56,7 @@ async def test_exclude_default():
 
 @pytest.mark.asyncio
 async def test_exclude_none():
-    async with database:
+    async with base_ormar_config.database:
         category = Category(id=2, name=None)
         assert category.model_dump() == {
             "id": 2,
@@ -105,7 +91,7 @@ async def test_exclude_none():
 
 @pytest.mark.asyncio
 async def test_exclude_unset():
-    async with database:
+    async with base_ormar_config.database:
         category = Category(id=3, name="Test 2")
         assert category.model_dump() == {
             "id": 3,

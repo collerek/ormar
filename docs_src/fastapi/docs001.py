@@ -1,45 +1,25 @@
 from typing import List, Optional
 
-import databases
 import ormar
-import sqlalchemy
 from fastapi import FastAPI
 
-DATABASE_URL = "sqlite:///test.db"
-
-ormar_base_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL), metadata=sqlalchemy.MetaData()
-)
-
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database("sqlite:///test.db")
-app.state.database = database
+from tests.settings import create_config
+from tests.lifespan import lifespan
 
 
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 class Category(ormar.Model):
-    ormar_config = ormar_base_config.copy(tablename="categories")
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    ormar_config = ormar_base_config.copy(tablename="items")
+    ormar_config = base_ormar_config.copy(tablename="items")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

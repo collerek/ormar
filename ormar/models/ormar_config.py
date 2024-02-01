@@ -28,6 +28,7 @@ class OrmarConfig:
         self,
         metadata: Optional[sqlalchemy.MetaData] = None,
         database: Optional[databases.Database] = None,
+        engine: Optional[sqlalchemy.engine.Engine] = None,
         tablename: Optional[str] = None,
         order_by: Optional[List[str]] = None,
         abstract: bool = False,
@@ -39,6 +40,7 @@ class OrmarConfig:
         self.pkname = None  # type: ignore
         self.metadata = metadata
         self.database = database  # type: ignore
+        self.engine = engine # type: ignore
         self.tablename = tablename  # type: ignore
         self.orders_by = order_by or []
         self.columns: List[sqlalchemy.Column] = []
@@ -60,6 +62,7 @@ class OrmarConfig:
         self,
         metadata: Optional[sqlalchemy.MetaData] = None,
         database: Optional[databases.Database] = None,
+        engine: Optional[sqlalchemy.engine.Engine] = None,
         tablename: Optional[str] = None,
         order_by: Optional[List[str]] = None,
         abstract: Optional[bool] = None,
@@ -71,6 +74,7 @@ class OrmarConfig:
         return OrmarConfig(
             metadata=metadata or self.metadata,
             database=database or self.database,
+            engine=engine or self.engine,
             tablename=tablename,
             order_by=order_by,
             abstract=abstract or self.abstract,

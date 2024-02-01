@@ -1,47 +1,27 @@
 import base64
 import uuid
-from contextlib import asynccontextmanager
 from enum import Enum
-from typing import AsyncIterator, List
+from typing import  List
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import lifespan, init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
 
 headers = {"content-type": "application/json"}
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    if not database.is_connected:
-        await database.connect()
-    yield
-    if database.is_connected:
-        await database.disconnect()
-
-
-app = FastAPI(lifespan=lifespan)
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 blob3 = b"\xc3\x83\x28"
 blob4 = b"\xf0\x28\x8c\x28"
 blob5 = b"\xee"
 blob6 = b"\xff"
-
-
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
 
 
 class BinaryEnum(Enum):
@@ -59,6 +39,9 @@ class BinaryThing(ormar.Model):
     bt: str = ormar.LargeBinary(represent_as_base64_str=True, max_length=100)
 
 
+create_test_database = init_tests(base_ormar_config)
+
+
 @app.get("/things", response_model=List[BinaryThing])
 async def read_things():
     return await BinaryThing.objects.order_by("name").all()
@@ -68,14 +51,6 @@ async def read_things():
 async def create_things(thing: BinaryThing):
     thing = await thing.save()
     return thing
-
-
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
 
 
 @pytest.mark.asyncio

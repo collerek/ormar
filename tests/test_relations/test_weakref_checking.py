@@ -1,35 +1,29 @@
-import databases
 import ormar
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
+from tests.lifespan import init_tests
 
 
 class Band(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="bands",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="bands")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Artist(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="artists",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="artists")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
     band: Band = ormar.ForeignKey(Band)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_weakref_init():

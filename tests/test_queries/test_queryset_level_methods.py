@@ -1,11 +1,9 @@
 from enum import Enum
 from typing import Optional
 
-import databases
 import ormar
 import pydantic
 import pytest
-import sqlalchemy
 from ormar import QuerySet
 from ormar.exceptions import (
     ModelListEmptyError,
@@ -14,10 +12,11 @@ from ormar.exceptions import (
 )
 from pydantic import Json
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config(force_rollback=True)
 
 
 class MySize(Enum):
@@ -26,11 +25,7 @@ class MySize(Enum):
 
 
 class Book(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="books",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -43,11 +38,7 @@ class Book(ormar.Model):
 
 
 class ToDo(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="todos",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="todos")
 
     id: int = ormar.Integer(primary_key=True)
     text: str = ormar.String(max_length=500)
@@ -57,22 +48,14 @@ class ToDo(ormar.Model):
 
 
 class Category(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="categories",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=500)
 
 
 class Note(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="notes",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="notes")
 
     id: int = ormar.Integer(primary_key=True)
     text: str = ormar.String(max_length=500)
@@ -80,11 +63,7 @@ class Note(ormar.Model):
 
 
 class ItemConfig(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=database,
-        tablename="item_config",
-    )
+    ormar_config = base_ormar_config.copy(tablename="item_config")
 
     id: Optional[int] = ormar.Integer(primary_key=True)
     item_id: str = ormar.String(max_length=32, index=True)
@@ -102,9 +81,7 @@ class QuerySetCls(QuerySet):
 
 
 class Customer(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=database,
+    ormar_config = base_ormar_config.copy(
         tablename="customer",
         queryset_class=QuerySetCls,
     )
@@ -114,29 +91,19 @@ class Customer(ormar.Model):
 
 
 class JsonTestModel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=database,
-        tablename="test_model",
-    )
+    ormar_config = base_ormar_config.copy(tablename="test_model")
 
     id: int = ormar.Integer(primary_key=True)
     json_field: Json = ormar.JSON()
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_delete_and_update():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await Book.objects.create(
                 title="Tom Sawyer", author="Twain, Mark", genre="Adventure"
             )
@@ -191,7 +158,7 @@ async def test_delete_and_update():
 
 @pytest.mark.asyncio
 async def test_get_or_create():
-    async with database:
+    async with base_ormar_config.database:
         tom, created = await Book.objects.get_or_create(
             title="Volume I", author="Anonymous", genre="Fiction"
         )
@@ -217,7 +184,7 @@ async def test_get_or_create():
 
 @pytest.mark.asyncio
 async def test_get_or_create_with_defaults():
-    async with database:
+    async with base_ormar_config.database:
         book, created = await Book.objects.get_or_create(
             title="Nice book", _defaults={"author": "Mojix", "genre": "Historic"}
         )
@@ -253,7 +220,7 @@ async def test_get_or_create_with_defaults():
 
 @pytest.mark.asyncio
 async def test_update_or_create():
-    async with database:
+    async with base_ormar_config.database:
         tom = await Book.objects.update_or_create(
             title="Volume I", author="Anonymous", genre="Fiction"
         )
@@ -276,7 +243,7 @@ async def test_update_or_create():
 
 @pytest.mark.asyncio
 async def test_bulk_create():
-    async with database:
+    async with base_ormar_config.database:
         await ToDo.objects.bulk_create(
             [
                 ToDo(text="Buy the groceries."),
@@ -299,7 +266,7 @@ async def test_bulk_create():
 
 @pytest.mark.asyncio
 async def test_bulk_create_json_field():
-    async with database:
+    async with base_ormar_config.database:
         json_value = {"a": 1}
         test_model_1 = JsonTestModel(id=1, json_field=json_value)
         test_model_2 = JsonTestModel(id=2, json_field=json_value)
@@ -319,7 +286,7 @@ async def test_bulk_create_json_field():
         query = table.select().where(table.c.json_field["a"].as_integer() == 1)
         res = [
             JsonTestModel.from_row(record, source_model=JsonTestModel)
-            for record in await database.fetch_all(query)
+            for record in await base_ormar_config.database.fetch_all(query)
         ]
 
         assert test_model_1 in res
@@ -329,7 +296,7 @@ async def test_bulk_create_json_field():
 
 @pytest.mark.asyncio
 async def test_bulk_create_with_relation():
-    async with database:
+    async with base_ormar_config.database:
         category = await Category.objects.create(name="Sample Category")
 
         await Note.objects.bulk_create(
@@ -347,7 +314,7 @@ async def test_bulk_create_with_relation():
 
 @pytest.mark.asyncio
 async def test_bulk_update():
-    async with database:
+    async with base_ormar_config.database:
         await ToDo.objects.bulk_create(
             [
                 ToDo(text="Buy the groceries."),
@@ -378,7 +345,7 @@ async def test_bulk_update():
 
 @pytest.mark.asyncio
 async def test_bulk_update_with_only_selected_columns():
-    async with database:
+    async with base_ormar_config.database:
         await ToDo.objects.bulk_create(
             [
                 ToDo(text="Reset the world simulation.", completed=False),
@@ -407,7 +374,7 @@ async def test_bulk_update_with_only_selected_columns():
 
 @pytest.mark.asyncio
 async def test_bulk_update_with_relation():
-    async with database:
+    async with base_ormar_config.database:
         category = await Category.objects.create(name="Sample Category")
         category2 = await Category.objects.create(name="Sample II Category")
 
@@ -436,7 +403,7 @@ async def test_bulk_update_with_relation():
 
 @pytest.mark.asyncio
 async def test_bulk_update_not_saved_objts():
-    async with database:
+    async with base_ormar_config.database:
         category = await Category.objects.create(name="Sample Category")
         with pytest.raises(ModelPersistenceError):
             await Note.objects.bulk_update(
@@ -452,7 +419,7 @@ async def test_bulk_update_not_saved_objts():
 
 @pytest.mark.asyncio
 async def test_bulk_operations_with_json():
-    async with database:
+    async with base_ormar_config.database:
         items = [
             ItemConfig(item_id="test1"),
             ItemConfig(item_id="test2"),
@@ -480,14 +447,14 @@ async def test_bulk_operations_with_json():
         query = table.select().where(table.c.pairs["b"].as_integer() == 2)
         res = [
             ItemConfig.from_row(record, source_model=ItemConfig)
-            for record in await database.fetch_all(query)
+            for record in await base_ormar_config.database.fetch_all(query)
         ]
         assert len(res) == 2
 
 
 @pytest.mark.asyncio
 async def test_custom_queryset_cls():
-    async with database:
+    async with base_ormar_config.database:
         with pytest.raises(ValueError):
             await Customer.objects.first_or_404(id=1)
 
@@ -498,7 +465,7 @@ async def test_custom_queryset_cls():
 
 @pytest.mark.asyncio
 async def test_filter_enum():
-    async with database:
+    async with base_ormar_config.database:
         it = ItemConfig(item_id="test_1")
         await it.save()
 

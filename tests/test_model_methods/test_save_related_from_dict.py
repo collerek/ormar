@@ -1,33 +1,24 @@
 from typing import List
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class CringeLevel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="levels",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="levels")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class NickName(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="nicks",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="nicks")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -36,22 +27,14 @@ class NickName(ormar.Model):
 
 
 class NicksHq(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="nicks_x_hq",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="nicks_x_hq")
 
     id: int = ormar.Integer(primary_key=True)
     new_field: str = ormar.String(max_length=200, nullable=True)
 
 
 class HQ(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="hqs",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="hqs")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -59,11 +42,7 @@ class HQ(ormar.Model):
 
 
 class Company(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="companies",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
@@ -71,19 +50,13 @@ class Company(ormar.Model):
     hq: HQ = ormar.ForeignKey(HQ, related_name="companies")
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_saving_related_reverse_fk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             payload = {"companies": [{"name": "Banzai"}], "name": "Main"}
             hq = HQ(**payload)
             count = await hq.save_related(follow=True, save_all=True)
@@ -99,8 +72,8 @@ async def test_saving_related_reverse_fk():
 
 @pytest.mark.asyncio
 async def test_saving_related_reverse_fk_multiple():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             payload = {
                 "companies": [{"name": "Banzai"}, {"name": "Yamate"}],
                 "name": "Main",
@@ -121,8 +94,8 @@ async def test_saving_related_reverse_fk_multiple():
 
 @pytest.mark.asyncio
 async def test_saving_related_fk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             payload = {"hq": {"name": "Main"}, "name": "Banzai"}
             comp = Company(**payload)
             count = await comp.save_related(follow=True, save_all=True)
@@ -137,8 +110,8 @@ async def test_saving_related_fk():
 
 @pytest.mark.asyncio
 async def test_saving_many_to_many_wo_through():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             payload = {
                 "name": "Main",
                 "nicks": [
@@ -160,9 +133,9 @@ async def test_saving_many_to_many_wo_through():
 
 @pytest.mark.asyncio
 async def test_saving_many_to_many_with_through():
-    async with database:
-        async with database.transaction(force_rollback=True):
-            async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            async with base_ormar_config.database.transaction(force_rollback=True):
                 payload = {
                     "name": "Main",
                     "nicks": [
@@ -194,8 +167,8 @@ async def test_saving_many_to_many_with_through():
 
 @pytest.mark.asyncio
 async def test_saving_nested_with_m2m_and_rev_fk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             payload = {
                 "name": "Main",
                 "nicks": [
@@ -219,8 +192,8 @@ async def test_saving_nested_with_m2m_and_rev_fk():
 
 @pytest.mark.asyncio
 async def test_saving_nested_with_m2m_and_rev_fk_and_through():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             payload = {
                 "hq": {
                     "name": "Yoko",

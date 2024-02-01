@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import List, Optional
 
 import databases
@@ -13,24 +14,20 @@ ormar_base_config = ormar.OrmarConfig(
 )
 
 
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database("sqlite:///test.db")
-app.state.database = database
-
-
-@app.on_event("startup")
-async def startup() -> None:
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     database_ = app.state.database
     if not database_.is_connected:
         await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
+    yield
     database_ = app.state.database
     if database_.is_connected:
         await database_.disconnect()
+
+app = FastAPI(lifespan=lifespan)
+metadata = sqlalchemy.MetaData()
+database = databases.Database("sqlite:///test.db")
+app.state.database = database
 
 
 class Category(ormar.Model):

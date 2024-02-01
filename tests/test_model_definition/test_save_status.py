@@ -1,23 +1,18 @@
 from typing import List
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from ormar.exceptions import ModelPersistenceError
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class NickNames(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="nicks",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="nicks")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -25,19 +20,11 @@ class NickNames(ormar.Model):
 
 
 class NicksHq(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="nicks_x_hq",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="nicks_x_hq")
 
 
 class HQ(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="hqs",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="hqs")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -45,11 +32,7 @@ class HQ(ormar.Model):
 
 
 class Company(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="companies",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
@@ -57,19 +40,13 @@ class Company(ormar.Model):
     hq: HQ = ormar.ForeignKey(HQ)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_instantiation_false_save_true():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             comp = Company(name="Banzai", founded=1988)
             assert not comp.saved
             await comp.save()
@@ -78,8 +55,8 @@ async def test_instantiation_false_save_true():
 
 @pytest.mark.asyncio
 async def test_saved_edited_not_saved():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             comp = await Company.objects.create(name="Banzai", founded=1988)
             assert comp.saved
             comp.name = "Banzai2"
@@ -100,8 +77,8 @@ async def test_saved_edited_not_saved():
 
 @pytest.mark.asyncio
 async def test_adding_related_gets_dirty():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             hq = await HQ.objects.create(name="Main")
             comp = await Company.objects.create(name="Banzai", founded=1988)
             assert comp.saved
@@ -127,8 +104,8 @@ async def test_adding_related_gets_dirty():
 
 @pytest.mark.asyncio
 async def test_adding_many_to_many_does_not_gets_dirty():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             nick1 = await NickNames.objects.create(name="Bazinga", is_lame=False)
             nick2 = await NickNames.objects.create(name="Bazinga2", is_lame=True)
 
@@ -156,8 +133,8 @@ async def test_adding_many_to_many_does_not_gets_dirty():
 
 @pytest.mark.asyncio
 async def test_delete():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             comp = await Company.objects.create(name="Banzai", founded=1988)
             assert comp.saved
             await comp.delete()
@@ -169,8 +146,8 @@ async def test_delete():
 
 @pytest.mark.asyncio
 async def test_load():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             comp = await Company.objects.create(name="Banzai", founded=1988)
             assert comp.saved
             comp.name = "AA"
@@ -183,8 +160,8 @@ async def test_load():
 
 @pytest.mark.asyncio
 async def test_queryset_methods():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await Company.objects.create(name="Banzai", founded=1988)
             await Company.objects.create(name="Yuhu", founded=1989)
             await Company.objects.create(name="Konono", founded=1990)
@@ -226,8 +203,8 @@ async def test_queryset_methods():
 
 @pytest.mark.asyncio
 async def test_bulk_methods():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             c1 = Company(name="Banzai", founded=1988)
             c2 = Company(name="Yuhu", founded=1989)
 

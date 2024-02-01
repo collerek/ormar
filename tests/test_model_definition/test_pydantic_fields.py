@@ -1,22 +1,16 @@
 import random
 from typing import Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from pydantic import BaseModel, Field, HttpUrl
 from pydantic_extra_types.payment import PaymentCardNumber
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class ModelTest(ormar.Model):
@@ -70,18 +64,12 @@ class ModelTest3(ormar.Model):
     pydantic_test: PydanticTest
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_working_with_pydantic_fields():
-    async with database:
+    async with base_ormar_config.database:
         test = ModelTest(name="Test")
         assert test.name == "Test"
         assert test.url == "https://www.example.com"
@@ -101,7 +89,7 @@ async def test_working_with_pydantic_fields():
 
 @pytest.mark.asyncio
 async def test_default_factory_for_pydantic_fields():
-    async with database:
+    async with base_ormar_config.database:
         test = ModelTest2(name="Test2", number="4000000000000002")
         assert test.name == "Test2"
         assert test.url == "https://www.example2.com"
@@ -121,7 +109,7 @@ async def test_default_factory_for_pydantic_fields():
 
 @pytest.mark.asyncio
 async def test_init_setting_for_pydantic_fields():
-    async with database:
+    async with base_ormar_config.database:
         test = ModelTest3(name="Test3")
         assert test.name == "Test3"
         assert test.url == "https://www.example3.com"

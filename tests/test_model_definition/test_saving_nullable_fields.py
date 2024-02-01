@@ -1,23 +1,17 @@
 from typing import Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
-from sqlalchemy import create_engine
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-db = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class PrimaryModel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=db,
-        tablename="primary_models",
-    )
+    ormar_config = base_ormar_config.copy(tablename="primary_models")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255, index=True)
@@ -27,11 +21,7 @@ class PrimaryModel(ormar.Model):
 
 
 class SecondaryModel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=db,
-        tablename="secondary_models",
-    )
+    ormar_config = base_ormar_config.copy(tablename="secondary_models")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -40,18 +30,13 @@ class SecondaryModel(ormar.Model):
     )
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_create_models():
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             primary = await PrimaryModel(
                 name="Foo", some_text="Bar", some_other_text="Baz"
             ).save()

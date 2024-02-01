@@ -6,16 +6,11 @@ import pydantic
 import sqlalchemy
 from pydantic_core import PydanticUndefined
 
-from tests.settings import DATABASE_URL
-
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class SelfRef(ormar.Model):
@@ -60,6 +55,9 @@ class MutualB(ormar.Model):
 
 
 MutualA.update_forward_refs()
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_getting_pydantic_model():

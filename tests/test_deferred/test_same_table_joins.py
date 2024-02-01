@@ -1,33 +1,24 @@
 from typing import Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class Department(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="departments",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="departments")
 
     id: int = ormar.Integer(primary_key=True, autoincrement=False)
     name: str = ormar.String(max_length=100)
 
 
 class SchoolClass(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="schoolclasses",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="schoolclasses")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -35,22 +26,14 @@ class SchoolClass(ormar.Model):
 
 
 class Category(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="categories",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Student(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="students",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="students")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -59,11 +42,7 @@ class Student(ormar.Model):
 
 
 class Teacher(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="teachers",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="teachers")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -71,13 +50,7 @@ class Teacher(ormar.Model):
     category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 async def create_data():
@@ -95,8 +68,8 @@ async def create_data():
 
 @pytest.mark.asyncio
 async def test_model_multiple_instances_of_same_table_in_schema():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await create_data()
             classes = await SchoolClass.objects.select_related(
                 ["teachers__category", "students__schoolclass"]
@@ -123,8 +96,8 @@ async def test_model_multiple_instances_of_same_table_in_schema():
 
 @pytest.mark.asyncio
 async def test_right_tables_join():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await create_data()
             classes = await SchoolClass.objects.select_related(
                 ["teachers__category", "students"]
@@ -138,8 +111,8 @@ async def test_right_tables_join():
 
 @pytest.mark.asyncio
 async def test_multiple_reverse_related_objects():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await create_data()
             classes = await SchoolClass.objects.select_related(
                 ["teachers__category", "students__category"]

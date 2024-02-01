@@ -39,7 +39,7 @@ jobs:
           POSTGRES_DB: testsuite
         ports:
           - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5 --name postgres
 
     steps:
     - name: Checkout
@@ -70,6 +70,30 @@ jobs:
       env:
         DATABASE_URL: "mysql://username:password@127.0.0.1:3306/testsuite"
       run: bash scripts/test.sh
+
+    - name: Install postgresql-client
+      run: |
+        sudo apt-get update
+        sudo apt-get install --yes postgresql-client
+
+    - name: Connect to PostgreSQL with CLI
+      run: env PGPASSWORD=password psql -h localhost -U username -c 'SELECT VERSION();' testsuite
+
+    - name: Show max connections
+      run: env PGPASSWORD=password psql -h localhost -U username -c 'SHOW max_connections;' testsuite
+
+    - name: Alter max connections
+      run: |
+        
+        docker exec -i postgres bash << EOF
+          sed -i -e 's/max_connections = 100/max_connections = 1000/' /var/lib/postgresql/data/postgresql.conf
+          sed -i -e 's/shared_buffers = 128MB/shared_buffers = 512MB/' /var/lib/postgresql/data/postgresql.conf
+        EOF
+        docker restart --time 0 postgres
+        sleep 5
+
+    - name: Show max connections
+      run: env PGPASSWORD=password psql -h localhost -U username -c 'SHOW max_connections;' testsuite
 
     - name: Run postgres
       env:

@@ -2,7 +2,6 @@ import datetime
 from collections import Counter
 from typing import Optional
 
-import databases
 import ormar
 import ormar.fields.constraints
 import pydantic
@@ -13,19 +12,15 @@ from ormar.exceptions import ModelError
 from ormar.models.metaclass import get_constraint_copy
 from ormar.relations.relation_proxy import RelationProxy
 from pydantic import computed_field
-from sqlalchemy import create_engine
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-metadata = sa.MetaData()
-db = databases.Database(DATABASE_URL)
-engine = create_engine(DATABASE_URL)
 
+base_ormar_config = create_config()
 
 class AuditModel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        abstract=True,
-    )
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     created_by: str = ormar.String(max_length=100)
     updated_by: str = ormar.String(max_length=100, default="Sam")
@@ -36,11 +31,7 @@ class AuditModel(ormar.Model):
 
 
 class DateFieldsModelNoSubclass(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="test_date_models",
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy(tablename="test_date_models")
 
     date_id: int = ormar.Integer(primary_key=True)
     created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
@@ -48,10 +39,8 @@ class DateFieldsModelNoSubclass(ormar.Model):
 
 
 class DateFieldsModel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
+    ormar_config = base_ormar_config.copy(
         abstract=True,
-        metadata=metadata,
-        database=db,
         constraints=[
             ormar.fields.constraints.UniqueColumns(
                 "creation_date",
@@ -72,7 +61,7 @@ class DateFieldsModel(ormar.Model):
 
 
 class Category(DateFieldsModel, AuditModel):
-    ormar_config = ormar.OrmarConfig(
+    ormar_config = base_ormar_config.copy(
         tablename="categories",
         constraints=[ormar.fields.constraints.UniqueColumns("name", "code")],
     )
@@ -91,7 +80,7 @@ class Category(DateFieldsModel, AuditModel):
 
 
 class Subject(DateFieldsModel):
-    ormar_config = ormar.OrmarConfig()
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
@@ -99,21 +88,14 @@ class Subject(DateFieldsModel):
 
 
 class Person(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Car(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        abstract=True,
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50)
@@ -129,22 +111,14 @@ class Truck(Car):
 
 
 class Bus(Car):
-    ormar_config = ormar.OrmarConfig(
-        tablename="buses",
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy(tablename="buses")
 
     owner: Person = ormar.ForeignKey(Person, related_name="buses")
     max_persons: int = ormar.Integer()
 
 
 class Car2(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        abstract=True,
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50)
@@ -154,13 +128,13 @@ class Car2(ormar.Model):
 
 
 class Truck2(Car2):
-    ormar_config = ormar.OrmarConfig(tablename="trucks2")
+    ormar_config = base_ormar_config.copy(tablename="trucks2")
 
     max_capacity: int = ormar.Integer()
 
 
 class Bus2(Car2):
-    ormar_config = ormar.OrmarConfig(tablename="buses2")
+    ormar_config = base_ormar_config.copy(tablename="buses2")
 
     max_persons: int = ormar.Integer()
 
@@ -169,11 +143,7 @@ class ImmutablePerson(Person):
     model_config = dict(frozen=True, validate_assignment=False)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_init_of_abstract_model() -> None:
@@ -193,11 +163,7 @@ def test_duplicated_related_name_on_different_model() -> None:
 
 def test_field_redefining_in_concrete_models() -> None:
     class RedefinedField(DateFieldsModel):
-        ormar_config = ormar.OrmarConfig(
-            tablename="redefines",
-            metadata=metadata,
-            database=db,
-        )
+        ormar_config = base_ormar_config.copy(tablename="redefines")
 
         id: int = ormar.Integer(primary_key=True)
         created_date: str = ormar.String(
@@ -221,11 +187,7 @@ def test_model_subclassing_that_redefines_constraints_column_names() -> None:
     with pytest.raises(ModelDefinitionError):
 
         class WrongField2(DateFieldsModel):  # pragma: no cover
-            ormar_config = ormar.OrmarConfig(
-                tablename="wrongs",
-                metadata=metadata,
-                database=db,
-            )
+            ormar_config = base_ormar_config.copy(tablename="wrongs")
 
             id: int = ormar.Integer(primary_key=True)
             created_date: str = ormar.String(max_length=200)  # type: ignore
@@ -235,18 +197,14 @@ def test_model_subclassing_non_abstract_raises_error() -> None:
     with pytest.raises(ModelDefinitionError):
 
         class WrongField2(DateFieldsModelNoSubclass):  # pragma: no cover
-            ormar_config = ormar.OrmarConfig(
-                tablename="wrongs",
-                metadata=metadata,
-                database=db,
-            )
+            ormar_config = base_ormar_config.copy(tablename="wrongs")
 
             id: int = ormar.Integer(primary_key=True)
 
 
 def test_params_are_inherited() -> None:
-    assert Category.ormar_config.metadata == metadata
-    assert Category.ormar_config.database == db
+    assert Category.ormar_config.metadata == base_ormar_config.metadata
+    assert Category.ormar_config.database == base_ormar_config.database
     assert len(Category.ormar_config.property_fields) == 2
 
     constraints = Counter(map(lambda c: type(c), Category.ormar_config.constraints))
@@ -265,8 +223,8 @@ def round_date_to_seconds(
 
 @pytest.mark.asyncio
 async def test_fields_inherited_from_mixin() -> None:
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             cat = await Category(
                 name="Foo", code=123, created_by="Sam", updated_by="Max"
             ).save()
@@ -282,6 +240,8 @@ async def test_fields_inherited_from_mixin() -> None:
             assert all(
                 field in Subject.ormar_config.model_fields for field in mixin_columns
             )
+            assert cat.code_name == "123:Foo"
+            assert cat.audit == "Sam Max"
             assert sub.created_date is not None
             assert sub.updated_date is not None
 
@@ -293,7 +253,7 @@ async def test_fields_inherited_from_mixin() -> None:
                 for field in mixin2_columns
             )
 
-            inspector = sa.inspect(engine)
+            inspector = sa.inspect(base_ormar_config.engine)
             assert "categories" in inspector.get_table_names()
             table_columns = [x.get("name") for x in inspector.get_columns("categories")]
             assert all(
@@ -342,8 +302,8 @@ async def test_fields_inherited_from_mixin() -> None:
 
 @pytest.mark.asyncio
 async def test_inheritance_with_relation() -> None:
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             sam = await Person(name="Sam").save()
             joe = await Person(name="Joe").save()
             await Truck(
@@ -391,8 +351,8 @@ async def test_inheritance_with_relation() -> None:
 
 @pytest.mark.asyncio
 async def test_inheritance_with_multi_relation() -> None:
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             sam = await Person(name="Sam").save()
             joe = await Person(name="Joe").save()
             alex = await Person(name="Alex").save()

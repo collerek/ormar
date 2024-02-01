@@ -1,17 +1,10 @@
-import databases
 import ormar
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class AutoincrementModel(ormar.Model):
@@ -30,6 +23,9 @@ class ExplicitNullableModel(ormar.Model):
     ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True, nullable=True)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_pk_field_is_not_null():

@@ -1,19 +1,12 @@
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from ormar.exceptions import QueryDefinitionError
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class Car(ormar.Model):
@@ -35,19 +28,13 @@ class User(ormar.Model):
     cars = ormar.ManyToMany(Car, through=UsersCar)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_limit_zero():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             for i in range(5):
                 await Car(name=f"{i}").save()
 
@@ -58,8 +45,8 @@ async def test_limit_zero():
 
 @pytest.mark.asyncio
 async def test_pagination_errors():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             with pytest.raises(QueryDefinitionError):
                 await Car.objects.paginate(0).all()
 
@@ -69,8 +56,8 @@ async def test_pagination_errors():
 
 @pytest.mark.asyncio
 async def test_pagination_on_single_model():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             for i in range(20):
                 await Car(name=f"{i}").save()
 
@@ -93,8 +80,8 @@ async def test_pagination_on_single_model():
 
 @pytest.mark.asyncio
 async def test_proxy_pagination():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             user = await User(name="Jon").save()
 
             for i in range(20):
