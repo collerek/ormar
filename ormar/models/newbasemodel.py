@@ -185,7 +185,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: Any
         :rtype: Any
         """
-        # TODO: To many fields land here - descriptors problem?
         # TODO: Check __pydantic_extra__
         if item == "__pydantic_extra__":
             return None

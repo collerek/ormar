@@ -2,7 +2,7 @@
 import abc
 import base64
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type, Union
 
 import sqlalchemy.types as types
 from sqlalchemy.engine import Dialect
@@ -164,15 +164,14 @@ class EncryptedString(types.TypeDecorator):
         try:
             value = self._underlying_type.process_bind_param(value, dialect)
         except AttributeError:
-            encoder = ormar.SQL_ENCODERS_MAP.get(self.type_, None)
-            if encoder:
-                if self.type_ in ADDITIONAL_PARAMETERS_MAP:
-                    additional_parameter = getattr(
-                        self._field_type, ADDITIONAL_PARAMETERS_MAP[self.type_]
-                    )
-                    value = encoder(value, additional_parameter)
-                else:
-                    value = encoder(value)  # type: ignore
+            encoder, additional_parameter = self._get_coder_type_and_params(
+                coders=ormar.SQL_ENCODERS_MAP
+            )
+            if encoder is not None:
+                params = [value] + (
+                    [additional_parameter] if additional_parameter else []
+                )
+                value = encoder(*params)
 
         encrypted_value = self.backend.encrypt(value)
         return encrypted_value
@@ -185,16 +184,24 @@ class EncryptedString(types.TypeDecorator):
         try:
             return self._underlying_type.process_result_value(decrypted_value, dialect)
         except AttributeError:
-            decoder = ormar.DECODERS_MAP.get(self.type_, None)
-            if decoder:
-                if self.type_ in ADDITIONAL_PARAMETERS_MAP:
-                    additional_parameter = getattr(
-                        self._field_type, ADDITIONAL_PARAMETERS_MAP[self.type_]
-                    )
-                    return decoder(
-                        decrypted_value,
-                        additional_parameter,
-                    )  # type: ignore
-                return decoder(decrypted_value)  # type: ignore
+            decoder, additional_parameter = self._get_coder_type_and_params(
+                coders=ormar.DECODERS_MAP
+            )
+            if decoder is not None:
+                params = [decrypted_value] + (
+                    [additional_parameter] if additional_parameter else []
+                )
+                return decoder(*params)  # type: ignore
 
             return self._field_type.__type__(decrypted_value)  # type: ignore
+
+    def _get_coder_type_and_params(
+        self, coders: Dict[type, Callable]
+    ) -> Tuple[Optional[Callable], Optional[str]]:
+        coder = coders.get(self.type_, None)
+        additional_parameter: Optional[str] = None
+        if self.type_ in ADDITIONAL_PARAMETERS_MAP:
+            additional_parameter = getattr(
+                self._field_type, ADDITIONAL_PARAMETERS_MAP[self.type_]
+            )
+        return coder, additional_parameter

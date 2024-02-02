@@ -84,7 +84,7 @@ ADDITIONAL_PARAMETERS_MAP: Dict[type, str] = {
 }
 
 
-DECODERS_MAP = {
+DECODERS_MAP: Dict[type, Callable] = {
     bool: parse_bool,
     datetime.datetime: SchemaValidator(core_schema.datetime_schema()).validate_python,
     datetime.date: SchemaValidator(core_schema.date_schema()).validate_python,

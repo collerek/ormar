@@ -196,11 +196,26 @@ class BaseField(FieldInfo):
             default = (
                 self.ormar_default
                 if self.ormar_default is not None
-                else (self.server_default if use_server else None)
+                else self._get_default_server_value(use_server=use_server)
             )
-            if callable(default) and call_default_factory:  # pragma: no cover
-                default = default()
-            return default
+            return self._get_default_callable_value(
+                default=default,
+                call_default_factory=call_default_factory,
+            )
+
+    def _get_default_server_value(self, use_server: bool) -> Any:
+        """
+        Return default value for a server side if use_server is True
+        """
+        return self.server_default if use_server else None
+
+    @staticmethod
+    def _get_default_callable_value(default: Any, call_default_factory: bool) -> Any:
+        """
+        Return default factory value if call_default_factory is True
+        and default is a callable.
+        """
+        return default() if (callable(default) and call_default_factory) else default
 
     def has_default(self, use_server: bool = True) -> bool:
         """
