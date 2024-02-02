@@ -64,7 +64,7 @@ jobs:
         poetry config --list
 
     - name: Install dependencies
-      run: poetry install --extras "all" --no-root
+      run: poetry install --extras "all"
 
     - name: Run mysql
       env:
