@@ -1,4 +1,5 @@
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -15,5 +16,5 @@ for p in path.rglob("*"):
 
 @pytest.mark.parametrize("filepath", filepaths)
 def test_all_docs(filepath: str):
-    result = subprocess.run(["python", filepath])
+    result = subprocess.run([sys.executable, filepath])
     assert result.returncode == 0
