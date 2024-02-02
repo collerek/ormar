@@ -32,3 +32,5 @@ lint:
 
 fmt:
 	poetry run python -m black .
+
+pre-commit: fmt lint type_check

@@ -1,7 +1,8 @@
 import base64
 import uuid
+from contextlib import asynccontextmanager
 from enum import Enum
-from typing import List
+from typing import AsyncIterator, List
 
 import databases
 import ormar
@@ -13,27 +14,22 @@ from httpx import AsyncClient
 
 from tests.settings import DATABASE_URL
 
-app = FastAPI()
-
 database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
-app.state.database = database
 
 headers = {"content-type": "application/json"}
 
 
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    if not database.is_connected:
+        await database.connect()
+    yield
+    if database.is_connected:
+        await database.disconnect()
 
 
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
+app = FastAPI(lifespan=lifespan)
 
 
 blob3 = b"\xc3\x83\x28"

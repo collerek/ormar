@@ -657,15 +657,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             include=cast(Optional[Dict], include_dict),
             exclude=cast(Optional[Dict], exclude_dict),
         )
-        for through_model in models_to_populate:
-            through_field = model.ormar_config.model_fields[through_model]
-            if through_field.related_name in relation_map:
-                continue
-            through_instance = getattr(model, through_model)
+        through_fields_to_populate = [
+            model.ormar_config.model_fields[through_model]
+            for through_model in models_to_populate
+            if model.ormar_config.model_fields[through_model].related_name
+            not in relation_map
+        ]
+        for through_field in through_fields_to_populate:
+            through_instance = getattr(model, through_field.name)
             if through_instance:
-                model_dict[through_model] = through_instance.dict()
-            # else:
-            #     model_dict[through_model] = None
+                model_dict[through_field.name] = through_instance.dict()
 
     @classmethod
     def _skip_ellipsis(

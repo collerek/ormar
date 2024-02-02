@@ -1,18 +1,9 @@
 repos:
   - repo: local
     hooks:
-      - id: format-with-black
+      - id: pre-commit-local
         name: format
-        entry: make fmt
+        entry: make pre-commit
         language: python
         pass_filenames: false
-      - id: lint-with-ruff
-        name: lint
-        entry: make lint
-        language: python
-        pass_filenames: false
-      - id: type-check-with-mypy
-        name: type check
-        entry: make type_check
-        language: python
-        pass_filenames: false
+
