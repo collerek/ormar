@@ -160,7 +160,7 @@ def test_primary_key_access_and_setting(example):
 
 def test_pydantic_model_is_created(example):
     assert issubclass(example.__class__, pydantic.BaseModel)
-    assert all([field in example.__fields__ for field in fields_to_check])
+    assert all([field in example.model_fields for field in fields_to_check])
     assert example.test == 1
 
 

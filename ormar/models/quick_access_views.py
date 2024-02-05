@@ -12,7 +12,7 @@ quick_access_set = {
     "__config__",
     "__custom_root_type__",
     "__dict__",
-    "__fields__",
+    "model_fields",
     "__fields_set__",
     "__json_encoder__",
     "__pk_only__",

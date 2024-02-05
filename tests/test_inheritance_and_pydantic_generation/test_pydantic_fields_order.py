@@ -40,4 +40,4 @@ def create_test_database():
 
 def test_model_field_order():
     TestCreate = NewTestModel.get_pydantic(exclude={"a"})
-    assert list(TestCreate.__fields__.keys()) == ["b", "c", "d", "e", "f"]
+    assert list(TestCreate.model_fields.keys()) == ["b", "c", "d", "e", "f"]

@@ -96,7 +96,7 @@ def create_test_database():
 def test_model_definition():
     model_fields = Category.ormar_config.model_fields
     sqlalchemy_columns = Category.ormar_config.table.c
-    pydantic_columns = Category.__fields__
+    pydantic_columns = Category.model_fields
     assert "updated_by" not in model_fields
     assert "updated_by" not in sqlalchemy_columns
     assert "updated_by" not in pydantic_columns
@@ -106,7 +106,7 @@ def test_model_definition():
 
     assert "updated_by" not in Gun.ormar_config.model_fields
     assert "updated_by" not in Gun.ormar_config.table.c
-    assert "updated_by" not in Gun.__fields__
+    assert "updated_by" not in Gun.model_fields
 
 
 @pytest.mark.asyncio

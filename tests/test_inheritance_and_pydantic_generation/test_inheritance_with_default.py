@@ -45,15 +45,15 @@ def create_test_database():
 
 
 def test_model_structure():
-    assert "id" in BaseModel.__fields__
+    assert "id" in BaseModel.model_fields
     assert "id" in BaseModel.ormar_config.model_fields
     assert BaseModel.ormar_config.model_fields["id"].has_default()
-    assert BaseModel.__fields__["id"].default_factory is not None
+    assert BaseModel.model_fields["id"].default_factory is not None
 
-    assert "id" in Member.__fields__
+    assert "id" in Member.model_fields
     assert "id" in Member.ormar_config.model_fields
     assert Member.ormar_config.model_fields["id"].has_default()
-    assert Member.__fields__["id"].default_factory is not None
+    assert Member.model_fields["id"].default_factory is not None
 
 
 @pytest.mark.asyncio
