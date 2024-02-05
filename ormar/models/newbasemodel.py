@@ -7,6 +7,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Literal,
     Mapping,
     MutableSequence,
     Optional,
@@ -783,6 +784,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 dict_instance[field] = None
         return dict_instance
 
+    @typing_extensions.deprecated(
+        "The `dict` method is deprecated; use `model_dump` instead.",
+        category=OrmarDeprecatedSince020,
+    )
     def dict(  # type: ignore # noqa A003
         self,
         *,
@@ -796,6 +801,40 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude_through_models: bool = False,
         exclude_list: bool = False,
         relation_map: Optional[Dict] = None,
+    ) -> "DictStrAny":  # noqa: A003'
+        warnings.warn(
+            "The `dict` method is deprecated; use `model_dump` instead.",
+            DeprecationWarning,
+        )
+        return self.model_dump(
+            include=include,
+            exclude=exclude,
+            by_alias=by_alias,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
+            exclude_primary_keys=exclude_primary_keys,
+            exclude_through_models=exclude_through_models,
+            exclude_list=exclude_list,
+            relation_map=relation_map,
+        )
+
+    def model_dump(  # type: ignore # noqa A003
+        self,
+        *,
+        mode: Literal["json", "python"] | str = "python",
+        include: Union[Set, Dict, None] = None,
+        exclude: Union[Set, Dict, None] = None,
+        by_alias: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+        exclude_primary_keys: bool = False,
+        exclude_through_models: bool = False,
+        exclude_list: bool = False,
+        relation_map: Optional[Dict] = None,
+        round_trip: bool = False,
+        warnings: bool = True,
     ) -> "DictStrAny":  # noqa: A003'
         """
 
@@ -824,8 +863,16 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :type exclude_none: bool
         :param exclude_list: flag to exclude lists of nested values models from dict
         :type exclude_list: bool
-        :param relation_map: map of the relations to follow to avoid circural deps
+        :param relation_map: map of the relations to follow to avoid circular deps
         :type relation_map: Dict
+        :param mode: The mode in which `to_python` should run.
+            If mode is 'json', the dictionary will only contain JSON serializable types.
+            If mode is 'python', the dictionary may contain any Python objects.
+        :type mode: str
+        :param round_trip: flag to enable serialization round-trip support
+        :type round_trip: bool
+        :param warnings: flag to log warnings for invalid fields
+        :type warnings: bool
         :return:
         :rtype:
         """
@@ -836,12 +883,15 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             exclude_through_models=exclude_through_models,
         )
         dict_instance = super().model_dump(
+            mode=mode,
             include=include,
             exclude=pydantic_exclude,
             by_alias=by_alias,
             exclude_defaults=exclude_defaults,
             exclude_unset=exclude_unset,
             exclude_none=exclude_none,
+            round_trip=round_trip,
+            warnings=warnings,
         )
 
         dict_instance = {
