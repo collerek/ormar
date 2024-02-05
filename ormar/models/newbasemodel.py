@@ -1,5 +1,6 @@
 import base64
 import sys
+import warnings
 from typing import (
     TYPE_CHECKING,
     AbstractSet,
@@ -19,6 +20,7 @@ from typing import (
 
 import pydantic
 import sqlalchemy
+import typing_extensions
 
 import ormar  # noqa I100
 from ormar.exceptions import ModelError, ModelPersistenceError
@@ -38,6 +40,7 @@ from ormar.queryset.utils import translate_list_to_dict
 from ormar.relations.alias_manager import AliasManager
 from ormar.relations.relation import Relation
 from ormar.relations.relation_manager import RelationsManager
+from ormar.warnings import OrmarDeprecatedSince020
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, OrmarConfig
@@ -911,7 +914,21 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         return self.__pydantic_serializer__.to_json(data).decode()
 
     @classmethod
+    @typing_extensions.deprecated(
+        "The `construct` method is deprecated; use `model_construct` instead.",
+        category=OrmarDeprecatedSince020,
+    )
     def construct(
+        cls: Type["T"], _fields_set: set[str] | None = None, **values: Any
+    ) -> "T":
+        warnings.warn(
+            "The `construct` method is deprecated; use `model_construct` instead.",
+            DeprecationWarning,
+        )
+        return cls.model_construct(_fields_set=_fields_set, **values)
+
+    @classmethod
+    def model_construct(
         cls: Type["T"], _fields_set: Optional["SetStr"] = None, **values: Any
     ) -> "T":
         own_values = {
@@ -925,12 +942,33 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             elif not field.is_required():
                 fields_values[name] = field.get_default()
         fields_values.update(own_values)
+
+        if _fields_set is None:
+            _fields_set = set(values.keys())
+
+        _extra: dict[str, Any] | None = None
+        if cls.model_config.get("extra") == "allow":
+            _extra = {}
+            for k, v in values.items():
+                _extra[k] = v
+        else:
+            fields_values.update(values)
         object.__setattr__(model, "__dict__", fields_values)
         model._initialize_internal_attributes()
         cls._construct_relations(model=model, values=values)
-        if _fields_set is None:
-            _fields_set = set(values.keys())
         object.__setattr__(model, "__pydantic_fields_set__", _fields_set)
+        if not cls.__pydantic_root_model__:
+            object.__setattr__(model, "__pydantic_extra__", _extra)
+
+        if cls.__pydantic_post_init__:
+            model.model_post_init(None)
+        elif not cls.__pydantic_root_model__:
+            # Note: if there are any private attributes,
+            # cls.__pydantic_post_init__ would exist
+            # Since it doesn't, that means that `__pydantic_private__`
+            # should be set to None
+            object.__setattr__(model, "__pydantic_private__", None)
+
         return model
 
     @classmethod

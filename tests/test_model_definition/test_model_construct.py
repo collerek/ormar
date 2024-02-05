@@ -70,7 +70,9 @@ async def test_construct_with_empty_relation():
         async with database.transaction(force_rollback=True):
             await HQ.objects.create(name="Main")
             comp = Company(name="Banzai", hq=None, founded=1988)
-            comp2 = Company.construct(**dict(name="Banzai", hq=None, founded=1988))
+            comp2 = Company.model_construct(
+                **dict(name="Banzai", hq=None, founded=1988)
+            )
             assert comp.dict() == comp2.dict()
 
 
@@ -80,10 +82,12 @@ async def test_init_and_construct_has_same_effect():
         async with database.transaction(force_rollback=True):
             hq = await HQ.objects.create(name="Main")
             comp = Company(name="Banzai", hq=hq, founded=1988)
-            comp2 = Company.construct(**dict(name="Banzai", hq=hq, founded=1988))
+            comp2 = Company.model_construct(**dict(name="Banzai", hq=hq, founded=1988))
             assert comp.dict() == comp2.dict()
 
-            comp3 = Company.construct(**dict(name="Banzai", hq=hq.dict(), founded=1988))
+            comp3 = Company.model_construct(
+                **dict(name="Banzai", hq=hq.dict(), founded=1988)
+            )
             assert comp.dict() == comp3.dict()
 
 
@@ -94,8 +98,8 @@ async def test_init_and_construct_has_same_effect_with_m2m():
             n1 = await NickNames(name="test").save()
             n2 = await NickNames(name="test2").save()
             hq = HQ(name="Main", nicks=[n1, n2])
-            hq2 = HQ.construct(**dict(name="Main", nicks=[n1, n2]))
+            hq2 = HQ.model_construct(**dict(name="Main", nicks=[n1, n2]))
             assert hq.dict() == hq2.dict()
 
-            hq3 = HQ.construct(**dict(name="Main", nicks=[n1.dict(), n2.dict()]))
+            hq3 = HQ.model_construct(**dict(name="Main", nicks=[n1.dict(), n2.dict()]))
             assert hq.dict() == hq3.dict()
