@@ -8,7 +8,7 @@ on:
     branches-ignore:
       - 'gh-pages'
   pull_request:
-    branches: [ master ]
+    branches: [ master, pydantic_v2 ]
 
 jobs:
   lint:
