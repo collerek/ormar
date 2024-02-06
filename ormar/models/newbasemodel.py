@@ -822,7 +822,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def model_dump(  # type: ignore # noqa A003
         self,
         *,
-        mode: Literal["json", "python"] | str = "python",
+        mode: Union[Literal["json", "python"], str] = "python",
         include: Union[Set, Dict, None] = None,
         exclude: Union[Set, Dict, None] = None,
         by_alias: bool = False,
