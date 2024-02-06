@@ -122,9 +122,9 @@ async def test_setting_values_after_init():
         t1.model_dump_json()
         assert '["thing1"]' in t1.model_dump_json()
 
-        assert '["thing1"]' in (await Thing.objects.get(id=t1.id)).json()
+        assert '["thing1"]' in (await Thing.objects.get(id=t1.id)).model_dump_json()
         await t1.update()
-        assert '["thing1"]' in (await Thing.objects.get(id=t1.id)).json()
+        assert '["thing1"]' in (await Thing.objects.get(id=t1.id)).model_dump_json()
 
 
 @pytest.mark.asyncio

@@ -5,7 +5,8 @@ import databases
 import ormar
 import pytest
 import sqlalchemy
-from pydantic import BaseModel, Field, HttpUrl, PaymentCardNumber
+from pydantic import BaseModel, Field, HttpUrl
+from pydantic_extra_types.payment import PaymentCardNumber
 
 from tests.settings import DATABASE_URL
 
