@@ -969,7 +969,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         category=OrmarDeprecatedSince020,
     )
     def construct(
-        cls: Type["T"], _fields_set: set[str] | None = None, **values: Any
+        cls: Type["T"], _fields_set: Union[Set[str], None] = None, **values: Any
     ) -> "T":  # pragma: no cover
         warnings.warn(
             "The `construct` method is deprecated; use `model_construct` instead.",
