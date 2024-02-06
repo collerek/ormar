@@ -121,7 +121,8 @@ async def test_all_endpoints():
         assert item.pk is not None
 
         response = await client.post(
-            "/items/add_category/", json={"item": item.dict(), "category": category}
+            "/items/add_category/",
+            json={"item": item.model_dump(), "category": category},
         )
         assert response.status_code == 200
         item = Item(**response.json())
@@ -129,7 +130,8 @@ async def test_all_endpoints():
         assert item.categories[0].name == "test cat"
 
         await client.post(
-            "/items/add_category/", json={"item": item.dict(), "category": category2}
+            "/items/add_category/",
+            json={"item": item.model_dump(), "category": category2},
         )
 
         response = await client.get("/items/")

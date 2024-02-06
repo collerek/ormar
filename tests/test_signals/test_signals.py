@@ -321,7 +321,7 @@ async def test_multiple_senders_signal(cleanup):
             assert audits[0].event_type == "PRE_SAVE_cover"
             assert audits[0].event_log.get("title") == cover.title
             assert audits[1].event_type == "PRE_SAVE_album"
-            assert audits[1].event_log.get("cover") == album.cover.dict(
+            assert audits[1].event_log.get("cover") == album.cover.model_dump(
                 exclude={"albums"}
             )
 

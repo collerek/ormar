@@ -64,14 +64,14 @@ async def test_pydantic_only_fields():
             album = await Album.objects.fields({"name", "timestamp"}).get()
             assert album.timestamp is None
 
-            test_dict = album.dict()
+            test_dict = album.model_dump()
             assert "timestamp" in test_dict
             assert test_dict["timestamp"] is None
 
             assert album.name30 == "Hitchcock_30"
 
             album.timestamp = datetime.datetime.now()
-            test_dict = album.dict()
+            test_dict = album.model_dump()
             assert "timestamp" in test_dict
             assert test_dict["timestamp"] is not None
             assert test_dict.get("name10") == "Hitchcock_10"

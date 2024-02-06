@@ -104,7 +104,7 @@ async def test_model_multiple_instances_of_same_table_in_schema():
             assert classes[0].name == "Math"
             assert classes[0].students[0].name == "Jane"
 
-            assert len(classes[0].dict().get("students")) == 2
+            assert len(classes[0].model_dump().get("students")) == 2
 
             # since it's going from schoolclass => teacher
             # => schoolclass (same class) department is already populated

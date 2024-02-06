@@ -120,7 +120,7 @@ async def get_current_user():
 async def create_quiz_lol(
     quiz_input: QuizInput, user: User = Depends(get_current_user)
 ):
-    quiz = Quiz(**quiz_input.dict(), user_id=user.id)
+    quiz = Quiz(**quiz_input.model_dump(), user_id=user.id)
     return await quiz.save()
 
 

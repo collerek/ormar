@@ -83,4 +83,4 @@ async def test_uuid_pk_in_save_related():
             "id": ...,
             "courses": {"id": ..., "students": {"id", "studentcourse"}},
         }
-        assert department_check.dict(exclude=to_exclude) == to_save
+        assert department_check.model_dump(exclude=to_exclude) == to_save

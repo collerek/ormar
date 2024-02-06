@@ -94,7 +94,7 @@ async def get_item(item_id: int):
 @app.put("/items/{item_id}")
 async def update_item(item_id: int, item: Item):
     item_db = await Item.objects.get(pk=item_id)
-    return await item_db.update(**item.dict())
+    return await item_db.update(**item.model_dump())
 
 
 @app.delete("/items/{item_id}")
@@ -120,8 +120,8 @@ async def test_all_endpoints():
         assert items[0] == item
 
         item.name = "New name"
-        response = await client.put(f"/items/{item.pk}", json=item.dict())
-        assert response.json() == item.dict()
+        response = await client.put(f"/items/{item.pk}", json=item.model_dump())
+        assert response.json() == item.model_dump()
 
         response = await client.get("/items")
         items = [Item(**item) for item in response.json()]

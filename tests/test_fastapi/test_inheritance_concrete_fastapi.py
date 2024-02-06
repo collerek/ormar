@@ -136,7 +136,7 @@ async def test_read_main():
         assert cat.created_date is not None
         assert cat.id == 1
 
-        cat_dict = cat.dict()
+        cat_dict = cat.model_dump()
         cat_dict["updated_date"] = cat_dict["updated_date"].strftime(
             "%Y-%m-%d %H:%M:%S.%f"
         )
@@ -162,11 +162,14 @@ async def test_inheritance_with_relation():
         truck_dict = dict(
             name="Shelby wanna be",
             max_capacity=1400,
-            owner=sam.dict(),
-            co_owner=joe.dict(),
+            owner=sam.model_dump(),
+            co_owner=joe.model_dump(),
         )
         bus_dict = dict(
-            name="Unicorn", max_persons=50, owner=sam.dict(), co_owner=joe.dict()
+            name="Unicorn",
+            max_persons=50,
+            owner=sam.model_dump(),
+            co_owner=joe.model_dump(),
         )
         unicorn = Bus(**(await client.post("/buses/", json=bus_dict)).json())
         shelby = Truck(**(await client.post("/trucks/", json=truck_dict)).json())
@@ -203,21 +206,25 @@ async def test_inheritance_with_m2m_relation():
         joe = Person(**(await client.post("/persons/", json={"name": "Joe"})).json())
         alex = Person(**(await client.post("/persons/", json={"name": "Alex"})).json())
 
-        truck_dict = dict(name="Shelby wanna be", max_capacity=2000, owner=sam.dict())
-        bus_dict = dict(name="Unicorn", max_persons=80, owner=sam.dict())
+        truck_dict = dict(
+            name="Shelby wanna be", max_capacity=2000, owner=sam.model_dump()
+        )
+        bus_dict = dict(name="Unicorn", max_persons=80, owner=sam.model_dump())
 
         unicorn = Bus2(**(await client.post("/buses2/", json=bus_dict)).json())
         shelby = Truck2(**(await client.post("/trucks2/", json=truck_dict)).json())
 
         unicorn = Bus2(
             **(
-                await client.post(f"/buses2/{unicorn.pk}/add_coowner/", json=joe.dict())
+                await client.post(
+                    f"/buses2/{unicorn.pk}/add_coowner/", json=joe.model_dump()
+                )
             ).json()
         )
         unicorn = Bus2(
             **(
                 await client.post(
-                    f"/buses2/{unicorn.pk}/add_coowner/", json=alex.dict()
+                    f"/buses2/{unicorn.pk}/add_coowner/", json=alex.model_dump()
                 )
             ).json()
         )
@@ -234,7 +241,7 @@ async def test_inheritance_with_m2m_relation():
         assert unicorn.co_owners[1] == alex
         assert unicorn.max_persons == 80
 
-        await client.post(f"/trucks2/{shelby.pk}/add_coowner/", json=alex.dict())
+        await client.post(f"/trucks2/{shelby.pk}/add_coowner/", json=alex.model_dump())
 
         shelby = Truck2(
             **(

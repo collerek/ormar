@@ -75,7 +75,7 @@ You can define same receiver for multiple models at once by passing a list of mo
 # define a dummy debug function
 @pre_update([Album, Track])
 async def before_update(sender, instance, **kwargs):
-    print(f"{sender.get_name()}: {instance.json()}: {kwargs}")
+    print(f"{sender.get_name()}: {instance.model_dump_json()}: {kwargs}")
 ```
 
 Of course you can also create multiple functions for the same signal and model. Each of them will run at each signal.
@@ -83,7 +83,7 @@ Of course you can also create multiple functions for the same signal and model. 
 ```python
 @pre_update(Album)
 async def before_update(sender, instance, **kwargs):
-    print(f"{sender.get_name()}: {instance.json()}: {kwargs}")
+    print(f"{sender.get_name()}: {instance.model_dump_json()}: {kwargs}")
 
 @pre_update(Album)
 async def before_update2(sender, instance, **kwargs):
@@ -100,7 +100,7 @@ class AlbumAuditor:
 
     async def before_save(self, sender, instance, **kwargs):
         await AuditLog(
-            event_type=f"{self.event_type}_SAVE", event_log=instance.json()
+            event_type=f"{self.event_type}_SAVE", event_log=instance.model_dump_json()
         ).save()
 
 auditor = AlbumAuditor()

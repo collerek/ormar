@@ -45,7 +45,7 @@ Note that if you need a normal pydantic field in your model (used to store value
 field with parameter `pydantic_only=True`.
 
 Fields created like this are added to the `pydantic` model fields -> so are subject to validation according to `Field` type, 
-also appear in `dict()` and `json()` result. 
+also appear in `model_dump()` and `json()` result. 
 
 The difference is that **those fields are not saved in the database**. So they won't be included in underlying sqlalchemy `columns`, 
 or `table` variables (check [Internals][Internals] section below to see how you can access those if you need).
@@ -72,7 +72,7 @@ If you combine `pydantic_only=True` field with `default` parameter and do not pa
 Since it can be a function you can set `default=datetime.datetime.now` and get current timestamp each time you call an endpoint etc.
 
 !!!note
-    Note that both `pydantic_only` and `property_field` decorated field can be included/excluded in both `dict()` and `fastapi`
+    Note that both `pydantic_only` and `property_field` decorated field can be included/excluded in both `model_dump()` and `fastapi`
     response with `include`/`exclude` and `response_model_include`/`response_model_exclude` accordingly.
 
 ```python
@@ -169,11 +169,11 @@ But it's so common that `ormar` has you covered. You can "materialize" a `proper
     ```
     
 Note that `property_field` decorated methods do not go through verification (but that might change in future) and are only available
-in the response from `fastapi` and `dict()` and `json()` methods. You cannot pass a value for this field in the request 
+in the response from `fastapi` and `model_dump()` and `json()` methods. You cannot pass a value for this field in the request 
 (or rather you can but it will be discarded by ormar so really no point but no Exception will be raised).
 
 !!!note
-    Note that both `pydantic_only` and `property_field` decorated field can be included/excluded in both `dict()` and `fastapi`
+    Note that both `pydantic_only` and `property_field` decorated field can be included/excluded in both `model_dump()` and `fastapi`
     response with `include`/`exclude` and `response_model_include`/`response_model_exclude` accordingly.
     
 !!!tip

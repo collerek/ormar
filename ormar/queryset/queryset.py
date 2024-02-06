@@ -1153,7 +1153,7 @@ class QuerySet(Generic[T]):
 
         ready_objects = []
         for obj in objects:
-            ready_objects.append(obj.prepare_model_to_save(obj.dict()))
+            ready_objects.append(obj.prepare_model_to_save(obj.model_dump()))
             await asyncio.sleep(0)  # Allow context switching to prevent blocking
 
         # don't use execute_many, as in databases it's executed in a loop
@@ -1202,7 +1202,7 @@ class QuerySet(Generic[T]):
         columns = [self.model.get_column_alias(k) for k in columns]
 
         for obj in objects:
-            new_kwargs = obj.dict()
+            new_kwargs = obj.model_dump()
             if new_kwargs.get(pk_name) is None:
                 raise ModelPersistenceError(
                     "You cannot update unsaved objects. "

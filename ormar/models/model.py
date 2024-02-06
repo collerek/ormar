@@ -344,5 +344,5 @@ class Model(ModelRow):
             queryset = queryset.order_by(order_by)
         instance = await queryset.select_related(relations).get(pk=self.pk)
         self._orm.clear()
-        self.update_from_dict(instance.dict())
+        self.update_from_dict(instance.model_dump())
         return self

@@ -80,13 +80,13 @@ def sample_data():
 def test_dumping_to_dict_no_exclusion(sample_data):
     item1, item2 = sample_data
 
-    dict1 = item1.dict()
+    dict1 = item1.model_dump()
     assert dict1["name"] == "Teddy Bear"
     assert dict1["category"]["name"] == "Toys"
     assert dict1["category"]["tier"]["name"] == "Tier I"
     assert dict1["created_by"]["email"] == "test@test.com"
 
-    dict2 = item2.dict()
+    dict2 = item2.model_dump()
     assert dict2["name"] == "M16"
     assert dict2["category"]["name"] == "Weapons"
     assert dict2["created_by"]["email"] == "test@test.com"

@@ -196,7 +196,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     def __getstate__(self) -> Dict[Any, Any]:
         state = super().__getstate__()
-        self_dict = self.dict()
+        self_dict = self.model_dump()
         state["__dict__"].update(**self_dict)
         return state
 
@@ -600,7 +600,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         result = []
         for model in models:
             try:
-                model_dict = model.dict(
+                model_dict = model.model_dump(
                     relation_map=relation_map,
                     include=include,
                     exclude=exclude,
@@ -669,7 +669,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         for through_field in through_fields_to_populate:
             through_instance = getattr(model, through_field.name)
             if through_instance:
-                model_dict[through_field.name] = through_instance.dict()
+                model_dict[through_field.name] = through_instance.model_dump()
 
     @classmethod
     def _skip_ellipsis(
@@ -677,7 +677,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     ) -> Union[Set, Dict, None]:
         """
         Helper to traverse the include/exclude dictionaries.
-        In dict() Ellipsis should be skipped as it indicates all fields required
+        In model_dump() Ellipsis should be skipped as it indicates all fields required
         and not the actual set/dict with fields names.
 
         :param items: current include/exclude value
@@ -754,7 +754,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                         exclude_through_models=exclude_through_models,
                     )
                 elif nested_model is not None:
-                    model_dict = nested_model.dict(
+                    model_dict = nested_model.model_dump(
                         relation_map=self._skip_ellipsis(
                             relation_map, field, default_return=dict()
                         ),
@@ -931,7 +931,40 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         return dict_instance
 
+    @typing_extensions.deprecated(
+        "The `json` method is deprecated; use `model_dump_json` instead.",
+        category=OrmarDeprecatedSince020,
+    )
     def json(  # type: ignore # noqa A003
+        self,
+        *,
+        include: Union[Set, Dict, None] = None,
+        exclude: Union[Set, Dict, None] = None,
+        by_alias: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+        exclude_primary_keys: bool = False,
+        exclude_through_models: bool = False,
+        **dumps_kwargs: Any,
+    ) -> str:
+        warnings.warn(
+            "The `json` method is deprecated; use `model_dump_json` instead.",
+            DeprecationWarning,
+        )
+        return self.model_dump_json(
+            include=include,
+            exclude=exclude,
+            by_alias=by_alias,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
+            exclude_primary_keys=exclude_primary_keys,
+            exclude_through_models=exclude_through_models,
+            **dumps_kwargs,
+        )
+
+    def model_dump_json(  # type: ignore # noqa A003
         self,
         *,
         include: Union[Set, Dict, None] = None,
@@ -951,7 +984,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         `encoder` is an optional function to supply as `default` to json.dumps(),
         other arguments as per `json.dumps()`.
         """
-        data = self.dict(
+        data = self.model_dump(
             include=include,
             exclude=exclude,
             by_alias=by_alias,

@@ -117,10 +117,10 @@ async def test_json_is_not_required_if_nullable():
 async def test_setting_values_after_init():
     async with database:
         t1 = Thing(id="67a82813-d90c-45ff-b546-b4e38d7030d7", name="t1", js=["thing1"])
-        assert '["thing1"]' in t1.json()
+        assert '["thing1"]' in t1.model_dump_json()
         await t1.save()
-        t1.json()
-        assert '["thing1"]' in t1.json()
+        t1.model_dump_json()
+        assert '["thing1"]' in t1.model_dump_json()
 
         assert '["thing1"]' in (await Thing.objects.get(id=t1.id)).json()
         await t1.update()

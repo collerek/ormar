@@ -89,7 +89,7 @@ flag of the `ManyToMany`.
   But you cannot:
   * access the related field from reverse model with `related_name`
   * even if you `select_related` from reverse side of the model the returned models won't be populated in reversed instance (the join is not prevented so you still can `filter` and `order_by` over the relation)
-  * the relation won't be populated in `dict()` and `json()`
+  * the relation won't be populated in `model_dump()` and `json()`
   * you cannot pass the nested related objects when populating from dictionary or json (also through `fastapi`). It will be either ignored or error will be raised depending on `extra` setting in pydantic `Config`.
 
 Example:
@@ -126,8 +126,8 @@ categories = (
 assert categories[0].first_name == "Test"
 
 # note that posts are not populated for author even if explicitly
-# included in select_related - note no posts in dict()
-assert news.dict(exclude={"id"}) == {"name": "News"}
+# included in select_related - note no posts in model_dump()
+assert news.model_dump(exclude={"id"}) == {"name": "News"}
 
 # still can filter through fields of related model
 categories = await Category.objects.filter(posts__title="Hello, M2M").all()

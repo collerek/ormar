@@ -588,7 +588,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
      the `fields/exclude_fields` (from `QuerySet`) methods schema so when in doubt you can refer to docs in queries -> selecting subset of fields -> fields.
 *  `Model.update()` method now accepts `_columns: List[str] = None` parameter, that accepts list of column names to update. If passed only those columns will be updated in database.
    Note that `update()` does not refresh the instance of the Model, so if you change more columns than you pass in `_columns` list your Model instance will have different values than the database!
-*  `Model.dict()` method previously included only directly related models or nested models if they were not nullable and not virtual, 
+*  `Model.model_dump()` method previously included only directly related models or nested models if they were not nullable and not virtual, 
    now all related models not previously visited without loops are included in `dict()`. This should be not breaking
    as just more data will be dumped to dict, but it should not be missing.
 *  `QuerySet.delete(each=False, **kwargs)` previously required that you either pass a `filter` (by `**kwargs` or as a separate `filter()` call) or set `each=True` now also accepts
@@ -941,7 +941,7 @@ as the same model can be registered multiple times and `ormar` needs to know fro
 *  Performance optimization
 *  Fix for bug with `pydantic_only` fields being required
 *  Add `property_field` decorator that registers a function as a property that will 
-   be included in `Model.dict()` and in `fastapi` response
+   be included in `Model.model_dump()` and in `fastapi` response
 *  Update docs
 
 # 0.6.1
@@ -977,7 +977,7 @@ so now you can use those methods directly from relation
 
 # 0.5.3
 
-*  Fixed bug in `Model.dict()` method that was ignoring exclude parameter and not include dictionary argument.
+*  Fixed bug in `Model.model_dump()` method that was ignoring exclude parameter and not include dictionary argument.
 
 # 0.5.2
 
@@ -1020,7 +1020,7 @@ so now you can use those methods directly from relation
 
 # 0.4.3
 
-*  include properties in models.dict() and model.json()
+*  include properties in models.model_dump() and model.json()
 
 # 0.4.2
 

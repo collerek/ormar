@@ -153,7 +153,7 @@ In example `response_model_exclude={"category__priority", "category__other_field
         Note that apart from `response_model_exclude` parameter `fastapi` supports also other parameters inherited from `pydantic`.
         All of them works also with ormar, but can have some nuances so best to read [dict](../models/methods.md#dict) part of the documentation.
 
-### Exclude in `Model.dict()`
+### Exclude in `Model.model_dump()`
 
 Alternatively you can just return a dict from `ormar.Model` and use . 
 
@@ -166,14 +166,14 @@ Like this you can also set exclude/include as dict and exclude fields on nested 
 @app.post("/users2/", response_model=User)
 async def create_user2(user: User):
     user = await user.save()
-    return user.dict(exclude={'password'})
-    # could be also something like return user.dict(exclude={'category': {'priority'}}) to exclude category priority
+    return user.model_dump(exclude={'password'})
+    # could be also something like return user.model_dump(exclude={'category': {'priority'}}) to exclude category priority
 ```
 
 !!!Note
         Note that above example will nullify the password field even if you pass it in request, but the **field will be still there** as it's part of the response schema, the value will be set to `None`.
 
-If you want to fully exclude the field with this approach simply don't use `response_model` and exclude in Model's dict()
+If you want to fully exclude the field with this approach simply don't use `response_model` and exclude in Model's model_dump()
 
 Alternatively you can just return a dict from ormar model. 
 Like this you can also set exclude/include as dict and exclude fields on nested models.
@@ -187,7 +187,7 @@ So if you skip `response_model` altogether you can do something like this:
 @app.post("/users4/") # note no response_model
 async def create_user4(user: User):
     user = await user.save()
-    return user.dict(exclude={'last_name'})
+    return user.model_dump(exclude={'last_name'})
 ```
 
 !!!Note
@@ -213,7 +213,7 @@ async def create_user3(user: User):
         To see more examples and read more visit [get_pydantic](../models/methods.md#get_pydantic) part of the documentation.
 
 !!!Warning
-        The `get_pydantic` method generates all models in a tree of nested models according to an algorithm that allows to avoid loops in models (same algorithm that is used in `dict()`, `select_all()` etc.)
+        The `get_pydantic` method generates all models in a tree of nested models according to an algorithm that allows to avoid loops in models (same algorithm that is used in `model_dump()`, `select_all()` etc.)
         
         That means that nested models won't have reference to parent model (by default ormar relation is biderectional).
         

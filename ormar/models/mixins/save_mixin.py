@@ -359,7 +359,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         ].through.get_name()
         through = getattr(instance, through_name)
         if through:
-            through_dict = through.dict(exclude=through.extract_related_names())
+            through_dict = through.model_dump(exclude=through.extract_related_names())
         else:
             through_dict = {}
         await getattr(

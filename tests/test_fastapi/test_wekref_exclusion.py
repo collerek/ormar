@@ -97,7 +97,7 @@ async def get_test_3():
     ot = await OtherThing.objects.select_related("things").get()
     # exclude unwanted field while ot is still in scope
     # in order not to pass it to fastapi
-    return [t.dict(exclude={"other_thing"}) for t in ot.things]
+    return [t.model_dump(exclude={"other_thing"}) for t in ot.things]
 
 
 @app.get("/test/4", response_model=List[Thing], response_model_exclude={"other_thing"})

@@ -172,7 +172,7 @@ async def test_working_with_aliases_get_or_create():
             assert artist == artist2
             assert created is False
 
-            art3 = artist2.dict()
+            art3 = artist2.model_dump()
             art3["born_year"] = 2019
             await Artist.objects.update_or_create(**art3)
 

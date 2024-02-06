@@ -119,7 +119,7 @@ async def test_quering_of_related_model_works_but_no_result(cleanup):
         post_categories = await post.categories.all()
         assert len(post_categories) == 1
 
-        assert "posts" not in post.dict().get("categories", [])[0]
+        assert "posts" not in post.model_dump().get("categories", [])[0]
 
         assert news == await post.categories.get(name="News")
 
@@ -133,7 +133,7 @@ async def test_quering_of_related_model_works_but_no_result(cleanup):
             .get()
         )
         assert category == news
-        assert "posts" not in category.dict()
+        assert "posts" not in category.model_dump()
 
         # relation not in json
         category2 = (

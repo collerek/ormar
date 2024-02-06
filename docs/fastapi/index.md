@@ -122,7 +122,7 @@ async def create_category(category: Category):
 @app.put("/items/{item_id}")
 async def get_item(item_id: int, item: Item):
     item_db = await Item.objects.get(pk=item_id)
-    return await item_db.update(**item.dict())
+    return await item_db.update(**item.model_dump())
 
 
 @app.delete("/items/{item_id}")
@@ -197,14 +197,14 @@ def test_all_endpoints():
         assert items[0] == item
 
         item.name = "New name"
-        response = client.put(f"/items/{item.pk}", json=item.dict())
-        assert response.json() == item.dict()
+        response = client.put(f"/items/{item.pk}", json=item.model_dump())
+        assert response.json() == item.model_dump()
 
         response = client.get("/items/")
         items = [Item(**item) for item in response.json()]
         assert items[0].name == "New name"
 
-        response = client.delete(f"/items/{item.pk}", json=item.dict())
+        response = client.delete(f"/items/{item.pk}", json=item.model_dump())
         assert response.json().get("deleted_rows", "__UNDEFINED__") != "__UNDEFINED__"
         response = client.get("/items/")
         items = response.json()

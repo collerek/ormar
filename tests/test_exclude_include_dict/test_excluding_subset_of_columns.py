@@ -206,7 +206,7 @@ async def test_excluding_nested_lists_in_dump():
             manufacturer = await Company.objects.select_related("cars").get(
                 name="Toyota"
             )
-            assert manufacturer.dict() == {
+            assert manufacturer.model_dump() == {
                 "cars": [
                     {
                         "aircon_type": "Manual",

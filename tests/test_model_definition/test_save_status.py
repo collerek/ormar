@@ -212,7 +212,7 @@ async def test_queryset_methods():
             assert comp3.pk == comp.pk
             assert created is False
 
-            update_dict = comp.dict()
+            update_dict = comp.model_dump()
             update_dict["founded"] = 2010
             comp = await Company.objects.update_or_create(**update_dict)
             assert comp.saved

@@ -119,7 +119,7 @@ async def get_department(department_name: str):
     department = await Department.objects.select_all(follow=True).get(
         department_name=department_name
     )
-    return department.dict(exclude=to_exclude)
+    return department.model_dump(exclude=to_exclude)
 
 
 @app.get("/departments/{department_name}/second")
@@ -127,7 +127,7 @@ async def get_department_exclude(department_name: str):
     department = await Department.objects.select_all(follow=True).get(
         department_name=department_name
     )
-    return department.dict(exclude=to_exclude_ormar)
+    return department.model_dump(exclude=to_exclude_ormar)
 
 
 @app.get("/departments/{department_name}/exclude")
@@ -135,7 +135,7 @@ async def get_department_exclude_all(department_name: str):
     department = await Department.objects.select_all(follow=True).get(
         department_name=department_name
     )
-    return department.dict(exclude=exclude_all)
+    return department.model_dump(exclude=exclude_all)
 
 
 @pytest.mark.asyncio

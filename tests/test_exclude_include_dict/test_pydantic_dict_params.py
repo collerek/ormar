@@ -48,17 +48,17 @@ def create_test_database():
 async def test_exclude_default():
     async with database:
         category = Category()
-        assert category.dict() == {
+        assert category.model_dump() == {
             "id": None,
             "items": [],
             "name": "Test",
             "visibility": True,
         }
-        assert category.dict(exclude_defaults=True) == {"items": []}
+        assert category.model_dump(exclude_defaults=True) == {"items": []}
 
         await category.save()
         category2 = await Category.objects.get()
-        assert category2.dict() == {
+        assert category2.model_dump() == {
             "id": 1,
             "items": [],
             "name": "Test",

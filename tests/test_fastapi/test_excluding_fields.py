@@ -70,26 +70,26 @@ async def create_item(item: Item):
 @app.get("/items/{item_id}")
 async def get_item(item_id: int):
     item = await Item.objects.select_related("categories").get(pk=item_id)
-    return item.dict(exclude_primary_keys=True, exclude_through_models=True)
+    return item.model_dump(exclude_primary_keys=True, exclude_through_models=True)
 
 
 @app.get("/categories/{category_id}")
 async def get_category(category_id: int):
     category = await Category.objects.select_related("items").get(pk=category_id)
-    return category.dict(exclude_primary_keys=True)
+    return category.model_dump(exclude_primary_keys=True)
 
 
 @app.get("/categories/nt/{category_id}")
 async def get_category_no_through(category_id: int):
     category = await Category.objects.select_related("items").get(pk=category_id)
-    result = category.dict(exclude_through_models=True)
+    result = category.model_dump(exclude_through_models=True)
     return result
 
 
 @app.get("/categories/ntp/{category_id}")
 async def get_category_no_pk_through(category_id: int):
     category = await Category.objects.select_related("items").get(pk=category_id)
-    return category.dict(exclude_through_models=True, exclude_primary_keys=True)
+    return category.model_dump(exclude_through_models=True, exclude_primary_keys=True)
 
 
 @pytest.mark.asyncio

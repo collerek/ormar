@@ -13,7 +13,7 @@ Available methods are described below.
 ## `pydantic` methods
 
 Note that each `ormar.Model` is also a `pydantic.BaseModel`, so all `pydantic` methods are also available on a model,
-especially `dict()` and `json()` methods that can also accept `exclude`, `include` and other parameters.
+especially `model_dump()` and `json()` methods that can also accept `exclude`, `include` and other parameters.
 
 To read more check [pydantic][pydantic] documentation
 
@@ -118,17 +118,17 @@ class Item(ormar.Model):
     categories: List[Category] = ormar.ManyToMany(Category)
 
 category = Category(name="Test 2")
-assert category.dict() == {'id': None, 'items': [], 'name': 'Test 2',
+assert category.model_dump() == {'id': None, 'items': [], 'name': 'Test 2',
                            'visibility': True}
-assert category.dict(exclude_unset=True) == {'items': [], 'name': 'Test 2'}
+assert category.model_dump(exclude_unset=True) == {'items': [], 'name': 'Test 2'}
 
 await category.save()
 category2 = await Category.objects.get()
-assert category2.dict() == {'id': 1, 'items': [], 'name': 'Test 2',
+assert category2.model_dump() == {'id': 1, 'items': [], 'name': 'Test 2',
                             'visibility': True}
 # NOTE how after loading from db all fields are set explicitly
 # as this is what happens when you populate a model from db
-assert category2.dict(exclude_unset=True) == {'id': 1, 'items': [],
+assert category2.model_dump(exclude_unset=True) == {'id': 1, 'items': [],
                                               'name': 'Test 2', 'visibility': True}
 ```
 
@@ -162,15 +162,15 @@ class Item(ormar.Model):
     
 category = Category()
 # note that Integer pk is by default autoincrement so optional
-assert category.dict() == {'id': None, 'items': [], 'name': 'Test', 'visibility': True}
-assert category.dict(exclude_defaults=True) == {'items': []}
+assert category.model_dump() == {'id': None, 'items': [], 'name': 'Test', 'visibility': True}
+assert category.model_dump(exclude_defaults=True) == {'items': []}
 
 # save and reload the data
 await category.save()
 category2 = await Category.objects.get()
 
-assert category2.dict() == {'id': 1, 'items': [], 'name': 'Test', 'visibility': True}
-assert category2.dict(exclude_defaults=True) == {'id': 1, 'items': []}
+assert category2.model_dump() == {'id': 1, 'items': [], 'name': 'Test', 'visibility': True}
+assert category2.model_dump(exclude_defaults=True) == {'id': 1, 'items': []}
 ```
 
 ### exclude_none
@@ -204,16 +204,16 @@ class Item(ormar.Model):
 
 
 category = Category(name=None)
-assert category.dict() == {'id': None, 'items': [], 'name': None,
+assert category.model_dump() == {'id': None, 'items': [], 'name': None,
                            'visibility': True}
 # note the id is not set yet so None and excluded
-assert category.dict(exclude_none=True) == {'items': [], 'visibility': True}
+assert category.model_dump(exclude_none=True) == {'items': [], 'visibility': True}
 
 await category.save()
 category2 = await Category.objects.get()
-assert category2.dict() == {'id': 1, 'items': [], 'name': None,
+assert category2.model_dump() == {'id': 1, 'items': [], 'name': None,
                             'visibility': True}
-assert category2.dict(exclude_none=True) == {'id': 1, 'items': [],
+assert category2.model_dump(exclude_none=True) == {'id': 1, 'items': [],
                                              'visibility': True}
 
 ```
@@ -235,8 +235,8 @@ class Item(ormar.Model):
     name: str = ormar.String(max_length=100)
 
 item1 = Item(id=1, name="Test Item")
-assert item1.dict() == {"id": 1, "name": "Test Item"}
-assert item1.dict(exclude_primary_keys=True) == {"name": "Test Item"}
+assert item1.model_dump() == {"id": 1, "name": "Test Item"}
+assert item1.model_dump(exclude_primary_keys=True) == {"name": "Test Item"}
 ```
 
 ### exclude_through_models (`ormar` only)
@@ -280,7 +280,7 @@ await Item(**item_dict).save_related(follow=True, save_all=True)
 item = await Item.objects.select_related("categories").get()
 
 # by default you can see the through models (itemcategory)
-assert item.dict() == {'id': 1, 'name': 'test', 
+assert item.model_dump() == {'id': 1, 'name': 'test', 
                        'categories': [
                            {'id': 1, 'name': 'test cat', 
                             'itemcategory': {'id': 1, 'category': None, 'item': None}}, 
@@ -289,7 +289,7 @@ assert item.dict() == {'id': 1, 'name': 'test',
                        ]}
 
 # you can exclude those fields/ models
-assert item.dict(exclude_through_models=True) == {
+assert item.model_dump(exclude_through_models=True) == {
                        'id': 1, 'name': 'test', 
                        'categories': [
                            {'id': 1, 'name': 'test cat'}, 
@@ -299,7 +299,7 @@ assert item.dict(exclude_through_models=True) == {
 
 ## json
 
-`json()` has exactly the same parameters as `dict()` so check above.
+`json()` has exactly the same parameters as `model_dump()` so check above.
 
 Of course the end result is a string with json representation and not a dictionary.
 
@@ -647,7 +647,7 @@ to_exclude = {
 }
 # after excluding ids and through models you get exact same payload used to
 # construct whole tree
-assert department_check.dict(exclude=to_exclude) == to_save
+assert department_check.model_dump(exclude=to_exclude) == to_save
 
 ```
 

@@ -66,14 +66,14 @@ RequestUser = User.get_pydantic(exclude={"password": ..., "category": {"priority
 @app.post("/users3/", response_model=User) # here you can also use both ormar/pydantic
 async def create_user3(user: RequestUser):  # use the generated model here
     # note how now user is pydantic and not ormar Model so you need to convert
-    return await User(**user.dict()).save()
+    return await User(**user.model_dump()).save()
 ```
 
 !!!Note
         To see more examples and read more visit [get_pydantic](../models/methods.md#get_pydantic) part of the documentation.
 
 !!!Warning
-        The `get_pydantic` method generates all models in a tree of nested models according to an algorithm that allows to avoid loops in models (same algorithm that is used in `dict()`, `select_all()` etc.)
+        The `get_pydantic` method generates all models in a tree of nested models according to an algorithm that allows to avoid loops in models (same algorithm that is used in `model_dump()`, `select_all()` etc.)
         
         That means that nested models won't have reference to parent model (by default ormar relation is biderectional).
         
@@ -94,7 +94,7 @@ RequestUser = User.get_pydantic(exclude={"password": ..., "category": {"priority
 @app.post("/users3/", response_model=User)
 async def create_user3(user: RequestUser):  # type: ignore
     # note how now user is not ormar Model so you need to convert
-    return await User(**user.dict()).save()
+    return await User(**user.model_dump()).save()
 ```
 
 The second one is a little bit more hacky and utilizes a way in which fastapi extract function parameters.
@@ -105,7 +105,7 @@ You can overwrite the `__annotations__` entry for given param.
 RequestUser = User.get_pydantic(exclude={"password": ..., "category": {"priority"}})
 # do not use the app decorator
 async def create_user3(user: User):  # use ormar model here
-    return await User(**user.dict()).save()
+    return await User(**user.model_dump()).save()
 # overwrite the function annotations entry for user param with generated model 
 create_user3.__annotations__["user"] = RequestUser
 # manually call app functions (app.get, app.post etc.) and pass your function reference
@@ -139,5 +139,5 @@ class UserCreate(pydantic.BaseModel):
 async def create_user3(user: UserCreate):  # use pydantic model here
     # note how now request param is a pydantic model and not the ormar one
     # so you need to parse/convert it to ormar before you can use database
-    return await User(**user.dict()).save()
+    return await User(**user.model_dump()).save()
 ```

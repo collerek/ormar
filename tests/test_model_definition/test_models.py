@@ -322,7 +322,7 @@ async def test_uuid_column():
             assert item2.id == item3.id
             assert isinstance(item3.id, uuid.UUID)
 
-            u3 = await UUIDSample2(**u1.dict()).save()
+            u3 = await UUIDSample2(**u1.model_dump()).save()
 
             u1_2 = await UUIDSample.objects.get(pk=u3.id)
             assert u1_2 == u1

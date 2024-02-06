@@ -73,7 +73,7 @@ async def test_construct_with_empty_relation():
             comp2 = Company.model_construct(
                 **dict(name="Banzai", hq=None, founded=1988)
             )
-            assert comp.dict() == comp2.dict()
+            assert comp.model_dump() == comp2.model_dump()
 
 
 @pytest.mark.asyncio
@@ -83,7 +83,7 @@ async def test_init_and_construct_has_same_effect():
             hq = await HQ.objects.create(name="Main")
             comp = Company(name="Banzai", hq=hq, founded=1988)
             comp2 = Company.model_construct(**dict(name="Banzai", hq=hq, founded=1988))
-            assert comp.dict() == comp2.dict()
+            assert comp.model_dump() == comp2.model_dump()
 
             comp3 = Company.model_construct(
                 **dict(name="Banzai", hq=hq.dict(), founded=1988)

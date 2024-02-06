@@ -45,7 +45,7 @@ But you cannot:
 
 * Access the related field from reverse model with `related_name`
 * Even if you `select_related` from reverse side of the model the returned models won't be populated in reversed instance (the join is not prevented so you still can `filter` and `order_by` over the relation)
-* The relation won't be populated in `dict()` and `json()`
+* The relation won't be populated in `model_dump()` and `json()`
 * You cannot pass the nested related objects when populating from dictionary or json (also through `fastapi`). It will be either ignored or error will be raised depending on `extra` setting in pydantic `Config`.
 
 Example:
@@ -82,8 +82,8 @@ authors = (
 assert authors[0].first_name == "Test"
 
 # note that posts are not populated for author even if explicitly
-# included in select_related - note no posts in dict()
-assert author.dict(exclude={"id"}) == {"first_name": "Test", "last_name": "Author"}
+# included in select_related - note no posts in model_dump()
+assert author.model_dump(exclude={"id"}) == {"first_name": "Test", "last_name": "Author"}
 
 # still can filter through fields of related model
 authors = await Author.objects.filter(posts__title="Test Post").all()
@@ -246,7 +246,7 @@ You can setup the relation also with just the pk column value of the related mod
 
 Next option is with a dictionary of key-values of the related model.
 
-You can build the dictionary yourself or get it from existing model with `dict()` method.
+You can build the dictionary yourself or get it from existing model with `model_dump()` method.
 
 ```Python hl_lines="40-41"
 --8<-- "../docs_src/relations/docs001.py"

@@ -68,7 +68,7 @@ async def test_read_main():
         assert cat.created_date is not None
         assert cat.id == 1
 
-        cat_dict = cat.dict()
+        cat_dict = cat.model_dump()
         cat_dict["updated_date"] = cat_dict["updated_date"].strftime(
             "%Y-%m-%d %H:%M:%S.%f"
         )

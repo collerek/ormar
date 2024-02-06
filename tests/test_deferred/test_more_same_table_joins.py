@@ -102,7 +102,7 @@ async def test_model_multiple_instances_of_same_table_in_schema():
         ).all()
         assert classes[0].name == "Math"
         assert classes[0].students[0].name == "Jane"
-        assert len(classes[0].dict().get("students")) == 2
+        assert len(classes[0].model_dump().get("students")) == 2
         assert classes[0].teachers[0].category.department.name == "Law Department"
         assert classes[0].students[0].category.department.name == "Math Department"
 
@@ -116,7 +116,7 @@ async def test_load_all_multiple_instances_of_same_table_in_schema():
 
         await math_class.load_all(follow=True)
         assert math_class.students[0].name == "Jane"
-        assert len(math_class.dict().get("students")) == 2
+        assert len(math_class.model_dump().get("students")) == 2
         assert math_class.teachers[0].category.department.name == "Law Department"
         assert math_class.students[0].category.department.name == "Math Department"
 
@@ -140,7 +140,7 @@ async def test_filter_groups_with_instances_of_same_table_in_schema():
         )
         assert math_class.name == "Math"
         assert math_class.students[0].name == "Jane"
-        assert len(math_class.dict().get("students")) == 2
+        assert len(math_class.model_dump().get("students")) == 2
         assert math_class.teachers[0].category.department.name == "Law Department"
         assert math_class.students[0].category.department.name == "Math Department"
 
