@@ -25,7 +25,7 @@ class OrmarDeprecationWarning(DeprecationWarning):
         *args: object,
         since: Tuple[int, int],
         expected_removal: Optional[Tuple[int, int]] = None,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         super().__init__(message, *args)
         self.message = message.rstrip(".")
         self.since = since
@@ -47,5 +47,5 @@ class OrmarDeprecatedSince020(OrmarDeprecationWarning):
     """A specific `OrmarDeprecationWarning` subclass defining
     functionality deprecated since Ormar 0.20."""
 
-    def __init__(self, message: str, *args: object) -> None:
+    def __init__(self, message: str, *args: object) -> None:  # pragma: no cover
         super().__init__(message, *args, since=(0, 20), expected_removal=(0, 30))
