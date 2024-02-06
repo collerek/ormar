@@ -947,7 +947,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude_primary_keys: bool = False,
         exclude_through_models: bool = False,
         **dumps_kwargs: Any,
-    ) -> str:
+    ) -> str:  # pragma: no cover
         warnings.warn(
             "The `json` method is deprecated; use `model_dump_json` instead.",
             DeprecationWarning,
