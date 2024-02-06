@@ -11,7 +11,7 @@ from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 from ormar import post_save
-from pydantic import computed_field
+from pydantic import ConfigDict, computed_field
 
 from tests.settings import DATABASE_URL
 
@@ -38,8 +38,7 @@ async def shutdown() -> None:
 # note that you can set orm_mode here
 # and in this case UserSchema become unnecessary
 class UserBase(pydantic.BaseModel):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
     email: str
     first_name: str
@@ -52,8 +51,7 @@ class UserCreateSchema(UserBase):
 
 
 class UserSchema(UserBase):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 def gen_pass():
@@ -109,9 +107,7 @@ class User2(ormar.Model):
     first_name: str = ormar.String(max_length=255)
     last_name: str = ormar.String(max_length=255)
     category: str = ormar.String(max_length=255, nullable=True)
-    timestamp: datetime.datetime = ormar.DateTime(
-        pydantic_only=True, default=datetime.datetime.now
-    )
+    timestamp: datetime.datetime = pydantic.Field(default=datetime.datetime.now)
 
 
 @pytest.fixture(autouse=True, scope="module")

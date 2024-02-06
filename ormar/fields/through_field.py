@@ -55,7 +55,6 @@ def Through(  # noqa CFQ002
         column_type=None,
         primary_key=False,
         index=False,
-        pydantic_only=False,
         default=None,
         server_default=None,
         is_relation=True,

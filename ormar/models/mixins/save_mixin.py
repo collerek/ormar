@@ -96,9 +96,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict[str, str]
         """
-        ormar_fields = {
-            k for k, v in cls.ormar_config.model_fields.items() if not v.pydantic_only
-        }
+        ormar_fields = {k for k, v in cls.ormar_config.model_fields.items()}
         new_kwargs = {k: v for k, v in new_kwargs.items() if k in ormar_fields}
         return new_kwargs
 
@@ -229,11 +227,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :rtype: Dict
         """
         for field_name, field in cls.ormar_config.model_fields.items():
-            if (
-                field_name not in new_kwargs
-                and field.has_default(use_server=False)
-                and not field.pydantic_only
-            ):
+            if field_name not in new_kwargs and field.has_default(use_server=False):
                 new_kwargs[field_name] = field.get_default()
             # clear fields with server_default set as None
             if (

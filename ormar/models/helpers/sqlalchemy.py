@@ -100,10 +100,9 @@ def check_pk_column_validity(
 ) -> Optional[str]:
     """
     Receives the field marked as primary key and verifies if the pkname
-    was not already set (only one allowed per model) and if field is not marked
-    as pydantic_only as it needs to be a database field.
+    was not already set (only one allowed per model).
 
-    :raises ModelDefintionError: if pkname already set or field is pydantic_only
+    :raises ModelDefintionError: if pkname already set
     :param field_name: name of field
     :type field_name: str
     :param field: ormar.Field
@@ -115,8 +114,6 @@ def check_pk_column_validity(
     """
     if pkname is not None:
         raise ormar.ModelDefinitionError("Only one primary key column is allowed.")
-    if field.pydantic_only:
-        raise ormar.ModelDefinitionError("Primary key column cannot be pydantic only")
     return field_name
 
 
@@ -134,11 +131,7 @@ def sqlalchemy_columns_from_model_fields(
     are leading to the same related model only one can have empty related_name param.
     Also related_names have to be unique.
 
-    Trigger validation of primary_key - only one and required pk can be set,
-    cannot be pydantic_only.
-
-    Append fields to columns if it's not pydantic_only,
-    virtual ForeignKey or ManyToMany field.
+    Trigger validation of primary_key - only one and required pk can be set
 
     Sets `owner` on each model_field as reference to newly created Model.
 
@@ -168,11 +161,6 @@ def _process_fields(
     Helper method.
 
     Populates pkname and columns.
-    Trigger validation of primary_key - only one and required pk can be set,
-    cannot be pydantic_only.
-
-    Append fields to columns if it's not pydantic_only,
-    virtual ForeignKey or ManyToMany field.
 
     Sets `owner` on each model_field as reference to newly created Model.
 
@@ -217,7 +205,7 @@ def _is_db_field(field: "BaseField") -> bool:
     :return: result of the check
     :rtype: bool
     """
-    return not field.pydantic_only and not field.virtual and not field.is_multi
+    return not field.virtual and not field.is_multi
 
 
 def populate_meta_tablename_columns_and_pk(

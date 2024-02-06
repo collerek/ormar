@@ -19,7 +19,6 @@ class ModelDefinitionError(AsyncOrmException):
     * defining a Field without required parameters
     * defining a model with more than one primary_key
     * defining a model without primary_key
-    * setting primary_key column as pydantic_only
     """
 
     pass

@@ -2,6 +2,7 @@ import datetime
 
 import databases
 import ormar
+import pydantic
 import pytest
 import sqlalchemy
 from pydantic import computed_field
@@ -21,7 +22,7 @@ class Album(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    timestamp: datetime.datetime = ormar.DateTime(pydantic_only=True)
+    timestamp: datetime.datetime = pydantic.Field(default=None)
 
     @computed_field
     def name10(self) -> str:

@@ -161,7 +161,6 @@ def ManyToMany(  # type: ignore
         virtual=virtual,
         primary_key=False,
         index=False,
-        pydantic_only=False,
         default=None,
         server_default=None,
         owner=owner,

@@ -24,7 +24,6 @@ def is_field_nullable(
     nullable: Optional[bool],
     default: Any,
     server_default: Any,
-    pydantic_only: Optional[bool],
 ) -> bool:
     """
     Checks if the given field should be nullable/ optional based on parameters given.
@@ -35,17 +34,11 @@ def is_field_nullable(
     :type default: Any
     :param server_default: function to be called as default by sql server
     :type server_default: Any
-    :param pydantic_only: flag if fields should not be included in the sql table
-    :type pydantic_only: Optional[bool]
     :return: result of the check
     :rtype: bool
     """
     if nullable is None:
-        return (
-            default is not None
-            or server_default is not None
-            or (pydantic_only is not None and pydantic_only)
-        )
+        return default is not None or server_default is not None
     return nullable
 
 
@@ -79,7 +72,6 @@ class ModelFieldFactory:
         server_default = kwargs.pop("server_default", None)
         nullable = kwargs.pop("nullable", None)
         sql_nullable = kwargs.pop("sql_nullable", None)
-        pydantic_only = kwargs.pop("pydantic_only", False)
 
         primary_key = kwargs.pop("primary_key", False)
         autoincrement = kwargs.pop("autoincrement", False)
@@ -91,7 +83,7 @@ class ModelFieldFactory:
         overwrite_pydantic_type = kwargs.pop("overwrite_pydantic_type", None)
 
         nullable = is_field_nullable(
-            nullable, default, server_default, pydantic_only
+            nullable, default, server_default
         ) or is_auto_primary_key(primary_key, autoincrement)
         sql_nullable = (
             False
@@ -120,7 +112,6 @@ class ModelFieldFactory:
             sql_nullable=sql_nullable,
             index=kwargs.pop("index", False),
             unique=kwargs.pop("unique", False),
-            pydantic_only=pydantic_only,
             autoincrement=autoincrement,
             column_type=cls.get_column_type(
                 **kwargs, sql_nullable=sql_nullable, enum_class=enum_class

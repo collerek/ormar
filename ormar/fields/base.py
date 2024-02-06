@@ -1,4 +1,3 @@
-import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Type, Union
 
 import sqlalchemy
@@ -44,15 +43,6 @@ class BaseField(FieldInfo):
         self.sql_nullable: bool = kwargs.pop("sql_nullable", False)
         self.index: bool = kwargs.pop("index", False)
         self.unique: bool = kwargs.pop("unique", False)
-        self.pydantic_only: bool = kwargs.pop("pydantic_only", False)
-        if self.pydantic_only:
-            warnings.warn(
-                "Parameter `pydantic_only` is deprecated and will "
-                "be removed in one of the next releases.\n You can declare "
-                "pydantic fields in a normal way. \n Check documentation: "
-                "https://collerek.github.io/ormar/fields/pydantic-fields",
-                DeprecationWarning,
-            )
         self.choices: Sequence = kwargs.pop("choices", False)
 
         self.virtual: bool = kwargs.pop(

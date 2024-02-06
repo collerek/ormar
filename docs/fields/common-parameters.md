@@ -29,7 +29,6 @@ Automatically changed to True if user provide one of the following:
 * `default` value or function is provided
 * `server_default` value or function is provided
 * `autoincrement` is set on `Integer` `primary_key` field
-* **[DEPRECATED]**`pydantic_only=True` is set 
 
 Specifies if field is optional or required, used both with sql and pydantic.
 
@@ -166,20 +165,6 @@ Used in sql only.
 Sets the unique constraint on a table's column.
 
 Used in sql only.
-
-## pydantic_only (**DEPRECATED**)
-
-**This parameter is deprecated and will be removed in one of next releases!**
-
-**To check how to declare pydantic only fields that are not saved into database see [pydantic fields section](pydantic-fields.md)** 
-
-`pydantic_only`: `bool` = `False` 
-
-Prevents creation of a sql column for given field.
-
-Used for data related to given model but not to be stored in the database.
-
-Used in pydantic only.
 
 ## overwrite_pydantic_type
 

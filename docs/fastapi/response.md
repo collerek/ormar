@@ -229,8 +229,7 @@ Sample:
 import pydantic
 
 class UserBase(pydantic.BaseModel):
-    class Config:
-        orm_mode = True
+    model_config = pydantic.ConfigDict(from_attributes=True)
 
     email: str
     first_name: str

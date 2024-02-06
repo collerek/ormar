@@ -297,7 +297,6 @@ def ForeignKey(  # type: ignore # noqa CFQ002
         virtual=virtual,
         primary_key=False,
         index=False,
-        pydantic_only=False,
         default=None,
         server_default=None,
         onupdate=onupdate,

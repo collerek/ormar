@@ -202,20 +202,6 @@ def test_two_pks_in_model_definition():
 
 
 @typing.no_type_check
-def test_setting_pk_column_as_pydantic_only_in_model_definition():
-    with pytest.raises(ModelDefinitionError):
-
-        class ExampleModel2(Model):
-            ormar_config = ormar.OrmarConfig(
-                tablename="example4",
-                database=database,
-                metadata=metadata,
-            )
-
-            test: int = ormar.Integer(primary_key=True, pydantic_only=True)
-
-
-@typing.no_type_check
 def test_decimal_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
 
