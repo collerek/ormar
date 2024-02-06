@@ -1,3 +1,7 @@
+# Adopted from pydantic
+from typing import Optional, Tuple
+
+
 class OrmarDeprecationWarning(DeprecationWarning):
     """A Pydantic specific deprecation warning.
 
@@ -12,15 +16,15 @@ class OrmarDeprecationWarning(DeprecationWarning):
     """
 
     message: str
-    since: tuple[int, int]
-    expected_removal: tuple[int, int]
+    since: Tuple[int, int]
+    expected_removal: Tuple[int, int]
 
     def __init__(
         self,
         message: str,
         *args: object,
-        since: tuple[int, int],
-        expected_removal: tuple[int, int] | None = None,
+        since: Tuple[int, int],
+        expected_removal: Optional[Tuple[int, int]] = None,
     ) -> None:
         super().__init__(message, *args)
         self.message = message.rstrip(".")
@@ -29,7 +33,7 @@ class OrmarDeprecationWarning(DeprecationWarning):
             expected_removal if expected_removal is not None else (since[0] + 1, 0)
         )
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover
         message = (
             f"{self.message}. Deprecated in Ormar V{self.since[0]}.{self.since[1]}"
             f" to be removed in V{self.expected_removal[0]}.{self.expected_removal[1]}."

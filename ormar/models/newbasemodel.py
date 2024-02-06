@@ -801,7 +801,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude_through_models: bool = False,
         exclude_list: bool = False,
         relation_map: Optional[Dict] = None,
-    ) -> "DictStrAny":  # noqa: A003'
+    ) -> "DictStrAny":  # noqa: A003 # pragma: no cover
         warnings.warn(
             "The `dict` method is deprecated; use `model_dump` instead.",
             DeprecationWarning,
@@ -970,7 +970,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     )
     def construct(
         cls: Type["T"], _fields_set: set[str] | None = None, **values: Any
-    ) -> "T":
+    ) -> "T":  # pragma: no cover
         warnings.warn(
             "The `construct` method is deprecated; use `model_construct` instead.",
             DeprecationWarning,
@@ -997,7 +997,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             _fields_set = set(values.keys())
 
         _extra: dict[str, Any] | None = None
-        if cls.model_config.get("extra") == "allow":
+        if cls.model_config.get("extra") == "allow":  # pragma: no cover
             _extra = {}
             for k, v in values.items():
                 _extra[k] = v
@@ -1010,7 +1010,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if not cls.__pydantic_root_model__:
             object.__setattr__(model, "__pydantic_extra__", _extra)
 
-        if cls.__pydantic_post_init__:
+        if cls.__pydantic_post_init__:  # pragma: no cover
             model.model_post_init(None)
         elif not cls.__pydantic_root_model__:
             # Note: if there are any private attributes,
