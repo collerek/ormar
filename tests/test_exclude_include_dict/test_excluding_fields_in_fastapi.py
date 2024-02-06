@@ -130,7 +130,7 @@ async def create_user(user: User):
 @app.post("/users2/", response_model=User)
 async def create_user2(user: User):
     user = await user.save()
-    return user.dict(exclude={"password"})
+    return user.model_dump(exclude={"password"})
 
 
 @app.post("/users3/", response_model=UserBase)
@@ -140,7 +140,7 @@ async def create_user3(user: User2):
 
 @app.post("/users4/")
 async def create_user4(user: User2):
-    return (await user.save()).dict(exclude={"password"})
+    return (await user.save()).model_dump(exclude={"password"})
 
 
 @app.post("/random/", response_model=RandomModel)
@@ -284,7 +284,7 @@ async def test_excluding_property_field_in_endpoints2():
 
     @post_save(RandomModel)
     async def after_save(sender, instance, **kwargs):
-        dummy_registry[instance.pk] = instance.dict()
+        dummy_registry[instance.pk] = instance.model_dump()
 
     client = AsyncClient(app=app, base_url="http://testserver")
     async with client as client, LifespanManager(app):

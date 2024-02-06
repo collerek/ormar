@@ -68,7 +68,7 @@ def test_casts_properly():
     }
     test_package = TicketPackage(**payload)
     TicketPackageOut = TicketPackage.get_pydantic(exclude={"ticket"})
-    parsed = TicketPackageOut(**test_package.dict()).dict()
+    parsed = TicketPackageOut(**test_package.model_dump()).model_dump()
     assert "ticket" not in parsed
     assert "package" in parsed
     assert "library" in parsed.get("package")

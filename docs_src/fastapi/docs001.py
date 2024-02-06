@@ -67,7 +67,7 @@ async def create_category(category: Category):
 @app.put("/items/{item_id}")
 async def get_item(item_id: int, item: Item):
     item_db = await Item.objects.get(pk=item_id)
-    return await item_db.update(**item.dict())
+    return await item_db.update(**item.model_dump())
 
 
 @app.delete("/items/{item_id}")

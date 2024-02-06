@@ -65,7 +65,7 @@ async def test_sort_order_on_main_model():
         assert "sample2" not in check_include
         assert "sorted_name" not in check_include
 
-        check_include = songs[0].dict(exclude={"sample"})
+        check_include = songs[0].model_dump(exclude={"sample"})
         assert "sample" not in check_include
         assert "sample2" in check_include
         assert "sorted_name" in check_include

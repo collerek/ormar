@@ -86,9 +86,9 @@ async def test_init_and_construct_has_same_effect():
             assert comp.model_dump() == comp2.model_dump()
 
             comp3 = Company.model_construct(
-                **dict(name="Banzai", hq=hq.dict(), founded=1988)
+                **dict(name="Banzai", hq=hq.model_dump(), founded=1988)
             )
-            assert comp.dict() == comp3.dict()
+            assert comp.model_dump() == comp3.model_dump()
 
 
 @pytest.mark.asyncio
@@ -99,7 +99,9 @@ async def test_init_and_construct_has_same_effect_with_m2m():
             n2 = await NickNames(name="test2").save()
             hq = HQ(name="Main", nicks=[n1, n2])
             hq2 = HQ.model_construct(**dict(name="Main", nicks=[n1, n2]))
-            assert hq.dict() == hq2.dict()
+            assert hq.model_dump() == hq2.model_dump()
 
-            hq3 = HQ.model_construct(**dict(name="Main", nicks=[n1.dict(), n2.dict()]))
-            assert hq.dict() == hq3.dict()
+            hq3 = HQ.model_construct(
+                **dict(name="Main", nicks=[n1.model_dump(), n2.model_dump()])
+            )
+            assert hq.model_dump() == hq3.model_dump()

@@ -94,17 +94,17 @@ def test_dumping_to_dict_no_exclusion(sample_data):
 
 def test_dumping_to_dict_exclude_set(sample_data):
     item1, item2 = sample_data
-    dict3 = item2.dict(exclude={"name"})
+    dict3 = item2.model_dump(exclude={"name"})
     assert "name" not in dict3
     assert dict3["category"]["name"] == "Weapons"
     assert dict3["created_by"]["email"] == "test@test.com"
 
-    dict4 = item2.dict(exclude={"category"})
+    dict4 = item2.model_dump(exclude={"category"})
     assert dict4["name"] == "M16"
     assert "category" not in dict4
     assert dict4["created_by"]["email"] == "test@test.com"
 
-    dict5 = item2.dict(exclude={"category", "name"})
+    dict5 = item2.model_dump(exclude={"category", "name"})
     assert "name" not in dict5
     assert "category" not in dict5
     assert dict5["created_by"]["email"] == "test@test.com"
@@ -112,7 +112,7 @@ def test_dumping_to_dict_exclude_set(sample_data):
 
 def test_dumping_to_dict_exclude_dict(sample_data):
     item1, item2 = sample_data
-    dict6 = item2.dict(exclude={"category": {"name"}, "name": ...})
+    dict6 = item2.model_dump(exclude={"category": {"name"}, "name": ...})
     assert "name" not in dict6
     assert "category" in dict6
     assert "name" not in dict6["category"]
@@ -121,7 +121,7 @@ def test_dumping_to_dict_exclude_dict(sample_data):
 
 def test_dumping_to_dict_exclude_nested_dict(sample_data):
     item1, item2 = sample_data
-    dict1 = item2.dict(exclude={"category": {"tier": {"name"}}, "name": ...})
+    dict1 = item2.model_dump(exclude={"category": {"tier": {"name"}}, "name": ...})
     assert "name" not in dict1
     assert "category" in dict1
     assert dict1["category"]["name"] == "Weapons"
@@ -131,7 +131,7 @@ def test_dumping_to_dict_exclude_nested_dict(sample_data):
 
 def test_dumping_to_dict_exclude_and_include_nested_dict(sample_data):
     item1, item2 = sample_data
-    dict1 = item2.dict(
+    dict1 = item2.model_dump(
         exclude={"category": {"tier": {"name"}}}, include={"name", "category"}
     )
     assert dict1.get("name") == "M16"
@@ -140,7 +140,7 @@ def test_dumping_to_dict_exclude_and_include_nested_dict(sample_data):
     assert "created_by" not in dict1
     assert dict1["category"]["tier"].get("name") is None
 
-    dict2 = item1.dict(
+    dict2 = item1.model_dump(
         exclude={"id": ...},
         include={"name": ..., "category": {"name": ..., "tier": {"id"}}},
     )
@@ -154,7 +154,7 @@ def test_dumping_to_dict_exclude_and_include_nested_dict(sample_data):
 
 def test_dumping_dict_without_primary_keys(sample_data):
     item1, item2 = sample_data
-    dict1 = item2.dict(exclude_primary_keys=True)
+    dict1 = item2.model_dump(exclude_primary_keys=True)
     assert dict1 == {
         "category": {"name": "Weapons", "tier": {"name": "Tier I"}},
         "created_by": {
@@ -168,7 +168,7 @@ def test_dumping_dict_without_primary_keys(sample_data):
         },
         "name": "M16",
     }
-    dict2 = item1.dict(exclude_primary_keys=True)
+    dict2 = item1.model_dump(exclude_primary_keys=True)
     assert dict2 == {
         "category": {"name": "Toys", "tier": {"name": "Tier I"}},
         "created_by": {

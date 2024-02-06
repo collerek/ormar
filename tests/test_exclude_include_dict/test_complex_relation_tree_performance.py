@@ -355,7 +355,7 @@ async def test_very_complex_relation_map():
             await Release(**pay, tag=saved_tags[ind]).save()
 
         releases = await Release.objects.order_by(Release.id.desc()).all()
-        dicts = [release.dict() for release in releases]
+        dicts = [release.model_dump() for release in releases]
 
         result = [
             {

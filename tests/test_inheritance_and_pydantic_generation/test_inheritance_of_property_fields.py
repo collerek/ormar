@@ -59,7 +59,7 @@ def create_test_database():
 def test_property_fields_are_inherited():
     foo = Foo(name="foo")
     assert foo.prefixed_name == "prefix_foo"
-    assert foo.dict() == {
+    assert foo.model_dump() == {
         "name": "foo",
         "id": None,
         "double_prefixed_name": "prefix2_foo",
@@ -68,4 +68,4 @@ def test_property_fields_are_inherited():
 
     bar = Bar(name="bar")
     assert bar.prefixed_name == "baz_bar"
-    assert bar.dict() == {"name": "bar", "id": None, "prefixed_name": "baz_bar"}
+    assert bar.model_dump() == {"name": "bar", "id": None, "prefixed_name": "baz_bar"}

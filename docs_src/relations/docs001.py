@@ -39,7 +39,7 @@ course = Course(name="Math", completed=False, department=department)
 course2 = Course(name="Math II", completed=False, department=department.pk)
 
 # set up a relation with dictionary corresponding to related model
-course3 = Course(name="Math III", completed=False, department=department.dict())
+course3 = Course(name="Math III", completed=False, department=department.model_dump())
 
 # explicitly set up None
 course4 = Course(name="Math III", completed=False, department=None)

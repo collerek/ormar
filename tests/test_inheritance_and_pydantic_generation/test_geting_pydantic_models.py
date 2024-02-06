@@ -113,13 +113,13 @@ def test_initializing_pydantic_model():
     }
     PydanticCategory = Category.get_pydantic()
     ormar_cat = Category(**data)
-    assert ormar_cat.dict() == data
+    assert ormar_cat.model_dump() == data
     cat = PydanticCategory(**data)
-    assert cat.dict() == data
+    assert cat.model_dump() == data
 
     data = {"id": 1, "name": "test"}
     cat = PydanticCategory(**data)
-    assert cat.dict() == {**data, "items": None}
+    assert cat.model_dump() == {**data, "items": None}
 
 
 def test_getting_pydantic_model_include():

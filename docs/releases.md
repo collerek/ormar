@@ -1020,7 +1020,7 @@ so now you can use those methods directly from relation
 
 # 0.4.3
 
-*  include properties in models.model_dump() and model.json()
+*  include properties in models.model_dump() and model.model_dump_json()
 
 # 0.4.2
 

@@ -245,7 +245,9 @@ async def test_inheritance_with_m2m_relation():
 
         shelby = Truck2(
             **(
-                await client.post(f"/trucks2/{shelby.pk}/add_coowner/", json=joe.dict())
+                await client.post(
+                    f"/trucks2/{shelby.pk}/add_coowner/", json=joe.model_dump()
+                )
             ).json()
         )
 
