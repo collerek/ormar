@@ -98,7 +98,8 @@ async def test_exclude_none():
             "visibility": True,
         }
         assert (
-            category2.json(exclude_none=True) == '{"id":2,"visibility":true,"items":[]}'
+            category2.model_dump_json(exclude_none=True)
+            == '{"id":2,"visibility":true,"items":[]}'
         )
 
 

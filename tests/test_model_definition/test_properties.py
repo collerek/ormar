@@ -57,7 +57,7 @@ async def test_sort_order_on_main_model():
         assert all(
             x["sorted_name"] == f"{x['sort_order']}: {x['name']}" for x in song_dict
         )
-        song_json = [song.json() for song in songs]
+        song_json = [song.model_dump_json() for song in songs]
         assert all("sorted_name" in x for x in song_json)
 
         check_include = songs[0].model_dump(include={"sample"})

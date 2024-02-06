@@ -105,42 +105,42 @@ async def test_signal_functions(cleanup):
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"PRE_SAVE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @post_save(Album)
             async def after_save(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"POST_SAVE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @pre_update(Album)
             async def before_update(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"PRE_UPDATE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @post_update(Album)
             async def after_update(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"POST_UPDATE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @pre_delete(Album)
             async def before_delete(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"PRE_DELETE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @post_delete(Album)
             async def after_delete(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"POST_DELETE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @post_bulk_update(Album)
@@ -148,7 +148,7 @@ async def test_signal_functions(cleanup):
                 for it in instances:
                     await AuditLog(
                         event_type=f"BULK_POST_UPDATE_{sender.get_name()}",
-                        event_log=it.json(),
+                        event_log=it.model_dump_json(),
                     ).save()
 
             album = await Album.objects.create(name="Venice")
@@ -228,14 +228,14 @@ async def test_multiple_signals(cleanup):
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"PRE_SAVE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @pre_save(Album)
             async def before_save2(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"PRE_SAVE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             album = await Album.objects.create(name="Miami")
@@ -263,7 +263,7 @@ async def test_static_methods_as_signals(cleanup):
                 async def before_save(sender, instance, **kwargs):
                     await AuditLog(
                         event_type=f"{AlbumAuditor.event_type}_SAVE",
-                        event_log=instance.json(),
+                        event_log=instance.model_dump_json(),
                     ).save()
 
             album = await Album.objects.create(name="Colorado")
@@ -286,7 +286,8 @@ async def test_methods_as_signals(cleanup):
 
                 async def before_save(self, sender, instance, **kwargs):
                     await AuditLog(
-                        event_type=f"{self.event_type}_SAVE", event_log=instance.json()
+                        event_type=f"{self.event_type}_SAVE",
+                        event_log=instance.model_dump_json(),
                     ).save()
 
             auditor = AlbumAuditor()
@@ -310,7 +311,7 @@ async def test_multiple_senders_signal(cleanup):
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"PRE_SAVE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             cover = await Cover(title="Blue").save()

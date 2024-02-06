@@ -22,7 +22,7 @@ class Author(ormar.Model):
 
 
 def test_schema_not_allowed():
-    schema = Author.schema()
+    schema = Author.model_json_schema()
     for field_schema in schema.get("properties").values():
         for key in field_schema.keys():
             assert "_" not in key, f"Found illegal field in openapi schema: {key}"

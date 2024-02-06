@@ -142,9 +142,9 @@ async def test_quering_of_related_model_works_but_no_result(cleanup):
             .get()
         )
         assert category2 == news
-        assert "posts" not in category2.json()
+        assert "posts" not in category2.model_dump_json()
 
-        assert "posts" not in Category.schema().get("properties")
+        assert "posts" not in Category.model_json_schema().get("properties")
 
 
 @pytest.mark.asyncio
