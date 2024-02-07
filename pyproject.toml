@@ -125,6 +125,7 @@ dataclasses = { version = ">=0.6.0,<0.8 || >0.8,<1.0.0" }
 
 # Performance testing
 yappi = "^1.4.0"
+pytest-benchmark = "^4.0.0"
 nest-asyncio = "^1.5.6"
 
 pre-commit = "^2.21.0"
