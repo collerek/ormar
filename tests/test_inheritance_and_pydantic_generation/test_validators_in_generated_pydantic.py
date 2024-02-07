@@ -2,10 +2,9 @@ import enum
 
 import databases
 import ormar
-import pydantic
 import pytest
 import sqlalchemy
-from pydantic import ValidationError
+from pydantic import ValidationError, field_validator
 
 from tests.settings import DATABASE_URL
 
@@ -36,7 +35,7 @@ class ModelExample(ormar.Model):
     str_field: str = ormar.String(min_length=5, max_length=10, nullable=False)
     enum_field: str = ormar.Enum(nullable=False, enum_class=EnumExample)
 
-    @pydantic.validator("str_field")
+    @field_validator("str_field")
     def validate_str_field(cls, v):
         if " " not in v:
             raise ValueError("must contain a space")

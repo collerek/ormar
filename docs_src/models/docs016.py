@@ -1,5 +1,6 @@
 import databases
 import ormar
+import pydantic
 import sqlalchemy
 
 database = databases.Database("sqlite:///db.sqlite")
@@ -12,7 +13,7 @@ class Course(ormar.Model):
         metadata=metadata,
     )
 
-    model_config = dict(allow_mutation=False)
+    model_config = pydantic.ConfigDict(frozen=True)
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
