@@ -9,15 +9,18 @@ from typing import (
     List,
     Optional,
     Set,
+    Tuple,
     Type,
     Union,
     cast,
 )
 
 import pydantic
+from pydantic import BaseModel
 from pydantic._internal._decorators import DecoratorInfos
 from pydantic.fields import FieldInfo
 
+from ormar.fields import BaseField, ForeignKeyField, ManyToManyField
 from ormar.models.mixins.relation_mixin import RelationMixin  # noqa: I100, I202
 from ormar.queryset.utils import translate_list_to_dict
 
@@ -114,23 +117,41 @@ class PydanticMixin(RelationMixin):
         field = cls.ormar_config.model_fields[name]
         target: Any = None
         if field.is_relation and name in relation_map:
-            target = field.to._convert_ormar_to_pydantic(
-                include=cls._skip_ellipsis(include, name),
-                exclude=cls._skip_ellipsis(exclude, name),
-                relation_map=cls._skip_ellipsis(
-                    relation_map, name, default_return=dict()
-                ),
+            target, default = cls._determined_included_relation_field_type(
+                name=name,
+                field=field,
+                include=include,
+                exclude=exclude,
+                defaults=defaults,
+                relation_map=relation_map,
             )
-            if field.is_multi or field.virtual:
-                target = List[target]  # type: ignore
-            if field.nullable:
-                defaults[name] = None
         elif not field.is_relation:
             defaults[name] = cls.model_fields[name].default
             target = field.__type__
         if target is not None and field.nullable:
             target = Optional[target]
         return target
+
+    @classmethod
+    def _determined_included_relation_field_type(
+        cls,
+        name: str,
+        field: Union[BaseField, ForeignKeyField, ManyToManyField],
+        include: Union[Set, Dict, None],
+        exclude: Union[Set, Dict, None],
+        defaults: Dict,
+        relation_map: Dict[str, Any],
+    ) -> Tuple[Type[BaseModel], Dict]:
+        target = field.to._convert_ormar_to_pydantic(
+            include=cls._skip_ellipsis(include, name),
+            exclude=cls._skip_ellipsis(exclude, name),
+            relation_map=cls._skip_ellipsis(relation_map, name, default_return=dict()),
+        )
+        if field.is_multi or field.virtual:
+            target = List[target]  # type: ignore
+        if field.nullable:
+            defaults[name] = None
+        return target, defaults
 
     @classmethod
     def _copy_field_validators(cls, model: Type[pydantic.BaseModel]) -> None:
