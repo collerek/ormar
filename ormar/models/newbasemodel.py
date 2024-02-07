@@ -1029,17 +1029,30 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if _fields_set is None:
             _fields_set = set(values.keys())
 
-        _extra: dict[str, Any] | None = None
-        if cls.model_config.get("extra") == "allow":  # pragma: no cover
-            _extra = {}
-            for k, v in values.items():
-                _extra[k] = v
-        else:
+        extra_allowed = cls.model_config.get("extra") == "allow"
+        if not extra_allowed:
             fields_values.update(values)
         object.__setattr__(model, "__dict__", fields_values)
         model._initialize_internal_attributes()
         cls._construct_relations(model=model, values=values)
         object.__setattr__(model, "__pydantic_fields_set__", _fields_set)
+        return cls._pydantic_model_construct_finalizer(
+            model=model, extra_allowed=extra_allowed, values=values
+        )
+
+    @classmethod
+    def _pydantic_model_construct_finalizer(
+        cls: Type["T"], model: "T", extra_allowed: bool, **values: Any
+    ) -> "T":
+        """
+        Recreate pydantic model_construct logic here as we do not call super method.
+        """
+        _extra: Union[Dict[str, Any], None] = None
+        if extra_allowed:  # pragma: no cover
+            _extra = {}
+            for k, v in values.items():
+                _extra[k] = v
+
         if not cls.__pydantic_root_model__:
             object.__setattr__(model, "__pydantic_extra__", _extra)
 
