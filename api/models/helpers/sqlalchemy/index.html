@@ -1,0 +1,4607 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A simple async ORM with fastapi in mind and pydantic validation.">
+      
+      
+      
+      
+        <link rel="prev" href="../relations/">
+      
+      
+        <link rel="next" href="../validation/">
+      
+      
+      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.2.7">
+    
+    
+      
+        <title>sqlalchemy - ormar</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.046329b4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.85d0ee34.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function n(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],n("js",new Date),n("config","UA-72514911-3"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){this.value&&n("event","search",{search_term:this.value})}),document$.subscribe(function(){var a=document.forms.feedback;if(void 0!==a)for(var e of a.querySelectorAll("[type=submit]"))e.addEventListener("click",function(e){e.preventDefault();var t=document.location.pathname,e=this.getAttribute("data-md-value");n("event","feedback",{page:t,data:e}),a.firstElementChild.disabled=!0;e=a.querySelector(".md-feedback__note [data-md-value='"+e+"']");e&&(e.hidden=!1)}),a.hidden=!1}),location$.subscribe(function(e){n("config","UA-72514911-3",{page_path:e.pathname})})});var e=document.createElement("script");e.async=!0,e.src="https://www.googletagmanager.com/gtag/js?id=UA-72514911-3",document.getElementById("__analytics").insertAdjacentElement("afterEnd",e)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ormar.models.helpers.sqlalchemy" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="ormar" class="md-header__button md-logo" aria-label="ormar" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            ormar
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              sqlalchemy
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/collerek/ormar" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    collerek/ormar
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="ormar" class="md-nav__button md-logo" aria-label="ormar" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    ormar
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/collerek/ormar" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    collerek/ormar
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Models
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Models
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../models/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Definition
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../models/inheritance/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Inheritance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../models/methods/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Methods
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../models/migrations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Migrations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../models/internals/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Internals
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Fields
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Fields
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../fields/common-parameters/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Common parameters
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../fields/field-types/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Fields types
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../fields/pydantic-fields/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pydantic only fields
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../fields/encryption/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Fields encryption
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../../relations/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Relations
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_5">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Relations
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../relations/postponed-annotations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Postponed annotations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../relations/foreign-key/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ForeignKey
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../relations/many-to-many/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ManyToMany
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../relations/queryset-proxy/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    QuerySetProxy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../../queries/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Queries
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_6">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Queries
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../queries/create/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Insert data into database
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../queries/read/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Read data from database
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../queries/update/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Update data in database
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../queries/delete/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Delete data from database
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../queries/joins-and-subqueries/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Joins and subqueries
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../queries/filter-and-sort/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Filtering and sorting data
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../queries/select-columns/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Selecting subset of columns
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../queries/pagination-and-rows-number/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pagination and rows number
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../queries/aggregations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Aggregation functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../queries/raw-data/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Return raw data
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../signals/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Signals
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../transactions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Transactions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Use with Fastapi
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Use with Fastapi
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../fastapi/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quick Start
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../fastapi/response/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Using ormar in responses
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../fastapi/requests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Using ormar in requests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../mypy/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Use with mypy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../plugin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    PyCharm plugin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../releases/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Release Notes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" checked>
+        
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Api (BETA)
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            Api (BETA)
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14_1" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    ormar
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_14_1">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_14_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_14_1">
+            <span class="md-nav__icon md-icon"></span>
+            ormar
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14_1_1" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../decorators/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    decorators
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_14_1_1">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_14_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            decorators
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../decorators/property_field/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    property_field
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../decorators/signals/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    signals
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../exceptions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    exceptions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14_1_3" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../fields/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    fields
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_14_1_3">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_14_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            fields
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../fields/base/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    base
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../fields/constraints/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    constraints
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../fields/foreign_key/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    foreign_key
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../fields/many_to_many/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    many_to_many
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../fields/model_fields/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    model_fields
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../fields/parsers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    parsers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../fields/referential_actions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    referential_actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../fields/sqlalchemy_encrypted/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    sqlalchemy_encrypted
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../fields/sqlalchemy_uuid/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    sqlalchemy_uuid
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../fields/through_field/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    through_field
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14_1_4" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    models
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_14_1_4">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_14_1_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_14_1_4">
+            <span class="md-nav__icon md-icon"></span>
+            models
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14_1_4_1" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../descriptors/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    descriptors
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_14_1_4_1">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_14_1_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14_1_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            descriptors
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../descriptors/descriptors/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    descriptors
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../excludable/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    excludable
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14_1_4_3" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    helpers
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_14_1_4_3">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_14_1_4_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_14_1_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            helpers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    models
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pydantic/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pydantic
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../related_names_validation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    related_names_validation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../relations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    relations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    sqlalchemy
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    sqlalchemy
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy" class="md-nav__link">
+    ormar.models.helpers.sqlalchemy
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.adjust_through_many_to_many_model" class="md-nav__link">
+    adjust_through_many_to_many_model()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.check_for_null_type_columns_from_forward_refs" class="md-nav__link">
+    check_for_null_type_columns_from_forward_refs()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.check_pk_column_validity" class="md-nav__link">
+    check_pk_column_validity()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.create_and_append_m2m_fk" class="md-nav__link">
+    create_and_append_m2m_fk()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.populate_meta_sqlalchemy_table_if_required" class="md-nav__link">
+    populate_meta_sqlalchemy_table_if_required()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.populate_meta_tablename_columns_and_pk" class="md-nav__link">
+    populate_meta_tablename_columns_and_pk()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.set_constraint_names" class="md-nav__link">
+    set_constraint_names()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.sqlalchemy_columns_from_model_fields" class="md-nav__link">
+    sqlalchemy_columns_from_model_fields()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.update_column_definition" class="md-nav__link">
+    update_column_definition()
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../validation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    validation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metaclass/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    metaclass
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14_1_4_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../mixins/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    mixins
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_14_1_4_5">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_14_1_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14_1_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            mixins
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mixins/alias_mixin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    alias_mixin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mixins/excludable_mixin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    excludable_mixin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mixins/merge_mixin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    merge_mixin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mixins/prefetch_mixin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    prefetch_mixin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mixins/pydantic_mixin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pydantic_mixin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mixins/relation_mixin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    relation_mixin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mixins/save_mixin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    save_mixin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../model/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../model_row/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    model_row
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modelproxy/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    modelproxy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../newbasemodel/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    newbasemodel
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quick_access_views/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    quick_access_views
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../traversible/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    traversible
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../utils/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    utils
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14_1_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../protocols/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    protocols
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_14_1_5">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_14_1_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14_1_5">
+            <span class="md-nav__icon md-icon"></span>
+            protocols
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../protocols/queryset_protocol/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    queryset_protocol
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../protocols/relation_protocol/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    relation_protocol
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14_1_6" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../queryset/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    queryset
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_14_1_6">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_14_1_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14_1_6">
+            <span class="md-nav__icon md-icon"></span>
+            queryset
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14_1_6_1" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../queryset/actions/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    actions
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_14_1_6_1">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_14_1_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14_1_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            actions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/actions/filter_action/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    filter_action
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/actions/order_action/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    order_action
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/actions/query_action/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    query_action
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/actions/select_action/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    select_action
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/clause/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    clause
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/field_accessor/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    field_accessor
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/join/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    join
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14_1_6_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../queryset/queries/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    queries
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_14_1_6_5">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_14_1_6_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14_1_6_5">
+            <span class="md-nav__icon md-icon"></span>
+            queries
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/queries/filter_query/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    filter_query
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/queries/limit_query/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    limit_query
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/queries/offset_query/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    offset_query
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/queries/order_query/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    order_query
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/queries/prefetch_query/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    prefetch_query
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/queries/query/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    query
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/queryset/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    queryset
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/reverse_alias_resolver/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    reverse_alias_resolver
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../queryset/utils/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    utils
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14_1_7" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../relations/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    relations
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_14_1_7">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_14_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            relations
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../relations/alias_manager/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    alias_manager
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../relations/querysetproxy/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    querysetproxy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../relations/relation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    relation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../relations/relation_manager/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    relation_manager
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../relations/relation_proxy/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    relation_proxy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../relations/utils/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    utils
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14_1_8" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../signals/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    signals
+  </span>
+  
+
+            </a>
+            
+              <label class="md-nav__link " for="__nav_14_1_8">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_14_1_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            signals
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../signals/signal/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    signal
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy" class="md-nav__link">
+    ormar.models.helpers.sqlalchemy
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.adjust_through_many_to_many_model" class="md-nav__link">
+    adjust_through_many_to_many_model()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.check_for_null_type_columns_from_forward_refs" class="md-nav__link">
+    check_for_null_type_columns_from_forward_refs()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.check_pk_column_validity" class="md-nav__link">
+    check_pk_column_validity()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.create_and_append_m2m_fk" class="md-nav__link">
+    create_and_append_m2m_fk()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.populate_meta_sqlalchemy_table_if_required" class="md-nav__link">
+    populate_meta_sqlalchemy_table_if_required()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.populate_meta_tablename_columns_and_pk" class="md-nav__link">
+    populate_meta_tablename_columns_and_pk()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.set_constraint_names" class="md-nav__link">
+    set_constraint_names()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.sqlalchemy_columns_from_model_fields" class="md-nav__link">
+    sqlalchemy_columns_from_model_fields()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ormar.models.helpers.sqlalchemy.update_column_definition" class="md-nav__link">
+    update_column_definition()
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+  <h1>sqlalchemy</h1>
+
+<div class="doc doc-object doc-module">
+
+
+<a id="ormar.models.helpers.sqlalchemy"></a>
+  <div class="doc doc-contents first">
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="ormar.models.helpers.sqlalchemy.adjust_through_many_to_many_model" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">adjust_through_many_to_many_model</span><span class="p">(</span><span class="n">model_field</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Registers m2m relation on through model.
+Sets ormar.ForeignKey from through model to both child and parent models.
+Sets sqlalchemy.ForeignKey to both child and parent models.
+Sets pydantic fields with child and parent model types.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>model_field</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="ormar.ManyToManyField" href="../../../#ormar.ManyToManyField">ManyToManyField</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>relation field defined in parent model</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>ormar/models/helpers/sqlalchemy.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">adjust_through_many_to_many_model</span><span class="p">(</span><span class="n">model_field</span><span class="p">:</span> <span class="s2">&quot;ManyToManyField&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Registers m2m relation on through model.</span>
+<span class="sd">    Sets ormar.ForeignKey from through model to both child and parent models.</span>
+<span class="sd">    Sets sqlalchemy.ForeignKey to both child and parent models.</span>
+<span class="sd">    Sets pydantic fields with child and parent model types.</span>
+
+<span class="sd">    :param model_field: relation field defined in parent model</span>
+<span class="sd">    :type model_field: ManyToManyField</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parent_name</span> <span class="o">=</span> <span class="n">model_field</span><span class="o">.</span><span class="n">default_target_field_name</span><span class="p">()</span>
+    <span class="n">child_name</span> <span class="o">=</span> <span class="n">model_field</span><span class="o">.</span><span class="n">default_source_field_name</span><span class="p">()</span>
+    <span class="n">model_fields</span> <span class="o">=</span> <span class="n">model_field</span><span class="o">.</span><span class="n">through</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">model_fields</span>
+    <span class="n">model_fields</span><span class="p">[</span><span class="n">parent_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
+        <span class="n">model_field</span><span class="o">.</span><span class="n">to</span><span class="p">,</span>
+        <span class="n">real_name</span><span class="o">=</span><span class="n">parent_name</span><span class="p">,</span>
+        <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;CASCADE&quot;</span><span class="p">,</span>
+        <span class="n">owner</span><span class="o">=</span><span class="n">model_field</span><span class="o">.</span><span class="n">through</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">model_fields</span><span class="p">[</span><span class="n">child_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
+        <span class="n">model_field</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span>
+        <span class="n">real_name</span><span class="o">=</span><span class="n">child_name</span><span class="p">,</span>
+        <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;CASCADE&quot;</span><span class="p">,</span>
+        <span class="n">owner</span><span class="o">=</span><span class="n">model_field</span><span class="o">.</span><span class="n">through</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">create_and_append_m2m_fk</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model_field</span><span class="o">.</span><span class="n">to</span><span class="p">,</span> <span class="n">model_field</span><span class="o">=</span><span class="n">model_field</span><span class="p">,</span> <span class="n">field_name</span><span class="o">=</span><span class="n">parent_name</span>
+    <span class="p">)</span>
+    <span class="n">create_and_append_m2m_fk</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model_field</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span> <span class="n">model_field</span><span class="o">=</span><span class="n">model_field</span><span class="p">,</span> <span class="n">field_name</span><span class="o">=</span><span class="n">child_name</span>
+    <span class="p">)</span>
+
+    <span class="n">create_pydantic_field</span><span class="p">(</span><span class="n">parent_name</span><span class="p">,</span> <span class="n">model_field</span><span class="o">.</span><span class="n">to</span><span class="p">,</span> <span class="n">model_field</span><span class="p">)</span>
+    <span class="n">create_pydantic_field</span><span class="p">(</span><span class="n">child_name</span><span class="p">,</span> <span class="n">model_field</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span> <span class="n">model_field</span><span class="p">)</span>
+
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">model_field</span><span class="o">.</span><span class="n">through</span><span class="p">,</span> <span class="n">parent_name</span><span class="p">,</span> <span class="n">RelationDescriptor</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">parent_name</span><span class="p">))</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">model_field</span><span class="o">.</span><span class="n">through</span><span class="p">,</span> <span class="n">child_name</span><span class="p">,</span> <span class="n">RelationDescriptor</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">child_name</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="ormar.models.helpers.sqlalchemy.check_for_null_type_columns_from_forward_refs" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">check_for_null_type_columns_from_forward_refs</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Check is any column is of NUllType() meaning it's empty column from ForwardRef</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>meta</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="ormar.ModelMeta" href="../../../#ormar.ModelMeta">ModelMeta</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Meta class of the Model without sqlalchemy table constructed</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>result of the check</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>ormar/models/helpers/sqlalchemy.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">check_for_null_type_columns_from_forward_refs</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="s2">&quot;ModelMeta&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check is any column is of NUllType() meaning it&#39;s empty column from ForwardRef</span>
+
+<span class="sd">    :param meta: Meta class of the Model without sqlalchemy table constructed</span>
+<span class="sd">    :type meta: Model class Meta</span>
+<span class="sd">    :return: result of the check</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">sql</span><span class="o">.</span><span class="n">sqltypes</span><span class="o">.</span><span class="n">NullType</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">columns</span>
+    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="ormar.models.helpers.sqlalchemy.check_pk_column_validity" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">check_pk_column_validity</span><span class="p">(</span><span class="n">field_name</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">pkname</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Receives the field marked as primary key and verifies if the pkname
+was not already set (only one allowed per model) and if field is not marked
+as pydantic_only as it needs to be a database field.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>field_name</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>name of field</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>field</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="ormar.BaseField" href="../../../#ormar.BaseField">BaseField</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>ormar.Field</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>pkname</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[str]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>already set pkname</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>name of the field that should be set as pkname</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Raises:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>ModelDefintionError</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>if pkname already set or field is pydantic_only</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>ormar/models/helpers/sqlalchemy.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">check_pk_column_validity</span><span class="p">(</span>
+    <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="s2">&quot;BaseField&quot;</span><span class="p">,</span> <span class="n">pkname</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Receives the field marked as primary key and verifies if the pkname</span>
+<span class="sd">    was not already set (only one allowed per model) and if field is not marked</span>
+<span class="sd">    as pydantic_only as it needs to be a database field.</span>
+
+<span class="sd">    :raises ModelDefintionError: if pkname already set or field is pydantic_only</span>
+<span class="sd">    :param field_name: name of field</span>
+<span class="sd">    :type field_name: str</span>
+<span class="sd">    :param field: ormar.Field</span>
+<span class="sd">    :type field: BaseField</span>
+<span class="sd">    :param pkname: already set pkname</span>
+<span class="sd">    :type pkname: Optional[str]</span>
+<span class="sd">    :return: name of the field that should be set as pkname</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">pkname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ModelDefinitionError</span><span class="p">(</span><span class="s2">&quot;Only one primary key column is allowed.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">pydantic_only</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ModelDefinitionError</span><span class="p">(</span><span class="s2">&quot;Primary key column cannot be pydantic only&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">field_name</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="ormar.models.helpers.sqlalchemy.create_and_append_m2m_fk" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">create_and_append_m2m_fk</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">model_field</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.</p>
+<p>Newly created field is added to m2m relation through model Meta columns and table.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>field_name</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>name of the column to create</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>model</code></td>
+          <td>
+                <code><span title="typing.Type">Type</span>[<a class="autorefs autorefs-internal" title="ormar.Model" href="../../../#ormar.Model">Model</a>]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Model class to which FK should be created</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>model_field</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="ormar.ManyToManyField" href="../../../#ormar.ManyToManyField">ManyToManyField</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>field with ManyToMany relation</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>ormar/models/helpers/sqlalchemy.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">create_and_append_m2m_fk</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;Model&quot;</span><span class="p">],</span> <span class="n">model_field</span><span class="p">:</span> <span class="s2">&quot;ManyToManyField&quot;</span><span class="p">,</span> <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.</span>
+
+<span class="sd">    Newly created field is added to m2m relation through model Meta columns and table.</span>
+
+<span class="sd">    :param field_name: name of the column to create</span>
+<span class="sd">    :type field_name: str</span>
+<span class="sd">    :param model: Model class to which FK should be created</span>
+<span class="sd">    :type model: Model class</span>
+<span class="sd">    :param model_field: field with ManyToMany relation</span>
+<span class="sd">    :type model_field: ManyToManyField field</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pk_alias</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_column_alias</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">pkname</span><span class="p">)</span>
+    <span class="n">pk_column</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">pk_alias</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pk_column</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">raise</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ModelDefinitionError</span><span class="p">(</span>
+            <span class="s2">&quot;ManyToMany relation cannot lead to field without pk&quot;</span>
+        <span class="p">)</span>
+    <span class="n">column</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="n">field_name</span><span class="p">,</span>
+        <span class="n">pk_column</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
+        <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">tablename</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">pk_alias</span><span class="p">,</span>
+            <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;CASCADE&quot;</span><span class="p">,</span>
+            <span class="n">onupdate</span><span class="o">=</span><span class="s2">&quot;CASCADE&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;fk_</span><span class="si">{</span><span class="n">model_field</span><span class="o">.</span><span class="n">through</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">tablename</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">tablename</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">pk_alias</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">model_field</span><span class="o">.</span><span class="n">through</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+    <span class="n">model_field</span><span class="o">.</span><span class="n">through</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">append_column</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="ormar.models.helpers.sqlalchemy.populate_meta_sqlalchemy_table_if_required" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">populate_meta_sqlalchemy_table_if_required</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Constructs sqlalchemy table out of columns and parameters set on Meta class.
+It populates name, metadata, columns and constraints.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>meta</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="ormar.ModelMeta" href="../../../#ormar.ModelMeta">ModelMeta</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Meta class of the Model without sqlalchemy table constructed</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>ormar/models/helpers/sqlalchemy.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">populate_meta_sqlalchemy_table_if_required</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="s2">&quot;ModelMeta&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Constructs sqlalchemy table out of columns and parameters set on Meta class.</span>
+<span class="sd">    It populates name, metadata, columns and constraints.</span>
+
+<span class="sd">    :param meta: Meta class of the Model without sqlalchemy table constructed</span>
+<span class="sd">    :type meta: Model class Meta</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="s2">&quot;table&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">check_for_null_type_columns_from_forward_refs</span><span class="p">(</span>
+        <span class="n">meta</span>
+    <span class="p">):</span>
+        <span class="n">set_constraint_names</span><span class="p">(</span><span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">)</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">Table</span><span class="p">(</span>
+            <span class="n">meta</span><span class="o">.</span><span class="n">tablename</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="o">*</span><span class="n">meta</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="o">*</span><span class="n">meta</span><span class="o">.</span><span class="n">constraints</span>
+        <span class="p">)</span>
+        <span class="n">meta</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="n">table</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="ormar.models.helpers.sqlalchemy.populate_meta_tablename_columns_and_pk" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">populate_meta_tablename_columns_and_pk</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">new_model</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Sets Model tablename if it's not already set in Meta.
+Default tablename if not present is class name lower + s (i.e. Bed becomes -&gt; beds)</p>
+<p>Checks if Model's Meta have pkname and columns set.
+If not calls the sqlalchemy_columns_from_model_fields to populate
+columns from ormar.fields definitions.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>name</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>name of the current Model</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>new_model</code></td>
+          <td>
+                <code><span title="typing.Type">Type</span>[<a class="autorefs autorefs-internal" title="ormar.Model" href="../../../#ormar.Model">Model</a>]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>currently constructed Model</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>ormar.models.metaclass.ModelMetaclass</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Model with populated pkname and columns in Meta</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Raises:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>ModelDefinitionError</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>if pkname is not present raises ModelDefinitionError. Each model has to have pk.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>ormar/models/helpers/sqlalchemy.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">populate_meta_tablename_columns_and_pk</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new_model</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;Model&quot;</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;Model&quot;</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sets Model tablename if it&#39;s not already set in Meta.</span>
+<span class="sd">    Default tablename if not present is class name lower + s (i.e. Bed becomes -&gt; beds)</span>
+
+<span class="sd">    Checks if Model&#39;s Meta have pkname and columns set.</span>
+<span class="sd">    If not calls the sqlalchemy_columns_from_model_fields to populate</span>
+<span class="sd">    columns from ormar.fields definitions.</span>
+
+<span class="sd">    :raises ModelDefinitionError: if pkname is not present raises ModelDefinitionError.</span>
+<span class="sd">    Each model has to have pk.</span>
+
+<span class="sd">    :param name: name of the current Model</span>
+<span class="sd">    :type name: str</span>
+<span class="sd">    :param new_model: currently constructed Model</span>
+<span class="sd">    :type new_model: ormar.models.metaclass.ModelMetaclass</span>
+<span class="sd">    :return: Model with populated pkname and columns in Meta</span>
+<span class="sd">    :rtype: ormar.models.metaclass.ModelMetaclass</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tablename</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;s&quot;</span>
+    <span class="n">new_model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">tablename</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">new_model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">tablename</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">new_model</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="s2">&quot;tablename&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">tablename</span>
+    <span class="p">)</span>
+    <span class="n">pkname</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">new_model</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="s2">&quot;columns&quot;</span><span class="p">):</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="n">new_model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">columns</span>
+        <span class="n">pkname</span> <span class="o">=</span> <span class="n">new_model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">pkname</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">pkname</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span> <span class="n">sqlalchemy_columns_from_model_fields</span><span class="p">(</span>
+            <span class="n">new_model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">model_fields</span><span class="p">,</span> <span class="n">new_model</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">pkname</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ormar</span><span class="o">.</span><span class="n">ModelDefinitionError</span><span class="p">(</span><span class="s2">&quot;Table has to have a primary key.&quot;</span><span class="p">)</span>
+
+    <span class="n">new_model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">columns</span>
+    <span class="n">new_model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">pkname</span> <span class="o">=</span> <span class="n">pkname</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">new_model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">orders_by</span><span class="p">:</span>
+        <span class="c1"># by default we sort by pk name if other option not provided</span>
+        <span class="n">new_model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">orders_by</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pkname</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_model</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="ormar.models.helpers.sqlalchemy.set_constraint_names" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">set_constraint_names</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Populates the names on IndexColumns and UniqueColumns and CheckColumns constraints.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>meta</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="ormar.ModelMeta" href="../../../#ormar.ModelMeta">ModelMeta</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Meta class of the Model without sqlalchemy table constructed</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>ormar/models/helpers/sqlalchemy.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">set_constraint_names</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="s2">&quot;ModelMeta&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Populates the names on IndexColumns and UniqueColumns and CheckColumns constraints.</span>
+
+<span class="sd">    :param meta: Meta class of the Model without sqlalchemy table constructed</span>
+<span class="sd">    :type meta: Model class Meta</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">constraints</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">constraint</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="n">constraint</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;uc_</span><span class="si">{</span><span class="n">meta</span><span class="o">.</span><span class="n">tablename</span><span class="si">}</span><span class="s2">_&quot;</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">constraint</span><span class="o">.</span><span class="n">_pending_colargs</span><span class="p">])</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">Index</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">constraint</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;TEMPORARY_NAME&quot;</span>
+        <span class="p">):</span>
+            <span class="n">constraint</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;ix_</span><span class="si">{</span><span class="n">meta</span><span class="o">.</span><span class="n">tablename</span><span class="si">}</span><span class="s2">_&quot;</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">col</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">constraint</span><span class="o">.</span><span class="n">_pending_colargs</span><span class="p">])</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">CheckConstraint</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">constraint</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="n">sql_condition</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">constraint</span><span class="o">.</span><span class="n">sqltext</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+            <span class="n">constraint</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;check_</span><span class="si">{</span><span class="n">meta</span><span class="o">.</span><span class="n">tablename</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">sql_condition</span><span class="si">}</span><span class="s2">&quot;</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="ormar.models.helpers.sqlalchemy.sqlalchemy_columns_from_model_fields" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">sqlalchemy_columns_from_model_fields</span><span class="p">(</span><span class="n">model_fields</span><span class="p">,</span> <span class="n">new_model</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Iterates over declared on Model model fields and extracts fields that
+should be treated as database fields.</p>
+<p>If the model is empty it sets mandatory id field as primary key
+(used in through models in m2m relations).</p>
+<p>Triggers a validation of relation_names in relation fields. If multiple fields
+are leading to the same related model only one can have empty related_name param.
+Also related_names have to be unique.</p>
+<p>Trigger validation of primary_key - only one and required pk can be set,
+cannot be pydantic_only.</p>
+<p>Append fields to columns if it's not pydantic_only,
+virtual ForeignKey or ManyToMany field.</p>
+<p>Sets <code>owner</code> on each model_field as reference to newly created Model.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>model_fields</code></td>
+          <td>
+                <code><span title="typing.Dict">Dict</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>dictionary of declared ormar model fields</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>new_model</code></td>
+          <td>
+                <code><span title="typing.Type">Type</span>[<a class="autorefs autorefs-internal" title="ormar.Model" href="../../../#ormar.Model">Model</a>]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>Tuple[Optional[str], List[sqlalchemy.Column]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>pkname, list of sqlalchemy columns</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Raises:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>ModelDefinitionError</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>if validation of related_names fail, or pkname validation fails.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>ormar/models/helpers/sqlalchemy.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">sqlalchemy_columns_from_model_fields</span><span class="p">(</span>
+    <span class="n">model_fields</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">new_model</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;Model&quot;</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">Column</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Iterates over declared on Model model fields and extracts fields that</span>
+<span class="sd">    should be treated as database fields.</span>
+
+<span class="sd">    If the model is empty it sets mandatory id field as primary key</span>
+<span class="sd">    (used in through models in m2m relations).</span>
+
+<span class="sd">    Triggers a validation of relation_names in relation fields. If multiple fields</span>
+<span class="sd">    are leading to the same related model only one can have empty related_name param.</span>
+<span class="sd">    Also related_names have to be unique.</span>
+
+<span class="sd">    Trigger validation of primary_key - only one and required pk can be set,</span>
+<span class="sd">    cannot be pydantic_only.</span>
+
+<span class="sd">    Append fields to columns if it&#39;s not pydantic_only,</span>
+<span class="sd">    virtual ForeignKey or ManyToMany field.</span>
+
+<span class="sd">    Sets `owner` on each model_field as reference to newly created Model.</span>
+
+<span class="sd">    :raises ModelDefinitionError: if validation of related_names fail,</span>
+<span class="sd">    or pkname validation fails.</span>
+<span class="sd">    :param model_fields: dictionary of declared ormar model fields</span>
+<span class="sd">    :type model_fields: Dict[str, ormar.Field]</span>
+<span class="sd">    :param new_model:</span>
+<span class="sd">    :type new_model: Model class</span>
+<span class="sd">    :return: pkname, list of sqlalchemy columns</span>
+<span class="sd">    :rtype: Tuple[Optional[str], List[sqlalchemy.Column]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">model_fields</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">model_fields</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ormar</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Table </span><span class="si">{</span><span class="n">new_model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">tablename</span><span class="si">}</span><span class="s2"> had no fields so auto &quot;</span>
+            <span class="s2">&quot;Integer primary key named `id` created.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">validate_related_names_in_relations</span><span class="p">(</span><span class="n">model_fields</span><span class="p">,</span> <span class="n">new_model</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_process_fields</span><span class="p">(</span><span class="n">model_fields</span><span class="o">=</span><span class="n">model_fields</span><span class="p">,</span> <span class="n">new_model</span><span class="o">=</span><span class="n">new_model</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="ormar.models.helpers.sqlalchemy.update_column_definition" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">update_column_definition</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Updates a column with a new type column based on updated parameters in FK fields.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>model</code></td>
+          <td>
+                <code><span title="typing.Union">Union</span>[<span title="typing.Type">Type</span>[<a class="autorefs autorefs-internal" title="ormar.Model" href="../../../#ormar.Model">Model</a>], <span title="typing.Type">Type</span>[<a class="autorefs autorefs-internal" title="ormar.models.NewBaseModel" href="../../#ormar.models.NewBaseModel">NewBaseModel</a>]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>model on which columns needs to be updated</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>field</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="ormar.ForeignKeyField" href="../../../#ormar.ForeignKeyField">ForeignKeyField</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>field with column definition that requires update</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>None</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>None</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>ormar/models/helpers/sqlalchemy.py</code></summary>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">update_column_definition</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="s2">&quot;Model&quot;</span><span class="p">],</span> <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;NewBaseModel&quot;</span><span class="p">]],</span> <span class="n">field</span><span class="p">:</span> <span class="s2">&quot;ForeignKeyField&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Updates a column with a new type column based on updated parameters in FK fields.</span>
+
+<span class="sd">    :param model: model on which columns needs to be updated</span>
+<span class="sd">    :type model: Type[&quot;Model&quot;]</span>
+<span class="sd">    :param field: field with column definition that requires update</span>
+<span class="sd">    :type field: ForeignKeyField</span>
+<span class="sd">    :return: None</span>
+<span class="sd">    :rtype: None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">columns</span>
+    <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">columns</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">column</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">field</span><span class="o">.</span><span class="n">get_alias</span><span class="p">():</span>
+            <span class="n">new_column</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">get_column</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">get_alias</span><span class="p">())</span>
+            <span class="n">columns</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_column</span>
+            <span class="k">break</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../../../..", "features": [], "search": "../../../../assets/javascripts/workers/search.dfff1995.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.dff1b7c8.min.js"></script>
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+      
+        <script src="../../../../javascripts/config.js"></script>
+      
+    
+  </body>
+</html>
