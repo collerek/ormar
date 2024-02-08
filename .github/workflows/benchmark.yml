@@ -33,9 +33,6 @@ jobs:
       - name: Install dependencies
         run: poetry install --extras "all"
 
-      - name: Install codspeed
-        run: pip install pytest-codspeed =="2.2.0"
-
       - name: Run benchmarks
         uses: CodSpeedHQ/action@v2
         with:
