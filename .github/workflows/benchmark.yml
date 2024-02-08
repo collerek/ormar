@@ -2,8 +2,7 @@ name: codspeed-benchmarks
 
 on:
   push:
-    branches:
-      - "master" # or "master"
+    branches: [ master, pydantic_v2 ]
   pull_request:
     branches: [ master, pydantic_v2 ]
   # `workflow_dispatch` allows CodSpeed to trigger backtest
