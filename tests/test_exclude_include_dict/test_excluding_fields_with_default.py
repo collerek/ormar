@@ -1,15 +1,14 @@
 import random
 from typing import Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 def get_position() -> int:
@@ -17,11 +16,7 @@ def get_position() -> int:
 
 
 class Album(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="albums",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="albums")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -29,11 +24,7 @@ class Album(ormar.Model):
 
 
 class Track(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="tracks",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="tracks")
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -42,19 +33,13 @@ class Track(ormar.Model):
     play_count: int = ormar.Integer(nullable=True, default=0)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_excluding_field_with_default():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             album = await Album.objects.create(name="Miami")
             await Track.objects.create(title="Vice City", album=album, play_count=10)
             await Track.objects.create(title="Beach Sand", album=album, play_count=20)

@@ -1,20 +1,13 @@
 from typing import List
 
-import databases
 import ormar
-import sqlalchemy
 from pydantic import PrivateAttr
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class Subscription(ormar.Model):
@@ -27,6 +20,9 @@ class Subscription(ormar.Model):
 
     def add_payment(self, payment: str):
         self._add_payments.append(payment)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_private_attribute():

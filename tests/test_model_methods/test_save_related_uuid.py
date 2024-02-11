@@ -6,27 +6,22 @@ import ormar
 import pytest
 import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class Department(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        database=database,
-        metadata=metadata,
-    )
+    ormar_config = base_ormar_config.copy()
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     department_name: str = ormar.String(max_length=100)
 
 
 class Course(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        database=database,
-        metadata=metadata,
-    )
+    ormar_config = base_ormar_config.copy()
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     course_name: str = ormar.String(max_length=100)
@@ -35,28 +30,19 @@ class Course(ormar.Model):
 
 
 class Student(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        database=database,
-        metadata=metadata,
-    )
+    ormar_config = base_ormar_config.copy()
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     name: str = ormar.String(max_length=100)
     courses = ormar.ManyToMany(Course)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_uuid_pk_in_save_related():
-    async with database:
+    async with base_ormar_config.database:
         to_save = {
             "department_name": "Ormar",
             "courses": [

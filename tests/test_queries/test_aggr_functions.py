@@ -1,22 +1,15 @@
 from typing import Optional
 
-import databases
 import ormar
 import pytest
 import pytest_asyncio
-import sqlalchemy
 from ormar.exceptions import QueryDefinitionError
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class Author(ormar.Model):
@@ -38,19 +31,13 @@ class Book(ormar.Model):
     ranking: int = ormar.Integer(nullable=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest_asyncio.fixture(autouse=True, scope="function")
 async def cleanup():
     yield
-    async with database:
+    async with base_ormar_config.database:
         await Book.objects.delete(each=True)
         await Author.objects.delete(each=True)
 
@@ -64,7 +51,7 @@ async def sample_data():
 
 @pytest.mark.asyncio
 async def test_min_method():
-    async with database:
+    async with base_ormar_config.database:
         await sample_data()
         assert await Book.objects.min("year") == 1920
         result = await Book.objects.min(["year", "ranking"])
@@ -88,7 +75,7 @@ async def test_min_method():
 
 @pytest.mark.asyncio
 async def test_max_method():
-    async with database:
+    async with base_ormar_config.database:
         await sample_data()
         assert await Book.objects.max("year") == 1930
         result = await Book.objects.max(["year", "ranking"])
@@ -112,7 +99,7 @@ async def test_max_method():
 
 @pytest.mark.asyncio
 async def test_sum_method():
-    async with database:
+    async with base_ormar_config.database:
         await sample_data()
         assert await Book.objects.sum("year") == 5773
         result = await Book.objects.sum(["year", "ranking"])
@@ -137,7 +124,7 @@ async def test_sum_method():
 
 @pytest.mark.asyncio
 async def test_avg_method():
-    async with database:
+    async with base_ormar_config.database:
         await sample_data()
         assert round(float(await Book.objects.avg("year")), 2) == 1924.33
         result = await Book.objects.avg(["year", "ranking"])
@@ -165,7 +152,7 @@ async def test_avg_method():
 
 @pytest.mark.asyncio
 async def test_queryset_method():
-    async with database:
+    async with base_ormar_config.database:
         await sample_data()
         author = await Author.objects.select_related("books").get()
         assert await author.books.min("year") == 1920
@@ -179,7 +166,7 @@ async def test_queryset_method():
 
 @pytest.mark.asyncio
 async def test_count_method():
-    async with database:
+    async with base_ormar_config.database:
         await sample_data()
 
         count = await Author.objects.select_related("books").count()

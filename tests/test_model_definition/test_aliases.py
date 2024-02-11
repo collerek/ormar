@@ -1,22 +1,17 @@
 from typing import List, Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class Child(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="children",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="children")
 
     id: int = ormar.Integer(name="child_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)
@@ -25,11 +20,7 @@ class Child(ormar.Model):
 
 
 class Artist(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="artists",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="artists")
 
     id: int = ormar.Integer(name="artist_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)
@@ -39,24 +30,14 @@ class Artist(ormar.Model):
 
 
 class Album(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="music_albums",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="music_albums")
 
     id: int = ormar.Integer(name="album_id", primary_key=True)
     name: str = ormar.String(name="album_name", max_length=100)
     artist: Optional[Artist] = ormar.ForeignKey(Artist, name="artist_id")
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_table_structure():
@@ -69,8 +50,8 @@ def test_table_structure():
 
 @pytest.mark.asyncio
 async def test_working_with_aliases():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             artist = await Artist.objects.create(
                 first_name="Ted", last_name="Mosbey", born_year=1975
             )
@@ -127,7 +108,7 @@ async def test_working_with_aliases():
 
 @pytest.mark.asyncio
 async def test_bulk_operations_and_fields():
-    async with database:
+    async with base_ormar_config.database:
         d1 = Child(first_name="Daughter", last_name="1", born_year=1990)
         d2 = Child(first_name="Daughter", last_name="2", born_year=1991)
         await Child.objects.bulk_create([d1, d2])
@@ -158,8 +139,8 @@ async def test_bulk_operations_and_fields():
 
 @pytest.mark.asyncio
 async def test_working_with_aliases_get_or_create():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             artist, created = await Artist.objects.get_or_create(
                 first_name="Teddy", last_name="Bear", born_year=2020
             )

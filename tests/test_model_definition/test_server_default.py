@@ -1,24 +1,19 @@
 import time
 from datetime import datetime
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from sqlalchemy import func, text
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class Product(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="product",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="product")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -27,13 +22,7 @@ class Product(ormar.Model):
     created: datetime = ormar.DateTime(server_default=func.now())
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_table_defined_properly():
@@ -46,8 +35,8 @@ def test_table_defined_properly():
 
 @pytest.mark.asyncio
 async def test_model_creation():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             p1 = Product(name="Test")
             assert p1.created is None
             await p1.save()

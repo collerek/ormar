@@ -5,25 +5,21 @@ import os
 import uuid
 from enum import Enum
 
-import databases
 import ormar
 import pydantic
 import pytest
 import sqlalchemy
 from ormar.exceptions import ModelError, NoMatch, QueryDefinitionError
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class JsonSample(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="jsons",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="jsons")
 
     id: int = ormar.Integer(primary_key=True)
     test_json = ormar.JSON(nullable=True)
@@ -34,11 +30,7 @@ blob2 = b"test2icac89uc98"
 
 
 class LargeBinarySample(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="my_bolbs",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="my_bolbs")
 
     id: int = ormar.Integer(primary_key=True)
     test_binary: bytes = ormar.LargeBinary(max_length=100000)
@@ -49,11 +41,7 @@ blob4 = os.urandom(100)
 
 
 class LargeBinaryStr(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="my_str_blobs",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="my_str_bolbs")
 
     id: int = ormar.Integer(primary_key=True)
     test_binary: str = ormar.LargeBinary(
@@ -62,11 +50,7 @@ class LargeBinaryStr(ormar.Model):
 
 
 class LargeBinaryNullableStr(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="my_str_blobs2",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="my_str_bolbs2")
 
     id: int = ormar.Integer(primary_key=True)
     test_binary: str = ormar.LargeBinary(
@@ -78,22 +62,14 @@ class LargeBinaryNullableStr(ormar.Model):
 
 
 class UUIDSample(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="uuids",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="uuids")
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     test_text: str = ormar.Text()
 
 
 class UUIDSample2(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="uuids2",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="uuids2")
 
     id: uuid.UUID = ormar.UUID(
         primary_key=True, default=uuid.uuid4, uuid_format="string"
@@ -102,33 +78,21 @@ class UUIDSample2(ormar.Model):
 
 
 class User(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="users",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="users")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="")
 
 
 class User2(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="users2",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="users2")
 
     id: str = ormar.String(primary_key=True, max_length=100)
     name: str = ormar.String(max_length=100, default="")
 
 
 class Product(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="product",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="product")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -152,11 +116,7 @@ class CountryCodeEnum(int, Enum):
 
 
 class Country(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="country",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="country")
 
     id: int = ormar.Integer(primary_key=True)
     name: CountryNameEnum = ormar.Enum(enum_class=CountryNameEnum, default="Canada")
@@ -165,34 +125,20 @@ class Country(ormar.Model):
 
 
 class NullableCountry(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="country2",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="country2")
 
     id: int = ormar.Integer(primary_key=True)
     name: CountryNameEnum = ormar.Enum(enum_class=CountryNameEnum, nullable=True)
 
 
 class NotNullableCountry(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="country3",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="country3")
 
     id: int = ormar.Integer(primary_key=True)
     name: CountryNameEnum = ormar.Enum(enum_class=CountryNameEnum, nullable=False)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_model_class():
@@ -219,8 +165,8 @@ def test_model_pk():
 
 @pytest.mark.asyncio
 async def test_json_column():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await JsonSample.objects.create(test_json=dict(aa=12))
             await JsonSample.objects.create(test_json='{"aa": 12}')
 
@@ -235,8 +181,8 @@ async def test_json_column():
 
 @pytest.mark.asyncio
 async def test_binary_column():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await LargeBinarySample.objects.create(test_binary=blob)
             await LargeBinarySample.objects.create(test_binary=blob2)
 
@@ -251,8 +197,8 @@ async def test_binary_column():
 
 @pytest.mark.asyncio
 async def test_binary_str_column():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await LargeBinaryStr(test_binary=blob3).save()
             await LargeBinaryStr.objects.create(test_binary=blob4)
 
@@ -267,8 +213,8 @@ async def test_binary_str_column():
 
 @pytest.mark.asyncio
 async def test_binary_nullable_str_column():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await LargeBinaryNullableStr().save()
             await LargeBinaryNullableStr.objects.create()
             items = await LargeBinaryNullableStr.objects.all()
@@ -298,8 +244,8 @@ async def test_binary_nullable_str_column():
 
 @pytest.mark.asyncio
 async def test_uuid_column():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             u1 = await UUIDSample.objects.create(test_text="aa")
             u2 = await UUIDSample.objects.create(test_text="bb")
 
@@ -333,8 +279,8 @@ async def test_uuid_column():
 
 @pytest.mark.asyncio
 async def test_model_crud():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             users = await User.objects.all()
             assert users == []
 
@@ -360,8 +306,8 @@ async def test_model_crud():
 
 @pytest.mark.asyncio
 async def test_model_get():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             with pytest.raises(ormar.NoMatch):
                 await User.objects.get()
 
@@ -385,8 +331,8 @@ async def test_model_get():
 
 @pytest.mark.asyncio
 async def test_model_filter():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await User.objects.create(name="Tom")
             await User.objects.create(name="Jane")
             await User.objects.create(name="Lucy")
@@ -441,7 +387,7 @@ async def test_model_filter():
 
 @pytest.mark.asyncio
 async def test_wrong_query_contains_model():
-    async with database:
+    async with base_ormar_config.database:
         with pytest.raises(QueryDefinitionError):
             product = Product(name="90%-Cotton", rating=2)
             await Product.objects.filter(name__contains=product).count()
@@ -449,8 +395,8 @@ async def test_wrong_query_contains_model():
 
 @pytest.mark.asyncio
 async def test_model_exists():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await User.objects.create(name="Tom")
             assert await User.objects.filter(name="Tom").exists() is True
             assert await User.objects.filter(name="Jane").exists() is False
@@ -458,8 +404,8 @@ async def test_model_exists():
 
 @pytest.mark.asyncio
 async def test_model_count():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await User.objects.create(name="Tom")
             await User.objects.create(name="Jane")
             await User.objects.create(name="Lucy")
@@ -470,8 +416,8 @@ async def test_model_count():
 
 @pytest.mark.asyncio
 async def test_model_limit():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await User.objects.create(name="Tom")
             await User.objects.create(name="Jane")
             await User.objects.create(name="Lucy")
@@ -481,8 +427,8 @@ async def test_model_limit():
 
 @pytest.mark.asyncio
 async def test_model_limit_with_filter():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await User.objects.create(name="Tom")
             await User.objects.create(name="Tom")
             await User.objects.create(name="Tom")
@@ -494,8 +440,8 @@ async def test_model_limit_with_filter():
 
 @pytest.mark.asyncio
 async def test_offset():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await User.objects.create(name="Tom")
             await User.objects.create(name="Jane")
 
@@ -505,8 +451,8 @@ async def test_offset():
 
 @pytest.mark.asyncio
 async def test_model_first():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             tom = await User.objects.create(name="Tom")
             jane = await User.objects.create(name="Jane")
 
@@ -522,7 +468,7 @@ async def test_model_first():
 @pytest.mark.asyncio
 async def test_model_choices():
     """Test that choices work properly for various types of fields."""
-    async with database:
+    async with base_ormar_config.database:
         # Test valid choices.
         await asyncio.gather(
             Country.objects.create(name="Canada", taxed=True, country_code=1),
@@ -562,7 +508,7 @@ async def test_model_choices():
 @pytest.mark.asyncio
 async def test_nullable_field_model_choices():
     """Test that choices work properly for according to nullable setting"""
-    async with database:
+    async with base_ormar_config.database:
         c1 = await NullableCountry(name=None).save()
         assert c1.name is None
 
@@ -572,8 +518,8 @@ async def test_nullable_field_model_choices():
 
 @pytest.mark.asyncio
 async def test_start_and_end_filters():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await User.objects.create(name="Markos Uj")
             await User.objects.create(name="Maqua Bigo")
             await User.objects.create(name="maqo quidid")
@@ -602,8 +548,8 @@ async def test_start_and_end_filters():
 
 @pytest.mark.asyncio
 async def test_get_and_first():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await User.objects.create(name="Tom")
             await User.objects.create(name="Jane")
             await User.objects.create(name="Lucy")

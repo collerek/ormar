@@ -1,10 +1,8 @@
 from typing import Any, Dict, List, Tuple, Type, cast
 from uuid import UUID, uuid4
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from ormar import (
     Model,
     ModelDefinitionError,
@@ -14,16 +12,11 @@ from ormar import (
     pre_update,
 )
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class Animal(ormar.Model):
@@ -66,18 +59,12 @@ class Human2(ormar.Model):
     )
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_ordering_by_through_fail():
-    async with database:
+    async with base_ormar_config.database:
         alice = await Human2(name="Alice").save()
         spot = await Animal(name="Spot").save()
         await alice.favoriteAnimals.add(spot)
@@ -252,7 +239,7 @@ async def reorder_links_on_remove(
 
 @pytest.mark.asyncio
 async def test_ordering_by_through_on_m2m_field():
-    async with database:
+    async with base_ormar_config.database:
 
         def verify_order(instance, expected):
             field_name = (

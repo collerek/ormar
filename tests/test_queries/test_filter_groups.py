@@ -1,19 +1,12 @@
 from typing import Optional
 
-import databases
 import ormar
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class Author(ormar.Model):
@@ -30,6 +23,9 @@ class Book(ormar.Model):
     author: Optional[Author] = ormar.ForeignKey(Author)
     title: str = ormar.String(max_length=100)
     year: int = ormar.Integer(nullable=True)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_or_group():

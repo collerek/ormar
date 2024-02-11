@@ -1,22 +1,17 @@
 # type: ignore
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from pydantic import PydanticUserError, computed_field
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class Song(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="songs",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="songs")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -35,18 +30,12 @@ class Song(ormar.Model):
         return "sample2"
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_sort_order_on_main_model():
-    async with database:
+    async with base_ormar_config.database:
         await Song.objects.create(name="Song 3", sort_order=3)
         await Song.objects.create(name="Song 1", sort_order=1)
         await Song.objects.create(name="Song 2", sort_order=2)

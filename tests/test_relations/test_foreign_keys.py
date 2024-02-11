@@ -1,23 +1,18 @@
 from typing import Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from ormar.exceptions import MultipleMatches, NoMatch, RelationshipInstanceError
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class Album(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="albums",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="albums")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -25,11 +20,7 @@ class Album(ormar.Model):
 
 
 class Track(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="tracks",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="tracks")
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -40,11 +31,7 @@ class Track(ormar.Model):
 
 
 class Cover(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="covers",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="covers")
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album, related_name="cover_pictures")
@@ -52,22 +39,14 @@ class Cover(ormar.Model):
 
 
 class Organisation(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="org",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="org")
 
     id: int = ormar.Integer(primary_key=True)
     ident: str = ormar.String(max_length=100, choices=["ACME Ltd", "Other ltd"])
 
 
 class Team(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="teams",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="teams")
 
     id: int = ormar.Integer(primary_key=True)
     org: Optional[Organisation] = ormar.ForeignKey(Organisation)
@@ -75,44 +54,34 @@ class Team(ormar.Model):
 
 
 class Member(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="members",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="members")
 
     id: int = ormar.Integer(primary_key=True)
     team: Optional[Team] = ormar.ForeignKey(Team)
     email: str = ormar.String(max_length=100)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_wrong_query_foreign_key_type():
-    async with database:
+    async with base_ormar_config.database:
         with pytest.raises(RelationshipInstanceError):
             Track(title="The Error", album="wrong_pk_type")
 
 
 @pytest.mark.asyncio
 async def test_setting_explicitly_empty_relation():
-    async with database:
+    async with base_ormar_config.database:
         track = Track(album=None, title="The Bird", position=1)
         assert track.album is None
 
 
 @pytest.mark.asyncio
 async def test_related_name():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             album = await Album.objects.create(name="Vanilla")
             await Cover.objects.create(album=album, title="The cover file")
             assert len(album.cover_pictures) == 1
@@ -120,8 +89,8 @@ async def test_related_name():
 
 @pytest.mark.asyncio
 async def test_model_crud():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             album = Album(name="Jamaica")
             await album.save()
             track1 = Track(album=album, title="The Bird", position=1)
@@ -152,8 +121,8 @@ async def test_model_crud():
 
 @pytest.mark.asyncio
 async def test_select_related():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             album = Album(name="Malibu")
             await album.save()
             track1 = Track(album=album, title="The Bird", position=1)
@@ -181,8 +150,8 @@ async def test_select_related():
 
 @pytest.mark.asyncio
 async def test_model_removal_from_relations():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             album = Album(name="Chichi")
             await album.save()
             track1 = Track(album=album, title="The Birdman", position=1)
@@ -223,8 +192,8 @@ async def test_model_removal_from_relations():
 
 @pytest.mark.asyncio
 async def test_fk_filter():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             malibu = Album(name="Malibu%")
             await malibu.save()
             await Track.objects.create(album=malibu, title="The Bird", position=1)
@@ -283,8 +252,8 @@ async def test_fk_filter():
 
 @pytest.mark.asyncio
 async def test_multiple_fk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             acme = await Organisation.objects.create(ident="ACME Ltd")
             red_team = await Team.objects.create(org=acme, name="Red Team")
             blue_team = await Team.objects.create(org=acme, name="Blue Team")
@@ -309,8 +278,8 @@ async def test_multiple_fk():
 
 @pytest.mark.asyncio
 async def test_pk_filter():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             fantasies = await Album.objects.create(name="Test")
             track = await Track.objects.create(
                 album=fantasies, title="Test1", position=1
@@ -332,8 +301,8 @@ async def test_pk_filter():
 
 @pytest.mark.asyncio
 async def test_limit_and_offset():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             fantasies = await Album.objects.create(name="Limitless")
             await Track.objects.create(
                 id=None, album=fantasies, title="Sample", position=1
@@ -364,8 +333,8 @@ async def test_limit_and_offset():
 
 @pytest.mark.asyncio
 async def test_get_exceptions():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             fantasies = await Album.objects.create(name="Test")
 
             with pytest.raises(NoMatch):
@@ -380,8 +349,8 @@ async def test_get_exceptions():
 
 @pytest.mark.asyncio
 async def test_wrong_model_passed_as_fk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             with pytest.raises(RelationshipInstanceError):
                 org = await Organisation.objects.create(ident="ACME Ltd")
                 await Track.objects.create(album=org, title="Test1", position=1)
@@ -389,8 +358,8 @@ async def test_wrong_model_passed_as_fk():
 
 @pytest.mark.asyncio
 async def test_bulk_update_model_with_no_children():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             album = await Album.objects.create(name="Test")
             album.name = "Test2"
             await Album.objects.bulk_update([album], columns=["name"])
@@ -401,8 +370,8 @@ async def test_bulk_update_model_with_no_children():
 
 @pytest.mark.asyncio
 async def test_bulk_update_model_with_children():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             best_seller = await Album.objects.create(name="to_be_best_seller")
             best_seller2 = await Album.objects.create(name="to_be_best_seller2")
             not_best_seller = await Album.objects.create(name="unpopular")

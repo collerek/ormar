@@ -1,23 +1,17 @@
 # type: ignore
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from ormar import ModelDefinitionError
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 def test_through_with_relation_fails():
-    base_ormar_config = ormar.OrmarConfig(
-        database=database,
-        metadata=metadata,
-    )
-
     class Category(ormar.Model):
         ormar_config = base_ormar_config.copy(tablename="categories")
 
@@ -46,3 +40,6 @@ def test_through_with_relation_fails():
             id: int = ormar.Integer(primary_key=True)
             title: str = ormar.String(max_length=200)
             categories = ormar.ManyToMany(Category, through=PostCategory)
+
+
+create_test_database = init_tests(base_ormar_config)

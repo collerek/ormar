@@ -1,18 +1,11 @@
-import databases
 import ormar
-import sqlalchemy
 from sqlalchemy import text
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class Task(ormar.Model):
@@ -20,12 +13,15 @@ class Task(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(
-        max_length=255, minimum=0, server_default=text("Default Name"), nullable=False
+        max_length=255, minimum=0, server_default=text("'Default Name'"), nullable=False
     )
     points: int = ormar.Integer(
         default=0, minimum=0, server_default=text("0"), nullable=False
     )
     score: int = ormar.Integer(default=5)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_populate_default_values():

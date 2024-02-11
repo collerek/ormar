@@ -1,17 +1,16 @@
 import datetime
 from enum import Enum
 
-import databases
 import ormar
 import pydantic
 import pytest
-import sqlalchemy
 from ormar import ModelDefinitionError
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config(force_rollback=True)
 
 
 def time():
@@ -24,11 +23,7 @@ class MyEnum(Enum):
 
 
 class Example(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="example",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="example")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200, default="aaa")
@@ -42,22 +37,13 @@ class Example(ormar.Model):
 
 
 class EnumExample(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="enum_example",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="enum_example")
 
     id: int = ormar.Integer(primary_key=True)
     size: MyEnum = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_proper_enum_column_type():
@@ -75,7 +61,7 @@ def test_accepts_only_proper_enums():
 
 @pytest.mark.asyncio
 async def test_enum_bulk_operations():
-    async with database:
+    async with base_ormar_config.database:
         examples = [EnumExample(), EnumExample()]
         await EnumExample.objects.bulk_create(examples)
 
@@ -92,7 +78,7 @@ async def test_enum_bulk_operations():
 
 @pytest.mark.asyncio
 async def test_enum_filter():
-    async with database:
+    async with base_ormar_config.database:
         examples = [EnumExample(), EnumExample(size=MyEnum.BIG)]
         await EnumExample.objects.bulk_create(examples)
 
@@ -105,7 +91,7 @@ async def test_enum_filter():
 
 @pytest.mark.asyncio
 async def test_model_crud():
-    async with database:
+    async with base_ormar_config.database:
         example = Example()
         await example.save()
 
@@ -133,15 +119,11 @@ async def test_model_crud():
 
 @pytest.mark.asyncio
 async def test_invalid_enum_field() -> None:
-    async with database:
+    async with base_ormar_config.database:
         with pytest.raises(ModelDefinitionError):
 
             class Example2(ormar.Model):
-                ormar_config = ormar.OrmarConfig(
-                    tablename="example",
-                    metadata=metadata,
-                    database=database,
-                )
+                ormar_config = base_ormar_config.copy(tablename="example2")
 
                 id: int = ormar.Integer(primary_key=True)
                 size: MyEnum = ormar.Enum(enum_class=[])  # type: ignore

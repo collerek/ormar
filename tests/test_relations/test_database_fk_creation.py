@@ -1,35 +1,26 @@
 from typing import Optional
 
-import databases
 import ormar
 import pytest
 import sqlalchemy
 from ormar.fields.foreign_key import validate_referential_action
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
-engine = sqlalchemy.create_engine(DATABASE_URL)
+
+base_ormar_config = create_config()
 
 
 class Artist(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="artists",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="artists")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Album(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="albums",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="albums")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -37,20 +28,14 @@ class Album(ormar.Model):
 
 
 class A(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=64, nullalbe=False)
 
 
 class B(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=64, nullalbe=False)
@@ -58,26 +43,18 @@ class B(ormar.Model):
 
 
 class C(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=64, nullalbe=False)
     b: B = ormar.ForeignKey(to=B, ondelete=ormar.ReferentialAction.CASCADE)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_simple_cascade():
-    inspector = sqlalchemy.inspect(engine)
+    inspector = sqlalchemy.inspect(base_ormar_config.engine)
     columns = inspector.get_columns("albums")
     assert len(columns) == 3
     col_names = [col.get("name") for col in columns]
@@ -103,8 +80,8 @@ def test_validations_referential_action():
 
 @pytest.mark.asyncio
 async def test_cascade_clear():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             a = await A.objects.create(name="a")
             b = await B.objects.create(name="b", a=a)
             await C.objects.create(name="c", b=b)

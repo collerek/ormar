@@ -1,41 +1,18 @@
 from typing import List, Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-from tests.settings import DATABASE_URL
+from tests.lifespan import lifespan, init_tests
+from tests.settings import create_config
 
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
-app.state.database = database
 
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 headers = {"content-type": "application/json"}
-
-
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
-
-
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
 
 
 class Author(ormar.Model):
@@ -66,12 +43,8 @@ class Post(ormar.Model):
     author: Optional[Author] = ormar.ForeignKey(Author, skip_reverse=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
+
 
 
 @app.post("/categories/forbid/", response_model=Category2)

@@ -3,7 +3,6 @@ import datetime
 import decimal
 import typing
 
-import databases
 import ormar
 import pydantic
 import pytest
@@ -11,18 +10,15 @@ import sqlalchemy
 from ormar.exceptions import ModelDefinitionError
 from ormar.models import Model
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
+
+base_ormar_config = create_config()
 
 
 class ExampleModel(Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="example",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="example")
 
     test: int = ormar.Integer(primary_key=True)
     test_string: str = ormar.String(max_length=250)
@@ -53,22 +49,13 @@ fields_to_check = [
 
 
 class ExampleModel2(Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="examples",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="example2")
 
     test: int = ormar.Integer(primary_key=True)
     test_string: str = ormar.String(max_length=250)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.fixture()
@@ -117,7 +104,7 @@ def test_missing_metadata():
         class JsonSample2(ormar.Model):
             ormar_config = ormar.OrmarConfig(
                 tablename="jsons2",
-                database=database,
+                database=base_ormar_config.database,
             )
 
             id: int = ormar.Integer(primary_key=True)
@@ -176,11 +163,7 @@ def test_no_pk_in_model_definition():
     with pytest.raises(ModelDefinitionError):  # type: ignore
 
         class ExampleModel2(Model):  # type: ignore
-            ormar_config = ormar.OrmarConfig(
-                tablename="example2",
-                database=database,
-                metadata=metadata,
-            )
+            ormar_config = base_ormar_config.copy(tablename="example2")
 
             test_string: str = ormar.String(max_length=250)  # type: ignore
 
@@ -191,11 +174,7 @@ def test_two_pks_in_model_definition():
 
         @typing.no_type_check
         class ExampleModel2(Model):
-            ormar_config = ormar.OrmarConfig(
-                tablename="example3",
-                database=database,
-                metadata=metadata,
-            )
+            ormar_config = base_ormar_config.copy(tablename="example3")
 
             id: int = ormar.Integer(primary_key=True)
             test_string: str = ormar.String(max_length=250, primary_key=True)
@@ -206,11 +185,7 @@ def test_decimal_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
 
         class ExampleModel2(Model):
-            ormar_config = ormar.OrmarConfig(
-                tablename="example5",
-                database=database,
-                metadata=metadata,
-            )
+            ormar_config = base_ormar_config.copy(tablename="example5")
 
             test: decimal.Decimal = ormar.Decimal(primary_key=True)
 
@@ -220,11 +195,7 @@ def test_binary_error_without_length_model_definition():
     with pytest.raises(ModelDefinitionError):
 
         class ExampleModel2(Model):
-            ormar_config = ormar.OrmarConfig(
-                tablename="example6",
-                database=database,
-                metadata=metadata,
-            )
+            ormar_config = base_ormar_config.copy(tablename="example6")
 
             test: bytes = ormar.LargeBinary(primary_key=True, max_length=-1)
 
@@ -234,11 +205,7 @@ def test_string_error_in_model_definition():
     with pytest.raises(ModelDefinitionError):
 
         class ExampleModel2(Model):
-            ormar_config = ormar.OrmarConfig(
-                tablename="example6",
-                database=database,
-                metadata=metadata,
-            )
+            ormar_config = base_ormar_config.copy(tablename="example6")
 
             test: str = ormar.String(primary_key=True, max_length=0)
 

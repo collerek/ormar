@@ -1,42 +1,36 @@
 from typing import Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import lifespan, init_tests
 
-app = FastAPI()
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 class Category(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="categories",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="items",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="items")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
+
+
+create_test_database = init_tests(base_ormar_config)
+
 
 
 @app.post("/items/", response_model=Item)

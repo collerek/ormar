@@ -1,34 +1,25 @@
 from typing import List, Optional, Union
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from ormar.exceptions import QueryDefinitionError
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class Subject(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="subjects",
-        database=database,
-        metadata=metadata,
-    )
+    ormar_config = base_ormar_config.copy(tablename="subjects")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=80)
 
 
 class Author(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="authors",
-        database=database,
-        metadata=metadata,
-    )
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     first_name: str = ormar.String(max_length=80)
@@ -36,11 +27,7 @@ class Author(ormar.Model):
 
 
 class Category(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="categories",
-        database=database,
-        metadata=metadata,
-    )
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
@@ -49,19 +36,11 @@ class Category(ormar.Model):
 
 
 class PostCategory(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="posts_categories",
-        database=database,
-        metadata=metadata,
-    )
+    ormar_config = base_ormar_config.copy(tablename="posts_categories")
 
 
 class Post(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="posts",
-        database=database,
-        metadata=metadata,
-    )
+    ormar_config = base_ormar_config.copy(tablename="posts")
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -71,18 +50,13 @@ class Post(ormar.Model):
     author: Optional[Author] = ormar.ForeignKey(Author)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_queryset_methods():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             guido = await Author.objects.create(
                 first_name="Guido", last_name="Van Rossum"
             )
@@ -187,8 +161,8 @@ async def test_queryset_methods():
 
 @pytest.mark.asyncio
 async def test_queryset_update():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             guido = await Author.objects.create(
                 first_name="Guido", last_name="Van Rossum"
             )

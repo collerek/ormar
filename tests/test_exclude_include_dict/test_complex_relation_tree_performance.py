@@ -7,16 +7,10 @@ import pydantic
 import pytest
 import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
-
-
-base_ormar_config = orm.OrmarConfig(
-    database=database,
-    metadata=metadata,
-)
+base_ormar_config = create_config()
 
 
 class ChagenlogRelease(orm.Model):
@@ -304,18 +298,12 @@ class Webhook(orm.Model):
     error: str = orm.Text(default="")
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_very_complex_relation_map():
-    async with database:
+    async with base_ormar_config.database:
         tags = [
             {"id": 18, "name": "name-18", "ref": "ref-18"},
             {"id": 17, "name": "name-17", "ref": "ref-17"},

@@ -4,16 +4,14 @@ from datetime import date
 from enum import Enum
 from typing import Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
-from sqlalchemy import create_engine
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config(force_rollback=True)
 
 
 class PrimaryKeyMixin:
@@ -23,12 +21,6 @@ class PrimaryKeyMixin:
 class Level(Enum):
     ADMIN = "0"
     STAFF = "1"
-
-
-base_ormar_config = ormar.OrmarConfig(
-    database=database,
-    metadata=metadata,
-)
 
 
 class User(PrimaryKeyMixin, ormar.Model):
@@ -65,17 +57,12 @@ class Task(PrimaryKeyMixin, ormar.Model):
     )
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_selecting_related_with_limit():
-    async with database:
+    async with base_ormar_config.database:
         user1 = await User(mobile="9928917653", password="pass1").save()
         user2 = await User(mobile="9928917654", password="pass2").save()
         await Task(name="one", user=user1).save()

@@ -1,24 +1,18 @@
 from typing import Union
 
-import databases
 import ormar
 import pytest
-import sqlalchemy as sa
 from ormar.exceptions import ModelPersistenceError
-from sqlalchemy import create_engine
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-metadata = sa.MetaData()
-db = databases.Database(DATABASE_URL)
+
+base_ormar_config = create_config()
 
 
 class Category(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="categories",
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
@@ -26,11 +20,7 @@ class Category(ormar.Model):
 
 
 class Workshop(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="workshops",
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy(tablename="workshops")
 
     id: int = ormar.Integer(primary_key=True)
     topic: str = ormar.String(max_length=255, index=True)
@@ -39,18 +29,13 @@ class Workshop(ormar.Model):
     )
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_model_relationship():
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             cat = await Category(name="Foo", code=123).save()
             ws = await Workshop(topic="Topic 1", category=cat).save()
 
@@ -68,8 +53,8 @@ async def test_model_relationship():
 
 @pytest.mark.asyncio
 async def test_model_relationship_with_not_saved():
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             cat = Category(name="Foo", code=123)
             with pytest.raises(ModelPersistenceError):
                 await Workshop(topic="Topic 1", category=cat).save()

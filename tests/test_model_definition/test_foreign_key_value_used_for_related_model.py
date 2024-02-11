@@ -1,21 +1,14 @@
 import uuid
 from typing import Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class PageLink(ormar.Model):
@@ -52,18 +45,13 @@ class Course(ormar.Model):
     department: Optional[Department] = ormar.ForeignKey(Department)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_pass_int_values_as_fk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             link = await PageLink(id=1, value="test", country="USA").save()
             await Post.objects.create(title="My post", link=link.id)
             post_check = await Post.objects.select_related("link").get()
@@ -72,7 +60,7 @@ async def test_pass_int_values_as_fk():
 
 @pytest.mark.asyncio
 async def test_pass_uuid_value_as_fk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             dept = await Department(name="Department test").save()
             await Course(name="Test course", department=dept.id).save()

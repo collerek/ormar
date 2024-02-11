@@ -1,20 +1,12 @@
 from typing import List, Optional
 
-import databases
 import ormar
-import sqlalchemy
 from ormar.models.excludable import ExcludableItems
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
-
-
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class NickNames(ormar.Model):
@@ -56,6 +48,9 @@ class Car(ormar.Model):
     gearbox_type: str = ormar.String(max_length=20, nullable=True)
     gears: int = ormar.Integer(nullable=True)
     aircon_type: str = ormar.String(max_length=20, nullable=True)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def compare_results(excludable):

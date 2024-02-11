@@ -1,21 +1,14 @@
 import enum
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from pydantic import ValidationError, field_validator
 
-from tests.settings import DATABASE_URL
-
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL)
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class EnumExample(str, enum.Enum):
@@ -25,11 +18,7 @@ class EnumExample(str, enum.Enum):
 
 
 class ModelExample(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        database=database,
-        metadata=metadata,
-        tablename="examples",
-    )
+    ormar_config = base_ormar_config.copy(tablename="examples")
 
     id: int = ormar.Integer(primary_key=True)
     str_field: str = ormar.String(min_length=5, max_length=10, nullable=False)
@@ -43,6 +32,9 @@ class ModelExample(ormar.Model):
 
 
 ModelExampleCreate = ModelExample.get_pydantic(exclude={"id"})
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_ormar_validator():

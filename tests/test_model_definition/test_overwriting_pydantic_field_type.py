@@ -1,23 +1,18 @@
 from typing import Dict, Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from pydantic import Json, PositiveInt, ValidationError
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class OverwriteTest(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="overwrites",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="overwrites")
 
     id: int = ormar.Integer(primary_key=True)
     my_int: int = ormar.Integer(overwrite_pydantic_type=PositiveInt)
@@ -26,13 +21,7 @@ class OverwriteTest(ormar.Model):
     )  # type: ignore
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_constraints():
@@ -50,7 +39,7 @@ def test_constraints():
 
 @pytest.mark.asyncio
 async def test_saving():
-    async with database:
+    async with base_ormar_config.database:
         await OverwriteTest(my_int=5, constraint_dict={"aa": 123}).save()
 
         test = await OverwriteTest.objects.get()

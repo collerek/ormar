@@ -1,25 +1,17 @@
 # type: ignore
 from typing import ForwardRef, List, Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy as sa
-from sqlalchemy import create_engine
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-metadata = sa.MetaData()
-db = databases.Database(DATABASE_URL)
-engine = create_engine(DATABASE_URL)
+
+base_ormar_config = create_config()
+
 
 TeacherRef = ForwardRef("Teacher")
-
-
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=db,
-)
 
 
 class Student(ormar.Model):
@@ -76,17 +68,13 @@ class City(ormar.Model):
 Country.update_forward_refs()
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_double_relations():
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             t1 = await Teacher.objects.create(name="Mr. Jones")
             t2 = await Teacher.objects.create(name="Ms. Smith")
             t3 = await Teacher.objects.create(name="Mr. Quibble")
@@ -143,8 +131,8 @@ async def test_double_relations():
 
 @pytest.mark.asyncio
 async def test_auto_through_model():
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             england = await Country(name="England").save()
             france = await Country(name="France").save()
             london = await City(name="London", country=england).save()
