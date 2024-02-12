@@ -7,9 +7,8 @@ from ormar.queryset.utils import (
     update_dict_from_list,
 )
 
-from tests.settings import create_config
 from tests.lifespan import init_tests
-
+from tests.settings import create_config
 
 base_ormar_config = create_config()
 
@@ -206,5 +205,6 @@ def test_sorting_models():
     orders_by = {"sort_order": "asc", "none": ..., "id": "asc", "uu": 2, "aa": None}
     models = sort_models(models, orders_by)
     assert [model.id for model in models] == [1, 4, 2, 3, 5, 6]
+
 
 create_test_database = init_tests(base_ormar_config)

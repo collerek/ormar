@@ -40,7 +40,7 @@ class OrmarConfig:
         self.pkname = None  # type: ignore
         self.metadata = metadata
         self.database = database  # type: ignore
-        self.engine = engine # type: ignore
+        self.engine = engine  # type: ignore
         self.tablename = tablename  # type: ignore
         self.orders_by = order_by or []
         self.columns: List[sqlalchemy.Column] = []

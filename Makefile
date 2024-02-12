@@ -19,7 +19,7 @@ test_docs:
 	bash scripts/test_docs.sh -svv
 
 test:
-	pytest
+	pytest -svv tests/
 
 coverage:
 	pytest --cov=ormar --cov=tests --cov-fail-under=100 --cov-report=term-missing tests

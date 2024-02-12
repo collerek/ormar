@@ -8,9 +8,8 @@ from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-from tests.lifespan import lifespan, init_tests
+from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
-
 
 base_ormar_config = create_config()
 app = FastAPI(lifespan=lifespan(base_ormar_config))
@@ -34,7 +33,6 @@ class Thing(ormar.Model):
 
 
 create_test_database = init_tests(base_ormar_config)
-
 
 
 @app.post("/test/1")

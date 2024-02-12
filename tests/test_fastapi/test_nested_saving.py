@@ -7,9 +7,8 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from ormar.queryset.utils import translate_list_to_dict
 
-from tests.lifespan import lifespan, init_tests
+from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
-
 
 base_ormar_config = create_config()
 app = FastAPI(lifespan=lifespan(base_ormar_config))

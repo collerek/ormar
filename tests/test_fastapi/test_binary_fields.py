@@ -1,7 +1,7 @@
 import base64
 import uuid
 from enum import Enum
-from typing import  List
+from typing import List
 
 import ormar
 import pytest
@@ -9,9 +9,8 @@ from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
+from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
-from tests.lifespan import lifespan, init_tests
-
 
 headers = {"content-type": "application/json"}
 base_ormar_config = create_config()

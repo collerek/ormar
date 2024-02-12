@@ -16,9 +16,8 @@ from ormar import (
 from ormar.exceptions import SignalDefinitionError
 from ormar.signals import SignalEmitter
 
-from tests.settings import create_config
 from tests.lifespan import init_tests
-
+from tests.settings import create_config
 
 base_ormar_config = create_config()
 

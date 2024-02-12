@@ -1,13 +1,13 @@
+from typing import ForwardRef, Optional
+
 import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
-from typing import ForwardRef, Optional
 
+from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
-from tests.lifespan import lifespan, init_tests
-
 
 base_ormar_config = create_config()
 app = FastAPI(lifespan=lifespan(base_ormar_config))

@@ -9,7 +9,7 @@ from fastapi import Depends, FastAPI
 from httpx import AsyncClient
 from pydantic import BaseModel, Json
 
-from tests.lifespan import lifespan, init_tests
+from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 
 base_ormar_config = create_config()
@@ -75,7 +75,6 @@ class Quiz(ormar.Model):
 
 
 create_test_database = init_tests(base_ormar_config)
-
 
 
 async def get_current_user():

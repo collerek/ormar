@@ -891,7 +891,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             exclude_unset=exclude_unset,
             exclude_none=exclude_none,
             round_trip=round_trip,
-            warnings=warnings,
+            warnings=False,
         )
 
         dict_instance = {
@@ -994,7 +994,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             exclude_primary_keys=exclude_primary_keys,
             exclude_through_models=exclude_through_models,
         )
-        return self.__pydantic_serializer__.to_json(data).decode()
+        return self.__pydantic_serializer__.to_json(data, warnings=False).decode()
 
     @classmethod
     @typing_extensions.deprecated(

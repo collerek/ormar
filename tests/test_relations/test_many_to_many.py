@@ -1,4 +1,3 @@
-import asyncio
 from typing import List, Optional
 
 import ormar
@@ -6,9 +5,8 @@ import pytest
 import pytest_asyncio
 from ormar.exceptions import ModelPersistenceError, NoMatch, RelationshipInstanceError
 
-from tests.settings import create_config
 from tests.lifespan import init_tests
-
+from tests.settings import create_config
 
 base_ormar_config = create_config(force_rollback=True)
 
@@ -35,13 +33,6 @@ class Post(ormar.Model):
     title: str = ormar.String(max_length=200)
     categories: Optional[List[Category]] = ormar.ManyToMany(Category)
     author: Optional[Author] = ormar.ForeignKey(Author)
-
-
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.get_event_loop()
-    yield loop
-    loop.close()
 
 
 create_test_database = init_tests(base_ormar_config)

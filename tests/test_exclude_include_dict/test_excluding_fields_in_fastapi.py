@@ -2,7 +2,6 @@ import datetime
 import random
 import string
 
-import databases
 import ormar
 import pydantic
 import pytest
@@ -13,9 +12,8 @@ from httpx import AsyncClient
 from ormar import post_save
 from pydantic import ConfigDict, computed_field
 
-from tests.lifespan import lifespan, init_tests
+from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
-
 
 base_ormar_config = create_config()
 app = FastAPI(lifespan=lifespan(base_ormar_config))

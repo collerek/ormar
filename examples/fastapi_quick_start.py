@@ -24,6 +24,7 @@ async def lifespan(app: FastAPI):
     if database_.is_connected:
         await database_.disconnect()
 
+
 app = FastAPI(lifespan=lifespan)
 metadata = sqlalchemy.MetaData()
 database = databases.Database("sqlite:///test.db")

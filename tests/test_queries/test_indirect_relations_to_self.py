@@ -3,9 +3,8 @@ from datetime import datetime
 import ormar
 import pytest
 
-from tests.settings import create_config
 from tests.lifespan import init_tests
-
+from tests.settings import create_config
 
 base_ormar_config = create_config()
 

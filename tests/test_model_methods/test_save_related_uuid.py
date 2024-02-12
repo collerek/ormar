@@ -1,14 +1,11 @@
 import uuid
 from typing import Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import create_config
 from tests.lifespan import init_tests
-
+from tests.settings import create_config
 
 base_ormar_config = create_config()
 

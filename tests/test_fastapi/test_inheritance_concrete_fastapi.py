@@ -1,17 +1,16 @@
 import datetime
 from typing import List, Optional
 
-import pytest
 import ormar
+import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 from ormar.relations.relation_proxy import RelationProxy
 from pydantic import computed_field
 
-from tests.lifespan import lifespan, init_tests
+from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
-
 
 base_ormar_config = create_config()
 app = FastAPI(lifespan=lifespan(base_ormar_config))
@@ -135,7 +134,6 @@ class Truck2(Car2):
 
 
 create_test_database = init_tests(base_ormar_config)
-
 
 
 @app.post("/subjects/", response_model=Subject)

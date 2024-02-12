@@ -5,9 +5,8 @@ import ormar.fields.constraints
 import pymysql
 import pytest
 
-from tests.settings import create_config
 from tests.lifespan import init_tests
-
+from tests.settings import create_config
 
 base_ormar_config = create_config()
 

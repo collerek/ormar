@@ -13,11 +13,11 @@ from ormar.models.metaclass import get_constraint_copy
 from ormar.relations.relation_proxy import RelationProxy
 from pydantic import computed_field
 
-from tests.settings import create_config
 from tests.lifespan import init_tests
-
+from tests.settings import create_config
 
 base_ormar_config = create_config()
+
 
 class AuditModel(ormar.Model):
     ormar_config = base_ormar_config.copy(abstract=True)

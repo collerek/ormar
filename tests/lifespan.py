@@ -1,9 +1,9 @@
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
+
 import pytest
 import sqlalchemy
-
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from typing import AsyncIterator
 
 
 def lifespan(config):

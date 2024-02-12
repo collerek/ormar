@@ -7,9 +7,8 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from starlette import status
 
-from tests.lifespan import lifespan, init_tests
+from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
-
 
 base_ormar_config = create_config()
 app = FastAPI(lifespan=lifespan(base_ormar_config))
@@ -52,7 +51,6 @@ Country.update_forward_refs()
 
 
 create_test_database = init_tests(base_ormar_config)
-
 
 
 @app.post("/", response_model=Country, status_code=status.HTTP_201_CREATED)

@@ -11,9 +11,8 @@ import pytest
 from ormar import ModelDefinitionError, NoMatch
 from ormar.fields.sqlalchemy_encrypted import EncryptedString
 
-from tests.settings import create_config
 from tests.lifespan import init_tests
-
+from tests.settings import create_config
 
 base_ormar_config = create_config()
 default_fernet = dict(

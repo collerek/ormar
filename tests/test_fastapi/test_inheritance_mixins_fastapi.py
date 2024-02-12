@@ -1,15 +1,14 @@
 import datetime
+from typing import Optional
 
-import pytest
 import ormar
+import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
-from typing import Optional
 
-from tests.lifespan import lifespan, init_tests
+from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
-
 
 base_ormar_config = create_config()
 app = FastAPI(lifespan=lifespan(base_ormar_config))
@@ -42,7 +41,6 @@ class Subject(ormar.Model, DateFieldsMixins):
 
 
 create_test_database = init_tests(base_ormar_config)
-
 
 
 @app.post("/subjects/", response_model=Subject)
