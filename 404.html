@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Error 404</title>
+
+    <script>
+        window.onload = function () {
+            const destination = window.location.href;
+            if (window.location.href.includes("https://github.com/collerek/ormar")) {
+                const redirectLocation = window.location.href.replace(
+                    "https://github.com/collerek/ormar",
+                    "https://github.com/collerek/ormar/latest"
+                );
+                document.getElementById("body").innerHTML = "Ormar has moved into versioned docs deployment !<br/><br/>Redirecting to " + redirectLocation + " ...";
+                window.location.href = redirectLocation;
+            }
+        }
+    </script>
+</head>
+
+<body id="body" style="text-align: center">
+    Page not found
+</body>
+
+</html>
