@@ -149,14 +149,14 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
             annotation=field_type, default=None
         )
         add_field_serializer_for_reverse_relations(
-            to_model=model_field.to, related_name=related_name
+            to_model=model_field.to, related_name=related_name, field_type=field_type
         )
         model_field.to.model_rebuild(force=True)
         setattr(model_field.to, related_name, RelationDescriptor(name=related_name))
 
 
 def add_field_serializer_for_reverse_relations(
-    to_model: Type["Model"], related_name: str
+    to_model: Type["Model"], related_name: str, field_type: type
 ) -> None:
     def serialize(
         self: "Model", children: List["Model"], handler: SerializerFunctionWrapHandler
@@ -177,9 +177,9 @@ def add_field_serializer_for_reverse_relations(
                 result.append({child.ormar_config.pkname: child.pk})
             return result
 
-    decorator = field_serializer(related_name, mode="wrap", check_fields=False)(
-        serialize
-    )
+    decorator = field_serializer(
+        related_name, mode="wrap", check_fields=False, return_type=field_type
+    )(serialize)
     setattr(to_model, f"serialize_{related_name}", decorator)
     DecoratorInfos.build(to_model)
 
