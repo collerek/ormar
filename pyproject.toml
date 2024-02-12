@@ -72,7 +72,7 @@ python = "<3.8"
 
 [tool.poetry.dev-dependencies]
 # Testing
-pytest = "^7.4.3"
+pytest = "^7.4.4"
 pytest-cov = "^4.0.0"
 codecov = "^2.1.13"
 pytest-asyncio = "^0.21.1"
@@ -114,7 +114,7 @@ dataclasses = { version = ">=0.6.0,<0.8 || >0.8,<1.0.0" }
 # Performance testing
 yappi = "^1.6.0"
 pytest-benchmark = "^4.0.0"
-nest-asyncio = "^1.5.8"
+nest-asyncio = "^1.6.0"
 
 pre-commit = "^2.21.0"
 
@@ -141,6 +141,8 @@ all = [
 [tool.poetry.group.dev.dependencies]
 httpx = "^0.24.1"
 asgi-lifespan = "^2.1.0"
+pytest-codspeed = "^2.2.0"
+mike = "^2.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
