@@ -8,10 +8,10 @@
     <script>
         window.onload = function () {
             const destination = window.location.href;
-            if (window.location.href.includes("https://github.com/collerek/ormar")) {
+            if (window.location.href.includes("https://collerek.github.io/ormar")) {
                 const redirectLocation = window.location.href.replace(
-                    "https://github.com/collerek/ormar",
-                    "https://github.com/collerek/ormar/latest"
+                    "https://collerek.github.io/ormar",
+                    "https://collerek.github.io/ormar/latest"
                 );
                 document.getElementById("body").innerHTML = "Ormar has moved into versioned docs deployment !<br/><br/>Redirecting to " + redirectLocation + " ...";
                 window.location.href = redirectLocation;
