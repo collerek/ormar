@@ -102,6 +102,8 @@ extra:
   analytics:
     provider: google
     property:  UA-72514911-3
+  version:
+    provider: mike
 extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js
   - javascripts/config.js
