@@ -77,6 +77,9 @@ markdown_extensions:
   - pymdownx.highlight:
       linenums: true
 plugins:
+- mike:
+    alias_type: symlink
+    canonical_version: latest
 - search
 - gen-files:
     scripts:
