@@ -1,27 +1,18 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <meta charset="utf-8">
-    <title>Error 404</title>
-
-    <script>
-        window.onload = function () {
-            const destination = window.location.href;
-            if (window.location.href.includes("https://collerek.github.io/ormar")) {
-                const redirectLocation = window.location.href.replace(
-                    "https://collerek.github.io/ormar",
-                    "https://collerek.github.io/ormar/latest"
-                );
-                document.getElementById("body").innerHTML = "Ormar has moved into versioned docs deployment !<br/><br/>Redirecting to " + redirectLocation + " ...";
-                window.location.href = redirectLocation;
-            }
-        }
-    </script>
+  <meta charset="utf-8">
+  <title>Redirecting</title>
+  <noscript>
+    <meta http-equiv="refresh" content="1; url=latest/" />
+  </noscript>
+  <script>
+    window.location.replace(
+      "latest/" + window.location.search + window.location.hash
+    );
+  </script>
 </head>
-
-<body id="body" style="text-align: center">
-    Page not found
+<body>
+  Redirecting to <a href="latest/">latest/</a>...
 </body>
-
 </html>
