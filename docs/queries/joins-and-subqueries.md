@@ -46,20 +46,14 @@ To chain related `Models` relation use double underscores between names.
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     is_best_seller: bool = ormar.Boolean(default=False)
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -82,10 +76,7 @@ You can provide a string or a list of strings (or a field/ list of fields)
 
 ```python
 class SchoolClass(ormar.Model):
-    class Meta:
-        tablename = "schoolclasses"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="schoolclasses")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -93,20 +84,14 @@ class SchoolClass(ormar.Model):
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Student(ormar.Model):
-    class Meta:
-        tablename = "students"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -115,10 +100,7 @@ class Student(ormar.Model):
 
 
 class Teacher(ormar.Model):
-    class Meta:
-        tablename = "teachers"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -182,18 +164,14 @@ If `follow=True` is set it adds also related models of related models.
 With sample date like follow:
 
 ```python
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
-
-
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = OrmarConfig(
+    database=databases.Database(DATABASE_URL, force_rollback=True),
+    metadata=sqlalchemy.MetaData(),
+)
 
 
 class Address(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "addresses"
+    ormar_config = base_ormar_config.copy(tablename="addresses")
 
     id: int = ormar.Integer(primary_key=True)
     street: str = ormar.String(max_length=100, nullable=False)
@@ -203,8 +181,7 @@ class Address(ormar.Model):
 
 
 class Branch(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "branches"
+    ormar_config = base_ormar_config.copy(tablename="branches")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False)
@@ -212,8 +189,7 @@ class Branch(ormar.Model):
 
 
 class Company(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "companies"
+    ormar_config = base_ormar_config.copy(tablename="companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
@@ -264,20 +240,14 @@ To chain related `Models` relation use double underscores between names.
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     is_best_seller: bool = ormar.Boolean(default=False)
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -301,10 +271,7 @@ You can provide a string, or a list of strings
 
 ```python
 class SchoolClass(ormar.Model):
-    class Meta:
-        tablename = "schoolclasses"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="schoolclasses")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -312,20 +279,14 @@ class SchoolClass(ormar.Model):
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Student(ormar.Model):
-    class Meta:
-        tablename = "students"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -334,10 +295,7 @@ class Student(ormar.Model):
 
 
 class Teacher(ormar.Model):
-    class Meta:
-        tablename = "teachers"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

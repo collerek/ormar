@@ -22,10 +22,7 @@ Combines the `offset` and `limit` methods based on page number and size
 
 ```python
 class Track(ormar.Model):
-    class Meta:
-        tablename = "track"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="track")
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -52,10 +49,7 @@ use the `limit_raw_sql` parameter flag, and set it to `True`.
 
 ```python
 class Track(ormar.Model):
-    class Meta:
-        tablename = "track"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="track")
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -86,10 +80,7 @@ use the `limit_raw_sql` parameter flag, and set it to `True`.
 
 ```python
 class Track(ormar.Model):
-    class Meta:
-        tablename = "track"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="track")
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)

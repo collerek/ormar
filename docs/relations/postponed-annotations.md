@@ -36,9 +36,7 @@ PersonRef = ForwardRef("Person")
 
 
 class Person(ormar.Model):
-    class Meta(ModelMeta):
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -72,9 +70,7 @@ PersonRef = ForwardRef("Person")
 
 
 class Person(ormar.Model):
-    class Meta(ModelMeta):
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -93,14 +89,10 @@ and through parameters.
 ChildRef = ForwardRef("Child")
 
 class ChildFriend(ormar.Model):
-    class Meta(ModelMeta):
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy()
 
 class Child(ormar.Model):
-    class Meta(ModelMeta):
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -132,9 +124,7 @@ TeacherRef = ForwardRef("Teacher")
 
 
 class Student(ormar.Model):
-    class Meta(ModelMeta):
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -144,16 +134,11 @@ class Student(ormar.Model):
 
 
 class StudentTeacher(ormar.Model):
-    class Meta(ModelMeta):
-        tablename = 'students_x_teachers'
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy(tablename='students_x_teachers')
 
 
 class Teacher(ormar.Model):
-    class Meta(ModelMeta):
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

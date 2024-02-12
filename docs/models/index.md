@@ -9,7 +9,7 @@ They are being managed in the background and you do not have to create them on y
 
 To build an ormar model you simply need to inherit a `ormar.Model` class.
 
-```Python hl_lines="10"
+```Python hl_lines="9"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
@@ -23,7 +23,7 @@ Each table **has to** have a primary key column, which you specify by setting `p
 
 Only one primary key column is allowed.
 
-```Python hl_lines="15 16 17"
+```Python hl_lines="15-17"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
@@ -60,7 +60,7 @@ you should get back exactly same value in `response`.).
 !!!warning
     pydantic fields have to be always **Optional** and it cannot be changed (otherwise db load validation would fail)
 
-```Python hl_lines="18"
+```Python hl_lines="19"
 --8<-- "../docs_src/models/docs014.py"
 ```
 
@@ -73,11 +73,15 @@ Since it can be a function you can set `default=datetime.datetime.now` and get c
 
 ```python
 # <==related of code removed for clarity==>
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL),
+    metadata=sqlalchemy.MetaData(),
+    engine=sqlalchemy.create_engine(DATABASE_URL),
+)
+
+
 class User(ormar.Model):
-    class Meta:
-        tablename: str = "users2"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="users2")
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255, nullable=False)
@@ -90,7 +94,7 @@ class User(ormar.Model):
     )
 
 # <==related of code removed for clarity==>
-app =FastAPI()
+app = FastAPI()
 
 @app.post("/users/")
 async def create_user(user: User):
@@ -134,17 +138,17 @@ If for whatever reason you prefer to change the name in the database but keep th
 with specifying `name` parameter during Field declaration
 
 Here you have a sample model with changed names
-```Python hl_lines="16-19"
+```Python hl_lines="18-21"
 --8<-- "../docs_src/models/docs008.py"
 ```
 
 Note that you can also change the ForeignKey column name
-```Python hl_lines="21"
+```Python hl_lines="34"
 --8<-- "../docs_src/models/docs009.py"
 ```
 
 But for now you cannot change the ManyToMany column names as they go through other Model anyway.
-```Python hl_lines="28"
+```Python hl_lines="43"
 --8<-- "../docs_src/models/docs010.py"
 ```
 
@@ -152,7 +156,7 @@ But for now you cannot change the ManyToMany column names as they go through oth
 
 If you want to customize the queries run by ormar you can define your own queryset class (that extends the ormar `QuerySet`) in your model class, default one is simply the `QuerySet`
 
-You can provide a new class in `Meta` configuration of your class as `queryset_class` parameter.
+You can provide a new class in `ormar_config` of your class as `queryset_class` parameter.
 
 ```python
 import ormar
@@ -170,12 +174,10 @@ class MyQuerySetClass(QuerySet):
 
         
 class Book(ormar.Model):
-    
-    class Meta(ormar.ModelMeta):
-        metadata = metadata
-        database = database
-        tablename = "book"
-        queryset_class = MyQuerySetClass
+    ormar_config = base_ormar_config.copy(
+        queryset_class=MyQuerySetClass,
+        tablename="book",
+    )
     
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=32)
@@ -217,9 +219,9 @@ and table creation you need to assign each `Model` with two special parameters.
 
 One is `Database` instance created with your database url in [sqlalchemy connection string][sqlalchemy connection string] format.
 
-Created instance needs to be passed to every `Model` with `Meta` class `database` parameter.
+Created instance needs to be passed to every `Model` with `ormar_config` object `database` parameter.
 
-```Python hl_lines="1 6 12"
+```Python hl_lines="1 5 11"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
@@ -231,9 +233,9 @@ Created instance needs to be passed to every `Model` with `Meta` class `database
 
 Second dependency is sqlalchemy `MetaData` instance.
 
-Created instance needs to be passed to every `Model` with `Meta` class `metadata` parameter.
+Created instance needs to be passed to every `Model` with `ormar_config` object `metadata` parameter.
 
-```Python hl_lines="2 7 13"
+```Python hl_lines="3 6 12"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
@@ -243,25 +245,22 @@ Created instance needs to be passed to every `Model` with `Meta` class `metadata
 
 #### Best practice
 
-Only thing that `ormar` expects is a class with name `Meta` and two class variables: `metadata` and `databases`.
+Only thing that `ormar` expects is a field with name `ormar_config`.
 
-So instead of providing the same parameters over and over again for all models you should creata a class and subclass it in all models.
+So instead of providing the same parameters over and over again for all models
+you should creat an object and use its copy in all models.
 
-```Python hl_lines="14 20 33"
+```Python hl_lines="9-11 18 27"
 --8<-- "../docs_src/models/docs013.py"
 ```
-
-!!!warning
-    You need to subclass your `MainMeta` class in each `Model` class as those classes store configuration variables 
-    that otherwise would be overwritten by each `Model`.
 
 ### Table Names
 
 By default table name is created from Model class name as lowercase name plus 's'.
 
-You can overwrite this parameter by providing `Meta` class `tablename` argument.
+You can overwrite this parameter by providing `ormar_config` object `tablename` argument.
 
-```Python hl_lines="12 13 14"
+```Python hl_lines="14-16"
 --8<-- "../docs_src/models/docs002.py"
 ```
 
@@ -279,9 +278,9 @@ Right now only `IndexColumns` and `UniqueColumns` constraints are supported.
 
 #### UniqueColumns
 
-You can set this parameter by providing `Meta` class `constraints` argument.
+You can set this parameter by providing `ormar_config` object `constraints` argument.
 
-```Python hl_lines="14-17"
+```Python hl_lines="13-16"
 --8<-- "../docs_src/models/docs006.py"
 ```
 
@@ -292,9 +291,9 @@ You can set this parameter by providing `Meta` class `constraints` argument.
 
 #### IndexColumns
 
-You can set this parameter by providing `Meta` class `constraints` argument.
+You can set this parameter by providing `ormar_config` object `constraints` argument.
 
-```Python hl_lines="14-17"
+```Python hl_lines="13-16"
 --8<-- "../docs_src/models/docs017.py"
 ```
 
@@ -305,9 +304,9 @@ You can set this parameter by providing `Meta` class `constraints` argument.
 
 #### CheckColumns
 
-You can set this parameter by providing `Meta` class `constraints` argument.
+You can set this parameter by providing `ormar_config` object `constraints` argument.
 
-```Python hl_lines="14-17"
+```Python hl_lines="15-20"
 --8<-- "../docs_src/models/docs018.py"
 ```
 
@@ -319,9 +318,9 @@ You can set this parameter by providing `Meta` class `constraints` argument.
 
 As each `ormar.Model` is also a `pydantic` model, you might want to tweak the settings of the pydantic configuration.
 
-The way to do this in pydantic is to adjust the settings on the `Config` class provided to your model, and it works exactly the same for ormar models.
+The way to do this in pydantic is to adjust the settings on the `model_config` dictionary provided to your model, and it works exactly the same for ormar models.
 
-So in order to set your own preferences you need to provide not only the `Meta` class but also the `Config` class to your model.
+So in order to set your own preferences you need to provide not only the `ormar_config` class but also the `model_config = ConfigDict()` class to your model.
 
 !!!note
         To read more about available settings visit the [pydantic](https://pydantic-docs.helpmanual.io/usage/model_config/) config page.
@@ -330,13 +329,11 @@ Note that if you do not provide your own configuration, ormar will do it for you
 The default config provided is as follows:
 
 ```python
-class Config(pydantic.BaseConfig):
-    orm_mode = True
-    validate_assignment = True
+model_config = ConfigDict(validate_assignment=True)
 ```
 
 So to overwrite setting or provide your own a sample model can look like following:
-```Python hl_lines="15-16"
+```Python hl_lines="16"
 --8<-- "../docs_src/models/docs016.py"
 ```
 
@@ -348,69 +345,62 @@ If you try to do so the `ModelError` will be raised.
 
 Since the extra fields cannot be saved in the database the default to disallow such fields seems a feasible option.
 
-On the contrary in `pydantic` the default option is to ignore such extra fields, therefore `ormar` provides an `Meta.extra` setting to behave in the same way.
+On the contrary in `pydantic` the default option is to ignore such extra fields, therefore `ormar` provides an `ormar_config.extra` setting to behave in the same way.
 
 To ignore extra fields passed to `ormar` set this setting to `Extra.ignore` instead of default `Extra.forbid`.
 
 Note that `ormar` does not allow accepting extra fields, you can only ignore them or forbid them (raise exception if present)
 
 ```python
-from ormar import Extra
+from ormar import Extra, OrmarConfig
 
 class Child(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "children"
-        metadata = metadata
-        database = database
-        extra = Extra.ignore  # set extra setting to prevent exceptions on extra fields presence
+    ormar_config = OrmarConfig(
+        tablename="children",
+        extra=Extra.ignore  # set extra setting to prevent exceptions on extra fields presence
+    )
 
     id: int = ormar.Integer(name="child_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)
     last_name: str = ormar.String(name="lname", max_length=100)
 ```
 
-To set the same setting on all model check the [best practices]("../models/index/#best-practice") and `BaseMeta` concept.
+To set the same setting on all model check the [best practices]("../models/index/#best-practice") and `base_ormar_config` concept.
 
 ## Model sort order
 
 When querying the database with given model by default the Model is ordered by the `primary_key`
 column ascending. If you wish to change the default behaviour you can do it by providing `orders_by`
-parameter to model `Meta` class.
+parameter to model `ormar_config` object.
 
 Sample default ordering:
 ```python
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL),
+    metadata=sqlalchemy.MetaData(),
+)
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
 
 # default sort by column id ascending
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 ```
 Modified
 ```python
-
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
-
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL),
+    metadata=sqlalchemy.MetaData(),
+)
 
 # now default sort by name descending
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
-        orders_by = ["-name"]
+    ormar_config = base_ormar_config.copy(
+        orders_by = ["-name"],
+        tablename="authors",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -425,7 +415,7 @@ There are two ways to create and persist the `Model` instance in the database.
 
 If you plan to modify the instance in the later execution of your program you can initiate your `Model` as a normal class and later await a `save()` call.  
 
-```Python hl_lines="20 21"
+```Python hl_lines="25-26"
 --8<-- "../docs_src/models/docs007.py"
 ```
 
@@ -435,7 +425,7 @@ For creating multiple objects at once a `bulk_create()` QuerySet's method is ava
 
 Each model has a `QuerySet` initialised as `objects` parameter 
 
-```Python hl_lines="23"
+```Python hl_lines="28"
 --8<-- "../docs_src/models/docs007.py"
 ```
 

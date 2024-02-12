@@ -32,10 +32,7 @@ the count will be the total number of rows returned
 
 ```python
 class Book(ormar.Model):
-    class Meta:
-        tablename = "books"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -60,10 +57,7 @@ Returns a bool value to confirm if there are rows matching the given criteria (a
 
 ```python
 class Book(ormar.Model):
-    class Meta:
-        tablename = "books"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)

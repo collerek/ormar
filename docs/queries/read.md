@@ -31,10 +31,7 @@ Passing a criteria is actually calling filter(*args, **kwargs) method described 
 
 ```python
 class Track(ormar.Model):
-    class Meta:
-        tablename = "track"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="track")
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -74,10 +71,7 @@ a new one with given kwargs and _defaults.
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "album"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="album")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -114,10 +108,7 @@ Gets the first row from the db ordered by primary key column ascending.
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "album"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="album")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -143,20 +134,14 @@ If there are no rows meeting the criteria an empty list is returned.
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "album"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="album")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "track"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="track")
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -186,10 +171,7 @@ If there are no rows meeting the criteria an empty async generator is returned.
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "album"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="album")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

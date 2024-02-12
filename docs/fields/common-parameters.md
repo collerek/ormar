@@ -108,7 +108,7 @@ Used in sql only.
 
 Sample usage:
 
-```Python hl_lines="21-23"
+```Python hl_lines="20-22"
 --8<-- "../docs_src/fields/docs004.py"
 ```
 
@@ -184,12 +184,15 @@ So it's on you as a user to provide a type that is valid in the context of given
         As it's easy to break functionality of ormar the `overwrite_pydantic_type` argument is not available on relation fields!
 
 ```python
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata
+    database=database
+)
+
+
 # sample overwrites
 class OverwriteTest(ormar.Model):
-    class Meta:
-        tablename = "overwrites"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="overwrites")
 
     id: int = ormar.Integer(primary_key=True)
     my_int: str = ormar.Integer(overwrite_pydantic_type=PositiveInt)

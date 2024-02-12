@@ -35,10 +35,7 @@ metadata = sqlalchemy.MetaData()
 
 
 class Company(ormar.Model):
-    class Meta:
-        tablename = "companies"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -46,10 +43,7 @@ class Company(ormar.Model):
 
 
 class Car(ormar.Model):
-    class Meta:
-        tablename = "cars"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     manufacturer = ormar.ForeignKey(Company)
@@ -208,15 +202,14 @@ import sqlalchemy
 import ormar
 from tests.settings import DATABASE_URL
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL, force_rollback=True),
+    metadata=sqlalchemy.MetaData(),
+)
 
 
 class Company(ormar.Model):
-    class Meta:
-        tablename = "companies"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -224,10 +217,7 @@ class Company(ormar.Model):
 
 
 class Car(ormar.Model):
-    class Meta:
-        tablename = "cars"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     manufacturer = ormar.ForeignKey(Company)

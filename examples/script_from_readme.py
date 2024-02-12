@@ -6,16 +6,15 @@ import pydantic
 import sqlalchemy
 
 DATABASE_URL = "sqlite:///db.sqlite"
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
 
 
 # note that this step is optional -> all ormar cares is an individual
 # OrmarConfig for each of the models, but this way you do not
 # have to repeat the same parameters if you use only one database
 base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
+    database=databases.Database(DATABASE_URL),
+    metadata=sqlalchemy.MetaData(),
+    engine=sqlalchemy.create_engine(DATABASE_URL),
 )
 
 # Note that all type hints are optional
@@ -28,15 +27,14 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class Author(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename="authors")
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-
-    ormar_config = base_ormar_config.copy(tablename="books")
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
@@ -47,10 +45,9 @@ class Book(ormar.Model):
 # create the database
 # note that in production you should use migrations
 # note that this is not required if you connect to existing database
-engine = sqlalchemy.create_engine(DATABASE_URL)
 # just to be sure we clear the db before
-metadata.drop_all(engine)
-metadata.create_all(engine)
+base_ormar_config.metadata.drop_all(base_ormar_config.engine)
+base_ormar_config.metadata.create_all(base_ormar_config.engine)
 
 
 # all functions below are divided into functionality categories
@@ -378,7 +375,7 @@ async def raw_data():
 async def with_connect(function):
     # note that for any other backend than sqlite you actually need to
     # connect to the database to perform db operations
-    async with database:
+    async with base_ormar_config.database:
         await function()
 
     # note that if you use framework like `fastapi` you shouldn't connect
@@ -408,4 +405,4 @@ for func in [
     asyncio.run(with_connect(func))
 
 # drop the database tables
-metadata.drop_all(engine)
+base_ormar_config.metadata.drop_all(base_ormar_config.engine)

@@ -30,10 +30,7 @@ The allowed kwargs are `Model` fields names and proper value types.
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "album"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="album")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -68,10 +65,7 @@ i.e. `get_or_create(_defaults: {"title": "I win"}, title="never used")` will alw
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "album"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="album")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -106,7 +100,7 @@ assert album == album2
 
 Updates the model, or in case there is no match in database creates a new one.
 
-```Python hl_lines="26-32"
+```Python hl_lines="40-48"
 --8<-- "../docs_src/queries/docs003.py"
 ```
 
@@ -122,7 +116,7 @@ Allows you to create multiple objects at once.
 
 A valid list of `Model` objects needs to be passed.
 
-```python hl_lines="21-27"
+```python hl_lines="26-32"
 --8<-- "../docs_src/queries/docs004.py"
 ```
 
