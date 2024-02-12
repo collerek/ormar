@@ -1,7 +1,9 @@
 name: Build Documentation using MkDocs
 on:
   push:
-    branches: [ master ]
+    # Pattern matched against refs/tags
+    tags:
+      - '**'
 jobs:
   build:
     name: Build and Deploy Documentation
@@ -19,6 +21,12 @@ jobs:
           poetry install --extras "all"
         env:
           POETRY_VIRTUALENVS_CREATE: false
-      - name: Deploy
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Test
         run: |
-          mkdocs gh-deploy --force
+          echo $RELEASE_VERSION
+          echo ${{ env.RELEASE_VERSION }}
+#      - name: Deploy
+#        run: |
+#          mike deploy --push --update-aliases ${{ env.RELEASE_VERSION }} latest

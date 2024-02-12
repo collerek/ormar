@@ -142,6 +142,7 @@ all = [
 httpx = "^0.24.1"
 asgi-lifespan = "^2.1.0"
 pytest-codspeed = "^2.2.0"
+mike = "^2.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
