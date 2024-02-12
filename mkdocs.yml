@@ -1,4 +1,5 @@
 site_name: ormar
+site_url: 'https://collerek.github.io/ormar/'
 site_description: A simple async ORM with fastapi in mind and pydantic validation.
 nav:
   - Overview: index.md
@@ -80,6 +81,7 @@ plugins:
 - mike:
     alias_type: symlink
     canonical_version: latest
+    version_selector: true
 - search
 - gen-files:
     scripts:
