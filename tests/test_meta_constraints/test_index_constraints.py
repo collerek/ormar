@@ -1,19 +1,16 @@
-import databases
 import ormar.fields.constraints
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class Product(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
+    ormar_config = base_ormar_config.copy(
         tablename="products",
-        metadata=metadata,
-        database=database,
         constraints=[
             ormar.fields.constraints.IndexColumns("company", "name", name="my_index"),
             ormar.fields.constraints.IndexColumns("location", "company_type"),
@@ -27,13 +24,7 @@ class Product(ormar.Model):
     company_type: str = ormar.String(max_length=200)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_table_structure():
@@ -52,8 +43,8 @@ def test_table_structure():
 
 @pytest.mark.asyncio
 async def test_index_is_not_unique():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await Product.objects.create(
                 name="Cookies", company="Nestle", location="A", company_type="B"
             )

@@ -1,25 +1,14 @@
-import databases
 import ormar
-import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
-
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL)
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class NewTestModel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        database=database,
-        metadata=metadata,
-    )
+    ormar_config = base_ormar_config.copy()
 
     a: int = ormar.Integer(primary_key=True)
     b: str = ormar.String(max_length=1)
@@ -29,13 +18,7 @@ class NewTestModel(ormar.Model):
     f: str = ormar.String(max_length=1)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_model_field_order():

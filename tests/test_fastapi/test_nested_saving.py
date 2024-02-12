@@ -1,53 +1,30 @@
 from typing import Any, Dict, Optional, Set, Type, Union, cast
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 from ormar.queryset.utils import translate_list_to_dict
 
-from tests.settings import DATABASE_URL
+from tests.lifespan import lifespan, init_tests
+from tests.settings import create_config
 
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
-app.state.database = database
 
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 headers = {"content-type": "application/json"}
 
 
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
-
-
 class Department(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        database=database,
-        metadata=metadata,
-    )
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     department_name: str = ormar.String(max_length=100)
 
 
 class Course(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        database=database,
-        metadata=metadata,
-    )
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     course_name: str = ormar.String(max_length=100)
@@ -56,23 +33,11 @@ class Course(ormar.Model):
 
 
 class Student(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        database=database,
-        metadata=metadata,
-    )
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     courses = ormar.ManyToMany(Course)
-
-
-# create db and tables
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
 
 
 to_exclude = {
@@ -88,6 +53,9 @@ to_exclude_ormar = {
     "id": ...,
     "courses": {"id": ..., "students": {"id", "studentcourse"}},
 }
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def auto_exclude_id_field(to_exclude: Any) -> Union[Dict, Set]:

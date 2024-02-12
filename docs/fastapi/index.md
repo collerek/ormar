@@ -26,7 +26,8 @@ Here you can find a very simple sample application code.
 
 ### Imports and initialization 
 
-First take care of the imports and initialization 
+Define startup and shutdown procedures using FastAPI lifespan and use is in the
+application.
 ```python
 from typing import List, Optional
 
@@ -36,29 +37,29 @@ from fastapi import FastAPI
 
 import ormar
 
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database("sqlite:///test.db")
-app.state.database = database
-```
-
-### Database connection 
-
-Next define startup and shutdown events (or use middleware)
-- note that this is `databases` specific setting not the ormar one
-```python
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
 
 
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    if not config.database.is_connected:
+        await config.database.connect()
+        config.metadata.drop_all(config.engine)
+        config.metadata.create_all(config.engine)
+
+    yield
+
+    if config.database.is_connected:
+        config.metadata.drop_all(config.engine)
+        await config.database.disconnect()
+
+
+base_ormar_config = ormar.OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=databases.Database("sqlite:///test.db"),
+)
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 ```
 
 !!!info

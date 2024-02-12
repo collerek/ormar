@@ -1,20 +1,13 @@
 from typing import List, Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
-
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class Role(ormar.Model):
@@ -56,6 +49,9 @@ class Item(ormar.Model):
     name: str = ormar.String(max_length=100)
     category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
     created_by: Optional[User] = ormar.ForeignKey(User)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.fixture(autouse=True, scope="module")

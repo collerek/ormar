@@ -1,33 +1,24 @@
 from typing import List, Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config(force_rollback=True)
 
 
 class RandomSet(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="randoms",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="randoms")
 
     id: int = ormar.Integer(name="random_id", primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Tonation(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="tonations",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="tonations")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(name="tonation_name", max_length=100)
@@ -35,22 +26,14 @@ class Tonation(ormar.Model):
 
 
 class Division(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="divisions",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="divisions")
 
     id: int = ormar.Integer(name="division_id", primary_key=True)
     name: str = ormar.String(max_length=100, nullable=True)
 
 
 class Shop(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="shops",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="shops")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=True)
@@ -58,19 +41,11 @@ class Shop(ormar.Model):
 
 
 class AlbumShops(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="albums_x_shops",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="albums_x_shops")
 
 
 class Album(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="albums",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="albums")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=True)
@@ -78,11 +53,7 @@ class Album(ormar.Model):
 
 
 class Track(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="tracks",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="tracks")
 
     id: int = ormar.Integer(name="track_id", primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -92,11 +63,7 @@ class Track(ormar.Model):
 
 
 class Cover(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="covers",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="covers")
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(
@@ -106,19 +73,13 @@ class Cover(ormar.Model):
     artist: str = ormar.String(max_length=200, nullable=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_prefetch_related():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             album = Album(name="Malibu")
             await album.save()
             ton1 = await Tonation.objects.create(name="B-mol")
@@ -196,8 +157,8 @@ async def test_prefetch_related():
 
 @pytest.mark.asyncio
 async def test_prefetch_related_with_many_to_many():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             div = await Division.objects.create(name="Div 1")
             shop1 = await Shop.objects.create(name="Shop 1", division=div)
             shop2 = await Shop.objects.create(name="Shop 2", division=div)
@@ -245,8 +206,8 @@ async def test_prefetch_related_with_many_to_many():
 
 @pytest.mark.asyncio
 async def test_prefetch_related_empty():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await Track.objects.create(title="The Bird", position=1)
             track = await Track.objects.prefetch_related(["album__cover_pictures"]).get(
                 title="The Bird"
@@ -257,8 +218,8 @@ async def test_prefetch_related_empty():
 
 @pytest.mark.asyncio
 async def test_prefetch_related_with_select_related():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             div = await Division.objects.create(name="Div 1")
             shop1 = await Shop.objects.create(name="Shop 1", division=div)
             shop2 = await Shop.objects.create(name="Shop 2", division=div)
@@ -330,8 +291,8 @@ async def test_prefetch_related_with_select_related():
 
 @pytest.mark.asyncio
 async def test_prefetch_related_with_select_related_and_fields():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             div = await Division.objects.create(name="Div 1")
             shop1 = await Shop.objects.create(name="Shop 1", division=div)
             shop2 = await Shop.objects.create(name="Shop 2", division=div)

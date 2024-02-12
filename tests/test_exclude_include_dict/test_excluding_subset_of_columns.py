@@ -1,23 +1,18 @@
 from typing import Optional
 
-import databases
 import ormar
 import pydantic
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class Company(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="companies",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False)
@@ -25,11 +20,7 @@ class Company(ormar.Model):
 
 
 class Car(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="cars",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="cars")
 
     id: int = ormar.Integer(primary_key=True)
     manufacturer: Optional[Company] = ormar.ForeignKey(Company)
@@ -40,19 +31,13 @@ class Car(ormar.Model):
     aircon_type: str = ormar.String(max_length=20, nullable=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_selecting_subset():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             toyota = await Company.objects.create(name="Toyota", founded=1937)
             await Car.objects.create(
                 manufacturer=toyota,
@@ -184,8 +169,8 @@ async def test_selecting_subset():
 
 @pytest.mark.asyncio
 async def test_excluding_nested_lists_in_dump():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             toyota = await Company.objects.create(name="Toyota", founded=1937)
             car1 = await Car.objects.create(
                 manufacturer=toyota,

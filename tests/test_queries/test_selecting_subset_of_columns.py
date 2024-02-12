@@ -2,25 +2,20 @@ import asyncio
 import itertools
 from typing import List, Optional
 
-import databases
 import ormar
 import pydantic
 import pytest
 import pytest_asyncio
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class NickNames(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="nicks",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="nicks")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -28,19 +23,11 @@ class NickNames(ormar.Model):
 
 
 class NicksHq(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="nicks_x_hq",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="nicks_x_hq")
 
 
 class HQ(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="hqs",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="hqs")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -48,11 +35,7 @@ class HQ(ormar.Model):
 
 
 class Company(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="companies",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
@@ -61,11 +44,7 @@ class Company(ormar.Model):
 
 
 class Car(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="cars",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="cars")
 
     id: int = ormar.Integer(primary_key=True)
     manufacturer: Optional[Company] = ormar.ForeignKey(Company)
@@ -76,13 +55,7 @@ class Car(ormar.Model):
     aircon_type: str = ormar.String(max_length=20, nullable=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.fixture(scope="module")
@@ -94,7 +67,7 @@ def event_loop():
 
 @pytest_asyncio.fixture(autouse=True, scope="module")
 async def sample_data(event_loop, create_test_database):
-    async with database:
+    async with base_ormar_config.database:
         nick1 = await NickNames.objects.create(name="Nippon", is_lame=False)
         nick2 = await NickNames.objects.create(name="EroCherry", is_lame=True)
         hq = await HQ.objects.create(name="Japan")
@@ -131,8 +104,8 @@ async def sample_data(event_loop, create_test_database):
 
 @pytest.mark.asyncio
 async def test_selecting_subset():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             all_cars = (
                 await Car.objects.select_related(["manufacturer__hq__nicks"])
                 .fields(
@@ -240,7 +213,7 @@ async def test_selecting_subset():
 
 @pytest.mark.asyncio
 async def test_selecting_subset_of_through_model():
-    async with database:
+    async with base_ormar_config.database:
         car = (
             await Car.objects.select_related(["manufacturer__hq__nicks"])
             .fields(

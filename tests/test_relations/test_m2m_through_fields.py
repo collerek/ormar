@@ -1,20 +1,13 @@
 from typing import Any, ForwardRef
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config(force_rollback=True)
 
 
 class Category(ormar.Model):
@@ -48,13 +41,7 @@ class Post(ormar.Model):
     blog = ormar.ForeignKey(Blog)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 class PostCategory2(ormar.Model):
@@ -74,7 +61,7 @@ class Post2(ormar.Model):
 
 @pytest.mark.asyncio
 async def test_forward_ref_is_updated():
-    async with database:
+    async with base_ormar_config.database:
         assert Post2.ormar_config.requires_ref_update
         Post2.update_forward_refs()
 
@@ -83,7 +70,7 @@ async def test_forward_ref_is_updated():
 
 @pytest.mark.asyncio
 async def test_setting_fields_on_through_model():
-    async with database:
+    async with base_ormar_config.database:
         post = await Post(title="Test post").save()
         category = await Category(name="Test category").save()
         await post.categories.add(category)
@@ -94,7 +81,7 @@ async def test_setting_fields_on_through_model():
 
 @pytest.mark.asyncio
 async def test_setting_additional_fields_on_through_model_in_add():
-    async with database:
+    async with base_ormar_config.database:
         post = await Post(title="Test post").save()
         category = await Category(name="Test category").save()
         await post.categories.add(category, sort_order=1)
@@ -104,7 +91,7 @@ async def test_setting_additional_fields_on_through_model_in_add():
 
 @pytest.mark.asyncio
 async def test_setting_additional_fields_on_through_model_in_create():
-    async with database:
+    async with base_ormar_config.database:
         post = await Post(title="Test post").save()
         await post.categories.create(
             name="Test category2", postcategory={"sort_order": 2}
@@ -115,7 +102,7 @@ async def test_setting_additional_fields_on_through_model_in_create():
 
 @pytest.mark.asyncio
 async def test_getting_additional_fields_from_queryset() -> Any:
-    async with database:
+    async with base_ormar_config.database:
         post = await Post(title="Test post").save()
         await post.categories.create(
             name="Test category1", postcategory={"sort_order": 1}
@@ -137,7 +124,7 @@ async def test_getting_additional_fields_from_queryset() -> Any:
 
 @pytest.mark.asyncio
 async def test_only_one_side_has_through() -> Any:
-    async with database:
+    async with base_ormar_config.database:
         post = await Post(title="Test post").save()
         await post.categories.create(
             name="Test category1", postcategory={"sort_order": 1}
@@ -162,7 +149,7 @@ async def test_only_one_side_has_through() -> Any:
 
 @pytest.mark.asyncio
 async def test_filtering_by_through_model() -> Any:
-    async with database:
+    async with base_ormar_config.database:
         post = await Post(title="Test post").save()
         await post.categories.create(
             name="Test category1",
@@ -189,7 +176,7 @@ async def test_filtering_by_through_model() -> Any:
 
 @pytest.mark.asyncio
 async def test_deep_filtering_by_through_model() -> Any:
-    async with database:
+    async with base_ormar_config.database:
         blog = await Blog(title="My Blog").save()
         post = await Post(title="Test post", blog=blog).save()
 
@@ -220,7 +207,7 @@ async def test_deep_filtering_by_through_model() -> Any:
 
 @pytest.mark.asyncio
 async def test_ordering_by_through_model() -> Any:
-    async with database:
+    async with base_ormar_config.database:
         post = await Post(title="Test post").save()
         await post.categories.create(
             name="Test category1",
@@ -255,7 +242,7 @@ async def test_ordering_by_through_model() -> Any:
 
 @pytest.mark.asyncio
 async def test_update_through_models_from_queryset_on_through() -> Any:
-    async with database:
+    async with base_ormar_config.database:
         post = await Post(title="Test post").save()
         await post.categories.create(
             name="Test category1",
@@ -284,7 +271,7 @@ async def test_update_through_models_from_queryset_on_through() -> Any:
 
 @pytest.mark.asyncio
 async def test_update_through_model_after_load() -> Any:
-    async with database:
+    async with base_ormar_config.database:
         post = await Post(title="Test post").save()
         await post.categories.create(
             name="Test category1",
@@ -303,7 +290,7 @@ async def test_update_through_model_after_load() -> Any:
 
 @pytest.mark.asyncio
 async def test_update_through_from_related() -> Any:
-    async with database:
+    async with base_ormar_config.database:
         post = await Post(title="Test post").save()
         await post.categories.create(
             name="Test category1",
@@ -332,7 +319,7 @@ async def test_update_through_from_related() -> Any:
 
 @pytest.mark.asyncio
 async def test_excluding_fields_on_through_model() -> Any:
-    async with database:
+    async with base_ormar_config.database:
         post = await Post(title="Test post").save()
         await post.categories.create(
             name="Test category1",

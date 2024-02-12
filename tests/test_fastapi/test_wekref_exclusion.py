@@ -1,51 +1,19 @@
 from typing import List, Optional
 from uuid import UUID, uuid4
 
-import databases
 import ormar
 import pydantic
 import pytest
-import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-from tests.settings import DATABASE_URL
-
-app = FastAPI()
-
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
-
-app.state.database = database
+from tests.lifespan import lifespan, init_tests
+from tests.settings import create_config
 
 
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
-
-
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
-
-
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 class OtherThing(ormar.Model):
@@ -63,6 +31,10 @@ class Thing(ormar.Model):
     name: str = ormar.Text(default="")
     js: pydantic.Json = ormar.JSON(nullable=True)
     other_thing: Optional[OtherThing] = ormar.ForeignKey(OtherThing, nullable=True)
+
+
+create_test_database = init_tests(base_ormar_config)
+
 
 
 @app.post("/test/1")

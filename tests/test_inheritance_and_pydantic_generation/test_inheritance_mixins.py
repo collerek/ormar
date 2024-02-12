@@ -1,17 +1,15 @@
 import datetime
 from typing import Optional
 
-import databases
 import ormar
 import pytest
 import sqlalchemy as sa
-from sqlalchemy import create_engine
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-metadata = sa.MetaData()
-db = databases.Database(DATABASE_URL)
-engine = create_engine(DATABASE_URL)
+
+base_ormar_config = create_config()
 
 
 class AuditMixin:
@@ -25,11 +23,7 @@ class DateFieldsMixins:
 
 
 class Category(ormar.Model, DateFieldsMixins, AuditMixin):
-    ormar_config = ormar.OrmarConfig(
-        tablename="categories",
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
@@ -37,31 +31,19 @@ class Category(ormar.Model, DateFieldsMixins, AuditMixin):
 
 
 class Subject(ormar.Model, DateFieldsMixins):
-    ormar_config = ormar.OrmarConfig(
-        tablename="subjects",
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy(tablename="subjects")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
     category: Optional[Category] = ormar.ForeignKey(Category)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_field_redefining() -> None:
     class RedefinedField(ormar.Model, DateFieldsMixins):
-        ormar_config = ormar.OrmarConfig(
-            tablename="redefined",
-            metadata=metadata,
-            database=db,
-        )
+        ormar_config = base_ormar_config.copy(tablename="redefined")
 
         id: int = ormar.Integer(primary_key=True)
         created_date: datetime.datetime = ormar.DateTime(name="creation_date")
@@ -81,11 +63,7 @@ def test_field_redefining() -> None:
 def test_field_redefining_in_second() -> None:
 
     class RedefinedField2(ormar.Model, DateFieldsMixins):
-        ormar_config = ormar.OrmarConfig(
-            tablename="redefines2",
-            metadata=metadata,
-            database=db,
-        )
+        ormar_config = base_ormar_config.copy(tablename="redefines2")
 
         id: int = ormar.Integer(primary_key=True)
         created_date: str = ormar.String(
@@ -119,8 +97,8 @@ def round_date_to_seconds(
 
 @pytest.mark.asyncio
 async def test_fields_inherited_from_mixin() -> None:
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             cat = await Category(
                 name="Foo", code=123, created_by="Sam", updated_by="Max"
             ).save()
@@ -146,7 +124,7 @@ async def test_fields_inherited_from_mixin() -> None:
                 for field in mixin2_columns
             )
 
-            inspector = sa.inspect(engine)
+            inspector = sa.inspect(base_ormar_config.engine)
             assert "categories" in inspector.get_table_names()
             table_columns = [x.get("name") for x in inspector.get_columns("categories")]
             assert all(col in table_columns for col in mixin_columns + mixin2_columns)

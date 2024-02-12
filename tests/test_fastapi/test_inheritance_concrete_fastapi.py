@@ -1,43 +1,141 @@
 import datetime
-from typing import List
+from typing import List, Optional
 
 import pytest
-import sqlalchemy
+import ormar
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
+from ormar.relations.relation_proxy import RelationProxy
+from pydantic import computed_field
 
-from tests.settings import DATABASE_URL
-from tests.test_inheritance_and_pydantic_generation.test_inheritance_concrete import (  # noqa: E501
-    Bus,
-    Bus2,
-    Category,
-    Person,
-    Subject,
-    Truck,
-    Truck2,
-    metadata,
-)
-from tests.test_inheritance_and_pydantic_generation.test_inheritance_concrete import (
-    db as database,
-)
-
-app = FastAPI()
-app.state.database = database
+from tests.lifespan import lifespan, init_tests
+from tests.settings import create_config
 
 
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
+class AuditModel(ormar.Model):
+    ormar_config = base_ormar_config.copy(abstract=True)
+
+    created_by: str = ormar.String(max_length=100)
+    updated_by: str = ormar.String(max_length=100, default="Sam")
+
+    @computed_field
+    def audit(self) -> str:  # pragma: no cover
+        return f"{self.created_by} {self.updated_by}"
+
+
+class DateFieldsModelNoSubclass(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="test_date_models")
+
+    date_id: int = ormar.Integer(primary_key=True)
+    created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
+    updated_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
+
+
+class DateFieldsModel(ormar.Model):
+    ormar_config = base_ormar_config.copy(
+        abstract=True,
+        constraints=[
+            ormar.fields.constraints.UniqueColumns(
+                "creation_date",
+                "modification_date",
+            ),
+            ormar.fields.constraints.CheckColumns(
+                "creation_date <= modification_date",
+            ),
+        ],
+    )
+
+    created_date: datetime.datetime = ormar.DateTime(
+        default=datetime.datetime.now, name="creation_date"
+    )
+    updated_date: datetime.datetime = ormar.DateTime(
+        default=datetime.datetime.now, name="modification_date"
+    )
+
+
+class Person(ormar.Model):
+    ormar_config = base_ormar_config.copy()
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
+class Car(ormar.Model):
+    ormar_config = base_ormar_config.copy(abstract=True)
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=50)
+    owner: Person = ormar.ForeignKey(Person)
+    co_owner: Person = ormar.ForeignKey(Person, related_name="coowned")
+    created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
+
+
+class Car2(ormar.Model):
+    ormar_config = base_ormar_config.copy(abstract=True)
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=50)
+    owner: Person = ormar.ForeignKey(Person, related_name="owned")
+    co_owners: RelationProxy[Person] = ormar.ManyToMany(Person, related_name="coowned")
+    created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
+
+
+class Bus(Car):
+    ormar_config = base_ormar_config.copy(tablename="buses")
+
+    owner: Person = ormar.ForeignKey(Person, related_name="buses")
+    max_persons: int = ormar.Integer()
+
+
+class Bus2(Car2):
+    ormar_config = base_ormar_config.copy(tablename="buses2")
+
+    max_persons: int = ormar.Integer()
+
+
+class Category(DateFieldsModel, AuditModel):
+    ormar_config = base_ormar_config.copy(tablename="categories")
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=50, unique=True, index=True)
+    code: int = ormar.Integer()
+
+    @computed_field
+    def code_name(self) -> str:
+        return f"{self.code}:{self.name}"
+
+    @computed_field
+    def audit(self) -> str:
+        return f"{self.created_by} {self.updated_by}"
+
+
+class Subject(DateFieldsModel):
+    ormar_config = base_ormar_config.copy()
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=50, unique=True, index=True)
+    category: Optional[Category] = ormar.ForeignKey(Category)
+
+
+class Truck(Car):
+    ormar_config = base_ormar_config.copy()
+
+    max_capacity: int = ormar.Integer()
+
+
+class Truck2(Car2):
+    ormar_config = base_ormar_config.copy(tablename="trucks2")
+
+    max_capacity: int = ormar.Integer()
+
+
+create_test_database = init_tests(base_ormar_config)
+
 
 
 @app.post("/subjects/", response_model=Subject)
@@ -111,14 +209,6 @@ async def add_truck_coowner(item_id: int, person: Person):
     truck = await Truck2.objects.select_related(["owner", "co_owners"]).get(pk=item_id)
     await truck.co_owners.add(person)
     return truck
-
-
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
 
 
 @pytest.mark.asyncio

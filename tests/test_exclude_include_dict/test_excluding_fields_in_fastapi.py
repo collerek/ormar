@@ -13,26 +13,12 @@ from httpx import AsyncClient
 from ormar import post_save
 from pydantic import ConfigDict, computed_field
 
-from tests.settings import DATABASE_URL
-
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
-app.state.database = database
+from tests.lifespan import lifespan, init_tests
+from tests.settings import create_config
 
 
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 # note that you can set orm_mode here
@@ -60,11 +46,7 @@ def gen_pass():
 
 
 class RandomModel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="random_users",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="random_users")
 
     id: int = ormar.Integer(primary_key=True)
     password: str = ormar.String(max_length=255, default=gen_pass)
@@ -80,11 +62,7 @@ class RandomModel(ormar.Model):
 
 
 class User(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="users",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="users")
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255)
@@ -95,11 +73,7 @@ class User(ormar.Model):
 
 
 class User2(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="users2",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="users2")
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255, nullable=False)
@@ -110,12 +84,7 @@ class User2(ormar.Model):
     timestamp: datetime.datetime = pydantic.Field(default=datetime.datetime.now)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @app.post("/users/", response_model=User, response_model_exclude={"password"})

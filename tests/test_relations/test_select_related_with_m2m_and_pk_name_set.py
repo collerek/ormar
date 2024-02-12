@@ -2,23 +2,16 @@
 from datetime import date
 from typing import List, Optional, Union
 
-import databases
 import ormar
 import pytest
 import sqlalchemy
 from ormar import ModelDefinitionError
-from sqlalchemy import create_engine
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class Role(ormar.Model):
@@ -53,12 +46,7 @@ class User(ormar.Model):
     lastupdate: date = ormar.DateTime(server_default=sqlalchemy.func.now())
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_wrong_model():
@@ -74,7 +62,7 @@ def test_wrong_model():
 
 @pytest.mark.asyncio
 async def test_create_primary_models():
-    async with database:
+    async with base_ormar_config.database:
         await Role.objects.create(
             name="user", order=0, description="no administration right"
         )

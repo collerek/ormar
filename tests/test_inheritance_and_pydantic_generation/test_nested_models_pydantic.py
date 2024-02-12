@@ -1,17 +1,10 @@
-import databases
 import ormar
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
-
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class Library(ormar.Model):
@@ -44,6 +37,9 @@ class TicketPackage(ormar.Model):
     status: str = ormar.String(max_length=100)
     ticket: Ticket = ormar.ForeignKey(Ticket, related_name="packages")
     package: Package = ormar.ForeignKey(Package, related_name="tickets")
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_have_proper_children():

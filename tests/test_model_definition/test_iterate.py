@@ -1,34 +1,25 @@
 import uuid
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 from ormar.exceptions import QueryDefinitionError
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class User(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="users3",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="users3")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="")
 
 
 class User2(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="users4",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="users4")
 
     id: uuid.UUID = ormar.UUID(
         uuid_format="string", primary_key=True, default=uuid.uuid4
@@ -37,11 +28,7 @@ class User2(ormar.Model):
 
 
 class Task(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="tasks",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="tasks")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="")
@@ -49,11 +36,7 @@ class Task(ormar.Model):
 
 
 class Task2(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="tasks2",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="tasks2")
 
     id: uuid.UUID = ormar.UUID(
         uuid_format="string", primary_key=True, default=uuid.uuid4
@@ -62,27 +45,21 @@ class Task2(ormar.Model):
     user: User2 = ormar.ForeignKey(to=User2)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_empty_result():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             async for user in User.objects.iterate():
                 pass  # pragma: no cover
 
 
 @pytest.mark.asyncio
 async def test_model_iterator():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             tom = await User.objects.create(name="Tom")
             jane = await User.objects.create(name="Jane")
             lucy = await User.objects.create(name="Lucy")
@@ -93,8 +70,8 @@ async def test_model_iterator():
 
 @pytest.mark.asyncio
 async def test_model_iterator_filter():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             tom = await User.objects.create(name="Tom")
             await User.objects.create(name="Jane")
             await User.objects.create(name="Lucy")
@@ -105,8 +82,8 @@ async def test_model_iterator_filter():
 
 @pytest.mark.asyncio
 async def test_model_iterator_relations():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             tom = await User.objects.create(name="Tom")
             jane = await User.objects.create(name="Jane")
             lucy = await User.objects.create(name="Lucy")
@@ -125,8 +102,8 @@ async def test_model_iterator_relations():
 
 @pytest.mark.asyncio
 async def test_model_iterator_relations_queryset_proxy():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             tom = await User.objects.create(name="Tom")
             jane = await User.objects.create(name="Jane")
 
@@ -151,8 +128,8 @@ async def test_model_iterator_relations_queryset_proxy():
 
 @pytest.mark.asyncio
 async def test_model_iterator_uneven_number_of_relations():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             tom = await User.objects.create(name="Tom")
             jane = await User.objects.create(name="Jane")
             lucy = await User.objects.create(name="Lucy")
@@ -173,8 +150,8 @@ async def test_model_iterator_uneven_number_of_relations():
 
 @pytest.mark.asyncio
 async def test_model_iterator_uuid_pk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             tom = await User2.objects.create(name="Tom")
             jane = await User2.objects.create(name="Jane")
             lucy = await User2.objects.create(name="Lucy")
@@ -185,8 +162,8 @@ async def test_model_iterator_uuid_pk():
 
 @pytest.mark.asyncio
 async def test_model_iterator_filter_uuid_pk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             tom = await User2.objects.create(name="Tom")
             await User2.objects.create(name="Jane")
             await User2.objects.create(name="Lucy")
@@ -197,8 +174,8 @@ async def test_model_iterator_filter_uuid_pk():
 
 @pytest.mark.asyncio
 async def test_model_iterator_relations_uuid_pk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             tom = await User2.objects.create(name="Tom")
             jane = await User2.objects.create(name="Jane")
             lucy = await User2.objects.create(name="Lucy")
@@ -217,8 +194,8 @@ async def test_model_iterator_relations_uuid_pk():
 
 @pytest.mark.asyncio
 async def test_model_iterator_relations_queryset_proxy_uuid_pk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             tom = await User2.objects.create(name="Tom")
             jane = await User2.objects.create(name="Jane")
 
@@ -243,8 +220,8 @@ async def test_model_iterator_relations_queryset_proxy_uuid_pk():
 
 @pytest.mark.asyncio
 async def test_model_iterator_uneven_number_of_relations_uuid_pk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             tom = await User2.objects.create(name="Tom")
             jane = await User2.objects.create(name="Jane")
             lucy = await User2.objects.create(name="Lucy")
@@ -267,7 +244,7 @@ async def test_model_iterator_uneven_number_of_relations_uuid_pk():
 
 @pytest.mark.asyncio
 async def test_model_iterator_with_prefetch_raises_error():
-    async with database:
+    async with base_ormar_config.database:
         with pytest.raises(QueryDefinitionError):
             async for user in User.objects.prefetch_related(User.tasks).iterate():
                 pass  # pragma: no cover

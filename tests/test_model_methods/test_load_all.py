@@ -1,20 +1,13 @@
 from typing import List
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class Language(ormar.Model):
@@ -59,19 +52,13 @@ class Company(ormar.Model):
     hq: HQ = ormar.ForeignKey(HQ, related_name="companies")
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_load_all_fk_rel():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             hq = await HQ.objects.create(name="Main")
             company = await Company.objects.create(name="Banzai", founded=1988, hq=hq)
 
@@ -90,8 +77,8 @@ async def test_load_all_fk_rel():
 
 @pytest.mark.asyncio
 async def test_load_all_many_to_many():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             nick1 = await NickName.objects.create(name="BazingaO", is_lame=False)
             nick2 = await NickName.objects.create(name="Bazinga20", is_lame=True)
             hq = await HQ.objects.create(name="Main")
@@ -116,8 +103,8 @@ async def test_load_all_many_to_many():
 
 @pytest.mark.asyncio
 async def test_load_all_with_order():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             nick1 = await NickName.objects.create(name="Barry", is_lame=False)
             nick2 = await NickName.objects.create(name="Joe", is_lame=True)
             hq = await HQ.objects.create(name="Main")
@@ -150,8 +137,8 @@ async def test_load_all_with_order():
 
 @pytest.mark.asyncio
 async def test_loading_reversed_relation():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             hq = await HQ.objects.create(name="Main")
             await Company.objects.create(name="Banzai", founded=1988, hq=hq)
 
@@ -166,8 +153,8 @@ async def test_loading_reversed_relation():
 
 @pytest.mark.asyncio
 async def test_loading_nested():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             language = await Language.objects.create(name="English")
             level = await CringeLevel.objects.create(name="High", language=language)
             level2 = await CringeLevel.objects.create(name="Low", language=language)

@@ -1,42 +1,20 @@
 import datetime
 from typing import List, Optional, Union
 
-import databases
 import ormar
 import pydantic
 import pytest
-import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 from pydantic import Field
 
-from tests.settings import DATABASE_URL
-
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
-app.state.database = database
+from tests.lifespan import lifespan, init_tests
+from tests.settings import create_config
 
 
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
-
-
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 class PTestA(pydantic.BaseModel):
@@ -68,12 +46,8 @@ class Item(ormar.Model):
     categories = ormar.ManyToMany(Category)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
+
 
 
 @app.get("/items/", response_model=List[Item])

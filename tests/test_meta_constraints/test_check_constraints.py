@@ -1,22 +1,19 @@
 import sqlite3
 
 import asyncpg  # type: ignore
-import databases
 import ormar.fields.constraints
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class Product(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
+    ormar_config = base_ormar_config.copy(
         tablename="products",
-        metadata=metadata,
-        database=database,
         constraints=[
             ormar.fields.constraints.CheckColumns("inventory > buffer"),
         ],
@@ -29,20 +26,14 @@ class Product(ormar.Model):
     buffer: int = ormar.Integer()
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_check_columns_exclude_mysql():
     if Product.ormar_config.database._backend._dialect.name != "mysql":
-        async with database:  # pragma: no cover
-            async with database.transaction(force_rollback=True):
+        async with base_ormar_config.database:  # pragma: no cover
+            async with base_ormar_config.database.transaction(force_rollback=True):
                 await Product.objects.create(
                     name="Mars", company="Nestle", inventory=100, buffer=10
                 )

@@ -1,20 +1,13 @@
 from typing import Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class Author(ormar.Model):
@@ -34,11 +27,7 @@ class Book(ormar.Model):
 
 
 class JsonModel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=database,
-        tablename="jsons",
-    )
+    ormar_config = base_ormar_config.copy(tablename="jsons")
 
     id = ormar.Integer(primary_key=True)
     text_field = ormar.Text(nullable=True)
@@ -46,18 +35,12 @@ class JsonModel(ormar.Model):
     json_not_null = ormar.JSON()
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_is_null():
-    async with database:
+    async with base_ormar_config.database:
         tolkien = await Author.objects.create(name="J.R.R. Tolkien")
         await Book.objects.create(author=tolkien, title="The Hobbit")
         await Book.objects.create(
@@ -99,7 +82,7 @@ async def test_is_null():
 
 @pytest.mark.asyncio
 async def test_isnull_json():
-    async with database:
+    async with base_ormar_config.database:
         author = await JsonModel.objects.create(json_not_null=None)
         assert author.json_field is None
         non_null_text_fields = await JsonModel.objects.all(text_field__isnull=False)

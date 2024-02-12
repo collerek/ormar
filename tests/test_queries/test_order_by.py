@@ -1,22 +1,17 @@
 from typing import List, Optional
 
-import databases
 import ormar
 import pytest
-import sqlalchemy
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = create_config()
 
 
 class Song(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="songs",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="songs")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -24,33 +19,21 @@ class Song(ormar.Model):
 
 
 class Owner(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="owners",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="owners")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class AliasNested(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="aliases_nested",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="aliases_nested")
 
     id: int = ormar.Integer(name="alias_id", primary_key=True)
     name: str = ormar.String(name="alias_name", max_length=100)
 
 
 class AliasTest(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="aliases",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="aliases")
 
     id: int = ormar.Integer(name="alias_id", primary_key=True)
     name: str = ormar.String(name="alias_name", max_length=100)
@@ -58,11 +41,7 @@ class AliasTest(ormar.Model):
 
 
 class Toy(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="toys",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="toys")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -70,22 +49,14 @@ class Toy(ormar.Model):
 
 
 class Factory(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="factories",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="factories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Car(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="cars",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="cars")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -93,29 +64,19 @@ class Car(ormar.Model):
 
 
 class User(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="users",
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy(tablename="users")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     cars: List[Car] = ormar.ManyToMany(Car)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_sort_order_on_main_model():
-    async with database:
+    async with base_ormar_config.database:
         await Song.objects.create(name="Song 3", sort_order=3)
         await Song.objects.create(name="Song 1", sort_order=1)
         await Song.objects.create(name="Song 2", sort_order=2)
@@ -174,7 +135,7 @@ async def test_sort_order_on_main_model():
 
 @pytest.mark.asyncio
 async def test_sort_order_on_related_model():
-    async with database:
+    async with base_ormar_config.database:
         aphrodite = await Owner.objects.create(name="Aphrodite")
         hermes = await Owner.objects.create(name="Hermes")
         zeus = await Owner.objects.create(name="Zeus")
@@ -260,7 +221,7 @@ async def test_sort_order_on_related_model():
 
 @pytest.mark.asyncio
 async def test_sort_order_on_many_to_many():
-    async with database:
+    async with base_ormar_config.database:
         factory1 = await Factory.objects.create(name="Factory 1")
         factory2 = await Factory.objects.create(name="Factory 2")
 
@@ -334,7 +295,7 @@ async def test_sort_order_on_many_to_many():
 
 @pytest.mark.asyncio
 async def test_sort_order_with_aliases():
-    async with database:
+    async with base_ormar_config.database:
         al1 = await AliasTest.objects.create(name="Test4")
         al2 = await AliasTest.objects.create(name="Test2")
         al3 = await AliasTest.objects.create(name="Test1")

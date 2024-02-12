@@ -1,49 +1,38 @@
 import datetime
 
-import databases
 import ormar
 import pytest
-import sqlalchemy as sa
-from sqlalchemy import create_engine
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-metadata = sa.MetaData()
-db = databases.Database(DATABASE_URL)
-engine = create_engine(DATABASE_URL)
+
+base_ormar_config = create_config()
 
 
 class User(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        tablename="users",
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy(tablename="users")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
 
 
 class RelationalAuditModel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(abstract=True)
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     created_by: User = ormar.ForeignKey(User, nullable=False)
     updated_by: User = ormar.ForeignKey(User, nullable=False)
 
 
 class AuditModel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(abstract=True)
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     created_by: str = ormar.String(max_length=100)
     updated_by: str = ormar.String(max_length=100, default="Sam")
 
 
 class DateFieldsModel(ormar.Model):
-    ormar_config = ormar.OrmarConfig(
-        abstract=True,
-        metadata=metadata,
-        database=db,
-    )
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     created_date: datetime.datetime = ormar.DateTime(
         default=datetime.datetime.now, name="creation_date"
@@ -54,7 +43,7 @@ class DateFieldsModel(ormar.Model):
 
 
 class Category(DateFieldsModel, AuditModel):
-    ormar_config = ormar.OrmarConfig(
+    ormar_config = base_ormar_config.copy(
         tablename="categories",
         exclude_parent_fields=["updated_by", "updated_date"],
     )
@@ -65,7 +54,7 @@ class Category(DateFieldsModel, AuditModel):
 
 
 class Item(DateFieldsModel, AuditModel):
-    ormar_config = ormar.OrmarConfig(
+    ormar_config = base_ormar_config.copy(
         tablename="items",
         exclude_parent_fields=["updated_by", "updated_date"],
     )
@@ -77,7 +66,7 @@ class Item(DateFieldsModel, AuditModel):
 
 
 class Gun(RelationalAuditModel, DateFieldsModel):
-    ormar_config = ormar.OrmarConfig(
+    ormar_config = base_ormar_config.copy(
         tablename="guns",
         exclude_parent_fields=["updated_by"],
     )
@@ -86,11 +75,7 @@ class Gun(RelationalAuditModel, DateFieldsModel):
     name: str = ormar.String(max_length=50)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_model_definition():
@@ -111,8 +96,8 @@ def test_model_definition():
 
 @pytest.mark.asyncio
 async def test_model_works_as_expected():
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             test = await Category(name="Cat", code=2, created_by="Joe").save()
             assert test.created_date is not None
 
@@ -123,8 +108,8 @@ async def test_model_works_as_expected():
 
 @pytest.mark.asyncio
 async def test_exclude_with_redefinition():
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             test = await Item(name="Item", code=3, created_by="Anna").save()
             assert test.created_date is not None
             assert test.updated_by == "Bob"
@@ -136,8 +121,8 @@ async def test_exclude_with_redefinition():
 
 @pytest.mark.asyncio
 async def test_exclude_with_relation():
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             user = await User(name="Michail Kalasznikow").save()
             test = await Gun(name="AK47", created_by=user).save()
             assert test.created_date is not None

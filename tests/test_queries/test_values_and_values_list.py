@@ -1,23 +1,16 @@
 import asyncio
 from typing import List, Optional
 
-import databases
 import ormar
 import pytest
 import pytest_asyncio
-import sqlalchemy
 from ormar.exceptions import QueryDefinitionError
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class User(ormar.Model):
@@ -52,12 +45,7 @@ class Post(ormar.Model):
     category: Optional[Category] = ormar.ForeignKey(Category)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.fixture(scope="module")
@@ -69,7 +57,7 @@ def event_loop():
 
 @pytest_asyncio.fixture(autouse=True, scope="module")
 async def sample_data(event_loop, create_test_database):
-    async with database:
+    async with base_ormar_config.database:
         creator = await User(name="Anonymous").save()
         admin = await Role(name="admin").save()
         editor = await Role(name="editor").save()
@@ -83,7 +71,7 @@ async def sample_data(event_loop, create_test_database):
 
 @pytest.mark.asyncio
 async def test_simple_queryset_values():
-    async with database:
+    async with base_ormar_config.database:
         posts = await Post.objects.values()
         assert posts == [
             {"id": 1, "name": "Ormar strikes again!", "category": 1},
@@ -94,7 +82,7 @@ async def test_simple_queryset_values():
 
 @pytest.mark.asyncio
 async def test_queryset_values_nested_relation():
-    async with database:
+    async with base_ormar_config.database:
         posts = await Post.objects.select_related("category__created_by").values()
         assert posts == [
             {
@@ -135,7 +123,7 @@ async def test_queryset_values_nested_relation():
 
 @pytest.mark.asyncio
 async def test_queryset_values_nested_relation_subset_of_fields():
-    async with database:
+    async with base_ormar_config.database:
         posts = await Post.objects.select_related("category__created_by").values(
             ["name", "category__name", "category__created_by__name"]
         )
@@ -160,7 +148,7 @@ async def test_queryset_values_nested_relation_subset_of_fields():
 
 @pytest.mark.asyncio
 async def test_queryset_simple_values_list():
-    async with database:
+    async with base_ormar_config.database:
         posts = await Post.objects.values_list()
         assert posts == [
             (1, "Ormar strikes again!", 1),
@@ -171,7 +159,7 @@ async def test_queryset_simple_values_list():
 
 @pytest.mark.asyncio
 async def test_queryset_nested_relation_values_list():
-    async with database:
+    async with base_ormar_config.database:
         posts = await Post.objects.select_related("category__created_by").values_list()
         assert posts == [
             (1, "Ormar strikes again!", 1, 1, "News", 0, 1, 1, "Anonymous"),
@@ -192,7 +180,7 @@ async def test_queryset_nested_relation_values_list():
 
 @pytest.mark.asyncio
 async def test_queryset_nested_relation_subset_of_fields_values_list():
-    async with database:
+    async with base_ormar_config.database:
         posts = await Post.objects.select_related("category__created_by").values_list(
             ["name", "category__name", "category__created_by__name"]
         )
@@ -205,7 +193,7 @@ async def test_queryset_nested_relation_subset_of_fields_values_list():
 
 @pytest.mark.asyncio
 async def test_m2m_values():
-    async with database:
+    async with base_ormar_config.database:
         user = await User.objects.select_related("roles").values()
         assert user == [
             {
@@ -231,7 +219,7 @@ async def test_m2m_values():
 
 @pytest.mark.asyncio
 async def test_nested_m2m_values():
-    async with database:
+    async with base_ormar_config.database:
         user = (
             await Role.objects.select_related("users__categories")
             .filter(name="admin")
@@ -256,7 +244,7 @@ async def test_nested_m2m_values():
 
 @pytest.mark.asyncio
 async def test_nested_m2m_values_without_through_explicit():
-    async with database:
+    async with base_ormar_config.database:
         user = (
             await Role.objects.select_related("users__categories")
             .filter(name="admin")
@@ -275,7 +263,7 @@ async def test_nested_m2m_values_without_through_explicit():
 
 @pytest.mark.asyncio
 async def test_nested_m2m_values_without_through_param():
-    async with database:
+    async with base_ormar_config.database:
         user = (
             await Role.objects.select_related("users__categories")
             .filter(name="admin")
@@ -293,7 +281,7 @@ async def test_nested_m2m_values_without_through_param():
 
 @pytest.mark.asyncio
 async def test_nested_m2m_values_no_through_and_m2m_models_but_keep_end_model():
-    async with database:
+    async with base_ormar_config.database:
         user = (
             await Role.objects.select_related("users__categories")
             .filter(name="admin")
@@ -306,7 +294,7 @@ async def test_nested_m2m_values_no_through_and_m2m_models_but_keep_end_model():
 
 @pytest.mark.asyncio
 async def test_nested_flatten_and_exception():
-    async with database:
+    async with base_ormar_config.database:
         with pytest.raises(QueryDefinitionError):
             (await Role.objects.fields({"name", "id"}).values_list(flatten=True))
 
@@ -316,7 +304,7 @@ async def test_nested_flatten_and_exception():
 
 @pytest.mark.asyncio
 async def test_empty_result():
-    async with database:
+    async with base_ormar_config.database:
         roles = await Role.objects.filter(Role.name == "test").values_list()
         roles2 = await Role.objects.filter(Role.name == "test").values()
         assert roles == roles2 == []
@@ -324,7 +312,7 @@ async def test_empty_result():
 
 @pytest.mark.asyncio
 async def test_queryset_values_multiple_select_related():
-    async with database:
+    async with base_ormar_config.database:
         posts = (
             await Category.objects.select_related(["created_by__roles", "posts"])
             .filter(Category.created_by.roles.name == "editor")
@@ -357,7 +345,7 @@ async def test_queryset_values_multiple_select_related():
 
 @pytest.mark.asyncio
 async def test_querysetproxy_values():
-    async with database:
+    async with base_ormar_config.database:
         role = (
             await Role.objects.select_related("users__categories")
             .filter(name="admin")
@@ -403,7 +391,7 @@ async def test_querysetproxy_values():
 
 @pytest.mark.asyncio
 async def test_querysetproxy_values_list():
-    async with database:
+    async with base_ormar_config.database:
         role = (
             await Role.objects.select_related("users__categories")
             .filter(name="admin")

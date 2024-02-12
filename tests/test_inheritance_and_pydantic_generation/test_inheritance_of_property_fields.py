@@ -1,18 +1,15 @@
-import databases
 import ormar
-import pytest
-import sqlalchemy
-import sqlalchemy as sa
 from pydantic import computed_field
 
-from tests.settings import DATABASE_URL
+from tests.settings import create_config
+from tests.lifespan import init_tests
 
-metadata = sa.MetaData()
-database = databases.Database(DATABASE_URL)
+
+base_ormar_config = create_config()
 
 
 class BaseFoo(ormar.Model):
-    ormar_config = ormar.OrmarConfig(abstract=True)
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     name: str = ormar.String(max_length=100)
 
@@ -22,10 +19,7 @@ class BaseFoo(ormar.Model):
 
 
 class Foo(BaseFoo):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy()
 
     @computed_field
     def double_prefixed_name(self) -> str:
@@ -35,10 +29,7 @@ class Foo(BaseFoo):
 
 
 class Bar(BaseFoo):
-    ormar_config = ormar.OrmarConfig(
-        metadata=metadata,
-        database=database,
-    )
+    ormar_config = base_ormar_config.copy()
 
     @computed_field
     def prefixed_name(self) -> str:
@@ -47,13 +38,7 @@ class Bar(BaseFoo):
     id: int = ormar.Integer(primary_key=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_property_fields_are_inherited():

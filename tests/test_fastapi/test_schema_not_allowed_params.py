@@ -2,15 +2,11 @@ import databases
 import ormar
 import sqlalchemy
 
-DATABASE_URL = "sqlite:///db.sqlite"
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
 
-base_ormar_config = ormar.OrmarConfig(
-    metadata=metadata,
-    database=database,
-)
+base_ormar_config = create_config()
 
 
 class Author(ormar.Model):
@@ -19,6 +15,9 @@ class Author(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     contents: str = ormar.Text()
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_schema_not_allowed():
