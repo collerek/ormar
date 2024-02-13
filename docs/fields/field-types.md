@@ -161,10 +161,11 @@ That way you can i.e. set the value by API, even if value is not `utf-8` compati
 import base64
 ... # other imports skipped for brevity 
 class LargeBinaryStr(ormar.Model):
-    class Meta:
-        tablename = "my_str_blobs"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="my_str_blobs",
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     test_binary: str = ormar.LargeBinary(
@@ -233,10 +234,11 @@ class TestEnum(Enum):
     val2 = 'Val2'
 
 class TestModel(ormar.Model):
-    class Meta:
-        tablename = "org"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="org",
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     # pass list(Enum) to choices

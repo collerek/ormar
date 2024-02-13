@@ -23,10 +23,11 @@ Field is not required if (any/many/all) of following:
 Example:
 ```python
 class User(ormar.Model):
-    class Meta:
-        tablename: str = "users"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+        tablename="users"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255)
@@ -111,13 +112,13 @@ One is a dictionary with nested fields that represents the model tree structure,
 Assume for a second that our user's category is a separate model:
 
 ```python
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata 
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename: str = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
     
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255)    
@@ -125,8 +126,7 @@ class Category(ormar.Model):
 
 
 class User(ormar.Model):
-    class Meta(BaseMeta):
-        tablename: str = "users"
+    ormar_config = base_ormar_config.copy(tablename="users")
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255)

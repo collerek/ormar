@@ -19,8 +19,11 @@ To encrypt a field you need to pass at minimum `encrypt_secret` and `encrypt_bac
 
 ```python hl_lines="7-8"
 class Filter(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "filters"
+    ormar_config = ormar.OrmarConfig(
+        tablename="filters",
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, 
@@ -59,8 +62,11 @@ Note that since this backend never decrypt the stored value it's only applicable
 
 ```python
 class Hash(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "hashes"
+    ormar_config = ormar.OrmarConfig(
+        tablename="hashes",
+        database=database,
+        metadata=metadata,
+    )        
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128,
@@ -106,8 +112,11 @@ as the returned value is parsed to corresponding python type.
 
 ```python
 class Filter(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "filters"
+    ormar_config = ormar.OrmarConfig(
+        tablename="filters",
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, 
@@ -152,8 +161,11 @@ argument by `encrypt_custom_backend`.
 
 ```python
 class Filter(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "filters"
+    ormar_config = ormar.OrmarConfig(
+        tablename="filters",
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, 

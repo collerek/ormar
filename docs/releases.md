@@ -513,9 +513,10 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
     ```python
     ... # course declaration ommited
     class Student(ormar.Model):
-        class Meta:
-            database = database
-            metadata = metadata
+        ormar_config = ormar.OrmarConfig(
+            database=database,
+            metadata=metadata,
+        )
     
         id: int = ormar.Integer(primary_key=True)
         name: str = ormar.String(max_length=100)
@@ -523,10 +524,11 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
     
     # will produce default Through model like follows (example simplified)
     class StudentCourse(ormar.Model):
-        class Meta:
-            database = database
-            metadata = metadata
-            tablename = "students_courses"
+        ormar_config = ormar.OrmarConfig(
+            tablename="students_courses",
+            database=database,
+            metadata=metadata,
+        )
     
         id: int = ormar.Integer(primary_key=True)
         student = ormar.ForeignKey(Student) # default name
@@ -540,9 +542,10 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
     ```python
     ... # course declaration ommited
     class Student(ormar.Model):
-        class Meta:
-            database = database
-            metadata = metadata
+        ormar_config = ormar.OrmarConfig(
+            database=database,
+            metadata=metadata,
+        )
     
         id: int = ormar.Integer(primary_key=True)
         name: str = ormar.String(max_length=100)
@@ -552,10 +555,11 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
     
     # will produce default Through model like follows (example simplified)
     class StudentCourse(ormar.Model):
-        class Meta:
-            database = database
-            metadata = metadata
-            tablename = "students_courses"
+        ormar_config = ormar.OrmarConfig(
+            tablename="students_courses",
+            database=database,
+            metadata=metadata,
+        )
     
         id: int = ormar.Integer(primary_key=True)
         student_id = ormar.ForeignKey(Student) # set by through_relation_name

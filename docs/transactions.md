@@ -30,9 +30,10 @@ metadata = sqlalchemy.MetaData()
 database = databases.Database("sqlite:///")
 
 class Author(ormar.Model):
-    class Meta:
-        database=database
-        metadata=metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
     
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255)

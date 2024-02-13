@@ -186,10 +186,11 @@ So it's on you as a user to provide a type that is valid in the context of given
 ```python
 # sample overwrites
 class OverwriteTest(ormar.Model):
-    class Meta:
-        tablename = "overwrites"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="overwrites",
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     my_int: str = ormar.Integer(overwrite_pydantic_type=PositiveInt)

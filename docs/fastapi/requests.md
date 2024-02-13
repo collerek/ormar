@@ -24,10 +24,11 @@ Field is not required if (any/many/all) of following:
 Example:
 ```python
 class User(ormar.Model):
-    class Meta:
-        tablename: str = "users"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+        tablename="users",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255)

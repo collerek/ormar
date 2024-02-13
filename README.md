@@ -179,32 +179,30 @@ metadata = sqlalchemy.MetaData()
 # note that this step is optional -> all ormar cares is a internal
 # class with name Meta and proper parameters, but this way you do not
 # have to repeat the same parameters if you use only one database
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 
 # Note that all type hints are optional
 # below is a perfectly valid model declaration
 # class Author(ormar.Model):
-#     class Meta(BaseMeta):
-#         tablename = "authors"
+#     ormar_config = ormar.OrmarConfig(tablename="authors")
 #
 #     id = ormar.Integer(primary_key=True) # <= notice no field types
 #     name = ormar.String(max_length=100)
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
