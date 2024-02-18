@@ -1,5 +1,6 @@
 import copy
 import sys
+import warnings
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -560,7 +561,11 @@ def get_serializer() -> Callable:
         Serialize a value if it's not expired weak reference.
         """
         try:
-            return handler(value)
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore", message="Pydantic serializer warnings"
+                )
+                return handler(value)
         except ReferenceError:
             return None
         except ValueError as exc:

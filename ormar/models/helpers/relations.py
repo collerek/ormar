@@ -1,10 +1,13 @@
 import inspect
+import warnings
 from typing import TYPE_CHECKING, Any, List, Optional, Type, Union, cast
 
 from pydantic import BaseModel, create_model, field_serializer
 from pydantic._internal._decorators import DecoratorInfos
 from pydantic.fields import FieldInfo
-from pydantic_core.core_schema import SerializerFunctionWrapHandler
+from pydantic_core.core_schema import (
+    SerializerFunctionWrapHandler,
+)
 
 import ormar
 from ormar import ForeignKey, ManyToMany
@@ -149,14 +152,14 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
             annotation=field_type, default=None
         )
         add_field_serializer_for_reverse_relations(
-            to_model=model_field.to, related_name=related_name, field_type=field_type
+            to_model=model_field.to, related_name=related_name
         )
         model_field.to.model_rebuild(force=True)
         setattr(model_field.to, related_name, RelationDescriptor(name=related_name))
 
 
 def add_field_serializer_for_reverse_relations(
-    to_model: Type["Model"], related_name: str, field_type: type
+    to_model: Type["Model"], related_name: str
 ) -> None:
     def serialize(
         self: "Model", children: List["Model"], handler: SerializerFunctionWrapHandler
@@ -166,7 +169,11 @@ def add_field_serializer_for_reverse_relations(
         by excluding the children.
         """
         try:
-            return handler(children)
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore", message="Pydantic serializer warnings"
+                )
+                return handler(children)
         except ValueError as exc:
             if not str(exc).startswith("Circular reference"):  # pragma: no cover
                 raise exc
@@ -177,9 +184,9 @@ def add_field_serializer_for_reverse_relations(
                 result.append({child.ormar_config.pkname: child.pk})
             return result
 
-    decorator = field_serializer(
-        related_name, mode="wrap", check_fields=False, return_type=field_type
-    )(serialize)
+    decorator = field_serializer(related_name, mode="wrap", check_fields=False)(
+        serialize
+    )
     setattr(to_model, f"serialize_{related_name}", decorator)
     DecoratorInfos.build(to_model)
 
