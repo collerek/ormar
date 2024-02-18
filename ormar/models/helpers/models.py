@@ -31,7 +31,7 @@ def populate_default_options_values(  # noqa: CCR001
     new_model: Type["Model"], model_fields: Dict
 ) -> None:
     """
-    Sets all optional Meta values to it's defaults
+    Sets all optional OrmarConfig values to its defaults
     and set model_fields that were already previously extracted.
 
     Here should live all options that are not overwritten/set for all models.
@@ -83,7 +83,7 @@ def substitue_backend_pool_for_sqlite(new_model: Type["Model"]) -> None:
         backend._pool = old_pool.__class__(backend._database_url, **backend._options)
 
 
-def check_required_meta_parameters(new_model: Type["Model"]) -> None:
+def check_required_config_parameters(new_model: Type["Model"]) -> None:
     """
     Verifies if ormar.Model has database and metadata set.
 
@@ -155,7 +155,7 @@ def group_related_list(list_: List) -> Dict:
 
 def config_field_not_set(model: Type["Model"], field_name: str) -> bool:
     """
-    Checks if field with given name is already present in model.Meta.
+    Checks if field with given name is already present in model.OrmarConfig.
     Then check if it's set to something truthful
     (in practice meaning not None, as it's non or ormar Field only).
 

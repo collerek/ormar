@@ -84,12 +84,12 @@ class QuerySet(Generic[T]):
         self.limit_sql_raw = limit_raw_sql
 
     @property
-    def model_meta(self) -> "OrmarConfig":
+    def model_config(self) -> "OrmarConfig":
         """
-        Shortcut to model class Meta set on QuerySet model.
+        Shortcut to model class OrmarConfig set on QuerySet model.
 
-        :return: Meta class of the model
-        :rtype: model Meta class
+        :return: OrmarConfig of the model
+        :rtype: model's OrmarConfig
         """
         if not self.model_cls:  # pragma nocover
             raise ValueError("Model class of QuerySet is not initialized")
@@ -247,22 +247,22 @@ class QuerySet(Generic[T]):
     @property
     def database(self) -> databases.Database:
         """
-        Shortcut to models database from Meta class.
+        Shortcut to models database from OrmarConfig class.
 
         :return: database
         :rtype: databases.Database
         """
-        return self.model_meta.database
+        return self.model_config.database
 
     @property
     def table(self) -> sqlalchemy.Table:
         """
-        Shortcut to models table from Meta class.
+        Shortcut to models table from OrmarConfig.
 
         :return: database table
         :rtype: sqlalchemy.Table
         """
-        return self.model_meta.table
+        return self.model_config.table
 
     def build_select_expression(
         self,
@@ -707,7 +707,7 @@ class QuerySet(Generic[T]):
         expr = self.build_select_expression().alias("subquery_for_count")
         expr = sqlalchemy.func.count().select().select_from(expr)
         if distinct:
-            pk_column_name = self.model.get_column_alias(self.model_meta.pkname)
+            pk_column_name = self.model.get_column_alias(self.model_config.pkname)
             expr_distinct = expr.group_by(pk_column_name).alias("subquery_for_group")
             expr = sqlalchemy.func.count().select().select_from(expr_distinct)
         return await self.database.fetch_val(expr)
@@ -1036,7 +1036,7 @@ class QuerySet(Generic[T]):
         :return: updated or created model
         :rtype: Model
         """
-        pk_name = self.model_meta.pkname
+        pk_name = self.model_config.pkname
         if "pk" in kwargs:
             kwargs[pk_name] = kwargs.pop("pk")
         if pk_name not in kwargs or kwargs.get(pk_name) is None:
@@ -1102,7 +1102,7 @@ class QuerySet(Generic[T]):
 
         rows: list = []
         last_primary_key = None
-        pk_alias = self.model.get_column_alias(self.model_meta.pkname)
+        pk_alias = self.model.get_column_alias(self.model_config.pkname)
 
         async for row in self.database.iterate(query=expr):
             current_primary_key = row[pk_alias]
@@ -1188,7 +1188,7 @@ class QuerySet(Generic[T]):
             raise ModelListEmptyError("Bulk update objects are empty!")
 
         ready_objects = []
-        pk_name = self.model_meta.pkname
+        pk_name = self.model_config.pkname
         if not columns:
             columns = list(
                 self.model.extract_db_own_fields().union(
@@ -1214,9 +1214,9 @@ class QuerySet(Generic[T]):
             )
             await asyncio.sleep(0)
 
-        pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
+        pk_column = self.model_config.table.c.get(self.model.get_column_alias(pk_name))
         pk_column_name = self.model.get_column_alias(pk_name)
-        table_columns = [c.name for c in self.model_meta.table.c]
+        table_columns = [c.name for c in self.model_config.table.c]
         expr = self.table.update().where(
             pk_column == bindparam("new_" + pk_column_name)
         )

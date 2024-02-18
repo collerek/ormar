@@ -10,8 +10,8 @@ database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-# note that this step is optional -> all ormar cares is a internal
-# class with name Meta and proper parameters, but this way you do not
+# note that this step is optional -> all ormar cares is an individual
+# OrmarConfig for each of the models, but this way you do not
 # have to repeat the same parameters if you use only one database
 base_ormar_config = ormar.OrmarConfig(
     metadata=metadata,
