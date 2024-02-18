@@ -201,7 +201,7 @@ def overwrite_binary_format(schema: Dict[str, Any], model: Type["Model"]) -> Non
             prop["format"] = "base64"
 
 
-def construct_schema_function_without_choices() -> Callable:
+def construct_schema_function() -> Callable:
     """
     Modifies model example and description if needed.
 
@@ -221,13 +221,10 @@ def construct_schema_function_without_choices() -> Callable:
 
 def modify_schema_example(model: Type["Model"]) -> None:  # noqa CCR001
     """
-    Checks if Model has any fields with choices set.
-    If yes it adds choices validation into pre root validators.
+    Modifies the schema example in openapi schema.
 
     :param model: newly constructed Model
     :type model: Model class
     """
     if not config_field_not_set(model=model, field_name="model_fields"):
-        model.model_config["json_schema_extra"] = (
-            construct_schema_function_without_choices()
-        )
+        model.model_config["json_schema_extra"] = construct_schema_function()

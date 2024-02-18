@@ -53,10 +53,10 @@ def encode_json(value: Any) -> Optional[str]:
 
 def re_dump_value(value: str) -> Union[str, bytes]:
     """
-    Rw-dumps choices due to different string representation in orjson and json
+    Re-dumps value due to different string representation in orjson and json
     :param value: string to re-dump
     :type value: str
-    :return: re-dumped choices
+    :return: re-dumped value
     :rtype: List[str]
     """
     try:

@@ -801,7 +801,7 @@ class QuerySet(Generic[T]):
             self.model.extract_related_names()
         )
         updates = {k: v for k, v in kwargs.items() if k in self_fields}
-        updates = self.model.validate_choices(updates)
+        updates = self.model.validate_enums(updates)
         updates = self.model.translate_columns_to_aliases(updates)
 
         expr = FilterQuery(filter_clauses=self.filter_clauses).apply(

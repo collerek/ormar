@@ -44,7 +44,7 @@ class LargeBinaryStr(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     test_binary: str = ormar.LargeBinary(
-        max_length=100000, choices=[blob3, blob4], represent_as_base64_str=True
+        max_length=100000, represent_as_base64_str=True
     )
 
 
@@ -54,7 +54,6 @@ class LargeBinaryNullableStr(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     test_binary: str = ormar.LargeBinary(
         max_length=100000,
-        choices=[blob3, blob4],
         represent_as_base64_str=True,
         nullable=True,
     )
@@ -466,9 +465,9 @@ async def test_model_first():
 
 @pytest.mark.asyncio
 async def test_model_choices():
-    """Test that choices work properly for various types of fields."""
+    """Test that enum work properly for various types of fields."""
     async with base_ormar_config.database:
-        # Test valid choices.
+        # Test valid enums values.
         await asyncio.gather(
             Country.objects.create(name="Canada", taxed=True, country_code=1),
             Country.objects.create(name="Algeria", taxed=True, country_code=213),
@@ -505,8 +504,8 @@ async def test_model_choices():
 
 
 @pytest.mark.asyncio
-async def test_nullable_field_model_choices():
-    """Test that choices work properly for according to nullable setting"""
+async def test_nullable_field_model_enum():
+    """Test that enum work properly for according to nullable setting"""
     async with base_ormar_config.database:
         c1 = await NullableCountry(name=None).save()
         assert c1.name is None
