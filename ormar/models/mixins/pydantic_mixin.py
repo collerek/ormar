@@ -2,13 +2,13 @@ import copy
 import string
 from random import choices
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
     List,
     Optional,
     Set,
-    TYPE_CHECKING,
     Type,
     Union,
     cast,
@@ -32,7 +32,11 @@ class PydanticMixin(RelationMixin):
 
     @classmethod
     def get_pydantic(
-        cls, *, include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None
+        cls,
+        *,
+        include: Union[Set, Dict] = None,
+        exclude: Union[Set, Dict] = None,
+        fk_as_int: Union[Set, Dict] = None,
     ) -> Type[pydantic.BaseModel]:
         """
         Returns a pydantic model out of ormar model.
@@ -49,7 +53,10 @@ class PydanticMixin(RelationMixin):
         relation_map = translate_list_to_dict(cls._iterate_related_models())
 
         return cls._convert_ormar_to_pydantic(
-            include=include, exclude=exclude, relation_map=relation_map
+            include=include,
+            exclude=exclude,
+            fk_as_int=fk_as_int,
+            relation_map=relation_map,
         )
 
     @classmethod
@@ -58,11 +65,14 @@ class PydanticMixin(RelationMixin):
         relation_map: Dict[str, Any],
         include: Union[Set, Dict] = None,
         exclude: Union[Set, Dict] = None,
+        fk_as_int: Union[Set, Dict] = None,
     ) -> Type[pydantic.BaseModel]:
         if include and isinstance(include, Set):
             include = translate_list_to_dict(include)
         if exclude and isinstance(exclude, Set):
             exclude = translate_list_to_dict(exclude)
+        if fk_as_int and isinstance(fk_as_int, Set):
+            fk_as_int = translate_list_to_dict(fk_as_int)
         fields_dict: Dict[str, Any] = dict()
         defaults: Dict[str, Any] = dict()
         fields_to_process = cls._get_not_excluded_fields(
@@ -82,6 +92,7 @@ class PydanticMixin(RelationMixin):
                 defaults=defaults,
                 include=include,
                 exclude=exclude,
+                fk_as_int=fk_as_int,
                 relation_map=relation_map,
             )
             if field is not None:
@@ -103,18 +114,36 @@ class PydanticMixin(RelationMixin):
         defaults: Dict,
         include: Union[Set, Dict, None],
         exclude: Union[Set, Dict, None],
+        fk_as_int: Union[Set, Dict, None],
         relation_map: Dict[str, Any],
     ) -> Any:
         field = cls.Meta.model_fields[name]
         target: Any = None
         if field.is_relation and name in relation_map:  # type: ignore
-            target = field.to._convert_ormar_to_pydantic(
-                include=cls._skip_ellipsis(include, name),
-                exclude=cls._skip_ellipsis(exclude, name),
-                relation_map=cls._skip_ellipsis(
-                    relation_map, name, default_return=dict()
-                ),
-            )
+            if fk_as_int and name in fk_as_int:
+                if not isinstance(fk_as_int[name], Dict):  # type: ignore
+                    target = pydantic.PositiveInt
+
+                else:
+                    current_level = fk_as_int[name]  # type: ignore
+                    fk_as_int.update(current_level)
+                    fk_as_int.pop(name)  # type: ignore
+                    target = field.to._convert_ormar_to_pydantic(
+                        include=cls._skip_ellipsis(include, name),
+                        exclude=cls._skip_ellipsis(exclude, name),
+                        fk_as_int=fk_as_int,
+                        relation_map=cls._skip_ellipsis(
+                            relation_map, name, default_return=dict()
+                        ),
+                    )
+            else:
+                target = field.to._convert_ormar_to_pydantic(
+                    include=cls._skip_ellipsis(include, name),
+                    exclude=cls._skip_ellipsis(exclude, name),
+                    relation_map=cls._skip_ellipsis(
+                        relation_map, name, default_return=dict()
+                    ),
+                )
             if field.is_multi or field.virtual:
                 target = List[target]  # type: ignore
         elif not field.is_relation:

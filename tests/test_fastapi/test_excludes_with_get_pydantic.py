@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 
 from tests.settings import DATABASE_URL
-from tests.test_inheritance_and_pydantic_generation.test_geting_pydantic_models import (
+from tests.test_inheritance_and_pydantic_generation.test_getting_pydantic_models import (
     Category,
     SelfRef,
     database,
