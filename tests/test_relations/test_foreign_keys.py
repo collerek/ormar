@@ -41,7 +41,7 @@ class Organisation(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="org")
 
     id: int = ormar.Integer(primary_key=True)
-    ident: str = ormar.String(max_length=100, choices=["ACME Ltd", "Other ltd"])
+    ident: str = ormar.String(max_length=100)
 
 
 class Team(ormar.Model):

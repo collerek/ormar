@@ -63,7 +63,8 @@ def create_and_append_m2m_fk(
     """
     Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.
 
-    Newly created field is added to m2m relation through model Meta columns and table.
+    Newly created field is added to m2m relation
+    through model OrmarConfig columns and table.
 
     :param field_name: name of the column to create
     :type field_name: str
@@ -208,14 +209,14 @@ def _is_db_field(field: "BaseField") -> bool:
     return not field.virtual and not field.is_multi
 
 
-def populate_meta_tablename_columns_and_pk(
+def populate_config_tablename_columns_and_pk(
     name: str, new_model: Type["Model"]
 ) -> Type["Model"]:
     """
-    Sets Model tablename if it's not already set in Meta.
+    Sets Model tablename if it's not already set in OrmarConfig.
     Default tablename if not present is class name lower + s (i.e. Bed becomes -> beds)
 
-    Checks if Model's Meta have pkname and columns set.
+    Checks if Model's OrmarConfig have pkname and columns set.
     If not calls the sqlalchemy_columns_from_model_fields to populate
     columns from ormar.fields definitions.
 
@@ -226,7 +227,7 @@ def populate_meta_tablename_columns_and_pk(
     :type name: str
     :param new_model: currently constructed Model
     :type new_model: ormar.models.metaclass.ModelMetaclass
-    :return: Model with populated pkname and columns in Meta
+    :return: Model with populated pkname and columns in OrmarConfig
     :rtype: ormar.models.metaclass.ModelMetaclass
     """
     tablename = name.lower() + "s"
@@ -251,52 +252,54 @@ def populate_meta_tablename_columns_and_pk(
     new_model.ormar_config.columns = columns
     new_model.ormar_config.pkname = pkname
     if not new_model.ormar_config.orders_by:
-        # by default we sort by pk name if other option not provided
+        # by default, we sort by pk name if other option not provided
         new_model.ormar_config.orders_by.append(pkname)
     return new_model
 
 
-def check_for_null_type_columns_from_forward_refs(meta: "OrmarConfig") -> bool:
+def check_for_null_type_columns_from_forward_refs(config: "OrmarConfig") -> bool:
     """
     Check is any column is of NUllType() meaning it's empty column from ForwardRef
 
-    :param meta: Meta class of the Model without sqlalchemy table constructed
-    :type meta: Model class Meta
+    :param config: OrmarConfig of the Model without sqlalchemy table constructed
+    :type config: Model class OrmarConfig
     :return: result of the check
     :rtype: bool
     """
     return not any(
-        isinstance(col.type, sqlalchemy.sql.sqltypes.NullType) for col in meta.columns
+        isinstance(col.type, sqlalchemy.sql.sqltypes.NullType) for col in config.columns
     )
 
 
-def populate_meta_sqlalchemy_table_if_required(meta: "OrmarConfig") -> None:
+def populate_config_sqlalchemy_table_if_required(config: "OrmarConfig") -> None:
     """
-    Constructs sqlalchemy table out of columns and parameters set on Meta class.
+    Constructs sqlalchemy table out of columns and parameters set on OrmarConfig.
     It populates name, metadata, columns and constraints.
 
-    :param meta: Meta class of the Model without sqlalchemy table constructed
-    :type meta: Model class Meta
+    :param config: OrmarConfig of the Model without sqlalchemy table constructed
+    :type config: Model class OrmarConfig
     """
-    if meta.table is None and check_for_null_type_columns_from_forward_refs(meta):
-        set_constraint_names(meta=meta)
+    if config.table is None and check_for_null_type_columns_from_forward_refs(
+        config=config
+    ):
+        set_constraint_names(config=config)
         table = sqlalchemy.Table(
-            meta.tablename, meta.metadata, *meta.columns, *meta.constraints
+            config.tablename, config.metadata, *config.columns, *config.constraints
         )
-        meta.table = table
+        config.table = table
 
 
-def set_constraint_names(meta: "OrmarConfig") -> None:
+def set_constraint_names(config: "OrmarConfig") -> None:
     """
     Populates the names on IndexColumns and UniqueColumns and CheckColumns constraints.
 
-    :param meta: Meta class of the Model without sqlalchemy table constructed
-    :type meta: Model class Meta
+    :param config: OrmarConfig of the Model without sqlalchemy table constructed
+    :type config: Model class OrmarConfig
     """
-    for constraint in meta.constraints:
+    for constraint in config.constraints:
         if isinstance(constraint, sqlalchemy.UniqueConstraint) and not constraint.name:
             constraint.name = (
-                f"uc_{meta.tablename}_"
+                f"uc_{config.tablename}_"
                 f'{"_".join([str(col) for col in constraint._pending_colargs])}'
             )
         elif (
@@ -304,12 +307,12 @@ def set_constraint_names(meta: "OrmarConfig") -> None:
             and constraint.name == "TEMPORARY_NAME"
         ):
             constraint.name = (
-                f"ix_{meta.tablename}_"
+                f"ix_{config.tablename}_"
                 f'{"_".join([col for col in constraint._pending_colargs])}'
             )
         elif isinstance(constraint, sqlalchemy.CheckConstraint) and not constraint.name:
             sql_condition: str = str(constraint.sqltext).replace(" ", "_")
-            constraint.name = f"check_{meta.tablename}_{sql_condition}"
+            constraint.name = f"check_{config.tablename}_{sql_condition}"
 
 
 def update_column_definition(

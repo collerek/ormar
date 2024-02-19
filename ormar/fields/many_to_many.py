@@ -280,7 +280,7 @@ class ManyToManyField(  # type: ignore
             "__module__": self.owner.__module__,
             "__qualname__": f"{self.owner.__qualname__}.{class_name}",
         }
-        new_meta = ormar.models.ormar_config.OrmarConfig(
+        new_config = ormar.models.ormar_config.OrmarConfig(
             tablename=table_name,
             database=self.owner.ormar_config.database,
             metadata=self.owner.ormar_config.metadata,
@@ -290,7 +290,7 @@ class ManyToManyField(  # type: ignore
             (ormar.Model,),
             {
                 **base_namespace,
-                "ormar_config": new_meta,
+                "ormar_config": new_config,
                 "id": ormar.Integer(name="id", primary_key=True),
             },
         )

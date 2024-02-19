@@ -78,9 +78,9 @@ class SqlJoin:
     @property
     def alias_manager(self) -> AliasManager:
         """
-        Shortcut for ormar's model AliasManager stored on Meta.
+        Shortcut for ormar's model AliasManager stored on OrmarConfig.
 
-        :return: alias manager from model's Meta
+        :return: alias manager from model's OrmarConfig
         :rtype: AliasManager
         """
         return self.main_model.ormar_config.alias_manager

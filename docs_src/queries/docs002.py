@@ -23,7 +23,6 @@ class Book(ormar.Model):
     genre: str = ormar.String(
         max_length=100,
         default="Fiction",
-        choices=["Fiction", "Adventure", "Historic", "Fantasy"],
     )
 
 

@@ -31,7 +31,7 @@ from ormar.fields.parsers import decode_bytes, encode_json
 from ormar.models.helpers import register_relation_in_alias_manager
 from ormar.models.helpers.relations import expand_reverse_relationship
 from ormar.models.helpers.sqlalchemy import (
-    populate_meta_sqlalchemy_table_if_required,
+    populate_config_sqlalchemy_table_if_required,
     update_column_definition,
 )
 from ormar.models.metaclass import ModelMetaclass
@@ -109,7 +109,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         Json fields are automatically loaded/dumped if needed.
 
-        Models marked as abstract=True in internal Meta class cannot be initialized.
+        Models marked as abstract=True in internal OrmarConfig cannot be initialized.
 
         Accepts also special __pk_only__ flag that indicates that Model is constructed
         only with primary key value (so no other fields, it's a child model on other
@@ -439,7 +439,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     @property
     def pk_column(self) -> sqlalchemy.Column:
         """
-        Retrieves primary key sqlalchemy column from models Meta.table.
+        Retrieves primary key sqlalchemy column from models OrmarConfig.table.
         Each model has to have primary key.
         Only one primary key column is allowed.
 
@@ -460,7 +460,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     @property
     def signals(self) -> "SignalEmitter":
-        """Exposes signals from model Meta"""
+        """Exposes signals from model OrmarConfig"""
         return self.ormar_config.signals
 
     @classmethod
@@ -517,7 +517,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         Expands relationships, register relation in alias manager and substitutes
         sqlalchemy columns with new ones with proper column type (null before).
 
-        Populates Meta table of the Model which is left empty before.
+        Populates OrmarConfig table of the Model which is left empty before.
 
         Sets self_reference flag on models that links to themselves.
 
@@ -542,7 +542,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 expand_reverse_relationship(model_field=field)
                 register_relation_in_alias_manager(field=field)
                 update_column_definition(model=cls, field=field)
-        populate_meta_sqlalchemy_table_if_required(meta=cls.ormar_config)
+        populate_config_sqlalchemy_table_if_required(config=cls.ormar_config)
         # super().update_forward_refs(**localns)
         cls.model_rebuild(force=True)
         cls.ormar_config.requires_ref_update = False

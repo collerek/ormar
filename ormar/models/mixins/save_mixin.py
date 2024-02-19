@@ -238,7 +238,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return new_kwargs
 
     @classmethod
-    def validate_choices(cls, new_kwargs: Dict) -> Dict:
+    def validate_enums(cls, new_kwargs: Dict) -> Dict:
         """
         Receives dictionary of model that is about to be saved and validates the
         fields with choices set to see if the value is allowed.

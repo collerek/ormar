@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
 
 import sqlalchemy
 from pydantic.fields import FieldInfo, _Unset
@@ -43,7 +43,6 @@ class BaseField(FieldInfo):
         self.sql_nullable: bool = kwargs.pop("sql_nullable", False)
         self.index: bool = kwargs.pop("index", False)
         self.unique: bool = kwargs.pop("unique", False)
-        self.choices: Sequence = kwargs.pop("choices", False)
 
         self.virtual: bool = kwargs.pop(
             "virtual", None

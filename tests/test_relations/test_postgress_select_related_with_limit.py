@@ -27,9 +27,7 @@ class User(PrimaryKeyMixin, ormar.Model):
 
     mobile: str = ormar.String(unique=True, index=True, max_length=10)
     password: str = ormar.String(max_length=128)
-    level: str = ormar.String(
-        max_length=1, choices=list(Level), default=Level.STAFF.value
-    )
+    level: Level = ormar.Enum(default=Level.STAFF, enum_class=Level)
     email: Optional[str] = ormar.String(max_length=255, nullable=True, default=None)
     avatar: Optional[str] = ormar.String(max_length=255, nullable=True, default=None)
     fullname: Optional[str] = ormar.String(max_length=64, nullable=True, default=None)

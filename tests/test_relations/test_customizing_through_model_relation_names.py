@@ -30,11 +30,11 @@ create_test_database = init_tests(base_ormar_config)
 
 
 def test_tables_columns():
-    through_meta = Student.ormar_config.model_fields["courses"].through.ormar_config
-    assert "course_id" in through_meta.table.c
-    assert "student_id" in through_meta.table.c
-    assert "course_id" in through_meta.model_fields
-    assert "student_id" in through_meta.model_fields
+    through_config = Student.ormar_config.model_fields["courses"].through.ormar_config
+    assert "course_id" in through_config.table.c
+    assert "student_id" in through_config.table.c
+    assert "course_id" in through_config.model_fields
+    assert "student_id" in through_config.model_fields
 
 
 @pytest.mark.asyncio
