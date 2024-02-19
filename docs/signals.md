@@ -20,7 +20,7 @@ metadata = sqlalchemy.MetaData()
 
 class Album(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        tablename = "albums",
+        tablename="albums",
         database=database,
         metadata=metadata,
     )

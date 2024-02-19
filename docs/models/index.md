@@ -74,10 +74,11 @@ Since it can be a function you can set `default=datetime.datetime.now` and get c
 ```python
 # <==related of code removed for clarity==>
 class User(ormar.Model):
-    class Meta:
-        tablename: str = "users2"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="users2",
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255, nullable=False)
@@ -170,12 +171,12 @@ class MyQuerySetClass(QuerySet):
 
         
 class Book(ormar.Model):
-    
-    class Meta(ormar.ModelMeta):
-        metadata = metadata
-        database = database
-        tablename = "book"
-        queryset_class = MyQuerySetClass
+    ormar_config = ormar.OrmarConfig(
+        tablename="book",
+        database=database,
+        metadata=metadata,
+        queryset_class=MyQuerySetClass,
+    )   
     
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=32)
@@ -358,11 +359,12 @@ Note that `ormar` does not allow accepting extra fields, you can only ignore the
 from ormar import Extra
 
 class Child(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "children"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        tablename="children",
+        database=database,
+        metadata=metadata,
         extra = Extra.ignore  # set extra setting to prevent exceptions on extra fields presence
+    )
 
     id: int = ormar.Integer(name="child_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)
@@ -382,15 +384,14 @@ Sample default ordering:
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 # default sort by column id ascending
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -401,16 +402,17 @@ Modified
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata,
+    database=database,
+)
 
 # now default sort by name descending
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
-        orders_by = ["-name"]
+    base_ormar_config.copy(
+        tablename="authors", 
+        orders_by=["-name"],
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
