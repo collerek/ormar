@@ -151,7 +151,7 @@ class Query:
                 self.select_from, limit_qry, on_clause
             )
 
-        expr = sqlalchemy.sql.select(self.columns)
+        expr = sqlalchemy.sql.select(*self.columns)
         expr = expr.select_from(self.select_from)
 
         expr = self._apply_expression_modifiers(expr)
@@ -191,7 +191,7 @@ class Query:
             elif order.get_field_name_text() == pk_aliased_name:
                 maxes[pk_aliased_name] = order.get_text_clause()
 
-        limit_qry = sqlalchemy.sql.select([qry_text])
+        limit_qry = sqlalchemy.sql.select(qry_text)
         limit_qry = limit_qry.select_from(self.select_from)
         limit_qry = FilterQuery(filter_clauses=self.filter_clauses).apply(limit_qry)
         limit_qry = FilterQuery(
