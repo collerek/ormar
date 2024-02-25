@@ -15,7 +15,6 @@ class ModelDefinitionError(AsyncOrmException):
     """
     Raised for errors related to the model definition itself:
 
-    * setting @property_field on method with arguments other than func(self)
     * defining a Field without required parameters
     * defining a model with more than one primary_key
     * defining a model without primary_key

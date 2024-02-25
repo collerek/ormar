@@ -112,25 +112,3 @@ class RelationDescriptor:
 
         if not isinstance(instance.__dict__.get(self.name), list):
             instance.set_save_status(False)
-
-
-class PropertyDescriptor:
-    """
-    Property descriptor handles methods decorated with @property_field decorator.
-    They are read only.
-    """
-
-    def __init__(self, name: str, function: Any) -> None:
-        self.name = name
-        self.function = function
-
-    def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
-        if instance is None:
-            return self
-        if instance is not None and self.function is not None:
-            bound = self.function.__get__(instance, instance.__class__)
-            return bound() if callable(bound) else bound
-
-    def __set__(self, instance: "Model", value: Any) -> None:  # pragma: no cover
-        # kept here so it's a data-descriptor and precedes __dict__ lookup
-        pass

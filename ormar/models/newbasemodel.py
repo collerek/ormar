@@ -483,32 +483,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         object.__setattr__(self, "_orm_saved", status)
 
     @classmethod
-    def get_properties(
-        cls, include: Union[Set, Dict, None], exclude: Union[Set, Dict, None]
-    ) -> Set[str]:
-        """
-        Returns a set of names of functions/fields decorated with
-        @property_field decorator.
-
-        They are added to dictionary when called directly and therefore also are
-        present in fastapi responses.
-
-        :param include: fields to include
-        :type include: Union[Set, Dict, None]
-        :param exclude: fields to exclude
-        :type exclude: Union[Set, Dict, None]
-        :return: set of property fields names
-        :rtype: Set[str]
-        """
-
-        props = cls.ormar_config.property_fields
-        if include:
-            props = {prop for prop in props if prop in include}
-        if exclude:
-            props = {prop for prop in props if prop not in exclude}
-        return props
-
-    @classmethod
     def update_forward_refs(cls, **localns: Any) -> None:
         """
         Processes fields that are ForwardRef and need to be evaluated into actual
@@ -922,12 +896,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 exclude_through_models=exclude_through_models,
                 exclude_list=exclude_list,
             )
-
-        # include model properties as fields in dict
-        if object.__getattribute__(self, "ormar_config").property_fields:
-            props = self.get_properties(include=include_dict, exclude=exclude_dict)
-            if props:
-                dict_instance.update({prop: getattr(self, prop) for prop in props})
 
         return dict_instance
 

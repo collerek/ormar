@@ -35,7 +35,6 @@ from ormar.fields.many_to_many import ManyToManyField
 from ormar.models.descriptors import (
     JsonDescriptor,
     PkDescriptor,
-    PropertyDescriptor,
     PydanticDescriptor,
     RelationDescriptor,
 )
@@ -92,8 +91,8 @@ def add_cached_properties(new_model: Type["Model"]) -> None:
 
 def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa: CCR001
     """
-    Checks class namespace for properties or functions with __property_field__.
-    If attribute have __property_field__ it was decorated with @property_field.
+    Checks class namespace for properties or functions with computed_field.
+    If attribute have decorator_info it was decorated with @computed_field.
 
     Functions like this are exposed in dict() (therefore also fastapi result).
     Names of property fields are cached for quicker access / extraction.
@@ -597,7 +596,7 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
         updates class namespace.
 
         Extracts settings and fields from parent classes.
-        Fetches methods decorated with @property_field decorator
+        Fetches methods decorated with @computed_field decorator
         to expose them later in dict().
 
         Construct parent pydantic Metaclass/ Model.
@@ -681,14 +680,6 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
                         )
                     )
                     new_model.model_rebuild(force=True)
-
-                for item in new_model.ormar_config.property_fields:
-                    function = getattr(new_model, item)
-                    setattr(
-                        new_model,
-                        item,
-                        PropertyDescriptor(name=item, function=function),
-                    )
 
                 new_model.pk = PkDescriptor(name=new_model.ormar_config.pkname)
                 remove_excluded_parent_fields(new_model)
