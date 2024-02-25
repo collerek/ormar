@@ -39,7 +39,7 @@ class OrmarDeprecationWarning(DeprecationWarning):
             f" to be removed in V{self.expected_removal[0]}.{self.expected_removal[1]}."
         )
         if self.since == (0, 20):
-            message += " See Ormar V0.20 Migration Guide at https://collerek.github.io/ormar/migration-to-v0.20/"
+            message += " See Ormar V0.20 Migration Guide at https://collerek.github.io/ormar/migration/"
         return message
 
 

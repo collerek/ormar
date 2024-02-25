@@ -39,6 +39,7 @@ nav:
     - Using ormar in responses: fastapi/response.md
     - Using ormar in requests: fastapi/requests.md
   - Use with mypy: mypy.md
+  - Migration to v 0.20: migration.md
   - PyCharm plugin: plugin.md
   - Contributing: contributing.md
   - Release Notes: releases.md
