@@ -34,6 +34,18 @@ class Book(ormar.Model):
     year: int = ormar.Integer(nullable=True)
 
 
+class JsonModel(ormar.Model):
+    class Meta(ormar.ModelMeta):
+        metadata = metadata
+        database = database
+        tablename = "jsons"
+
+    id = ormar.Integer(primary_key=True)
+    text_field = ormar.Text(nullable=True)
+    json_field = ormar.JSON(nullable=True)
+    json_not_null = ormar.JSON()
+
+
 @pytest.fixture(autouse=True, scope="module")
 def create_test_database():
     engine = sqlalchemy.create_engine(DATABASE_URL)
@@ -83,3 +95,16 @@ async def test_is_null():
         assert len(tolkien.books) == 2
         assert tolkien.books[0].year == 1955
         assert tolkien.books[0].title == "The Lord of the Rings"
+
+
+@pytest.mark.asyncio
+async def test_isnull_json():
+    async with database:
+        author = await JsonModel.objects.create(json_not_null=None)
+        assert author.json_field is None
+        non_null_text_fields = await JsonModel.objects.all(text_field__isnull=False)
+        assert len(non_null_text_fields) == 0
+        non_null_json_fields = await JsonModel.objects.all(json_field__isnull=False)
+        assert len(non_null_json_fields) == 0
+        non_null_json_fields = await JsonModel.objects.all(json_not_null__isnull=False)
+        assert len(non_null_json_fields) == 1

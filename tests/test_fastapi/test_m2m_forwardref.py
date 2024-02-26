@@ -3,10 +3,11 @@ from typing import List, Optional
 import databases
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from pydantic.schema import ForwardRef
 from starlette import status
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 import ormar
 
@@ -90,9 +91,10 @@ async def create_country(country: Country):  # if this is ormar
     return result
 
 
-def test_payload():
-    client = TestClient(app)
-    with client as client:
+@pytest.mark.asyncio
+async def test_payload():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client, LifespanManager(app):
         payload = {
             "name": "Thailand",
             "iso2": "TH",
@@ -101,8 +103,10 @@ def test_payload():
             "demonym": "Thai",
             "native_name": "Thailand",
         }
-        resp = client.post("/", json=payload, headers={"application-type": "json"})
-        print(resp.content)
+        resp = await client.post(
+            "/", json=payload, headers={"application-type": "json"}
+        )
+        # print(resp.content)
         assert resp.status_code == 201
 
         resp_country = Country(**resp.json())

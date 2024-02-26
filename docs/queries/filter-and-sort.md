@@ -6,7 +6,7 @@ You can use following methods to filter the data (sql where clause).
 * `exclude(*args, **kwargs) -> QuerySet`
 * `get(*args, **kwargs) -> Model`
 * `get_or_none(*args, **kwargs) -> Optional[Model]`
-* `get_or_create(*args, **kwargs) -> Model`
+* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 * `all(*args, **kwargs) -> List[Optional[Model]]`
 
 
@@ -15,7 +15,7 @@ You can use following methods to filter the data (sql where clause).
     * `QuerysetProxy.exclude(*args, **kwargs)` method
     * `QuerysetProxy.get(*args, **kwargs)` method
     * `QuerysetProxy.get_or_none(*args, **kwargs)` method
-    * `QuerysetProxy.get_or_create(*args, **kwargs)` method
+    * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs)` method
     * `QuerysetProxy.all(*args, **kwargs)` method
 
 And following methods to sort the data (sql order by clause).
@@ -168,7 +168,7 @@ Product.objects.filter(
 ```
 
 !!!note 
-    All methods that do not return the rows explicitly returns a QueySet instance so
+    All methods that do not return the rows explicitly returns a QuerySet instance so
     you can chain them together
 
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
@@ -583,7 +583,7 @@ books = (
 
 `get(*args, **kwargs) -> Model`
 
-Get's the first row from the db meeting the criteria set by kwargs.
+Gets the first row from the db meeting the criteria set by kwargs.
 
 When any args and/or kwargs are passed it's a shortcut equivalent to calling `filter(*args, **kwargs).get()`
 
@@ -598,7 +598,7 @@ Exact equivalent of get described above but instead of raising the exception ret
 
 ## get_or_create
 
-`get_or_create(*args, **kwargs) -> Model`
+`get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 
 Combination of create and get methods.
 
@@ -713,7 +713,7 @@ Ordering in sql will be applied in order of names you provide in order_by.
     will result in 2 rows of result:
     ```
     MODEL: 1 - Child Models: [3, 1] # encountered first in result, all children rows combined
-    MODEL: 2 - Child Modles: [2]
+    MODEL: 2 - Child Models: [2]
     ```
     
     The main model will never duplicate in the result
@@ -795,7 +795,7 @@ assert owner.toys[1].name == "Toy 1"
 ```
 
 !!!note 
-    All methods that do not return the rows explicitly returns a QueySet instance so
+    All methods that do not return the rows explicitly returns a QuerySet instance so
     you can chain them together
 
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.

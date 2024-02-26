@@ -3,8 +3,9 @@ from typing import List
 
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 from tests.settings import DATABASE_URL
 from tests.test_inheritance_and_pydantic_generation.test_inheritance_concrete import (  # type: ignore
@@ -118,13 +119,14 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-def test_read_main():
-    client = TestClient(app)
-    with client as client:
+@pytest.mark.asyncio
+async def test_read_main():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client, LifespanManager(app):
         test_category = dict(name="Foo", code=123, created_by="Sam", updated_by="Max")
         test_subject = dict(name="Bar")
 
-        response = client.post("/categories/", json=test_category)
+        response = await client.post("/categories/", json=test_category)
         assert response.status_code == 200
         cat = Category(**response.json())
         assert cat.name == "Foo"
@@ -140,7 +142,7 @@ def test_read_main():
             "%Y-%m-%d %H:%M:%S.%f"
         )
         test_subject["category"] = cat_dict
-        response = client.post("/subjects/", json=test_subject)
+        response = await client.post("/subjects/", json=test_subject)
         assert response.status_code == 200
         sub = Subject(**response.json())
         assert sub.name == "Bar"
@@ -148,11 +150,12 @@ def test_read_main():
         assert isinstance(sub.updated_date, datetime.datetime)
 
 
-def test_inheritance_with_relation():
-    client = TestClient(app)
-    with client as client:
-        sam = Person(**client.post("/persons/", json={"name": "Sam"}).json())
-        joe = Person(**client.post("/persons/", json={"name": "Joe"}).json())
+@pytest.mark.asyncio
+async def test_inheritance_with_relation():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client, LifespanManager(app):
+        sam = Person(**(await client.post("/persons/", json={"name": "Sam"})).json())
+        joe = Person(**(await client.post("/persons/", json={"name": "Joe"})).json())
 
         truck_dict = dict(
             name="Shelby wanna be",
@@ -163,8 +166,8 @@ def test_inheritance_with_relation():
         bus_dict = dict(
             name="Unicorn", max_persons=50, owner=sam.dict(), co_owner=joe.dict()
         )
-        unicorn = Bus(**client.post("/buses/", json=bus_dict).json())
-        shelby = Truck(**client.post("/trucks/", json=truck_dict).json())
+        unicorn = Bus(**(await client.post("/buses/", json=bus_dict)).json())
+        shelby = Truck(**(await client.post("/trucks/", json=truck_dict)).json())
 
         assert shelby.name == "Shelby wanna be"
         assert shelby.owner.name == "Sam"
@@ -178,36 +181,43 @@ def test_inheritance_with_relation():
         assert unicorn.co_owner.name == "Joe"
         assert unicorn.max_persons == 50
 
-        unicorn2 = Bus(**client.get(f"/buses/{unicorn.pk}").json())
+        unicorn2 = Bus(**(await client.get(f"/buses/{unicorn.pk}")).json())
         assert unicorn2.name == "Unicorn"
         assert unicorn2.owner == sam
         assert unicorn2.owner.name == "Sam"
         assert unicorn2.co_owner.name == "Joe"
         assert unicorn2.max_persons == 50
 
-        buses = [Bus(**x) for x in client.get("/buses/").json()]
+        buses = [Bus(**x) for x in (await client.get("/buses/")).json()]
         assert len(buses) == 1
         assert buses[0].name == "Unicorn"
 
 
-def test_inheritance_with_m2m_relation():
-    client = TestClient(app)
-    with client as client:
-        sam = Person(**client.post("/persons/", json={"name": "Sam"}).json())
-        joe = Person(**client.post("/persons/", json={"name": "Joe"}).json())
-        alex = Person(**client.post("/persons/", json={"name": "Alex"}).json())
+@pytest.mark.asyncio
+async def test_inheritance_with_m2m_relation():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client, LifespanManager(app):
+        sam = Person(**(await client.post("/persons/", json={"name": "Sam"})).json())
+        joe = Person(**(await client.post("/persons/", json={"name": "Joe"})).json())
+        alex = Person(**(await client.post("/persons/", json={"name": "Alex"})).json())
 
         truck_dict = dict(name="Shelby wanna be", max_capacity=2000, owner=sam.dict())
         bus_dict = dict(name="Unicorn", max_persons=80, owner=sam.dict())
 
-        unicorn = Bus2(**client.post("/buses2/", json=bus_dict).json())
-        shelby = Truck2(**client.post("/trucks2/", json=truck_dict).json())
+        unicorn = Bus2(**(await client.post("/buses2/", json=bus_dict)).json())
+        shelby = Truck2(**(await client.post("/trucks2/", json=truck_dict)).json())
 
         unicorn = Bus2(
-            **client.post(f"/buses2/{unicorn.pk}/add_coowner/", json=joe.dict()).json()
+            **(
+                await client.post(f"/buses2/{unicorn.pk}/add_coowner/", json=joe.dict())
+            ).json()
         )
         unicorn = Bus2(
-            **client.post(f"/buses2/{unicorn.pk}/add_coowner/", json=alex.dict()).json()
+            **(
+                await client.post(
+                    f"/buses2/{unicorn.pk}/add_coowner/", json=alex.dict()
+                )
+            ).json()
         )
 
         assert shelby.name == "Shelby wanna be"
@@ -222,10 +232,12 @@ def test_inheritance_with_m2m_relation():
         assert unicorn.co_owners[1] == alex
         assert unicorn.max_persons == 80
 
-        client.post(f"/trucks2/{shelby.pk}/add_coowner/", json=alex.dict())
+        await client.post(f"/trucks2/{shelby.pk}/add_coowner/", json=alex.dict())
 
         shelby = Truck2(
-            **client.post(f"/trucks2/{shelby.pk}/add_coowner/", json=joe.dict()).json()
+            **(
+                await client.post(f"/trucks2/{shelby.pk}/add_coowner/", json=joe.dict())
+            ).json()
         )
 
         assert shelby.name == "Shelby wanna be"
@@ -235,6 +247,6 @@ def test_inheritance_with_m2m_relation():
         assert shelby.co_owners[1] == joe
         assert shelby.max_capacity == 2000
 
-        buses = [Bus2(**x) for x in client.get("/buses2/").json()]
+        buses = [Bus2(**x) for x in (await client.get("/buses2/")).json()]
         assert len(buses) == 1
         assert buses[0].name == "Unicorn"

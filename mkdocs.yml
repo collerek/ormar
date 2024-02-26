@@ -1,4 +1,5 @@
 site_name: ormar
+site_url: 'https://collerek.github.io/ormar/'
 site_description: A simple async ORM with fastapi in mind and pydantic validation.
 nav:
   - Overview: index.md
@@ -42,74 +43,32 @@ nav:
   - PyCharm plugin: plugin.md
   - Contributing: contributing.md
   - Release Notes: releases.md
-  - Api (BETA):
-      - Index: api/index.md
-      - Models:
-        - Helpers:
-            - api/models/descriptors/descriptors.md
-        - Helpers:
-            - api/models/helpers/models.md
-            - api/models/helpers/pydantic.md
-            - api/models/helpers/relations.md
-            - api/models/helpers/sqlalchemy.md
-            - api/models/helpers/validation.md
-            - api/models/helpers/related-names-validation.md
-        - Mixins:
-            - Alias Mixin: api/models/mixins/alias-mixin.md
-            - Excludable Mixin: api/models/mixins/excludable-mixin.md
-            - Merge Model Mixin: api/models/mixins/merge-model-mixin.md
-            - Prefetch Query Mixin: api/models/mixins/prefetch-query-mixin.md
-            - Relation Mixin: api/models/mixins/relation-mixin.md
-            - Save Prepare Mixin: api/models/mixins/save-prepare-mixin.md
-        - api/models/model.md
-        - Model Row: api/models/model-row.md
-        - New BaseModel: api/models/new-basemodel.md
-        - Model Table Proxy: api/models/model-table-proxy.md
-        - Model Metaclass: api/models/model-metaclass.md
-        - Excludable Items: api/models/excludable-items.md
-        - Traversible: api/models/traversible.md
-      - Fields:
-          - Base Field: api/fields/base-field.md
-          - Model Fields: api/fields/model-fields.md
-          - Foreign Key: api/fields/foreign-key.md
-          - Many To Many: api/fields/many-to-many.md
-          - api/fields/decorators.md
-      - Query Set:
-          - Query Set: api/query-set/query-set.md
-          - api/query-set/query.md
-          - Prefetch Query: api/query-set/prefetch-query.md
-          - api/query-set/join.md
-          - api/query-set/clause.md
-          - Filter Query: api/query-set/filter-query.md
-          - Order Query: api/query-set/order-query.md
-          - Limit Query: api/query-set/limit-query.md
-          - Offset Query: api/query-set/offset-query.md
-          - Field Accessor: api/query-set/field-accessor.md
-          - Reverse Alias Resolver: api/query-set/reverse-alias-resolver.md
-          - api/query-set/utils.md
-      - Relations:
-          - Relation Manager: api/relations/relation-manager.md
-          - api/relations/relation.md
-          - Relation Proxy: api/relations/relation-proxy.md
-          - Queryset Proxy: api/relations/queryset-proxy.md
-          - Alias Manager: api/relations/alias-manager.md
-          - api/relations/utils.md
-      - Signals:
-          - api/signals/signal.md
-          - api/signals/decorators.md
-      - Exceptions: api/exceptions.md
+  - Api (BETA): api/
+
 repo_name: collerek/ormar
 repo_url: https://github.com/collerek/ormar
-google_analytics:
-  - UA-72514911-3
-  - auto
 theme:
   name: material
   highlightjs: true
   hljs_languages:
       - python
   palette:
-    primary: indigo
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/lightbulb
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to dark mode
+  analytics:
+    gtag: G-ZJWZYM5DNM
 markdown_extensions:
   - admonition
   - pymdownx.superfences
@@ -118,6 +77,33 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.highlight:
       linenums: true
+plugins:
+- mike:
+    alias_type: symlink
+    canonical_version: latest
+    version_selector: true
+- search
+- gen-files:
+    scripts:
+      - docs/gen_ref_pages.py
+- literate-nav:
+    nav_file: SUMMARY.md
+- section-index
+- mkdocstrings:
+    watch:
+      - ormar
+    handlers:
+      python:
+        selection:
+          docstring_style: sphinx
+        rendering:
+          show_submodules: no
+extra:
+  analytics:
+    provider: google
+    property:  UA-72514911-3
+  version:
+    provider: mike
 extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js
   - javascripts/config.js

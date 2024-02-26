@@ -1,26 +1,32 @@
 name: Build Documentation using MkDocs
 on:
   push:
-    branches: [ master ]
+    # Pattern matched against refs/tags
+    tags:
+      - '**'
 jobs:
   build:
     name: Build and Deploy Documentation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Master
-        uses: actions/checkout@v2
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v2
+        uses: actions/checkout@v3
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Install dependencies
         run: |
-          python3.7 -m pip install --upgrade pip
-          python3.7 -m pip install "mkdocs-material<=7.1.5" "pydoc-markdown<=3.12"
-      - name: Build API docs
-        run: pydoc-markdown --build --site-dir=api
-      - name: Copy APi docs
-        run: cp -Tavr ./build/docs/content/ ./docs/api/
-      - name: Deploy
+          python -m pip install poetry==1.4.1
+          poetry install --extras "all"
+        env:
+          POETRY_VIRTUALENVS_CREATE: false
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Test
         run: |
-          mkdocs gh-deploy --force
+          echo $RELEASE_VERSION
+          echo ${{ env.RELEASE_VERSION }}
+#      - name: Deploy
+#        run: |
+#          mike deploy --push --update-aliases ${{ env.RELEASE_VERSION }} latest

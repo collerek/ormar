@@ -9,10 +9,12 @@ from typing import (  # noqa: I100, I201
     Sequence,
     Set,
     TYPE_CHECKING,
+    Tuple,
     Type,
     TypeVar,
     Union,
     cast,
+    AsyncGenerator,
 )
 
 import ormar  # noqa: I100, I202
@@ -193,17 +195,24 @@ class QuerysetProxy(Generic[T]):
         """
         return await self.queryset.exists()
 
-    async def count(self) -> int:
+    async def count(self, distinct: bool = True) -> int:
         """
         Returns number of rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
+        If `distinct` is `True` (the default), this will return
+        the number of primary rows selected. If `False`,
+        the count will be the total number of rows returned
+        (including extra rows for `one-to-many` or `many-to-many`
+        left `select_related` table joins).
+        `False` is the legacy (buggy) behavior for workflows that depend on it.
 
         Actual call delegated to QuerySet.
 
+        :param distinct: flag if the primary table rows should be distinct or not
         :return: number of rows
         :rtype: int
         """
-        return await self.queryset.count()
+        return await self.queryset.count(distinct=distinct)
 
     async def max(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
         """
@@ -352,7 +361,7 @@ class QuerysetProxy(Generic[T]):
 
     async def get_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
         """
-        Get's the first row from the db meeting the criteria set by kwargs.
+        Gets the first row from the db meeting the criteria set by kwargs.
 
         If no criteria set it will return the last row in db sorted by pk.
 
@@ -377,7 +386,7 @@ class QuerysetProxy(Generic[T]):
 
     async def get(self, *args: Any, **kwargs: Any) -> "T":
         """
-        Get's the first row from the db meeting the criteria set by kwargs.
+        Gets the first row from the db meeting the criteria set by kwargs.
 
         If no criteria set it will return the last row in db sorted by pk.
 
@@ -422,6 +431,28 @@ class QuerysetProxy(Generic[T]):
         self._clean_items_on_load()
         self._register_related(all_items)
         return all_items
+
+    async def iterate(  # noqa: A003
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> AsyncGenerator["T", None]:
+        """
+        Return async iterable generator for all rows from a database for given model.
+
+        Passing args and/or kwargs is a shortcut and equals to calling
+        `filter(*args, **kwargs).iterate()`.
+
+        If there are no rows meeting the criteria an empty async generator is returned.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: asynchronous iterable generator of returned models
+        :rtype: AsyncGenerator[Model]
+        """
+
+        async for item in self.queryset.iterate(*args, **kwargs):
+            yield item
 
     async def create(self, **kwargs: Any) -> "T":
         """
@@ -483,23 +514,31 @@ class QuerysetProxy(Generic[T]):
                 )
         return len(children)
 
-    async def get_or_create(self, *args: Any, **kwargs: Any) -> "T":
+    async def get_or_create(
+        self,
+        _defaults: Optional[Dict[str, Any]] = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Tuple["T", bool]:
         """
         Combination of create and get methods.
 
-        Tries to get a row meeting the criteria fro kwargs
+        Tries to get a row meeting the criteria for kwargs
         and if `NoMatch` exception is raised
-        it creates a new one with given kwargs.
+        it creates a new one with given kwargs and _defaults.
 
         :param kwargs: fields names and proper value types
         :type kwargs: Any
-        :return: returned or created Model
-        :rtype: Model
+        :param _defaults: default values for creating object
+        :type _defaults: Optional[Dict[str, Any]]
+        :return: model instance and a boolean
+        :rtype: Tuple("T", bool)
         """
         try:
-            return await self.get(*args, **kwargs)
-        except ormar.NoMatch:
-            return await self.create(**kwargs)
+            return await self.get(*args, **kwargs), False
+        except NoMatch:
+            _defaults = _defaults or {}
+            return await self.create(**{**kwargs, **_defaults}), True
 
     async def update_or_create(self, **kwargs: Any) -> "T":
         """

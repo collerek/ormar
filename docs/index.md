@@ -22,7 +22,7 @@
 ### Overview
 
 The `ormar` package is an async mini ORM for Python, with support for **Postgres,
-MySQL**, and **SQLite**. 
+MySQL**, and **SQLite**.
 
 The main benefits of using `ormar` are:
 
@@ -31,7 +31,7 @@ The main benefits of using `ormar` are:
 
 The goal was to create a simple ORM that can be **used directly (as request and response models) with [`fastapi`][fastapi]** that bases it's data validation on pydantic.
 
-Ormar - apart from the obvious "ORM" in name - gets its name from _ormar_ in Swedish which means _snakes_, and _ormar(e)_ in Croatian which means _cabinet_. 
+Ormar - apart from the obvious "ORM" in name - gets its name from _ormar_ in Swedish which means _snakes_, and _ormar(e)_ in Croatian which means _cabinet_.
 
 And what's a better name for python ORM than snakes cabinet :)
 
@@ -82,7 +82,7 @@ Ormar is built with:
 
 `ormar` is built as open-source software and will remain completely free (MIT license).
 
-As I write open-source code to solve everyday problems in my work or to promote and build strong python 
+As I write open-source code to solve everyday problems in my work or to promote and build strong python
 community you can say thank you and buy me a coffee or sponsor me with a monthly amount to help ensure my work remains free and maintained.
 
 <a aria-label="Sponsor collerek" href="https://github.com/sponsors/collerek" style="text-decoration: none; color: #c9d1d9 !important;">
@@ -99,7 +99,7 @@ community you can say thank you and buy me a coffee or sponsor me with a monthly
     padding: 10px;
     line-height: 0px;
     height: 40px;
-">  
+">
 <svg aria-hidden="true" viewBox="0 0 16 16" height="16" width="16" style="fill: #db61a2">
     <path fill-rule="evenodd" d="M4.25 2.5c-1.336 0-2.75 1.164-2.75 3 0 2.15 1.58 4.144 3.365 5.682A20.565 20.565 0 008 13.393a20.561 20.561 0 003.135-2.211C12.92 9.644 14.5 7.65 14.5 5.5c0-1.836-1.414-3-2.75-3-1.373 0-2.609.986-3.029 2.456a.75.75 0 01-1.442 0C6.859 3.486 5.623 2.5 4.25 2.5zM8 14.25l-.345.666-.002-.001-.006-.003-.018-.01a7.643 7.643 0 01-.31-.17 22.075 22.075 0 01-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.08 22.08 0 01-3.744 2.584l-.018.01-.006.003h-.002L8 14.25zm0 0l.345.666a.752.752 0 01-.69 0L8 14.25z"></path>
 </svg>
@@ -141,30 +141,30 @@ engine = sqlalchemy.create_engine(DATABASE_URL)
 metadata.create_all(engine)
 ```
 
-For a sample configuration of alembic and more information regarding migrations and 
+For a sample configuration of alembic and more information regarding migrations and
 database creation visit [migrations][migrations] documentation section.
 
 ### Package versions
 **ormar is still under development:**
 We recommend pinning any dependencies (with i.e. `ormar~=0.9.1`)
 
-`ormar` also follows the release numeration that breaking changes bump the major number, 
+`ormar` also follows the release numeration that breaking changes bump the major number,
 while other changes and fixes bump minor number, so with the latter you should be safe to
 update, yet always read the [releases][releases] docs before.
 `example: (0.5.2 -> 0.6.0 - breaking, 0.5.2 -> 0.5.3 - non breaking)`.
 
 ### Asynchronous Python
 
-Note that `ormar` is an asynchronous ORM, which means that you have to `await` the calls to 
+Note that `ormar` is an asynchronous ORM, which means that you have to `await` the calls to
 the methods, that are scheduled for execution in an event loop. Python has a builtin module
 [`asyncio`][asyncio] that allows you to do just that.
 
-Note that most "normal" python interpreters do not allow execution of `await` 
-outside of a function (because you actually schedule this function for delayed execution 
+Note that most "normal" python interpreters do not allow execution of `await`
+outside of a function (because you actually schedule this function for delayed execution
 and don't get the result immediately).
 
 In a modern web framework (like `fastapi`), the framework will handle this for you, but if
-you plan to do this on your own you need to perform this manually like described in the 
+you plan to do this on your own you need to perform this manually like described in the
 quick start below.
 
 ### Quick Start
@@ -343,7 +343,7 @@ async def delete():
 
 async def joins():
     # Tho join two models use select_related
-    
+
     # Django style
     book = await Book.objects.select_related("author").get(title="The Hobbit")
     # Python style
@@ -357,7 +357,7 @@ async def joins():
     # By default you also get a second side of the relation
     # constructed as lowercase source model name +'s' (books in this case)
     # you can also provide custom name with parameter related_name
-    
+
     # Django style
     author = await Author.objects.select_related("books").all(name="J.R.R. Tolkien")
     # Python style
@@ -596,7 +596,7 @@ metadata.drop_all(engine)
 *  `create(**kwargs): -> Model`
 *  `get(*args, **kwargs): -> Model`
 *  `get_or_none(*args, **kwargs): -> Optional[Model]`
-*  `get_or_create(*args, **kwargs) -> Model`
+*  `get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 *  `first(*args, **kwargs): -> Model`
 *  `update(each: bool = False, **kwargs) -> int`
 *  `update_or_create(**kwargs) -> Model`
@@ -604,13 +604,14 @@ metadata.drop_all(engine)
 *  `bulk_update(objects: List[Model], columns: List[str] = None) -> None`
 *  `delete(*args, each: bool = False, **kwargs) -> int`
 *  `all(*args, **kwargs) -> List[Optional[Model]]`
+*  `iterate(*args, **kwargs) -> AsyncGenerator[Model]`
 *  `filter(*args, **kwargs) -> QuerySet`
 *  `exclude(*args, **kwargs) -> QuerySet`
 *  `select_related(related: Union[List, str]) -> QuerySet`
 *  `prefetch_related(related: Union[List, str]) -> QuerySet`
 *  `limit(limit_count: int) -> QuerySet`
 *  `offset(offset: int) -> QuerySet`
-*  `count() -> int`
+*  `count(distinct: bool = True) -> int`
 *  `exists() -> bool`
 *  `max(columns: List[str]) -> Any`
 *  `min(columns: List[str]) -> Any`
@@ -646,10 +647,11 @@ Available Model Fields (with required args - optional ones in docs):
 * `Decimal(scale, precision)`
 * `UUID()`
 * `LargeBinary(max_length)`
-* `EnumField` - by passing `choices` to any other Field type
+* `Enum(enum_class)`
+* `Enum` like Field - by passing `choices` to any other Field type
 * `EncryptedString` - by passing `encrypt_secret` and `encrypt_backend`
 * `ForeignKey(to)`
-* `ManyToMany(to, through)`
+* `ManyToMany(to)`
 
 ### Available fields options
 The following keyword arguments are supported on all field types.
@@ -670,10 +672,10 @@ All fields are required unless one of the following is set:
   * `sql_nullable` - Used to set different setting for pydantic and the database. Sets the default to `nullable` value. Read the fields common parameters for details.
   * `default` - Set a default value for the field. **Not available for relation fields**
   * `server_default` - Set a default value for the field on server side (like sqlalchemy's `func.now()`). **Not available for relation fields**
-  * `primary key` with `autoincrement` - When a column is set to primary key and autoincrement is set on this column. 
-Autoincrement is set by default on int primary keys. 
+  * `primary key` with `autoincrement` - When a column is set to primary key and autoincrement is set on this column.
+Autoincrement is set by default on int primary keys.
   * `pydantic_only` - Field is available only as normal pydantic field, not stored in the database.
-  
+
 ### Available signals
 
 Signals allow to trigger your function for a given event on a given Model.

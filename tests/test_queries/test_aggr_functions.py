@@ -2,6 +2,7 @@ from typing import Optional
 
 import databases
 import pytest
+import pytest_asyncio
 import sqlalchemy
 
 import ormar
@@ -47,7 +48,7 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-@pytest.fixture(autouse=True, scope="function")
+@pytest_asyncio.fixture(autouse=True, scope="function")
 async def cleanup():
     yield
     async with database:
@@ -175,3 +176,16 @@ async def test_queryset_method():
         assert await author.books.max(["year", "title"]) == dict(
             year=1930, title="Book 3"
         )
+
+
+@pytest.mark.asyncio
+async def test_count_method():
+    async with database:
+        await sample_data()
+
+        count = await Author.objects.select_related("books").count()
+        assert count == 1
+
+        # The legacy functionality
+        count = await Author.objects.select_related("books").count(distinct=False)
+        assert count == 3

@@ -238,7 +238,7 @@ def test_excluding_property_field_in_endpoints2():
             "last_name",
             "created_date",
         ]
-        # despite being decorated with property_field if you explictly exclude it it will be gone
+        # despite being decorated with property_field if you explicitly exclude it it will be gone
         assert response.json().get("full_name") is None
 
 # <==related of code removed for clarity==>
@@ -428,6 +428,17 @@ You can set this parameter by providing `Meta` class `constraints` argument.
         Note that constraints are meant for combination of columns that should be in the index. 
         To set one column index use [`unique`](../fields/common-parameters.md#index) common parameter. 
         Of course, you can set many columns as indexes with this param but each of them will be a separate index.
+
+#### CheckColumns
+
+You can set this parameter by providing `Meta` class `constraints` argument.
+
+```Python hl_lines="14-17"
+--8<-- "../docs_src/models/docs018.py"
+```
+
+!!!note
+        Note that some databases do not actively support check constraints such as MySQL.
 
 
 ### Pydantic configuration

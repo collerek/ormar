@@ -198,7 +198,7 @@ To customize the names of fields/relation in Through model now you can use new p
 Example:
 
 ```python
-... # course declaration ommited
+... # course declaration omitted
 class Student(ormar.Model):
     class Meta:
         database = database

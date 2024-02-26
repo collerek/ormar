@@ -34,6 +34,12 @@ class OrderAction(QueryAction):
     def field_alias(self) -> str:
         return self.target_model.get_column_alias(self.field_name)
 
+    @property
+    def is_postgres_bool(self) -> bool:
+        dialect = self.target_model.Meta.database._backend._dialect.name
+        field_type = self.target_model.Meta.model_fields[self.field_name].__type__
+        return dialect == "postgresql" and field_type == bool
+
     def get_field_name_text(self) -> str:
         """
         Escapes characters if it's required.
@@ -49,15 +55,19 @@ class OrderAction(QueryAction):
     def get_min_or_max(self) -> sqlalchemy.sql.expression.TextClause:
         """
         Used in limit sub queries where you need to use aggregated functions
-        in order to order by columns not included in group by.
+        in order to order by columns not included in group by. For postgres bool
+        field it's using bool_or function as aggregates does not work with this type
+        of columns.
 
         :return: min or max function to order
         :rtype: sqlalchemy.sql.elements.TextClause
         """
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
         if self.direction == "":
-            return text(f"min({prefix}{self.table}" f".{self.field_alias})")
-        return text(f"max({prefix}{self.table}" f".{self.field_alias}) desc")
+            function = "min" if not self.is_postgres_bool else "bool_or"
+            return text(f"{function}({prefix}{self.table}" f".{self.field_alias})")
+        function = "max" if not self.is_postgres_bool else "bool_or"
+        return text(f"{function}({prefix}{self.table}" f".{self.field_alias}) desc")
 
     def get_text_clause(self) -> sqlalchemy.sql.expression.TextClause:
         """
@@ -68,14 +78,17 @@ class OrderAction(QueryAction):
         :return: complied and escaped clause
         :rtype: sqlalchemy.sql.elements.TextClause
         """
+        dialect = self.target_model.Meta.database._backend._dialect
+        quoter = dialect.identifier_preparer.quote
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
         table_name = self.table.name
         field_name = self.field_alias
         if not prefix:
-            dialect = self.target_model.Meta.database._backend._dialect
-            table_name = dialect.identifier_preparer.quote(table_name)
-            field_name = dialect.identifier_preparer.quote(field_name)
-        return text(f"{prefix}{table_name}" f".{field_name} {self.direction}")
+            table_name = quoter(table_name)
+        else:
+            table_name = quoter(f"{prefix}{table_name}")
+        field_name = quoter(field_name)
+        return text(f"{table_name}.{field_name} {self.direction}")
 
     def _split_value_into_parts(self, order_str: str) -> None:
         if order_str.startswith("-"):

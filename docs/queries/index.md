@@ -8,7 +8,7 @@ and it's options.
 Most of the methods are also available through many to many relations and on reverse
 foreign key relations through `QuerysetProxy` interface.
 
-!!!info 
+!!!info
     To see which relations are supported and how to construct relations
     visit [relations][relations].
 
@@ -24,7 +24,7 @@ To read more about any specific section or function please refer to the details 
 ###[Insert data into database](./create.md)
 
 * `create(**kwargs) -> Model`
-* `get_or_create(**kwargs) -> Model`
+* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
 * `update_or_create(**kwargs) -> Model`
 * `bulk_create(objects: List[Model]) -> None`
 
@@ -34,12 +34,12 @@ To read more about any specific section or function please refer to the details 
     * `Model.upsert()` method
     * `Model.save_related()` method
 
-  
+
 * `QuerysetProxy`
     * `QuerysetProxy.create(**kwargs)` method
-    * `QuerysetProxy.get_or_create(**kwargs)` method
+    * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs)` method
     * `QuerysetProxy.update_or_create(**kwargs)` method
-  
+
 !!!tip
     To read more about any or all of those functions visit [create](./create.md) section.
 
@@ -47,7 +47,7 @@ To read more about any specific section or function please refer to the details 
 
 * `get(**kwargs) -> Model`
 * `get_or_none(**kwargs) -> Optional[Model]`
-* `get_or_create(**kwargs) -> Model`
+* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
 * `first() -> Model`
 * `all(**kwargs) -> List[Optional[Model]]`
 
@@ -59,10 +59,10 @@ To read more about any specific section or function please refer to the details 
 * `QuerysetProxy`
     * `QuerysetProxy.get(**kwargs)` method
     * `QuerysetProxy.get_or_none(**kwargs)` method
-    * `QuerysetProxy.get_or_create(**kwargs)` method
+    * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs)` method
     * `QuerysetProxy.first()` method
     * `QuerysetProxy.all(**kwargs)` method
-  
+
 !!!tip
     To read more about any or all of those functions visit [read](./read.md) section.
 
@@ -96,7 +96,7 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
 
 * `QuerysetProxy`
     * `QuerysetProxy.update_or_create(**kwargs)` method
-  
+
 !!!tip
     To read more about any or all of those functions visit [update](./update.md) section.
 
@@ -112,7 +112,7 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
 * `QuerysetProxy`
     * `QuerysetProxy.remove()` method
     * `QuerysetProxy.clear()` method
-  
+
 !!!tip
     To read more about any or all of those functions visit [delete](./delete.md) section.
 
@@ -129,7 +129,7 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
 * `QuerysetProxy`
     * `QuerysetProxy.select_related(related: Union[List, str])` method
     * `QuerysetProxy.prefetch_related(related: Union[List, str])` method
-  
+
 !!!tip
     To read more about any or all of those functions visit [joins and subqueries](./joins-and-subqueries.md) section.
 
@@ -140,7 +140,7 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
 * `order_by(columns:Union[List, str]) -> QuerySet`
 * `get(**kwargs) -> Model`
 * `get_or_none(**kwargs) -> Optional[Model]`
-* `get_or_create(**kwargs) -> Model`
+* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
 * `all(**kwargs) -> List[Optional[Model]]`
 
 
@@ -150,9 +150,9 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
     * `QuerysetProxy.order_by(columns:Union[List, str])` method
     * `QuerysetProxy.get(**kwargs)` method
     * `QuerysetProxy.get_or_none(**kwargs)` method
-    * `QuerysetProxy.get_or_create(**kwargs)` method
+    * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs)` method
     * `QuerysetProxy.all(**kwargs)` method
-  
+
 !!!tip
     To read more about any or all of those functions visit [filtering and sorting](./filter-and-sort.md) section.
 
@@ -165,7 +165,7 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
 * `QuerysetProxy`
     * `QuerysetProxy.fields(columns: Union[List, str, set, dict])` method
     * `QuerysetProxy.exclude_fields(columns: Union[List, str, set, dict])` method
-  
+
 !!!tip
     To read more about any or all of those functions visit [selecting columns](./select-columns.md) section.
 
@@ -182,22 +182,22 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
     * `QuerysetProxy.paginate(page: int)` method
     * `QuerysetProxy.limit(limit_count: int)` method
     * `QuerysetProxy.offset(offset: int)` method
-  
+
 !!!tip
     To read more about any or all of those functions visit [pagination](./pagination-and-rows-number.md) section.
 
 ### [Aggregated functions](./aggregations.md)
 
-* `count() -> int`
+* `count(distinct: bool = True) -> int`
 * `exists() -> bool`
 
 
 * `QuerysetProxy`
-    * `QuerysetProxy.count()` method
+    * `QuerysetProxy.count(distinct=True)` method
     * `QuerysetProxy.exists()` method
-  
+
 !!!tip
     To read more about any or all of those functions visit [aggregations](./aggregations.md) section.
-  
+
 
 [relations]: ../relations/index.md

@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING, Type
+from typing import Any, TYPE_CHECKING, Type, cast
 
 from ormar.queryset.actions import OrderAction
 from ormar.queryset.actions.filter_action import METHODS_TO_OPERATORS
@@ -45,11 +45,17 @@ class FieldAccessor:
         :return: FieldAccessor for field or nested model
         :rtype: ormar.queryset.field_accessor.FieldAccessor
         """
-        if self._field and item == self._field.name:
+        if (
+            object.__getattribute__(self, "_field")
+            and item == object.__getattribute__(self, "_field").name
+        ):
             return self._field
 
-        if self._model and item in self._model.Meta.model_fields:
-            field = self._model.Meta.model_fields[item]
+        if (
+            object.__getattribute__(self, "_model")
+            and item in object.__getattribute__(self, "_model").Meta.model_fields
+        ):
+            field = cast("Model", self._model).Meta.model_fields[item]
             if field.is_relation:
                 return FieldAccessor(
                     source_model=self._source_model,

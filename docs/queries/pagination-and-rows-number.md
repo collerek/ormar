@@ -69,7 +69,7 @@ tracks = await Track.objects.limit(1).all()
 ```
 
 !!!note
-    All methods that do not return the rows explicitly returns a QueySet instance so you can chain them together
+    All methods that do not return the rows explicitly returns a QuerySet instance so you can chain them together
     
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
@@ -103,7 +103,7 @@ tracks = await Track.objects.offset(1).limit(1).all()
 ```
 
 !!!note
-    All methods that do not return the rows explicitly returns a QueySet instance so you can chain them together
+    All methods that do not return the rows explicitly returns a QuerySet instance so you can chain them together
     
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
@@ -115,7 +115,7 @@ tracks = await Track.objects.offset(1).limit(1).all()
 
 `get(**kwargs) -> Model` 
 
-Get's the first row from the db meeting the criteria set by kwargs.
+Gets the first row from the db meeting the criteria set by kwargs.
 
 If no criteria is set it will return the last row in db sorted by pk.
 (The criteria cannot be set also with filter/exclude).

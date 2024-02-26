@@ -2,9 +2,11 @@ from typing import Optional
 
 import databases
 import pytest
+import pytest_asyncio
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -71,7 +73,7 @@ def create_test_database():
     metadata.drop_all(engine)
 
 
-@pytest.fixture()
+@pytest_asyncio.fixture
 async def sample_data():
     async with database:
         country = await Country(id=1, name="USA").save()
@@ -93,10 +95,11 @@ async def get_book_with_author_by_id(book_id: int):
     return book
 
 
-def test_related_with_defaults(sample_data):
-    client = TestClient(app)
-    with client as client:
-        response = client.get("/books/1")
+@pytest.mark.asyncio
+async def test_related_with_defaults(sample_data):
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client, LifespanManager(app):
+        response = await client.get("/books/1")
         assert response.json() == {
             "author": {"id": 1},
             "id": 1,
@@ -104,7 +107,7 @@ def test_related_with_defaults(sample_data):
             "year": 2021,
         }
 
-        response = client.get("/books_with_author/1")
+        response = await client.get("/books_with_author/1")
         assert response.json() == {
             "author": {
                 "books": [

@@ -1,3 +1,97 @@
+# 0.12.2
+
+## ✨ Features
+* Bump support for `FastAPI` up to the newest version (0.97.0) [#1110](https://github.com/collerek/ormar/pull/1110)
+* Add support and tests for `Python 3.11` [#1110](https://github.com/collerek/ormar/pull/1110)
+
+
+# 0.12.1
+
+## ✨ Features
+* Massive performance improvements in area of loading the models due to recursive loads and caching of the models and related models. (by @erichaydel - thanks!) [#853](https://github.com/collerek/ormar/pull/948)
+
+## 💬 Internals
+* Benchmarks for comparing performance effect of implemented changes in regard of trends (again, by @erichaydel - thanks!) [#853](https://github.com/collerek/ormar/pull/948)
+
+
+# 0.12.0
+
+## ✨ Breaking Changes
+
+* `Queryset.bulk_create` will now raise `ModelListEmptyError` on empty list of models (by @ponytailer - thanks!) [#853](https://github.com/collerek/ormar/pull/853)
+
+## ✨ Features
+* `Model.upsert()` now handles a flag `__force_save__`: `bool` that allow upserting the models regardless of the fact if they have primary key set or not. 
+Note that setting this flag will cause two queries for each upserted model -> `get` to check if model exists and later `update/insert` accordingly. [#889](https://github.com/collerek/ormar/pull/853)
+
+## 🐛 Fixes
+
+* Fix for empty relations breaking `construct` method (by @Abdeldjalil-H - thanks!) [#870](https://github.com/collerek/ormar/issues/870)
+* Fix save related not saving models with already set pks (including uuid) [#885](https://github.com/collerek/ormar/issues/885)
+* Fix for wrong relations exclusions depending on the order of exclusions [#779](https://github.com/collerek/ormar/issues/779)
+* Fix `property_fields` not being inherited properly [#774](https://github.com/collerek/ormar/issues/774)
+
+# 0.11.3
+
+## ✨ Features
+
+* Document `onupdate` and `ondelete` referential actions in `ForeignKey` and provide `ReferentialAction` enum to specify the behavior of the relationship (by @SepehrBazyar - thanks!) [#724](https://github.com/collerek/ormar/issues/724)
+* Add `CheckColumn` to supported constraints in models Meta (by @SepehrBazyar - thanks!) [#729](https://github.com/collerek/ormar/issues/729)
+
+## 🐛 Fixes
+
+* Fix limiting query result to 0 should return empty list (by @SepehrBazyar - thanks!) [#766](https://github.com/collerek/ormar/issues/713)
+
+## 💬 Other
+
+* Add dark mode to docs (by @SepehrBazyar - thanks!) [#717](https://github.com/collerek/ormar/pull/717) 
+* Update aiomysql dependency [#778](https://github.com/collerek/ormar/issues/778)
+
+
+# 0.11.2
+
+## 🐛 Fixes
+
+* Fix database drivers being required, while they should be optional [#713](https://github.com/collerek/ormar/issues/713)
+* Fix boolean field problem in `limit` queries in postgres without `limit_raw_sql` flag [#704](https://github.com/collerek/ormar/issues/704)
+* Fix enum_class spilling to schema causing errors in OpenAPI [#699](https://github.com/collerek/ormar/issues/699)
+
+# 0.11.1
+
+## 🐛 Fixes
+
+* Fix deepcopy issues introduced in pydantic 1.9 [#685](https://github.com/collerek/ormar/issues/685)
+
+# 0.11.0
+
+## ✨ Breaking Changes
+
+* Dropped support for python 3.6
+* `Queryset.get_or_create` returns now a tuple with model and bool value indicating if the model was created (by @MojixCoder - thanks!) [#554](https://github.com/collerek/ormar/pull/554)
+* `Queryset.count()` now counts the number of distinct parent model rows by default, counting all rows is possible by setting `distinct=False` (by @erichaydel - thanks) [#588](https://github.com/collerek/ormar/pull/588)
+
+## ✨ Features
+
+* Added support for python 3.10
+
+## 🐛 Fixes
+
+* Fix inconsistent `JSON` fields behaviour in `save` and `bulk_create` [#584](https://github.com/collerek/ormar/issues/584)
+* Fix maximum recursion error [#580](https://github.com/collerek/ormar/pull/580)
+
+
+# 0.10.25
+
+## ✨ Features
+
+* Add `queryset_class` option to `Model.Meta` that allows you to easily swap `QuerySet` for your Model (by @ponytailer - thanks!) [#538](https://github.com/collerek/ormar/pull/538)
+* Allow passing extra `kwargs` to `IndexColumns` that will be passed to sqlalchemy `Index` (by @zevisert - thanks) [#575](https://github.com/collerek/ormar/pull/538)
+
+## 🐛 Fixes
+
+* Fix nullable setting on `JSON` fields [#529](https://github.com/collerek/ormar/issues/529)
+* Fix bytes/str mismatch in bulk operations when using orjson instead of json (by @ponytailer - thanks!) [#538](https://github.com/collerek/ormar/pull/538)
+
 # 0.10.24
 
 ## ✨ Features
@@ -417,7 +511,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
   * By default `Through` model relation names default to related model name in lowercase.
     So in example like this:
     ```python
-    ... # course declaration ommited
+    ... # course declaration omitted
     class Student(ormar.Model):
         class Meta:
             database = database
@@ -444,7 +538,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
     
     Example:
     ```python
-    ... # course declaration ommited
+    ... # course declaration omitted
     class Student(ormar.Model):
         class Meta:
             database = database
@@ -578,7 +672,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
 *  Add 4 new signals -> `pre_relation_add`, `post_relation_add`, `pre_relation_remove` and `post_relation_remove`
     *  The newly added signals are emitted for `ManyToMany` relations (both sides) 
        and reverse side of `ForeignKey` relation (same as `QuerysetProxy` is exposed).
-    *  Signals recieve following args: `sender: Type[Model]` - sender class, 
+    *  Signals receive following args: `sender: Type[Model]` - sender class, 
        `instance: Model` - instance to which related model is added, `child: Model` - model being added,
        `relation_name: str` - name of the relation to which child is added, 
        for add signals also `passed_kwargs: Dict` - dict of kwargs passed to `add()`
@@ -740,7 +834,7 @@ that most of the `ormar` functions are working your database **CREATED with orma
 * **Breaking:** During model construction if `Meta` class of the `Model` does not 
   include `metadata` or `database` now `ModelDefinitionError` will be raised instead of generic `AttributeError`.
 * **Breaking:** `encode/databases` used for running the queries does not have a connection pool
-for sqlite backend, meaning that each querry is run with a new connection and there is no way to 
+for sqlite backend, meaning that each query is run with a new connection and there is no way to 
   enable enforcing ForeignKeys constraints as those are by default turned off on every connection.
   This is changed in `ormar` since >=0.9.0 and by default each sqlite3 query has `"PRAGMA foreign_keys=1;"`
   run so now each sqlite3 connection by default enforces ForeignKey constraints including cascades.
@@ -904,7 +998,7 @@ so now you can use those methods directly from relation
     *  Model is saved after adding/removing `ManyToMany` related objects (through model instance auto saved/deleted)
     *  Model is **not** saved after change of any own field (including pk as `Model.pk` alias)
     *  Model is **not** saved after adding/removing `ForeignKey` related object (fk column not saved)
-    *  Model is **not** saved after instantation with `__init__` (w/o `QuerySet.create` or before calling `save`)
+    *  Model is **not** saved after instantiation with `__init__` (w/o `QuerySet.create` or before calling `save`)
 *  Added `Model.upsert(**kwargs)` that performs `save()` if pk not set otherwise `update(**kwargs)`
 *  Added `Model.save_related(follow=False)` that iterates all related objects in all relations and checks if they are saved. If not it calls `upsert()` on each of them.
 *  **Breaking:** added raising exceptions if `add`-ing/`remove`-ing not saved (pk is None) models to `ManyToMany` relation

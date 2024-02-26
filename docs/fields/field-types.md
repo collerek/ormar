@@ -200,17 +200,32 @@ When loaded it's always python UUID so you can compare it and compare two format
 
 ### Enum
 
-Although there is no dedicated field type for Enums in `ormar` you can change any
-field into `Enum` like field by passing a `choices` list that is accepted by all Field types.
+There are two ways to use enums in ormar -> one is a dedicated `Enum` field that uses `sqlalchemy.Enum` column type, while the other is setting `choices` on any field in ormar.
+
+The Enum field uses the database dialect specific Enum column type if it's available, but fallback to varchar if this field type is not available.
+
+The `choices` option always respect the database field type selected.
+
+So which one to use depends on the backend you use and on the column/ data type you want in your Enum field.
+
+#### Enum - Field
+
+`Enum(enum_class=Type[Enum])` has a required `enum_class` parameter.  
+
+* Sqlalchemy column: `sqlalchemy.Enum`  
+* Type (used for pydantic): `Type[Enum]`
+
+#### Choices
+You can change any field into `Enum` like field by passing a `choices` list that is accepted by all Field types.
 
 It will add both: validation in `pydantic` model and will display available options in schema,
 therefore it will be available in docs of `fastapi`.
 
 If you still want to use `Enum` in your application you can do this by passing a `Enum` into choices
-and later pass value of given option to a given field (note tha Enum is not JsonSerializable).
+and later pass value of given option to a given field (note that Enum is not JsonSerializable).
 
 ```python
-# not that imports and endpoints declaration 
+# note that imports and endpoints declaration 
 # is skipped here for brevity
 from enum import Enum
 class TestEnum(Enum):

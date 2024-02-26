@@ -57,7 +57,6 @@ As part of the fastapi ecosystem `ormar` is supported in libraries that somehow 
 
 As of now `ormar` is supported by:
 
-*  [`fastapi-users`](https://github.com/frankie567/fastapi-users)
 *  [`fastapi-crudrouter`](https://github.com/awtkns/fastapi-crudrouter)
 *  [`fastapi-pagination`](https://github.com/uriyyo/fastapi-pagination)
 
@@ -334,7 +333,7 @@ async def delete():
 
 async def joins():
     # Tho join two models use select_related
-    
+
     # Django style
     book = await Book.objects.select_related("author").get(title="The Hobbit")
     # Python style
@@ -348,7 +347,7 @@ async def joins():
     # By default you also get a second side of the relation
     # constructed as lowercase source model name +'s' (books in this case)
     # you can also provide custom name with parameter related_name
-    
+
     # Django style
     author = await Author.objects.select_related("books").all(name="J.R.R. Tolkien")
     # Python style
@@ -420,7 +419,7 @@ async def filter_and_sort():
 
 async def subset_of_columns():
     # to exclude some columns from loading when querying the database
-    # you can use fileds() method
+    # you can use fields() method
     hobbit = await Book.objects.fields(["title"]).get(title="The Hobbit")
     # note that fields not included in fields are empty (set to None)
     assert hobbit.year is None
@@ -587,7 +586,7 @@ metadata.drop_all(engine)
 *  `create(**kwargs): -> Model`
 *  `get(*args, **kwargs): -> Model`
 *  `get_or_none(*args, **kwargs): -> Optional[Model]`
-*  `get_or_create(*args, **kwargs) -> Model`
+*  `get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 *  `first(*args, **kwargs): -> Model`
 *  `update(each: bool = False, **kwargs) -> int`
 *  `update_or_create(**kwargs) -> Model`
@@ -595,13 +594,14 @@ metadata.drop_all(engine)
 *  `bulk_update(objects: List[Model], columns: List[str] = None) -> None`
 *  `delete(*args, each: bool = False, **kwargs) -> int`
 *  `all(*args, **kwargs) -> List[Optional[Model]]`
+*  `iterate(*args, **kwargs) -> AsyncGenerator[Model]`
 *  `filter(*args, **kwargs) -> QuerySet`
 *  `exclude(*args, **kwargs) -> QuerySet`
 *  `select_related(related: Union[List, str]) -> QuerySet`
 *  `prefetch_related(related: Union[List, str]) -> QuerySet`
 *  `limit(limit_count: int) -> QuerySet`
 *  `offset(offset: int) -> QuerySet`
-*  `count() -> int`
+*  `count(distinct: bool = True) -> int`
 *  `exists() -> bool`
 *  `max(columns: List[str]) -> Any`
 *  `min(columns: List[str]) -> Any`
@@ -637,10 +637,11 @@ Available Model Fields (with required args - optional ones in docs):
 * `Decimal(scale, precision)`
 * `UUID()`
 * `LargeBinary(max_length)`
-* `EnumField` - by passing `choices` to any other Field type
+* `Enum(enum_class)`
+* `Enum` like Field - by passing `choices` to any other Field type
 * `EncryptedString` - by passing `encrypt_secret` and `encrypt_backend`
 * `ForeignKey(to)`
-* `ManyToMany(to, through)`
+* `ManyToMany(to)`
 
 ### Available fields options
 The following keyword arguments are supported on all field types.

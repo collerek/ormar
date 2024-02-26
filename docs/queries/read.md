@@ -3,9 +3,10 @@
 Following methods allow you to load data from the database.
 
 * `get(*args, **kwargs) -> Model`
-* `get_or_create(*args, **kwargs) -> Model`
+* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 * `first(*args, **kwargs) -> Model`
 * `all(*args, **kwargs) -> List[Optional[Model]]`
+* `iterate(*args, **kwargs) -> AsyncGenerator[Model]`
 
 
 * `Model`
@@ -14,7 +15,7 @@ Following methods allow you to load data from the database.
 
 * `QuerysetProxy`
     * `QuerysetProxy.get(*args, **kwargs)` method
-    * `QuerysetProxy.get_or_create(*args, **kwargs)` method
+    * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs)` method
     * `QuerysetProxy.first(*args, **kwargs)` method
     * `QuerysetProxy.all(*args, **kwargs)` method
 
@@ -22,7 +23,7 @@ Following methods allow you to load data from the database.
 
 `get(*args, **kwargs) -> Model`
 
-Get's the first row from the db meeting the criteria set by kwargs.
+Gets the first row from the db meeting the criteria set by kwargs.
 
 If no criteria set it will return the last row in db sorted by pk column.
 
@@ -64,12 +65,12 @@ Exact equivalent of get described above but instead of raising the exception ret
 
 ## get_or_create
 
-`get_or_create(*args, **kwargs) -> Model`
+`get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 
 Combination of create and get methods.
 
 Tries to get a row meeting the criteria and if `NoMatch` exception is raised it creates
-a new one with given kwargs.
+a new one with given kwargs and _defaults.
 
 ```python
 class Album(ormar.Model):
@@ -80,12 +81,17 @@ class Album(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
+    year: int = ormar.Integer()
 ```
 
 ```python
-album = await Album.objects.get_or_create(name='The Cat')
+album, created = await Album.objects.get_or_create(name='The Cat', _defaults={"year": 1999})
+assert created is True
+assert album.name == "The Cat"
+assert album.year == 1999
 # object is created as it does not exist
-album2 = await Album.objects.get_or_create(name='The Cat')
+album2, created = await Album.objects.get_or_create(name='The Cat')
+assert created is False
 assert album == album2
 # return True as the same db row is returned
 ```
@@ -93,7 +99,7 @@ assert album == album2
 !!!warning 
     Despite being an equivalent row from database the `album` and `album2` in
     example above are 2 different python objects!
-    Updating one of them will not refresh the second one until you excplicitly load() the
+    Updating one of them will not refresh the second one until you explicitly load() the
     fresh data from db.
 
 !!!note 
@@ -167,6 +173,45 @@ tracks = await Track.objects.all()
 # will return a list of all Tracks in database
 
 ```
+
+## iterate
+
+`iterate(*args, **kwargs) -> AsyncGenerator["Model"]`
+
+Return async iterable generator for all rows from a database for given model.
+
+Passing args and/or kwargs is a shortcut and equals to calling `filter(*args, **kwargs).iterate()`.
+
+If there are no rows meeting the criteria an empty async generator is returned.
+
+```python
+class Album(ormar.Model):
+    class Meta:
+        tablename = "album"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+```
+
+```python
+await Album.objects.create(name='The Cat')
+await Album.objects.create(name='The Dog')
+# will asynchronously iterate all Album models yielding one main model at a time from the generator
+async for album in Album.objects.iterate():
+    print(album.name)
+
+# The Cat
+# The Dog
+
+```
+
+!!!warning
+    Use of `iterate()` causes previous `prefetch_related()` calls to be ignored;
+    since these two optimizations do not make sense together.
+
+    If `iterate()` & `prefetch_related()` are used together the `QueryDefinitionError` exception is raised.
 
 ## Model methods
 

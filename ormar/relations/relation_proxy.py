@@ -1,4 +1,15 @@
-from typing import Any, Generic, Optional, TYPE_CHECKING, Type, TypeVar
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    TYPE_CHECKING,
+    Set,
+    Type,
+    TypeVar,
+)
+from typing_extensions import SupportsIndex
 
 import ormar
 from ormar.exceptions import NoMatch, RelationshipInstanceError
@@ -13,7 +24,7 @@ else:
     T = TypeVar("T", bound="Model")
 
 
-class RelationProxy(Generic[T], list):
+class RelationProxy(Generic[T], List[T]):
     """
     Proxy of the Relation that is a list with special methods.
     """
@@ -26,7 +37,6 @@ class RelationProxy(Generic[T], list):
         field_name: str,
         data_: Any = None,
     ) -> None:
-        super().__init__(data_ or ())
         self.relation: "Relation[T]" = relation
         self.type_: "RelationType" = type_
         self.field_name = field_name
@@ -35,6 +45,20 @@ class RelationProxy(Generic[T], list):
             relation=self.relation, to=to, type_=type_
         )
         self._related_field_name: Optional[str] = None
+
+        self._relation_cache: Dict[int, int] = {}
+
+        validated_data = []
+        if data_ is not None:
+            idx = 0
+            for d in data_:
+                try:
+                    self._relation_cache[d.__hash__()] = idx
+                    validated_data.append(d)
+                    idx += 1
+                except ReferenceError:
+                    pass
+        super().__init__(validated_data or ())
 
     @property
     def related_field_name(self) -> str:
@@ -54,6 +78,102 @@ class RelationProxy(Generic[T], list):
 
     def __getitem__(self, item: Any) -> "T":  # type: ignore
         return super().__getitem__(item)
+
+    def append(self, item: "T") -> None:
+        """
+        Appends an item to the list in place
+
+        :param item: The generic item of the list
+        :type item: T
+        """
+        idx = len(self)
+        self._relation_cache[item.__hash__()] = idx
+        super().append(item)
+
+    def update_cache(self, prev_hash: int, new_hash: int) -> None:
+        """
+        Updates the cache from the old hash to the new one.
+        This maintains the index cache, which allows O(1) indexing and
+        existence checks
+
+        :param prev_hash: The hash to update
+        :type prev_hash: int
+        :param prev_hash: The new hash to update to
+        :type new_hash: int
+        """
+        try:
+            idx = self._relation_cache.pop(prev_hash)
+            self._relation_cache[new_hash] = idx
+        except KeyError:
+            pass
+
+    def index(self, item: T, *args: Any) -> int:
+        """
+        Gets the index of the item in the list
+
+        :param item: The item to get the index of
+        :type item: "T"
+        """
+        return self._relation_cache[item.__hash__()]
+
+    def _get_list_of_missing_weakrefs(self) -> Set[int]:
+        """
+        Iterates through the list and checks for weakrefs.
+
+        :return: The set of missing weakref indices
+        :rtype: Set[int]
+        """
+        to_remove = set()
+        for ind, relation_child in enumerate(self[:]):
+            try:
+                relation_child.__repr__.__self__  # type: ignore
+            except ReferenceError:  # pragma no cover
+                to_remove.add(ind)
+
+        return to_remove
+
+    def pop(self, index: SupportsIndex = 0) -> T:
+        """
+        Pops the index off the list and returns it. By default,
+        it pops off the element at index 0.
+        This also clears the value from the relation cache.
+
+        :param index: The index to pop
+        :type index: SupportsIndex
+        :return: The item at the provided index
+        :rtype: "T"
+        """
+        item = self[index]
+
+        # Try to delete it, but do it a long way
+        # if weakly-referenced thing doesn't exist
+        try:
+            self._relation_cache.pop(item.__hash__())
+        except ReferenceError:
+            for hash_, idx in self._relation_cache.items():
+                if idx == index:
+                    self._relation_cache.pop(hash_)
+                    break
+
+        index_int = int(index)
+        for idx in range(index_int + 1, len(self)):
+            self._relation_cache[self[idx].__hash__()] -= 1
+
+        return super().pop(index)
+
+    def __contains__(self, item: object) -> bool:
+        """
+        Checks whether the item exists in self. This relies
+        on the relation cache, which is a hashmap of values
+        in the list. It runs in O(1) time.
+
+        :param item: The item to check if the list contains
+        :type item: object
+        """
+        try:
+            return item.__hash__() in self._relation_cache
+        except ReferenceError:
+            return False
 
     def __getattribute__(self, item: str) -> Any:
         """
@@ -83,6 +203,7 @@ class RelationProxy(Generic[T], list):
         return getattr(self.queryset_proxy, item)
 
     def _clear(self) -> None:
+        self._relation_cache.clear()
         super().clear()
 
     def _initialize_queryset(self) -> None:
@@ -164,7 +285,10 @@ class RelationProxy(Generic[T], list):
             child=item,
             relation_name=self.field_name,
         )
-        super().remove(item)
+
+        index_to_remove = self._relation_cache[item.__hash__()]
+        self.pop(index_to_remove)
+
         relation_name = self.related_field_name
         relation = item._orm._get(relation_name)
         # if relation is None:  # pragma nocover
@@ -200,6 +324,7 @@ class RelationProxy(Generic[T], list):
         :param item: child to add to relation
         :type item: Model
         """
+        new_idx = len(self)
         relation_name = self.related_field_name
         await self._owner.signals.pre_relation_add.send(
             sender=self._owner.__class__,
@@ -215,6 +340,7 @@ class RelationProxy(Generic[T], list):
         else:
             setattr(item, relation_name, self._owner)
             await item.upsert()
+        self._relation_cache[item.__hash__()] = new_idx
         await self._owner.signals.post_relation_add.send(
             sender=self._owner.__class__,
             instance=self._owner,

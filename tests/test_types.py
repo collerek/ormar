@@ -86,6 +86,7 @@ async def test_types() -> None:
         #     reveal_type(publisher)  # model method
         #     reveal_type(publishers)  # many to many
         #     reveal_type(publishers[0])  # item in m2m list
+        #     reveal_type(next(p for p in publishers))  # item in m2m iterator
         #     # getting relation without __getattribute__
         #     reveal_type(authors)  # reverse many to many  # TODO: wrong
         #     reveal_type(book2)  # queryset get

@@ -1,5 +1,6 @@
 import base64
 import uuid
+from enum import Enum
 from typing import (
     Any,
     Callable,
@@ -57,7 +58,6 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         new_kwargs = cls.substitute_models_with_pks(new_kwargs)
         new_kwargs = cls.populate_default_values(new_kwargs)
         new_kwargs = cls.reconvert_str_to_bytes(new_kwargs)
-        new_kwargs = cls.dump_all_json_fields_to_str(new_kwargs)
         new_kwargs = cls.translate_columns_to_aliases(new_kwargs)
         return new_kwargs
 
@@ -76,6 +76,14 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         new_kwargs = cls.dump_all_json_fields_to_str(new_kwargs)
         # new_kwargs = cls.populate_onupdate_value(new_kwargs)
         new_kwargs = cls.translate_columns_to_aliases(new_kwargs)
+        new_kwargs = cls.translate_enum_columns(new_kwargs)
+        return new_kwargs
+
+    @classmethod
+    def translate_enum_columns(cls, new_kwargs: dict) -> dict:
+        for key, value in new_kwargs.items():
+            if isinstance(value, Enum):
+                new_kwargs[key] = value.name
         return new_kwargs
 
     @classmethod
@@ -315,7 +323,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         if (
             save_all or not instance.pk or not instance.saved
         ) and not instance.__pk_only__:
-            await instance.upsert()
+            await instance.upsert(__force_save__=True)
             if relation_field and relation_field.is_multi:
                 await instance._upsert_through_model(
                     instance=instance,

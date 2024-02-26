@@ -3,8 +3,9 @@ from typing import List
 import databases
 import pytest
 import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 import ormar
 from tests.settings import DATABASE_URL
@@ -103,26 +104,27 @@ async def get_item_excl(item_id: int):
     return item
 
 
-def test_all_endpoints():
-    client = TestClient(app)
-    with client as client:
+@pytest.mark.asyncio
+async def test_all_endpoints():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client, LifespanManager(app):
         item = {
             "name": "test",
             "categories": [{"name": "test cat"}, {"name": "test cat2"}],
         }
-        response = client.post("/items/", json=item)
+        response = await client.post("/items/", json=item)
         item_check = Item(**response.json())
         assert item_check.id is not None
         assert item_check.categories[0].id is not None
 
-        no_pk_item = client.get(f"/items/{item_check.id}", json=item).json()
+        no_pk_item = (await client.get(f"/items/{item_check.id}")).json()
         assert no_pk_item == item
 
-        no_pk_item2 = client.get(f"/items/fex/{item_check.id}", json=item).json()
+        no_pk_item2 = (await client.get(f"/items/fex/{item_check.id}")).json()
         assert no_pk_item2 == item
 
-        no_pk_category = client.get(
-            f"/categories/{item_check.categories[0].id}", json=item
+        no_pk_category = (
+            await client.get(f"/categories/{item_check.categories[0].id}")
         ).json()
         assert no_pk_category == {
             "items": [
@@ -134,8 +136,8 @@ def test_all_endpoints():
             "name": "test cat",
         }
 
-        no_through_category = client.get(
-            f"/categories/nt/{item_check.categories[0].id}", json=item
+        no_through_category = (
+            await client.get(f"/categories/nt/{item_check.categories[0].id}")
         ).json()
         assert no_through_category == {
             "id": 1,
@@ -143,7 +145,7 @@ def test_all_endpoints():
             "name": "test cat",
         }
 
-        no_through_category = client.get(
-            f"/categories/ntp/{item_check.categories[0].id}", json=item
+        no_through_category = (
+            await client.get(f"/categories/ntp/{item_check.categories[0].id}")
         ).json()
         assert no_through_category == {"items": [{"name": "test"}], "name": "test cat"}

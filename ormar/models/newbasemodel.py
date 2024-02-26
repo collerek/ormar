@@ -22,19 +22,14 @@ from typing import (
 import databases
 import pydantic
 import sqlalchemy
-from ormar.models.utils import Extra
 from pydantic import BaseModel
-
-try:
-    import orjson as json
-except ImportError:  # pragma: no cover
-    import json  # type: ignore
 
 
 import ormar  # noqa I100
 from ormar.exceptions import ModelError, ModelPersistenceError
 from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
+from ormar.fields.parsers import encode_json
 from ormar.models.helpers import register_relation_in_alias_manager
 from ormar.models.helpers.relations import expand_reverse_relationship
 from ormar.models.helpers.sqlalchemy import (
@@ -43,8 +38,10 @@ from ormar.models.helpers.sqlalchemy import (
 )
 from ormar.models.metaclass import ModelMeta, ModelMetaclass
 from ormar.models.modelproxy import ModelTableProxy
+from ormar.models.utils import Extra
 from ormar.queryset.utils import translate_list_to_dict
 from ormar.relations.alias_manager import AliasManager
+from ormar.relations.relation import Relation
 from ormar.relations.relation_manager import RelationsManager
 
 if TYPE_CHECKING:  # pragma no cover
@@ -67,10 +64,17 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     Constructed with ModelMetaclass which in turn also inherits pydantic metaclass.
 
     Abstracts away all internals and helper functions, so final Model class has only
-    the logic concerned with database connection and data persistance.
+    the logic concerned with database connection and data persistence.
     """
 
-    __slots__ = ("_orm_id", "_orm_saved", "_orm", "_pk_column", "__pk_only__")
+    __slots__ = (
+        "_orm_id",
+        "_orm_saved",
+        "_orm",
+        "_pk_column",
+        "__pk_only__",
+        "__cached_hash__",
+    )
 
     if TYPE_CHECKING:  # pragma no cover
         pk: Any
@@ -82,6 +86,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         __metadata__: sqlalchemy.MetaData
         __database__: databases.Database
         __relation_map__: Optional[List[str]]
+        __cached_hash__: Optional[int]
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
         _orm_id: int
@@ -176,11 +181,21 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: None
         :rtype: None
         """
+        prev_hash = hash(self)
+
         if hasattr(self, name):
             object.__setattr__(self, name, value)
         else:
             # let pydantic handle errors for unknown fields
             super().__setattr__(name, value)
+
+        # In this case, the hash could have changed, so update it
+        if name == self.Meta.pkname or self.pk is None:
+            object.__setattr__(self, "__cached_hash__", None)
+            new_hash = hash(self)
+
+            if prev_hash != new_hash:
+                self._update_relation_cache(prev_hash, new_hash)
 
     def __getattr__(self, item: str) -> Any:
         """
@@ -217,6 +232,30 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         self._initialize_internal_attributes()
         for name, value in relations.items():
             setattr(self, name, value)
+
+    def _update_relation_cache(self, prev_hash: int, new_hash: int) -> None:
+        """
+        Update all relation proxy caches with different hash if we have changed
+
+        :param prev_hash: The previous hash to update
+        :type prev_hash: int
+        :param new_hash: The hash to update to
+        :type new_hash: int
+        """
+
+        def _update_cache(relations: List[Relation], recurse: bool = True) -> None:
+            for relation in relations:
+                relation_proxy = relation.get()
+
+                if hasattr(relation_proxy, "update_cache"):
+                    relation_proxy.update_cache(prev_hash, new_hash)  # type: ignore
+                elif recurse and hasattr(relation_proxy, "_orm"):
+                    _update_cache(
+                        relation_proxy._orm._relations.values(),  # type: ignore
+                        recurse=False,
+                    )
+
+        _update_cache(list(self._orm._relations.values()))
 
     def _internal_set(self, name: str, value: Any) -> None:
         """
@@ -358,6 +397,23 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             return self.__same__(other)
         return super().__eq__(other)  # pragma no cover
 
+    def __hash__(self) -> int:
+        if getattr(self, "__cached_hash__", None) is not None:
+            return self.__cached_hash__ or 0
+
+        if self.pk is not None:
+            ret = hash(str(self.pk) + self.__class__.__name__)
+        else:
+            vals = {
+                k: v
+                for k, v in self.__dict__.items()
+                if k not in self.extract_related_names()
+            }
+            ret = hash(str(vals) + self.__class__.__name__)
+
+        object.__setattr__(self, "__cached_hash__", ret)
+        return ret
+
     def __same__(self, other: "NewBaseModel") -> bool:
         """
         Used by __eq__, compares other model to this model.
@@ -370,22 +426,27 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: result of comparison
         :rtype: bool
         """
-        return (
-            # self._orm_id == other._orm_id
-            (self.pk == other.pk and self.pk is not None)
-            or (
-                (self.pk is None and other.pk is None)
-                and {
-                    k: v
-                    for k, v in self.__dict__.items()
-                    if k not in self.extract_related_names()
-                }
-                == {
-                    k: v
-                    for k, v in other.__dict__.items()
-                    if k not in other.extract_related_names()
-                }
-            )
+        if (self.pk is None and other.pk is not None) or (
+            self.pk is not None and other.pk is None
+        ):
+            return False
+        else:
+            return hash(self) == other.__hash__()
+
+    def _copy_and_set_values(
+        self: "NewBaseModel", values: "DictStrAny", fields_set: "SetStr", *, deep: bool
+    ) -> "NewBaseModel":
+        """
+        Overwrite related models values with dict representation to avoid infinite
+        recursion through related fields.
+        """
+        self_dict = values
+        self_dict.update(self.dict(exclude_list=True))
+        return cast(
+            "NewBaseModel",
+            super()._copy_and_set_values(
+                values=self_dict, fields_set=fields_set, deep=deep
+            ),
         )
 
     @classmethod
@@ -619,6 +680,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude: Optional[Dict],
         exclude_primary_keys: bool,
         exclude_through_models: bool,
+        exclude_list: bool,
     ) -> Dict:
         """
         Traverse nested models and converts them into dictionaries.
@@ -632,6 +694,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :type include: Optional[Dict]
         :param exclude: fields to exclude
         :type exclude: Optional[Dict]
+        :param exclude: whether to exclude lists
+        :type exclude: bool
         :return: current model dict with child models converted to dictionaries
         :rtype: Dict
         """
@@ -645,6 +709,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             try:
                 nested_model = getattr(self, field)
                 if isinstance(nested_model, MutableSequence):
+                    if exclude_list:
+                        continue
+
                     dict_instance[field] = self._extract_nested_models_from_list(
                         relation_map=self._skip_ellipsis(  # type: ignore
                             relation_map, field, default_return=dict()
@@ -684,6 +751,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude_none: bool = False,
         exclude_primary_keys: bool = False,
         exclude_through_models: bool = False,
+        exclude_list: bool = False,
         relation_map: Dict = None,
     ) -> "DictStrAny":  # noqa: A003'
         """
@@ -713,6 +781,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :type exclude_defaults: bool
         :param exclude_none: flag to exclude None values - passed to pydantic
         :type exclude_none: bool
+        :param exclude_list: flag to exclude lists of nested values models from dict
+        :type exclude_list: bool
         :param relation_map: map of the relations to follow to avoid circural deps
         :type relation_map: Dict
         :return:
@@ -758,6 +828,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 exclude=exclude,  # type: ignore
                 exclude_primary_keys=exclude_primary_keys,
                 exclude_through_models=exclude_through_models,
+                exclude_list=exclude_list,
             )
 
         # include model properties as fields in dict
@@ -848,6 +919,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             relation_value = [
                 relation_field.expand_relationship(x, model, to_register=False)
                 for x in value_to_set
+                if x is not None
             ]
 
             for child in relation_value:
@@ -913,7 +985,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             return base64.b64encode(value).decode()
         return value
 
-    def _convert_json(self, column_name: str, value: Any) -> Union[str, Dict]:
+    def _convert_json(self, column_name: str, value: Any) -> Union[str, Dict, None]:
         """
         Converts value to/from json if needed (for Json columns).
 
@@ -926,12 +998,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         """
         if column_name not in self._json_fields:
             return value
-        if not isinstance(value, str):
-            try:
-                value = json.dumps(value)
-            except TypeError:  # pragma no cover
-                pass
-        return value.decode("utf-8") if isinstance(value, bytes) else value
+        return encode_json(value)
 
     def _extract_own_model_fields(self) -> Dict:
         """

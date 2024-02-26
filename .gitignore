@@ -9,6 +9,7 @@ build
 *.pyc
 *.log
 test.db
+.vscode/
 dist
 /ormar.egg-info/
 site
@@ -16,3 +17,4 @@ profile.py
 *.db
 *.db-journal
 *coverage.xml
+.benchmarks/

@@ -1,9 +1,11 @@
-from typing import List, Optional
+from enum import Enum
+from typing import Optional
 
 import databases
 import pydantic
 import pytest
 import sqlalchemy
+from pydantic import Json
 
 import ormar
 from ormar import QuerySet
@@ -16,6 +18,11 @@ from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL, force_rollback=True)
 metadata = sqlalchemy.MetaData()
+
+
+class MySize(Enum):
+    SMALL = 0
+    BIG = 1
 
 
 class Book(ormar.Model):
@@ -44,6 +51,7 @@ class ToDo(ormar.Model):
     text: str = ormar.String(max_length=500)
     completed: bool = ormar.Boolean(default=False)
     pairs: pydantic.Json = ormar.JSON(default=[])
+    size = ormar.Enum(enum_class=MySize, default=MySize.SMALL)
 
 
 class Category(ormar.Model):
@@ -68,7 +76,7 @@ class Note(ormar.Model):
 
 
 class ItemConfig(ormar.Model):
-    class Meta:
+    class Meta(ormar.ModelMeta):
         metadata = metadata
         database = database
         tablename = "item_config"
@@ -76,6 +84,7 @@ class ItemConfig(ormar.Model):
     id: Optional[int] = ormar.Integer(primary_key=True)
     item_id: str = ormar.String(max_length=32, index=True)
     pairs: pydantic.Json = ormar.JSON(default=["2", "3"])
+    size = ormar.Enum(enum_class=MySize, default=MySize.SMALL)
 
 
 class QuerySetCls(QuerySet):
@@ -96,6 +105,16 @@ class Customer(ormar.Model):
 
     id: Optional[int] = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=32)
+
+
+class JsonTestModel(ormar.Model):
+    class Meta(ormar.ModelMeta):
+        metadata = metadata
+        database = database
+        tablename = "test_model"
+
+    id: int = ormar.Integer(primary_key=True)
+    json_field: Json = ormar.JSON()
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -166,17 +185,18 @@ async def test_delete_and_update():
 @pytest.mark.asyncio
 async def test_get_or_create():
     async with database:
-        tom = await Book.objects.get_or_create(
+        tom, created = await Book.objects.get_or_create(
             title="Volume I", author="Anonymous", genre="Fiction"
         )
         assert await Book.objects.count() == 1
+        assert created is True
 
-        assert (
-            await Book.objects.get_or_create(
-                title="Volume I", author="Anonymous", genre="Fiction"
-            )
-            == tom
+        second_tom, created = await Book.objects.get_or_create(
+            title="Volume I", author="Anonymous", genre="Fiction"
         )
+
+        assert second_tom.pk == tom.pk
+        assert created is False
         assert await Book.objects.count() == 1
 
         assert await Book.objects.create(
@@ -186,6 +206,42 @@ async def test_get_or_create():
             await Book.objects.get_or_create(
                 title="Volume I", author="Anonymous", genre="Fiction"
             )
+
+
+@pytest.mark.asyncio
+async def test_get_or_create_with_defaults():
+    async with database:
+        book, created = await Book.objects.get_or_create(
+            title="Nice book", _defaults={"author": "Mojix", "genre": "Historic"}
+        )
+        assert created is True
+        assert book.author == "Mojix"
+        assert book.title == "Nice book"
+        assert book.genre == "Historic"
+
+        book2, created = await Book.objects.get_or_create(
+            author="Mojix", _defaults={"title": "Book2"}
+        )
+        assert created is False
+        assert book2 == book
+        assert book2.title == "Nice book"
+        assert book2.author == "Mojix"
+        assert book2.genre == "Historic"
+        assert await Book.objects.count() == 1
+
+        book, created = await Book.objects.get_or_create(
+            title="doesn't exist",
+            _defaults={"title": "overwritten", "author": "Mojix", "genre": "Historic"},
+        )
+        assert created is True
+        assert book.title == "overwritten"
+
+        book2, created = await Book.objects.get_or_create(
+            title="overwritten", _defaults={"title": "doesn't work"}
+        )
+        assert created is False
+        assert book2.title == "overwritten"
+        assert book2 == book
 
 
 @pytest.mark.asyncio
@@ -230,8 +286,38 @@ async def test_bulk_create():
         completed = await ToDo.objects.filter(completed=True).all()
         assert len(completed) == 2
 
-        with pytest.raises(ModelListEmptyError):
+        with pytest.raises(ormar.exceptions.ModelListEmptyError):
             await ToDo.objects.bulk_create([])
+
+
+@pytest.mark.asyncio
+async def test_bulk_create_json_field():
+    async with database:
+        json_value = {"a": 1}
+        test_model_1 = JsonTestModel(id=1, json_field=json_value)
+        test_model_2 = JsonTestModel(id=2, json_field=json_value)
+
+        # store one with .save() and the other with .bulk_create()
+        await test_model_1.save()
+        await JsonTestModel.objects.bulk_create([test_model_2])
+
+        # refresh from the database
+        await test_model_1.load()
+        await test_model_2.load()
+
+        assert test_model_1.json_field == test_model_2.json_field  # True
+
+        # try to query the json field
+        table = JsonTestModel.Meta.table
+        query = table.select().where(table.c.json_field["a"].as_integer() == 1)
+        res = [
+            JsonTestModel.from_row(record, source_model=JsonTestModel)
+            for record in await database.fetch_all(query)
+        ]
+
+        assert test_model_1 in res
+        assert test_model_2 in res
+        assert len(res) == 2
 
 
 @pytest.mark.asyncio
@@ -268,6 +354,7 @@ async def test_bulk_update():
         for todo in todoes:
             todo.text = todo.text + "_1"
             todo.completed = False
+            todo.size = MySize.BIG
 
         await ToDo.objects.bulk_update(todoes)
 
@@ -279,6 +366,7 @@ async def test_bulk_update():
 
         for todo in todoes:
             assert todo.text[-2:] == "_1"
+            assert todo.size == MySize.BIG
 
 
 @pytest.mark.asyncio
@@ -374,6 +462,21 @@ async def test_bulk_operations_with_json():
         items = await ItemConfig.objects.all()
         assert all(x.pairs == ["1"] for x in items)
 
+        items = await ItemConfig.objects.filter(ItemConfig.id > 1).all()
+        for item in items:
+            item.pairs = {"b": 2}
+        await ItemConfig.objects.bulk_update(items)
+        items = await ItemConfig.objects.filter(ItemConfig.id > 1).all()
+        assert all(x.pairs == {"b": 2} for x in items)
+
+        table = ItemConfig.Meta.table
+        query = table.select().where(table.c.pairs["b"].as_integer() == 2)
+        res = [
+            ItemConfig.from_row(record, source_model=ItemConfig)
+            for record in await database.fetch_all(query)
+        ]
+        assert len(res) == 2
+
 
 @pytest.mark.asyncio
 async def test_custom_queryset_cls():
@@ -384,3 +487,13 @@ async def test_custom_queryset_cls():
         await Customer(name="test").save()
         c = await Customer.objects.first_or_404(name="test")
         assert c.name == "test"
+
+
+@pytest.mark.asyncio
+async def test_filter_enum():
+    async with database:
+        it = ItemConfig(item_id="test_1")
+        await it.save()
+
+        it = await ItemConfig.objects.filter(size=MySize.SMALL).first()
+        assert it

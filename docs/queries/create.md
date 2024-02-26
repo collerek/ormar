@@ -3,7 +3,7 @@
 Following methods allow you to insert data into the database.
 
 * `create(**kwargs) -> Model`
-* `get_or_create(**kwargs) -> Model`
+* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
 * `update_or_create(**kwargs) -> Model`
 * `bulk_create(objects: List[Model]) -> None`
 
@@ -16,7 +16,7 @@ Following methods allow you to insert data into the database.
 
 * `QuerysetProxy`
       * `QuerysetProxy.create(**kwargs)` method
-      * `QuerysetProxy.get_or_create(**kwargs)` method
+      * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs)` method
       * `QuerysetProxy.update_or_create(**kwargs)` method
 
 ## create
@@ -56,12 +56,15 @@ await malibu.save()
 
 ## get_or_create
 
-`get_or_create(**kwargs) -> Model`
+`get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
 
 Combination of create and get methods.
 
 Tries to get a row meeting the criteria and if `NoMatch` exception is raised it creates
-a new one with given kwargs.
+a new one with given kwargs and _defaults.
+
+When `_defaults` dictionary is provided the values set in `_defaults` will **always** be set, including overwriting explicitly provided values. 
+i.e. `get_or_create(_defaults: {"title": "I win"}, title="never used")` will always use "I win" as title whether you provide your own value in kwargs or not. 
 
 ```python
 class Album(ormar.Model):
@@ -72,12 +75,17 @@ class Album(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
+    year: int = ormar.Integer()
 ```
 
 ```python
-album = await Album.objects.get_or_create(name='The Cat')
+album, created = await Album.objects.get_or_create(name='The Cat', _defaults={"year": 1999})
+assert created is True
+assert album.name == "The Cat"
+assert album.year == 1999
 # object is created as it does not exist
-album2 = await Album.objects.get_or_create(name='The Cat')
+album2, created = await Album.objects.get_or_create(name='The Cat')
+assert created is False
 assert album == album2
 # return True as the same db row is returned
 ```
@@ -85,7 +93,7 @@ assert album == album2
 !!!warning 
     Despite being a equivalent row from database the `album` and `album2` in
     example above are 2 different python objects!
-    Updating one of them will not refresh the second one until you excplicitly load() the
+    Updating one of them will not refresh the second one until you explicitly load() the
     fresh data from db.
 
 !!!note 

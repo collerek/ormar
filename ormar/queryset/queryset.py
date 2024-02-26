@@ -1,3 +1,4 @@
+import asyncio
 from typing import (
     Any,
     Dict,
@@ -12,6 +13,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    AsyncGenerator,
 )
 
 import databases
@@ -37,8 +39,8 @@ from ormar.exceptions import (
 from ormar.queryset import FieldAccessor, FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
-from ormar.queryset.prefetch_query import PrefetchQuery
-from ormar.queryset.query import Query
+from ormar.queryset.queries.prefetch_query import PrefetchQuery
+from ormar.queryset.queries.query import Query
 from ormar.queryset.reverse_alias_resolver import ReverseAliasResolver
 
 if TYPE_CHECKING:  # pragma no cover
@@ -172,7 +174,7 @@ class QuerySet(Generic[T]):
         )
         return await query.prefetch_related(models=models, rows=rows)  # type: ignore
 
-    def _process_query_result_rows(self, rows: List) -> List["T"]:
+    async def _process_query_result_rows(self, rows: List) -> List["T"]:
         """
         Process database rows and initialize ormar Model from each of the rows.
 
@@ -181,16 +183,19 @@ class QuerySet(Generic[T]):
         :return: list of models
         :rtype: List[Model]
         """
-        result_rows = [
-            self.model.from_row(
-                row=row,
-                select_related=self._select_related,
-                excludable=self._excludable,
-                source_model=self.model,
-                proxy_source_model=self.proxy_source_model,
+        result_rows = []
+        for row in rows:
+            result_rows.append(
+                self.model.from_row(
+                    row=row,
+                    select_related=self._select_related,
+                    excludable=self._excludable,
+                    source_model=self.model,
+                    proxy_source_model=self.proxy_source_model,
+                )
             )
-            for row in rows
-        ]
+            await asyncio.sleep(0)
+
         if result_rows:
             return self.model.merge_instances_list(result_rows)  # type: ignore
         return cast(List["T"], result_rows)
@@ -281,10 +286,10 @@ class QuerySet(Generic[T]):
             filter_clauses=self.filter_clauses,
             exclude_clauses=self.exclude_clauses,
             offset=offset or self.query_offset,
-            limit_count=limit or self.limit_count,
             excludable=self._excludable,
             order_bys=order_bys or self.order_bys,
             limit_raw_sql=self.limit_sql_raw,
+            limit_count=limit if limit is not None else self.limit_count,
         )
         exp = qry.build_select_expression()
         # print("\n", exp.compile(compile_kwargs={"literal_binds": True}))
@@ -678,16 +683,28 @@ class QuerySet(Generic[T]):
         expr = sqlalchemy.exists(expr).select()
         return await self.database.fetch_val(expr)
 
-    async def count(self) -> int:
+    async def count(self, distinct: bool = True) -> int:
         """
         Returns number of rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
+        If `distinct` is `True` (the default), this will return
+        the number of primary rows selected. If `False`,
+        the count will be the total number of rows returned
+        (including extra rows for `one-to-many` or `many-to-many`
+        left `select_related` table joins).
+        `False` is the legacy (buggy) behavior for workflows that depend on it.
+
+        :param distinct: flag if the primary table rows should be distinct or not
 
         :return: number of rows
         :rtype: int
         """
         expr = self.build_select_expression().alias("subquery_for_count")
         expr = sqlalchemy.func.count().select().select_from(expr)
+        if distinct:
+            pk_column_name = self.model.get_column_alias(self.model_meta.pkname)
+            expr_distinct = expr.group_by(pk_column_name).alias("subquery_for_group")
+            expr = sqlalchemy.func.count().select().select_from(expr_distinct)
         return await self.database.fetch_val(expr)
 
     async def _query_aggr_function(self, func_name: str, columns: List) -> Any:
@@ -901,7 +918,7 @@ class QuerySet(Generic[T]):
             + self.order_bys,
         )
         rows = await self.database.fetch_all(expr)
-        processed_rows = self._process_query_result_rows(rows)
+        processed_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and processed_rows:
             processed_rows = await self._prefetch_related_models(processed_rows, rows)
         self.check_single_result_rows_count(processed_rows)
@@ -909,7 +926,7 @@ class QuerySet(Generic[T]):
 
     async def get_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
         """
-        Get's the first row from the db meeting the criteria set by kwargs.
+        Gets the first row from the db meeting the criteria set by kwargs.
 
         If no criteria set it will return the last row in db sorted by pk.
 
@@ -930,7 +947,7 @@ class QuerySet(Generic[T]):
 
     async def get(self, *args: Any, **kwargs: Any) -> "T":  # noqa: CCR001
         """
-        Get's the first row from the db meeting the criteria set by kwargs.
+        Gets the first row from the db meeting the criteria set by kwargs.
 
         If no criteria set it will return the last row in db sorted by pk.
 
@@ -966,32 +983,40 @@ class QuerySet(Generic[T]):
             expr = self.build_select_expression()
 
         rows = await self.database.fetch_all(expr)
-        processed_rows = self._process_query_result_rows(rows)
+        processed_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and processed_rows:
             processed_rows = await self._prefetch_related_models(processed_rows, rows)
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
-    async def get_or_create(self, *args: Any, **kwargs: Any) -> "T":
+    async def get_or_create(
+        self,
+        _defaults: Optional[Dict[str, Any]] = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Tuple["T", bool]:
         """
         Combination of create and get methods.
 
         Tries to get a row meeting the criteria for kwargs
         and if `NoMatch` exception is raised
-        it creates a new one with given kwargs.
+        it creates a new one with given kwargs and _defaults.
 
         Passing a criteria is actually calling filter(*args, **kwargs) method described
         below.
 
         :param kwargs: fields names and proper value types
         :type kwargs: Any
-        :return: returned or created Model
-        :rtype: Model
+        :param _defaults: default values for creating object
+        :type _defaults: Optional[Dict[str, Any]]
+        :return: model instance and a boolean
+        :rtype: Tuple("T", bool)
         """
         try:
-            return await self.get(*args, **kwargs)
+            return await self.get(*args, **kwargs), False
         except NoMatch:
-            return await self.create(**kwargs)
+            _defaults = _defaults or {}
+            return await self.create(**{**kwargs, **_defaults}), True
 
     async def update_or_create(self, **kwargs: Any) -> "T":
         """
@@ -1029,11 +1054,60 @@ class QuerySet(Generic[T]):
 
         expr = self.build_select_expression()
         rows = await self.database.fetch_all(expr)
-        result_rows = self._process_query_result_rows(rows)
+        result_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and result_rows:
             result_rows = await self._prefetch_related_models(result_rows, rows)
 
         return result_rows
+
+    async def iterate(  # noqa: A003
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> AsyncGenerator["T", None]:
+        """
+        Return async iterable generator for all rows from a database for given model.
+
+        Passing args and/or kwargs is a shortcut and equals to calling
+        `filter(*args, **kwargs).iterate()`.
+
+        If there are no rows meeting the criteria an empty async generator is returned.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: asynchronous iterable generator of returned models
+        :rtype: AsyncGenerator[Model]
+        """
+
+        if self._prefetch_related:
+            raise QueryDefinitionError(
+                "Prefetch related queries are not supported in iterators"
+            )
+
+        if kwargs or args:
+            async for result in self.filter(*args, **kwargs).iterate():
+                yield result
+            return
+
+        expr = self.build_select_expression()
+
+        rows: list = []
+        last_primary_key = None
+        pk_alias = self.model.get_column_alias(self.model_meta.pkname)
+
+        async for row in self.database.iterate(query=expr):
+            current_primary_key = row[pk_alias]
+            if last_primary_key == current_primary_key or last_primary_key is None:
+                last_primary_key = current_primary_key
+                rows.append(row)
+                continue
+
+            yield (await self._process_query_result_rows(rows))[0]
+            last_primary_key = current_primary_key
+            rows = [row]
+
+        if rows:
+            yield (await self._process_query_result_rows(rows))[0]
 
     async def create(self, **kwargs: Any) -> "T":
         """
@@ -1064,10 +1138,14 @@ class QuerySet(Generic[T]):
         :param objects: list of ormar models already initialized and ready to save.
         :type objects: List[Model]
         """
+
         if not objects:
             raise ModelListEmptyError("Bulk create objects are empty!")
 
-        ready_objects = [obj.prepare_model_to_save(obj.dict()) for obj in objects]
+        ready_objects = []
+        for obj in objects:
+            ready_objects.append(obj.prepare_model_to_save(obj.dict()))
+            await asyncio.sleep(0)  # Allow context switching to prevent blocking
 
         # don't use execute_many, as in databases it's executed in a loop
         # instead of using execute_many from drivers
@@ -1114,15 +1192,7 @@ class QuerySet(Generic[T]):
 
         columns = [self.model.get_column_alias(k) for k in columns]
 
-        # on_update_fields = {
-        #     self.model.get_column_alias(k)
-        #     for k in cast(Type["Model"], self.model_cls).get_fields_with_onupdate()
-        # }
-        # updated_columns = new_columns | on_update_fields
-
         for obj in objects:
-            # when the obj.__setattr__, should be dirty for column
-            # only load the kv from dirty fields
             new_kwargs = obj.dict()
             if new_kwargs.get(pk_name) is None:
                 raise ModelPersistenceError(
@@ -1131,15 +1201,13 @@ class QuerySet(Generic[T]):
                 )
             new_kwargs = obj.prepare_model_to_update(new_kwargs)
             ready_objects.append(
-                {
-                    "new_" + k: v for k, v in new_kwargs.items()
-                    if k in columns
-                }
+                {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
             )
+            await asyncio.sleep(0)
+
         pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
         pk_column_name = self.model.get_column_alias(pk_name)
         table_columns = [c.name for c in self.model_meta.table.c]
-        # Make the expr
         expr = self.table.update().where(
             pk_column == bindparam("new_" + pk_column_name)
         )

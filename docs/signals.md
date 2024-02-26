@@ -141,7 +141,7 @@ album.signals.pre_save.disconnect(before_save)
     
     *  bulk operations (`QuerySet.bulk_create` and `QuerySet.bulk_update`) as they are designed for speed.
     
-    *  queyset table level operations (`QuerySet.update` and `QuerySet.delete`) as they run on the underlying tables 
+    *  queryset table level operations (`QuerySet.update` and `QuerySet.delete`) as they run on the underlying tables 
     (more lak raw sql update/delete operations) and do not have specific instance.
 
 ### pre_save
