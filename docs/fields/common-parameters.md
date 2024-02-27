@@ -216,10 +216,10 @@ class OverwriteTest(ormar.Model):
 
 `choices`: `Sequence` = `[]` 
 
-## onupdate
+## on_update
 
-when the object update or bulk_update, if you don't update the field which has the onupdate option,
-its value will be changed from `onupdate definition`
+when the object update or bulk_update, if you don't update the field which has the on_update option,
+its value will be changed from `on_update definition`
 
 ```python
 
@@ -230,16 +230,21 @@ class ToDo(ormar.Model):
         database = database
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=32)
-    my_timestamp: int = ormar.Integer(onupdate=time.time)
-    is_dirty: bool = ormar.Boolean(default=False, onupdate=True)
+    name: str = ormar.String(
+        max_length=255,
+        on_update=lambda: "hello",
+    )
+    is_dirty: bool = ormar.Boolean(default=False, on_update=True)
+    updated_at: datetime = ormar.DateTime(
+        default=datetime.now, server_default=func.now(), on_update=datetime.now
+    )
 
-
+await ToDo.objects.create(name="test")
 todo = await ToDo.objects.get(id=1)
-await todo.update(name="test")
+await todo.update()
 
 assert todo.is_dirty
-assert todo.my_timestamp == now
+assert todo.name == "hello"
 
 ```
 

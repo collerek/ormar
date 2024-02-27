@@ -655,7 +655,7 @@ The following keyword arguments are supported on all field types.
 * `choices: typing.Sequence`
 * `name: str`
 * `pydantic_only: bool`
-* `onupdate: Any/callable`
+* `on_update: Any/callable`
 
 All fields are required unless one of the following is set:
 
