@@ -251,6 +251,8 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
 
         :param new_kwargs: dictionary of model that is about to be saved
         :type new_kwargs: Dict
+        :param obj: ormar models
+        :type obj: Model
         :return: dictionary of model that is about to be saved
         :rtype: Dict
         """
