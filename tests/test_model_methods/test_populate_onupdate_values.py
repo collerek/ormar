@@ -124,3 +124,10 @@ async def test_onupdate_bulk_update():
         assert t3.points == 1
         assert t3.year == 2
         assert t3.updated_at > t2.updated_at
+
+        t4 = await Task.objects.get(name="bulk_update")
+        t4.year = 2024
+        await Task.objects.bulk_update([t4], columns=["year"])
+        t5 = await Task.objects.get(name="hello")
+        assert t5.year == 2024
+        assert t5.points == 1
