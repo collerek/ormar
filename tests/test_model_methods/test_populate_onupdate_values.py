@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 
 import databases
@@ -118,6 +119,7 @@ async def test_onupdate_bulk_update():
 
         t2 = await Task.objects.get(name="123")
         t2.name = "bulk_update"
+        await asyncio.sleep(0.1)
         await Task.objects.bulk_update([t2])
         t3 = await Task.objects.get(name="bulk_update")
         assert t3.name == "bulk_update"
@@ -127,7 +129,9 @@ async def test_onupdate_bulk_update():
 
         t4 = await Task.objects.get(name="bulk_update")
         t4.year = 2024
+        await asyncio.sleep(0.1)
         await Task.objects.bulk_update([t4], columns=["year"])
         t5 = await Task.objects.get(name="hello")
         assert t5.year == 2024
         assert t5.points == 1
+        assert t5.updated_at > t4.updated_at

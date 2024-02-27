@@ -212,6 +212,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: Any
         :rtype: Any
         """
+        if item == "__setattr_fields__":
+            return set()
         return super().__getattribute__(item)
 
     def __getstate__(self) -> Dict[Any, Any]:
