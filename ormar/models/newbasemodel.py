@@ -74,6 +74,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         "_pk_column",
         "__pk_only__",
         "__cached_hash__",
+        "__setattr_fields__",
     )
 
     if TYPE_CHECKING:  # pragma no cover
@@ -87,6 +88,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         __database__: databases.Database
         __relation_map__: Optional[List[str]]
         __cached_hash__: Optional[int]
+        __setattr_fields__: Set
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
         _orm_id: int
@@ -169,6 +171,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if hasattr(self, "_init_private_attributes"):
             # introduced in pydantic 1.7
             self._init_private_attributes()
+        object.__setattr__(self, "__setattr_fields__", set())
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
         """
@@ -196,6 +199,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
             if prev_hash != new_hash:
                 self._update_relation_cache(prev_hash, new_hash)
+        self.__setattr_fields__.add(name)
 
     def __getattr__(self, item: str) -> Any:
         """

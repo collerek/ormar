@@ -1,6 +1,5 @@
 import warnings
-from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING, Type, \
-    Union
+from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
 from pydantic import Json, typing
@@ -49,7 +48,8 @@ class BaseField(FieldInfo):
         self.unique: bool = kwargs.pop("unique", False)
         self.pydantic_only: bool = kwargs.pop("pydantic_only", False)
         self.on_update: Union[Callable[..., Any], Any, None] = kwargs.pop(
-            "on_update", None)
+            "on_update", None
+        )
         if self.pydantic_only:
             warnings.warn(
                 "Parameter `pydantic_only` is deprecated and will "

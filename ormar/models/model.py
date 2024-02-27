@@ -1,7 +1,4 @@
-from typing import (
-    Any, Dict, List, Optional, Set,
-    TYPE_CHECKING, TypeVar, Union
-)
+from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, TypeVar, Union
 
 import ormar.queryset  # noqa I100
 from ormar.exceptions import ModelPersistenceError, NoMatch
@@ -248,9 +245,17 @@ class Model(ModelRow):
         if _columns:
             onupdate_fields = self.get_fields_with_onupdate()
             self_fields = {
-                k: v for k, v in self_fields.items()
+                k: v
+                for k, v in self_fields.items()
                 if k in _columns or k in onupdate_fields
             }
+        if not kwargs and not _columns:
+            for field_name in self.get_fields_with_onupdate():
+                if field_name not in self.__setattr_fields__:
+                    field = self.Meta.model_fields[field_name]
+                    onupdate_field_value = {field_name: field.get_onupdate()}
+                    self_fields.update(onupdate_field_value)
+                    self.update_from_dict(onupdate_field_value)
         self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.update().values(**self_fields)
         expr = expr.where(self.pk_column == getattr(self, self.Meta.pkname))

@@ -92,7 +92,14 @@ class SqlJoin:
         """
         return self.next_model.Meta.table
 
-    def _on_clause(self, previous_alias: str, from_table_name:str, from_column_name: str, to_table_name: str, to_column_name: str) -> text:
+    def _on_clause(
+        self,
+        previous_alias: str,
+        from_table_name: str,
+        from_column_name: str,
+        to_table_name: str,
+        to_column_name: str,
+    ) -> text:
         """
         Receives aliases and names of both ends of the join and combines them
         into one text clause used in joins.
@@ -112,11 +119,15 @@ class SqlJoin:
         """
         dialect = self.main_model.Meta.database._backend._dialect
         quoter = dialect.identifier_preparer.quote
-        left_part = f"{quoter(f'{self.next_alias}_{to_table_name}')}.{quoter(to_column_name)}"
+        left_part = (
+            f"{quoter(f'{self.next_alias}_{to_table_name}')}.{quoter(to_column_name)}"
+        )
         if not previous_alias:
             right_part = f"{quoter(from_table_name)}.{quoter(from_column_name)}"
         else:
-            right_part = f"{quoter(f'{previous_alias}_{from_table_name}')}.{from_column_name}"
+            right_part = (
+                f"{quoter(f'{previous_alias}_{from_table_name}')}.{from_column_name}"
+            )
 
         return text(f"{left_part}={right_part}")
 
