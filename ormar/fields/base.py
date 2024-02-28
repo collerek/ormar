@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Type, Union
+from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING, Type, Union
 
 import sqlalchemy
 from pydantic import Json, typing
@@ -47,6 +47,9 @@ class BaseField(FieldInfo):
         self.index: bool = kwargs.pop("index", False)
         self.unique: bool = kwargs.pop("unique", False)
         self.pydantic_only: bool = kwargs.pop("pydantic_only", False)
+        self.on_update: Union[Callable[..., Any], Any, None] = kwargs.pop(
+            "on_update", None
+        )
         if self.pydantic_only:
             warnings.warn(
                 "Parameter `pydantic_only` is deprecated and will "
@@ -216,6 +219,23 @@ class BaseField(FieldInfo):
         return self.ormar_default is not None or (
             self.server_default is not None and use_server
         )
+
+    def has_onupdate(self) -> bool:
+        """
+        Checks if the field has onupdate value set.
+        :return: result of the check if onupdate value is set
+        rtype: bool
+        """
+        return self.on_update is not None
+
+    def get_onupdate(self) -> Union[None, Any]:
+        """
+        Get onupdate value if set
+
+        :return: result of the onupdate
+        rtype: Any
+        """
+        return self.on_update() if callable(self.on_update) else self.on_update
 
     def is_auto_primary_key(self) -> bool:
         """

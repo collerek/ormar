@@ -216,6 +216,40 @@ class OverwriteTest(ormar.Model):
 
 `choices`: `Sequence` = `[]` 
 
+## on_update
+
+when the object update or bulk_update, if you don't update the field which has the on_update option,
+its value will be changed from `on_update definition`
+
+```python
+
+class ToDo(ormar.Model):
+    class Meta:
+        tablename = "todo"
+        metadata = metadata
+        database = database
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(
+        max_length=255,
+        on_update=lambda: "hello",
+    )
+    is_dirty: bool = ormar.Boolean(default=False, on_update=True)
+    updated_at: datetime = ormar.DateTime(
+        default=datetime.now, server_default=func.now(), on_update=datetime.now
+    )
+
+await ToDo.objects.create(name="test")
+todo = await ToDo.objects.get(id=1)
+await todo.update()
+
+assert todo.is_dirty
+assert todo.name == "hello"
+
+```
+
+
+
 A set of choices allowed to be used for given field.
 
 Used for data validation on pydantic side.

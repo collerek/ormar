@@ -229,6 +229,7 @@ class Model(ModelRow):
         :rtype: Model
         """
         if kwargs:
+            kwargs = self.populate_onupdate_value(kwargs)
             self.update_from_dict(kwargs)
 
         if not self.pk:
@@ -242,7 +243,19 @@ class Model(ModelRow):
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
         if _columns:
-            self_fields = {k: v for k, v in self_fields.items() if k in _columns}
+            onupdate_fields = self.get_fields_with_onupdate()
+            self_fields = {
+                k: v
+                for k, v in self_fields.items()
+                if k in _columns or k in onupdate_fields
+            }
+        if not kwargs and not _columns:
+            for field_name in self.get_fields_with_onupdate():
+                if field_name not in self.__setattr_fields__:
+                    field = self.Meta.model_fields[field_name]
+                    onupdate_field_value = {field_name: field.get_onupdate()}
+                    self_fields.update(onupdate_field_value)
+                    self.update_from_dict(onupdate_field_value)
         self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.Meta.table.update().values(**self_fields)
         expr = expr.where(self.pk_column == getattr(self, self.Meta.pkname))

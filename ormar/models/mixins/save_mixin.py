@@ -22,6 +22,7 @@ from ormar.models.mixins import AliasMixin
 from ormar.models.mixins.relation_mixin import RelationMixin
 
 if TYPE_CHECKING:  # pragma: no cover
+    from ormar.models import T
     from ormar import ForeignKeyField, Model
 
 
@@ -35,6 +36,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         _skip_ellipsis: Callable
         _json_fields: Set[str]
         _bytes_fields: Set[str]
+        _onupdate_fields: Set[str]
         __fields__: Dict[str, pydantic.fields.ModelField]
 
     @classmethod
@@ -243,6 +245,27 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return new_kwargs
 
     @classmethod
+    def populate_onupdate_value(cls, new_kwargs: Dict, obj: "T" = None) -> Dict:
+        """
+        Populate value which from onupdate options in field
+
+        :param new_kwargs: dictionary of model that is about to be saved
+        :type new_kwargs: Dict
+        :param obj: ormar models
+        :type obj: Model
+        :return: dictionary of model that is about to be saved
+        :rtype: Dict
+        """
+        for field_name in cls.get_fields_with_onupdate():
+            field = cls.Meta.model_fields[field_name]
+            if field_name not in new_kwargs:
+                new_kwargs[field_name] = field.get_onupdate()
+            if obj:
+                if field_name not in obj.__setattr_fields__:
+                    new_kwargs[field_name] = field.get_onupdate()
+        return new_kwargs
+
+    @classmethod
     def validate_choices(cls, new_kwargs: Dict) -> Dict:
         """
         Receives dictionary of model that is about to be saved and validates the
@@ -406,3 +429,13 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         if not isinstance(values, list):
             values = [values]
         return values
+
+    @classmethod
+    def get_fields_with_onupdate(cls) -> Set[str]:
+        if not cls._onupdate_fields:
+            cls._onupdate_fields = {
+                field_name
+                for field_name, field in cls.Meta.model_fields.items()
+                if field.has_onupdate() and not field.pydantic_only
+            }
+        return cls._onupdate_fields

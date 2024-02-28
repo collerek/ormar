@@ -111,6 +111,7 @@ def add_cached_properties(new_model: Type["Model"]) -> None:
     new_model._pydantic_fields = {name for name in new_model.__fields__}
     new_model._json_fields = set()
     new_model._bytes_fields = set()
+    new_model._onupdate_fields = set()
 
 
 def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa: CCR001

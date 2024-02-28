@@ -74,6 +74,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         "_pk_column",
         "__pk_only__",
         "__cached_hash__",
+        "__setattr_fields__",
     )
 
     if TYPE_CHECKING:  # pragma no cover
@@ -87,6 +88,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         __database__: databases.Database
         __relation_map__: Optional[List[str]]
         __cached_hash__: Optional[int]
+        __setattr_fields__: Set
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
         _orm_id: int
@@ -99,6 +101,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         _quick_access_fields: Set
         _json_fields: Set
         _bytes_fields: Set
+        _onupdate_fields: Set
         Meta: ModelMeta
 
     # noinspection PyMissingConstructor
@@ -195,6 +198,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
             if prev_hash != new_hash:
                 self._update_relation_cache(prev_hash, new_hash)
+        self.__setattr_fields__.add(name)
 
     def __getattr__(self, item: str) -> Any:
         """
@@ -374,6 +378,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :rtype: None
         """
         # object.__setattr__(self, "_orm_id", uuid.uuid4().hex)
+        object.__setattr__(self, "__setattr_fields__", set())
         object.__setattr__(self, "_orm_saved", False)
         object.__setattr__(self, "_pk_column", None)
         object.__setattr__(

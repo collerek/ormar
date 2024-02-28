@@ -796,6 +796,7 @@ class QuerySet(Generic[T]):
             self.model.extract_related_names()
         )
         updates = {k: v for k, v in kwargs.items() if k in self_fields}
+        updates = self.model.populate_onupdate_value(updates)
         updates = self.model.validate_choices(updates)
         updates = self.model.translate_columns_to_aliases(updates)
 
@@ -1190,7 +1191,12 @@ class QuerySet(Generic[T]):
         if pk_name not in columns:
             columns.append(pk_name)
 
-        columns = [self.model.get_column_alias(k) for k in columns]
+        columns = {self.model.get_column_alias(k) for k in columns}
+        on_update_fields = {
+            self.model.get_column_alias(k)
+            for k in cast(Type["Model"], self.model_cls).get_fields_with_onupdate()
+        }
+        columns |= on_update_fields
 
         for obj in objects:
             new_kwargs = obj.dict()
@@ -1199,6 +1205,7 @@ class QuerySet(Generic[T]):
                     "You cannot update unsaved objects. "
                     f"{self.model.__name__} has to have {pk_name} filled."
                 )
+            new_kwargs = obj.populate_onupdate_value(new_kwargs, obj)
             new_kwargs = obj.prepare_model_to_update(new_kwargs)
             ready_objects.append(
                 {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
