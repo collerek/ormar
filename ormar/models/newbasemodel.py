@@ -171,7 +171,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         if hasattr(self, "_init_private_attributes"):
             # introduced in pydantic 1.7
             self._init_private_attributes()
-        object.__setattr__(self, "__setattr_fields__", set())
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
         """
@@ -212,8 +211,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :return: Any
         :rtype: Any
         """
-        if item == "__setattr_fields__":
-            return set()
         return super().__getattribute__(item)
 
     def __getstate__(self) -> Dict[Any, Any]:
@@ -381,6 +378,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :rtype: None
         """
         # object.__setattr__(self, "_orm_id", uuid.uuid4().hex)
+        object.__setattr__(self, "__setattr_fields__", set())
         object.__setattr__(self, "_orm_saved", False)
         object.__setattr__(self, "_pk_column", None)
         object.__setattr__(
