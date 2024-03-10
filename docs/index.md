@@ -128,17 +128,20 @@ For tests and basic applications the `sqlalchemy` is more than enough:
 # 1. Imports
 import sqlalchemy
 import databases
+import ormar
 
 # 2. Initialization
 DATABASE_URL = "sqlite:///db.sqlite"
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = ormar.OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=databases.Database(DATABASE_URL),
+    engine=sqlalchemy.create_engine(DATABASE_URL),
+)
 
 # Define models here
 
 # 3. Database creation and tables creation
-engine = sqlalchemy.create_engine(DATABASE_URL)
-metadata.create_all(engine)
+base_ormar_config.metadata.create_all(engine)
 ```
 
 For a sample configuration of alembic and more information regarding migrations and
@@ -175,45 +178,39 @@ Note that you can find the same script in examples folder on github.
 from typing import Optional
 
 import databases
-import pydantic
 
 import ormar
 import sqlalchemy
 
 DATABASE_URL = "sqlite:///db.sqlite"
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = ormar.OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=databases.Database(DATABASE_URL),
+    engine = sqlalchemy.create_engine(DATABASE_URL),
+)
 
-
-# note that this step is optional -> all ormar cares is a internal
-# class with name Meta and proper parameters, but this way you do not
-# have to repeat the same parameters if you use only one database
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
-
+# note that this step is optional -> all ormar cares is a field with name
+# ormar_config # and proper parameters, but this way you do not have to repeat
+# the same parameters if you use only one database
+#
 # Note that all type hints are optional
 # below is a perfectly valid model declaration
 # class Author(ormar.Model):
-#     class Meta(BaseMeta):
-#         tablename = "authors"
+#     ormar_config = base_ormar_config.copy(tablename="authors")
 #
 #     id = ormar.Integer(primary_key=True) # <= notice no field types
 #     name = ormar.String(max_length=100)
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
@@ -224,10 +221,9 @@ class Book(ormar.Model):
 # create the database
 # note that in production you should use migrations
 # note that this is not required if you connect to existing database
-engine = sqlalchemy.create_engine(DATABASE_URL)
 # just to be sure we clear the db before
-metadata.drop_all(engine)
-metadata.create_all(engine)
+base_ormar_config.metadata.drop_all(engine)
+base_ormar_config.metadata.create_all(engine)
 
 
 # all functions below are divided into functionality categories

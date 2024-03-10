@@ -96,10 +96,7 @@ Flag indicates whether fields which were not explicitly set when creating the mo
 
 ```python
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="Test")
@@ -107,10 +104,7 @@ class Category(ormar.Model):
 
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -140,20 +134,14 @@ Flag indicates are equal to their default values (whether set or otherwise) shou
 
 ```python
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="Test")
     visibility: bool = ormar.Boolean(default=True)
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -181,10 +169,7 @@ Flag indicates whether fields which are equal to `None` should be excluded from 
 
 ```python
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="Test", nullable=True)
@@ -192,10 +177,7 @@ class Category(ormar.Model):
 
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -226,10 +208,7 @@ Setting flag to `True` will exclude all primary key columns in a tree, including
 
 ```python
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -249,20 +228,14 @@ Setting the `exclude_through_models=True` will exclude all through models, inclu
 
 ```python
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -321,25 +294,21 @@ That means that this way you can effortlessly create pydantic models for request
 Given sample ormar models like follows:
 
 ```python
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
+base_ormar_config = ormar.OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=databases.Database(DATABASE_URL, force_rollback=True),
+)
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="test")
@@ -482,10 +451,7 @@ In example:
 
 ```python
 class Movie(ormar.Model):
-    class Meta:
-        tablename = "movies"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="title")
@@ -584,18 +550,14 @@ Example:
 
 ```python
 class Department(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     department_name: str = ormar.String(max_length=100)
 
 
 class Course(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     course_name: str = ormar.String(max_length=100)
@@ -604,9 +566,7 @@ class Course(ormar.Model):
 
 
 class Student(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

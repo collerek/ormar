@@ -9,7 +9,7 @@ Sqlalchemy column and Type are automatically taken from target `Model`.
 
 ## Defining Models
 
-```Python hl_lines="40"
+```Python hl_lines="34"
 --8<-- "../docs_src/relations/docs002.py"
 ```
 
@@ -28,16 +28,14 @@ By default it's child (source) `Model` name + s, like courses in snippet below:
 
 ```python
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -96,16 +94,14 @@ Example:
 
 ```python
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -141,7 +137,7 @@ assert len(categories) == 1
 Optionally if you want to add additional fields you can explicitly create and pass
 the through model class.
 
-```Python hl_lines="14-20 29"
+```Python hl_lines="19-24 32"
 --8<-- "../docs_src/relations/docs004.py"
 ```
 
@@ -170,9 +166,7 @@ So in example like this:
 ```python
 ... # course declaration omitted
 class Student(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -180,10 +174,7 @@ class Student(ormar.Model):
 
 # will produce default Through model like follows (example simplified)
 class StudentCourse(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
-        tablename = "students_courses"
+    ormar_config = base_ormar_config.copy(tablename="students_courses")
 
     id: int = ormar.Integer(primary_key=True)
     student = ormar.ForeignKey(Student) # default name
@@ -199,10 +190,14 @@ Example:
 
 ```python
 ... # course declaration omitted
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database("sqlite:///db.sqlite"),
+    metadata=sqlalchemy.MetaData(),
+)
+
+
 class Student(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -212,10 +207,7 @@ class Student(ormar.Model):
 
 # will produce Through model like follows (example simplified)
 class StudentCourse(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
-        tablename = "students_courses"
+    ormar_config = base_ormar_config.copy(tablename="student_courses")
 
     id: int = ormar.Integer(primary_key=True)
     student_id = ormar.ForeignKey(Student) # set by through_relation_name
@@ -238,7 +230,7 @@ so it's useful only when additional fields are provided on `Through` model.
 
 In a sample model setup as following:
 
-```Python hl_lines="14-20 29"
+```Python hl_lines="19-24 32"
 --8<-- "../docs_src/relations/docs004.py"
 ```
 

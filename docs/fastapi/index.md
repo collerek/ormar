@@ -45,13 +45,10 @@ from fastapi import FastAPI
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     if not config.database.is_connected:
         await config.database.connect()
-        config.metadata.drop_all(config.engine)
-        config.metadata.create_all(config.engine)
 
     yield
 
     if config.database.is_connected:
-        config.metadata.drop_all(config.engine)
         await config.database.disconnect()
 
 
@@ -72,21 +69,21 @@ Define ormar models with appropriate fields.
 Those models will be used instead of pydantic ones.
 
 ```python
+base_ormar_config = OrmarConfig(
+    metadata = metadata
+    database = database
+)
+
+
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

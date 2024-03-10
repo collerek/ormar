@@ -127,7 +127,7 @@ provided Through model.
 
 Given sample like this:
 
-```Python hl_lines="14-20 29"
+```Python hl_lines="19-24 32"
 --8<-- "../docs_src/relations/docs004.py"
 ```
 
@@ -174,7 +174,7 @@ Updates the related model with provided keyword arguments, return number of upda
 Note that for `ManyToMany` relations update can also accept an argument with through field
 name and a dictionary of fields.
 
-```Python hl_lines="14-20 29"
+```Python hl_lines="19-24 32"
 --8<-- "../docs_src/relations/docs004.py"
 ```
 

@@ -14,7 +14,7 @@ Sqlalchemy column and Type are automatically taken from target `Model`.
 
 To define a relation add `ForeignKey` field that points to related `Model`.
 
-```Python hl_lines="29"
+```Python hl_lines="30"
 --8<-- "../docs_src/fields/docs003.py"
 ```
 
@@ -24,7 +24,7 @@ To define a relation add `ForeignKey` field that points to related `Model`.
 
 By default it's child (source) `Model` name + s, like courses in snippet below: 
 
-```Python hl_lines="29 35"
+```Python hl_lines="29 36"
 --8<-- "../docs_src/fields/docs001.py"
 ```
 
@@ -52,8 +52,7 @@ Example:
 
 ```python
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     first_name: str = ormar.String(max_length=80)
@@ -61,8 +60,7 @@ class Author(ormar.Model):
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -175,7 +173,7 @@ To read which methods of QuerySet are available read below [querysetproxy][query
 
 But you can overwrite this name by providing `related_name` parameter like below:
 
-```Python hl_lines="29 35"
+```Python hl_lines="27-29 35"
 --8<-- "../docs_src/fields/docs002.py"
 ```
 
@@ -230,7 +228,7 @@ You have several ways to set-up a relationship connection.
 
 The most obvious one is to pass a related `Model` instance to the constructor.
 
-```Python hl_lines="34-35"
+```Python hl_lines="35-36"
 --8<-- "../docs_src/relations/docs001.py"
 ```
 
@@ -238,7 +236,7 @@ The most obvious one is to pass a related `Model` instance to the constructor.
 
 You can setup the relation also with just the pk column value of the related model.
 
-```Python hl_lines="37-38"
+```Python hl_lines="38-39"
 --8<-- "../docs_src/relations/docs001.py"
 ```
 
@@ -248,7 +246,7 @@ Next option is with a dictionary of key-values of the related model.
 
 You can build the dictionary yourself or get it from existing model with `model_dump()` method.
 
-```Python hl_lines="40-41"
+```Python hl_lines="41-42"
 --8<-- "../docs_src/relations/docs001.py"
 ```
 
@@ -256,7 +254,7 @@ You can build the dictionary yourself or get it from existing model with `model_
 
 Finally you can explicitly set it to None (default behavior if no value passed).
 
-```Python hl_lines="43-44"
+```Python hl_lines="44-45"
 --8<-- "../docs_src/relations/docs001.py"
 ```
 

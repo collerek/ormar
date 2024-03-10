@@ -16,14 +16,14 @@ engine = sqlalchemy.create_engine("sqlite:///test.db")
 metadata.create_all(engine)
 ```
 
-You can also create single tables, sqlalchemy tables are exposed in `ormar.Meta` class.
+You can also create single tables, sqlalchemy tables are exposed in `ormar.ormar_config` object.
 
 ```python
 import sqlalchemy
 # get your database url in sqlalchemy format - same as used with databases instance used in Model definition
 engine = sqlalchemy.create_engine("sqlite:///test.db")
 # Artist is an ormar model from previous examples
-Artist.Meta.table.create(engine)
+Artist.ormar_config.table.create(engine)
 ```
 
 !!!warning

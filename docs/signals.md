@@ -14,15 +14,15 @@ import sqlalchemy
 
 import ormar
 
-database = databases.Database("sqlite:///db.sqlite")
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database("sqlite:///db.sqlite"),
+    metadata=sqlalchemy.MetaData(),
+)
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -34,7 +34,7 @@ You can for example define a trigger that will set `album.is_best_seller` status
 
 Import `pre_update` decorator, for list of currently available decorators/ signals check below.
 
-```Python hl_lines="1"
+```Python hl_lines="7"
 --8<-- "../docs_src/signals/docs002.py"
 ```
 
@@ -54,7 +54,7 @@ for which you want to run the signal receiver.
 
 Currently there is no way to set signal for all models at once without explicitly passing them all into registration of receiver.
 
-```Python hl_lines="4-7"
+```Python hl_lines="27-30"
 --8<-- "../docs_src/signals/docs002.py"
 ```
 
@@ -65,7 +65,7 @@ Currently there is no way to set signal for all models at once without explicitl
 Note that our newly created function has instance and class of the instance so you can easily run database 
 queries inside your receivers if you want to.
 
-```Python hl_lines="15-22"
+```Python hl_lines="40-47"
 --8<-- "../docs_src/signals/docs002.py"
 ```
 
@@ -106,7 +106,7 @@ class AlbumAuditor:
 auditor = AlbumAuditor()
 pre_save(Album)(auditor.before_save)
 # call above has same result like the one below
-Album.Meta.signals.pre_save.connect(auditor.before_save)
+Album.ormar_config.signals.pre_save.connect(auditor.before_save)
 # signals are also exposed on instance
 album = Album(name='Miami')
 album.signals.pre_save.connect(auditor.before_save)
@@ -127,7 +127,7 @@ async def before_update(sender, instance, **kwargs):
         instance.is_best_seller = True
 
 # disconnect given function from signal for given Model
-Album.Meta.signals.pre_save.disconnect(before_save)
+Album.ormar_config.signals.pre_save.disconnect(before_save)
 # signals are also exposed on instance
 album = Album(name='Miami')
 album.signals.pre_save.disconnect(before_save)
@@ -251,23 +251,23 @@ import sqlalchemy
 
 import ormar
 
-database = databases.Database("sqlite:///db.sqlite")
-metadata = sqlalchemy.MetaData()
+
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database("sqlite:///db.sqlite"),
+    metadata=sqlalchemy.MetaData(),
+)
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     is_best_seller: bool = ormar.Boolean(default=False)
     play_count: int = ormar.Integer(default=0)
 
-Album.Meta.signals.your_custom_signal = ormar.Signal()
-Album.Meta.signals.your_custom_signal.connect(your_receiver_name)
+Album.ormar_config.signals.your_custom_signal = ormar.Signal()
+Album.ormar_config.signals.your_custom_signal.connect(your_receiver_name)
 ```
 
 Actually under the hood signal is a `SignalEmitter` instance that keeps a dictionary of know signals, and allows you
@@ -276,13 +276,13 @@ to access them as attributes. When you try to access a signal that does not exis
 So example above can be simplified to. The `Signal` will be created for you.
 
 ```
-Album.Meta.signals.your_custom_signal.connect(your_receiver_name)
+Album.ormar_config.signals.your_custom_signal.connect(your_receiver_name)
 ```
 
 Now to trigger this signal you need to call send method of the Signal.
 
 ```python
-await Album.Meta.signals.your_custom_signal.send(sender=Album)
+await Album.ormar_config.signals.your_custom_signal.send(sender=Album)
 ```
 
 Note that sender is the only required parameter and it should be ormar Model class.
@@ -290,6 +290,6 @@ Note that sender is the only required parameter and it should be ormar Model cla
 Additional parameters have to be passed as keyword arguments.
 
 ```python
-await Album.Meta.signals.your_custom_signal.send(sender=Album, my_param=True)
+await Album.ormar_config.signals.your_custom_signal.send(sender=Album, my_param=True)
 ```
 
