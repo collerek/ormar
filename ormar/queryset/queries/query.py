@@ -223,7 +223,7 @@ class Query:
 
         :param expr: select expression before clauses
         :type expr: sqlalchemy.sql.selectable.Select
-        :return: expresion with all present clauses applied
+        :return: expression with all present clauses applied
         :rtype: sqlalchemy.sql.selectable.Select
         """
         expr = FilterQuery(filter_clauses=self.filter_clauses).apply(expr)

@@ -364,7 +364,7 @@ class QuerysetProxy(Generic[T]):
 
     async def get_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
         """
-        Get's the first row from the db meeting the criteria set by kwargs.
+        Gets the first row from the db meeting the criteria set by kwargs.
 
         If no criteria set it will return the last row in db sorted by pk.
 
@@ -389,7 +389,7 @@ class QuerysetProxy(Generic[T]):
 
     async def get(self, *args: Any, **kwargs: Any) -> "T":
         """
-        Get's the first row from the db meeting the criteria set by kwargs.
+        Gets the first row from the db meeting the criteria set by kwargs.
 
         If no criteria set it will return the last row in db sorted by pk.
 
@@ -526,7 +526,7 @@ class QuerysetProxy(Generic[T]):
         """
         Combination of create and get methods.
 
-        Tries to get a row meeting the criteria fro kwargs
+        Tries to get a row meeting the criteria for kwargs
         and if `NoMatch` exception is raised
         it creates a new one with given kwargs and _defaults.
 

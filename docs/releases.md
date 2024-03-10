@@ -511,7 +511,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
   * By default `Through` model relation names default to related model name in lowercase.
     So in example like this:
     ```python
-    ... # course declaration ommited
+    ... # course declaration omitted
     class Student(ormar.Model):
         class Meta:
             database = database
@@ -538,7 +538,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
     
     Example:
     ```python
-    ... # course declaration ommited
+    ... # course declaration omitted
     class Student(ormar.Model):
         class Meta:
             database = database
@@ -672,7 +672,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
 *  Add 4 new signals -> `pre_relation_add`, `post_relation_add`, `pre_relation_remove` and `post_relation_remove`
     *  The newly added signals are emitted for `ManyToMany` relations (both sides) 
        and reverse side of `ForeignKey` relation (same as `QuerysetProxy` is exposed).
-    *  Signals recieve following args: `sender: Type[Model]` - sender class, 
+    *  Signals receive following args: `sender: Type[Model]` - sender class, 
        `instance: Model` - instance to which related model is added, `child: Model` - model being added,
        `relation_name: str` - name of the relation to which child is added, 
        for add signals also `passed_kwargs: Dict` - dict of kwargs passed to `add()`
@@ -834,7 +834,7 @@ that most of the `ormar` functions are working your database **CREATED with orma
 * **Breaking:** During model construction if `Meta` class of the `Model` does not 
   include `metadata` or `database` now `ModelDefinitionError` will be raised instead of generic `AttributeError`.
 * **Breaking:** `encode/databases` used for running the queries does not have a connection pool
-for sqlite backend, meaning that each querry is run with a new connection and there is no way to 
+for sqlite backend, meaning that each query is run with a new connection and there is no way to 
   enable enforcing ForeignKeys constraints as those are by default turned off on every connection.
   This is changed in `ormar` since >=0.9.0 and by default each sqlite3 query has `"PRAGMA foreign_keys=1;"`
   run so now each sqlite3 connection by default enforces ForeignKey constraints including cascades.
@@ -998,7 +998,7 @@ so now you can use those methods directly from relation
     *  Model is saved after adding/removing `ManyToMany` related objects (through model instance auto saved/deleted)
     *  Model is **not** saved after change of any own field (including pk as `Model.pk` alias)
     *  Model is **not** saved after adding/removing `ForeignKey` related object (fk column not saved)
-    *  Model is **not** saved after instantation with `__init__` (w/o `QuerySet.create` or before calling `save`)
+    *  Model is **not** saved after instantiation with `__init__` (w/o `QuerySet.create` or before calling `save`)
 *  Added `Model.upsert(**kwargs)` that performs `save()` if pk not set otherwise `update(**kwargs)`
 *  Added `Model.save_related(follow=False)` that iterates all related objects in all relations and checks if they are saved. If not it calls `upsert()` on each of them.
 *  **Breaking:** added raising exceptions if `add`-ing/`remove`-ing not saved (pk is None) models to `ManyToMany` relation
