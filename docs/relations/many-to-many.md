@@ -24,9 +24,9 @@ news = await Category.objects.create(name="News")
 
 `ForeignKey` fields are automatically registering reverse side of the relation.
 
-By default it's child (source) `Model` name + s, like courses in snippet below: 
+By default it's child (source) `Model` name + s, like `posts` in snippet below: 
 
-```python
+```python hl_lines="25-26"
 class Category(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="categories")
 
@@ -79,12 +79,14 @@ categories: Optional[Union[Category, List[Category]]] = ormar.ManyToMany(
 If you are sure you don't want the reverse relation you can use `skip_reverse=True` 
 flag of the `ManyToMany`.
 
-  If you set `skip_reverse` flag internally the field is still registered on the other 
-  side of the relationship so you can:
+If you set `skip_reverse` flag internally the field is still registered on the other 
+side of the relationship so you can:
+
   * `filter` by related models fields from reverse model
   * `order_by` by related models fields from reverse model 
   
-  But you cannot:
+But you cannot:
+
   * access the related field from reverse model with `related_name`
   * even if you `select_related` from reverse side of the model the returned models won't be populated in reversed instance (the join is not prevented so you still can `filter` and `order_by` over the relation)
   * the relation won't be populated in `model_dump()` and `json()`

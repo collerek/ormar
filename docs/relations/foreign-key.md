@@ -45,7 +45,7 @@ But you cannot:
 
 * Access the related field from reverse model with `related_name`
 * Even if you `select_related` from reverse side of the model the returned models won't be populated in reversed instance (the join is not prevented so you still can `filter` and `order_by` over the relation)
-* The relation won't be populated in `model_dump()` and `json()`
+* The relation won't be populated in `model_dump()` and `model_dump_json()`
 * You cannot pass the nested related objects when populating from dictionary or json (also through `fastapi`). It will be either ignored or error will be raised depending on `extra` setting in pydantic `Config`.
 
 Example:
@@ -110,7 +110,7 @@ assert department.courses[0] == course
 !!!warning
     If you want to add child model on related model the primary key value for parent model **has to exist in database**.
     
-    Otherwise ormar will raise RelationshipInstanceError as it cannot set child's ForeignKey column value 
+    Otherwise ormar will raise `RelationshipInstanceError` as it cannot set child's ForeignKey column value 
     if parent model has no primary key value.
     
     That means that in example above the department has to be saved before you can call `department.courses.add()`.
@@ -149,7 +149,7 @@ await department.courses.remove(course, keep_reversed=False)
 
 Removal of all related models in one call.
 
-Like remove by default `clear()` nulls the ForeigKey column on child model (all, not matter if they are loaded or not).
+Like with remove, by default, `clear()` nulls the ForeigKey column on child model (all, not matter if they are loaded or not).
 
 ```python
 # nulls department column on all courses related to this department
@@ -171,7 +171,7 @@ To read which methods of QuerySet are available read below [querysetproxy][query
 
 ## related_name
 
-But you can overwrite this name by providing `related_name` parameter like below:
+You can overwrite related model field name by providing `related_name` parameter like below:
 
 ```Python hl_lines="27-29 35"
 --8<-- "../docs_src/fields/docs002.py"

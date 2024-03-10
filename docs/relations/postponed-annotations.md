@@ -14,21 +14,8 @@ First, you need to import the required ref from typing.
 from typing import ForwardRef
 ```
 
-But note that before python 3.7 it used to be internal, so for python <= 3.6 you need
-
-```python
-from typing import _ForwardRef as ForwardRef
-```
-
-or since `pydantic` is required by `ormar` it can handle this switch for you. 
-In that case you can simply import ForwardRef from pydantic regardless of your python version.
-
-```python
-from pydantic.typing import ForwardRef
-```
-
 Now we need a sample model and a reference to the same model, 
-which will be used to creat a self referencing relation.
+which will be used to create a self referencing relation.
 
 ```python
 # create the forwardref to model Person

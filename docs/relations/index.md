@@ -26,7 +26,7 @@ The definition of one-to-many relation also uses `ForeignKey`, and it's register
 
 So in relation to example above.
 
-```Python hl_lines="8"
+```Python hl_lines="7-8"
 class Department(ormar.Model):
     ormar_config = base_ormar_config.copy()
 
@@ -50,7 +50,7 @@ class Department(ormar.Model):
 
 To define many-to-many relation use `ManyToMany` field.
 
-```python hl_lines="18"
+```python hl_lines="19"
 class Category(ormar.Model):
     ormar_config = ormar.OrmarConfig(
         database=database,
@@ -91,7 +91,7 @@ side of the current query for m2m models.
 So if you query from model `A` to model `B`, only model `B` has through field exposed.
 Which kind of make sense, since it's a one through model/field for each of related models.
 
-```python hl_lines="12-20"
+```python hl_lines="12-21"
 class Category(ormar.Model):
     ormar_config = ormar.OrmarConfig(
         database=database,
