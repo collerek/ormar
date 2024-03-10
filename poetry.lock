@@ -614,14 +614,14 @@ test-randomorder = ["pytest-randomly"]
 
 [[package]]
 name = "databases"
-version = "0.8.0"
+version = "0.7.0"
 description = "Async database support for Python."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "databases-0.8.0-py3-none-any.whl", hash = "sha256:0ceb7fd5c740d846e1f4f58c0256d780a6786841ec8e624a21f1eb1b51a9093d"},
-    {file = "databases-0.8.0.tar.gz", hash = "sha256:6544d82e9926f233d694ec29cd018403444c7fb6e863af881a8304d1ff5cfb90"},
+    {file = "databases-0.7.0-py3-none-any.whl", hash = "sha256:cf5da4b8a3e3cd038c459529725ebb64931cbbb7a091102664f20ef8f6cefd0d"},
+    {file = "databases-0.7.0.tar.gz", hash = "sha256:ea2d419d3d2eb80595b7ceb8f282056f080af62efe2fb9bcd83562f93ec4b674"},
 ]
 
 [package.dependencies]
@@ -2691,4 +2691,4 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.0"
-content-hash = "07f42e04f1a0a496c83a81dcbe310c1b800e14d46c58e3da08a8a7347e5d6551"
+content-hash = "3b912bdff99c92f4e359315eb4a0a4107e4dc9c5484ba30bd0cea0e10746001b"
