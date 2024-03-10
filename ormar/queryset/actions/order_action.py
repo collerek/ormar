@@ -80,7 +80,7 @@ class OrderAction(QueryAction):
         :return: complied and escaped clause
         :rtype: sqlalchemy.sql.elements.TextClause
         """
-        dialect = self.target_model.Meta.database._backend._dialect
+        dialect = self.target_model.ormar_config.database._backend._dialect
         quoter = dialect.identifier_preparer.quote
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
         table_name = self.table.name
