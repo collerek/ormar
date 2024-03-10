@@ -372,7 +372,7 @@ class Truck2(Car2):
 
 
 class Bus2(Car2):
-    ormar_config = base_ormar_config.copy(tablename="busses2")
+    ormar_config = base_ormar_config.copy(tablename="buses2")
 
     max_persons: int = ormar.Integer()
 ```

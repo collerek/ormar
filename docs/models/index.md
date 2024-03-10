@@ -67,12 +67,14 @@ you should get back exactly same value in `response`.).
 If you set pydantic field with `default` parameter and do not pass actual value in request you will always get default value.
 Since it can be a function you can set `default=datetime.datetime.now` and get current timestamp each time you call an endpoint etc.
 
+#### Non Database Fields in Fastapi
+
 !!!note
     Note, that both pydantic and calculated_fields decorated field can be included/excluded in both `model_dump()` and `fastapi`
     response with `include`/`exclude` and `response_model_include`/`response_model_exclude` accordingly.
 
 ```python
-# <==related of code removed for clarity==>
+# <==part of related code removed for clarity==>
 base_ormar_config = ormar.OrmarConfig(
     database=databases.Database(DATABASE_URL),
     metadata=sqlalchemy.MetaData(),
@@ -93,14 +95,14 @@ class User(ormar.Model):
         default=datetime.datetime.now
     )
 
-# <==related of code removed for clarity==>
+# <==part of related code removed for clarity==>
 app = FastAPI()
 
 @app.post("/users/")
 async def create_user(user: User):
     return await user.save()
 
-# <==related of code removed for clarity==>
+# <==part of related code removed for clarity==>
 
 def test_excluding_fields_in_endpoints():
     client = TestClient(app)
@@ -127,7 +129,7 @@ def test_excluding_fields_in_endpoints():
         assert response.json().get("timestamp") == str(timestamp).replace(" ", "T")
 
 
-# <==related of code removed for clarity==>
+# <==part of related code removed for clarity==>
 ```
 
 #### Fields names vs Column names
@@ -152,7 +154,7 @@ But for now you cannot change the ManyToMany column names as they go through oth
 --8<-- "../docs_src/models/docs010.py"
 ```
 
-## Overwriting the default QuerySet
+### Overwriting the default QuerySet
 
 If you want to customize the queries run by ormar you can define your own queryset class (that extends the ormar `QuerySet`) in your model class, default one is simply the `QuerySet`
 
@@ -188,9 +190,9 @@ book = await Book.objects.first_or_404(name="123")
 
 ```
 
-### Type Hints & Legacy
+### Type Hints
 
-From version >=0.4.0 `ormar` switched to new notation.
+Note that for better IDE support and mypy checks you can provide type hints.
 
 ```Python hl_lines="15-17"
 --8<-- "../docs_src/models/docs001.py"
@@ -245,12 +247,12 @@ Created instance needs to be passed to every `Model` with `ormar_config` object 
 
 #### Best practice
 
-Only thing that `ormar` expects is a field with name `ormar_config`.
-
+Note that `ormar` expects the field with name `ormar_config` that is an instance of `OrmarConfig` class.
+To ease the config management, the `OrmarConfig` class provide `copy` method.
 So instead of providing the same parameters over and over again for all models
-you should creat an object and use its copy in all models.
+you should create a base object and use its copy in all models.
 
-```Python hl_lines="9-11 18 27"
+```Python hl_lines="9-12 19 28"
 --8<-- "../docs_src/models/docs013.py"
 ```
 
@@ -258,7 +260,7 @@ you should creat an object and use its copy in all models.
 
 By default table name is created from Model class name as lowercase name plus 's'.
 
-You can overwrite this parameter by providing `ormar_config` object `tablename` argument.
+You can overwrite this parameter by providing `ormar_config` object's `tablename` argument.
 
 ```Python hl_lines="14-16"
 --8<-- "../docs_src/models/docs002.py"
@@ -268,10 +270,10 @@ You can overwrite this parameter by providing `ormar_config` object `tablename` 
 
 On a model level you can also set model-wise constraints on sql columns.
 
-Right now only `IndexColumns` and `UniqueColumns` constraints are supported. 
+Right now only `IndexColumns`, `UniqueColumns` and `CheckColumns` constraints are supported. 
 
 !!!note
-        Note that both constraints should be used only if you want to set a name on constraint or want to set the index on multiple columns, otherwise `index` and `unique` properties on ormar fields are preferred.
+    Note that both constraints should be used only if you want to set a name on constraint or want to set the index on multiple columns, otherwise `index` and `unique` properties on ormar fields are preferred.
 
 !!!tip
     To read more about columns constraints like `primary_key`, `unique`, `ForeignKey` etc. visit [fields][fields].
@@ -285,9 +287,9 @@ You can set this parameter by providing `ormar_config` object `constraints` argu
 ```
 
 !!!note
-        Note that constraints are meant for combination of columns that should be unique. 
-        To set one column as unique use [`unique`](../fields/common-parameters.md#unique) common parameter. 
-        Of course you can set many columns as unique with this param but each of them will be checked separately.
+    Note that constraints are meant for combination of columns that should be unique. 
+    To set one column as unique use [`unique`](../fields/common-parameters.md#unique) common parameter. 
+    Of course you can set many columns as unique with this param but each of them will be checked separately.
 
 #### IndexColumns
 
@@ -298,9 +300,9 @@ You can set this parameter by providing `ormar_config` object `constraints` argu
 ```
 
 !!!note
-        Note that constraints are meant for combination of columns that should be in the index. 
-        To set one column index use [`unique`](../fields/common-parameters.md#index) common parameter. 
-        Of course, you can set many columns as indexes with this param but each of them will be a separate index.
+    Note that constraints are meant for combination of columns that should be in the index. 
+    To set one column index use [`unique`](../fields/common-parameters.md#index) common parameter. 
+    Of course, you can set many columns as indexes with this param but each of them will be a separate index.
 
 #### CheckColumns
 
@@ -311,7 +313,7 @@ You can set this parameter by providing `ormar_config` object `constraints` argu
 ```
 
 !!!note
-        Note that some databases do not actively support check constraints such as MySQL.
+    Note that some databases do not actively support check constraints (such as MySQL).
 
 
 ### Pydantic configuration
@@ -323,13 +325,13 @@ The way to do this in pydantic is to adjust the settings on the `model_config` d
 So in order to set your own preferences you need to provide not only the `ormar_config` class but also the `model_config = ConfigDict()` class to your model.
 
 !!!note
-        To read more about available settings visit the [pydantic](https://pydantic-docs.helpmanual.io/usage/model_config/) config page.
+    To read more about available settings visit the [pydantic](https://pydantic-docs.helpmanual.io/usage/model_config/) config page.
 
 Note that if you do not provide your own configuration, ormar will do it for you.
 The default config provided is as follows:
 
 ```python
-model_config = ConfigDict(validate_assignment=True)
+model_config = ConfigDict(validate_assignment=True, ser_json_bytes="base64")
 ```
 
 So to overwrite setting or provide your own a sample model can look like following:
@@ -373,7 +375,7 @@ When querying the database with given model by default the Model is ordered by t
 column ascending. If you wish to change the default behaviour you can do it by providing `orders_by`
 parameter to model `ormar_config` object.
 
-Sample default ordering:
+Sample default ordering (not specified - so by primary key):
 ```python
 base_ormar_config = ormar.OrmarConfig(
     database=databases.Database(DATABASE_URL),
@@ -383,13 +385,15 @@ base_ormar_config = ormar.OrmarConfig(
 
 # default sort by column id ascending
 class Author(ormar.Model):
-    ormar_config = base_ormar_config.copy()
+    ormar_config = base_ormar_config.copy(
+        tablename="authors",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 ```
 Modified
-```python
+```python hl_lines="9"
 base_ormar_config = ormar.OrmarConfig(
     database=databases.Database(DATABASE_URL),
     metadata=sqlalchemy.MetaData(),
@@ -409,9 +413,6 @@ class Author(ormar.Model):
 ## Model Initialization
 
 There are two ways to create and persist the `Model` instance in the database.
-
-!!!tip 
-    Use `ipython` to try this from the console, since it supports `await`.
 
 If you plan to modify the instance in the later execution of your program you can initiate your `Model` as a normal class and later await a `save()` call.  
 

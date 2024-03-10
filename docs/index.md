@@ -21,7 +21,7 @@
 
 ### Overview
 
-The `ormar` package is an async mini ORM for Python, with support for **Postgres,
+The `ormar` package is an async ORM for Python, with support for **Postgres,
 MySQL**, and **SQLite**.
 
 The main benefits of using `ormar` are:
@@ -53,13 +53,7 @@ Yet remember that those are - well - tests and not all solutions are suitable to
 
 ### Part of the `fastapi` ecosystem
 
-As part of the fastapi ecosystem `ormar` is supported in libraries that somehow work with databases.
-
-As of now `ormar` is supported by:
-
-*  [`fastapi-users`](https://github.com/frankie567/fastapi-users)
-*  [`fastapi-crudrouter`](https://github.com/awtkns/fastapi-crudrouter)
-*  [`fastapi-pagination`](https://github.com/uriyyo/fastapi-pagination)
+As part of the fastapi ecosystem `ormar` is supported in selected libraries that somehow work with databases.
 
 Ormar remains sql dialect agnostic - so only columns working in all supported backends are implemented.
 
@@ -76,7 +70,6 @@ Ormar is built with:
   * [`sqlalchemy core`][sqlalchemy-core] for query building.
   * [`databases`][databases] for cross-database async support.
   * [`pydantic`][pydantic] for data validation.
-  * `typing_extensions` for python 3.6 - 3.7
 
 ### License
 
@@ -658,7 +651,6 @@ The following keyword arguments are supported on all field types.
   * `server_default: Any`
   * `index: bool`
   * `unique: bool`
-  * `choices: typing.Sequence`
   * `name: str`
 
 All fields are required unless one of the following is set:
