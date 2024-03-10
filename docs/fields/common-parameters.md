@@ -174,14 +174,14 @@ If you want to, you can apply your own type, that will be **completely** replaci
 So it's on you as a user to provide a type that is valid in the context of given ormar field type.
 
 !!!warning
-        Note that by default you should use build in arguments that are passed to underlying pydantic field. 
-        
-        You can check what arguments are supported in field types section or in [pydantic](https://pydantic-docs.helpmanual.io/usage/schema/#field-customisation) docs.
+    Note that by default you should use build in arguments that are passed to underlying pydantic field. 
+    
+    You can check what arguments are supported in field types section or in [pydantic](https://pydantic-docs.helpmanual.io/usage/schema/#field-customisation) docs.
 
 !!!danger
-        Setting a wrong type of pydantic field can break your model, so overwrite it only when you know what you are doing.
-        
-        As it's easy to break functionality of ormar the `overwrite_pydantic_type` argument is not available on relation fields!
+    Setting a wrong type of pydantic field can break your model, so overwrite it only when you know what you are doing.
+    
+    As it's easy to break functionality of ormar the `overwrite_pydantic_type` argument is not available on relation fields!
 
 ```python
 base_ormar_config = ormar.OrmarConfig(
@@ -199,18 +199,6 @@ class OverwriteTest(ormar.Model):
     constraint_dict: Json = ormar.JSON(
         overwrite_pydantic_type=Optional[Json[Dict[str, int]]])
 ```
-
-## choices
-
-`choices`: `Sequence` = `[]` 
-
-A set of choices allowed to be used for given field.
-
-Used for data validation on pydantic side.
-
-Prevents insertion of value not present in the choices list.
-
-Used in pydantic only.
 
 [relations]: ../relations/index.md
 [queries]: ../queries/index.md
