@@ -7,7 +7,7 @@ Out of various types of ORM models inheritance `ormar` currently supports two of
 
 ## Types of inheritance
 
-The short summary of different types of inheritance is:
+The short summary of different types of inheritance:
 
 * **Mixins [SUPPORTED]** - don't subclass `ormar.Model`, just define fields that are
   later used on different models (like `created_date` and `updated_date` on each model),
@@ -126,8 +126,6 @@ class Category(DateFieldsModel, AuditModel):
 The list of inherited options/settings is as follows: `metadata`, `database`
 and `constraints`.
 
-Also methods decorated with `@property_field` decorator will be inherited/recognized.
-
 Of course apart from that all fields from base classes are combined and created in the
 concrete table of the final Model.
 
@@ -143,7 +141,7 @@ inheritance.
 Whenever you define a field with same name and new definition it will completely replace
 the previously defined one.
 
-```python
+```python hl_lines="28"
 # base class
 class DateFieldsModel(ormar.Model):
     ormar_config = OrmarConfig(
@@ -324,7 +322,7 @@ Person.ormar_config.model_fields
 Similarly, you can inherit from Models that have ManyToMany relations declared but
 there is one, but substantial difference - the Through model. 
 
-Since in the future the Through model will be able to hold additional fields and now it links only two Tables 
+Since the Through model will be able to hold additional fields, and now it links only two Tables 
 (`from` and `to` ones), each child that inherits the m2m relation field has to have separate
 Through model. 
 
