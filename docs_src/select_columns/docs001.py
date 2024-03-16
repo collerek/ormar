@@ -3,6 +3,7 @@ import asyncio
 import databases
 import ormar
 import sqlalchemy
+from examples import create_drop_database
 from tests.settings import DATABASE_URL
 
 base_ormar_config = ormar.OrmarConfig(
@@ -31,6 +32,7 @@ class Car(ormar.Model):
     aircon_type: str = ormar.String(max_length=20, nullable=True)
 
 
+@create_drop_database(base_config=base_ormar_config)
 async def sample_data():
     # build some sample data
     toyota = await Company.objects.create(name="Toyota", founded=1937)
