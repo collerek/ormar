@@ -31,7 +31,11 @@ Passing a criteria is actually calling filter(*args, **kwargs) method described 
 
 ```python
 class Track(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename="track")
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+        tablename="track"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)

@@ -30,7 +30,12 @@ The allowed kwargs are `Model` fields names and proper value types.
 
 ```python
 class Album(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename="album")
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+        tablename="album"
+    )
+
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -49,7 +54,7 @@ await malibu.save()
 ```
 
 !!!tip 
-        Check other `Model` methods in [models][models]
+    Check other `Model` methods in [models][models]
 
 ## get_or_create
 
@@ -65,7 +70,11 @@ i.e. `get_or_create(_defaults: {"title": "I win"}, title="never used")` will alw
 
 ```python
 class Album(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename="album")
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+        tablename="album"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

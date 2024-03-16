@@ -44,8 +44,8 @@ In above example fields `id` (is an `autoincrement` `Integer`), `first_name` ( h
 If the field is nullable you don't have to include it in payload during creation as well as in response, so given example above you can:
 
 !!!Warning
-        Note that although you do not have to pass the optional field, you still **can** do it.
-        And if someone will pass a value it will be used later unless you take measures to prevent it.
+    Note that although you do not have to pass the optional field, you still **can** do it.
+    And if someone will pass a value it will be used later unless you take measures to prevent it.
 
 ```python
 # note that app is an FastApi app
@@ -72,14 +72,14 @@ async def create_user3(user: RequestUser):  # use the generated model here
 ```
 
 !!!Note
-        To see more examples and read more visit [get_pydantic](../models/methods.md#get_pydantic) part of the documentation.
+    To see more examples and read more visit [get_pydantic](../models/methods.md#get_pydantic) part of the documentation.
 
 !!!Warning
-        The `get_pydantic` method generates all models in a tree of nested models according to an algorithm that allows to avoid loops in models (same algorithm that is used in `model_dump()`, `select_all()` etc.)
+    The `get_pydantic` method generates all models in a tree of nested models according to an algorithm that allows to avoid loops in models (same algorithm that is used in `model_dump()`, `select_all()` etc.)
         
-        That means that nested models won't have reference to parent model (by default ormar relation is bidirectional).
+    That means that nested models won't have reference to parent model (by default ormar relation is bidirectional).
         
-        Note also that if given model exists in a tree more than once it will be doubled in pydantic models (each occurrence will have separate own model). That way you can exclude/include different fields on different leafs of the tree.
+    Note also that if given model exists in a tree more than once it will be doubled in pydantic models (each occurrence will have separate own model). That way you can exclude/include different fields on different leafs of the tree.
 
 #### Mypy and type checking
 

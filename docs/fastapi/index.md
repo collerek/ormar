@@ -16,13 +16,13 @@ Here you can find a very simple sample application code.
     It's divided into subsections for clarity.
 
 !!!note
-        If you want to read more on how you can use ormar models in fastapi requests and 
-        responses check the [responses](response.md) and [requests](requests.md) documentation.
+    If you want to read more on how you can use ormar models in fastapi requests and 
+    responses check the [responses](response.md) and [requests](requests.md) documentation.
 
 ## Quick Start
 
 !!!note
-        Note that you can find the full quick start script in the [github](https://github.com/collerek/ormar) repo under examples.
+    Note that you can find the full quick start script in the [github](https://github.com/collerek/ormar) repo under examples.
 
 ### Imports and initialization 
 

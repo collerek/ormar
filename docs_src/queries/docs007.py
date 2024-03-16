@@ -8,7 +8,8 @@ from examples import create_drop_database
 DATABASE_URL = "sqlite:///test.db"
 
 ormar_base_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL), metadata=sqlalchemy.MetaData()
+    database=databases.Database(DATABASE_URL),
+    metadata=sqlalchemy.MetaData(),
 )
 
 

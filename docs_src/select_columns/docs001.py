@@ -3,18 +3,16 @@ import asyncio
 import databases
 import ormar
 import sqlalchemy
-from examples import create_drop_database
+from tests.settings import DATABASE_URL
 
-DATABASE_URL = "sqlite:///test.db"
-
-ormar_base_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL, force_rollback=True),
     metadata=sqlalchemy.MetaData(),
 )
 
 
 class Company(ormar.Model):
-    ormar_config = ormar_base_config.copy(tablename="companies")
+    ormar_config = base_ormar_config.copy(tablename="companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -22,7 +20,7 @@ class Company(ormar.Model):
 
 
 class Car(ormar.Model):
-    ormar_config = ormar_base_config.copy(tablename="cars")
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     manufacturer = ormar.ForeignKey(Company)
@@ -33,8 +31,7 @@ class Car(ormar.Model):
     aircon_type: str = ormar.String(max_length=20, nullable=True)
 
 
-@create_drop_database(base_config=ormar_base_config)
-async def run_query():
+async def sample_data():
     # build some sample data
     toyota = await Company.objects.create(name="Toyota", founded=1937)
     await Car.objects.create(
@@ -63,4 +60,4 @@ async def run_query():
     )
 
 
-asyncio.run(run_query())
+asyncio.run(sample_data())

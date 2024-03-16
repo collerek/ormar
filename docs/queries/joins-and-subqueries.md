@@ -390,12 +390,12 @@ might be faster despite it needs to perform three separate queries instead of on
 
 #### Memory
 
-`ormar` is a mini ORM meaning that it does not keep a registry of already loaded models.
+`ormar` is does not keep a registry of already loaded models.
 
 That means that in `select_related` example above you will always have 10 000 Models A,
 30 000 Models B
-(even if the unique number of rows in db is 3 - processing of `select_related` spawns **
-new** child models for each parent model). And 60 000 Models C.
+(even if the unique number of rows in db is 3 - processing of `select_related` spawns 
+**new** child models for each parent model). And 60 000 Models C.
 
 If the same Model B is shared by rows 1, 10, 100 etc. and you update one of those, the
 rest of rows that share the same child will **not** be updated on the spot. If you
@@ -429,7 +429,7 @@ that `select_related` will use more memory as each child is instantiated as a ne
     
     ```python
     # will return False (note that id is a python `builtin` function not ormar one).
-    id(row1.child1) == (ro100.child1)
+    id(row1.child1) == id(ro100.child1)
     
     # from above - will also return False
     id(model1) == id(model2)

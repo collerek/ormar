@@ -54,7 +54,7 @@ for which you want to run the signal receiver.
 
 Currently there is no way to set signal for all models at once without explicitly passing them all into registration of receiver.
 
-```Python hl_lines="27-30"
+```Python hl_lines="28-31"
 --8<-- "../docs_src/signals/docs002.py"
 ```
 
@@ -65,7 +65,7 @@ Currently there is no way to set signal for all models at once without explicitl
 Note that our newly created function has instance and class of the instance so you can easily run database 
 queries inside your receivers if you want to.
 
-```Python hl_lines="40-47"
+```Python hl_lines="41-48"
 --8<-- "../docs_src/signals/docs002.py"
 ```
 
@@ -78,7 +78,7 @@ async def before_update(sender, instance, **kwargs):
     print(f"{sender.get_name()}: {instance.model_dump_json()}: {kwargs}")
 ```
 
-Of course you can also create multiple functions for the same signal and model. Each of them will run at each signal.
+Of course, you can also create multiple functions for the same signal and model. Each of them will run at each signal.
 
 ```python
 @pre_update(Album)
@@ -142,7 +142,7 @@ album.signals.pre_save.disconnect(before_save)
     *  bulk operations (`QuerySet.bulk_create` and `QuerySet.bulk_update`) as they are designed for speed.
     
     *  queryset table level operations (`QuerySet.update` and `QuerySet.delete`) as they run on the underlying tables 
-    (more lak raw sql update/delete operations) and do not have specific instance.
+    (more like raw sql update/delete operations) and do not have specific instance.
 
 ### pre_save
 

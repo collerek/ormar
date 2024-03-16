@@ -704,7 +704,7 @@ Ordering in sql will be applied in order of names you provide in order_by.
 Given sample Models like following:
 
 ```python
---8 < -- "../../docs_src/queries/docs007.py"
+--8<-- "../docs_src/queries/docs007.py"
 ```
 
 To order by main model field just provide a field name
