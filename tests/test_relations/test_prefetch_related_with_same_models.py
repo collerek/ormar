@@ -1,14 +1,16 @@
 from random import randint
-from typing import List, Optional
+from typing import ForwardRef, Optional
 
 import ormar
 import pytest
 from faker import Faker
+from ormar.relations.relation_proxy import RelationProxy
 
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
 base_ormar_config = create_config()
+fake = Faker()
 
 
 class Author(ormar.Model):
@@ -36,20 +38,30 @@ class Book(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=256)
     description: Optional[str] = ormar.String(max_length=256, nullable=True)
-    authors: Optional[List[Author]] = ormar.ManyToMany(
+    authors: RelationProxy[Author] = ormar.ManyToMany(
         Author, related_name="author_books", through=BookAuthor
     )
-    co_authors: Optional[List[Author]] = ormar.ManyToMany(
+    co_authors: RelationProxy[Author] = ormar.ManyToMany(
         Author, related_name="co_author_books", through=BookCoAuthor
     )
 
+
+class SelfRef(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="selfrefs")
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    main_child = ormar.ForeignKey(to=ForwardRef("SelfRef"), related_name="parent")
+    children: RelationProxy["SelfRef"] = ormar.ManyToMany(ForwardRef("SelfRef"))
+
+
+SelfRef.update_forward_refs()
 
 create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
-async def test_db():
-    fake = Faker()
+async def test_prefetch_related_with_same_model_relations() -> None:
     async with base_ormar_config.database:
         for _ in range(6):
             await Author.objects.create(name=fake.name())
@@ -78,3 +90,30 @@ async def test_db():
             if x.id == 1
         ][0]
         assert prefetch_dict_result == select_dict_result
+
+
+@pytest.mark.asyncio
+async def test_prefetch_related_with_self_referencing() -> None:
+    async with base_ormar_config.database:
+        main_child = await SelfRef.objects.create(name="MainChild")
+        main = await SelfRef.objects.create(name="Main", main_child=main_child)
+
+        child1 = await SelfRef.objects.create(name="Child1")
+        child2 = await SelfRef.objects.create(name="Child2")
+
+        await main.children.add(child1)
+        await main.children.add(child2)
+
+        select_result = await SelfRef.objects.select_related(
+            ["main_child", "children"]
+        ).get(name="Main")
+        print(select_result.json(indent=4))
+
+        prefetch_result = await SelfRef.objects.prefetch_related(
+            ["main_child", "children"]
+        ).get(name="Main")
+
+        assert prefetch_result.main_child.name == main_child.name
+        assert len(prefetch_result.children) == 2
+        assert prefetch_result.children[0].name == child1.name
+        assert prefetch_result.children[1].name == child2.name
