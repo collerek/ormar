@@ -288,7 +288,9 @@ class PrefetchQuery:
 
             field_name = model.get_related_field_name(target_field=target_field)
 
-            children = self.already_extracted.get(target_model, {}).get(field_name, {})
+            children = self.already_extracted.get(target_model, {}).get(
+                f"{field_name}__{target_field.name}", {}
+            )
             models = self.already_extracted.get(target_model, {}).get("pk_models", {})
             set_children_on_model(
                 model=model,
@@ -605,5 +607,5 @@ class PrefetchQuery:
             if instance.pk not in models:
                 models[instance.pk] = instance
             self.already_extracted[target_model.get_name()].setdefault(
-                field_name, dict()
+                f"{field_name}__{target_field.name}", dict()
             ).setdefault(row[field_db_name], set()).add(instance.pk)
