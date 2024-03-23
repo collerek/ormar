@@ -1,5 +1,5 @@
 from random import randint
-from typing import Optional
+from typing import List, Optional
 
 import ormar
 import pytest
@@ -36,10 +36,10 @@ class Book(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=256)
     description: Optional[str] = ormar.String(max_length=256, nullable=True)
-    authors: Optional[list[Author]] = ormar.ManyToMany(
+    authors: Optional[List[Author]] = ormar.ManyToMany(
         Author, related_name="author_books", through=BookAuthor
     )
-    co_authors: Optional[list[Author]] = ormar.ManyToMany(
+    co_authors: Optional[List[Author]] = ormar.ManyToMany(
         Author, related_name="co_author_books", through=BookCoAuthor
     )
 
