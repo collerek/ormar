@@ -884,18 +884,23 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     @classmethod
     def construct(
-        cls: Type["T"], _fields_set: Optional["SetStr"] = None, **values: Any
+        cls: Type["T"],
+        _fields_set: Optional["SetStr"] = None,
+        _excluded_fields: Optional["SetStr"] = None,
+        **values: Any,
     ) -> "T":
+        for field_to_nullify in _excluded_fields or []:
+            values[field_to_nullify] = None
         own_values = {
             k: v for k, v in values.items() if k not in cls.extract_related_names()
         }
         model = cls.__new__(cls)
         fields_values: Dict[str, Any] = {}
-        for name, field in cls.__fields__.items():
+        for name, field_to_nullify in cls.__fields__.items():
             if name in own_values:
                 fields_values[name] = own_values[name]
-            elif not field.required:
-                fields_values[name] = field.get_default()
+            elif not field_to_nullify.required:
+                fields_values[name] = field_to_nullify.get_default()
         fields_values.update(own_values)
         object.__setattr__(model, "__dict__", fields_values)
         model._initialize_internal_attributes()

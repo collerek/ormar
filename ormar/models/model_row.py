@@ -98,10 +98,12 @@ class ModelRow(NewBaseModel):
 
         instance: Optional["Model"] = None
         if item.get(cls.Meta.pkname, None) is not None:
-            item["__excluded__"] = cls.get_names_to_exclude(
+            excluded_fields = cls.get_names_to_exclude(
                 excludable=excludable, alias=table_prefix
             )
-            instance = cast("Model", cls(**item))
+            instance = cast(
+                "Model", cls.construct(**item, _excluded_fields=excluded_fields)
+            )
             instance.set_save_status(True)
         return instance
 

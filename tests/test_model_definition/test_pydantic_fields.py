@@ -65,6 +65,12 @@ class ModelTest3(ormar.Model):
         kwargs["pydantic_test"] = PydanticTest(aa="random", bb=42)
         super().__init__(**kwargs)
 
+    @classmethod
+    def construct(cls, **kwargs):
+        kwargs["number"] = get_number()
+        kwargs["pydantic_test"] = PydanticTest(aa="random", bb=42)
+        return super().construct(**kwargs)
+
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)
     url: HttpUrl = "https://www.example3.com"  # type: ignore
