@@ -1,34 +1,30 @@
-from typing import Any, Optional, TYPE_CHECKING
-
 import databases
+import ormar
 import pytest
 import sqlalchemy
+from ormar.models.ormar_config import OrmarConfig
 
-import ormar
-from ormar.relations.querysetproxy import QuerysetProxy
 from tests.settings import DATABASE_URL
 
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
-
 class Publisher(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "publishers"
+    ormar_config = OrmarConfig(
+        metadata=metadata,
+        database=database,
+        tablename="publishers",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
-        order_by = ["-name"]
+    ormar_config = OrmarConfig(
+        metadata=metadata, database=database, tablename="authors", order_by=["-name"]
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -36,9 +32,12 @@ class Author(ormar.Model):
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
-        order_by = ["year", "-ranking"]
+    ormar_config = OrmarConfig(
+        metadata=metadata,
+        database=database,
+        tablename="books",
+        order_by=["year", "-ranking"],
+    )
 
     id: int = ormar.Integer(primary_key=True)
     author = ormar.ForeignKey(Author)
@@ -63,12 +62,10 @@ def assert_type(book: Book):
 @pytest.mark.asyncio
 async def test_types() -> None:
     async with database:
-        query = Book.objects
         publisher = await Publisher(name="Test publisher").save()
         author = await Author.objects.create(name="Test Author")
         await author.publishers.add(publisher)
-        author2 = await Author.objects.select_related("publishers").get()
-        publishers = author2.publishers
+        await Author.objects.select_related("publishers").get()
         publisher2 = await Publisher.objects.select_related("authors").get()
         authors = publisher2.authors
         assert authors[0] == author
@@ -78,8 +75,8 @@ async def test_types() -> None:
             #     reveal_type(author)  # iter of relation proxy
         book = await Book.objects.create(title="Test", author=author)
         book2 = await Book.objects.select_related("author").get()
-        books = await Book.objects.select_related("author").all()
-        author_books = await author.books.all()
+        await Book.objects.select_related("author").all()
+        await author.books.all()
         assert book.author.name == "Test Author"
         assert book2.author.name == "Test Author"
         # if TYPE_CHECKING:  # pragma: no cover

@@ -1,47 +1,45 @@
+from contextlib import asynccontextmanager
 from typing import List, Optional
 
 import databases
+import ormar
 import sqlalchemy
 import uvicorn
 from fastapi import FastAPI
 
-import ormar
+DATABASE_URL = "sqlite:///test.db"
 
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database("sqlite:///test.db")
-app.state.database = database
+ormar_base_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL), metadata=sqlalchemy.MetaData()
+)
 
 
-@app.on_event("startup")
-async def startup() -> None:
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     database_ = app.state.database
     if not database_.is_connected:
         await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
+    yield
     database_ = app.state.database
     if database_.is_connected:
         await database_.disconnect()
 
 
+app = FastAPI(lifespan=lifespan)
+metadata = sqlalchemy.MetaData()
+database = databases.Database("sqlite:///test.db")
+app.state.database = database
+
+
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = ormar_base_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    ormar_config = ormar_base_config.copy(tablename="items")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -69,7 +67,7 @@ async def create_category(category: Category):
 @app.put("/items/{item_id}")
 async def get_item(item_id: int, item: Item):
     item_db = await Item.objects.get(pk=item_id)
-    return await item_db.update(**item.dict())
+    return await item_db.update(**item.model_dump())
 
 
 @app.delete("/items/{item_id}")

@@ -1,9 +1,8 @@
-from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, TypeVar, Union
 
 import ormar.queryset  # noqa I100
 from ormar.exceptions import ModelPersistenceError, NoMatch
 from ormar.models import NewBaseModel  # noqa I100
-from ormar.models.metaclass import ModelMeta
 from ormar.models.model_row import ModelRow
 from ormar.queryset.utils import subtract_dict, translate_list_to_dict
 
@@ -11,17 +10,18 @@ T = TypeVar("T", bound="Model")
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import ForeignKeyField
+    from ormar.models.ormar_config import OrmarConfig
 
 
 class Model(ModelRow):
     __abstract__ = False
     if TYPE_CHECKING:  # pragma nocover
-        Meta: ModelMeta
+        ormar_config: OrmarConfig
 
     def __repr__(self) -> str:  # pragma nocover
         _repr = {
             k: getattr(self, k)
-            for k, v in self.Meta.model_fields.items()
+            for k, v in self.ormar_config.model_fields.items()
             if not v.skip_field
         }
         return f"{self.__class__.__name__}({str(_repr)})"
@@ -40,8 +40,8 @@ class Model(ModelRow):
 
         force_save = kwargs.pop("__force_save__", False)
         if force_save:
-            expr = self.Meta.table.select().where(self.pk_column == self.pk)
-            row = await self.Meta.database.fetch_one(expr)
+            expr = self.ormar_config.table.select().where(self.pk_column == self.pk)
+            row = await self.ormar_config.database.fetch_one(expr)
             if not row:
                 return await self.save()
             return await self.update(**kwargs)
@@ -76,8 +76,11 @@ class Model(ModelRow):
         await self.signals.pre_save.send(sender=self.__class__, instance=self)
         self_fields = self._extract_model_db_fields()
 
-        if not self.pk and self.Meta.model_fields[self.Meta.pkname].autoincrement:
-            self_fields.pop(self.Meta.pkname, None)
+        if (
+            not self.pk
+            and self.ormar_config.model_fields[self.ormar_config.pkname].autoincrement
+        ):
+            self_fields.pop(self.ormar_config.pkname, None)
         self_fields = self.populate_default_values(self_fields)
         self.update_from_dict(
             {
@@ -88,18 +91,18 @@ class Model(ModelRow):
         )
 
         self_fields = self.translate_columns_to_aliases(self_fields)
-        expr = self.Meta.table.insert()
+        expr = self.ormar_config.table.insert()
         expr = expr.values(**self_fields)
 
-        pk = await self.Meta.database.execute(expr)
+        pk = await self.ormar_config.database.execute(expr)
         if pk and isinstance(pk, self.pk_type()):
-            setattr(self, self.Meta.pkname, pk)
+            setattr(self, self.ormar_config.pkname, pk)
 
         self.set_save_status(True)
         # refresh server side defaults
         if any(
             field.server_default is not None
-            for name, field in self.Meta.model_fields.items()
+            for name, field in self.ormar_config.model_fields.items()
             if name not in self_fields
         ):
             await self.load()
@@ -111,10 +114,10 @@ class Model(ModelRow):
         self,
         follow: bool = False,
         save_all: bool = False,
-        relation_map: Dict = None,
-        exclude: Union[Set, Dict] = None,
+        relation_map: Optional[Dict] = None,
+        exclude: Union[Set, Dict, None] = None,
         update_count: int = 0,
-        previous_model: "Model" = None,
+        previous_model: Optional["Model"] = None,
         relation_field: Optional["ForeignKeyField"] = None,
     ) -> int:
         """
@@ -210,7 +213,7 @@ class Model(ModelRow):
 
         return update_count
 
-    async def update(self: T, _columns: List[str] = None, **kwargs: Any) -> T:
+    async def update(self: T, _columns: Optional[List[str]] = None, **kwargs: Any) -> T:
         """
         Performs update of Model instance in the database.
         Fields can be updated before or you can pass them as kwargs.
@@ -240,14 +243,14 @@ class Model(ModelRow):
             sender=self.__class__, instance=self, passed_args=kwargs
         )
         self_fields = self._extract_model_db_fields()
-        self_fields.pop(self.get_column_name_from_alias(self.Meta.pkname))
+        self_fields.pop(self.get_column_name_from_alias(self.ormar_config.pkname))
         if _columns:
             self_fields = {k: v for k, v in self_fields.items() if k in _columns}
         self_fields = self.translate_columns_to_aliases(self_fields)
-        expr = self.Meta.table.update().values(**self_fields)
-        expr = expr.where(self.pk_column == getattr(self, self.Meta.pkname))
+        expr = self.ormar_config.table.update().values(**self_fields)
+        expr = expr.where(self.pk_column == getattr(self, self.ormar_config.pkname))
 
-        await self.Meta.database.execute(expr)
+        await self.ormar_config.database.execute(expr)
         self.set_save_status(True)
         await self.signals.post_update.send(sender=self.__class__, instance=self)
         return self
@@ -268,9 +271,9 @@ class Model(ModelRow):
         :rtype: int
         """
         await self.signals.pre_delete.send(sender=self.__class__, instance=self)
-        expr = self.Meta.table.delete()
-        expr = expr.where(self.pk_column == (getattr(self, self.Meta.pkname)))
-        result = await self.Meta.database.execute(expr)
+        expr = self.ormar_config.table.delete()
+        expr = expr.where(self.pk_column == (getattr(self, self.ormar_config.pkname)))
+        result = await self.ormar_config.database.execute(expr)
         self.set_save_status(False)
         await self.signals.post_delete.send(sender=self.__class__, instance=self)
         return result
@@ -286,8 +289,8 @@ class Model(ModelRow):
         :return: reloaded Model
         :rtype: Model
         """
-        expr = self.Meta.table.select().where(self.pk_column == self.pk)
-        row = await self.Meta.database.fetch_one(expr)
+        expr = self.ormar_config.table.select().where(self.pk_column == self.pk)
+        row = await self.ormar_config.database.fetch_one(expr)
         if not row:  # pragma nocover
             raise NoMatch("Instance was deleted from database and cannot be refreshed")
         kwargs = dict(row)
@@ -299,8 +302,8 @@ class Model(ModelRow):
     async def load_all(
         self: T,
         follow: bool = False,
-        exclude: Union[List, str, Set, Dict] = None,
-        order_by: Union[List, str] = None,
+        exclude: Union[List, str, Set, Dict, None] = None,
+        order_by: Union[List, str, None] = None,
     ) -> T:
         """
         Allow to refresh existing Models fields from database.
@@ -341,5 +344,5 @@ class Model(ModelRow):
             queryset = queryset.order_by(order_by)
         instance = await queryset.select_related(relations).get(pk=self.pk)
         self._orm.clear()
-        self.update_from_dict(instance.dict())
+        self.update_from_dict(instance.model_dump())
         return self

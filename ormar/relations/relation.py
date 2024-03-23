@@ -1,10 +1,10 @@
 from enum import Enum
 from typing import (
+    TYPE_CHECKING,
     Generic,
     List,
     Optional,
     Set,
-    TYPE_CHECKING,
     Type,
     TypeVar,
     Union,
@@ -16,8 +16,8 @@ from ormar.exceptions import RelationshipInstanceError  # noqa I100
 from ormar.relations.relation_proxy import RelationProxy
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.relations import RelationsManager
     from ormar.models import Model, NewBaseModel, T
+    from ormar.relations import RelationsManager
 else:
     T = TypeVar("T", bound="Model")
 
@@ -48,7 +48,7 @@ class Relation(Generic[T]):
         type_: RelationType,
         field_name: str,
         to: Type["T"],
-        through: Type["Model"] = None,
+        through: Optional[Type["Model"]] = None,
     ) -> None:
         """
         Initialize the Relation and keep the related models either as instances of
@@ -128,15 +128,20 @@ class Relation(Generic[T]):
         """
         if not isinstance(self.related_models, RelationProxy):  # pragma nocover
             raise ValueError("Cannot find existing models in parent relation type")
-        if self._to_remove:
-            self._clean_related()
-        for ind, relation_child in enumerate(self.related_models[:]):
+
+        if child not in self.related_models:
+            return None
+        else:
+            # We need to clear the weakrefs that don't point to anything anymore
+            # There's an assumption here that if some of the related models
+            # went out of scope, then they all did, so we can just check the first one
             try:
-                if relation_child == child:
-                    return ind
-            except ReferenceError:  # pragma no cover
-                self._to_remove.add(ind)
-        return None
+                self.related_models[0].__repr__.__self__
+                return self.related_models.index(child)
+            except ReferenceError:
+                missing = self.related_models._get_list_of_missing_weakrefs()
+                self._to_remove.update(missing)
+            return self.related_models.index(child)
 
     def add(self, child: "Model") -> None:
         """
@@ -157,8 +162,16 @@ class Relation(Generic[T]):
                 rel = rel or []
                 if not isinstance(rel, list):
                     rel = [rel]
-                rel.append(child)
+                self._populate_owner_side_dict(rel=rel, child=child)
                 self._owner.__dict__[relation_name] = rel
+
+    def _populate_owner_side_dict(self, rel: List["Model"], child: "Model") -> None:
+        try:
+            if child not in rel:
+                rel.append(child)
+        except ReferenceError:
+            rel.clear()
+            rel.append(child)
 
     def remove(self, child: Union["NewBaseModel", Type["NewBaseModel"]]) -> None:
         """
@@ -186,6 +199,8 @@ class Relation(Generic[T]):
         :return: related model/models if set
         :rtype: Optional[Union[List[Model], Model]]
         """
+        if self._to_remove:
+            self._clean_related()
         return self.related_models
 
     def __repr__(self) -> str:  # pragma no cover

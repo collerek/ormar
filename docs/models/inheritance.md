@@ -7,7 +7,7 @@ Out of various types of ORM models inheritance `ormar` currently supports two of
 
 ## Types of inheritance
 
-The short summary of different types of inheritance is:
+The short summary of different types of inheritance:
 
 * **Mixins [SUPPORTED]** - don't subclass `ormar.Model`, just define fields that are
   later used on different models (like `created_date` and `updated_date` on each model),
@@ -32,6 +32,13 @@ To use Mixins just define a class that is not inheriting from an `ormar.Model` b
 defining `ormar.Fields` as class variables.
 
 ```python
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL),
+    metadata=sqlalchemy.MetaData(),
+    engine=sqlalchemy.create_engine(DATABASE_URL),
+)
+
+
 # a mixin defines the fields but is a normal python class 
 class AuditMixin:
     created_by: str = ormar.String(max_length=100)
@@ -45,10 +52,7 @@ class DateFieldsMixins:
 
 # a models can inherit from one or more mixins
 class Category(ormar.Model, DateFieldsMixins, AuditMixin):
-    class Meta(ormar.ModelMeta):
-        tablename = "categories"
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
@@ -57,7 +61,7 @@ class Category(ormar.Model, DateFieldsMixins, AuditMixin):
 
 !!!tip 
     Note that Mixins are **not** models, so you still need to inherit
-    from `ormar.Model` as well as define `Meta` class in the **final** model.
+    from `ormar.Model` as well as define `ormar_config` field in the **final** model.
 
 A Category class above will have four additional fields: `created_date`, `updated_date`,
 `created_by` and `updated_by`.
@@ -73,11 +77,11 @@ In concept concrete table inheritance is very similar to Mixins, but uses
 actual `ormar.Models` as base classes.
 
 !!!warning 
-    Note that base classes have `abstract=True` set in `Meta` class, if you try
+    Note that base classes have `abstract=True` set in `ormar_config` object, if you try
     to inherit from non abstract marked class `ModelDefinitionError` will be raised.
 
 Since this abstract Model will never be initialized you can skip `metadata`
-and `database` in it's `Meta` definition.
+and `database` in it's `ormar_config` definition.
 
 But if you provide it - it will be inherited, that way you do not have to
 provide `metadata` and `databases` in the final/concrete class
@@ -91,8 +95,7 @@ otherwise an error will be raised.
 # note that base classes have abstract=True
 # since this model will never be initialized you can skip metadata and database
 class AuditModel(ormar.Model):
-    class Meta:
-        abstract = True
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     created_by: str = ormar.String(max_length=100)
     updated_by: str = ormar.String(max_length=100, default="Sam")
@@ -100,10 +103,11 @@ class AuditModel(ormar.Model):
 
 # but if you provide it it will be inherited - DRY (Don't Repeat Yourself) in action
 class DateFieldsModel(ormar.Model):
-    class Meta:
-        abstract = True
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy(
+        abstract=True,
+        metadata=metadata,
+        database=db,
+    )
 
     created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
     updated_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
@@ -111,8 +115,7 @@ class DateFieldsModel(ormar.Model):
 
 # that way you do not have to provide metadata and databases in concrete class
 class Category(DateFieldsModel, AuditModel):
-    class Meta(ormar.ModelMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
@@ -122,8 +125,6 @@ class Category(DateFieldsModel, AuditModel):
 
 The list of inherited options/settings is as follows: `metadata`, `database`
 and `constraints`.
-
-Also methods decorated with `@property_field` decorator will be inherited/recognized.
 
 Of course apart from that all fields from base classes are combined and created in the
 concrete table of the final Model.
@@ -140,15 +141,16 @@ inheritance.
 Whenever you define a field with same name and new definition it will completely replace
 the previously defined one.
 
-```python
+```python hl_lines="28"
 # base class
 class DateFieldsModel(ormar.Model):
-    class Meta:
-        abstract = True
-        metadata = metadata
-        database = db
+    ormar_config = OrmarConfig(
+        abstract=True,
+        metadata=metadata,
+        database=db,
         # note that UniqueColumns need sqlalchemy db columns names not the ormar ones
-        constraints = [ormar.UniqueColumns("creation_date", "modification_date")]
+        constraints=[ormar.UniqueColumns("creation_date", "modification_date")]
+    )
 
     created_date: datetime.datetime = ormar.DateTime(
         default=datetime.datetime.now, name="creation_date"
@@ -159,10 +161,11 @@ class DateFieldsModel(ormar.Model):
 
 
 class RedefinedField(DateFieldsModel):
-    class Meta(ormar.ModelMeta):
-        tablename = "redefines"
-        metadata = metadata
-        database = db
+    ormar_config = OrmarConfig(
+        tablename="redefines",
+        metadata=metadata,
+        database=db,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     # here the created_date is replaced by the String field
@@ -170,12 +173,12 @@ class RedefinedField(DateFieldsModel):
 
 
 # you can verify that the final field is correctly declared and created
-changed_field = RedefinedField.Meta.model_fields["created_date"]
+changed_field = RedefinedField.ormar_config.model_fields["created_date"]
 assert changed_field.default is None
 assert changed_field.alias == "creation_date"
-assert any(x.name == "creation_date" for x in RedefinedField.Meta.table.columns)
+assert any(x.name == "creation_date" for x in RedefinedField.ormar_config.table.columns)
 assert isinstance(
-    RedefinedField.Meta.table.columns["creation_date"].type,
+    RedefinedField.ormar_config.table.columns["creation_date"].type,
     sqlalchemy.sql.sqltypes.String,
 )
 ```
@@ -225,9 +228,7 @@ That might sound complicated but let's look at the following example:
 ```python
 # normal model used in relation
 class Person(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -235,10 +236,7 @@ class Person(ormar.Model):
 
 # parent model - needs to be abstract
 class Car(ormar.Model):
-    class Meta:
-        abstract = True
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50)
@@ -249,16 +247,13 @@ class Car(ormar.Model):
 
 
 class Truck(Car):
-    class Meta:
-        pass
+    ormar_config = base_ormar_config.copy()
 
     max_capacity: int = ormar.Integer()
 
 
 class Bus(Car):
-    class Meta:
-        # default naming is name.lower()+'s' so it's ugly for buss ;)
-        tablename = "buses"
+    ormar_config = base_ormar_config.copy(tablename="buses")
 
     max_persons: int = ormar.Integer()
 ```
@@ -266,7 +261,7 @@ class Bus(Car):
 Now when you will inspect the fields on Person model you will get:
 
 ```python
-Person.Meta.model_fields
+Person.ormar_config.model_fields
 """
 {'id': <class 'ormar.fields.model_fields.Integer'>, 
 'name': <class 'ormar.fields.model_fields.String'>, 
@@ -293,8 +288,7 @@ different `related_name` parameter.
 ```python
 # rest of the above example remains the same
 class Bus(Car):
-    class Meta:
-        tablename = "buses"
+    ormar_config = base_ormar_config.copy(tablename="buses")
 
     # new field that changes the related_name
     owner: Person = ormar.ForeignKey(Person, related_name="buses")
@@ -304,7 +298,7 @@ class Bus(Car):
 Now the columns looks much better.
 
 ```python
-Person.Meta.model_fields
+Person.ormar_config.model_fields
 """
 {'id': <class 'ormar.fields.model_fields.Integer'>, 
 'name': <class 'ormar.fields.model_fields.String'>, 
@@ -328,7 +322,7 @@ Person.Meta.model_fields
 Similarly, you can inherit from Models that have ManyToMany relations declared but
 there is one, but substantial difference - the Through model. 
 
-Since in the future the Through model will be able to hold additional fields and now it links only two Tables 
+Since the Through model will be able to hold additional fields, and now it links only two Tables 
 (`from` and `to` ones), each child that inherits the m2m relation field has to have separate
 Through model. 
 
@@ -344,27 +338,18 @@ We will modify the previous example described above to use m2m relation for co_o
 ```python
 # person remain the same as above
 class Person(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 # new through model between Person and Car2
 class PersonsCar(ormar.Model):
-    class Meta:
-        tablename = "cars_x_persons"
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy(tablename="cars_x_persons")
 
 # note how co_owners is now ManyToMany relation
 class Car2(ormar.Model):
-    class Meta:
-        # parent class needs to be marked abstract
-        abstract = True
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50)
@@ -379,22 +364,19 @@ class Car2(ormar.Model):
 
 # child models define only additional Fields
 class Truck2(Car2):
-    class Meta:
-        # note how you don't have to provide inherited Meta params
-        tablename = "trucks2"
+    ormar_config = base_ormar_config.copy(tablename="trucks2")
 
     max_capacity: int = ormar.Integer()
 
 
 class Bus2(Car2):
-    class Meta:
-        tablename = "buses2"
+    ormar_config = base_ormar_config.copy(tablename="buses2")
 
     max_persons: int = ormar.Integer()
 ```
 
 `Ormar` automatically modifies related_name of the fields to include the **table** name 
-of the children models. The dafault name is original related_name + '_' + child table name.
+of the children models. The default name is original related_name + '_' + child table name.
 
 That way for class Truck2 the relation defined in 
 `owner: Person = ormar.ForeignKey(Person, related_name="owned")` becomes `owned_trucks2`
@@ -402,7 +384,7 @@ That way for class Truck2 the relation defined in
 You can verify the names by inspecting the list of fields present on `Person` model.
 
 ```python
-Person.Meta.model_fields
+Person.ormar_config.model_fields
 {
 # note how all relation fields need to be unique on Person
 # regardless if autogenerated or manually overwritten
@@ -425,14 +407,14 @@ But that's not all. It's kind of internal to `ormar` but affects the data struct
 so let's examine the through models for both `Bus2` and `Truck2` models.
 
 ```python
-Bus2.Meta.model_fields['co_owners'].through
+Bus2.ormar_config.model_fields['co_owners'].through
 <class 'abc.PersonsCarBus2'>
-Bus2.Meta.model_fields['co_owners'].through.Meta.tablename
+Bus2.ormar_config.model_fields['co_owners'].through.ormar_config.tablename
 'cars_x_persons_buses2'
 
-Truck2.Meta.model_fields['co_owners'].through
+Truck2.ormar_config.model_fields['co_owners'].through
 <class 'abc.PersonsCarTruck2'>
-Truck2.Meta.model_fields['co_owners'].through.Meta.tablename
+Truck2.ormar_config.model_fields['co_owners'].through.ormar_config.tablename
 'cars_x_persons_trucks2'
 ```
 
@@ -443,7 +425,7 @@ the name of the **table** from the child is used.
 Note that original model is not only not used, the table for this model is removed from metadata:
 
 ```python
-Bus2.Meta.metadata.tables.keys()
+Bus2.ormar_config.metadata.tables.keys()
 dict_keys(['test_date_models', 'categories', 'subjects', 'persons', 'trucks', 'buses', 
            'cars_x_persons_trucks2', 'trucks2', 'cars_x_persons_buses2', 'buses2'])
 ```
@@ -469,26 +451,24 @@ Ormar allows you to skip certain fields in inherited model that are coming from 
 !!!Note
     Note that the same behaviour can be achieved by splitting the model into more abstract models and mixins - which is a preferred way in normal circumstances.
 
-To skip certain fields from a child model, list all fields that you want to skip in `model.Meta.exclude_parent_fields` parameter like follows:
+To skip certain fields from a child model, list all fields that you want to skip in `model.ormar_config.exclude_parent_fields` parameter like follows:
 
 ```python
-metadata = sa.MetaData()
-db = databases.Database(DATABASE_URL)
+base_ormar_config = OrmarConfig(
+    metadata=sa.MetaData(),
+    database=databases.Database(DATABASE_URL),
+)
 
 
 class AuditModel(ormar.Model):
-    class Meta:
-        abstract = True
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     created_by: str = ormar.String(max_length=100)
     updated_by: str = ormar.String(max_length=100, default="Sam")
 
 
 class DateFieldsModel(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        abstract = True
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     created_date: datetime.datetime = ormar.DateTime(
         default=datetime.datetime.now, name="creation_date"
@@ -499,23 +479,24 @@ class DateFieldsModel(ormar.Model):
 
 
 class Category(DateFieldsModel, AuditModel):
-    class Meta(ormar.ModelMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(
+        tablename="categories",
         # set fields that should be skipped
-        exclude_parent_fields = ["updated_by", "updated_date"]
+        exclude_parent_fields=["updated_by", "updated_date"],
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)
     code: int = ormar.Integer()
 
 # Note that now the update fields in Category are gone in all places -> ormar fields, pydantic fields and sqlachemy table columns
-# so full list of available fileds in Category is: ["created_by", "created_date", "id", "name", "code"]
+# so full list of available fields in Category is: ["created_by", "created_date", "id", "name", "code"]
 ```
 
 Note how you simply need to provide field names and it will exclude the parent field regardless of from which parent model the field is coming from.
 
 !!!Note
-    Note that if you want to overwrite a field in child model you do not have to exclude it, simpy overwrite the field declaration in child model with same field name.
+    Note that if you want to overwrite a field in child model you do not have to exclude it, simply overwrite the field declaration in child model with same field name.
 
 !!!Warning
     Note that this kind of behavior can confuse mypy and static type checkers, yet accessing the non existing fields will fail at runtime. That's why splitting the base classes is preferred.
@@ -523,38 +504,32 @@ Note how you simply need to provide field names and it will exclude the parent f
 The same effect can be achieved by splitting base classes like:
 
 ```python
-metadata = sa.MetaData()
-db = databases.Database(DATABASE_URL)
+base_ormar_config = OrmarConfig(
+    metadata=sa.MetaData(),
+    database=databases.Database(DATABASE_URL),
+)
 
 
 class AuditCreateModel(ormar.Model):
-    class Meta:
-        abstract = True
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     created_by: str = ormar.String(max_length=100)
     
 
 class AuditUpdateModel(ormar.Model):
-    class Meta:
-        abstract = True
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     updated_by: str = ormar.String(max_length=100, default="Sam")
 
 class CreateDateFieldsModel(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        abstract = True
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     created_date: datetime.datetime = ormar.DateTime(
         default=datetime.datetime.now, name="creation_date"
     )
     
 class UpdateDateFieldsModel(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        abstract = True
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     updated_date: datetime.datetime = ormar.DateTime(
         default=datetime.datetime.now, name="modification_date"
@@ -562,8 +537,7 @@ class UpdateDateFieldsModel(ormar.Model):
 
 
 class Category(CreateDateFieldsModel, AuditCreateModel):
-    class Meta(ormar.ModelMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50, unique=True, index=True)

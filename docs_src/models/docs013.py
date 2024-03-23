@@ -1,27 +1,22 @@
 from typing import Optional
 
 import databases
+import ormar
 import sqlalchemy
 
-import ormar
+DATABASE_URL = "sqlite:///test.db"
 
-database = databases.Database("sqlite:///test.db", force_rollback=True)
-metadata = sqlalchemy.MetaData()
-
-
-# note that you do not have to subclass ModelMeta,
-# it's useful for type hints and code completion
-class MainMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+ormar_base_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL),
+    metadata=sqlalchemy.MetaData(),
+)
 
 
 class Artist(ormar.Model):
-    class Meta(MainMeta):
-        # note that tablename is optional
-        # if not provided ormar will user class.__name__.lower()+'s'
-        # -> artists in this example
-        pass
+    # note that tablename is optional
+    # if not provided ormar will user class.__name__.lower()+'s'
+    # -> artists in this example
+    ormar_config = ormar_base_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     first_name: str = ormar.String(max_length=100)
@@ -30,8 +25,7 @@ class Artist(ormar.Model):
 
 
 class Album(ormar.Model):
-    class Meta(MainMeta):
-        pass
+    ormar_config = ormar_base_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

@@ -1,15 +1,15 @@
 import string
 import uuid
 from random import choices
-from typing import Any, Dict, List, TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
 
 import sqlalchemy
 from sqlalchemy import text
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
-    from ormar.models import ModelRow
     from ormar.fields import ForeignKeyField
+    from ormar.models import ModelRow
 
 
 def get_table_alias() -> str:
@@ -59,7 +59,7 @@ class AliasManager:
 
     @staticmethod
     def prefixed_columns(
-        alias: str, table: sqlalchemy.Table, fields: List = None
+        alias: str, table: sqlalchemy.Table, fields: Optional[List] = None
     ) -> List[text]:
         """
         Creates a list of aliases sqlalchemy text clauses from
@@ -106,7 +106,10 @@ class AliasManager:
         return self._prefixed_tables.setdefault(key, table.alias(full_alias))
 
     def add_relation_type(
-        self, source_model: Type["Model"], relation_name: str, reverse_name: str = None
+        self,
+        source_model: Type["Model"],
+        relation_name: str,
+        reverse_name: Optional[str] = None,
     ) -> None:
         """
         Registers the relations defined in ormar models.
@@ -134,7 +137,7 @@ class AliasManager:
         if parent_key not in self._aliases_new:
             self.add_alias(parent_key)
 
-        to_field = source_model.Meta.model_fields[relation_name]
+        to_field = source_model.ormar_config.model_fields[relation_name]
         child_model = to_field.to
         child_key = f"{child_model.get_name()}_{reverse_name}"
         if child_key not in self._aliases_new:

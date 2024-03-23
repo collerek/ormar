@@ -1,31 +1,24 @@
 import random
 from typing import Optional
 
-import databases
-import pytest
-import sqlalchemy
-from pydantic import BaseModel, Field, HttpUrl, PaymentCardNumber
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
+from pydantic import BaseModel, Field, HttpUrl
+from pydantic_extra_types.payment import PaymentCardNumber
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
 
 
 class ModelTest(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)
     url: HttpUrl = "https://www.example.com"  # type: ignore
-    number: Optional[PaymentCardNumber]
+    number: Optional[PaymentCardNumber] = None
 
 
 CARD_NUMBERS = [
@@ -42,8 +35,7 @@ def get_number():
 
 
 class ModelTest2(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)
@@ -57,8 +49,7 @@ class PydanticTest(BaseModel):
 
 
 class ModelTest3(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     def __init__(self, **kwargs):
         kwargs["number"] = get_number()
@@ -72,18 +63,12 @@ class ModelTest3(ormar.Model):
     pydantic_test: PydanticTest
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_working_with_pydantic_fields():
-    async with database:
+    async with base_ormar_config.database:
         test = ModelTest(name="Test")
         assert test.name == "Test"
         assert test.url == "https://www.example.com"
@@ -103,7 +88,7 @@ async def test_working_with_pydantic_fields():
 
 @pytest.mark.asyncio
 async def test_default_factory_for_pydantic_fields():
-    async with database:
+    async with base_ormar_config.database:
         test = ModelTest2(name="Test2", number="4000000000000002")
         assert test.name == "Test2"
         assert test.url == "https://www.example2.com"
@@ -123,7 +108,7 @@ async def test_default_factory_for_pydantic_fields():
 
 @pytest.mark.asyncio
 async def test_init_setting_for_pydantic_fields():
-    async with database:
+    async with base_ormar_config.database:
         test = ModelTest3(name="Test3")
         assert test.name == "Test3"
         assert test.url == "https://www.example3.com"

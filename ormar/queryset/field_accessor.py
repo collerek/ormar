@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING, Type, cast
+from typing import TYPE_CHECKING, Any, Optional, Type, cast
 
 from ormar.queryset.actions import OrderAction
 from ormar.queryset.actions.filter_action import METHODS_TO_OPERATORS
@@ -17,23 +17,14 @@ class FieldAccessor:
     def __init__(
         self,
         source_model: Type["Model"],
-        field: "BaseField" = None,
-        model: Type["Model"] = None,
+        field: Optional["BaseField"] = None,
+        model: Optional[Type["Model"]] = None,
         access_chain: str = "",
     ) -> None:
         self._source_model = source_model
         self._field = field
         self._model = model
         self._access_chain = access_chain
-
-    def __bool__(self) -> bool:
-        """
-        Hack to avoid pydantic name check from parent model, returns false
-
-        :return: False
-        :rtype: bool
-        """
-        return False
 
     def __getattr__(self, item: str) -> Any:
         """
@@ -53,9 +44,10 @@ class FieldAccessor:
 
         if (
             object.__getattribute__(self, "_model")
-            and item in object.__getattribute__(self, "_model").Meta.model_fields
+            and item
+            in object.__getattribute__(self, "_model").ormar_config.model_fields
         ):
-            field = cast("Model", self._model).Meta.model_fields[item]
+            field = cast("Model", self._model).ormar_config.model_fields[item]
             if field.is_relation:
                 return FieldAccessor(
                     source_model=self._source_model,

@@ -1,114 +1,93 @@
 from datetime import datetime
 from typing import List, Optional, Union
 
-import databases
+import ormar as orm
 import pydantic
 import pytest
-import sqlalchemy
 
-import ormar as orm
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-from tests.settings import DATABASE_URL
-
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
-
-
-class MainMeta(orm.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = create_config()
 
 
 class ChagenlogRelease(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "changelog_release"
+    ormar_config = base_ormar_config.copy(tablename="changelog_release")
 
 
 class CommitIssue(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "commit_issues"
+    ormar_config = base_ormar_config.copy(tablename="commit_issues")
 
 
 class CommitLabel(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "commit_label"
+    ormar_config = base_ormar_config.copy(tablename="commit_label")
 
 
 class MergeRequestCommit(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "merge_request_commits"
+    ormar_config = base_ormar_config.copy(tablename="merge_request_commits")
 
 
 class MergeRequestIssue(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "merge_request_issues"
+    ormar_config = base_ormar_config.copy(tablename="merge_request_issues")
 
 
 class MergeRequestLabel(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "merge_request_labels"
+    ormar_config = base_ormar_config.copy(tablename="merge_request_labels")
 
 
 class ProjectLabel(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "project_label"
+    ormar_config = base_ormar_config.copy(tablename="project_label")
 
 
 class PushCommit(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "push_commit"
+    ormar_config = base_ormar_config.copy(tablename="push_commit")
 
 
 class PushLabel(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "push_label"
+    ormar_config = base_ormar_config.copy(tablename="push_label")
 
 
 class TagCommit(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "tag_commits"
+    ormar_config = base_ormar_config.copy(tablename="tag_commits")
 
 
 class TagIssue(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "tag_issue"
+    ormar_config = base_ormar_config.copy(tablename="tag_issue")
 
 
 class TagLabel(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
 
-    class Meta(MainMeta):
-        tablename = "tag_label"
+    ormar_config = base_ormar_config.copy(tablename="tag_label")
 
 
 class UserProject(orm.Model):
     id: int = orm.Integer(name="id", primary_key=True)
     access_level: int = orm.Integer(default=0)
 
-    class Meta(MainMeta):
-        tablename = "user_project"
+    ormar_config = base_ormar_config.copy(tablename="user_project")
 
 
 class Label(orm.Model):
@@ -117,8 +96,7 @@ class Label(orm.Model):
     description: str = orm.Text(default="")
     type: str = orm.String(max_length=100, default="")
 
-    class Meta(MainMeta):
-        tablename = "labels"
+    ormar_config = base_ormar_config.copy(tablename="labels")
 
 
 class Project(orm.Model):
@@ -139,8 +117,7 @@ class Project(orm.Model):
     changelog_file: str = orm.String(max_length=250, default="")
     version_file: str = orm.String(max_length=250, default="")
 
-    class Meta(MainMeta):
-        tablename = "projects"
+    ormar_config = base_ormar_config.copy(tablename="projects")
 
 
 class Issue(orm.Model):
@@ -154,8 +131,7 @@ class Issue(orm.Model):
     change_type: str = orm.String(max_length=100, default="")
     data: pydantic.Json = orm.JSON(default={})
 
-    class Meta(MainMeta):
-        tablename = "issues"
+    ormar_config = base_ormar_config.copy(tablename="issues")
 
 
 class User(orm.Model):
@@ -163,8 +139,7 @@ class User(orm.Model):
     username: str = orm.String(max_length=100, unique=True)
     name: str = orm.String(max_length=200, default="")
 
-    class Meta(MainMeta):
-        tablename = "users"
+    ormar_config = base_ormar_config.copy(tablename="users")
 
 
 class Branch(orm.Model):
@@ -177,8 +152,7 @@ class Branch(orm.Model):
     postfix_tag: str = orm.String(max_length=50, default="")
     project: Project = orm.ForeignKey(Project, ondelete="CASCADE", onupdate="CASCADE")
 
-    class Meta(MainMeta):
-        tablename = "branches"
+    ormar_config = base_ormar_config.copy(tablename="branches")
 
 
 class Changelog(orm.Model):
@@ -192,8 +166,7 @@ class Changelog(orm.Model):
     project: Project = orm.ForeignKey(Project, ondelete="CASCADE", onupdate="CASCADE")
     created_date: datetime = orm.DateTime(default=datetime.utcnow())
 
-    class Meta(MainMeta):
-        tablename = "changelogs"
+    ormar_config = base_ormar_config.copy(tablename="changelogs")
 
 
 class Commit(orm.Model):
@@ -210,8 +183,7 @@ class Commit(orm.Model):
         Issue, through=CommitIssue, ondelete="CASCADE", onupdate="CASCADE"
     )
 
-    class Meta(MainMeta):
-        tablename = "commits"
+    ormar_config = base_ormar_config.copy(tablename="commits")
 
 
 class MergeRequest(orm.Model):
@@ -234,8 +206,7 @@ class MergeRequest(orm.Model):
     )
     project: Project = orm.ForeignKey(Project, ondelete="CASCADE", onupdate="CASCADE")
 
-    class Meta(MainMeta):
-        tablename = "merge_requests"
+    ormar_config = base_ormar_config.copy(tablename="merge_requests")
 
 
 class Push(orm.Model):
@@ -259,8 +230,7 @@ class Push(orm.Model):
     author: User = orm.ForeignKey(User, ondelete="CASCADE", onupdate="CASCADE")
     project: Project = orm.ForeignKey(Project, ondelete="CASCADE", onupdate="CASCADE")
 
-    class Meta(MainMeta):
-        tablename = "pushes"
+    ormar_config = base_ormar_config.copy(tablename="pushes")
 
 
 class Tag(orm.Model):
@@ -291,8 +261,7 @@ class Tag(orm.Model):
         Branch, nullable=True, ondelete="CASCADE", onupdate="CASCADE"
     )
 
-    class Meta(MainMeta):
-        tablename = "tags"
+    ormar_config = base_ormar_config.copy(tablename="tags")
 
 
 class Release(orm.Model):
@@ -305,8 +274,7 @@ class Release(orm.Model):
     )
     data: pydantic.Json = orm.JSON(default={})
 
-    class Meta(MainMeta):
-        tablename = "releases"
+    ormar_config = base_ormar_config.copy(tablename="releases")
 
 
 class Webhook(orm.Model):
@@ -328,18 +296,12 @@ class Webhook(orm.Model):
     error: str = orm.Text(default="")
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_very_complex_relation_map():
-    async with database:
+    async with base_ormar_config.database:
         tags = [
             {"id": 18, "name": "name-18", "ref": "ref-18"},
             {"id": 17, "name": "name-17", "ref": "ref-17"},
@@ -349,19 +311,25 @@ async def test_very_complex_relation_map():
             {
                 "id": 9,
                 "title": "prueba-2321",
-                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->\n### [v.1.3.0.0] - 2021-08-19\n#### Resolved Issues\n\n#### Task\n\n- Probar flujo de changelog Automatic  Jira: [SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    Description: Se probara el flujo de changelog automatic.  \n\n    Changelog: Se agrega función para extraer texto del campo changelog del dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio. \n\n\n            \n<!--- end changelog ver.v.1.3.0.0 -->\n",
+                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->"
+                "Description 1"
+                "<!--- end changelog ver.v.1.3.0.0 -->\n",
                 "data": {},
             },
             {
                 "id": 8,
                 "title": "prueba-123-prod",
-                "description": "\n<!--- start changelog ver.v.1.2.0.0 -->\n### [v.1.2.0.0] - 2021-08-19\n#### Resolved Issues\n\n#### Task\n\n- Probar flujo de changelog Automatic  Jira: [SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    Description: Se probara el flujo de changelog automatic.  \n\n    Changelog: Se agrega función para extraer texto del campo changelog del dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio. \n\n\n            \n<!--- end changelog ver.v.1.2.0.0 -->\n",
+                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->"
+                "Description 2"
+                "<!--- end changelog ver.v.1.3.0.0 -->\n",
                 "data": {},
             },
             {
                 "id": 6,
                 "title": "prueba-3-2",
-                "description": "\n<!--- start changelog ver.v.1.1.0.0 -->\n### [v.1.1.0.0] - 2021-07-29\n#### Resolved Issues\n\n#### Task\n\n- Probar flujo de changelog Automatic  Jira: [SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    Description: Se probara el flujo de changelog automatic.  \n\n    Changelog: Se agrega función para extraer texto del campo changelog del dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio. \n\n\n            \n<!--- end changelog ver.v.1.1.0.0 -->\n",
+                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->"
+                "Description 3"
+                "<!--- end changelog ver.v.1.3.0.0 -->\n",
                 "data": {},
             },
         ]
@@ -373,45 +341,42 @@ async def test_very_complex_relation_map():
             await Release(**pay, tag=saved_tags[ind]).save()
 
         releases = await Release.objects.order_by(Release.id.desc()).all()
-        dicts = [release.dict() for release in releases]
+        dicts = [release.model_dump() for release in releases]
 
         result = [
             {
                 "id": 9,
                 "title": "prueba-2321",
-                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->\n### [v.1.3.0.0] - 2021-08-19\n#### Resolved Issues\n\n#### Task\n\n- Probar flujo de changelog Automatic  Jira: [SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    Description: Se probara el flujo de changelog automatic.  \n\n    Changelog: Se agrega función para extraer texto del campo changelog del dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio. \n\n\n            \n<!--- end changelog ver.v.1.3.0.0 -->\n",
+                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->"
+                "Description 1"
+                "<!--- end changelog ver.v.1.3.0.0 -->\n",
                 "data": {},
                 "tag": {
                     "id": 18,
-                    "taglabel": None,
-                    "tagcommit": None,
-                    "tagissue": None,
                 },
                 "changelogs": [],
             },
             {
                 "id": 8,
                 "title": "prueba-123-prod",
-                "description": "\n<!--- start changelog ver.v.1.2.0.0 -->\n### [v.1.2.0.0] - 2021-08-19\n#### Resolved Issues\n\n#### Task\n\n- Probar flujo de changelog Automatic  Jira: [SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    Description: Se probara el flujo de changelog automatic.  \n\n    Changelog: Se agrega función para extraer texto del campo changelog del dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio. \n\n\n            \n<!--- end changelog ver.v.1.2.0.0 -->\n",
+                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->"
+                "Description 2"
+                "<!--- end changelog ver.v.1.3.0.0 -->\n",
                 "data": {},
                 "tag": {
                     "id": 17,
-                    "taglabel": None,
-                    "tagcommit": None,
-                    "tagissue": None,
                 },
                 "changelogs": [],
             },
             {
                 "id": 6,
                 "title": "prueba-3-2",
-                "description": "\n<!--- start changelog ver.v.1.1.0.0 -->\n### [v.1.1.0.0] - 2021-07-29\n#### Resolved Issues\n\n#### Task\n\n- Probar flujo de changelog Automatic  Jira: [SAN-86](https://htech.atlassian.net/browse/SAN-86)\n\n    Description: Se probara el flujo de changelog automatic.  \n\n    Changelog: Se agrega función para extraer texto del campo changelog del dashboard de Sanval y ponerlo directamente en el changelog.md del repositorio. \n\n\n            \n<!--- end changelog ver.v.1.1.0.0 -->\n",
+                "description": "\n<!--- start changelog ver.v.1.3.0.0 -->"
+                "Description 3"
+                "<!--- end changelog ver.v.1.3.0.0 -->\n",
                 "data": {},
                 "tag": {
                     "id": 12,
-                    "taglabel": None,
-                    "tagcommit": None,
-                    "tagissue": None,
                 },
                 "changelogs": [],
             },

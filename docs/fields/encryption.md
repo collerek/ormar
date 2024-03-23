@@ -17,10 +17,14 @@ well as both-way encryption/decryption (`FERNET` backend).
 
 To encrypt a field you need to pass at minimum `encrypt_secret` and `encrypt_backend` parameters.
 
-```python hl_lines="7-8"
+```python hl_lines="10-12"
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata
+    database=database
+)
+
 class Filter(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "filters"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, 
@@ -59,8 +63,7 @@ Note that since this backend never decrypt the stored value it's only applicable
 
 ```python
 class Hash(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "hashes"
+    ormar_config = base_ormar_config.copy(tablename="hashes")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128,
@@ -106,8 +109,7 @@ as the returned value is parsed to corresponding python type.
 
 ```python
 class Filter(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "filters"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, 
@@ -152,8 +154,7 @@ argument by `encrypt_custom_backend`.
 
 ```python
 class Filter(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "filters"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, 
