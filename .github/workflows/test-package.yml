@@ -106,6 +106,10 @@ jobs:
 
     - name: Upload coverage
       uses: codecov/codecov-action@v4.1.0
+      with:
+        name: codecov-umbrella
+        token: ${{ secrets.CODCOV_TOKEN }}
+        verbose: true
 
     - name: Test & publish code coverage
       uses: paambaati/codeclimate-action@v5.0.0
