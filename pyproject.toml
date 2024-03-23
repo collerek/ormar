@@ -61,13 +61,6 @@ PyMySQL = { version = "^1.1.0", optional = true }
 version = ">=3.6.4"
 optional = true
 
-[tool.poetry.dependencies.typing-extensions]
-version = ">=3.7,<=5.0"
-python = "<3.8"
-
-[tool.poetry.dependencies.importlib-metadata]
-version = ">=3.1"
-python = "<3.8"
 
 [tool.poetry.extras]
 postgresql = ["asyncpg", "psycopg2-binary"]
