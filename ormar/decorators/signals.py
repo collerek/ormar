@@ -1,4 +1,4 @@
-from typing import Callable, List, TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING, Callable, List, Type, Union
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
@@ -34,7 +34,7 @@ def receiver(
         else:
             _senders = senders
         for sender in _senders:
-            signals = getattr(sender.Meta.signals, signal)
+            signals = getattr(sender.ormar_config.signals, signal)
             signals.connect(func)
         return func
 

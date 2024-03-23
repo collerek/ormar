@@ -1,33 +1,24 @@
 from typing import Optional
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
+import pytest_asyncio
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
-        orders_by = ["-ranking"]
+    ormar_config = base_ormar_config.copy(tablename="books", order_by=["-ranking"])
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(
@@ -38,26 +29,20 @@ class Book(ormar.Model):
     ranking: int = ormar.Integer(nullable=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
-@pytest.fixture(autouse=True, scope="function")
+@pytest_asyncio.fixture(autouse=True, scope="function")
 async def cleanup():
     yield
-    async with database:
+    async with base_ormar_config.database:
         await Book.objects.delete(each=True)
         await Author.objects.delete(each=True)
 
 
 @pytest.mark.asyncio
 async def test_default_orders_is_applied_from_reverse_relation():
-    async with database:
+    async with base_ormar_config.database:
         tolkien = await Author(name="J.R.R. Tolkien").save()
         hobbit = await Book(author=tolkien, title="The Hobbit", year=1933).save()
         silmarillion = await Book(

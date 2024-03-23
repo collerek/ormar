@@ -1,11 +1,9 @@
 from typing import Optional
 
-import databases
+import ormar
 import pydantic
 import pytest
-import sqlalchemy
-
-import ormar
+import pytest_asyncio
 from ormar import (
     post_bulk_update,
     post_delete,
@@ -15,19 +13,17 @@ from ormar import (
     pre_save,
     pre_update,
 )
-from ormar.signals import SignalEmitter
 from ormar.exceptions import SignalDefinitionError
-from tests.settings import DATABASE_URL
+from ormar.signals import SignalEmitter
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config()
 
 
 class AuditLog(ormar.Model):
-    class Meta:
-        tablename = "audits"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="audits")
 
     id: int = ormar.Integer(primary_key=True)
     event_type: str = ormar.String(max_length=100)
@@ -35,20 +31,14 @@ class AuditLog(ormar.Model):
 
 
 class Cover(ormar.Model):
-    class Meta:
-        tablename = "covers"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="covers")
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=100)
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="albums")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -57,19 +47,13 @@ class Album(ormar.Model):
     cover: Optional[Cover] = ormar.ForeignKey(Cover)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def cleanup():
     yield
-    async with database:
+    async with base_ormar_config.database:
         await AuditLog.objects.delete(each=True)
 
 
@@ -94,49 +78,49 @@ def test_invalid_signal():
 
 @pytest.mark.asyncio
 async def test_signal_functions(cleanup):
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
 
             @pre_save(Album)
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"PRE_SAVE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @post_save(Album)
             async def after_save(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"POST_SAVE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @pre_update(Album)
             async def before_update(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"PRE_UPDATE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @post_update(Album)
             async def after_update(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"POST_UPDATE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @pre_delete(Album)
             async def before_delete(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"PRE_DELETE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @post_delete(Album)
             async def after_delete(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"POST_DELETE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @post_bulk_update(Album)
@@ -144,7 +128,7 @@ async def test_signal_functions(cleanup):
                 for it in instances:
                     await AuditLog(
                         event_type=f"BULK_POST_UPDATE_{sender.get_name()}",
-                        event_log=it.json(),
+                        event_log=it.model_dump_json(),
                     ).save()
 
             album = await Album.objects.create(name="Venice")
@@ -217,21 +201,21 @@ async def test_signal_functions(cleanup):
 
 @pytest.mark.asyncio
 async def test_multiple_signals(cleanup):
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
 
             @pre_save(Album)
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"PRE_SAVE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             @pre_save(Album)
             async def before_save2(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"PRE_SAVE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             album = await Album.objects.create(name="Miami")
@@ -248,8 +232,8 @@ async def test_multiple_signals(cleanup):
 
 @pytest.mark.asyncio
 async def test_static_methods_as_signals(cleanup):
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
 
             class AlbumAuditor:
                 event_type = "ALBUM_INSTANCE"
@@ -259,7 +243,7 @@ async def test_static_methods_as_signals(cleanup):
                 async def before_save(sender, instance, **kwargs):
                     await AuditLog(
                         event_type=f"{AlbumAuditor.event_type}_SAVE",
-                        event_log=instance.json(),
+                        event_log=instance.model_dump_json(),
                     ).save()
 
             album = await Album.objects.create(name="Colorado")
@@ -273,8 +257,8 @@ async def test_static_methods_as_signals(cleanup):
 
 @pytest.mark.asyncio
 async def test_methods_as_signals(cleanup):
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
 
             class AlbumAuditor:
                 def __init__(self):
@@ -282,7 +266,8 @@ async def test_methods_as_signals(cleanup):
 
                 async def before_save(self, sender, instance, **kwargs):
                     await AuditLog(
-                        event_type=f"{self.event_type}_SAVE", event_log=instance.json()
+                        event_type=f"{self.event_type}_SAVE",
+                        event_log=instance.model_dump_json(),
                     ).save()
 
             auditor = AlbumAuditor()
@@ -299,14 +284,14 @@ async def test_methods_as_signals(cleanup):
 
 @pytest.mark.asyncio
 async def test_multiple_senders_signal(cleanup):
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
 
             @pre_save([Album, Cover])
             async def before_save(sender, instance, **kwargs):
                 await AuditLog(
                     event_type=f"PRE_SAVE_{sender.get_name()}",
-                    event_log=instance.json(),
+                    event_log=instance.model_dump_json(),
                 ).save()
 
             cover = await Cover(title="Blue").save()
@@ -317,7 +302,7 @@ async def test_multiple_senders_signal(cleanup):
             assert audits[0].event_type == "PRE_SAVE_cover"
             assert audits[0].event_log.get("title") == cover.title
             assert audits[1].event_type == "PRE_SAVE_album"
-            assert audits[1].event_log.get("cover") == album.cover.dict(
+            assert audits[1].event_log.get("cover") == album.cover.model_dump(
                 exclude={"albums"}
             )
 
@@ -327,8 +312,8 @@ async def test_multiple_senders_signal(cleanup):
 
 @pytest.mark.asyncio
 async def test_modifing_the_instance(cleanup):
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
 
             @pre_update(Album)
             async def before_update(sender, instance, **kwargs):
@@ -353,8 +338,8 @@ async def test_modifing_the_instance(cleanup):
 
 @pytest.mark.asyncio
 async def test_custom_signal(cleanup):
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
 
             async def after_update(sender, instance, **kwargs):
                 if instance.play_count > 50 and not instance.is_best_seller:
@@ -363,7 +348,7 @@ async def test_custom_signal(cleanup):
                     instance.is_best_seller = False
                 await instance.update()
 
-            Album.Meta.signals.custom.connect(after_update)
+            Album.ormar_config.signals.custom.connect(after_update)
 
             # here album.play_count ans is_best_seller get default values
             album = await Album.objects.create(name="Venice")
@@ -378,13 +363,13 @@ async def test_custom_signal(cleanup):
             album.play_count = 60
             await album.update()
             assert not album.is_best_seller
-            await Album.Meta.signals.custom.send(sender=Album, instance=album)
+            await Album.ormar_config.signals.custom.send(sender=Album, instance=album)
             assert album.is_best_seller
 
             album.play_count = 30
             await album.update()
             assert album.is_best_seller
-            await Album.Meta.signals.custom.send(sender=Album, instance=album)
+            await Album.ormar_config.signals.custom.send(sender=Album, instance=album)
             assert not album.is_best_seller
 
-            Album.Meta.signals.custom.disconnect(after_update)
+            Album.ormar_config.signals.custom.disconnect(after_update)

@@ -1,22 +1,17 @@
 from typing import Optional
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
+import pytest
 from ormar import NoMatch
-from tests.settings import DATABASE_URL
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config()
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="albums")
 
     id: int = ormar.Integer(primary_key=True, name="album_id")
     name: str = ormar.String(max_length=100)
@@ -24,20 +19,14 @@ class Album(ormar.Model):
 
 
 class Writer(ormar.Model):
-    class Meta:
-        tablename = "writers"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="writers")
 
     id: int = ormar.Integer(primary_key=True, name="writer_id")
     name: str = ormar.String(max_length=100)
 
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="tracks")
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album, name="album_id")
@@ -67,19 +56,13 @@ async def get_sample_data():
     return album, [track1, track2, tracks3]
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_quering_by_reverse_fk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             sample_data = await get_sample_data()
             track1 = sample_data[1][0]
             album = await Album.objects.first()
@@ -133,8 +116,8 @@ async def test_quering_by_reverse_fk():
 
 @pytest.mark.asyncio
 async def test_getting():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             sample_data = await get_sample_data()
             album = sample_data[0]
             track1 = await album.tracks.fields(["album", "title", "position"]).get(
@@ -203,8 +186,8 @@ async def test_getting():
 
 @pytest.mark.asyncio
 async def test_cleaning_related():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             sample_data = await get_sample_data()
             album = sample_data[0]
             await album.tracks.clear(keep_reversed=False)
@@ -218,8 +201,8 @@ async def test_cleaning_related():
 
 @pytest.mark.asyncio
 async def test_loading_related():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             sample_data = await get_sample_data()
             album = sample_data[0]
             tracks = await album.tracks.select_related("written_by").all()
@@ -237,8 +220,8 @@ async def test_loading_related():
 
 @pytest.mark.asyncio
 async def test_adding_removing():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             sample_data = await get_sample_data()
             album = sample_data[0]
             track_new = await Track(title="Rainbow", position=5, play_count=300).save()

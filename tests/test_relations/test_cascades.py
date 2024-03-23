@@ -1,40 +1,30 @@
 from typing import Optional
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
+import pytest_asyncio
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config()
 
 
 class Band(ormar.Model):
-    class Meta:
-        tablename = "bands"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="bands")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class ArtistsBands(ormar.Model):
-    class Meta:
-        tablename = "artists_x_bands"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="artists_x_bands")
 
     id: int = ormar.Integer(primary_key=True)
 
 
 class Artist(ormar.Model):
-    class Meta:
-        tablename = "artists"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="artists")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -42,10 +32,7 @@ class Artist(ormar.Model):
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="albums")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -53,36 +40,27 @@ class Album(ormar.Model):
 
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="tracks")
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album, ondelete="CASCADE")
     title: str = ormar.String(max_length=100)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def cleanup():
     yield
-    async with database:
+    async with base_ormar_config.database:
         await Band.objects.delete(each=True)
         await Artist.objects.delete(each=True)
 
 
 @pytest.mark.asyncio
 async def test_simple_cascade(cleanup):
-    async with database:
+    async with base_ormar_config.database:
         artist = await Artist(name="Dr Alban").save()
         await Album(name="Jamaica", artist=artist).save()
         await Artist.objects.delete(id=artist.id)
@@ -95,7 +73,7 @@ async def test_simple_cascade(cleanup):
 
 @pytest.mark.asyncio
 async def test_nested_cascade(cleanup):
-    async with database:
+    async with base_ormar_config.database:
         artist = await Artist(name="Dr Alban").save()
         album = await Album(name="Jamaica", artist=artist).save()
         await Track(title="Yuhu", album=album).save()
@@ -114,7 +92,7 @@ async def test_nested_cascade(cleanup):
 
 @pytest.mark.asyncio
 async def test_many_to_many_cascade(cleanup):
-    async with database:
+    async with base_ormar_config.database:
         artist = await Artist(name="Dr Alban").save()
         band = await Band(name="Scorpions").save()
         await artist.bands.add(band)
@@ -136,7 +114,7 @@ async def test_many_to_many_cascade(cleanup):
 
 @pytest.mark.asyncio
 async def test_reverse_many_to_many_cascade(cleanup):
-    async with database:
+    async with base_ormar_config.database:
         artist = await Artist(name="Dr Alban").save()
         band = await Band(name="Scorpions").save()
         await artist.bands.add(band)

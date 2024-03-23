@@ -1,22 +1,17 @@
 from typing import Optional
 
-import databases
+import ormar
 import pydantic
 import pytest
-import sqlalchemy
 
-import ormar
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = create_config()
 
 
 class Company(ormar.Model):
-    class Meta:
-        tablename = "companies"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False)
@@ -24,10 +19,7 @@ class Company(ormar.Model):
 
 
 class Car(ormar.Model):
-    class Meta:
-        tablename = "cars"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="cars")
 
     id: int = ormar.Integer(primary_key=True)
     manufacturer: Optional[Company] = ormar.ForeignKey(Company)
@@ -38,19 +30,13 @@ class Car(ormar.Model):
     aircon_type: str = ormar.String(max_length=20, nullable=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_selecting_subset():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             toyota = await Company.objects.create(name="Toyota", founded=1937)
             await Car.objects.create(
                 manufacturer=toyota,
@@ -173,8 +159,62 @@ async def test_selecting_subset():
                 assert car.manufacturer.name == "Toyota"
                 assert car.manufacturer.founded is None
 
-            with pytest.raises(pydantic.error_wrappers.ValidationError):
+            with pytest.raises(pydantic.ValidationError):
                 # cannot exclude mandatory model columns - company__name in this example
                 await Car.objects.select_related("manufacturer").exclude_fields(
                     ["manufacturer__name"]
                 ).all()
+
+
+@pytest.mark.asyncio
+async def test_excluding_nested_lists_in_dump():
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            toyota = await Company.objects.create(name="Toyota", founded=1937)
+            car1 = await Car.objects.create(
+                manufacturer=toyota,
+                name="Corolla",
+                year=2020,
+                gearbox_type="Manual",
+                gears=5,
+                aircon_type="Manual",
+            )
+            car2 = await Car.objects.create(
+                manufacturer=toyota,
+                name="Yaris",
+                year=2019,
+                gearbox_type="Manual",
+                gears=5,
+                aircon_type="Manual",
+            )
+            manufacturer = await Company.objects.select_related("cars").get(
+                name="Toyota"
+            )
+            assert manufacturer.model_dump() == {
+                "cars": [
+                    {
+                        "aircon_type": "Manual",
+                        "gearbox_type": "Manual",
+                        "gears": 5,
+                        "id": car1.id,
+                        "name": "Corolla",
+                        "year": 2020,
+                    },
+                    {
+                        "aircon_type": "Manual",
+                        "gearbox_type": "Manual",
+                        "gears": 5,
+                        "id": car2.id,
+                        "name": "Yaris",
+                        "year": 2019,
+                    },
+                ],
+                "founded": 1937,
+                "id": toyota.id,
+                "name": "Toyota",
+            }
+            assert manufacturer.model_dump(exclude_list=True) == {
+                "founded": 1937,
+                "id": toyota.id,
+                "name": "Toyota",
+            }

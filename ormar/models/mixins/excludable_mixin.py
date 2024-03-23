@@ -1,13 +1,13 @@
 from typing import (
+    TYPE_CHECKING,
     AbstractSet,
     Any,
     Dict,
     List,
     Mapping,
+    Optional,
     Set,
-    TYPE_CHECKING,
     Type,
-    TypeVar,
     Union,
     cast,
 )
@@ -18,7 +18,6 @@ from ormar.models.mixins.relation_mixin import RelationMixin
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
-    T = TypeVar("T", bound=Model)
     IntStr = Union[int, str]
     AbstractSetIntStr = AbstractSet[IntStr]
     MappingIntStrAny = Mapping[IntStr, Any]
@@ -35,7 +34,7 @@ class ExcludableMixin(RelationMixin):
 
     @staticmethod
     def get_child(
-        items: Union[Set, Dict, None], key: str = None
+        items: Union[Set, Dict, None], key: Optional[str] = None
     ) -> Union[Set, Dict, None]:
         """
         Used to get nested dictionaries keys if they exists otherwise returns
@@ -71,9 +70,9 @@ class ExcludableMixin(RelationMixin):
         :rtype: List[str]
         """
         pk_alias = (
-            model.get_column_alias(model.Meta.pkname)
+            model.get_column_alias(model.ormar_config.pkname)
             if use_alias
-            else model.Meta.pkname
+            else model.ormar_config.pkname
         )
         if pk_alias not in columns:
             columns.append(pk_alias)
@@ -113,11 +112,11 @@ class ExcludableMixin(RelationMixin):
         model_excludable = excludable.get(model_cls=model, alias=alias)  # type: ignore
         columns = [
             model.get_column_name_from_alias(col.name) if not use_alias else col.name
-            for col in model.Meta.table.columns
+            for col in model.ormar_config.table.columns
         ]
         field_names = [
             model.get_column_name_from_alias(col.name)
-            for col in model.Meta.table.columns
+            for col in model.ormar_config.table.columns
         ]
         if model_excludable.include:
             columns = [
@@ -181,7 +180,7 @@ class ExcludableMixin(RelationMixin):
         :rtype: Set
         """
         if exclude_primary_keys:
-            exclude.add(cls.Meta.pkname)
+            exclude.add(cls.ormar_config.pkname)
         if exclude_through_models:
             exclude = exclude.union(cls.extract_through_names())
         return exclude
@@ -219,6 +218,6 @@ class ExcludableMixin(RelationMixin):
             fields_to_exclude = fields_to_exclude.union(
                 model_excludable.exclude.intersection(fields_names)
             )
-        fields_to_exclude = fields_to_exclude - {cls.Meta.pkname}
+        fields_to_exclude = fields_to_exclude - {cls.ormar_config.pkname}
 
         return fields_to_exclude

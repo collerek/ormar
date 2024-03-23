@@ -1,9 +1,7 @@
-import warnings
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
 
 import sqlalchemy
-from pydantic import Json, typing
-from pydantic.fields import FieldInfo, Required, Undefined
+from pydantic.fields import FieldInfo, _Unset
 
 import ormar  # noqa I101
 from ormar import ModelDefinitionError
@@ -14,8 +12,7 @@ from ormar.fields.sqlalchemy_encrypted import (
 )
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model
-    from ormar.models import NewBaseModel
+    from ormar.models import Model, NewBaseModel
 
 
 class BaseField(FieldInfo):
@@ -46,16 +43,6 @@ class BaseField(FieldInfo):
         self.sql_nullable: bool = kwargs.pop("sql_nullable", False)
         self.index: bool = kwargs.pop("index", False)
         self.unique: bool = kwargs.pop("unique", False)
-        self.pydantic_only: bool = kwargs.pop("pydantic_only", False)
-        if self.pydantic_only:
-            warnings.warn(
-                "Parameter `pydantic_only` is deprecated and will "
-                "be removed in one of the next releases.\n You can declare "
-                "pydantic fields in a normal way. \n Check documentation: "
-                "https://collerek.github.io/ormar/fields/pydantic-fields",
-                DeprecationWarning,
-            )
-        self.choices: typing.Sequence = kwargs.pop("choices", False)
 
         self.virtual: bool = kwargs.pop(
             "virtual", None
@@ -76,6 +63,7 @@ class BaseField(FieldInfo):
 
         self.owner: Type["Model"] = kwargs.pop("owner", None)
         self.to: Type["Model"] = kwargs.pop("to", None)
+        self.to_pk_only: Type["Model"] = kwargs.pop("to_pk_only", None)
         self.through: Type["Model"] = kwargs.pop("through", None)
         self.self_reference: bool = kwargs.pop("self_reference", False)
         self.self_reference_primary: Optional[str] = kwargs.pop(
@@ -145,9 +133,7 @@ class BaseField(FieldInfo):
         """
         base = self.default_value()
         if base is None:
-            base = dict(default=None) if self.nullable else dict(default=Undefined)
-        if self.__type__ == Json and base.get("default") is Undefined:
-            base["default"] = Required
+            base = dict(default=None) if self.nullable else dict(default=_Unset)
         return base
 
     def default_value(self, use_server: bool = False) -> Optional[Dict]:
@@ -181,7 +167,9 @@ class BaseField(FieldInfo):
             return dict(default=default)
         return None
 
-    def get_default(self, use_server: bool = False) -> Any:  # noqa CCR001
+    def get_default(
+        self, use_server: bool = False, call_default_factory: bool = True
+    ) -> Any:  # noqa CCR001
         """
         Return default value for a field.
         If the field is Callable the function is called and actual result is returned.
@@ -197,11 +185,26 @@ class BaseField(FieldInfo):
             default = (
                 self.ormar_default
                 if self.ormar_default is not None
-                else (self.server_default if use_server else None)
+                else self._get_default_server_value(use_server=use_server)
             )
-            if callable(default):  # pragma: no cover
-                default = default()
-            return default
+            return self._get_default_callable_value(
+                default=default,
+                call_default_factory=call_default_factory,
+            )
+
+    def _get_default_server_value(self, use_server: bool) -> Any:
+        """
+        Return default value for a server side if use_server is True
+        """
+        return self.server_default if use_server else None
+
+    @staticmethod
+    def _get_default_callable_value(default: Any, call_default_factory: bool) -> Any:
+        """
+        Return default factory value if call_default_factory is True
+        and default is a callable.
+        """
+        return default() if (callable(default) and call_default_factory) else default
 
     def has_default(self, use_server: bool = True) -> bool:
         """
@@ -244,8 +247,8 @@ class BaseField(FieldInfo):
                 con.reference,
                 ondelete=con.ondelete,
                 onupdate=con.onupdate,
-                name=f"fk_{self.owner.Meta.tablename}_{self.to.Meta.tablename}"
-                f"_{self.to.get_column_alias(self.to.Meta.pkname)}_{self.name}",
+                name=f"fk_{self.owner.ormar_config.tablename}_{self.to.ormar_config.tablename}"
+                f"_{self.to.get_column_alias(self.to.ormar_config.pkname)}_{self.name}",
             )
             for con in self.constraints
         ]
@@ -340,7 +343,7 @@ class BaseField(FieldInfo):
         :rtype: None
         """
         if self.owner is not None and (
-            self.owner == self.to or self.owner.Meta == self.to.Meta
+            self.owner == self.to or self.owner.ormar_config == self.to.ormar_config
         ):
             self.self_reference = True
             self.self_reference_primary = self.name

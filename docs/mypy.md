@@ -1,14 +1,6 @@
 To provide better errors check you should use mypy with pydantic [plugin][plugin] 
 
-Note that legacy model declaration type will raise  static type analyzers errors.
-
-So you **cannot use the old notation** like this: 
-
-```Python hl_lines="15-17"
---8<-- "../docs_src/models/docs011.py"
-```
-
-Instead switch to notation introduced in version 0.4.0.
+Please use notation introduced in version 0.4.0.
 
 ```Python hl_lines="15-17"
 --8<-- "../docs_src/models/docs012.py"

@@ -1,51 +1,28 @@
 from typing import Optional
 
-import databases
-import pytest
-import sqlalchemy
-from fastapi import FastAPI
-from starlette.testclient import TestClient
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
+import pytest_asyncio
+from asgi_lifespan import LifespanManager
+from fastapi import FastAPI
+from httpx import AsyncClient
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests, lifespan
+from tests.settings import create_config
 
-app = FastAPI()
-app.state.database = database
-
-
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
-
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 class Country(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "countries"
+    ormar_config = base_ormar_config.copy(tablename="countries")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, default="Poland")
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -54,8 +31,7 @@ class Author(ormar.Model):
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
@@ -63,17 +39,12 @@ class Book(ormar.Model):
     year: int = ormar.Integer(nullable=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
-@pytest.fixture()
+@pytest_asyncio.fixture
 async def sample_data():
-    async with database:
+    async with base_ormar_config.database:
         country = await Country(id=1, name="USA").save()
         author = await Author(id=1, name="bug", rating=5, country=country).save()
         await Book(
@@ -93,24 +64,40 @@ async def get_book_with_author_by_id(book_id: int):
     return book
 
 
-def test_related_with_defaults(sample_data):
-    client = TestClient(app)
-    with client as client:
-        response = client.get("/books/1")
+@pytest.mark.asyncio
+async def test_related_with_defaults(sample_data):
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client, LifespanManager(app):
+        response = await client.get("/books/1")
         assert response.json() == {
-            "author": {"id": 1},
+            "author": {
+                "books": [
+                    {
+                        "author": {"id": 1},
+                        "id": 1,
+                        "title": "Bug caused by default value",
+                        "year": 2021,
+                    }
+                ],
+                "id": 1,
+            },
             "id": 1,
             "title": "Bug caused by default value",
             "year": 2021,
         }
 
-        response = client.get("/books_with_author/1")
+        response = await client.get("/books_with_author/1")
         assert response.json() == {
             "author": {
                 "books": [
-                    {"id": 1, "title": "Bug caused by default value", "year": 2021}
+                    {
+                        "author": {"id": 1},
+                        "id": 1,
+                        "title": "Bug caused by default value",
+                        "year": 2021,
+                    }
                 ],
-                "country": {"id": 1},
+                "country": {"authors": [{"id": 1}], "id": 1},
                 "id": 1,
                 "name": "bug",
                 "rating": 5,

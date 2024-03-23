@@ -29,7 +29,6 @@ Automatically changed to True if user provide one of the following:
 * `default` value or function is provided
 * `server_default` value or function is provided
 * `autoincrement` is set on `Integer` `primary_key` field
-* **[DEPRECATED]**`pydantic_only=True` is set 
 
 Specifies if field is optional or required, used both with sql and pydantic.
 
@@ -109,7 +108,7 @@ Used in sql only.
 
 Sample usage:
 
-```Python hl_lines="21-23"
+```Python hl_lines="20-22"
 --8<-- "../docs_src/fields/docs004.py"
 ```
 
@@ -167,20 +166,6 @@ Sets the unique constraint on a table's column.
 
 Used in sql only.
 
-## pydantic_only (**DEPRECATED**)
-
-**This parameter is deprecated and will be removed in one of next releases!**
-
-**To check how to declare pydantic only fields that are not saved into database see [pydantic fields section](pydantic-fields.md)** 
-
-`pydantic_only`: `bool` = `False` 
-
-Prevents creation of a sql column for given field.
-
-Used for data related to given model but not to be stored in the database.
-
-Used in pydantic only.
-
 ## overwrite_pydantic_type
 
 By default, ormar uses predefined pydantic field types that it applies on model creation (hence the type hints are optional).
@@ -189,40 +174,31 @@ If you want to, you can apply your own type, that will be **completely** replaci
 So it's on you as a user to provide a type that is valid in the context of given ormar field type.
 
 !!!warning
-        Note that by default you should use build in arguments that are passed to underlying pydantic field. 
-        
-        You can check what arguments are supported in field types section or in [pydantic](https://pydantic-docs.helpmanual.io/usage/schema/#field-customisation) docs.
+    Note that by default you should use build in arguments that are passed to underlying pydantic field. 
+    
+    You can check what arguments are supported in field types section or in [pydantic](https://pydantic-docs.helpmanual.io/usage/schema/#field-customisation) docs.
 
 !!!danger
-        Setting a wrong type of pydantic field can break your model, so overwrite it only when you know what you are doing.
-        
-        As it's easy to break functionality of ormar the `overwrite_pydantic_type` argument is not available on relation fields!
+    Setting a wrong type of pydantic field can break your model, so overwrite it only when you know what you are doing.
+    
+    As it's easy to break functionality of ormar the `overwrite_pydantic_type` argument is not available on relation fields!
 
 ```python
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata
+    database=database
+)
+
+
 # sample overwrites
 class OverwriteTest(ormar.Model):
-    class Meta:
-        tablename = "overwrites"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="overwrites")
 
     id: int = ormar.Integer(primary_key=True)
     my_int: str = ormar.Integer(overwrite_pydantic_type=PositiveInt)
     constraint_dict: Json = ormar.JSON(
         overwrite_pydantic_type=Optional[Json[Dict[str, int]]])
 ```
-
-## choices
-
-`choices`: `Sequence` = `[]` 
-
-A set of choices allowed to be used for given field.
-
-Used for data validation on pydantic side.
-
-Prevents insertion of value not present in the choices list.
-
-Used in pydantic only.
 
 [relations]: ../relations/index.md
 [queries]: ../queries/index.md

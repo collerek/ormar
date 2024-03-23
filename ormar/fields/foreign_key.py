@@ -4,11 +4,12 @@ import uuid
 from dataclasses import dataclass
 from random import choices
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
+    ForwardRef,
     List,
     Optional,
-    TYPE_CHECKING,
     Tuple,
     Type,
     Union,
@@ -17,21 +18,15 @@ from typing import (
 
 import sqlalchemy
 from pydantic import BaseModel, create_model
-from pydantic.typing import ForwardRef, evaluate_forwardref
 
 import ormar  # noqa I101
 from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
-from ormar.fields.referential_actions import ReferentialAction
 from ormar.fields.base import BaseField
+from ormar.fields.referential_actions import ReferentialAction
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import Model, NewBaseModel, T
     from ormar.fields import ManyToManyField
-
-    if sys.version_info < (3, 7):
-        ToType = Type["T"]
-    else:
-        ToType = Union[Type["T"], "ForwardRef"]
+    from ormar.models import Model, NewBaseModel, T
 
 
 def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
@@ -54,10 +49,10 @@ def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
     :rtype: Model
     """
     init_dict = {
-        **{fk.Meta.pkname: pk or -1, "__pk_only__": True},
+        **{fk.ormar_config.pkname: pk or -1, "__pk_only__": True},
         **{
             k: create_dummy_instance(v.to)
-            for k, v in fk.Meta.model_fields.items()
+            for k, v in fk.ormar_config.model_fields.items()
             if v.is_relation and not v.nullable and not v.virtual
         },
     }
@@ -93,8 +88,11 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-    to: Type["T"], nullable: bool, onupdate: str = None, ondelete: str = None
-) -> Tuple[Any, List, Any]:
+    to: Type["T"],
+    nullable: bool,
+    onupdate: Optional[str] = None,
+    ondelete: Optional[str] = None,
+) -> Tuple[Any, List, Any, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
     pydantic field to use, ForeignKey constraint and type of the target column field.
@@ -112,8 +110,10 @@ def populate_fk_params_based_on_to_model(
     :return: tuple with target pydantic type, list of fk constraints and target col type
     :rtype: Tuple[Any, List, Any]
     """
-    fk_string = to.Meta.tablename + "." + to.get_column_alias(to.Meta.pkname)
-    to_field = to.Meta.model_fields[to.Meta.pkname]
+    fk_string = (
+        to.ormar_config.tablename + "." + to.get_column_alias(to.ormar_config.pkname)
+    )
+    to_field = to.ormar_config.model_fields[to.ormar_config.pkname]
     pk_only_model = create_dummy_model(to, to_field)
     __type__ = (
         Union[to_field.__type__, to, pk_only_model]
@@ -126,7 +126,7 @@ def populate_fk_params_based_on_to_model(
         )
     ]
     column_type = to_field.column_type
-    return __type__, constraints, column_type
+    return __type__, constraints, column_type, pk_only_model
 
 
 def validate_not_allowed_fields(kwargs: Dict) -> None:
@@ -205,15 +205,15 @@ def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":  # pragma: no cover
 
 
 def ForeignKey(  # type: ignore # noqa CFQ002
-    to: "ToType",
+    to: Union[Type["T"], "ForwardRef"],
     *,
-    name: str = None,
+    name: Optional[str] = None,
     unique: bool = False,
     nullable: bool = True,
-    related_name: str = None,
+    related_name: Optional[str] = None,
     virtual: bool = False,
-    onupdate: Union[ReferentialAction, str] = None,
-    ondelete: Union[ReferentialAction, str] = None,
+    onupdate: Union[ReferentialAction, str, None] = None,
+    ondelete: Union[ReferentialAction, str, None] = None,
     **kwargs: Any,
 ) -> "T":
     """
@@ -263,13 +263,18 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     sql_nullable = nullable if sql_nullable is None else sql_nullable
 
     validate_not_allowed_fields(kwargs)
-
+    pk_only_model = None
     if to.__class__ == ForwardRef:
         __type__ = to if not nullable else Optional[to]
         constraints: List = []
         column_type = None
     else:
-        __type__, constraints, column_type = populate_fk_params_based_on_to_model(
+        (
+            __type__,
+            constraints,
+            column_type,
+            pk_only_model,
+        ) = populate_fk_params_based_on_to_model(
             to=to,  # type: ignore
             nullable=nullable,
             ondelete=ondelete,
@@ -279,6 +284,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     namespace = dict(
         __type__=__type__,
         to=to,
+        to_pk_only=pk_only_model,
         through=None,
         alias=name,
         name=kwargs.pop("real_name", None),
@@ -291,7 +297,6 @@ def ForeignKey(  # type: ignore # noqa CFQ002
         virtual=virtual,
         primary_key=False,
         index=False,
-        pydantic_only=False,
         default=None,
         server_default=None,
         onupdate=onupdate,
@@ -359,6 +364,17 @@ class ForeignKeyField(BaseField):
         prefix = "to_" if self.self_reference else ""
         return self.through_relation_name or f"{prefix}{self.owner.get_name()}"
 
+    def _evaluate_forward_ref(
+        self, globalns: Any, localns: Any, is_through: bool = False
+    ) -> None:
+        target = "through" if is_through else "to"
+        target_obj = getattr(self, target)
+        if sys.version_info.minor <= 8:  # pragma: no cover
+            evaluated = target_obj._evaluate(globalns, localns)
+        else:  # pragma: no cover
+            evaluated = target_obj._evaluate(globalns, localns, set())
+        setattr(self, target, evaluated)
+
     def evaluate_forward_ref(self, globalns: Any, localns: Any) -> None:
         """
         Evaluates the ForwardRef to actual Field based on global and local namespaces
@@ -371,13 +387,12 @@ class ForeignKeyField(BaseField):
         :rtype: None
         """
         if self.to.__class__ == ForwardRef:
-            self.to = evaluate_forwardref(
-                self.to, globalns, localns or None  # type: ignore
-            )
+            self._evaluate_forward_ref(globalns, localns)
             (
                 self.__type__,
                 self.constraints,
                 self.column_type,
+                self.to_pk_only,
             ) = populate_fk_params_based_on_to_model(
                 to=self.to,
                 nullable=self.nullable,
@@ -451,12 +466,21 @@ class ForeignKeyField(BaseField):
         :return: (if needed) registered Model
         :rtype: Model
         """
-        if len(value.keys()) == 1 and list(value.keys())[0] == self.to.Meta.pkname:
+        pk_only_model = None
+        keys = set(value.keys())
+        own_keys = keys - self.to.extract_related_names()
+        if (
+            len(own_keys) == 1
+            and list(own_keys)[0] == self.to.ormar_config.pkname
+            and value.get(self.to.ormar_config.pkname) is not None
+            and not self.is_through
+        ):
             value["__pk_only__"] = True
+            pk_only_model = self.to_pk_only(**value)
         model = self.to(**value)
         if to_register:
             self.register_relation(model=model, child=child)
-        return model
+        return pk_only_model if pk_only_model is not None else model
 
     def _construct_model_from_pk(
         self, value: Any, child: "Model", to_register: bool
@@ -479,11 +503,14 @@ class ForeignKeyField(BaseField):
         if self.to.pk_type() == uuid.UUID and isinstance(value, str):  # pragma: nocover
             value = uuid.UUID(value)
         if not isinstance(value, self.to.pk_type()):
-            raise RelationshipInstanceError(
-                f"Relationship error - ForeignKey {self.to.__name__} "
-                f"is of type {self.to.pk_type()} "
-                f"while {type(value)} passed as a parameter."
-            )
+            if isinstance(value, self.to_pk_only):
+                value = getattr(value, self.to.ormar_config.pkname)
+            else:
+                raise RelationshipInstanceError(
+                    f"Relationship error - ForeignKey {self.to.__name__} "
+                    f"is of type {self.to.pk_type()} "
+                    f"while {type(value)} passed as a parameter."
+                )
         model = create_dummy_instance(fk=self.to, pk=value)
         if to_register:
             self.register_relation(model=model, child=child)

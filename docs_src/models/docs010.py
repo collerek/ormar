@@ -1,25 +1,40 @@
 import databases
+import ormar
 import sqlalchemy
 
-import ormar
-from .docs008 import Child
+DATABASE_URl = "sqlite:///test.db"
 
-database = databases.Database("sqlite:///test.db", force_rollback=True)
+database = databases.Database(DATABASE_URl, force_rollback=True)
 metadata = sqlalchemy.MetaData()
 
 
+class Child(ormar.Model):
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+        tablename="children",
+    )
+
+    id: int = ormar.Integer(name="child_id", primary_key=True)
+    first_name: str = ormar.String(name="fname", max_length=100)
+    last_name: str = ormar.String(name="lname", max_length=100)
+    born_year: int = ormar.Integer(name="year_born", nullable=True)
+
+
 class ArtistChildren(ormar.Model):
-    class Meta:
-        tablename = "children_x_artists"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+        tablename="children_x_artists",
+    )
 
 
 class Artist(ormar.Model):
-    class Meta:
-        tablename = "artists"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+        tablename="artists",
+    )
 
     id: int = ormar.Integer(name="artist_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)

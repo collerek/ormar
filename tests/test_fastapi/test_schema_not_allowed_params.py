@@ -1,29 +1,24 @@
-import databases
-import sqlalchemy
-
 import ormar
 
-DATABASE_URL = "sqlite:///db.sqlite"
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     contents: str = ormar.Text()
 
 
+create_test_database = init_tests(base_ormar_config)
+
+
 def test_schema_not_allowed():
-    schema = Author.schema()
+    schema = Author.model_json_schema()
     for field_schema in schema.get("properties").values():
         for key in field_schema.keys():
             assert "_" not in key, f"Found illegal field in openapi schema: {key}"

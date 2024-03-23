@@ -1,42 +1,30 @@
-import asyncio
 from typing import Optional
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config(force_rollback=True)
 
 
 class Department(ormar.Model):
-    class Meta:
-        tablename = "departments"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="departments")
 
     id: int = ormar.Integer(primary_key=True, autoincrement=False)
     name: str = ormar.String(max_length=100)
 
 
 class SchoolClass(ormar.Model):
-    class Meta:
-        tablename = "schoolclasses"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="schoolclasses")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -44,10 +32,7 @@ class Category(ormar.Model):
 
 
 class Student(ormar.Model):
-    class Meta:
-        tablename = "students"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="students")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -56,10 +41,7 @@ class Student(ormar.Model):
 
 
 class Teacher(ormar.Model):
-    class Meta:
-        tablename = "teachers"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="teachers")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -67,20 +49,7 @@ class Teacher(ormar.Model):
     category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
 
 
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.get_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(autouse=True, scope="module")
-async def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 async def create_data():
@@ -98,35 +67,35 @@ async def create_data():
 
 @pytest.mark.asyncio
 async def test_model_multiple_instances_of_same_table_in_schema():
-    async with database:
+    async with base_ormar_config.database:
         await create_data()
         classes = await SchoolClass.objects.select_related(
             ["teachers__category__department", "students__category__department"]
         ).all()
         assert classes[0].name == "Math"
         assert classes[0].students[0].name == "Jane"
-        assert len(classes[0].dict().get("students")) == 2
+        assert len(classes[0].model_dump().get("students")) == 2
         assert classes[0].teachers[0].category.department.name == "Law Department"
         assert classes[0].students[0].category.department.name == "Math Department"
 
 
 @pytest.mark.asyncio
 async def test_load_all_multiple_instances_of_same_table_in_schema():
-    async with database:
+    async with base_ormar_config.database:
         await create_data()
         math_class = await SchoolClass.objects.get(name="Math")
         assert math_class.name == "Math"
 
         await math_class.load_all(follow=True)
         assert math_class.students[0].name == "Jane"
-        assert len(math_class.dict().get("students")) == 2
+        assert len(math_class.model_dump().get("students")) == 2
         assert math_class.teachers[0].category.department.name == "Law Department"
         assert math_class.students[0].category.department.name == "Math Department"
 
 
 @pytest.mark.asyncio
 async def test_filter_groups_with_instances_of_same_table_in_schema():
-    async with database:
+    async with base_ormar_config.database:
         await create_data()
         math_class = (
             await SchoolClass.objects.select_related(
@@ -143,7 +112,7 @@ async def test_filter_groups_with_instances_of_same_table_in_schema():
         )
         assert math_class.name == "Math"
         assert math_class.students[0].name == "Jane"
-        assert len(math_class.dict().get("students")) == 2
+        assert len(math_class.model_dump().get("students")) == 2
         assert math_class.teachers[0].category.department.name == "Law Department"
         assert math_class.students[0].category.department.name == "Math Department"
 

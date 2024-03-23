@@ -1,24 +1,17 @@
 from typing import List, Optional
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
+import pytest_asyncio
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = create_config()
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     first_name: str = ormar.String(max_length=80)
@@ -26,16 +19,14 @@ class Author(ormar.Model):
 
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -43,19 +34,14 @@ class Post(ormar.Model):
     author: Optional[Author] = ormar.ForeignKey(Author, skip_reverse=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def cleanup():
     yield
-    async with database:
-        PostCategory = Post.Meta.model_fields["categories"].through
+    async with base_ormar_config.database:
+        PostCategory = Post.ormar_config.model_fields["categories"].through
         await PostCategory.objects.delete(each=True)
         await Post.objects.delete(each=True)
         await Category.objects.delete(each=True)
@@ -82,7 +68,7 @@ def test_model_definition():
 
 @pytest.mark.asyncio
 async def test_assigning_related_objects(cleanup):
-    async with database:
+    async with base_ormar_config.database:
         guido = await Author.objects.create(first_name="Guido", last_name="Van Rossum")
         post = await Post.objects.create(title="Hello, M2M", author=guido)
         news = await Category.objects.create(name="News")
@@ -110,7 +96,7 @@ async def test_assigning_related_objects(cleanup):
 
 @pytest.mark.asyncio
 async def test_quering_of_related_model_works_but_no_result(cleanup):
-    async with database:
+    async with base_ormar_config.database:
         guido = await Author.objects.create(first_name="Guido", last_name="Van Rossum")
         post = await Post.objects.create(title="Hello, M2M", author=guido)
         news = await Category.objects.create(name="News")
@@ -120,7 +106,7 @@ async def test_quering_of_related_model_works_but_no_result(cleanup):
         post_categories = await post.categories.all()
         assert len(post_categories) == 1
 
-        assert "posts" not in post.dict().get("categories", [])[0]
+        assert "posts" not in post.model_dump().get("categories", [])[0]
 
         assert news == await post.categories.get(name="News")
 
@@ -134,7 +120,7 @@ async def test_quering_of_related_model_works_but_no_result(cleanup):
             .get()
         )
         assert category == news
-        assert "posts" not in category.dict()
+        assert "posts" not in category.model_dump()
 
         # relation not in json
         category2 = (
@@ -143,14 +129,14 @@ async def test_quering_of_related_model_works_but_no_result(cleanup):
             .get()
         )
         assert category2 == news
-        assert "posts" not in category2.json()
+        assert "posts" not in category2.model_dump_json()
 
-        assert "posts" not in Category.schema().get("properties")
+        assert "posts" not in Category.model_json_schema().get("properties")
 
 
 @pytest.mark.asyncio
 async def test_removal_of_the_relations(cleanup):
-    async with database:
+    async with base_ormar_config.database:
         guido = await Author.objects.create(first_name="Guido", last_name="Van Rossum")
         post = await Post.objects.create(title="Hello, M2M", author=guido)
         news = await Category.objects.create(name="News")
@@ -175,7 +161,7 @@ async def test_removal_of_the_relations(cleanup):
 
 @pytest.mark.asyncio
 async def test_selecting_related(cleanup):
-    async with database:
+    async with base_ormar_config.database:
         guido = await Author.objects.create(first_name="Guido", last_name="Van Rossum")
         guido2 = await Author.objects.create(
             first_name="Guido2", last_name="Van Rossum"

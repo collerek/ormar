@@ -1,62 +1,44 @@
 import base64
-import json
 import uuid
+from enum import Enum
 from typing import List
 
-import databases
-import pytest
-import sqlalchemy
-from fastapi import FastAPI
-from starlette.testclient import TestClient
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
+from asgi_lifespan import LifespanManager
+from fastapi import FastAPI
+from httpx import AsyncClient
 
-app = FastAPI()
-
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
-app.state.database = database
+from tests.lifespan import init_tests, lifespan
+from tests.settings import create_config
 
 headers = {"content-type": "application/json"}
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
-
-
-blob3 = b"\xc3\x28"
+blob3 = b"\xc3\x83\x28"
 blob4 = b"\xf0\x28\x8c\x28"
 blob5 = b"\xee"
 blob6 = b"\xff"
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+class BinaryEnum(Enum):
+    blob3 = blob3
+    blob4 = blob4
+    blob5 = blob5
+    blob6 = blob6
 
 
 class BinaryThing(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "things"
+    ormar_config = base_ormar_config.copy(tablename="things")
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     name: str = ormar.Text(default="")
-    bt: str = ormar.LargeBinary(
-        max_length=1000,
-        choices=[blob3, blob4, blob5, blob6],
-        represent_as_base64_str=True,
-    )
+    bt: str = ormar.LargeBinary(represent_as_base64_str=True, max_length=100)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 @app.get("/things", response_model=List[BinaryThing])
@@ -70,35 +52,26 @@ async def create_things(thing: BinaryThing):
     return thing
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
-
-
-def test_read_main():
-    client = TestClient(app)
-    with client as client:
-        response = client.post(
+@pytest.mark.asyncio
+async def test_read_main():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client as client, LifespanManager(app):
+        response = await client.post(
             "/things",
-            data=json.dumps({"bt": base64.b64encode(blob3).decode()}),
+            json={"bt": base64.b64encode(blob3).decode()},
             headers=headers,
         )
         assert response.status_code == 200
-        response = client.get("/things")
-        assert response.json()[0]["bt"] == base64.b64encode(blob3).decode()
-        thing = BinaryThing(**response.json()[0])
+        response = await client.get("/things")
+        assert response.json()[0]["bt"] == blob3.decode()
+        resp_json = response.json()
+        resp_json[0]["bt"] = resp_json[0]["bt"].encode()
+        thing = BinaryThing(**resp_json[0])
         assert thing.__dict__["bt"] == blob3
+        assert thing.bt == base64.b64encode(blob3).decode()
 
 
 def test_schema():
-    schema = BinaryThing.schema()
+    schema = BinaryThing.model_json_schema()
     assert schema["properties"]["bt"]["format"] == "base64"
-    converted_choices = ["7g==", "/w==", "8CiMKA==", "wyg="]
-    assert len(schema["properties"]["bt"]["enum"]) == 4
-    assert all(
-        choice in schema["properties"]["bt"]["enum"] for choice in converted_choices
-    )
     assert schema["example"]["bt"] == "string"

@@ -8,17 +8,17 @@ To use transactions use `database.transaction` as async context manager:
 
 ```python
 async with database.transaction():
-    # everyting called here will be one transaction
+    # everything called here will be one transaction
     await Model1().save()
     await Model2().save()
     ...
 ```
 
 !!!note
-    Note that it has to be the same `database` that the one used in Model's `Meta` class.
+    Note that it has to be the same `database` that the one used in Model's `ormar_config` object.
 
 To avoid passing `database` instance around in your code you can extract the instance from each `Model`.
-Database provided during declaration of `ormar.Model` is available through `Meta.database` and can
+Database provided during declaration of `ormar.Model` is available through `ormar_config.database` and can
 be reached from both class and instance.
 
 ```python
@@ -26,24 +26,25 @@ import databases
 import sqlalchemy
 import ormar
 
-metadata = sqlalchemy.MetaData()
-database = databases.Database("sqlite:///")
+
+base_ormar_config = OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database = databases.Database("sqlite:///"),
+)
+
 
 class Author(ormar.Model):
-    class Meta:
-        database=database
-        metadata=metadata
+    ormar_config = base_ormar_config.copy()
     
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255)
 
 # database is accessible from class
-database = Author.Meta.database
+database = Author.ormar_config.database
 
 # as well as from instance
 author = Author(name="Stephen King")
-database = author.Meta.database
-
+database = author.ormar_config.database
 ```
 
 You can also use `.transaction()` as a function decorator on any async function:
