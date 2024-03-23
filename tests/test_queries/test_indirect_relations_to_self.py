@@ -1,21 +1,16 @@
 from datetime import datetime
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config()
 
 
 class Node(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "node"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="node")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=120)
@@ -24,10 +19,7 @@ class Node(ormar.Model):
 
 
 class Edge(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "edge"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="edge")
 
     id: str = ormar.String(primary_key=True, max_length=12)
     src_node: Node = ormar.ForeignKey(Node, related_name="next_edges")
@@ -36,18 +28,12 @@ class Edge(ormar.Model):
     created_at: datetime = ormar.DateTime(timezone=True, default=datetime.now)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_sort_order_on_main_model():
-    async with database:
+    async with base_ormar_config.database:
         node1 = await Node(name="Node 1").save()
         node2 = await Node(name="Node 2").save()
         node3 = await Node(name="Node 3").save()

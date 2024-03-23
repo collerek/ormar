@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, TYPE_CHECKING, Tuple, Type, cast
+from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, Type, cast
 
 from ormar.models.mixins.relation_mixin import RelationMixin
 
@@ -38,15 +38,17 @@ class PrefetchQueryMixin(RelationMixin):
         :rtype: Tuple[Type[Model], str]
         """
         if reverse:
-            field_name = parent_model.Meta.model_fields[related].get_related_name()
-            field = target_model.Meta.model_fields[field_name]
+            field_name = parent_model.ormar_config.model_fields[
+                related
+            ].get_related_name()
+            field = target_model.ormar_config.model_fields[field_name]
             if field.is_multi:
                 field = cast("ManyToManyField", field)
                 field_name = field.default_target_field_name()
-                sub_field = field.through.Meta.model_fields[field_name]
+                sub_field = field.through.ormar_config.model_fields[field_name]
                 return field.through, sub_field.get_alias()
             return target_model, field.get_alias()
-        target_field = target_model.get_column_alias(target_model.Meta.pkname)
+        target_field = target_model.get_column_alias(target_model.ormar_config.pkname)
         return target_model, target_field
 
     @staticmethod
@@ -70,11 +72,11 @@ class PrefetchQueryMixin(RelationMixin):
         :rtype:
         """
         if reverse:
-            column_name = parent_model.Meta.pkname
+            column_name = parent_model.ormar_config.pkname
             return (
                 parent_model.get_column_alias(column_name) if use_raw else column_name
             )
-        column = parent_model.Meta.model_fields[related]
+        column = parent_model.ormar_config.model_fields[related]
         return column.get_alias() if use_raw else column.name
 
     @classmethod
@@ -93,7 +95,7 @@ class PrefetchQueryMixin(RelationMixin):
             return cls.get_name()
         if target_field.virtual:
             return target_field.get_related_name()
-        return target_field.to.Meta.pkname
+        return target_field.to.ormar_config.pkname
 
     @classmethod
     def get_filtered_names_to_extract(cls, prefetch_dict: Dict) -> List:

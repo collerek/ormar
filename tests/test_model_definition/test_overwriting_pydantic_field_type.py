@@ -1,52 +1,44 @@
 from typing import Dict, Optional
 
-import databases
+import ormar
 import pytest
-import sqlalchemy
 from pydantic import Json, PositiveInt, ValidationError
 
-import ormar
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = create_config()
 
 
 class OverwriteTest(ormar.Model):
-    class Meta:
-        tablename = "overwrites"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="overwrites")
 
     id: int = ormar.Integer(primary_key=True)
     my_int: int = ormar.Integer(overwrite_pydantic_type=PositiveInt)
     constraint_dict: Json = ormar.JSON(
-        overwrite_pydantic_type=Optional[Json[Dict[str, int]]]  # type: ignore
-    )
+        overwrite_pydantic_type=Optional[Json[Dict[str, int]]]
+    )  # type: ignore
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_constraints():
     with pytest.raises(ValidationError) as e:
         OverwriteTest(my_int=-10)
-    assert "ensure this value is greater than 0" in str(e.value)
+    assert "Input should be greater than 0" in str(e.value)
 
     with pytest.raises(ValidationError) as e:
         OverwriteTest(my_int=10, constraint_dict={"aa": "ab"})
-    assert "value is not a valid integer" in str(e.value)
+    assert (
+        "Input should be a valid integer, unable to parse string as an integer"
+        in str(e.value)
+    )
 
 
 @pytest.mark.asyncio
 async def test_saving():
-    async with database:
+    async with base_ormar_config.database:
         await OverwriteTest(my_int=5, constraint_dict={"aa": 123}).save()
 
         test = await OverwriteTest.objects.get()

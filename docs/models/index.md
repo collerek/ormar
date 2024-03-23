@@ -9,7 +9,7 @@ They are being managed in the background and you do not have to create them on y
 
 To build an ormar model you simply need to inherit a `ormar.Model` class.
 
-```Python hl_lines="10"
+```Python hl_lines="9"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
@@ -23,7 +23,7 @@ Each table **has to** have a primary key column, which you specify by setting `p
 
 Only one primary key column is allowed.
 
-```Python hl_lines="15 16 17"
+```Python hl_lines="15-17"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
@@ -42,15 +42,15 @@ id: int = ormar.Integer(primary_key=True, autoincrement=False)
 #### Non Database Fields
 
 Note that if you need a normal pydantic field in your model (used to store value on model or pass around some value) you can define a 
-field with parameter `pydantic_only=True`.
+field like usual in pydantic.
 
 Fields created like this are added to the `pydantic` model fields -> so are subject to validation according to `Field` type, 
-also appear in `dict()` and `json()` result. 
+also appear in `model_dump()` and `model_dump_json()` result. 
 
 The difference is that **those fields are not saved in the database**. So they won't be included in underlying sqlalchemy `columns`, 
 or `table` variables (check [Internals][Internals] section below to see how you can access those if you need).
 
-Subsequently `pydantic_only` fields won't be included in migrations or any database operation (like `save`, `update` etc.)
+Subsequently, pydantic fields won't be included in migrations or any database operation (like `save`, `update` etc.)
 
 Fields like those can be passed around into payload in `fastapi` request and will be returned in `fastapi` response 
 (of course only if you set their value somewhere in your code as the value is **not** fetched from the db. 
@@ -58,30 +58,32 @@ If you pass a value in `fastapi` `request` and return the same instance that `fa
 you should get back exactly same value in `response`.).
 
 !!!warning
-    `pydantic_only=True` fields are always **Optional** and it cannot be changed (otherwise db load validation would fail)
+    pydantic fields have to be always **Optional** and it cannot be changed (otherwise db load validation would fail)
 
-!!!tip
-    `pydantic_only=True` fields are a good solution if you need to pass additional information from outside of your API 
-    (i.e. frontend). They are not stored in db but you can access them in your `APIRoute` code and they also have `pydantic` validation. 
-
-```Python hl_lines="18"
+```Python hl_lines="19"
 --8<-- "../docs_src/models/docs014.py"
 ```
 
-If you combine `pydantic_only=True` field with `default` parameter and do not pass actual value in request you will always get default value.
+If you set pydantic field with `default` parameter and do not pass actual value in request you will always get default value.
 Since it can be a function you can set `default=datetime.datetime.now` and get current timestamp each time you call an endpoint etc.
 
+#### Non Database Fields in Fastapi
+
 !!!note
-    Note that both `pydantic_only` and `property_field` decorated field can be included/excluded in both `dict()` and `fastapi`
+    Note, that both pydantic and calculated_fields decorated field can be included/excluded in both `model_dump()` and `fastapi`
     response with `include`/`exclude` and `response_model_include`/`response_model_exclude` accordingly.
 
 ```python
-# <==related of code removed for clarity==>
+# <==part of related code removed for clarity==>
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL),
+    metadata=sqlalchemy.MetaData(),
+    engine=sqlalchemy.create_engine(DATABASE_URL),
+)
+
+
 class User(ormar.Model):
-    class Meta:
-        tablename: str = "users2"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="users2")
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255, nullable=False)
@@ -89,18 +91,18 @@ class User(ormar.Model):
     first_name: str = ormar.String(max_length=255)
     last_name: str = ormar.String(max_length=255)
     category: str = ormar.String(max_length=255, nullable=True)
-    timestamp: datetime.datetime = ormar.DateTime(
-        pydantic_only=True, default=datetime.datetime.now
+    timestamp: datetime.datetime = pydantic.Field(
+        default=datetime.datetime.now
     )
 
-# <==related of code removed for clarity==>
-app =FastAPI()
+# <==part of related code removed for clarity==>
+app = FastAPI()
 
 @app.post("/users/")
 async def create_user(user: User):
     return await user.save()
 
-# <==related of code removed for clarity==>
+# <==part of related code removed for clarity==>
 
 def test_excluding_fields_in_endpoints():
     client = TestClient(app)
@@ -127,121 +129,7 @@ def test_excluding_fields_in_endpoints():
         assert response.json().get("timestamp") == str(timestamp).replace(" ", "T")
 
 
-# <==related of code removed for clarity==>
-```
-
-#### Property fields
-
-Sometimes it's desirable to do some kind of calculation on the model instance. One of the most common examples can be concatenating
-two or more fields. Imagine you have `first_name` and `last_name` fields on your model, but would like to have `full_name` in the result
-of the `fastapi` query. 
-
-You can create a new `pydantic` model with a `method` that accepts only `self` (so like default python `@property`) 
-and populate it in your code. 
-
-But it's so common that `ormar` has you covered. You can "materialize" a `property_field` on you `Model`.   
-
-!!!warning
-    `property_field` fields are always **Optional** and it cannot be changed (otherwise db load validation would fail)
-
-```Python hl_lines="20-22"
---8<-- "../docs_src/models/docs015.py"
-```
-
-!!!warning
-    The decorated function has to accept only one parameter, and that parameter have to be `self`. 
-    
-    If you try to decorate a function with more parameters `ormar` will raise `ModelDefinitionError`.
-    
-    Sample:
-    
-    ```python
-    # will raise ModelDefinitionError
-    @property_field
-    def prefixed_name(self, prefix="prefix_"):
-        return 'custom_prefix__' + self.name
-    
-    # will raise ModelDefinitionError 
-    # (calling first param something else than 'self' is a bad practice anyway)
-    @property_field
-    def prefixed_name(instance):
-        return 'custom_prefix__' + self.name
-    ```
-    
-Note that `property_field` decorated methods do not go through verification (but that might change in future) and are only available
-in the response from `fastapi` and `dict()` and `json()` methods. You cannot pass a value for this field in the request 
-(or rather you can but it will be discarded by ormar so really no point but no Exception will be raised).
-
-!!!note
-    Note that both `pydantic_only` and `property_field` decorated field can be included/excluded in both `dict()` and `fastapi`
-    response with `include`/`exclude` and `response_model_include`/`response_model_exclude` accordingly.
-    
-!!!tip
-    Note that `@property_field` decorator is designed to replace the python `@property` decorator, you do not have to combine them.
-    
-    In theory you can cause `ormar` have a failsafe mechanism, but note that i.e. `mypy` will complain about re-decorating a property.
-    
-    ```python
-    # valid and working but unnecessary and mypy will complain
-    @property_field
-    @property
-    def prefixed_name(self):
-        return 'custom_prefix__' + self.name
-    ```
-    
-```python
-# <==related of code removed for clarity==>
-def gen_pass():  # note: NOT production ready 
-    choices = string.ascii_letters + string.digits + "!@#$%^&*()"
-    return "".join(random.choice(choices) for _ in range(20))
-
-class RandomModel(ormar.Model):
-    class Meta:
-        tablename: str = "random_users"
-        metadata = metadata
-        database = database
-
-        include_props_in_dict = True
-
-    id: int = ormar.Integer(primary_key=True)
-    password: str = ormar.String(max_length=255, default=gen_pass)
-    first_name: str = ormar.String(max_length=255, default="John")
-    last_name: str = ormar.String(max_length=255)
-    created_date: datetime.datetime = ormar.DateTime(
-        server_default=sqlalchemy.func.now()
-    )
-
-    @property_field
-    def full_name(self) -> str:
-        return " ".join([self.first_name, self.last_name])
-
-# <==related of code removed for clarity==>
-app =FastAPI()
-
-# explicitly exclude property_field in this endpoint
-@app.post("/random/", response_model=RandomModel, response_model_exclude={"full_name"})
-async def create_user(user: RandomModel):
-    return await user.save()
-
-# <==related of code removed for clarity==>
-
-def test_excluding_property_field_in_endpoints2():
-    client = TestClient(app)
-    with client as client:
-        RandomModel.Meta.include_props_in_dict = True
-        user3 = {"last_name": "Test"}
-        response = client.post("/random3/", json=user3)
-        assert list(response.json().keys()) == [
-            "id",
-            "password",
-            "first_name",
-            "last_name",
-            "created_date",
-        ]
-        # despite being decorated with property_field if you explicitly exclude it it will be gone
-        assert response.json().get("full_name") is None
-
-# <==related of code removed for clarity==>
+# <==part of related code removed for clarity==>
 ```
 
 #### Fields names vs Column names
@@ -252,25 +140,25 @@ If for whatever reason you prefer to change the name in the database but keep th
 with specifying `name` parameter during Field declaration
 
 Here you have a sample model with changed names
-```Python hl_lines="16-19"
+```Python hl_lines="18-21"
 --8<-- "../docs_src/models/docs008.py"
 ```
 
 Note that you can also change the ForeignKey column name
-```Python hl_lines="21"
+```Python hl_lines="34"
 --8<-- "../docs_src/models/docs009.py"
 ```
 
 But for now you cannot change the ManyToMany column names as they go through other Model anyway.
-```Python hl_lines="28"
+```Python hl_lines="43"
 --8<-- "../docs_src/models/docs010.py"
 ```
 
-## Overwriting the default QuerySet
+### Overwriting the default QuerySet
 
 If you want to customize the queries run by ormar you can define your own queryset class (that extends the ormar `QuerySet`) in your model class, default one is simply the `QuerySet`
 
-You can provide a new class in `Meta` configuration of your class as `queryset_class` parameter.
+You can provide a new class in `ormar_config` of your class as `queryset_class` parameter.
 
 ```python
 import ormar
@@ -288,12 +176,10 @@ class MyQuerySetClass(QuerySet):
 
         
 class Book(ormar.Model):
-    
-    class Meta(ormar.ModelMeta):
-        metadata = metadata
-        database = database
-        tablename = "book"
-        queryset_class = MyQuerySetClass
+    ormar_config = base_ormar_config.copy(
+        queryset_class=MyQuerySetClass,
+        tablename="book",
+    )
     
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=32)
@@ -304,17 +190,9 @@ book = await Book.objects.first_or_404(name="123")
 
 ```
 
-### Type Hints & Legacy
+### Type Hints
 
-Before version 0.4.0 `ormar` supported only one way of defining `Fields` on a `Model` using python type hints as pydantic.
-
-```Python hl_lines="15-17"
---8<-- "../docs_src/models/docs011.py"
-```
-
-But that didn't play well with static type checkers like `mypy` and `pydantic` PyCharm plugin.
-
-Therefore from version >=0.4.0 `ormar` switched to new notation.
+Note that for better IDE support and mypy checks you can provide type hints.
 
 ```Python hl_lines="15-17"
 --8<-- "../docs_src/models/docs001.py"
@@ -343,9 +221,9 @@ and table creation you need to assign each `Model` with two special parameters.
 
 One is `Database` instance created with your database url in [sqlalchemy connection string][sqlalchemy connection string] format.
 
-Created instance needs to be passed to every `Model` with `Meta` class `database` parameter.
+Created instance needs to be passed to every `Model` with `ormar_config` object `database` parameter.
 
-```Python hl_lines="1 6 12"
+```Python hl_lines="1 5 11"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
@@ -357,9 +235,9 @@ Created instance needs to be passed to every `Model` with `Meta` class `database
 
 Second dependency is sqlalchemy `MetaData` instance.
 
-Created instance needs to be passed to every `Model` with `Meta` class `metadata` parameter.
+Created instance needs to be passed to every `Model` with `ormar_config` object `metadata` parameter.
 
-```Python hl_lines="2 7 13"
+```Python hl_lines="3 6 12"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
@@ -369,25 +247,22 @@ Created instance needs to be passed to every `Model` with `Meta` class `metadata
 
 #### Best practice
 
-Only thing that `ormar` expects is a class with name `Meta` and two class variables: `metadata` and `databases`.
+Note that `ormar` expects the field with name `ormar_config` that is an instance of `OrmarConfig` class.
+To ease the config management, the `OrmarConfig` class provide `copy` method.
+So instead of providing the same parameters over and over again for all models
+you should create a base object and use its copy in all models.
 
-So instead of providing the same parameters over and over again for all models you should creata a class and subclass it in all models.
-
-```Python hl_lines="14 20 33"
+```Python hl_lines="9-12 19 28"
 --8<-- "../docs_src/models/docs013.py"
 ```
-
-!!!warning
-    You need to subclass your `MainMeta` class in each `Model` class as those classes store configuration variables 
-    that otherwise would be overwritten by each `Model`.
 
 ### Table Names
 
 By default table name is created from Model class name as lowercase name plus 's'.
 
-You can overwrite this parameter by providing `Meta` class `tablename` argument.
+You can overwrite this parameter by providing `ormar_config` object's `tablename` argument.
 
-```Python hl_lines="12 13 14"
+```Python hl_lines="14-16"
 --8<-- "../docs_src/models/docs002.py"
 ```
 
@@ -395,74 +270,72 @@ You can overwrite this parameter by providing `Meta` class `tablename` argument.
 
 On a model level you can also set model-wise constraints on sql columns.
 
-Right now only `IndexColumns` and `UniqueColumns` constraints are supported. 
+Right now only `IndexColumns`, `UniqueColumns` and `CheckColumns` constraints are supported. 
 
 !!!note
-        Note that both constraints should be used only if you want to set a name on constraint or want to set the index on multiple columns, otherwise `index` and `unique` properties on ormar fields are preferred.
+    Note that both constraints should be used only if you want to set a name on constraint or want to set the index on multiple columns, otherwise `index` and `unique` properties on ormar fields are preferred.
 
 !!!tip
     To read more about columns constraints like `primary_key`, `unique`, `ForeignKey` etc. visit [fields][fields].
 
 #### UniqueColumns
 
-You can set this parameter by providing `Meta` class `constraints` argument.
+You can set this parameter by providing `ormar_config` object `constraints` argument.
 
-```Python hl_lines="14-17"
+```Python hl_lines="13-16"
 --8<-- "../docs_src/models/docs006.py"
 ```
 
 !!!note
-        Note that constraints are meant for combination of columns that should be unique. 
-        To set one column as unique use [`unique`](../fields/common-parameters.md#unique) common parameter. 
-        Of course you can set many columns as unique with this param but each of them will be checked separately.
+    Note that constraints are meant for combination of columns that should be unique. 
+    To set one column as unique use [`unique`](../fields/common-parameters.md#unique) common parameter. 
+    Of course you can set many columns as unique with this param but each of them will be checked separately.
 
 #### IndexColumns
 
-You can set this parameter by providing `Meta` class `constraints` argument.
+You can set this parameter by providing `ormar_config` object `constraints` argument.
 
-```Python hl_lines="14-17"
+```Python hl_lines="13-16"
 --8<-- "../docs_src/models/docs017.py"
 ```
 
 !!!note
-        Note that constraints are meant for combination of columns that should be in the index. 
-        To set one column index use [`unique`](../fields/common-parameters.md#index) common parameter. 
-        Of course, you can set many columns as indexes with this param but each of them will be a separate index.
+    Note that constraints are meant for combination of columns that should be in the index. 
+    To set one column index use [`unique`](../fields/common-parameters.md#index) common parameter. 
+    Of course, you can set many columns as indexes with this param but each of them will be a separate index.
 
 #### CheckColumns
 
-You can set this parameter by providing `Meta` class `constraints` argument.
+You can set this parameter by providing `ormar_config` object `constraints` argument.
 
-```Python hl_lines="14-17"
+```Python hl_lines="15-20"
 --8<-- "../docs_src/models/docs018.py"
 ```
 
 !!!note
-        Note that some databases do not actively support check constraints such as MySQL.
+    Note that some databases do not actively support check constraints (such as MySQL).
 
 
 ### Pydantic configuration
 
 As each `ormar.Model` is also a `pydantic` model, you might want to tweak the settings of the pydantic configuration.
 
-The way to do this in pydantic is to adjust the settings on the `Config` class provided to your model, and it works exactly the same for ormar models.
+The way to do this in pydantic is to adjust the settings on the `model_config` dictionary provided to your model, and it works exactly the same for ormar models.
 
-So in order to set your own preferences you need to provide not only the `Meta` class but also the `Config` class to your model.
+So in order to set your own preferences you need to provide not only the `ormar_config` class but also the `model_config = ConfigDict()` class to your model.
 
 !!!note
-        To read more about available settings visit the [pydantic](https://pydantic-docs.helpmanual.io/usage/model_config/) config page.
+    To read more about available settings visit the [pydantic](https://pydantic-docs.helpmanual.io/usage/model_config/) config page.
 
 Note that if you do not provide your own configuration, ormar will do it for you.
 The default config provided is as follows:
 
 ```python
-class Config(pydantic.BaseConfig):
-    orm_mode = True
-    validate_assignment = True
+model_config = ConfigDict(validate_assignment=True, ser_json_bytes="base64")
 ```
 
 So to overwrite setting or provide your own a sample model can look like following:
-```Python hl_lines="15-16"
+```Python hl_lines="16"
 --8<-- "../docs_src/models/docs016.py"
 ```
 
@@ -474,69 +347,64 @@ If you try to do so the `ModelError` will be raised.
 
 Since the extra fields cannot be saved in the database the default to disallow such fields seems a feasible option.
 
-On the contrary in `pydantic` the default option is to ignore such extra fields, therefore `ormar` provides an `Meta.extra` setting to behave in the same way.
+On the contrary in `pydantic` the default option is to ignore such extra fields, therefore `ormar` provides an `ormar_config.extra` setting to behave in the same way.
 
 To ignore extra fields passed to `ormar` set this setting to `Extra.ignore` instead of default `Extra.forbid`.
 
 Note that `ormar` does not allow accepting extra fields, you can only ignore them or forbid them (raise exception if present)
 
 ```python
-from ormar import Extra
+from ormar import Extra, OrmarConfig
 
 class Child(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "children"
-        metadata = metadata
-        database = database
-        extra = Extra.ignore  # set extra setting to prevent exceptions on extra fields presence
+    ormar_config = OrmarConfig(
+        tablename="children",
+        extra=Extra.ignore  # set extra setting to prevent exceptions on extra fields presence
+    )
 
     id: int = ormar.Integer(name="child_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)
     last_name: str = ormar.String(name="lname", max_length=100)
 ```
 
-To set the same setting on all model check the [best practices]("../models/index/#best-practice") and `BaseMeta` concept.
+To set the same setting on all model check the [best practices]("../models/index/#best-practice") and `base_ormar_config` concept.
 
 ## Model sort order
 
 When querying the database with given model by default the Model is ordered by the `primary_key`
 column ascending. If you wish to change the default behaviour you can do it by providing `orders_by`
-parameter to model `Meta` class.
+parameter to model `ormar_config` object.
 
-Sample default ordering:
+Sample default ordering (not specified - so by primary key):
 ```python
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL),
+    metadata=sqlalchemy.MetaData(),
+)
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
 
 # default sort by column id ascending
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(
+        tablename="authors",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 ```
 Modified
-```python
-
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
-
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+```python hl_lines="9"
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL),
+    metadata=sqlalchemy.MetaData(),
+)
 
 # now default sort by name descending
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
-        orders_by = ["-name"]
+    ormar_config = base_ormar_config.copy(
+        orders_by = ["-name"],
+        tablename="authors",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -546,12 +414,9 @@ class Author(ormar.Model):
 
 There are two ways to create and persist the `Model` instance in the database.
 
-!!!tip 
-    Use `ipython` to try this from the console, since it supports `await`.
-
 If you plan to modify the instance in the later execution of your program you can initiate your `Model` as a normal class and later await a `save()` call.  
 
-```Python hl_lines="20 21"
+```Python hl_lines="25-26"
 --8<-- "../docs_src/models/docs007.py"
 ```
 
@@ -561,7 +426,7 @@ For creating multiple objects at once a `bulk_create()` QuerySet's method is ava
 
 Each model has a `QuerySet` initialised as `objects` parameter 
 
-```Python hl_lines="23"
+```Python hl_lines="28"
 --8<-- "../docs_src/models/docs007.py"
 ```
 

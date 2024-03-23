@@ -1,32 +1,23 @@
 from typing import Optional
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
 
 
 class DataSource(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "datasources"
+    ormar_config = base_ormar_config.copy(tablename="datasources")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200, unique=True, index=True)
 
 
 class DataSourceTable(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "source_tables"
+    ormar_config = base_ormar_config.copy(tablename="source_tables")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200, index=True)
@@ -36,8 +27,7 @@ class DataSourceTable(ormar.Model):
 
 
 class DataSourceTableColumn(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "source_columns"
+    ormar_config = base_ormar_config.copy(tablename="source_columns")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200, index=True)
@@ -47,18 +37,12 @@ class DataSourceTableColumn(ormar.Model):
     )
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():  # pragma: no cover
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_double_nested_reverse_relation():
-    async with database:
+    async with base_ormar_config.database:
         data_source = await DataSource(name="local").save()
         test_tables = [
             {

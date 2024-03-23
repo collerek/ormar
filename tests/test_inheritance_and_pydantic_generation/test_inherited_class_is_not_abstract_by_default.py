@@ -1,21 +1,16 @@
 import datetime
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
 
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL)
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config()
 
 
 class TableBase(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        abstract = True
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     id: int = ormar.Integer(primary_key=True)
     created_by: str = ormar.String(max_length=20, default="test")
@@ -27,8 +22,7 @@ class TableBase(ormar.Model):
 
 
 class NationBase(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        abstract = True
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     name: str = ormar.String(max_length=50)
     alpha2_code: str = ormar.String(max_length=2)
@@ -37,22 +31,15 @@ class NationBase(ormar.Model):
 
 
 class Nation(NationBase, TableBase):
-    class Meta(ormar.ModelMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_model_is_not_abstract_by_default():
-    async with database:
+    async with base_ormar_config.database:
         sweden = await Nation(
             name="Sweden", alpha2_code="SE", region="Europe", subregion="Scandinavia"
         ).save()

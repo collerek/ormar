@@ -1,4 +1,4 @@
-from typing import Dict, List, TYPE_CHECKING, Type, cast
+from typing import TYPE_CHECKING, Dict, List, Type, cast
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import ForeignKeyField, Model
@@ -20,7 +20,9 @@ class ReverseAliasResolver:
     ) -> None:
         self.select_related = select_related
         self.model_cls = model_cls
-        self.reversed_aliases = self.model_cls.Meta.alias_manager.reversed_aliases
+        self.reversed_aliases = (
+            self.model_cls.ormar_config.alias_manager.reversed_aliases
+        )
         self.excludable = excludable
         self.exclude_through = exclude_through
 
@@ -176,7 +178,7 @@ class ReverseAliasResolver:
             for relation in related_split:
                 previous_related_str = f"{related_str}__" if related_str else ""
                 new_related_str = previous_related_str + relation
-                field = model_cls.Meta.model_fields[relation]
+                field = model_cls.ormar_config.model_fields[relation]
                 field = cast("ForeignKeyField", field)
                 prefix_name = self._handle_through_fields_and_prefix(
                     model_cls=model_cls,

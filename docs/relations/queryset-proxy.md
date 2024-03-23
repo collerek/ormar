@@ -58,7 +58,7 @@ assert post.categories[0] == news
 
 `get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
 
-Tries to get a row meeting the criteria and if NoMatch exception is raised it creates a new one with given kwargs and _defaults.
+Tries to get a row meeting the criteria and if `NoMatch` exception is raised it creates a new one with given kwargs and _defaults.
 
 !!!tip
     Read more in queries documentation [get_or_create][get_or_create]
@@ -127,7 +127,7 @@ provided Through model.
 
 Given sample like this:
 
-```Python hl_lines="14-20 29"
+```Python hl_lines="19-24 32"
 --8<-- "../docs_src/relations/docs004.py"
 ```
 
@@ -174,7 +174,7 @@ Updates the related model with provided keyword arguments, return number of upda
 Note that for `ManyToMany` relations update can also accept an argument with through field
 name and a dictionary of fields.
 
-```Python hl_lines="14-20 29"
+```Python hl_lines="19-24 32"
 --8<-- "../docs_src/relations/docs004.py"
 ```
 

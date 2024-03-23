@@ -1,22 +1,17 @@
 from typing import List, Optional
 
-import databases
+import ormar
 import pytest
 import pytest_asyncio
-import sqlalchemy
 
-import ormar
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = create_config()
 
 
 class Author(ormar.Model):
-    class Meta:
-        tablename = "authors"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     first_name: str = ormar.String(max_length=80)
@@ -24,20 +19,14 @@ class Author(ormar.Model):
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
 
 
 class Post(ormar.Model):
-    class Meta:
-        tablename = "posts"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="posts")
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -45,19 +34,14 @@ class Post(ormar.Model):
     author: Optional[Author] = ormar.ForeignKey(Author, related_name="author_posts")
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest_asyncio.fixture(scope="function")
 async def cleanup():
     yield
-    async with database:
-        PostCategory = Post.Meta.model_fields["categories"].through
+    async with base_ormar_config.database:
+        PostCategory = Post.ormar_config.model_fields["categories"].through
         await PostCategory.objects.delete(each=True)
         await Post.objects.delete(each=True)
         await Category.objects.delete(each=True)
@@ -66,7 +50,7 @@ async def cleanup():
 
 @pytest.mark.asyncio
 async def test_selecting_related(cleanup):
-    async with database:
+    async with base_ormar_config.database:
         guido = await Author.objects.create(first_name="Guido", last_name="Van Rossum")
         post = await Post.objects.create(title="Hello, M2M", author=guido)
         news = await Category.objects.create(name="News")

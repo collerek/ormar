@@ -1,224 +1,552 @@
-# 0.12.2
+# Release notes
 
-## ✨ Features
+## 0.20.0
+
+### ✨ Breaking changes
+* `ormar` Model configuration
+
+    Instead of defining a `Meta` class now each of the ormar models require an ormar_config parameter that is an instance of the `OrmarConfig` class.
+    Note that the attribute must be named `ormar_config` and be an instance of the config class.
+    
+    ```python
+    import databases
+    import ormar
+    import sqlalchemy
+    
+    database = databases.Database("sqlite:///db.sqlite")
+    metadata = sqlalchemy.MetaData()
+    
+    # ormar < 0.20
+    class Album(ormar.Model):
+        class Meta:
+            database = database
+            metadata = metadata
+            tablename = "albums"
+        
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        favorite: bool = ormar.Boolean(default=False)
+    
+    # ormar >= 0.20
+    class AlbumV20(ormar.Model):
+        ormar_config = ormar.OrmarConfig(
+            database=database,
+            metadata=metadata,
+            tablename="albums_v20"
+        )
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        favorite: bool = ormar.Boolean(default=False)
+    ```
+
+* `OrmarConfig` api/ parameters
+    
+    The `ormar_config` expose the same set of settings as `Meta` class used to provide.
+    That means that you can use any of the following parameters initializing the config:
+    
+    ```python
+    metadata: Optional[sqlalchemy.MetaData]
+    database: Optional[databases.Database]
+    engine: Optional[sqlalchemy.engine.Engine]
+    tablename: Optional[str]
+    order_by: Optional[List[str]]
+    abstract: bool
+    exclude_parent_fields: Optional[List[str]]
+    queryset_class: Type[QuerySet]
+    extra: Extra
+    constraints: Optional[List[ColumnCollectionConstraint]]
+    ```
+
+* `BaseMeta` equivalent - best practice
+    
+    Note that to reduce the duplication of code and ease of development it's still recommended to create a base config and provide each of the models with a copy.
+    OrmarConfig provides a convenient `copy` method for that purpose. 
+    
+    The `copy` method accepts the same parameters as `OrmarConfig` init, so you can overwrite if needed, but by default it will return already existing attributes, except for: `tablename`, `order_by` and `constraints` which by default are cleared.
+    
+    ```python hl_lines="5-8 11 20"
+    import databases
+    import ormar
+    import sqlalchemy
+    
+    base_ormar_config = ormar.OrmarConfig(
+        database=databases.Database("sqlite:///db.sqlite"),
+        metadata=sqlalchemy.MetaData()
+    )
+    
+    class AlbumV20(ormar.Model):
+        ormar_config = base_ormar_config.copy(
+            tablename="albums_v20"
+        )
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+    
+        
+    class TrackV20(ormar.Model):
+        ormar_config = base_ormar_config.copy(
+            tablename="tracks_v20"
+        )
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+    ```
+
+* `choices` Field parameter is no longer supported.
+    
+    Before version 0.20 you could provide `choices` parameter to any existing ormar Field to limit the accepted values.
+    This functionality was dropped, and you should use `ormar.Enum` field that was designed for this purpose. 
+    If you want to keep the database field type (i.e. an Integer field) you can always write a custom validator.
+    
+    ```python
+    import databases
+    import ormar
+    import sqlalchemy
+    
+    database = databases.Database("sqlite:///db.sqlite")
+    metadata = sqlalchemy.MetaData()
+    
+    # ormar < 0.20
+    class Artist(ormar.Model):
+        class Meta:
+            database = database
+            metadata = metadata
+        
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        country: str = ormar.String(default=False, max_length=50, choices=["UK", "US", "Vietnam", "Colombia"])
+    
+    # ormar >= 0.20
+    from enum import Enum
+    
+    class Country(str, Enum):
+        UK = "UK"
+        US = "US"
+        VIETNAM = "Vietnam"
+        COLOMBIA = "Colombia"
+    
+    class ArtistV20(ormar.Model):
+        ormar_config = ormar.OrmarConfig(
+            database=database,
+            metadata=metadata,
+            tablename="artists_v20"
+        )
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        country: Country = ormar.Enum(enum_class=Country)
+    ```
+    
+
+* `pydantic_only` Field parameter is no longer supported
+    
+    `pydantic_only` fields were already deprecated and are removed in v 0.20. Ormar allows defining pydantic fields as in ordinary pydantic model.
+    
+    ```python
+    import databases
+    import ormar
+    import sqlalchemy
+    
+    database = databases.Database("sqlite:///db.sqlite")
+    metadata = sqlalchemy.MetaData()
+    
+    # ormar < 0.20
+    class Dish(ormar.Model):
+        class Meta:
+            database = database
+            metadata = metadata
+            tablename = "dishes"
+        
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        cook: str = ormar.String(max_length=40, pydantic_only=True, default="sam")
+    
+    # ormar >= 0.20
+    class DishV20(ormar.Model):
+        ormar_config = ormar.OrmarConfig(
+            database=database,
+            metadata=metadata,
+            tablename="dishes_v20"
+        )
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        cook: str = "sam"  # this is normal pydantic field
+    ```
+
+* `property_field` decorator is no longer supported
+    
+    `property_field` decorator was used to provide a way to pass calculated fields that were included in dictionary/ serialized json representation of the model.
+    Version 2.X of pydantic introduced such a possibility, so you should now switch to the one native to the pydantic.
+    
+    ```python
+    import databases
+    import ormar
+    import sqlalchemy
+    import pydantic
+    
+    database = databases.Database("sqlite:///db.sqlite")
+    metadata = sqlalchemy.MetaData()
+    
+    # ormar < 0.20
+    class Employee(ormar.Model):
+        class Meta:
+            database = database
+            metadata = metadata
+        
+    
+        id: int = ormar.Integer(primary_key=True)
+        first_name: str = ormar.String(max_length=100)
+        last_name: str = ormar.String(max_length=100)
+        
+        @ormar.property_field()
+        def full_name(self) -> str:
+            return f"{self.first_name} {self.last_name}"
+    
+    # ormar >= 0.20
+    class EmployeeV20(ormar.Model):
+        ormar_config = ormar.OrmarConfig(
+            database=database,
+            metadata=metadata,
+        )
+    
+        id: int = ormar.Integer(primary_key=True)
+        first_name: str = ormar.String(max_length=100)
+        last_name: str = ormar.String(max_length=100)
+    
+        @pydantic.computed_field()
+        def full_name(self) -> str:
+            return f"{self.first_name} {self.last_name}"
+    ```
+
+* Deprecated methods
+
+    All methods listed below are deprecated and will be removed in version 0.30 of `ormar`.
+
+    * `dict()` becomes the `model_dump()`
+        
+    ```python
+    import databases
+    import ormar
+    import sqlalchemy
+    
+    database = databases.Database("sqlite:///db.sqlite")
+    metadata = sqlalchemy.MetaData()
+    
+    class Album(ormar.Model):
+        ormar_config = ormar.OrmarConfig(
+            database=database,
+            metadata=metadata,
+            tablename="albums"
+        )
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        favorite: bool = ormar.Boolean(default=False)
+    
+    album = Album(name="Dark Side of the Moon")
+        
+    # ormar < 0.20
+    album_dict = album.dict()
+    
+    # ormar >= 0.20
+    new_album_dict = album.model_dump() 
+    ```
+    
+    Note that parameters remain the same i.e. `include`, `exclude` etc.
+
+    * `json()` becomes the `model_dump_json()`
+    
+      ```python
+      import databases
+      import ormar
+      import sqlalchemy
+    
+      database = databases.Database("sqlite:///db.sqlite")
+      metadata = sqlalchemy.MetaData()
+    
+      class Album(ormar.Model):
+          ormar_config = ormar.OrmarConfig(
+              database=database,
+              metadata=metadata,
+              tablename="albums"
+          )
+    
+          id: int = ormar.Integer(primary_key=True)
+          name: str = ormar.String(max_length=100)
+          favorite: bool = ormar.Boolean(default=False)
+    
+      album = Album(name="Dark Side of the Moon")
+        
+      # ormar < 0.20
+      album_json= album.json()
+    
+      # ormar >= 0.20
+      new_album_dict = album.model_dump_json() 
+      ```
+    
+      Note that parameters remain the same i.e. `include`, `exclude` etc.
+
+    * `construct()` becomes the `model_construct()`
+    
+    ```python
+    import databases
+    import ormar
+    import sqlalchemy
+    
+    database = databases.Database("sqlite:///db.sqlite")
+    metadata = sqlalchemy.MetaData()
+    
+    class Album(ormar.Model):
+        ormar_config = ormar.OrmarConfig(
+            database=database,
+            metadata=metadata,
+            tablename="albums"
+        )
+    
+        id: int = ormar.Integer(primary_key=True)
+        name: str = ormar.String(max_length=100)
+        favorite: bool = ormar.Boolean(default=False)
+        
+    params = {
+        "name": "Dark Side of the Moon",
+        "favorite": True,
+    }
+    # ormar < 0.20
+    album = Album.construct(**params)
+    
+    # ormar >= 0.20
+    album = Album.model_construct(**params)
+    ```
+    
+    To read more about construct please refer to `pydantic` documentation.
+
+
+##0.12.2
+
+###✨ Features
 * Bump support for `FastAPI` up to the newest version (0.97.0) [#1110](https://github.com/collerek/ormar/pull/1110)
 * Add support and tests for `Python 3.11` [#1110](https://github.com/collerek/ormar/pull/1110)
 
 
-# 0.12.1
+##0.12.1
 
-## ✨ Features
+###✨ Features
 * Massive performance improvements in area of loading the models due to recursive loads and caching of the models and related models. (by @erichaydel - thanks!) [#853](https://github.com/collerek/ormar/pull/948)
 
-## 💬 Internals
+###💬 Internals
 * Benchmarks for comparing performance effect of implemented changes in regard of trends (again, by @erichaydel - thanks!) [#853](https://github.com/collerek/ormar/pull/948)
 
 
-# 0.12.0
+##0.12.0
 
-## ✨ Breaking Changes
+###✨ Breaking Changes
 
 * `Queryset.bulk_create` will now raise `ModelListEmptyError` on empty list of models (by @ponytailer - thanks!) [#853](https://github.com/collerek/ormar/pull/853)
 
-## ✨ Features
+###✨ Features
 * `Model.upsert()` now handles a flag `__force_save__`: `bool` that allow upserting the models regardless of the fact if they have primary key set or not. 
 Note that setting this flag will cause two queries for each upserted model -> `get` to check if model exists and later `update/insert` accordingly. [#889](https://github.com/collerek/ormar/pull/853)
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix for empty relations breaking `construct` method (by @Abdeldjalil-H - thanks!) [#870](https://github.com/collerek/ormar/issues/870)
 * Fix save related not saving models with already set pks (including uuid) [#885](https://github.com/collerek/ormar/issues/885)
 * Fix for wrong relations exclusions depending on the order of exclusions [#779](https://github.com/collerek/ormar/issues/779)
 * Fix `property_fields` not being inherited properly [#774](https://github.com/collerek/ormar/issues/774)
 
-# 0.11.3
+##0.11.3
 
-## ✨ Features
+###✨ Features
 
 * Document `onupdate` and `ondelete` referential actions in `ForeignKey` and provide `ReferentialAction` enum to specify the behavior of the relationship (by @SepehrBazyar - thanks!) [#724](https://github.com/collerek/ormar/issues/724)
 * Add `CheckColumn` to supported constraints in models Meta (by @SepehrBazyar - thanks!) [#729](https://github.com/collerek/ormar/issues/729)
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix limiting query result to 0 should return empty list (by @SepehrBazyar - thanks!) [#766](https://github.com/collerek/ormar/issues/713)
 
-## 💬 Other
+###💬 Other
 
 * Add dark mode to docs (by @SepehrBazyar - thanks!) [#717](https://github.com/collerek/ormar/pull/717) 
 * Update aiomysql dependency [#778](https://github.com/collerek/ormar/issues/778)
 
 
-# 0.11.2
+##0.11.2
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix database drivers being required, while they should be optional [#713](https://github.com/collerek/ormar/issues/713)
 * Fix boolean field problem in `limit` queries in postgres without `limit_raw_sql` flag [#704](https://github.com/collerek/ormar/issues/704)
 * Fix enum_class spilling to schema causing errors in OpenAPI [#699](https://github.com/collerek/ormar/issues/699)
 
-# 0.11.1
+##0.11.1
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix deepcopy issues introduced in pydantic 1.9 [#685](https://github.com/collerek/ormar/issues/685)
 
-# 0.11.0
+##0.11.0
 
-## ✨ Breaking Changes
+###✨ Breaking Changes
 
 * Dropped support for python 3.6
 * `Queryset.get_or_create` returns now a tuple with model and bool value indicating if the model was created (by @MojixCoder - thanks!) [#554](https://github.com/collerek/ormar/pull/554)
 * `Queryset.count()` now counts the number of distinct parent model rows by default, counting all rows is possible by setting `distinct=False` (by @erichaydel - thanks) [#588](https://github.com/collerek/ormar/pull/588)
 
-## ✨ Features
+###✨ Features
 
 * Added support for python 3.10
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix inconsistent `JSON` fields behaviour in `save` and `bulk_create` [#584](https://github.com/collerek/ormar/issues/584)
 * Fix maximum recursion error [#580](https://github.com/collerek/ormar/pull/580)
 
 
-# 0.10.25
+##0.10.25
 
-## ✨ Features
+###✨ Features
 
 * Add `queryset_class` option to `Model.Meta` that allows you to easily swap `QuerySet` for your Model (by @ponytailer - thanks!) [#538](https://github.com/collerek/ormar/pull/538)
 * Allow passing extra `kwargs` to `IndexColumns` that will be passed to sqlalchemy `Index` (by @zevisert - thanks) [#575](https://github.com/collerek/ormar/pull/538)
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix nullable setting on `JSON` fields [#529](https://github.com/collerek/ormar/issues/529)
 * Fix bytes/str mismatch in bulk operations when using orjson instead of json (by @ponytailer - thanks!) [#538](https://github.com/collerek/ormar/pull/538)
 
-# 0.10.24
+##0.10.24
 
-## ✨ Features
+###✨ Features
 
 * Add `post_bulk_update` signal (by @ponytailer - thanks!) [#524](https://github.com/collerek/ormar/pull/524)
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix support for `pydantic==1.9.0` [#502](https://github.com/collerek/ormar/issues/502)
 * Fix timezone issues with datetime [#504](https://github.com/collerek/ormar/issues/504)
 * Remove literal binds in query generation to unblock postgres arrays [#/tophat/ormar-postgres-extensions/9](https://github.com/tophat/ormar-postgres-extensions/pull/9)
 * Fix bulk update for `JSON` fields [#519](https://github.com/collerek/ormar/issues/519)
 
-## 💬 Other
+###💬 Other
 
 * Improve performance of `bulk_create` by bypassing `databases` `execute_many` suboptimal implementation. (by @Mng-dev-ai thanks!) [#520](https://github.com/collerek/ormar/pull/520) 
 * Bump min. required `databases` version to `>=5.4`.
 
-# 0.10.23
+##0.10.23
 
-## ✨ Features
+###✨ Features
 
 * Add ability to pass `comment` to sqlalchemy when creating a column [#485](https://github.com/collerek/ormar/issues/485)
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix `LargeBinary` fields that can be nullable [#409](https://github.com/collerek/ormar/issues/409)
 * Make `ormar.Model` pickable [#413](https://github.com/collerek/ormar/issues/413)
 * Make `first()` and `get()` without arguments respect ordering of main model set by user, fallback to primary key (asc, and desc respectively) [#453](https://github.com/collerek/ormar/issues/453)
 * Fix improper quoting of non-aliased join `on` clauses in postgress [#455](https://github.com/collerek/ormar/issues/455)
 
-# 0.10.22
+##0.10.22
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Hot fix for validators not being inherited when parent `ormar` model was set [#365](https://github.com/collerek/ormar/issues/365)
 
 
-# 0.10.21
+##0.10.21
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Add `ormar` implementation of `construct` classmethod that allows to build `Model` instances without validating the input to speed up the whole flow, if your data is already validated [#318](https://github.com/collerek/ormar/issues/318)
 * Fix for "inheriting" field validators from `ormar` model when newly created pydanic model is generated with `get_pydantic` [#365](https://github.com/collerek/ormar/issues/365)
 
-# 0.10.20
+##0.10.20
 
-## ✨ Features
+###✨ Features
 
 * Add `extra` parameter in `Model.Meta` that accepts `Extra.ignore` and `Extra.forbid` (default) and either ignores the extra fields passed to `ormar` model or raises an exception if one is encountered [#358](https://github.com/collerek/ormar/issues/358)
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Allow `None` if field is nullable and have choices set [#354](https://github.com/collerek/ormar/issues/354)
 * Always set `primary_key` to `not null` regardless of `autoincrement` and explicit `nullable` setting to avoid problems with migrations [#348](https://github.com/collerek/ormar/issues/348) 
 
-# 0.10.19
+##0.10.19
 
-## ✨ Features
+###✨ Features
 
 * Add support for multi-column non-unique `IndexColumns` in `Meta.constraints` [#307](https://github.com/collerek/ormar/issues/307)
 * Add `sql_nullable` field attribute that allows to set different nullable setting for pydantic model and for underlying sql column [#308](https://github.com/collerek/ormar/issues/308)
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Enable caching of relation map to increase performance [#337](https://github.com/collerek/ormar/issues/337)
 * Clarify and fix documentation in regard of nullable fields [#339](https://github.com/collerek/ormar/issues/339)
 
-## 💬 Other
+###💬 Other
 
 * Bump supported `databases` version to `<=5.2`.
 
 
 
-# 0.10.18
+##0.10.18
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix order of fields in pydantic models [#328](https://github.com/collerek/ormar/issues/328)
 * Fix databases 0.5.0 support [#142](https://github.com/collerek/ormar/issues/142)
 
-# 0.10.17
+##0.10.17
 
-## ✨ Features
+###✨ Features
 
 * Allow overwriting the default pydantic type for model fields [#312](https://github.com/collerek/ormar/issues/312)
 * Add support for `sqlalchemy` >=1.4 (requires `databases` >= 0.5.0) [#142](https://github.com/collerek/ormar/issues/142)
 
-# 0.10.16
+##0.10.16
 
-## ✨ Features
+###✨ Features
 
 * Allow passing your own pydantic `Config` to `ormar.Model` that will be merged with the default one by @naturalethic (thanks!) [#285](https://github.com/collerek/ormar/issues/285)
 * Add `SmallInteger` field type by @ProgrammerPlus1998 (thanks!) [#297](https://github.com/collerek/ormar/pull/297)
 
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix generating openapi schema by removing obsolete pydantic field parameters that were directly exposed in schema [#291](https://github.com/collerek/ormar/issues/291)
 * Fix unnecessary warning for auto generated through models [#295](https://github.com/collerek/ormar/issues/295)
 
 
 
-# 0.10.15
+##0.10.15
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix generating pydantic models tree with nested models (by @pawamoy - thanks!) [#278](https://github.com/collerek/ormar/issues/278)
 * Fix missing f-string in warning about missing primary key field [#274](https://github.com/collerek/ormar/issues/274)
 * Fix passing foreign key value as relation (additional guard, fixed already in the latest release) [#270](https://github.com/collerek/ormar/issues/270)
 
 
-# 0.10.14
+##0.10.14
 
-## ✨ Features
+###✨ Features
 
 * Allow passing `timezone:bool = False` parameter to `DateTime` and `Time` fields for timezone aware database columns [#264](https://github.com/collerek/ormar/issues/264)
 * Allow passing datetime, date and time for filter on `DateTime`, `Time` and `Date` fields to allow filtering by datetimes instead of converting the value to string [#79](https://github.com/collerek/ormar/issues/79)
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix dependencies from `psycopg2` to `psycopg2-binary` [#255](https://github.com/collerek/ormar/issues/255)
 
 
-# 0.10.13
+##0.10.13
 
-## ✨ Features
+###✨ Features
 
 * Allow passing field accessors in `select_related` and `prefetch_related` aka. python style `select_related` [#225](https://github.com/collerek/ormar/issues/225).
   *  Previously: 
@@ -232,21 +560,21 @@ Note that setting this flag will cause two queries for each upserted model -> `g
     await Author.objects.prefetch_related(Author.posts.categories).get()
   ```
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix overwriting default value for inherited primary key [#253](https://github.com/collerek/ormar/issues/253)
 
-# 0.10.12
+##0.10.12
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix `QuerySet.create` method not using init (if custom provided) [#245](https://github.com/collerek/ormar/issues/245)
 * Fix `ForwardRef` `ManyToMany` relation setting wrong pydantic type [#250](https://github.com/collerek/ormar/issues/250)
 
 
-# 0.10.11
+##0.10.11
 
-## ✨ Features
+###✨ Features
 
 * Add `values` and `values_list` to `QuerySet` and `QuerysetProxy` that allows to return raw data from query [#223](https://github.com/collerek/ormar/issues/223).
   * Allow returning list of tuples or list of dictionaries from a query
@@ -254,53 +582,53 @@ Note that setting this flag will cause two queries for each upserted model -> `g
   * Allow excluding models in between in chain of relations, so you can extract only needed columns
   * `values_list` allows you to flatten the result if you extract only one column.
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix creation of auto through model for m2m relation with ForwardRef [#226](https://github.com/collerek/ormar/issues/226)
 
-# 0.10.10
+##0.10.10
 
-## ✨ Features
+###✨ Features
 
 * Add [`get_pydantic`](https://collerek.github.io/ormar/models/methods/#get_pydantic) flag that allows you to auto generate equivalent pydantic models tree from ormar.Model. This newly generated model tree can be used in requests and responses to exclude fields you do not want to include in the data.
 * Add [`exclude_parent_fields`](https://collerek.github.io/ormar/models/inheritance/#exclude_parent_fields) parameter to model Meta that allows you to exclude fields from parent models during inheritance. Note that best practice is to combine models and mixins but if you have many similar models and just one that differs it might be useful tool to achieve that. 
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix is null filter with pagination and relations (by @erichaydel) [#214](https://github.com/collerek/ormar/issues/214)
 * Fix not saving child object on reverse side of the relation if not saved before [#216](https://github.com/collerek/ormar/issues/216)
 
 
-## 💬 Other
+###💬 Other
 
 * Expand [fastapi](https://collerek.github.io/ormar/fastapi) part of the documentation to show samples of using ormar in requests and responses in fastapi.
 * Improve the docs in regard of `default`, `ForeignKey.add` etc. 
 
-# 0.10.9
+##0.10.9
 
-## Important security fix
+###Important security fix
 
 *  Update pin for pydantic to fix security vulnerability [CVE-2021-29510](https://github.com/samuelcolvin/pydantic/security/advisories/GHSA-5jqp-qgf6-3pvh)
 
 You are advised to update to version of pydantic that was patched. 
 In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies. 
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix OpenAPi schema for LargeBinary [#204](https://github.com/collerek/ormar/issues/204)
 
-# 0.10.8
+##0.10.8
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Fix populating default values in pk_only child models [#202](https://github.com/collerek/ormar/issues/202)
 * Fix mypy for LargeBinary fields with base64 str representation [#199](https://github.com/collerek/ormar/issues/199)
 * Fix OpenAPI schema format for LargeBinary fields with base64 str representation [#199](https://github.com/collerek/ormar/issues/199)
 * Fix OpenAPI choices encoding for LargeBinary fields with base64 str representation
 
-# 0.10.7
+##0.10.7
 
-## ✨ Features
+###✨ Features
 
 * Add `exclude_primary_keys: bool = False` flag to `dict()` method that allows to exclude all primary key columns in the resulting dictionaru. [#164](https://github.com/collerek/ormar/issues/164)
 * Add `exclude_through_models: bool = False` flag to `dict()` that allows excluding all through models from `ManyToMany` relations [#164](https://github.com/collerek/ormar/issues/164)
@@ -308,19 +636,19 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
   on access to attribute and string is converted to bytes on setting. Data in database is stored as bytes. [#187](https://github.com/collerek/ormar/issues/187)
 * Add `pk` alias to allow field access by `Model.pk` in filters and order by clauses (python style)
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * Remove default `None` option for `max_length` for `LargeBinary` field [#186](https://github.com/collerek/ormar/issues/186)
 * Remove default `None` option for `max_length` for `String` field
 
-## 💬 Other
+###💬 Other
 
 * Provide a guide and samples of `dict()` parameters in the [docs](https://collerek.github.io/ormar/models/methods/)
 * Major refactor of getting/setting attributes from magic methods into descriptors -> noticeable performance improvement
 
-# 0.10.6
+##0.10.6
 
-## ✨ Features
+###✨ Features
 
 * Add `LargeBinary(max_length)` field type [#166](https://github.com/collerek/ormar/issues/166)
 * Add support for normal pydantic fields (including Models) instead of `pydantic_only` 
@@ -340,30 +668,30 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
   The same algorithm is used to iterate related models without looks 
   as with `dict()` and `select/load_all`. Examples appear also in `fastapi`. [#157](https://github.com/collerek/ormar/issues/157)
 
-## 🐛 Fixes
+###🐛 Fixes
 
 * By default `pydantic` is not validating fields during assignment, 
   which is not a desirable setting for an ORM, now all `ormar.Models` 
   have validation turned-on during assignment (like `model.column = 'value'`)
 
-## 💬 Other
+###💬 Other
 
 *  Add connecting to the database in QuickStart in readme [#180](https://github.com/collerek/ormar/issues/180) 
 *  OpenAPI schema does no longer include `ormar.Model` docstring as description, 
    instead just model name is provided if you do not provide your own docstring.
 *  Some performance improvements.
 
-# 0.10.5
+##0.10.5
 
-## 🐛 Fixes
+###🐛 Fixes
 
 *  Fix bug in `fastapi-pagination` [#73](https://github.com/uriyyo/fastapi-pagination/issues/73)
 *  Remove unnecessary `Optional` in `List[Optional[T]]` in return value for `QuerySet.all()` and `Querysetproxy.all()` return values [#174](https://github.com/collerek/ormar/issues/174)
 *  Run tests coverage publish only on internal prs instead of all in github action.
 
-# 0.10.4
+##0.10.4
 
-## ✨ Features
+###✨ Features
 
 * Add **Python style** to `filter` and `order_by` with field access instead of dunder separated strings. [#51](https://github.com/collerek/ormar/issues/51)
   * Accessing a field with attribute access (chain of dot notation) can be used to construct `FilterGroups` (`ormar.and_` and `ormar.or_`)
@@ -475,15 +803,15 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
   * You can of course also combine different models and many order_bys:
     `Product.objects.order_by([Product.category.name.asc(), Product.name.desc()]).all()`
 
-## 🐛 Fixes
+### 🐛 Fixes
 
 *  Not really a bug but rather inconsistency. Providing a filter with nested model i.e. `album__category__name = 'AA'` 
    is checking if album and category models are included in `select_related()` and if not it's auto-adding them there.
    The same functionality was not working for `FilterGroups` (`and_` and `or_`), now it works (also for python style filters which return `FilterGroups`).
 
-# 0.10.3
+## 0.10.3
 
-## ✨ Features
+### ✨ Features
 
 * `ForeignKey` and `ManyToMany` now support `skip_reverse: bool = False` flag [#118](https://github.com/collerek/ormar/issues/118).
   If you set `skip_reverse` flag internally the field is still registered on the other 
@@ -511,7 +839,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
   * By default `Through` model relation names default to related model name in lowercase.
     So in example like this:
     ```python
-    ... # course declaration omitted
+    ... ## course declaration omitted
     class Student(ormar.Model):
         class Meta:
             database = database
@@ -521,7 +849,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
         name: str = ormar.String(max_length=100)
         courses = ormar.ManyToMany(Course)
     
-    # will produce default Through model like follows (example simplified)
+    ## will produce default Through model like follows (example simplified)
     class StudentCourse(ormar.Model):
         class Meta:
             database = database
@@ -529,7 +857,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
             tablename = "students_courses"
     
         id: int = ormar.Integer(primary_key=True)
-        student = ormar.ForeignKey(Student) # default name
+        student = ormar.ForeignKey(Student) ## default name
         course = ormar.ForeignKey(Course)  # default name
     ```
   * To customize the names of fields/relation in Through model now you can use new parameters to `ManyToMany`:
@@ -562,22 +890,22 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
         course_id = ormar.ForeignKey(Course)  # set by through_reverse_relation_name
     ```  
 
-## 🐛 Fixes
+### 🐛 Fixes
 
 *  Fix weakref `ReferenceError` error [#118](https://github.com/collerek/ormar/issues/118)
 *  Fix error raised by Through fields when pydantic `Config.extra="forbid"` is set
 *  Fix bug with `pydantic.PrivateAttr` not being initialized at `__init__` [#149](https://github.com/collerek/ormar/issues/149)
 *  Fix bug with pydantic-type `exclude` in `dict()` with `__all__` key not working
 
-## 💬 Other
+### 💬 Other
 *  Introduce link to `sqlalchemy-to-ormar` auto-translator for models
 *  Provide links to fastapi ecosystem libraries that support `ormar`
 *  Add transactions to docs (supported with `databases`)
 
 
-# 0.10.2
+## 0.10.2
 
-## ✨ Features
+### ✨ Features
 
 * `Model.save_related(follow=False)` now accept also two additional arguments: `Model.save_related(follow=False, save_all=False, exclude=None)`.
   *  `save_all:bool` -> By default (so with `save_all=False`) `ormar` only upserts models that are not saved (so new or updated ones), 
@@ -588,7 +916,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
      the `fields/exclude_fields` (from `QuerySet`) methods schema so when in doubt you can refer to docs in queries -> selecting subset of fields -> fields.
 *  `Model.update()` method now accepts `_columns: List[str] = None` parameter, that accepts list of column names to update. If passed only those columns will be updated in database.
    Note that `update()` does not refresh the instance of the Model, so if you change more columns than you pass in `_columns` list your Model instance will have different values than the database!
-*  `Model.dict()` method previously included only directly related models or nested models if they were not nullable and not virtual, 
+*  `Model.model_dump()` method previously included only directly related models or nested models if they were not nullable and not virtual, 
    now all related models not previously visited without loops are included in `dict()`. This should be not breaking
    as just more data will be dumped to dict, but it should not be missing.
 *  `QuerySet.delete(each=False, **kwargs)` previously required that you either pass a `filter` (by `**kwargs` or as a separate `filter()` call) or set `each=True` now also accepts
@@ -598,7 +926,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
 *  Same thing applies to `QuerysetProxy.update(each=False, **kwargs)` which also previously required that you either pass a `filter` (by `**kwargs` or as a separate `filter()` call) or set `each=True` now also accepts
     `exclude()` calls that generates NOT filter. So either `each=True` needs to be set to update whole table or at least one of `filter/exclude` clauses.
 
-## 🐛 Fixes
+### 🐛 Fixes
 
 *  Fix improper relation field resolution in `QuerysetProxy` if fk column has different database alias.
 *  Fix hitting recursion error with very complicated models structure with loops when calling `dict()`.
@@ -607,32 +935,32 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
 *  Fix bug when bulk_create would try to save also `property_field` decorated methods and `pydantic` fields
 *  Fix wrong merging of deeply nested chain of reversed relations
 
-## 💬 Other
+### 💬 Other
 
 *  Performance optimizations
 *  Split tests into packages based on tested area
 
-# 0.10.1
+## 0.10.1
 
-## Features
+### Features
 
 * add `get_or_none(**kwargs)` method to `QuerySet` and `QuerysetProxy`. It is exact equivalent of `get(**kwargs)` but instead of raising `ormar.NoMatch` exception if there is no db record matching the criteria, `get_or_none` simply returns `None`.
   
-## Fixes
+### Fixes
 
 *  Fix dialect dependent quoting of column and table names in order_by clauses not working
    properly in postgres.
 
-# 0.10.0
+## 0.10.0
 
-## Breaking
+### Breaking
 
 *  Dropped supported for long deprecated notation of field definition in which you use ormar fields as type hints i.e. `test_field: ormar.Integger() = None`
 *  Improved type hints -> `mypy` can properly resolve related models fields (`ForeignKey` and `ManyToMany`) as well as return types of `QuerySet` methods. 
    Those mentioned are now returning proper model (i.e. `Book`) instead or `ormar.Model` type. There is still problem with reverse sides of relation and `QuerysetProxy` methods, 
    to ease type hints now those return `Any`. Partially fixes #112.
 
-## Features
+### Features
 
 * add `select_all(follow: bool = False)` method to `QuerySet` and `QuerysetProxy`. 
   It is kind of equivalent of the Model's `load_all()` method but can be used directly in a query.
@@ -641,14 +969,14 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
   so you still have to issue `get()`, `all()` etc. as `select_all()` returns a QuerySet (or proxy)
   like `fields()` or `order_by()`.
 
-## Internals
+### Internals
 
 *  `ormar` fields are no longer stored as classes in `Meta.model_fields` dictionary 
    but instead they are stored as instances.
 
-# 0.9.9
+## 0.9.9
 
-## Features
+### Features
 *  Add possibility to change default ordering of relations and models.
     * To change model sorting pass `orders_by = [columns]` where `columns: List[str]` to model `Meta` class
     * To change relation order_by pass `orders_by = [columns]` where `columns: List[str]`
@@ -677,7 +1005,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
        `relation_name: str` - name of the relation to which child is added, 
        for add signals also `passed_kwargs: Dict` - dict of kwargs passed to `add()`
 
-## Changes
+### Changes
 * `Through` models for ManyToMany relations are now instantiated on creation, deletion and update, so you can provide not only
   autoincrement int as a primary key but any column type with default function provided.
 * Since `Through` models are now instantiated you can also subscribe to `Through` model 
@@ -685,15 +1013,15 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
 * `pre_update` signals receivers now get also passed_args argument which is a 
   dict of values passed to update function if any (else empty dict)
   
-## Fixes
+### Fixes
 * `pre_update` signal now is sent before the extraction of values so you can modify the passed
   instance in place and modified fields values will be reflected in database
 * `bulk_update` now works correctly also with `UUID` primary key column type
 
 
-# 0.9.8
+## 0.9.8
 
-## Features
+### Features
 * Add possibility to encrypt the selected field(s) in the database
   * As minimum you need to provide `encrypt_secret` and `encrypt_backend`
   * `encrypt_backend` can be one of the `ormar.EncryptBackends` enum (`NONE, FERNET, HASH, CUSTOM`) - default: `NONE`
@@ -706,12 +1034,12 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
   * Note that in HASH backend you can filter by full value but filters like `contain` will not work as comparison is make on encrypted values
   * Note that adding `encrypt_backend` changes the database column type to `TEXT`, which needs to be reflected in db either by migration or manual change
 
-## Fixes
+### Fixes
 * (Advanced/ Internal) Restore custom sqlalchemy types (by `types.TypeDecorator` subclass) functionality that ceased to working so `process_result_value` was never called
 
-# 0.9.7
+## 0.9.7
 
-## Features
+### Features
 * Add `isnull` operator to filter and exclude methods. 
     ```python
     album__name__isnull=True #(sql: album.name is null)
@@ -734,10 +1062,10 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
   ```
   Check the updated docs in Queries -> Filtering and sorting -> Complex filters
 
-## Other
+### Other
 * Setting default on `ForeignKey` or `ManyToMany` raises and `ModelDefinition` exception as it is (and was) not supported
 
-# 0.9.6
+## 0.9.6
 
 ##Important
 * `Through` model for `ManyToMany` relations now **becomes optional**. It's not a breaking change
@@ -749,7 +1077,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
   Note that you still need to provide it if you want to 
   customize the `Through` model name or the database table name.
 
-## Features
+### Features
 * Add `update` method to `QuerysetProxy` so now it's possible to update related models directly from parent model
   in `ManyToMany` relations and in reverse `ForeignKey` relations. Note that update like in `QuerySet` `update` returns number of
   updated models and **does not update related models in place** on parent model. To get the refreshed data on parent model you need to refresh
@@ -772,27 +1100,27 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
       but now if you try to do so `ModelDefinitionError` will be thrown
     * check the updated ManyToMany relation docs for more information
 
-# Other
+## Other
 * Updated docs and api docs
 * Refactors and optimisations mainly related to filters, exclusions and order bys
 
 
-# 0.9.5
+## 0.9.5
 
-## Fixes
+### Fixes
 * Fix creation of `pydantic` FieldInfo after update of `pydantic` to version >=1.8
 * Pin required dependency versions to avoid such situations in the future
 
 
-# 0.9.4
+## 0.9.4
 
-## Fixes
+### Fixes
 * Fix `fastapi` OpenAPI schema generation for automatic docs when multiple models refer to the same related one
 
 
-# 0.9.3
+## 0.9.3
 
-## Fixes
+### Fixes
 * Fix `JSON` field being double escaped when setting value after initialization
 * Fix `JSON` field not respecting `nullable` field setting due to `pydantic` internals 
 * Fix `choices` verification for `JSON` field
@@ -800,25 +1128,25 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
 * Fix `choices` not being verified during `update` call from `QuerySet`
 
 
-# 0.9.2
+## 0.9.2
 
-## Other
+### Other
 * Updated the Quick Start in docs/readme
 * Updated docs with links to queries subpage
 * Added badges for code climate and pepy downloads
 
 
-# 0.9.1
+## 0.9.1
 
-## Features
+### Features
 * Add choices values to `OpenAPI` specs, so it looks like native `Enum` field in the result schema.
 
-## Fixes
+### Fixes
 * Fix `choices` behavior with `fastapi` usage when special fields can be not initialized yet but passed as strings etc.
 
-# 0.9.0
+## 0.9.0
 
-## Important
+### Important
 * **Braking Fix:** Version 0.8.0 introduced a bug that prevents generation of foreign_keys constraint in the database,
 both in alembic and during creation through sqlalchemy.engine, this is fixed now.
 * **THEREFORE IF YOU USE VERSION >=0.8.0 YOU ARE STRONGLY ADVISED TO UPDATE** cause despite
@@ -828,7 +1156,7 @@ that most of the `ormar` functions are working your database **CREATED with orma
   should be fine nevertheless you should update to reflect all future schema updates in your models.
 
 
-## Breaking
+### Breaking
 * **Breaking:** All foreign_keys and unique constraints now have a name so `alembic` 
   can identify them in db and not depend on db
 * **Breaking:** During model construction if `Meta` class of the `Model` does not 
@@ -839,14 +1167,14 @@ for sqlite backend, meaning that each query is run with a new connection and the
   This is changed in `ormar` since >=0.9.0 and by default each sqlite3 query has `"PRAGMA foreign_keys=1;"`
   run so now each sqlite3 connection by default enforces ForeignKey constraints including cascades.
 
-## Other
+### Other
 
 * Update api docs.
 * Add tests for fk creation in db and for cascades in db
 
-# 0.8.1
+## 0.8.1
 
-## Features
+### Features
 
 * Introduce processing of `ForwardRef` in relations. 
   Now you can create self-referencing models - both `ForeignKey` and `ManyToMany` relations. 
@@ -864,15 +1192,15 @@ for sqlite backend, meaning that each query is run with a new connection and the
 * Introduce the `paginate` method that allows to limit/offset by `page` and `page_size`. 
   Available for `QuerySet` and `QuerysetProxy`.
 
-## Other
+### Other
 
 * Refactoring and performance optimization in queries and joins.
 * Add python 3.9 to tests and pypi setup.
 * Update API docs and docs -> i.e. split of queries documentation.
 
-# 0.8.0
+## 0.8.0
 
-## Breaking
+### Breaking
 * **Breaking:** `remove()` parent from child side in reverse ForeignKey relation now requires passing a relation `name`,
 as the same model can be registered multiple times and `ormar` needs to know from which relation on the parent you want to remove the child.
 * **Breaking:** applying `limit` and `offset` with `select_related` is by default applied only on the main table before the join -> meaning that not the total
@@ -881,20 +1209,20 @@ as the same model can be registered multiple times and `ormar` needs to know fro
 * **Breaking:** issuing `get()` **without any filters** now fetches the first row ordered by the primary key desc (so should be last one inserted (can be different for non number primary keys - i.e. alphabetical order of string))
 * **Breaking (internal):** sqlalchemy columns kept at `Meta.columns` are no longer bind to table, so you cannot get the column straight from there
 
-## Features
+### Features
 * Introduce **inheritance**. For now two types of inheritance are possible:
     * **Mixins** - don't subclass `ormar.Model`, just define fields that are later used on different models (like `created_date` and `updated_date` on each child model), only actual models create tables, but those fields from mixins are added
     * **Concrete table inheritance** - means that parent is marked as `abstract=True` in Meta class and each child has its own table with columns from the parent and own child columns, kind of similar to Mixins but parent also is a (an abstract) Model
     * To read more check the docs on models -> inheritance section.
 * QuerySet `first()` can be used with `prefetch_related`
 
-## Fixes
+### Fixes
 * Fix minor bug in `order_by` for primary model order bys
 * Fix in `prefetch_query` for multiple related_names for the same model.
 * Fix using same `related_name` on different models leading to the same related `Model` overwriting each other, now `ModelDefinitionError` is raised and you need to change the name. 
 * Fix `order_by` overwriting conditions when multiple joins to the same table applied.
 
-## Docs
+### Docs
 * Split and cleanup in docs:
     *  Divide models section into subsections
     *  Divide relations section into subsections
@@ -902,11 +1230,11 @@ as the same model can be registered multiple times and `ormar` needs to know fro
 * Add model inheritance section
 * Add API (BETA) documentation
 
-# 0.7.5
+## 0.7.5
 
 * Fix for wrong relation column name in many_to_many relation joins (fix [#73][#73])
 
-# 0.7.4
+## 0.7.4
 
 * Allow multiple relations to the same related model/table.
 * Fix for wrong relation column used in many_to_many relation joins (fix [#73][#73])
@@ -914,19 +1242,19 @@ as the same model can be registered multiple times and `ormar` needs to know fro
 * Add check if user provide related_name if there are multiple relations to same table on one model.
 * More eager cleaning of the dead weak proxy models.
 
-# 0.7.3
+## 0.7.3
 
 * Fix for setting fetching related model with UUDI pk, which is a string in raw (fix [#71][#71])
 
-# 0.7.2
+## 0.7.2
 
 * Fix for overwriting related models with pk only in `Model.update() with fields passed as parameters` (fix [#70][#70])
 
-# 0.7.1
+## 0.7.1
 
 * Fix for overwriting related models with pk only in `Model.save()` (fix [#68][#68])
 
-# 0.7.0
+## 0.7.0
 
 *  **Breaking:** QuerySet `bulk_update` method now raises `ModelPersistenceError` for unsaved models passed instead of `QueryDefinitionError`
 *  **Breaking:** Model initialization with unknown field name now raises `ModelError` instead of `KeyError`
@@ -936,19 +1264,19 @@ as the same model can be registered multiple times and `ormar` needs to know fro
 *  Performance optimization
 *  Updated docs
 
-# 0.6.2
+## 0.6.2
 
 *  Performance optimization
 *  Fix for bug with `pydantic_only` fields being required
 *  Add `property_field` decorator that registers a function as a property that will 
-   be included in `Model.dict()` and in `fastapi` response
+   be included in `Model.model_dump()` and in `fastapi` response
 *  Update docs
 
-# 0.6.1
+## 0.6.1
 
 * Explicitly set None to excluded nullable fields to avoid pydantic setting a default value (fix [#60][#60]). 
 
-# 0.6.0
+## 0.6.0
 
 *  **Breaking:** calling instance.load() when the instance row was deleted from db now raises `NoMatch` instead of `ValueError`
 *  **Breaking:** calling add and remove on ReverseForeignKey relation now updates the child model in db setting/removing fk column
@@ -960,12 +1288,12 @@ as the same model can be registered multiple times and `ormar` needs to know fro
 so now you can use those methods directly from relation  
 *  Update docs
 
-# 0.5.5
+## 0.5.5
 
 *  Fix for alembic autogenaration of migration `UUID` columns. It should just produce sqlalchemy `CHAR(32)` or `CHAR(36)`
 *  In order for this to work you have to set user_module_prefix='sa.' (must be equal to sqlalchemy_module_prefix option (default 'sa.'))
 
-# 0.5.4
+## 0.5.4
 
 *  Allow to pass `uuid_format` (allowed 'hex'(default) or 'string') to `UUID` field to change the format in which it's saved.
    By default field is saved in hex format (trimmed to 32 chars (without dashes)), but you can pass 
@@ -975,21 +1303,21 @@ so now you can use those methods directly from relation
    *  hex value = c616ab438cce49dbbf4380d109251dce
    *  string value = c616ab43-8cce-49db-bf43-80d109251dce
 
-# 0.5.3
+## 0.5.3
 
-*  Fixed bug in `Model.dict()` method that was ignoring exclude parameter and not include dictionary argument.
+*  Fixed bug in `Model.model_dump()` method that was ignoring exclude parameter and not include dictionary argument.
 
-# 0.5.2
+## 0.5.2
 
 *  Added `prefetch_related` method to load subsequent models in separate queries.
 *  Update docs
 
-# 0.5.1
+## 0.5.1
 
 * Switched to github actions instead of travis
 * Update badges in the docs
 
-# 0.5.0
+## 0.5.0
 
 * Added save status -> you can check if model is saved with `ModelInstance.saved` property
     *  Model is saved after `save/update/load/upsert` method on model
@@ -1010,7 +1338,7 @@ so now you can use those methods directly from relation
 *  Optional performance dependency orjson added (**strongly recommended**)
 *  Updated docs
 
-# 0.4.4
+## 0.4.4
 
 *  add exclude_fields() method to exclude fields from sql
 *  refactor column names setting (aliases)
@@ -1018,20 +1346,20 @@ so now you can use those methods directly from relation
 *  additional tests for fields and exclude_fields
 *  update docs
 
-# 0.4.3
+## 0.4.3
 
-*  include properties in models.dict() and model.json()
+*  include properties in models.model_dump() and model.model_dump_json()
 
-# 0.4.2
+## 0.4.2
 
 *  modify creation of pydantic models to allow returning related models with only pk populated
 
-# 0.4.1
+## 0.4.1
 
 *  add order_by method to queryset to allow sorting
 *  update docs
 
-# 0.4.0
+## 0.4.0
 
 *  Changed notation in Model definition -> now use name = ormar.Field() not name: ormar.Field()
     * Note that old notation is still supported but deprecated and will not play nice with static checkers like mypy and pydantic pycharm plugin
@@ -1043,42 +1371,42 @@ so now you can use those methods directly from relation
 *  Add mypy and pydantic plugin to docs 
 *  Expand the docs on ManyToMany relation
 
-# 0.3.11
+## 0.3.11
 
 * Fix setting server_default as default field value in python
 
-# 0.3.10
+## 0.3.10
 
 * Fix postgresql check to avoid exceptions with drivers not installed if using different backend
 
-# 0.3.9
+## 0.3.9
 
 *  Fix json schema generation as of [#19][#19]
 *  Fix for not initialized ManyToMany relations in fastapi copies of ormar.Models
 *  Update docs in regard of fastapi use
 *  Add tests to verify fastapi/docs proper generation
 
-# 0.3.8
+## 0.3.8
 
 *  Added possibility to provide alternative database column names with name parameter to all fields.
 *  Fix bug with selecting related ManyToMany fields with `fields()` if they are empty.
 *  Updated documentation
 
-# 0.3.7
+## 0.3.7
 
 *  Publish documentation and update readme
 
-# 0.3.6
+## 0.3.6
 
 *  Add fields() method to limit the selected columns from database - only nullable columns can be excluded.
 *  Added UniqueColumns and constraints list in model Meta to build unique constraints on list of columns.
 *  Added UUID field type based on Char(32) column type.
 
-# 0.3.5
+## 0.3.5
 
 *  Added bulk_create and bulk_update for operations on multiple objects.
 
-# 0.3.4
+## 0.3.4
 
 Add queryset level methods
 *  delete
@@ -1086,21 +1414,21 @@ Add queryset level methods
 *  get_or_create
 *  update_or_create
 
-# 0.3.3
+## 0.3.3
 
 *  Add additional filters - startswith and endswith
 
-# 0.3.2
+## 0.3.2
 
 *  Add choices parameter to all fields - limiting the accepted values to ones provided
 
-# 0.3.1
+## 0.3.1
 
 *  Added exclude to filter where not conditions.
 *  Added tests for mysql and postgres with fixes for postgres.
 *  Rafactors and cleanup.
 
-# 0.3.0
+## 0.3.0
 
 * Added ManyToMany field and support for many to many relations
 

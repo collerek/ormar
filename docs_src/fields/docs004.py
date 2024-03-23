@@ -1,20 +1,19 @@
 from datetime import datetime
 
 import databases
+import ormar
 import sqlalchemy
 from sqlalchemy import func, text
-
-import ormar
 
 database = databases.Database("sqlite:///test.db")
 metadata = sqlalchemy.MetaData()
 
 
 class Product(ormar.Model):
-    class Meta:
-        tablename = "product"
-        metadata = metadata
-        database = database
+
+    ormar_config = ormar.OrmarConfig(
+        database=database, metadata=metadata, tablename="product"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
