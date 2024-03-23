@@ -2,14 +2,14 @@
 import abc
 import base64
 from enum import Enum
-from typing import Any, Callable, Optional, TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type, Union
 
 import sqlalchemy.types as types
-from pydantic.utils import lenient_issubclass
 from sqlalchemy.engine import Dialect
 
 import ormar  # noqa: I100, I202
 from ormar import ModelDefinitionError  # noqa: I202, I100
+from ormar.fields.parsers import ADDITIONAL_PARAMETERS_MAP
 
 cryptography = None
 try:  # pragma: nocover
@@ -119,7 +119,7 @@ class EncryptedString(types.TypeDecorator):
         self,
         encrypt_secret: Union[str, Callable],
         encrypt_backend: EncryptBackends = EncryptBackends.FERNET,
-        encrypt_custom_backend: Type[EncryptBackend] = None,
+        encrypt_custom_backend: Optional[Type[EncryptBackend]] = None,
         **kwargs: Any,
     ) -> None:
         _field_type = kwargs.pop("_field_type")
@@ -129,7 +129,11 @@ class EncryptedString(types.TypeDecorator):
                 "In order to encrypt a column 'cryptography' is required!"
             )
         backend = BACKENDS_MAP.get(encrypt_backend, encrypt_custom_backend)
-        if not backend or not lenient_issubclass(backend, EncryptBackend):
+        if (
+            not backend
+            or not isinstance(backend, type)
+            or not issubclass(backend, EncryptBackend)
+        ):
             raise ModelDefinitionError("Wrong or no encrypt backend provided!")
 
         self.backend: EncryptBackend = backend()
@@ -160,9 +164,14 @@ class EncryptedString(types.TypeDecorator):
         try:
             value = self._underlying_type.process_bind_param(value, dialect)
         except AttributeError:
-            encoder = ormar.SQL_ENCODERS_MAP.get(self.type_, None)
-            if encoder:
-                value = encoder(value)  # type: ignore
+            encoder, additional_parameter = self._get_coder_type_and_params(
+                coders=ormar.SQL_ENCODERS_MAP
+            )
+            if encoder is not None:
+                params = [value] + (
+                    [additional_parameter] if additional_parameter else []
+                )
+                value = encoder(*params)
 
         encrypted_value = self.backend.encrypt(value)
         return encrypted_value
@@ -175,8 +184,24 @@ class EncryptedString(types.TypeDecorator):
         try:
             return self._underlying_type.process_result_value(decrypted_value, dialect)
         except AttributeError:
-            decoder = ormar.DECODERS_MAP.get(self.type_, None)
-            if decoder:
-                return decoder(decrypted_value)  # type: ignore
+            decoder, additional_parameter = self._get_coder_type_and_params(
+                coders=ormar.DECODERS_MAP
+            )
+            if decoder is not None:
+                params = [decrypted_value] + (
+                    [additional_parameter] if additional_parameter else []
+                )
+                return decoder(*params)  # type: ignore
 
             return self._field_type.__type__(decrypted_value)  # type: ignore
+
+    def _get_coder_type_and_params(
+        self, coders: Dict[type, Callable]
+    ) -> Tuple[Optional[Callable], Optional[str]]:
+        coder = coders.get(self.type_, None)
+        additional_parameter: Optional[str] = None
+        if self.type_ in ADDITIONAL_PARAMETERS_MAP:
+            additional_parameter = getattr(
+                self._field_type, ADDITIONAL_PARAMETERS_MAP[self.type_]
+            )
+        return coder, additional_parameter

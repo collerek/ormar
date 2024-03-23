@@ -1,28 +1,26 @@
 import enum
 
-import databases
-import pydantic
-import pytest
-import sqlalchemy
-from pydantic import ValidationError
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
+from pydantic import ValidationError, field_validator
 
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL)
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = create_config()
 
 
 class BaseModel(ormar.Model):
-    class Meta:
-        abstract = True
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     id: int = ormar.Integer(primary_key=True)
+    str_field: str = ormar.String(min_length=5, max_length=10, nullable=False)
+
+    @field_validator("str_field")
+    def validate_str_field(cls, v):
+        if " " not in v:
+            raise ValueError("must contain a space")
+        return v
 
 
 class EnumExample(str, enum.Enum):
@@ -32,22 +30,15 @@ class EnumExample(str, enum.Enum):
 
 
 class ModelExample(BaseModel):
-    class Meta(BaseMeta):
-        tablename = "examples"
+    ormar_config = base_ormar_config.copy(tablename="examples")
 
-    str_field: str = ormar.String(min_length=5, max_length=10, nullable=False)
-    enum_field: str = ormar.String(
-        max_length=1, nullable=False, choices=list(EnumExample)
-    )
-
-    @pydantic.validator("str_field")
-    def validate_str_field(cls, v):
-        if " " not in v:
-            raise ValueError("must contain a space")
-        return v
+    enum_field: str = ormar.Enum(enum_class=EnumExample, nullable=False)
 
 
 ModelExampleCreate = ModelExample.get_pydantic(exclude={"id"})
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_ormar_validator():
@@ -57,7 +48,7 @@ def test_ormar_validator():
     assert "must contain a space" in str(e)
     with pytest.raises(ValidationError) as e:
         ModelExample(str_field="a aaaaaaa", enum_field="Z")
-    assert "not in allowed choices" in str(e)
+    assert "Input should be 'A', 'B' or 'C'" in str(e)
 
 
 def test_pydantic_validator():
@@ -67,4 +58,4 @@ def test_pydantic_validator():
     assert "must contain a space" in str(e)
     with pytest.raises(ValidationError) as e:
         ModelExampleCreate(str_field="a aaaaaaa", enum_field="Z")
-    assert "not in allowed choices" in str(e)
+    assert "Input should be 'A', 'B' or 'C'" in str(e)

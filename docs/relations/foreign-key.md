@@ -14,7 +14,7 @@ Sqlalchemy column and Type are automatically taken from target `Model`.
 
 To define a relation add `ForeignKey` field that points to related `Model`.
 
-```Python hl_lines="29"
+```Python hl_lines="30"
 --8<-- "../docs_src/fields/docs003.py"
 ```
 
@@ -24,7 +24,7 @@ To define a relation add `ForeignKey` field that points to related `Model`.
 
 By default it's child (source) `Model` name + s, like courses in snippet below: 
 
-```Python hl_lines="29 35"
+```Python hl_lines="29 36"
 --8<-- "../docs_src/fields/docs001.py"
 ```
 
@@ -45,15 +45,14 @@ But you cannot:
 
 * Access the related field from reverse model with `related_name`
 * Even if you `select_related` from reverse side of the model the returned models won't be populated in reversed instance (the join is not prevented so you still can `filter` and `order_by` over the relation)
-* The relation won't be populated in `dict()` and `json()`
+* The relation won't be populated in `model_dump()` and `model_dump_json()`
 * You cannot pass the nested related objects when populating from dictionary or json (also through `fastapi`). It will be either ignored or error will be raised depending on `extra` setting in pydantic `Config`.
 
 Example:
 
 ```python
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     first_name: str = ormar.String(max_length=80)
@@ -61,8 +60,7 @@ class Author(ormar.Model):
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -82,8 +80,8 @@ authors = (
 assert authors[0].first_name == "Test"
 
 # note that posts are not populated for author even if explicitly
-# included in select_related - note no posts in dict()
-assert author.dict(exclude={"id"}) == {"first_name": "Test", "last_name": "Author"}
+# included in select_related - note no posts in model_dump()
+assert author.model_dump(exclude={"id"}) == {"first_name": "Test", "last_name": "Author"}
 
 # still can filter through fields of related model
 authors = await Author.objects.filter(posts__title="Test Post").all()
@@ -112,7 +110,7 @@ assert department.courses[0] == course
 !!!warning
     If you want to add child model on related model the primary key value for parent model **has to exist in database**.
     
-    Otherwise ormar will raise RelationshipInstanceError as it cannot set child's ForeignKey column value 
+    Otherwise ormar will raise `RelationshipInstanceError` as it cannot set child's ForeignKey column value 
     if parent model has no primary key value.
     
     That means that in example above the department has to be saved before you can call `department.courses.add()`.
@@ -151,7 +149,7 @@ await department.courses.remove(course, keep_reversed=False)
 
 Removal of all related models in one call.
 
-Like remove by default `clear()` nulls the ForeigKey column on child model (all, not matter if they are loaded or not).
+Like with remove, by default, `clear()` nulls the ForeigKey column on child model (all, not matter if they are loaded or not).
 
 ```python
 # nulls department column on all courses related to this department
@@ -173,9 +171,9 @@ To read which methods of QuerySet are available read below [querysetproxy][query
 
 ## related_name
 
-But you can overwrite this name by providing `related_name` parameter like below:
+You can overwrite related model field name by providing `related_name` parameter like below:
 
-```Python hl_lines="29 35"
+```Python hl_lines="27-29 35"
 --8<-- "../docs_src/fields/docs002.py"
 ```
 
@@ -230,7 +228,7 @@ You have several ways to set-up a relationship connection.
 
 The most obvious one is to pass a related `Model` instance to the constructor.
 
-```Python hl_lines="34-35"
+```Python hl_lines="35-36"
 --8<-- "../docs_src/relations/docs001.py"
 ```
 
@@ -238,7 +236,7 @@ The most obvious one is to pass a related `Model` instance to the constructor.
 
 You can setup the relation also with just the pk column value of the related model.
 
-```Python hl_lines="37-38"
+```Python hl_lines="38-39"
 --8<-- "../docs_src/relations/docs001.py"
 ```
 
@@ -246,9 +244,9 @@ You can setup the relation also with just the pk column value of the related mod
 
 Next option is with a dictionary of key-values of the related model.
 
-You can build the dictionary yourself or get it from existing model with `dict()` method.
+You can build the dictionary yourself or get it from existing model with `model_dump()` method.
 
-```Python hl_lines="40-41"
+```Python hl_lines="41-42"
 --8<-- "../docs_src/relations/docs001.py"
 ```
 
@@ -256,7 +254,7 @@ You can build the dictionary yourself or get it from existing model with `dict()
 
 Finally you can explicitly set it to None (default behavior if no value passed).
 
-```Python hl_lines="43-44"
+```Python hl_lines="44-45"
 --8<-- "../docs_src/relations/docs001.py"
 ```
 

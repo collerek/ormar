@@ -1,35 +1,26 @@
 from typing import Optional
 
-import databases
+import ormar
 import pytest
 import pytest_asyncio
-import sqlalchemy
 
-import ormar
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
-
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
-        orders_by = ["-name"]
+    ormar_config = base_ormar_config.copy(tablename="authors", order_by=["-name"])
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
-        orders_by = ["year", "-ranking"]
+    ormar_config = base_ormar_config.copy(
+        tablename="books", order_by=["year", "-ranking"]
+    )
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
@@ -38,26 +29,20 @@ class Book(ormar.Model):
     ranking: int = ormar.Integer(nullable=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest_asyncio.fixture(autouse=True, scope="function")
 async def cleanup():
     yield
-    async with database:
+    async with base_ormar_config.database:
         await Book.objects.delete(each=True)
         await Author.objects.delete(each=True)
 
 
 @pytest.mark.asyncio
 async def test_default_orders_is_applied():
-    async with database:
+    async with base_ormar_config.database:
         tolkien = await Author(name="J.R.R. Tolkien").save()
         sapkowski = await Author(name="Andrzej Sapkowski").save()
         king = await Author(name="Stephen King").save()
@@ -78,7 +63,7 @@ async def test_default_orders_is_applied():
 
 @pytest.mark.asyncio
 async def test_default_orders_is_applied_on_related():
-    async with database:
+    async with base_ormar_config.database:
         tolkien = await Author(name="J.R.R. Tolkien").save()
         silmarillion = await Book(
             author=tolkien, title="The Silmarillion", year=1977
@@ -101,7 +86,7 @@ async def test_default_orders_is_applied_on_related():
 
 @pytest.mark.asyncio
 async def test_default_orders_is_applied_on_related_two_fields():
-    async with database:
+    async with base_ormar_config.database:
         sanders = await Author(name="Brandon Sanderson").save()
         twok = await Book(
             author=sanders, title="The Way of Kings", year=2010, ranking=10

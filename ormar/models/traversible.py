@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Any, List, Optional, Type
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models.mixins.relation_mixin import RelationMixin
@@ -18,8 +18,8 @@ class NodeList:
     def add(
         self,
         node_class: Type["RelationMixin"],
-        relation_name: str = None,
-        parent_node: "Node" = None,
+        relation_name: Optional[str] = None,
+        parent_node: Optional["Node"] = None,
     ) -> "Node":
         """
         Adds new Node or returns the existing one
@@ -50,7 +50,7 @@ class NodeList:
         self,
         node_class: Type["RelationMixin"],
         relation_name: Optional[str] = None,
-        parent_node: "Node" = None,
+        parent_node: Optional["Node"] = None,
     ) -> Optional["Node"]:
         """
         Searches for existing node with given parameters
@@ -78,8 +78,8 @@ class Node:
     def __init__(
         self,
         node_class: Type["RelationMixin"],
-        relation_name: str = None,
-        parent_node: "Node" = None,
+        relation_name: Optional[str] = None,
+        parent_node: Optional["Node"] = None,
     ) -> None:
         self.relation_name = relation_name
         self.node_class = node_class
@@ -108,7 +108,7 @@ class Node:
         :return: result of the check
         :rtype: bool
         """
-        target_model = self.node_class.Meta.model_fields[relation_name].to
+        target_model = self.node_class.ormar_config.model_fields[relation_name].to
         if self.parent_node:
             node = self
             while node.parent_node:

@@ -1,12 +1,13 @@
 import sys
-from typing import Any, TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Type, Union
 
 from ormar.fields.base import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar import Model
     from pydantic.typing import ForwardRef
+
+    from ormar import Model
 
     if sys.version_info < (3, 7):
         ToType = Type[Model]
@@ -15,7 +16,11 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def Through(  # noqa CFQ002
-    to: "ToType", *, name: str = None, related_name: str = None, **kwargs: Any
+    to: "ToType",
+    *,
+    name: Optional[str] = None,
+    related_name: Optional[str] = None,
+    **kwargs: Any
 ) -> Any:
     """
     Despite a name it's a function that returns constructed ThroughField.
@@ -50,7 +55,6 @@ def Through(  # noqa CFQ002
         column_type=None,
         primary_key=False,
         index=False,
-        pydantic_only=False,
         default=None,
         server_default=None,
         is_relation=True,

@@ -1,31 +1,20 @@
 # type: ignore
-from typing import List, Optional
-
-import databases
-import pytest
-import sqlalchemy as sa
-from pydantic.typing import ForwardRef
-from sqlalchemy import create_engine
+from typing import ForwardRef, List, Optional
 
 import ormar
-from ormar import ModelMeta
-from tests.settings import DATABASE_URL
+import pytest
 
-metadata = sa.MetaData()
-db = databases.Database(DATABASE_URL)
-engine = create_engine(DATABASE_URL)
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config()
+
 
 TeacherRef = ForwardRef("Teacher")
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = db
-
-
 class Student(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -35,14 +24,11 @@ class Student(ormar.Model):
 
 
 class StudentTeacher(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "students_x_teachers"
+    ormar_config = base_ormar_config.copy(tablename="students_x_teachers")
 
 
 class Teacher(ormar.Model):
-    class Meta(ModelMeta):
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -58,8 +44,7 @@ CountryRef = ForwardRef("Country")
 
 
 class Country(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "countries"
+    ormar_config = base_ormar_config.copy(tablename="countries")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128)
@@ -70,8 +55,7 @@ class Country(ormar.Model):
 
 
 class City(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "cities"
+    ormar_config = base_ormar_config.copy(tablename="cities")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128)
@@ -83,17 +67,13 @@ class City(ormar.Model):
 Country.update_forward_refs()
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_double_relations():
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             t1 = await Teacher.objects.create(name="Mr. Jones")
             t2 = await Teacher.objects.create(name="Ms. Smith")
             t3 = await Teacher.objects.create(name="Mr. Quibble")
@@ -150,8 +130,8 @@ async def test_double_relations():
 
 @pytest.mark.asyncio
 async def test_auto_through_model():
-    async with db:
-        async with db.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             england = await Country(name="England").save()
             france = await Country(name="France").save()
             london = await City(name="London", country=england).save()

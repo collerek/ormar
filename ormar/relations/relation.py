@@ -1,10 +1,10 @@
 from enum import Enum
 from typing import (
+    TYPE_CHECKING,
     Generic,
     List,
     Optional,
     Set,
-    TYPE_CHECKING,
     Type,
     TypeVar,
     Union,
@@ -16,8 +16,8 @@ from ormar.exceptions import RelationshipInstanceError  # noqa I100
 from ormar.relations.relation_proxy import RelationProxy
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.relations import RelationsManager
     from ormar.models import Model, NewBaseModel, T
+    from ormar.relations import RelationsManager
 else:
     T = TypeVar("T", bound="Model")
 
@@ -48,7 +48,7 @@ class Relation(Generic[T]):
         type_: RelationType,
         field_name: str,
         to: Type["T"],
-        through: Type["Model"] = None,
+        through: Optional[Type["Model"]] = None,
     ) -> None:
         """
         Initialize the Relation and keep the related models either as instances of
@@ -162,8 +162,16 @@ class Relation(Generic[T]):
                 rel = rel or []
                 if not isinstance(rel, list):
                     rel = [rel]
-                rel.append(child)
+                self._populate_owner_side_dict(rel=rel, child=child)
                 self._owner.__dict__[relation_name] = rel
+
+    def _populate_owner_side_dict(self, rel: List["Model"], child: "Model") -> None:
+        try:
+            if child not in rel:
+                rel.append(child)
+        except ReferenceError:
+            rel.clear()
+            rel.append(child)
 
     def remove(self, child: Union["NewBaseModel", Type["NewBaseModel"]]) -> None:
         """

@@ -16,7 +16,7 @@ async def test_creating_models_individually(aio_benchmark, num_models: int):
         for idx in range(0, num_models):
             author = await Author.objects.create(
                 name="".join(random.sample(string.ascii_letters, 5)),
-                score=random.random() * 100,
+                score=int(random.random() * 100),
             )
             authors.append(author)
         return authors
@@ -62,7 +62,7 @@ async def test_get_or_create_when_create(aio_benchmark, num_models: int):
         for idx in range(0, num_models):
             author, created = await Author.objects.get_or_create(
                 name="".join(random.sample(string.ascii_letters, 5)),
-                score=random.random() * 100,
+                score=int(random.random() * 100),
             )
             assert created
             authors.append(author)
@@ -81,7 +81,7 @@ async def test_update_or_create_when_create(aio_benchmark, num_models: int):
         for idx in range(0, num_models):
             author = await Author.objects.update_or_create(
                 name="".join(random.sample(string.ascii_letters, 5)),
-                score=random.random() * 100,
+                score=int(random.random() * 100),
             )
             authors.append(author)
         return authors
