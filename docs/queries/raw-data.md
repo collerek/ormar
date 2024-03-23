@@ -40,8 +40,7 @@ Example:
 # declared models
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
@@ -49,8 +48,7 @@ class Category(ormar.Model):
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "posts"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)
@@ -83,16 +81,14 @@ Note how nested models columns will be prefixed with full relation path coming f
 # declare models
 
 class User(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Role(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -216,8 +212,7 @@ Example:
 # declared models
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
@@ -225,8 +220,7 @@ class Category(ormar.Model):
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "posts"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)
@@ -257,8 +251,7 @@ Let's complicate the relation and modify the previously mentioned Category model
 
 ```python
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)

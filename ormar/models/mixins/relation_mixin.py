@@ -1,4 +1,5 @@
-from typing import Any, Callable, Dict, List, Optional, Set, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, cast
+
 
 from ormar import BaseField, ForeignKeyField
 from ormar.models.traversible import NodeList
@@ -11,9 +12,9 @@ class RelationMixin:
     """
 
     if TYPE_CHECKING:  # pragma no cover
-        from ormar import ModelMeta
+        from ormar.models.ormar_config import OrmarConfig
 
-        Meta: ModelMeta
+        ormar_config: OrmarConfig
         __relation_map__: Optional[List[str]]
         __relation_map_dict__: Optional[Dict[str, Any]]
         _related_names: Optional[Set]
@@ -31,7 +32,9 @@ class RelationMixin:
         """
         related_names = cls.extract_related_names()
         self_fields = {
-            name for name in cls.Meta.model_fields.keys() if name not in related_names
+            name
+            for name in cls.ormar_config.model_fields.keys()
+            if name not in related_names
         }
         return self_fields
 
@@ -49,7 +52,9 @@ class RelationMixin:
 
         related_fields = []
         for name in cls.extract_related_names().union(cls.extract_through_names()):
-            related_fields.append(cast("ForeignKeyField", cls.Meta.model_fields[name]))
+            related_fields.append(
+                cast("ForeignKeyField", cls.ormar_config.model_fields[name])
+            )
         cls._related_fields = related_fields
 
         return related_fields
@@ -66,7 +71,7 @@ class RelationMixin:
             return cls._through_names
 
         related_names = set()
-        for name, field in cls.Meta.model_fields.items():
+        for name, field in cls.ormar_config.model_fields.items():
             if isinstance(field, BaseField) and field.is_through:
                 related_names.add(name)
 
@@ -86,7 +91,7 @@ class RelationMixin:
             return cls._related_names
 
         related_names = set()
-        for name, field in cls.Meta.model_fields.items():
+        for name, field in cls.ormar_config.model_fields.items():
             if (
                 isinstance(field, BaseField)
                 and field.is_relation
@@ -110,7 +115,7 @@ class RelationMixin:
         related_names = {
             name
             for name in related_names
-            if cls.Meta.model_fields[name].is_valid_uni_relation()
+            if cls.ormar_config.model_fields[name].is_valid_uni_relation()
         }
         return related_names
 
@@ -124,9 +129,9 @@ class RelationMixin:
     @classmethod
     def _iterate_related_models(  # noqa: CCR001
         cls,
-        node_list: NodeList = None,
-        parsed_map: Dict = None,
-        source_relation: str = None,
+        node_list: Optional[NodeList] = None,
+        parsed_map: Optional[Dict] = None,
+        source_relation: Optional[str] = None,
         recurrent: bool = False,
     ) -> List[str]:
         """
@@ -148,7 +153,7 @@ class RelationMixin:
         processed_relations: List[str] = []
         for relation in relations:
             if not current_node.visited(relation):
-                target_model = cls.Meta.model_fields[relation].to
+                target_model = cls.ormar_config.model_fields[relation].to
                 node_list.add(
                     node_class=target_model,
                     relation_name=relation,

@@ -1,18 +1,20 @@
+import asyncio
+
 import databases
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
+import sqlalchemy
+from examples import create_drop_database
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+DATABASE_URL = "sqlite:///test.db"
+
+ormar_base_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL),
+    metadata=sqlalchemy.MetaData(),
+)
 
 
 class Company(ormar.Model):
-    class Meta:
-        tablename = "companies"
-        metadata = metadata
-        database = database
+    ormar_config = ormar_base_config.copy(tablename="companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -20,10 +22,7 @@ class Company(ormar.Model):
 
 
 class Car(ormar.Model):
-    class Meta:
-        tablename = "cars"
-        metadata = metadata
-        database = database
+    ormar_config = ormar_base_config.copy(tablename="cars")
 
     id: int = ormar.Integer(primary_key=True)
     manufacturer = ormar.ForeignKey(Company)
@@ -34,12 +33,34 @@ class Car(ormar.Model):
     aircon_type: str = ormar.String(max_length=20, nullable=True)
 
 
-# build some sample data
-toyota = await Company.objects.create(name="Toyota", founded=1937)
-await Car.objects.create(manufacturer=toyota, name="Corolla", year=2020, gearbox_type='Manual', gears=5,
-                         aircon_type='Manual')
-await Car.objects.create(manufacturer=toyota, name="Yaris", year=2019, gearbox_type='Manual', gears=5,
-                         aircon_type='Manual')
-await Car.objects.create(manufacturer=toyota, name="Supreme", year=2020, gearbox_type='Auto', gears=6,
-                         aircon_type='Auto')
+@create_drop_database(base_config=ormar_base_config)
+async def run_query():
+    # build some sample data
+    toyota = await Company.objects.create(name="Toyota", founded=1937)
+    await Car.objects.create(
+        manufacturer=toyota,
+        name="Corolla",
+        year=2020,
+        gearbox_type="Manual",
+        gears=5,
+        aircon_type="Manual",
+    )
+    await Car.objects.create(
+        manufacturer=toyota,
+        name="Yaris",
+        year=2019,
+        gearbox_type="Manual",
+        gears=5,
+        aircon_type="Manual",
+    )
+    await Car.objects.create(
+        manufacturer=toyota,
+        name="Supreme",
+        year=2020,
+        gearbox_type="Auto",
+        gears=6,
+        aircon_type="Auto",
+    )
 
+
+asyncio.run(run_query())

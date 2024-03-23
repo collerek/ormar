@@ -13,22 +13,25 @@ Ormar uses `databases` for connectivity issues, `pydantic` for validation and `s
 All three should install along the installation of ormar if not present at your system before.
 
 *  databases
-*  pydantic>=1.5 
+*  pydantic
 *  sqlalchemy 
 
+The required versions are pinned in the pyproject.toml file.
 
 ## Optional dependencies
 
 *ormar* has three optional dependencies based on database backend you use:
 
-### Postgresql
+### Database backend
+
+#### Postgresql
 
 ```py
 pip install ormar[postgresql]
 ```
 Will install also `asyncpg` and `psycopg2`.
 
-### Mysql
+#### Mysql
 
 ```py
 pip install ormar[mysql]
@@ -36,7 +39,7 @@ pip install ormar[mysql]
 
 Will install also `aiomysql` and `pymysql`.
 
-### Sqlite
+#### Sqlite
 
 ```py
 pip install ormar[sqlite]

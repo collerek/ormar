@@ -1,37 +1,28 @@
-from typing import Optional, Type
-
-import databases
-import pytest
-import pytest_asyncio
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.settings import create_config
+
+base_ormar_config = create_config()
+from tests.lifespan import init_tests
 
 
 class Band(ormar.Model):
-    class Meta:
-        tablename = "bands"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="bands")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Artist(ormar.Model):
-    class Meta:
-        tablename = "artists"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="artists")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
     band: Band = ormar.ForeignKey(Band)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_weakref_init():
@@ -49,4 +40,4 @@ def test_weakref_init():
     band.artists  # Force it to clean
 
     assert len(band.artists) == 1
-    assert band.artists[0].name == "Artist 2"
+    assert band.artists[0].name == artist2.name

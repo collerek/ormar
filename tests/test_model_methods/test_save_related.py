@@ -1,31 +1,23 @@
 from typing import List
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config()
 
 
 class CringeLevel(ormar.Model):
-    class Meta:
-        tablename = "levels"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="levels")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class NickName(ormar.Model):
-    class Meta:
-        tablename = "nicks"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="nicks")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -34,17 +26,11 @@ class NickName(ormar.Model):
 
 
 class NicksHq(ormar.Model):
-    class Meta:
-        tablename = "nicks_x_hq"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="nicks_x_hq")
 
 
 class HQ(ormar.Model):
-    class Meta:
-        tablename = "hqs"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="hqs")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -52,10 +38,7 @@ class HQ(ormar.Model):
 
 
 class Company(ormar.Model):
-    class Meta:
-        tablename = "companies"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
@@ -63,19 +46,13 @@ class Company(ormar.Model):
     hq: HQ = ormar.ForeignKey(HQ, related_name="companies")
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_saving_related_fk_rel():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             hq = await HQ.objects.create(name="Main")
             comp = await Company.objects.create(name="Banzai", founded=1988, hq=hq)
             assert comp.saved
@@ -102,8 +79,8 @@ async def test_saving_related_fk_rel():
 
 @pytest.mark.asyncio
 async def test_saving_many_to_many():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             nick1 = await NickName.objects.create(name="BazingaO", is_lame=False)
             nick2 = await NickName.objects.create(name="Bazinga20", is_lame=True)
 
@@ -144,8 +121,8 @@ async def test_saving_many_to_many():
 
 @pytest.mark.asyncio
 async def test_saving_reversed_relation():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             hq = await HQ.objects.create(name="Main")
             await Company.objects.create(name="Banzai", founded=1988, hq=hq)
 
@@ -185,8 +162,8 @@ async def test_saving_reversed_relation():
 
 @pytest.mark.asyncio
 async def test_saving_nested():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             level = await CringeLevel.objects.create(name="High")
             level2 = await CringeLevel.objects.create(name="Low")
             nick1 = await NickName.objects.create(

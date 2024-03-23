@@ -1,38 +1,26 @@
 # type: ignore
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from ormar import ModelDefinitionError, property_field
-from tests.settings import DATABASE_URL
+import pytest
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config()
 
 
 class Song(ormar.Model):
-    class Meta:
-        tablename = "songs"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="songs")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_equality():
-    async with database:
+    async with base_ormar_config.database:
         song1 = await Song.objects.create(name="Song")
         song2 = await Song.objects.create(name="Song")
         song3 = Song(name="Song")
@@ -49,7 +37,7 @@ async def test_equality():
 
 @pytest.mark.asyncio
 async def test_hash_doesnt_change_with_fields_if_pk():
-    async with database:
+    async with base_ormar_config.database:
         song1 = await Song.objects.create(name="Song")
         prev_hash = hash(song1)
 
@@ -59,7 +47,7 @@ async def test_hash_doesnt_change_with_fields_if_pk():
 
 @pytest.mark.asyncio
 async def test_hash_changes_with_fields_if_no_pk():
-    async with database:
+    async with base_ormar_config.database:
         song1 = Song(name="Song")
         prev_hash = hash(song1)
 

@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Any, Type
 
 import sqlalchemy
 
@@ -143,8 +143,10 @@ class FilterAction(QueryAction):
         else:
             filter_value = self.filter_value
         if self.table_prefix:
-            aliased_table = self.source_model.Meta.alias_manager.prefixed_table_name(
-                self.table_prefix, self.column.table
+            aliased_table = (
+                self.source_model.ormar_config.alias_manager.prefixed_table_name(
+                    self.table_prefix, self.column.table
+                )
             )
             aliased_column = getattr(aliased_table.c, self.column.name)
         else:

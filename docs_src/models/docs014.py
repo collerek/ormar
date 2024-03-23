@@ -1,18 +1,19 @@
 import databases
-import sqlalchemy
-
 import ormar
+import pydantic
+import sqlalchemy
 
 database = databases.Database("sqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
 
 class Course(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     completed: bool = ormar.Boolean(default=False)
-    non_db_field: str = ormar.String(max_length=100, pydantic_only=True)
+    non_db_field: str = pydantic.Field(max_length=100)

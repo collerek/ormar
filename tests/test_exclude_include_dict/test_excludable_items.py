@@ -1,24 +1,16 @@
 from typing import List, Optional
 
-import databases
-import sqlalchemy
-
 import ormar
 from ormar.models.excludable import ExcludableItems
-from tests.settings import DATABASE_URL
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = create_config()
 
 
 class NickNames(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "nicks"
+    ormar_config = base_ormar_config.copy(tablename="nicks")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -26,13 +18,11 @@ class NickNames(ormar.Model):
 
 
 class NicksHq(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "nicks_x_hq"
+    ormar_config = base_ormar_config.copy(tablename="nicks_x_hq")
 
 
 class HQ(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
@@ -40,8 +30,7 @@ class HQ(ormar.Model):
 
 
 class Company(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "companies"
+    ormar_config = base_ormar_config.copy(tablename="companies")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
@@ -50,8 +39,7 @@ class Company(ormar.Model):
 
 
 class Car(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     manufacturer: Optional[Company] = ormar.ForeignKey(Company)
@@ -62,6 +50,9 @@ class Car(ormar.Model):
     aircon_type: str = ormar.String(max_length=20, nullable=True)
 
 
+create_test_database = init_tests(base_ormar_config)
+
+
 def compare_results(excludable):
     car_excludable = excludable.get(Car)
     assert car_excludable.exclude == {"year", "gearbox_type", "gears", "aircon_type"}
@@ -69,7 +60,9 @@ def compare_results(excludable):
 
     assert car_excludable.is_excluded("year")
 
-    alias = Company.Meta.alias_manager.resolve_relation_alias(Car, "manufacturer")
+    alias = Company.ormar_config.alias_manager.resolve_relation_alias(
+        Car, "manufacturer"
+    )
     manu_excludable = excludable.get(Company, alias=alias)
     assert manu_excludable.exclude == {"founded"}
     assert manu_excludable.include == set()
@@ -78,7 +71,7 @@ def compare_results(excludable):
 
 
 def compare_results_include(excludable):
-    manager = Company.Meta.alias_manager
+    manager = Company.ormar_config.alias_manager
     car_excludable = excludable.get(Car)
     assert car_excludable.include == {"id", "name"}
     assert car_excludable.exclude == set()
@@ -204,7 +197,9 @@ def test_includes_and_excludes_combo():
     assert car_excludable.is_excluded("aircon_type")
     assert car_excludable.is_included("name")
 
-    alias = Company.Meta.alias_manager.resolve_relation_alias(Car, "manufacturer")
+    alias = Company.ormar_config.alias_manager.resolve_relation_alias(
+        Car, "manufacturer"
+    )
     manu_excludable = excludable.get(Company, alias=alias)
     assert manu_excludable.include == {"name"}
     assert manu_excludable.exclude == {"founded"}

@@ -1,23 +1,14 @@
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
+import pytest
 
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
-
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config(force_rollback=True)
 
 
 class User(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "user"
+    ormar_config = base_ormar_config.copy(tablename="user")
 
     id: int = ormar.Integer(primary_key=True, autoincrement=True, nullable=False)
     user: str = ormar.String(
@@ -33,26 +24,19 @@ class User(ormar.Model):
 
 
 class Task(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "task"
+    ormar_config = base_ormar_config.copy(tablename="task")
 
     id: int = ormar.Integer(primary_key=True, autoincrement=True, nullable=False)
     from_: str = ormar.String(name="from", nullable=True, max_length=200)
     user = ormar.ForeignKey(User)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_single_model_quotes():
-    async with database:
+    async with base_ormar_config.database:
         await User.objects.create(
             user="test",
             first="first",
@@ -68,7 +52,7 @@ async def test_single_model_quotes():
 
 @pytest.mark.asyncio
 async def test_two_model_quotes():
-    async with database:
+    async with base_ormar_config.database:
         user = await User.objects.create(
             user="test",
             first="first",

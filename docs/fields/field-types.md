@@ -1,10 +1,10 @@
 # Fields
 
 
-There are 12 basic model field types and a special `ForeignKey` and `Many2Many` fields to establish relationships between models.
+There are 12 basic model field types and a special `ForeignKey` and `ManyToMany` fields to establish relationships between models.
 
 !!!tip
-    For explanation of `ForeignKey` and `Many2Many` fields check [relations][relations].
+    For explanation of `ForeignKey` and `ManyToMany` fields check [relations][relations].
 
 
 Each of the `Fields` has assigned both `sqlalchemy` column class and python type that is used to create `pydantic` model.
@@ -160,11 +160,16 @@ That way you can i.e. set the value by API, even if value is not `utf-8` compati
 ```python
 import base64
 ... # other imports skipped for brevity 
+
+
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata
+    database=database
+)
+
+
 class LargeBinaryStr(ormar.Model):
-    class Meta:
-        tablename = "my_str_blobs"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="my_str_blobs")
 
     id: int = ormar.Integer(primary_key=True)
     test_binary: str = ormar.LargeBinary(
@@ -215,46 +220,6 @@ So which one to use depends on the backend you use and on the column/ data type 
 * Sqlalchemy column: `sqlalchemy.Enum`  
 * Type (used for pydantic): `Type[Enum]`
 
-#### Choices
-You can change any field into `Enum` like field by passing a `choices` list that is accepted by all Field types.
-
-It will add both: validation in `pydantic` model and will display available options in schema,
-therefore it will be available in docs of `fastapi`.
-
-If you still want to use `Enum` in your application you can do this by passing a `Enum` into choices
-and later pass value of given option to a given field (note that Enum is not JsonSerializable).
-
-```python
-# note that imports and endpoints declaration 
-# is skipped here for brevity
-from enum import Enum
-class TestEnum(Enum):
-    val1 = 'Val1'
-    val2 = 'Val2'
-
-class TestModel(ormar.Model):
-    class Meta:
-        tablename = "org"
-        metadata = metadata
-        database = database
-
-    id: int = ormar.Integer(primary_key=True)
-    # pass list(Enum) to choices
-    enum_string: str = ormar.String(max_length=100, choices=list(TestEnum))
-
-# sample payload coming to fastapi
-response = client.post(
-    "/test_models/",
-    json={
-        "id": 1,
-        # you need to refer to the value of the `Enum` option
-        # if called like this, alternatively just use value
-        # string "Val1" in this case
-        "enum_string": TestEnum.val1.value
-    },
-)
-
-```
 
 [relations]: ../relations/index.md
 [queries]: ../queries.md

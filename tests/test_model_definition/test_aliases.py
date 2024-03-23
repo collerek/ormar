@@ -1,21 +1,16 @@
 from typing import List, Optional
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config()
 
 
 class Child(ormar.Model):
-    class Meta:
-        tablename = "children"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="children")
 
     id: int = ormar.Integer(name="child_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)
@@ -24,10 +19,7 @@ class Child(ormar.Model):
 
 
 class Artist(ormar.Model):
-    class Meta:
-        tablename = "artists"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="artists")
 
     id: int = ormar.Integer(name="artist_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)
@@ -37,37 +29,28 @@ class Artist(ormar.Model):
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "music_albums"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="music_albums")
 
     id: int = ormar.Integer(name="album_id", primary_key=True)
     name: str = ormar.String(name="album_name", max_length=100)
     artist: Optional[Artist] = ormar.ForeignKey(Artist, name="artist_id")
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_table_structure():
-    assert "album_id" in [x.name for x in Album.Meta.table.columns]
-    assert "album_name" in [x.name for x in Album.Meta.table.columns]
-    assert "fname" in [x.name for x in Artist.Meta.table.columns]
-    assert "lname" in [x.name for x in Artist.Meta.table.columns]
-    assert "year" in [x.name for x in Artist.Meta.table.columns]
+    assert "album_id" in [x.name for x in Album.ormar_config.table.columns]
+    assert "album_name" in [x.name for x in Album.ormar_config.table.columns]
+    assert "fname" in [x.name for x in Artist.ormar_config.table.columns]
+    assert "lname" in [x.name for x in Artist.ormar_config.table.columns]
+    assert "year" in [x.name for x in Artist.ormar_config.table.columns]
 
 
 @pytest.mark.asyncio
 async def test_working_with_aliases():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             artist = await Artist.objects.create(
                 first_name="Ted", last_name="Mosbey", born_year=1975
             )
@@ -124,7 +107,7 @@ async def test_working_with_aliases():
 
 @pytest.mark.asyncio
 async def test_bulk_operations_and_fields():
-    async with database:
+    async with base_ormar_config.database:
         d1 = Child(first_name="Daughter", last_name="1", born_year=1990)
         d2 = Child(first_name="Daughter", last_name="2", born_year=1991)
         await Child.objects.bulk_create([d1, d2])
@@ -155,8 +138,8 @@ async def test_bulk_operations_and_fields():
 
 @pytest.mark.asyncio
 async def test_working_with_aliases_get_or_create():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             artist, created = await Artist.objects.get_or_create(
                 first_name="Teddy", last_name="Bear", born_year=2020
             )
@@ -169,7 +152,7 @@ async def test_working_with_aliases_get_or_create():
             assert artist == artist2
             assert created is False
 
-            art3 = artist2.dict()
+            art3 = artist2.model_dump()
             art3["born_year"] = 2019
             await Artist.objects.update_or_create(**art3)
 
