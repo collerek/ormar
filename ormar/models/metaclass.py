@@ -179,7 +179,7 @@ def get_constraint_copy(
     constraint: ColumnCollectionConstraint,
 ) -> Union[UniqueColumns, IndexColumns, CheckColumns]:
     """
-    Copy the constraint and unpacking it's values
+    Copy the constraint and unpacking its values
 
     :raises ValueError: if non subclass of ColumnCollectionConstraint
     :param value: an instance of the ColumnCollectionConstraint class
@@ -434,7 +434,7 @@ def extract_from_parents_definition(  # noqa: CCR001
     If the class is parsed first time annotations and field definition is parsed
     from the class.__dict__.
 
-    If the class is a ormar.Model it is skipped.
+    If the class is an ormar.Model it is skipped.
 
     :param base_class: one of the parent classes
     :type base_class: Model or model parent class
@@ -538,7 +538,7 @@ def add_field_descriptor(
     :param field: model field to add descriptor for
     :type field: BaseField
     :param new_model: model with fields
-    :type new_model: Type["Model]
+    :type new_model: Type["Model"]
     """
     if field.is_relation:
         setattr(new_model, name, RelationDescriptor(name=name))
