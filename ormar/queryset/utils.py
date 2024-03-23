@@ -42,7 +42,7 @@ def check_node_not_dict_or_not_last_node(
 
 
 def translate_list_to_dict(  # noqa: CCR001
-    list_to_trans: Union[List, Set], is_order: bool = False
+    list_to_trans: Union[List, Set], is_order: bool = False, default: Any = ...
 ) -> Dict:
     """
     Splits the list of strings by '__' and converts them to dictionary with nested
@@ -53,6 +53,8 @@ def translate_list_to_dict(  # noqa: CCR001
 
     :param list_to_trans: input list
     :type list_to_trans: Union[List, Set]
+    :param default: value to use as a default value
+    :type default: Any
     :param is_order: flag if change affects order_by clauses are they require special
     default value with sort order.
     :type is_order: bool
@@ -63,7 +65,7 @@ def translate_list_to_dict(  # noqa: CCR001
     for path in list_to_trans:
         current_level = new_dict
         parts = path.split("__")
-        def_val: Any = ...
+        def_val: Any = default
         if is_order:
             if parts[0][0] == "-":
                 def_val = "desc"

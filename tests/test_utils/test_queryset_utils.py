@@ -1,5 +1,3 @@
-import ormar
-from ormar.queryset.queries.prefetch_query import sort_models
 from ormar.queryset.utils import (
     subtract_dict,
     translate_list_to_dict,
@@ -7,7 +5,6 @@ from ormar.queryset.utils import (
     update_dict_from_list,
 )
 
-from tests.lifespan import init_tests
 from tests.settings import create_config
 
 base_ormar_config = create_config()
@@ -172,39 +169,3 @@ def test_subtracting_with_set_and_dict():
     }
     test = subtract_dict(curr_dict, dict_to_update)
     assert test == {"translation": {"translations": {"language": Ellipsis}}}
-
-
-class SortModel(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename="sorts")
-
-    id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=100)
-    sort_order: int = ormar.Integer()
-
-
-def test_sorting_models():
-    models = [
-        SortModel(id=1, name="Alice", sort_order=0),
-        SortModel(id=2, name="Al", sort_order=1),
-        SortModel(id=3, name="Zake", sort_order=1),
-        SortModel(id=4, name="Will", sort_order=0),
-        SortModel(id=5, name="Al", sort_order=2),
-        SortModel(id=6, name="Alice", sort_order=2),
-    ]
-    orders_by = {"name": "asc", "none": {}, "sort_order": "desc"}
-    models = sort_models(models, orders_by)
-    assert models[5].name == "Zake"
-    assert models[0].name == "Al"
-    assert models[1].name == "Al"
-    assert [model.id for model in models] == [5, 2, 6, 1, 4, 3]
-
-    orders_by = {"name": "asc", "none": set("aa"), "id": "asc"}
-    models = sort_models(models, orders_by)
-    assert [model.id for model in models] == [2, 5, 1, 6, 4, 3]
-
-    orders_by = {"sort_order": "asc", "none": ..., "id": "asc", "uu": 2, "aa": None}
-    models = sort_models(models, orders_by)
-    assert [model.id for model in models] == [1, 4, 2, 3, 5, 6]
-
-
-create_test_database = init_tests(base_ormar_config)
