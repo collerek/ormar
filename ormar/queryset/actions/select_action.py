@@ -1,5 +1,5 @@
 import decimal
-from typing import Any, Callable, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Any, Callable, Optional, Type
 
 import sqlalchemy
 
@@ -20,7 +20,7 @@ class SelectAction(QueryAction):
     """
 
     def __init__(
-        self, select_str: str, model_cls: Type["Model"], alias: str = None
+        self, select_str: str, model_cls: Type["Model"], alias: Optional[str] = None
     ) -> None:
         super().__init__(query_str=select_str, model_cls=model_cls)
         if alias:  # pragma: no cover
@@ -36,7 +36,7 @@ class SelectAction(QueryAction):
         return self.get_target_field_type() in [int, float, decimal.Decimal]
 
     def get_target_field_type(self) -> Any:
-        return self.target_model.Meta.model_fields[self.field_name].__type__
+        return self.target_model.ormar_config.model_fields[self.field_name].__type__
 
     def get_text_clause(self) -> sqlalchemy.sql.expression.TextClause:
         alias = f"{self.table_prefix}_" if self.table_prefix else ""

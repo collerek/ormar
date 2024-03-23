@@ -1,32 +1,23 @@
 from typing import Optional
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
@@ -35,10 +26,7 @@ class Book(ormar.Model):
 
 
 class JsonModel(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        metadata = metadata
-        database = database
-        tablename = "jsons"
+    ormar_config = base_ormar_config.copy(tablename="jsons")
 
     id = ormar.Integer(primary_key=True)
     text_field = ormar.Text(nullable=True)
@@ -46,18 +34,12 @@ class JsonModel(ormar.Model):
     json_not_null = ormar.JSON()
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_is_null():
-    async with database:
+    async with base_ormar_config.database:
         tolkien = await Author.objects.create(name="J.R.R. Tolkien")
         await Book.objects.create(author=tolkien, title="The Hobbit")
         await Book.objects.create(
@@ -99,7 +81,7 @@ async def test_is_null():
 
 @pytest.mark.asyncio
 async def test_isnull_json():
-    async with database:
+    async with base_ormar_config.database:
         author = await JsonModel.objects.create(json_not_null=None)
         assert author.json_field is None
         non_null_text_fields = await JsonModel.objects.all(text_field__isnull=False)

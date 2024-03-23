@@ -1,24 +1,24 @@
-import databases
-import sqlalchemy
-
 import ormar
 from ormar import Extra
-from tests.settings import DATABASE_URL
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config(force_rollback=True)
 
 
 class Child(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "children"
-        metadata = metadata
-        database = database
-        extra = Extra.ignore
+    ormar_config = base_ormar_config.copy(
+        tablename="children",
+        extra=Extra.ignore,
+    )
 
     id: int = ormar.Integer(name="child_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)
     last_name: str = ormar.String(name="lname", max_length=100)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_allow_extra_parameter():

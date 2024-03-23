@@ -19,11 +19,10 @@ snakes, and ormar(e) in italian which means cabinet.
 And what's a better name for python ORM than snakes cabinet :)
 
 """
-try:
-    from importlib.metadata import version  # type: ignore
-except ImportError:  # pragma: no cover
-    from importlib_metadata import version  # type: ignore
-from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I100
+
+from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I001
+from importlib.metadata import version
+
 from ormar.decorators import (  # noqa: I100
     post_bulk_update,
     post_delete,
@@ -36,7 +35,6 @@ from ormar.decorators import (  # noqa: I100
     pre_relation_remove,
     pre_save,
     pre_update,
-    property_field,
 )
 from ormar.exceptions import (  # noqa: I100
     ModelDefinitionError,
@@ -44,37 +42,38 @@ from ormar.exceptions import (  # noqa: I100
     NoMatch,
 )
 from ormar.fields import (
+    DECODERS_MAP,
+    ENCODERS_MAP,
+    JSON,
+    SQL_ENCODERS_MAP,
+    UUID,
     BaseField,
     BigInteger,
     Boolean,
-    DECODERS_MAP,
+    CheckColumns,
     Date,
     DateTime,
     Decimal,
-    ENCODERS_MAP,
     EncryptBackends,
     Enum,
     Float,
     ForeignKey,
     ForeignKeyField,
+    IndexColumns,
     Integer,
-    JSON,
     LargeBinary,
     ManyToMany,
     ManyToManyField,
-    SQL_ENCODERS_MAP,
+    ReferentialAction,
     SmallInteger,
     String,
     Text,
     Time,
-    UUID,
     UniqueColumns,
-    IndexColumns,
-    CheckColumns,
-    ReferentialAction,
-)  # noqa: I100
-from ormar.models import ExcludableItems, Extra, Model
-from ormar.models.metaclass import ModelMeta
+)
+
+# noqa: I100
+from ormar.models import ExcludableItems, Extra, Model, OrmarConfig
 from ormar.queryset import OrderAction, QuerySet, and_, or_
 from ormar.relations import RelationType
 from ormar.signals import Signal
@@ -104,7 +103,6 @@ __all__ = [
     "Float",
     "ManyToMany",
     "Model",
-    "Action",
     "ModelDefinitionError",
     "MultipleMatches",
     "NoMatch",
@@ -119,8 +117,6 @@ __all__ = [
     "ReferentialAction",
     "QuerySetProtocol",
     "RelationProtocol",
-    "ModelMeta",
-    "property_field",
     "post_bulk_update",
     "post_delete",
     "post_save",
@@ -146,4 +142,5 @@ __all__ = [
     "DECODERS_MAP",
     "LargeBinary",
     "Extra",
+    "OrmarConfig",
 ]

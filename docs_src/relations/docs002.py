@@ -1,18 +1,18 @@
-from typing import Optional, Union, List
+from typing import List, Optional
 
 import databases
 import ormar
 import sqlalchemy
 
-database = databases.Database("sqlite:///db.sqlite")
-metadata = sqlalchemy.MetaData()
+DATABASE_URL = "sqlite:///test.db"
+
+ormar_base_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL), metadata=sqlalchemy.MetaData()
+)
 
 
 class Author(ormar.Model):
-    class Meta:
-        tablename = "authors"
-        database = database
-        metadata = metadata
+    ormar_config = ormar_base_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     first_name: str = ormar.String(max_length=80)
@@ -20,20 +20,14 @@ class Author(ormar.Model):
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        database = database
-        metadata = metadata
+    ormar_config = ormar_base_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
 
 
 class Post(ormar.Model):
-    class Meta:
-        tablename = "posts"
-        database = database
-        metadata = metadata
+    ormar_config = ormar_base_config.copy(tablename="posts")
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)

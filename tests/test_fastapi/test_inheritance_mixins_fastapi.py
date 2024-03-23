@@ -1,30 +1,46 @@
 import datetime
+from typing import Optional
 
+import ormar
 import pytest
-import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-from tests.settings import DATABASE_URL
-from tests.test_inheritance_and_pydantic_generation.test_inheritance_mixins import Category, Subject, metadata, db as database  # type: ignore
+from tests.lifespan import init_tests, lifespan
+from tests.settings import create_config
 
-app = FastAPI()
-app.state.database = database
-
-
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
+class AuditMixin:
+    created_by: str = ormar.String(max_length=100)
+    updated_by: str = ormar.String(max_length=100, default="Sam")
+
+
+class DateFieldsMixins:
+    created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
+    updated_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
+
+
+class Category(ormar.Model, DateFieldsMixins, AuditMixin):
+    ormar_config = base_ormar_config.copy(tablename="categories")
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=50, unique=True, index=True)
+    code: int = ormar.Integer()
+
+
+class Subject(ormar.Model, DateFieldsMixins):
+    ormar_config = base_ormar_config.copy(tablename="subjects")
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=50, unique=True, index=True)
+    category: Optional[Category] = ormar.ForeignKey(Category)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 @app.post("/subjects/", response_model=Subject)
@@ -36,14 +52,6 @@ async def create_item(item: Subject):
 async def create_category(category: Category):
     await category.save()
     return category
-
-
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
 
 
 @pytest.mark.asyncio
@@ -61,7 +69,7 @@ async def test_read_main():
         assert cat.created_date is not None
         assert cat.id == 1
 
-        cat_dict = cat.dict()
+        cat_dict = cat.model_dump()
         cat_dict["updated_date"] = cat_dict["updated_date"].strftime(
             "%Y-%m-%d %H:%M:%S.%f"
         )

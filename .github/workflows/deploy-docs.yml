@@ -27,6 +27,6 @@ jobs:
         run: |
           echo $RELEASE_VERSION
           echo ${{ env.RELEASE_VERSION }}
-#      - name: Deploy
-#        run: |
-#          mike deploy --push --update-aliases ${{ env.RELEASE_VERSION }} latest
+      - name: Deploy
+        run: |
+          mike deploy --push --update-aliases ${{ env.RELEASE_VERSION }} latest

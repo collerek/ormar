@@ -1,7 +1,7 @@
 import base64
-from typing import Any, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Any, Type
 
-from ormar.fields.parsers import encode_json
+from ormar.fields.parsers import decode_bytes, encode_json
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
@@ -53,7 +53,7 @@ class BytesDescriptor:
 
     def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
         value = instance.__dict__.get(self.name, None)
-        field = instance.Meta.model_fields[self.name]
+        field = instance.ormar_config.model_fields[self.name]
         if (
             value is not None
             and field.represent_as_base64_str
@@ -63,12 +63,11 @@ class BytesDescriptor:
         return value
 
     def __set__(self, instance: "Model", value: Any) -> None:
-        field = instance.Meta.model_fields[self.name]
+        field = instance.ormar_config.model_fields[self.name]
         if isinstance(value, str):
-            if field.represent_as_base64_str:
-                value = base64.b64decode(value)
-            else:
-                value = value.encode("utf-8")
+            value = decode_bytes(
+                value=value, represent_as_string=field.represent_as_base64_str
+            )
         instance._internal_set(self.name, value)
         instance.set_save_status(False)
 
@@ -107,36 +106,9 @@ class RelationDescriptor:
         return None  # pragma no cover
 
     def __set__(self, instance: "Model", value: Any) -> None:
-        model = instance.Meta.model_fields[self.name].expand_relationship(
+        instance.ormar_config.model_fields[self.name].expand_relationship(
             value=value, child=instance
         )
-        if isinstance(instance.__dict__.get(self.name), list):
-            # virtual foreign key or many to many
-            # TODO: Fix double items in dict, no effect on real action just ugly repr
-            instance.__dict__[self.name].append(model)
-        else:
-            # foreign key relation
-            instance.__dict__[self.name] = model
+
+        if not isinstance(instance.__dict__.get(self.name), list):
             instance.set_save_status(False)
-
-
-class PropertyDescriptor:
-    """
-    Property descriptor handles methods decorated with @property_field decorator.
-    They are read only.
-    """
-
-    def __init__(self, name: str, function: Any) -> None:
-        self.name = name
-        self.function = function
-
-    def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
-        if instance is None:
-            return self
-        if instance is not None and self.function is not None:
-            bound = self.function.__get__(instance, instance.__class__)
-            return bound() if callable(bound) else bound
-
-    def __set__(self, instance: "Model", value: Any) -> None:  # pragma: no cover
-        # kept here so it's a data-descriptor and precedes __dict__ lookup
-        pass

@@ -16,10 +16,10 @@ nav:
     - Pydantic only fields: fields/pydantic-fields.md
     - Fields encryption: fields/encryption.md
   - Relations:
-    - relations/index.md
-    - relations/postponed-annotations.md
+    - Relation types: relations/index.md
     - relations/foreign-key.md
     - relations/many-to-many.md
+    - relations/postponed-annotations.md
     - relations/queryset-proxy.md
   - Queries:
     - queries/index.md
@@ -40,6 +40,7 @@ nav:
     - Using ormar in responses: fastapi/response.md
     - Using ormar in requests: fastapi/requests.md
   - Use with mypy: mypy.md
+  - Migration to v 0.20: migration.md
   - PyCharm plugin: plugin.md
   - Contributing: contributing.md
   - Release Notes: releases.md

@@ -1,25 +1,17 @@
 import uuid
-from typing import List, Optional
-
-import databases
-import pytest
-import sqlalchemy
+from typing import Optional
 
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
 
 
 class PageLink(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "pagelinks"
+    ormar_config = base_ormar_config.copy(tablename="pagelinks")
 
     id: int = ormar.Integer(primary_key=True)
     value: str = ormar.String(max_length=2048)
@@ -27,8 +19,7 @@ class PageLink(ormar.Model):
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "posts"
+    ormar_config = base_ormar_config.copy(tablename="posts")
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=500)
@@ -38,16 +29,14 @@ class Post(ormar.Model):
 
 
 class Department(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4())
     name: str = ormar.String(max_length=100)
 
 
 class Course(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -55,18 +44,13 @@ class Course(ormar.Model):
     department: Optional[Department] = ormar.ForeignKey(Department)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_pass_int_values_as_fk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             link = await PageLink(id=1, value="test", country="USA").save()
             await Post.objects.create(title="My post", link=link.id)
             post_check = await Post.objects.select_related("link").get()
@@ -75,7 +59,7 @@ async def test_pass_int_values_as_fk():
 
 @pytest.mark.asyncio
 async def test_pass_uuid_value_as_fk():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             dept = await Department(name="Department test").save()
             await Course(name="Test course", department=dept.id).save()
