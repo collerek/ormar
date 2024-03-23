@@ -105,7 +105,7 @@ jobs:
       run: bash scripts/test.sh
 
     - name: Upload coverage
-      uses: codecov/codecov-action@v3.1.6
+      uses: codecov/codecov-action@v4.1.0
 
     - name: Test & publish code coverage
       uses: paambaati/codeclimate-action@v5.0.0
