@@ -18,7 +18,7 @@ async def test_updating_models_individually(
     @aio_benchmark
     async def update(authors: List[Author]):
         for author in authors:
-            a = await author.update(
+            _ = await author.update(
                 name="".join(random.sample(string.ascii_letters, 5))
             )
 

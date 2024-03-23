@@ -1,49 +1,34 @@
-from typing import Dict, List, Optional
-
-import databases
-import pytest
-import sqlalchemy
+from typing import Optional
 
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
 
 
 class Chart(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     datasets = ormar.JSON()
 
 
 class Config(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
     chart: Optional[Chart] = ormar.ForeignKey(Chart)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_list_field_that_is_not_relation_is_not_merged():
-    async with database:
+    async with base_ormar_config.database:
         chart = await Chart.objects.create(datasets=[{"test": "ok"}])
         await Config.objects.create(chart=chart)
         await Config.objects.create(chart=chart)

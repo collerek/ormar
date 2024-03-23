@@ -1,14 +1,14 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: build
+name: test
 
 on:
   push:
     branches-ignore:
       - 'gh-pages'
   pull_request:
-    branches: [ master ]
+    branches: [ master, pydantic_v2 ]
 
 jobs:
   tests:
@@ -17,7 +17,7 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'collerek/ormar'
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9, "3.10"]
+        python-version: [3.8, 3.9, "3.10", 3.11]
       fail-fast: false
     services:
       mysql:
@@ -39,37 +39,80 @@ jobs:
           POSTGRES_DB: testsuite
         ports:
           - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5 --name postgres
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: false
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1.3.3
+      with:
+        version: 1.4.2
+        virtualenvs-create: false
+
+    - name: Poetry details
       run: |
-        python -m pip install poetry==1.1.11
-        poetry install --extras "all"
-      env:
-        POETRY_VIRTUALENVS_CREATE: false
+        poetry --version
+        poetry config --list
+
+    - name: Install dependencies
+      run: poetry install --extras "all"
+
     - name: Run mysql
       env:
         DATABASE_URL: "mysql://username:password@127.0.0.1:3306/testsuite"
       run: bash scripts/test.sh
+
+    - name: Install postgresql-client
+      run: |
+        sudo apt-get update
+        sudo apt-get install --yes postgresql-client
+
+    - name: Connect to PostgreSQL with CLI
+      run: env PGPASSWORD=password psql -h localhost -U username -c 'SELECT VERSION();' testsuite
+
+    - name: Show max connections
+      run: env PGPASSWORD=password psql -h localhost -U username -c 'SHOW max_connections;' testsuite
+
+    - name: Alter max connections
+      run: |
+        
+        docker exec -i postgres bash << EOF
+          sed -i -e 's/max_connections = 100/max_connections = 1000/' /var/lib/postgresql/data/postgresql.conf
+          sed -i -e 's/shared_buffers = 128MB/shared_buffers = 512MB/' /var/lib/postgresql/data/postgresql.conf
+        EOF
+        docker restart --time 0 postgres
+        sleep 5
+
+    - name: Show max connections
+      run: env PGPASSWORD=password psql -h localhost -U username -c 'SHOW max_connections;' testsuite
+
     - name: Run postgres
       env:
         DATABASE_URL: "postgresql://username:password@localhost:5432/testsuite"
       run: bash scripts/test.sh
+
     - name: Run sqlite
       env:
         DATABASE_URL: "sqlite:///testsuite"
       run: bash scripts/test.sh
-    - run: mypy ormar tests benchmarks
+
     - name: Upload coverage
-      uses: codecov/codecov-action@v3.1.1
+      uses: codecov/codecov-action@v4.1.0
+      with:
+        name: codecov-umbrella
+        token: ${{ secrets.CODCOV_TOKEN }}
+        verbose: true
+
     - name: Test & publish code coverage
-      uses: paambaati/codeclimate-action@v3.2.0
+      uses: paambaati/codeclimate-action@v5.0.0
       if: github.event.pull_request.head.repo.full_name == 'collerek/ormar'
       env:
         CC_TEST_REPORTER_ID:  ${{ secrets.CC_COVERAGE_TOKEN }}

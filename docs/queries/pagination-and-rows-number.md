@@ -22,10 +22,11 @@ Combines the `offset` and `limit` methods based on page number and size
 
 ```python
 class Track(ormar.Model):
-    class Meta:
-        tablename = "track"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        database=databases.Database(DATABASE_URL),
+        metadata=sqlalchemy.MetaData(),
+        tablename="track"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -52,10 +53,11 @@ use the `limit_raw_sql` parameter flag, and set it to `True`.
 
 ```python
 class Track(ormar.Model):
-    class Meta:
-        tablename = "track"
-        metadata = metadata
-        database = database
+    ormar.OrmarConfig(
+        database=databases.Database(DATABASE_URL),
+        metadata=sqlalchemy.MetaData(),
+        tablename="track"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -86,10 +88,11 @@ use the `limit_raw_sql` parameter flag, and set it to `True`.
 
 ```python
 class Track(ormar.Model):
-    class Meta:
-        tablename = "track"
-        metadata = metadata
-        database = database
+    ormar.OrmarConfig(
+        database=databases.Database(DATABASE_URL),
+        metadata=sqlalchemy.MetaData(),
+        tablename="track"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -115,7 +118,7 @@ tracks = await Track.objects.offset(1).limit(1).all()
 
 `get(**kwargs) -> Model` 
 
-Get's the first row from the db meeting the criteria set by kwargs.
+Gets the first row from the db meeting the criteria set by kwargs.
 
 If no criteria is set it will return the last row in db sorted by pk.
 (The criteria cannot be set also with filter/exclude).

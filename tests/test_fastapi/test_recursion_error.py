@@ -1,38 +1,20 @@
-import json
-from datetime import datetime
 import uuid
+from datetime import datetime
 from typing import List
 
-import databases
-import pytest
-import sqlalchemy
-from fastapi import Depends, FastAPI
-from pydantic import BaseModel, Json
-from starlette.testclient import TestClient
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
+from asgi_lifespan import LifespanManager
+from fastapi import Depends, FastAPI
+from httpx import AsyncClient
+from pydantic import BaseModel, Json
 
-router = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
-router.state.database = database
+from tests.lifespan import init_tests, lifespan
+from tests.settings import create_config
 
+base_ormar_config = create_config()
+router = FastAPI(lifespan=lifespan(base_ormar_config))
 headers = {"content-type": "application/json"}
-
-
-@router.on_event("startup")
-async def startup() -> None:
-    database_ = router.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@router.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = router.state.database
-    if database_.is_connected:
-        await database_.disconnect()
 
 
 class User(ormar.Model):
@@ -48,10 +30,7 @@ class User(ormar.Model):
     verify_key: str = ormar.String(unique=True, max_length=100, nullable=True)
     created_at: datetime = ormar.DateTime(default=datetime.now())
 
-    class Meta:
-        tablename = "users"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="users")
 
 
 class UserSession(ormar.Model):
@@ -64,10 +43,7 @@ class UserSession(ormar.Model):
     session_key: str = ormar.String(unique=True, max_length=64)
     created_at: datetime = ormar.DateTime(default=datetime.now())
 
-    class Meta:
-        tablename = "user_sessions"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="user_sessions")
 
 
 class QuizAnswer(BaseModel):
@@ -95,18 +71,10 @@ class Quiz(ormar.Model):
     user_id: uuid.UUID = ormar.UUID(foreign_key=User.id)
     questions: Json = ormar.JSON(nullable=False)
 
-    class Meta:
-        tablename = "quiz"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="quiz")
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 async def get_current_user():
@@ -117,13 +85,14 @@ async def get_current_user():
 async def create_quiz_lol(
     quiz_input: QuizInput, user: User = Depends(get_current_user)
 ):
-    quiz = Quiz(**quiz_input.dict(), user_id=user.id)
+    quiz = Quiz(**quiz_input.model_dump(), user_id=user.id)
     return await quiz.save()
 
 
-def test_quiz_creation():
-    client = TestClient(app=router)
-    with client as client:
+@pytest.mark.asyncio
+async def test_quiz_creation():
+    client = AsyncClient(app=router, base_url="http://testserver")
+    async with client as client, LifespanManager(router):
         payload = {
             "title": "Some test question",
             "description": "A description",
@@ -145,5 +114,5 @@ def test_quiz_creation():
                 },
             ],
         }
-        response = client.post("/create", data=json.dumps(payload))
+        response = await client.post("/create", json=payload)
         assert response.status_code == 200

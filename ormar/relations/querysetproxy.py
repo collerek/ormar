@@ -1,6 +1,7 @@
-from _weakref import CallableProxyType
 from typing import (  # noqa: I100, I201
+    TYPE_CHECKING,
     Any,
+    AsyncGenerator,
     Dict,
     Generic,
     List,
@@ -8,23 +9,23 @@ from typing import (  # noqa: I100, I201
     Optional,
     Sequence,
     Set,
-    TYPE_CHECKING,
     Tuple,
     Type,
     TypeVar,
     Union,
     cast,
-    AsyncGenerator,
 )
+
+from _weakref import CallableProxyType
 
 import ormar  # noqa: I100, I202
 from ormar.exceptions import ModelPersistenceError, NoMatch, QueryDefinitionError
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.relations import Relation
+    from ormar import OrderAction, RelationType
     from ormar.models import Model, T
     from ormar.queryset import QuerySet
-    from ormar import OrderAction, RelationType
+    from ormar.relations import Relation
 else:
     T = TypeVar("T", bound="Model")
 
@@ -43,17 +44,17 @@ class QuerysetProxy(Generic[T]):
         relation: "Relation",
         to: Type["T"],
         type_: "RelationType",
-        qryset: "QuerySet[T]" = None,
+        qryset: Optional["QuerySet[T]"] = None,
     ) -> None:
         self.relation: "Relation" = relation
         self._queryset: Optional["QuerySet[T]"] = qryset
         self.type_: "RelationType" = type_
         self._owner: Union[CallableProxyType, "Model"] = self.relation.manager.owner
-        self.related_field_name = self._owner.Meta.model_fields[
+        self.related_field_name = self._owner.ormar_config.model_fields[
             self.relation.field_name
         ].get_related_name()
         self.to: Type[T] = to
-        self.related_field = to.Meta.model_fields[self.related_field_name]
+        self.related_field = to.ormar_config.model_fields[self.related_field_name]
         self.owner_pk_value = self._owner.pk
         self.through_model_name = (
             self.related_field.through.get_name()
@@ -286,7 +287,9 @@ class QuerysetProxy(Generic[T]):
         return await queryset.delete(**kwargs)  # type: ignore
 
     async def values(
-        self, fields: Union[List, str, Set, Dict] = None, exclude_through: bool = False
+        self,
+        fields: Union[List, str, Set, Dict, None] = None,
+        exclude_through: bool = False,
     ) -> List:
         """
         Return a list of dictionaries with column values in order of the fields
@@ -308,7 +311,7 @@ class QuerysetProxy(Generic[T]):
 
     async def values_list(
         self,
-        fields: Union[List, str, Set, Dict] = None,
+        fields: Union[List, str, Set, Dict, None] = None,
         flatten: bool = False,
         exclude_through: bool = False,
     ) -> List:
@@ -361,7 +364,7 @@ class QuerysetProxy(Generic[T]):
 
     async def get_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
         """
-        Get's the first row from the db meeting the criteria set by kwargs.
+        Gets the first row from the db meeting the criteria set by kwargs.
 
         If no criteria set it will return the last row in db sorted by pk.
 
@@ -386,7 +389,7 @@ class QuerysetProxy(Generic[T]):
 
     async def get(self, *args: Any, **kwargs: Any) -> "T":
         """
-        Get's the first row from the db meeting the criteria set by kwargs.
+        Gets the first row from the db meeting the criteria set by kwargs.
 
         If no criteria set it will return the last row in db sorted by pk.
 
@@ -523,7 +526,7 @@ class QuerysetProxy(Generic[T]):
         """
         Combination of create and get methods.
 
-        Tries to get a row meeting the criteria fro kwargs
+        Tries to get a row meeting the criteria for kwargs
         and if `NoMatch` exception is raised
         it creates a new one with given kwargs and _defaults.
 
@@ -551,7 +554,7 @@ class QuerysetProxy(Generic[T]):
         :return: updated or created model
         :rtype: Model
         """
-        pk_name = self.queryset.model_meta.pkname
+        pk_name = self.queryset.model_config.pkname
         if "pk" in kwargs:
             kwargs[pk_name] = kwargs.pop("pk")
         if pk_name not in kwargs or kwargs.get(pk_name) is None:

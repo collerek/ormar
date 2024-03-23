@@ -20,27 +20,27 @@ For example to list pydantic model fields you can:
 
 ## Sqlalchemy Table
 
-To access auto created sqlalchemy table you can use `Model.Meta.table` parameter
+To access auto created sqlalchemy table you can use `Model.ormar_config.table` parameter
 
 For example to list table columns you can:
 
-```Python hl_lines="20"
+```Python hl_lines="24"
 --8<-- "../docs_src/models/docs004.py"
 ```
 
 !!!tip
-    You can access table primary key name by `Course.Meta.pkname`
+    You can access table primary key name by `Course.ormar_config.pkname`
 
 !!!info
     For more options visit official [sqlalchemy-metadata][sqlalchemy-metadata] documentation.
 
 ## Fields Definition
 
-To access ormar `Fields` you can use `Model.Meta.model_fields` parameter
+To access ormar `Fields` you can use `Model.ormar_config.model_fields` parameter
 
 For example to list table model fields you can:
 
-```Python hl_lines="20"
+```Python hl_lines="22"
 --8<-- "../docs_src/models/docs005.py"
 ```
 

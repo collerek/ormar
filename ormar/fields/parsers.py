@@ -5,7 +5,7 @@ import uuid
 from typing import Any, Callable, Dict, Optional, Union
 
 import pydantic
-from pydantic.datetime_parse import parse_date, parse_datetime, parse_time
+from pydantic_core import SchemaValidator, core_schema
 
 try:
     import orjson as json
@@ -21,17 +21,23 @@ def encode_bool(value: bool) -> str:
     return "true" if value else "false"
 
 
-def encode_decimal(value: decimal.Decimal, precision: int = None) -> float:
-    if precision:
-        return (
-            round(float(value), precision)
-            if isinstance(value, decimal.Decimal)
-            else value
+def encode_decimal(value: decimal.Decimal, precision: Optional[int] = None) -> float:
+    return (
+        round(float(value), precision) if isinstance(value, decimal.Decimal) else value
+    )
+
+
+def encode_bytes(value: Union[str, bytes], represent_as_string: bool = False) -> str:
+    if represent_as_string:
+        value = (
+            value if isinstance(value, str) else base64.b64encode(value).decode("utf-8")
         )
-    return float(value)
+    else:
+        value = value if isinstance(value, str) else value.decode("utf-8")
+    return value
 
 
-def encode_bytes(value: Union[str, bytes], represent_as_string: bool = False) -> bytes:
+def decode_bytes(value: str, represent_as_string: bool = False) -> bytes:
     if represent_as_string:
         return value if isinstance(value, bytes) else base64.b64decode(value)
     return value if isinstance(value, bytes) else value.encode("utf-8")
@@ -47,10 +53,10 @@ def encode_json(value: Any) -> Optional[str]:
 
 def re_dump_value(value: str) -> Union[str, bytes]:
     """
-    Rw-dumps choices due to different string representation in orjson and json
+    Re-dumps value due to different string representation in orjson and json
     :param value: string to re-dump
     :type value: str
-    :return: re-dumped choices
+    :return: re-dumped value
     :rtype: List[str]
     """
     try:
@@ -72,11 +78,20 @@ ENCODERS_MAP: Dict[type, Callable] = {
 
 SQL_ENCODERS_MAP: Dict[type, Callable] = {bool: encode_bool, **ENCODERS_MAP}
 
-DECODERS_MAP = {
+ADDITIONAL_PARAMETERS_MAP: Dict[type, str] = {
+    bytes: "represent_as_base64_str",
+    decimal.Decimal: "decimal_places",
+}
+
+
+DECODERS_MAP: Dict[type, Callable] = {
     bool: parse_bool,
-    datetime.datetime: parse_datetime,
-    datetime.date: parse_date,
-    datetime.time: parse_time,
+    datetime.datetime: SchemaValidator(core_schema.datetime_schema()).validate_python,
+    datetime.date: SchemaValidator(core_schema.date_schema()).validate_python,
+    datetime.time: SchemaValidator(core_schema.time_schema()).validate_python,
     pydantic.Json: json.loads,
-    decimal.Decimal: decimal.Decimal,
+    decimal.Decimal: lambda x, precision: decimal.Decimal(
+        x, context=decimal.Context(prec=precision)
+    ),
+    bytes: decode_bytes,
 }

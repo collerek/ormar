@@ -1,4 +1,13 @@
-from typing import TYPE_CHECKING, Type, cast
+import inspect
+import warnings
+from typing import TYPE_CHECKING, Any, List, Optional, Type, Union, cast
+
+from pydantic import BaseModel, create_model, field_serializer
+from pydantic._internal._decorators import DecoratorInfos
+from pydantic.fields import FieldInfo
+from pydantic_core.core_schema import (
+    SerializerFunctionWrapHandler,
+)
 
 import ormar
 from ormar import ForeignKey, ManyToMany
@@ -9,7 +18,7 @@ from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
-    from ormar.fields import ManyToManyField, ForeignKeyField
+    from ormar.fields import ForeignKeyField, ManyToManyField
 
 alias_manager = AliasManager()
 
@@ -82,7 +91,7 @@ def expand_reverse_relationships(model: Type["Model"]) -> None:
     :param model: model on which relation should be checked and registered
     :type model: Model class
     """
-    model_fields = list(model.Meta.model_fields.values())
+    model_fields = list(model.ormar_config.model_fields.values())
     for model_field in model_fields:
         if model_field.is_relation and not model_field.has_unresolved_forward_refs():
             model_field = cast("ForeignKeyField", model_field)
@@ -101,9 +110,9 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
     :type model_field: relation Field
     """
     related_name = model_field.get_related_name()
-    # TODO: Reverse relations does not register pydantic fields?
+    related_model_fields = model_field.to.ormar_config.model_fields
     if model_field.is_multi:
-        model_field.to.Meta.model_fields[related_name] = ManyToMany(  # type: ignore
+        related_model_fields[related_name] = ManyToMany(  # type: ignore
             model_field.owner,
             through=model_field.through,
             name=related_name,
@@ -122,7 +131,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
         register_through_shortcut_fields(model_field=model_field)
         adjust_through_many_to_many_model(model_field=model_field)
     else:
-        model_field.to.Meta.model_fields[related_name] = ForeignKey(  # type: ignore
+        related_model_fields[related_name] = ForeignKey(  # type: ignore
             model_field.owner,
             real_name=related_name,
             virtual=True,
@@ -133,7 +142,95 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
             skip_field=model_field.skip_reverse,
         )
     if not model_field.skip_reverse:
+        field_type = related_model_fields[related_name].__type__
+        field_type = replace_models_with_copy(
+            annotation=field_type, source_model_field=model_field.name
+        )
+        if not model_field.is_multi:
+            field_type = Union[field_type, List[field_type], None]  # type: ignore
+        model_field.to.model_fields[related_name] = FieldInfo.from_annotated_attribute(
+            annotation=field_type, default=None
+        )
+        add_field_serializer_for_reverse_relations(
+            to_model=model_field.to, related_name=related_name
+        )
+        model_field.to.model_rebuild(force=True)
         setattr(model_field.to, related_name, RelationDescriptor(name=related_name))
+
+
+def add_field_serializer_for_reverse_relations(
+    to_model: Type["Model"], related_name: str
+) -> None:
+    def serialize(
+        self: "Model", children: List["Model"], handler: SerializerFunctionWrapHandler
+    ) -> Any:
+        """
+        Serialize a list of nodes, handling circular references
+        by excluding the children.
+        """
+        try:
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore", message="Pydantic serializer warnings"
+                )
+                return handler(children)
+        except ValueError as exc:
+            if not str(exc).startswith("Circular reference"):  # pragma: no cover
+                raise exc
+
+            result = []
+            for child in children:
+                # If there is one circular ref dump all children as pk only
+                result.append({child.ormar_config.pkname: child.pk})
+            return result
+
+    decorator = field_serializer(related_name, mode="wrap", check_fields=False)(
+        serialize
+    )
+    setattr(to_model, f"serialize_{related_name}", decorator)
+    DecoratorInfos.build(to_model)
+
+
+def replace_models_with_copy(
+    annotation: Type, source_model_field: Optional[str] = None
+) -> Any:
+    """
+    Replaces all models in annotation with their copies to avoid circular references.
+
+    :param annotation: annotation to replace models in
+    :type annotation: Type
+    :return: annotation with replaced models
+    :rtype: Type
+    """
+    if inspect.isclass(annotation) and issubclass(annotation, ormar.Model):
+        return create_copy_to_avoid_circular_references(model=annotation)
+    elif hasattr(annotation, "__origin__") and annotation.__origin__ in {list, Union}:
+        if annotation.__origin__ == list:
+            return List[  # type: ignore
+                replace_models_with_copy(
+                    annotation=annotation.__args__[0],
+                    source_model_field=source_model_field,
+                )
+            ]
+        elif annotation.__origin__ == Union:
+            args = annotation.__args__
+            new_args = [
+                replace_models_with_copy(
+                    annotation=arg, source_model_field=source_model_field
+                )
+                for arg in args
+            ]
+            return Union[tuple(new_args)]
+    else:
+        return annotation
+
+
+def create_copy_to_avoid_circular_references(model: Type["Model"]) -> Type["BaseModel"]:
+    new_model = create_model(
+        model.__name__,
+        __base__=model,
+    )
+    return new_model
 
 
 def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:
@@ -147,7 +244,7 @@ def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:
     through_name = through_model.get_name(lower=True)
     related_name = model_field.get_related_name()
 
-    model_field.owner.Meta.model_fields[through_name] = Through(
+    model_field.owner.ormar_config.model_fields[through_name] = Through(
         through_model,
         real_name=through_name,
         virtual=True,
@@ -156,7 +253,7 @@ def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:
         nullable=True,
     )
 
-    model_field.to.Meta.model_fields[through_name] = Through(
+    model_field.to.ormar_config.model_fields[through_name] = Through(
         through_model,
         real_name=through_name,
         virtual=True,
@@ -209,10 +306,13 @@ def verify_related_name_dont_duplicate(
     :return: None
     :rtype: None
     """
-    fk_field = model_field.to.Meta.model_fields.get(related_name)
+    fk_field = model_field.to.ormar_config.model_fields.get(related_name)
     if not fk_field:  # pragma: no cover
         return
-    if fk_field.to != model_field.owner and fk_field.to.Meta != model_field.owner.Meta:
+    if (
+        fk_field.to != model_field.owner
+        and fk_field.to.ormar_config != model_field.owner.ormar_config
+    ):
         raise ormar.ModelDefinitionError(
             f"Relation with related_name "
             f"'{related_name}' "
@@ -237,8 +337,10 @@ def reverse_field_not_already_registered(model_field: "ForeignKeyField") -> bool
     :rtype: bool
     """
     related_name = model_field.get_related_name()
-    check_result = related_name not in model_field.to.Meta.model_fields
-    check_result2 = model_field.owner.get_name() not in model_field.to.Meta.model_fields
+    check_result = related_name not in model_field.to.ormar_config.model_fields
+    check_result2 = (
+        model_field.owner.get_name() not in model_field.to.ormar_config.model_fields
+    )
 
     if not check_result:
         verify_related_name_dont_duplicate(
