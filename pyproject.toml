@@ -128,6 +128,7 @@ pydantic-extra-types = "^2.5.0"
 watchdog = "<4.0.0"
 pytest-codspeed = "^2.2.0"
 mike = "^2.0.0"
+faker = "^24.3.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

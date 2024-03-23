@@ -25,7 +25,6 @@ import typing_extensions
 
 import ormar  # noqa I100
 from ormar.exceptions import ModelError, ModelPersistenceError
-from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.parsers import decode_bytes, encode_json
 from ormar.models.helpers import register_relation_in_alias_manager
@@ -1167,18 +1166,3 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     f"model without pk set!"
                 )
         return self_fields
-
-    def get_relation_model_id(self, target_field: "BaseField") -> Optional[int]:
-        """
-        Returns an id of the relation side model to use in prefetch query.
-
-        :param target_field: field with relation definition
-        :type target_field: "BaseField"
-        :return: value of pk if set
-        :rtype: Optional[int]
-        """
-        if target_field.virtual or target_field.is_multi:
-            return self.pk
-        related_name = target_field.name
-        related_model = getattr(self, related_name)
-        return None if not related_model else related_model.pk

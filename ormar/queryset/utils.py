@@ -6,7 +6,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Sequence,
     Set,
     Tuple,
     Type,
@@ -42,7 +41,7 @@ def check_node_not_dict_or_not_last_node(
 
 
 def translate_list_to_dict(  # noqa: CCR001
-    list_to_trans: Union[List, Set], is_order: bool = False
+    list_to_trans: Union[List, Set], default: Any = ...
 ) -> Dict:
     """
     Splits the list of strings by '__' and converts them to dictionary with nested
@@ -53,6 +52,8 @@ def translate_list_to_dict(  # noqa: CCR001
 
     :param list_to_trans: input list
     :type list_to_trans: Union[List, Set]
+    :param default: value to use as a default value
+    :type default: Any
     :param is_order: flag if change affects order_by clauses are they require special
     default value with sort order.
     :type is_order: bool
@@ -63,14 +64,7 @@ def translate_list_to_dict(  # noqa: CCR001
     for path in list_to_trans:
         current_level = new_dict
         parts = path.split("__")
-        def_val: Any = ...
-        if is_order:
-            if parts[0][0] == "-":
-                def_val = "desc"
-                parts[0] = parts[0][1:]
-            else:
-                def_val = "asc"
-
+        def_val: Any = default
         for ind, part in enumerate(parts):
             is_last = ind == len(parts) - 1
             if check_node_not_dict_or_not_last_node(
@@ -187,78 +181,6 @@ def update_dict_from_list(curr_dict: Dict, list_to_update: Union[List, Set]) -> 
     dict_to_update = translate_list_to_dict(list_to_update)
     update(updated_dict, dict_to_update)
     return updated_dict
-
-
-def extract_nested_models(  # noqa: CCR001
-    model: "Model", model_type: Type["Model"], select_dict: Dict, extracted: Dict
-) -> None:
-    """
-    Iterates over model relations and extracts all nested models from select_dict and
-    puts them in corresponding list under relation name in extracted dict.keys
-
-    Basically flattens all relation to dictionary of all related models, that can be
-    used on several models and extract all of their children into dictionary of lists
-    witch children models.
-
-    Goes also into nested relations if needed (specified in select_dict).
-
-    :param model: parent Model
-    :type model: Model
-    :param model_type: parent model class
-    :type model_type: Type[Model]
-    :param select_dict: dictionary of related models from select_related
-    :type select_dict: Dict
-    :param extracted: dictionary with already extracted models
-    :type extracted: Dict
-    """
-    follow = [rel for rel in model_type.extract_related_names() if rel in select_dict]
-    for related in follow:
-        child = getattr(model, related)
-        if not child:
-            continue
-        target_model = model_type.ormar_config.model_fields[related].to
-        if isinstance(child, list):
-            extracted.setdefault(target_model.get_name(), []).extend(child)
-            if select_dict[related] is not Ellipsis:
-                for sub_child in child:
-                    extract_nested_models(
-                        sub_child, target_model, select_dict[related], extracted
-                    )
-        else:
-            extracted.setdefault(target_model.get_name(), []).append(child)
-            if select_dict[related] is not Ellipsis:
-                extract_nested_models(
-                    child, target_model, select_dict[related], extracted
-                )
-
-
-def extract_models_to_dict_of_lists(
-    model_type: Type["Model"],
-    models: Sequence["Model"],
-    select_dict: Dict,
-    extracted: Optional[Dict] = None,
-) -> Dict:
-    """
-    Receives a list of models and extracts all of the children and their children
-    into dictionary of lists with children models, flattening the structure to one dict
-    with all children models under their relation keys.
-
-    :param model_type: parent model class
-    :type model_type: Type[Model]
-    :param models: list of models from which related models should be extracted.
-    :type models: List[Model]
-    :param select_dict: dictionary of related models from select_related
-    :type select_dict: Dict
-    :param extracted: dictionary with already extracted models
-    :type extracted: Dict
-    :return: dictionary of lists f related models
-    :rtype: Dict
-    """
-    if not extracted:
-        extracted = dict()
-    for model in models:
-        extract_nested_models(model, model_type, select_dict, extracted)
-    return extracted
 
 
 def get_relationship_alias_model_and_str(
