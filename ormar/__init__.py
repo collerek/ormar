@@ -20,6 +20,7 @@ And what's a better name for python ORM than snakes cabinet :)
 
 """
 
+from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I001
 from importlib.metadata import version
 
 from ormar.decorators import (  # noqa: I100
@@ -73,7 +74,6 @@ from ormar.fields import (
 
 # noqa: I100
 from ormar.models import ExcludableItems, Extra, Model, OrmarConfig
-from ormar.protocols import QuerySetProtocol, RelationProtocol  # noqa: I001
 from ormar.queryset import OrderAction, QuerySet, and_, or_
 from ormar.relations import RelationType
 from ormar.signals import Signal
