@@ -1,32 +1,26 @@
-import databases
-import pytest
-import sqlalchemy
-import sqlalchemy as sa
-
 import ormar
-from tests.settings import DATABASE_URL
+from pydantic import computed_field
 
-metadata = sa.MetaData()
-database = databases.Database(DATABASE_URL)
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config()
 
 
 class BaseFoo(ormar.Model):
-    class Meta:
-        abstract = True
+    ormar_config = base_ormar_config.copy(abstract=True)
 
     name: str = ormar.String(max_length=100)
 
-    @ormar.property_field
+    @computed_field
     def prefixed_name(self) -> str:
         return "prefix_" + self.name
 
 
 class Foo(BaseFoo):
-    class Meta:
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
-    @ormar.property_field
+    @computed_field
     def double_prefixed_name(self) -> str:
         return "prefix2_" + self.name
 
@@ -34,30 +28,22 @@ class Foo(BaseFoo):
 
 
 class Bar(BaseFoo):
-    class Meta:
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
-    @ormar.property_field
+    @computed_field
     def prefixed_name(self) -> str:
         return "baz_" + self.name
 
     id: int = ormar.Integer(primary_key=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_property_fields_are_inherited():
     foo = Foo(name="foo")
     assert foo.prefixed_name == "prefix_foo"
-    assert foo.dict() == {
+    assert foo.model_dump() == {
         "name": "foo",
         "id": None,
         "double_prefixed_name": "prefix2_foo",
@@ -66,4 +52,4 @@ def test_property_fields_are_inherited():
 
     bar = Bar(name="bar")
     assert bar.prefixed_name == "baz_bar"
-    assert bar.dict() == {"name": "bar", "id": None, "prefixed_name": "baz_bar"}
+    assert bar.model_dump() == {"name": "bar", "id": None, "prefixed_name": "baz_bar"}

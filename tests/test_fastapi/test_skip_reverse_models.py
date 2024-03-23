@@ -1,45 +1,21 @@
 from typing import List, Optional
 
-import databases
+import ormar
 import pytest
-import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-import ormar
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests, lifespan
+from tests.settings import create_config
 
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
-app.state.database = database
-
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 headers = {"content-type": "application/json"}
 
 
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
-
-
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
-
-
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     first_name: str = ormar.String(max_length=80)
@@ -47,16 +23,18 @@ class Author(ormar.Model):
 
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
 
 
+class Category2(Category):
+    model_config = dict(extra="forbid")
+
+
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -64,12 +42,12 @@ class Post(ormar.Model):
     author: Optional[Author] = ormar.ForeignKey(Author, skip_reverse=True)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
+
+
+@app.post("/categories/forbid/", response_model=Category2)
+async def create_category_forbid(category: Category2):  # pragma: no cover
+    pass
 
 
 @app.post("/categories/", response_model=Category)
@@ -115,7 +93,7 @@ async def test_queries():
         assert response.status_code == 200
         response = await client.get("/categories/")
         assert response.status_code == 200
-        assert not "posts" in response.json()
+        assert "posts" not in response.json()
         categories = [Category(**x) for x in response.json()]
         assert categories[0] is not None
         assert categories[0].name == "Test category2"
@@ -139,7 +117,7 @@ async def test_queries():
         response = await client.post("/posts/", json=right_post, headers=headers)
         assert response.status_code == 200
 
-        Category.__config__.extra = "allow"
+        Category.model_config["extra"] = "allow"
         response = await client.get("/posts/")
         assert response.status_code == 200
         posts = [Post(**x) for x in response.json()]
@@ -150,6 +128,6 @@ async def test_queries():
         wrong_category = {"name": "Test category3", "posts": [{"title": "Test Post"}]}
 
         # cannot add posts if skipped, will be error with extra forbid
-        Category.__config__.extra = "forbid"
-        response = await client.post("/categories/", json=wrong_category)
+        assert Category2.model_config["extra"] == "forbid"
+        response = await client.post("/categories/forbid/", json=wrong_category)
         assert response.status_code == 422

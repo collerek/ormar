@@ -1,32 +1,23 @@
 from typing import List, Optional
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
 
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class MainMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
 
 
 class Role(ormar.Model):
-    class Meta(MainMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255, nullable=False)
 
 
 class User(ormar.Model):
-    class Meta(MainMeta):
-        tablename: str = "users"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255, nullable=False)
@@ -36,20 +27,14 @@ class User(ormar.Model):
 
 
 class Tier(ormar.Model):
-    class Meta:
-        tablename = "tiers"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -57,15 +42,15 @@ class Category(ormar.Model):
 
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
     created_by: Optional[User] = ormar.ForeignKey(User)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -90,13 +75,13 @@ def sample_data():
 def test_dumping_to_dict_no_exclusion(sample_data):
     item1, item2 = sample_data
 
-    dict1 = item1.dict()
+    dict1 = item1.model_dump()
     assert dict1["name"] == "Teddy Bear"
     assert dict1["category"]["name"] == "Toys"
     assert dict1["category"]["tier"]["name"] == "Tier I"
     assert dict1["created_by"]["email"] == "test@test.com"
 
-    dict2 = item2.dict()
+    dict2 = item2.model_dump()
     assert dict2["name"] == "M16"
     assert dict2["category"]["name"] == "Weapons"
     assert dict2["created_by"]["email"] == "test@test.com"
@@ -104,17 +89,17 @@ def test_dumping_to_dict_no_exclusion(sample_data):
 
 def test_dumping_to_dict_exclude_set(sample_data):
     item1, item2 = sample_data
-    dict3 = item2.dict(exclude={"name"})
+    dict3 = item2.model_dump(exclude={"name"})
     assert "name" not in dict3
     assert dict3["category"]["name"] == "Weapons"
     assert dict3["created_by"]["email"] == "test@test.com"
 
-    dict4 = item2.dict(exclude={"category"})
+    dict4 = item2.model_dump(exclude={"category"})
     assert dict4["name"] == "M16"
     assert "category" not in dict4
     assert dict4["created_by"]["email"] == "test@test.com"
 
-    dict5 = item2.dict(exclude={"category", "name"})
+    dict5 = item2.model_dump(exclude={"category", "name"})
     assert "name" not in dict5
     assert "category" not in dict5
     assert dict5["created_by"]["email"] == "test@test.com"
@@ -122,7 +107,7 @@ def test_dumping_to_dict_exclude_set(sample_data):
 
 def test_dumping_to_dict_exclude_dict(sample_data):
     item1, item2 = sample_data
-    dict6 = item2.dict(exclude={"category": {"name"}, "name": ...})
+    dict6 = item2.model_dump(exclude={"category": {"name"}, "name": ...})
     assert "name" not in dict6
     assert "category" in dict6
     assert "name" not in dict6["category"]
@@ -131,7 +116,7 @@ def test_dumping_to_dict_exclude_dict(sample_data):
 
 def test_dumping_to_dict_exclude_nested_dict(sample_data):
     item1, item2 = sample_data
-    dict1 = item2.dict(exclude={"category": {"tier": {"name"}}, "name": ...})
+    dict1 = item2.model_dump(exclude={"category": {"tier": {"name"}}, "name": ...})
     assert "name" not in dict1
     assert "category" in dict1
     assert dict1["category"]["name"] == "Weapons"
@@ -141,7 +126,7 @@ def test_dumping_to_dict_exclude_nested_dict(sample_data):
 
 def test_dumping_to_dict_exclude_and_include_nested_dict(sample_data):
     item1, item2 = sample_data
-    dict1 = item2.dict(
+    dict1 = item2.model_dump(
         exclude={"category": {"tier": {"name"}}}, include={"name", "category"}
     )
     assert dict1.get("name") == "M16"
@@ -150,7 +135,7 @@ def test_dumping_to_dict_exclude_and_include_nested_dict(sample_data):
     assert "created_by" not in dict1
     assert dict1["category"]["tier"].get("name") is None
 
-    dict2 = item1.dict(
+    dict2 = item1.model_dump(
         exclude={"id": ...},
         include={"name": ..., "category": {"name": ..., "tier": {"id"}}},
     )
@@ -164,25 +149,31 @@ def test_dumping_to_dict_exclude_and_include_nested_dict(sample_data):
 
 def test_dumping_dict_without_primary_keys(sample_data):
     item1, item2 = sample_data
-    dict1 = item2.dict(exclude_primary_keys=True)
+    dict1 = item2.model_dump(exclude_primary_keys=True)
     assert dict1 == {
         "category": {"name": "Weapons", "tier": {"name": "Tier I"}},
         "created_by": {
             "email": "test@test.com",
             "first_name": "Anna",
             "password": "ijacids7^*&",
-            "roles": [{"name": "User"}, {"name": "Admin"}],
+            "roles": [
+                {"name": "User"},
+                {"name": "Admin"},
+            ],
         },
         "name": "M16",
     }
-    dict2 = item1.dict(exclude_primary_keys=True)
+    dict2 = item1.model_dump(exclude_primary_keys=True)
     assert dict2 == {
         "category": {"name": "Toys", "tier": {"name": "Tier I"}},
         "created_by": {
             "email": "test@test.com",
             "first_name": "Anna",
             "password": "ijacids7^*&",
-            "roles": [{"name": "User"}, {"name": "Admin"}],
+            "roles": [
+                {"name": "User"},
+                {"name": "Admin"},
+            ],
         },
         "name": "Teddy Bear",
     }

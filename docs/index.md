@@ -21,7 +21,7 @@
 
 ### Overview
 
-The `ormar` package is an async mini ORM for Python, with support for **Postgres,
+The `ormar` package is an async ORM for Python, with support for **Postgres,
 MySQL**, and **SQLite**.
 
 The main benefits of using `ormar` are:
@@ -53,13 +53,7 @@ Yet remember that those are - well - tests and not all solutions are suitable to
 
 ### Part of the `fastapi` ecosystem
 
-As part of the fastapi ecosystem `ormar` is supported in libraries that somehow work with databases.
-
-As of now `ormar` is supported by:
-
-*  [`fastapi-users`](https://github.com/frankie567/fastapi-users)
-*  [`fastapi-crudrouter`](https://github.com/awtkns/fastapi-crudrouter)
-*  [`fastapi-pagination`](https://github.com/uriyyo/fastapi-pagination)
+As part of the fastapi ecosystem `ormar` is supported in selected libraries that somehow work with databases.
 
 Ormar remains sql dialect agnostic - so only columns working in all supported backends are implemented.
 
@@ -76,7 +70,6 @@ Ormar is built with:
   * [`sqlalchemy core`][sqlalchemy-core] for query building.
   * [`databases`][databases] for cross-database async support.
   * [`pydantic`][pydantic] for data validation.
-  * `typing_extensions` for python 3.6 - 3.7
 
 ### License
 
@@ -128,17 +121,20 @@ For tests and basic applications the `sqlalchemy` is more than enough:
 # 1. Imports
 import sqlalchemy
 import databases
+import ormar
 
 # 2. Initialization
 DATABASE_URL = "sqlite:///db.sqlite"
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = ormar.OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=databases.Database(DATABASE_URL),
+    engine=sqlalchemy.create_engine(DATABASE_URL),
+)
 
 # Define models here
 
 # 3. Database creation and tables creation
-engine = sqlalchemy.create_engine(DATABASE_URL)
-metadata.create_all(engine)
+base_ormar_config.metadata.create_all(engine)
 ```
 
 For a sample configuration of alembic and more information regarding migrations and
@@ -175,45 +171,39 @@ Note that you can find the same script in examples folder on github.
 from typing import Optional
 
 import databases
-import pydantic
 
 import ormar
 import sqlalchemy
 
 DATABASE_URL = "sqlite:///db.sqlite"
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = ormar.OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=databases.Database(DATABASE_URL),
+    engine = sqlalchemy.create_engine(DATABASE_URL),
+)
 
-
-# note that this step is optional -> all ormar cares is a internal
-# class with name Meta and proper parameters, but this way you do not
-# have to repeat the same parameters if you use only one database
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
-
+# note that this step is optional -> all ormar cares is a field with name
+# ormar_config # and proper parameters, but this way you do not have to repeat
+# the same parameters if you use only one database
+#
 # Note that all type hints are optional
 # below is a perfectly valid model declaration
 # class Author(ormar.Model):
-#     class Meta(BaseMeta):
-#         tablename = "authors"
+#     ormar_config = base_ormar_config.copy(tablename="authors")
 #
 #     id = ormar.Integer(primary_key=True) # <= notice no field types
 #     name = ormar.String(max_length=100)
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
@@ -224,10 +214,9 @@ class Book(ormar.Model):
 # create the database
 # note that in production you should use migrations
 # note that this is not required if you connect to existing database
-engine = sqlalchemy.create_engine(DATABASE_URL)
 # just to be sure we clear the db before
-metadata.drop_all(engine)
-metadata.create_all(engine)
+base_ormar_config.metadata.drop_all(engine)
+base_ormar_config.metadata.create_all(engine)
 
 
 # all functions below are divided into functionality categories
@@ -662,9 +651,7 @@ The following keyword arguments are supported on all field types.
   * `server_default: Any`
   * `index: bool`
   * `unique: bool`
-  * `choices: typing.Sequence`
   * `name: str`
-  * `pydantic_only: bool`
 
 All fields are required unless one of the following is set:
 
@@ -674,7 +661,6 @@ All fields are required unless one of the following is set:
   * `server_default` - Set a default value for the field on server side (like sqlalchemy's `func.now()`). **Not available for relation fields**
   * `primary key` with `autoincrement` - When a column is set to primary key and autoincrement is set on this column.
 Autoincrement is set by default on int primary keys.
-  * `pydantic_only` - Field is available only as normal pydantic field, not stored in the database.
 
 ### Available signals
 

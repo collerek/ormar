@@ -1,0 +1,39 @@
+name: codspeed-benchmarks
+
+on:
+  push:
+    branches: [ master, pydantic_v2 ]
+  pull_request:
+    branches: [ master, pydantic_v2 ]
+  # `workflow_dispatch` allows CodSpeed to trigger backtest
+  # performance analysis in order to generate initial data.
+  workflow_dispatch:
+
+jobs:
+  benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.3.3
+        with:
+          version: 1.4.2
+          virtualenvs-create: false
+
+      - name: Poetry details
+        run: |
+          poetry --version
+          poetry config --list
+
+      - name: Install dependencies
+        run: poetry install --extras "all"
+
+      - name: Run benchmarks
+        uses: CodSpeedHQ/action@v2
+        with:
+          token: ${{ secrets.CODSPEED_TOKEN }}
+          run: poetry run pytest benchmarks/ --codspeed

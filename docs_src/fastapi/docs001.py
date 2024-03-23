@@ -1,46 +1,23 @@
 from typing import List, Optional
 
-import databases
-import sqlalchemy
-from fastapi import FastAPI
-
 import ormar
+from fastapi import FastAPI
+from tests.lifespan import lifespan
+from tests.settings import create_config
 
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database("sqlite:///test.db")
-app.state.database = database
-
-
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="items")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -68,7 +45,7 @@ async def create_category(category: Category):
 @app.put("/items/{item_id}")
 async def get_item(item_id: int, item: Item):
     item_db = await Item.objects.get(pk=item_id)
-    return await item_db.update(**item.dict())
+    return await item_db.update(**item.model_dump())
 
 
 @app.delete("/items/{item_id}")

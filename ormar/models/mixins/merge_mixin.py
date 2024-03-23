@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, cast
 
 import ormar
 from ormar.queryset.utils import translate_list_to_dict
@@ -69,7 +69,7 @@ class MergeModelMixin:
 
     @classmethod
     def merge_two_instances(
-        cls, one: "Model", other: "Model", relation_map: Dict = None
+        cls, one: "Model", other: "Model", relation_map: Optional[Dict] = None
     ) -> "Model":
         """
         Merges current (other) Model and previous one (one) and returns the current

@@ -22,11 +22,13 @@ Field is not required if (any/many/all) of following:
 
 Example:
 ```python
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata
+    database=database
+)
+
 class User(ormar.Model):
-    class Meta:
-        tablename: str = "users"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255)
@@ -50,9 +52,9 @@ async def create_user(user: User):  # here we use ormar.Model in request paramet
 That means that if you do not pass i.e. `first_name` in request it will validate correctly (as field is optional), save in the database and return the saved record without this field (which will also pass validation).
 
 !!!Note
-        Note that although you do not pass the **field value**, the **field itself** is still present in the `response_model` that means it **will be present in response data** and set to `None`.
+    Note that although you do not pass the **field value**, the **field itself** is still present in the `response_model` that means it **will be present in response data** and set to `None`.
         
-        If you want to fully exclude the field from the result read on.
+    If you want to fully exclude the field from the result read on.
 
 ### FastApi `response_model_exclude`
 
@@ -61,7 +63,7 @@ Fastapi has `response_model_exclude` that accepts a set (or a list) of field nam
 That has it's limitation as `ormar` and `pydantic` accepts also dictionaries in which you can set exclude/include columns also on nested models (more on this below)
 
 !!!Warning
-        Note that you cannot exclude required fields when using `response_model` as it will fail during validation.
+    Note that you cannot exclude required fields when using `response_model` as it will fail during validation.
 
 ```python
 @app.post("/users/", response_model=User, response_model_exclude={"password"})
@@ -96,9 +98,9 @@ with client as client:
 ```
 
 !!!Note
-        Note how in above example `password` field is fully gone from the response data. 
+    Note how in above example `password` field is fully gone from the response data. 
         
-        Note that you can use this method only for non-required fields.
+    Note that you can use this method only for non-required fields.
 
 #### Nested models excludes
 
@@ -111,13 +113,13 @@ One is a dictionary with nested fields that represents the model tree structure,
 Assume for a second that our user's category is a separate model:
 
 ```python
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata 
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    metadata=metadata
+    database=database
+)
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename: str = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
     
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255)    
@@ -125,8 +127,7 @@ class Category(ormar.Model):
 
 
 class User(ormar.Model):
-    class Meta(BaseMeta):
-        tablename: str = "users"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255)
@@ -147,39 +148,39 @@ Note that you can go in deeper models with double underscore, and if you want to
 In example `response_model_exclude={"category__priority", "category__other_field", category__nested_model__nested_model_field}` etc.
 
 !!!Note
-        To read more about possible excludes and how to structure your exclude dictionary or set visit [fields](../queries/select-columns.md#fields) section of documentation
+    To read more about possible excludes and how to structure your exclude dictionary or set visit [fields](../queries/select-columns.md#fields) section of documentation
 
 !!!Note
-        Note that apart from `response_model_exclude` parameter `fastapi` supports also other parameters inherited from `pydantic`.
-        All of them works also with ormar, but can have some nuances so best to read [dict](../models/methods.md#dict) part of the documentation.
+    Note that apart from `response_model_exclude` parameter `fastapi` supports also other parameters inherited from `pydantic`.
+    All of them works also with ormar, but can have some nuances so best to read [dict](../models/methods.md#dict) part of the documentation.
 
-### Exclude in `Model.dict()`
+### Exclude in `Model.model_dump()`
 
 Alternatively you can just return a dict from `ormar.Model` and use . 
 
 Like this you can also set exclude/include as dict and exclude fields on nested models too.
 
 !!!Warning
-        Not using a `response_model` will cause api documentation having no response example and schema since in theory response can have any format.
+    Not using a `response_model` will cause api documentation having no response example and schema since in theory response can have any format.
 
 ```python
 @app.post("/users2/", response_model=User)
 async def create_user2(user: User):
     user = await user.save()
-    return user.dict(exclude={'password'})
-    # could be also something like return user.dict(exclude={'category': {'priority'}}) to exclude category priority
+    return user.model_dump(exclude={'password'})
+    # could be also something like return user.model_dump(exclude={'category': {'priority'}}) to exclude category priority
 ```
 
 !!!Note
-        Note that above example will nullify the password field even if you pass it in request, but the **field will be still there** as it's part of the response schema, the value will be set to `None`.
+    Note that above example will nullify the password field even if you pass it in request, but the **field will be still there** as it's part of the response schema, the value will be set to `None`.
 
-If you want to fully exclude the field with this approach simply don't use `response_model` and exclude in Model's dict()
+If you want to fully exclude the field with this approach simply don't use `response_model` and exclude in Model's model_dump()
 
 Alternatively you can just return a dict from ormar model. 
 Like this you can also set exclude/include as dict and exclude fields on nested models.
 
 !!!Note
-        In theory you loose validation of response here but since you operate on `ormar.Models` the response data have already been validated after db query (as ormar model is pydantic model).
+    In theory you loose validation of response here but since you operate on `ormar.Models` the response data have already been validated after db query (as ormar model is pydantic model).
 
 So if you skip `response_model` altogether you can do something like this:
 
@@ -187,13 +188,13 @@ So if you skip `response_model` altogether you can do something like this:
 @app.post("/users4/") # note no response_model
 async def create_user4(user: User):
     user = await user.save()
-    return user.dict(exclude={'last_name'})
+    return user.model_dump(exclude={'last_name'})
 ```
 
 !!!Note
-        Note that when you skip the response_model you can now **exclude also required fields** as the response is no longer validated after being returned.
+    Note that when you skip the response_model you can now **exclude also required fields** as the response is no longer validated after being returned.
         
-        The cost of this solution is that you loose also api documentation as response schema in unknown from fastapi perspective. 
+    The cost of this solution is that you loose also api documentation as response schema in unknown from fastapi perspective. 
 
 ### Generate `pydantic` model from `ormar.Model`
 
@@ -210,14 +211,14 @@ async def create_user3(user: User):
 ```
 
 !!!Note
-        To see more examples and read more visit [get_pydantic](../models/methods.md#get_pydantic) part of the documentation.
+    To see more examples and read more visit [get_pydantic](../models/methods.md#get_pydantic) part of the documentation.
 
 !!!Warning
-        The `get_pydantic` method generates all models in a tree of nested models according to an algorithm that allows to avoid loops in models (same algorithm that is used in `dict()`, `select_all()` etc.)
+    The `get_pydantic` method generates all models in a tree of nested models according to an algorithm that allows to avoid loops in models (same algorithm that is used in `model_dump()`, `select_all()` etc.)
         
-        That means that nested models won't have reference to parent model (by default ormar relation is bidirectional).
+    That means that nested models won't have reference to parent model (by default ormar relation is bidirectional).
         
-        Note also that if given model exists in a tree more than once it will be doubled in pydantic models (each occurrence will have separate own model). That way you can exclude/include different fields on different leafs of the tree.
+    Note also that if given model exists in a tree more than once it will be doubled in pydantic models (each occurrence will have separate own model). That way you can exclude/include different fields on different leafs of the tree.
 
 ### Separate `pydantic` model
 
@@ -229,8 +230,7 @@ Sample:
 import pydantic
 
 class UserBase(pydantic.BaseModel):
-    class Config:
-        orm_mode = True
+    model_config = pydantic.ConfigDict(from_attributes=True)
 
     email: str
     first_name: str

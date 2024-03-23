@@ -2,50 +2,29 @@
 import uuid
 from typing import List
 
-import databases
+import ormar
 import pydantic
 import pytest
-import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-import ormar
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests, lifespan
+from tests.settings import create_config
 
-app = FastAPI()
-
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
-app.state.database = database
-
-
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
-
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 class Thing(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "things"
+    ormar_config = base_ormar_config.copy(tablename="things")
 
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     name: str = ormar.Text(default="")
     js: pydantic.Json = ormar.JSON()
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 @app.get("/things", response_model=List[Thing])
@@ -87,14 +66,6 @@ async def read_things_untyped():
     return await Thing.objects.order_by("name").all()
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
-
-
 @pytest.mark.asyncio
 async def test_json_is_required_if_not_nullable():
     with pytest.raises(pydantic.ValidationError):
@@ -104,8 +75,7 @@ async def test_json_is_required_if_not_nullable():
 @pytest.mark.asyncio
 async def test_json_is_not_required_if_nullable():
     class Thing2(ormar.Model):
-        class Meta(BaseMeta):
-            tablename = "things2"
+        ormar_config = base_ormar_config.copy(tablename="things2")
 
         id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
         name: str = ormar.Text(default="")
@@ -116,16 +86,16 @@ async def test_json_is_not_required_if_nullable():
 
 @pytest.mark.asyncio
 async def test_setting_values_after_init():
-    async with database:
+    async with base_ormar_config.database:
         t1 = Thing(id="67a82813-d90c-45ff-b546-b4e38d7030d7", name="t1", js=["thing1"])
-        assert '["thing1"]' in t1.json()
+        assert '["thing1"]' in t1.model_dump_json()
         await t1.save()
-        t1.json()
-        assert '["thing1"]' in t1.json()
+        t1.model_dump_json()
+        assert '["thing1"]' in t1.model_dump_json()
 
-        assert '["thing1"]' in (await Thing.objects.get(id=t1.id)).json()
+        assert '["thing1"]' in (await Thing.objects.get(id=t1.id)).model_dump_json()
         await t1.update()
-        assert '["thing1"]' in (await Thing.objects.get(id=t1.id)).json()
+        assert '["thing1"]' in (await Thing.objects.get(id=t1.id)).model_dump_json()
 
 
 @pytest.mark.asyncio
