@@ -87,7 +87,7 @@ all = [
 pytest = "^7.4.4"
 pytest-cov = "^4.0.0"
 codecov = "^2.1.13"
-pytest-asyncio = "^0.21.0"
+pytest-asyncio = ">=0.21,<0.24"
 fastapi = "^0.109.1"
 
 black = "^24.1.0"
