@@ -1,5 +1,6 @@
 import collections.abc
 import copy
+from functools import reduce
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -16,65 +17,26 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar import BaseField, Model
 
 
-def check_node_not_dict_or_not_last_node(
-    part: str, is_last: bool, current_level: Any
-) -> bool:
-    """
-    Checks if given name is not present in the current level of the structure.
-    Checks if given name is not the last name in the split list of parts.
-    Checks if the given name in current level is not a dictionary.
-
-    All those checks verify if there is a need for deeper traversal.
-
-    :param part:
-    :type part: str
-    :param is_last: flag to check if last element
-    :type is_last: bool
-    :param current_level: current level of the traversed structure
-    :type current_level: Any
-    :return: result of the check
-    :rtype: bool
-    """
-    return (part not in current_level and not is_last) or (
-        part in current_level and not isinstance(current_level[part], dict)
-    )
+def string_to_dict(to_translate: str, default: Any = ...) -> Dict:
+    list_to_translate = to_translate.split("__")
+    initial = {list_to_translate.pop(-1): default}
+    return reduce(lambda x, y: {y: x}, reversed(list_to_translate), initial)
 
 
-def translate_list_to_dict(  # noqa: CCR001
-    list_to_trans: Union[List, Set], default: Any = ...
-) -> Dict:
-    """
-    Splits the list of strings by '__' and converts them to dictionary with nested
-    models grouped by parent model. That way each model appears only once in the whole
-    dictionary and children are grouped under parent name.
+def translate_list_to_dict(list_to_trans: Union[List, Set], default: Any = ...) -> Dict:
+    dictionaries = [string_to_dict(x, default=default) for x in list_to_trans]
+    return reduce(deep_merge, dictionaries, {})
 
-    Default required key ise Ellipsis like in pydantic.
 
-    :param list_to_trans: input list
-    :type list_to_trans: Union[List, Set]
-    :param default: value to use as a default value
-    :type default: Any
-    :param is_order: flag if change affects order_by clauses are they require special
-    default value with sort order.
-    :type is_order: bool
-    :return: converted to dictionary input list
-    :rtype: Dict
-    """
-    new_dict: Dict = dict()
-    for path in list_to_trans:
-        current_level = new_dict
-        parts = path.split("__")
-        def_val: Any = default
-        for ind, part in enumerate(parts):
-            is_last = ind == len(parts) - 1
-            if check_node_not_dict_or_not_last_node(
-                part=part, is_last=is_last, current_level=current_level
-            ):
-                current_level[part] = dict()
-            elif part not in current_level:
-                current_level[part] = def_val
-            current_level = current_level[part]
-    return new_dict
+def deep_merge(a: Any, b: Any) -> Any:
+    if not isinstance(a, dict) or not isinstance(b, dict):
+        return a if b is None else b
+    common_keys = set(a.keys()) & set(b.keys())
+    return {
+        **{k: v for k, v in a.items() if k not in common_keys},
+        **{k: v for k, v in b.items() if k not in common_keys},
+        **{key: deep_merge(a.get(key), b.get(key)) for key in common_keys},
+    }
 
 
 def convert_set_to_required_dict(set_to_convert: set) -> Dict:
