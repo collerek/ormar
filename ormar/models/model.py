@@ -1,6 +1,5 @@
+import uuid
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, TypeVar, Union
-
-from sqlalchemy import literal_column
 
 import ormar.queryset  # noqa I100
 from ormar.exceptions import ModelDefinitionError, ModelPersistenceError, NoMatch
@@ -95,17 +94,20 @@ class Model(ModelRow):
         self_fields = self.translate_columns_to_aliases(self_fields)
         expr = self.ormar_config.table.insert()
         expr = expr.values(**self_fields)
-        if self.db_backend_name() != "sqlite":
-            expr = expr.returning(literal_column(self.ormar_config.pkname))
-        else:
-            if self.ormar_config.model_fields[self.ormar_config.pkname].server_default:
-                raise ModelDefinitionError(
-                    "Server default clause on sqlite backend "
-                    "is not supported for primary key."
-                )
+        if (
+            self.db_backend_name() == "sqlite"
+            and self.ormar_config.model_fields[self.ormar_config.pkname].server_default
+        ):
+            raise ModelDefinitionError(
+                "Server default clause on sqlite backend "
+                "is not supported for primary key."
+            )
 
         pk = await self.ormar_config.database.execute(expr)
-        if pk and isinstance(pk, self.pk_type()):
+        if pk and (
+            isinstance(pk, self.pk_type())
+            or (self.pk_type() == uuid.UUID and isinstance(pk, (str, bytes)))
+        ):
             setattr(self, self.ormar_config.pkname, pk)
 
         self.set_save_status(True)
