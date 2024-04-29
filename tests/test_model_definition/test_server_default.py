@@ -1,8 +1,11 @@
 import time
+import uuid
+from contextlib import nullcontext
 from datetime import datetime
 
 import ormar
 import pytest
+from ormar import ModelDefinitionError
 from sqlalchemy import func, text
 
 from tests.lifespan import init_tests
@@ -19,6 +22,28 @@ class Product(ormar.Model):
     company: str = ormar.String(max_length=200, server_default="Acme")
     sort_order: int = ormar.Integer(server_default=text("10"))
     created: datetime = ormar.DateTime(server_default=func.now())
+
+
+def get_server_default_function() -> str:
+    dialect = base_ormar_config.database._backend._dialect.name
+
+    uuid_funct = {
+        "postgresql": "gen_random_uuid()",
+        "mysql": "UUID()",
+        "sqlite": str(uuid.uuid4()),
+    }
+    return uuid_funct[dialect]
+
+
+class ServerId(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="server_ids")
+
+    id: uuid.UUID = ormar.UUID(
+        primary_key=True,
+        server_default=get_server_default_function(),
+        uuid_format="string",
+    )
+    name: str = ormar.String(max_length=100)
 
 
 create_test_database = init_tests(base_ormar_config)
@@ -68,3 +93,15 @@ async def test_model_creation():
             if Product.db_backend_name() != "postgresql":
                 # postgres use transaction timestamp so it will remain the same
                 assert p1.created != p2.created  # pragma nocover
+
+
+@pytest.mark.asyncio
+async def test_uuid_server_function():
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            with (
+                pytest.raises(ModelDefinitionError)
+                if base_ormar_config.database._backend._dialect.name == "sqlite"
+                else nullcontext()
+            ):
+                await ServerId(name="test").save()
