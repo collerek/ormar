@@ -451,6 +451,11 @@ async def test_offset():
 async def test_model_first():
     async with base_ormar_config.database:
         async with base_ormar_config.database.transaction(force_rollback=True):
+            with pytest.raises(ormar.NoMatch):
+                await User.objects.first()
+
+            assert await User.objects.first_or_none() is None
+
             tom = await User.objects.create(name="Tom")
             jane = await User.objects.create(name="Jane")
 
@@ -459,6 +464,9 @@ async def test_model_first():
             assert await User.objects.filter(name="Jane").first() == jane
             with pytest.raises(NoMatch):
                 await User.objects.filter(name="Lucy").first()
+
+            assert await User.objects.first_or_none(name="Lucy") is None
+            assert await User.objects.filter(name="Lucy").first_or_none() is None
 
             assert await User.objects.order_by("name").first() == jane
 
