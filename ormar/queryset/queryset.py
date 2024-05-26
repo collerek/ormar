@@ -903,6 +903,7 @@ class QuerySet(Generic[T]):
         Gets the first row from the db ordered by primary key column ascending.
 
         :raises NoMatch: if no rows are returned
+        :raises MultipleMatches: if more than 1 row is returned.
         :param kwargs: fields names and proper value types
         :type kwargs: Any
         :return: returned model
@@ -938,6 +939,7 @@ class QuerySet(Generic[T]):
 
         If no match is found None will be returned.
 
+        :raises MultipleMatches: if more than 1 row is returned.
         :param kwargs: fields names and proper value types
         :type kwargs: Any
         :return: returned model
