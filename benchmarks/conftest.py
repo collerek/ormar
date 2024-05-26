@@ -3,31 +3,20 @@ import random
 import string
 import time
 
-import databases
 import nest_asyncio
+import ormar
 import pytest
 import pytest_asyncio
-import sqlalchemy
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-import ormar
-from tests.settings import DATABASE_URL
-
+base_ormar_config = create_config()
 nest_asyncio.apply()
-
-
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
 pytestmark = pytest.mark.asyncio
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
-
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -41,8 +30,7 @@ class AuthorWithManyFields(Author):
 
 
 class Publisher(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "publishers"
+    ormar_config = base_ormar_config.copy(tablename="publishers")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -50,8 +38,7 @@ class Publisher(ormar.Model):
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
+    ormar_config = base_ormar_config.copy(tablename="books")
 
     id: int = ormar.Integer(primary_key=True)
     author: Author = ormar.ForeignKey(Author, index=True)
@@ -60,13 +47,7 @@ class Book(ormar.Model):
     year: int = ormar.Integer(nullable=True)
 
 
-@pytest.fixture(autouse=True, scope="function")  # TODO: fix this to be module
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config, scope="function")
 
 
 @pytest_asyncio.fixture
@@ -86,7 +67,7 @@ async def authors_in_db(num_models: int):
     authors = [
         Author(
             name="".join(random.sample(string.ascii_letters, 5)),
-            score=random.random() * 100,
+            score=int(random.random() * 100),
         )
         for i in range(0, num_models)
     ]

@@ -1,42 +1,29 @@
 from typing import List, Optional
 
-import databases
-import sqlalchemy
-from sqlalchemy import create_engine
-
 import ormar
 import pytest
 
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-db = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = create_config()
 
 
 class Keyword(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = db
-        tablename = "keywords"
+    ormar_config = base_ormar_config.copy(tablename="keywords")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=50)
 
 
 class KeywordPrimaryModel(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = db
-        tablename = "primary_models_keywords"
+    ormar_config = base_ormar_config.copy(tablename="primary_models_keywords")
 
     id: int = ormar.Integer(primary_key=True)
 
 
 class PrimaryModel(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = db
-        tablename = "primary_models"
+    ormar_config = base_ormar_config.copy(tablename="primary_models")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255, index=True)
@@ -48,10 +35,7 @@ class PrimaryModel(ormar.Model):
 
 
 class SecondaryModel(ormar.Model):
-    class Meta:
-        metadata = metadata
-        database = db
-        tablename = "secondary_models"
+    ormar_config = base_ormar_config.copy(tablename="secondary_models")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -62,7 +46,7 @@ class SecondaryModel(ormar.Model):
 
 @pytest.mark.asyncio
 async def test_create_primary_models():
-    async with db:
+    async with base_ormar_config.database:
         for name, some_text, some_other_text in [
             ("Primary 1", "Some text 1", "Some other text 1"),
             ("Primary 2", "Some text 2", "Some other text 2"),
@@ -150,9 +134,4 @@ async def test_create_primary_models():
         assert len(models5[2].keywords) == 0
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)

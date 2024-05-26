@@ -1,20 +1,15 @@
-import databases
+import ormar
 import pytest
 from sqlalchemy import func
 
-import ormar
-import sqlalchemy
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = create_config()
 
 
 class Chart(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "charts"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="charts")
 
     chart_id = ormar.Integer(primary_key=True, autoincrement=True)
     name = ormar.String(max_length=200, unique=True, index=True)
@@ -28,10 +23,7 @@ class Chart(ormar.Model):
 
 
 class Report(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "reports"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="reports")
 
     report_id = ormar.Integer(primary_key=True, autoincrement=True)
     name = ormar.String(max_length=200, unique=True, index=True)
@@ -40,10 +32,7 @@ class Report(ormar.Model):
 
 
 class Language(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "languages"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="languages")
 
     language_id = ormar.Integer(primary_key=True, autoincrement=True)
     code = ormar.String(max_length=5)
@@ -51,20 +40,14 @@ class Language(ormar.Model):
 
 
 class TranslationNode(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "translation_nodes"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="translation_nodes")
 
     node_id = ormar.Integer(primary_key=True, autoincrement=True)
     node_type = ormar.String(max_length=200)
 
 
 class Translation(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "translations"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="translations")
 
     translation_id = ormar.Integer(primary_key=True, autoincrement=True)
     node_id = ormar.ForeignKey(TranslationNode, related_name="translations")
@@ -73,10 +56,7 @@ class Translation(ormar.Model):
 
 
 class Filter(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "filters"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="filters")
 
     filter_id = ormar.Integer(primary_key=True, autoincrement=True)
     name = ormar.String(max_length=200, unique=True, index=True)
@@ -90,10 +70,7 @@ class Filter(ormar.Model):
 
 
 class FilterValue(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "filter_values"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="filter_values")
 
     value_id = ormar.Integer(primary_key=True, autoincrement=True)
     value = ormar.String(max_length=300)
@@ -103,10 +80,7 @@ class FilterValue(ormar.Model):
 
 
 class FilterXReport(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "filters_x_reports"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="filters_x_reports")
 
     filter_x_report_id = ormar.Integer(primary_key=True)
     filter = ormar.ForeignKey(Filter, name="filter_id", related_name="reports")
@@ -117,10 +91,7 @@ class FilterXReport(ormar.Model):
 
 
 class ChartXReport(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "charts_x_reports"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="charts_x_reports")
 
     chart_x_report_id = ormar.Integer(primary_key=True)
     chart = ormar.ForeignKey(Chart, name="chart_id", related_name="reports")
@@ -130,10 +101,7 @@ class ChartXReport(ormar.Model):
 
 
 class ChartColumn(ormar.Model):
-    class Meta(ormar.ModelMeta):
-        tablename = "charts_columns"
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy(tablename="charts_columns")
 
     column_id = ormar.Integer(primary_key=True, autoincrement=True)
     chart = ormar.ForeignKey(Chart, name="chart_id", related_name="columns")
@@ -142,17 +110,11 @@ class ChartColumn(ormar.Model):
     translation = ormar.ForeignKey(TranslationNode, name="translation_node_id")
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_saving_related_fk_rel():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             await Report.objects.select_all(follow=True).all()

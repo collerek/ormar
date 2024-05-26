@@ -1,24 +1,16 @@
 from typing import List
 
-import databases
-import sqlalchemy
+import ormar
 from pydantic import PrivateAttr
 
-import ormar
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
-
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
 
 
 class Subscription(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "subscriptions"
+    ormar_config = base_ormar_config.copy(tablename="subscriptions")
 
     id: int = ormar.Integer(primary_key=True)
     stripe_subscription_id: str = ormar.String(nullable=False, max_length=256)
@@ -27,6 +19,9 @@ class Subscription(ormar.Model):
 
     def add_payment(self, payment: str):
         self._add_payments.append(payment)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_private_attribute():

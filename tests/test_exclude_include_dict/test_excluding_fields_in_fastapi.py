@@ -1,44 +1,28 @@
 import datetime
-import string
 import random
+import string
 
-import databases
+import ormar
 import pydantic
 import pytest
 import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
+from ormar import post_save
+from pydantic import ConfigDict, computed_field
 
-import ormar
-from ormar import post_save, property_field
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests, lifespan
+from tests.settings import create_config
 
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
-app.state.database = database
-
-
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 # note that you can set orm_mode here
 # and in this case UserSchema become unnecessary
 class UserBase(pydantic.BaseModel):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
     email: str
     first_name: str
@@ -51,8 +35,7 @@ class UserCreateSchema(UserBase):
 
 
 class UserSchema(UserBase):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 def gen_pass():
@@ -61,10 +44,7 @@ def gen_pass():
 
 
 class RandomModel(ormar.Model):
-    class Meta:
-        tablename: str = "random_users"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="random_users")
 
     id: int = ormar.Integer(primary_key=True)
     password: str = ormar.String(max_length=255, default=gen_pass)
@@ -74,16 +54,13 @@ class RandomModel(ormar.Model):
         server_default=sqlalchemy.func.now()
     )
 
-    @property_field
+    @computed_field
     def full_name(self) -> str:
         return " ".join([self.first_name, self.last_name])
 
 
 class User(ormar.Model):
-    class Meta:
-        tablename: str = "users"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="users")
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255)
@@ -94,10 +71,7 @@ class User(ormar.Model):
 
 
 class User2(ormar.Model):
-    class Meta:
-        tablename: str = "users2"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="users2")
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255, nullable=False)
@@ -105,17 +79,10 @@ class User2(ormar.Model):
     first_name: str = ormar.String(max_length=255)
     last_name: str = ormar.String(max_length=255)
     category: str = ormar.String(max_length=255, nullable=True)
-    timestamp: datetime.datetime = ormar.DateTime(
-        pydantic_only=True, default=datetime.datetime.now
-    )
+    timestamp: datetime.datetime = pydantic.Field(default=datetime.datetime.now)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @app.post("/users/", response_model=User, response_model_exclude={"password"})
@@ -126,7 +93,7 @@ async def create_user(user: User):
 @app.post("/users2/", response_model=User)
 async def create_user2(user: User):
     user = await user.save()
-    return user.dict(exclude={"password"})
+    return user.model_dump(exclude={"password"})
 
 
 @app.post("/users3/", response_model=UserBase)
@@ -136,7 +103,7 @@ async def create_user3(user: User2):
 
 @app.post("/users4/")
 async def create_user4(user: User2):
-    return (await user.save()).dict(exclude={"password"})
+    return (await user.save()).model_dump(exclude={"password"})
 
 
 @app.post("/random/", response_model=RandomModel)
@@ -276,12 +243,11 @@ async def test_adding_fields_in_endpoints2():
 
 @pytest.mark.asyncio
 async def test_excluding_property_field_in_endpoints2():
-
     dummy_registry = {}
 
     @post_save(RandomModel)
     async def after_save(sender, instance, **kwargs):
-        dummy_registry[instance.pk] = instance.dict()
+        dummy_registry[instance.pk] = instance.model_dump()
 
     client = AsyncClient(app=app, base_url="http://testserver")
     async with client as client, LifespanManager(app):

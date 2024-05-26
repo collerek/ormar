@@ -1,9 +1,9 @@
-import sys
 from typing import (
+    TYPE_CHECKING,
     Any,
+    ForwardRef,
     List,
     Optional,
-    TYPE_CHECKING,
     Tuple,
     Type,
     Union,
@@ -11,20 +11,18 @@ from typing import (
     overload,
 )
 
-from pydantic.typing import ForwardRef, evaluate_forwardref
 import ormar  # noqa: I100
 from ormar import ModelDefinitionError
 from ormar.fields import BaseField
-from ormar.fields.foreign_key import ForeignKeyField, validate_not_allowed_fields
+from ormar.fields.foreign_key import (
+    ForeignKeyField,
+    create_dummy_model,
+    validate_not_allowed_fields,
+)
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, T
     from ormar.relations.relation_proxy import RelationProxy
-
-    if sys.version_info < (3, 7):
-        ToType = Type["T"]
-    else:
-        ToType = Union[Type["T"], "ForwardRef"]
 
 REF_PREFIX = "#/components/schemas/"
 
@@ -36,7 +34,7 @@ def forbid_through_relations(through: Type["Model"]) -> None:
     :param through: through Model to be checked
     :type through: Type['Model]
     """
-    if any(field.is_relation for field in through.Meta.model_fields.values()):
+    if any(field.is_relation for field in through.ormar_config.model_fields.values()):
         raise ModelDefinitionError(
             f"Through Models cannot have explicit relations "
             f"defined. Remove the relations from Model "
@@ -46,7 +44,7 @@ def forbid_through_relations(through: Type["Model"]) -> None:
 
 def populate_m2m_params_based_on_to_model(
     to: Type["Model"], nullable: bool
-) -> Tuple[Any, Any]:
+) -> Tuple[Any, Any, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
     pydantic field to use and type of the target column field.
@@ -58,14 +56,22 @@ def populate_m2m_params_based_on_to_model(
     :return: Tuple[List, Any]
     :rtype: tuple with target pydantic type and target col type
     """
-    to_field = to.Meta.model_fields[to.Meta.pkname]
+    to_field = to.ormar_config.model_fields[to.ormar_config.pkname]
+    pk_only_model = create_dummy_model(to, to_field)
+    base_type = Union[  # type: ignore
+        to_field.__type__,  # type: ignore
+        to,  # type: ignore
+        pk_only_model,  # type: ignore
+        List[to],  # type: ignore
+        List[pk_only_model],  # type: ignore
+    ]
     __type__ = (
-        Union[to_field.__type__, to, List[to]]  # type: ignore
+        base_type  # type: ignore
         if not nullable
-        else Optional[Union[to_field.__type__, to, List[to]]]  # type: ignore
+        else Optional[base_type]  # type: ignore
     )
     column_type = to_field.column_type
-    return __type__, column_type
+    return __type__, column_type, pk_only_model
 
 
 @overload
@@ -79,10 +85,10 @@ def ManyToMany(to: ForwardRef, **kwargs: Any) -> "RelationProxy":  # pragma: no 
 
 
 def ManyToMany(  # type: ignore
-    to: "ToType",
-    through: Optional["ToType"] = None,
+    to: Union[Type["T"], "ForwardRef"],
+    through: Optional[Union[Type["T"], "ForwardRef"]] = None,
     *,
-    name: str = None,
+    name: Optional[str] = None,
     unique: bool = False,
     virtual: bool = False,
     **kwargs: Any,
@@ -129,7 +135,7 @@ def ManyToMany(  # type: ignore
         forbid_through_relations(cast(Type["Model"], through))
 
     validate_not_allowed_fields(kwargs)
-
+    pk_only_model = None
     if to.__class__ == ForwardRef:
         __type__ = (
             Union[to, List[to]]  # type: ignore
@@ -138,12 +144,13 @@ def ManyToMany(  # type: ignore
         )
         column_type = None
     else:
-        __type__, column_type = populate_m2m_params_based_on_to_model(
+        __type__, column_type, pk_only_model = populate_m2m_params_based_on_to_model(
             to=to, nullable=nullable  # type: ignore
         )
     namespace = dict(
         __type__=__type__,
         to=to,
+        to_pk_only=pk_only_model,
         through=through,
         alias=name,
         name=name,
@@ -154,7 +161,6 @@ def ManyToMany(  # type: ignore
         virtual=virtual,
         primary_key=False,
         index=False,
-        pydantic_only=False,
         default=None,
         server_default=None,
         owner=owner,
@@ -173,7 +179,11 @@ def ManyToMany(  # type: ignore
     return Field(**namespace)
 
 
-class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationProtocol):
+class ManyToManyField(  # type: ignore
+    ForeignKeyField,
+    ormar.QuerySetProtocol,
+    ormar.RelationProtocol,
+):
     """
     Actual class returned from ManyToMany function call and stored in model_fields.
     """
@@ -194,7 +204,7 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :rtype: str
         """
         return (
-            self.through.Meta.model_fields[
+            self.through.ormar_config.model_fields[
                 self.default_source_field_name()
             ].related_name
             or self.name
@@ -222,18 +232,19 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         :rtype: None
         """
         if self.to.__class__ == ForwardRef:
-            self.to = evaluate_forwardref(
-                self.to, globalns, localns or None  # type: ignore
-            )
-
-            (self.__type__, self.column_type) = populate_m2m_params_based_on_to_model(
+            self._evaluate_forward_ref(globalns, localns)
+            (
+                self.__type__,
+                self.column_type,
+                pk_only_model,
+            ) = populate_m2m_params_based_on_to_model(
                 to=self.to, nullable=self.nullable
             )
+            self.to_pk_only = pk_only_model
 
         if self.through.__class__ == ForwardRef:
-            self.through = evaluate_forwardref(
-                self.through, globalns, localns or None  # type: ignore
-            )
+            self._evaluate_forward_ref(globalns, localns, is_through=True)
+
             forbid_through_relations(self.through)
 
     def get_relation_name(self) -> str:
@@ -257,6 +268,51 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         """
         return self.through
 
+    def get_filter_clause_target(self) -> Type["Model"]:
+        return self.through
+
+    def get_model_relation_fields(self, use_alias: bool = False) -> str:
+        """
+        Extract names of the database columns or model fields that are connected
+        with given relation based on use_alias switch.
+
+        :param use_alias: use db names aliases or model fields
+        :type use_alias: bool
+        :return: name or names of the related columns/ fields
+        :rtype: Union[str, List[str]]
+        """
+        pk_field = self.owner.ormar_config.model_fields[self.owner.ormar_config.pkname]
+        result = pk_field.get_alias() if use_alias else pk_field.name
+        return result
+
+    def get_related_field_alias(self) -> str:
+        """
+        Extract names of the related database columns or that are connected
+        with given relation based to use as a target in filter clause.
+
+        :return: name or names of the related columns/ fields
+        :rtype: Union[str, Dict[str, str]]
+        """
+        if self.self_reference and self.self_reference_primary == self.name:
+            field_name = self.default_target_field_name()
+        else:
+            field_name = self.default_source_field_name()
+        sub_field = self.through.ormar_config.model_fields[field_name]
+        return sub_field.get_alias()
+
+    def get_related_field_name(self) -> Union[str, List[str]]:
+        """
+        Returns name of the relation field that should be used in prefetch query.
+        This field is later used to register relation in prefetch query,
+        populate relations dict, and populate nested model in prefetch query.
+
+        :return: name(s) of the field
+        :rtype: Union[str, List[str]]
+        """
+        if self.self_reference and self.self_reference_primary == self.name:
+            return self.default_target_field_name()
+        return self.default_source_field_name()
+
     def create_default_through_model(self) -> None:
         """
         Creates default empty through model if no additional fields are required.
@@ -265,15 +321,22 @@ class ManyToManyField(ForeignKeyField, ormar.QuerySetProtocol, ormar.RelationPro
         to_name = self.to.get_name(lower=False)
         class_name = f"{owner_name}{to_name}"
         table_name = f"{owner_name.lower()}s_{to_name.lower()}s"
-        new_meta_namespace = {
-            "tablename": table_name,
-            "database": self.owner.Meta.database,
-            "metadata": self.owner.Meta.metadata,
+        base_namespace = {
+            "__module__": self.owner.__module__,
+            "__qualname__": f"{self.owner.__qualname__}.{class_name}",
         }
-        new_meta = type("Meta", (), new_meta_namespace)
+        new_config = ormar.models.ormar_config.OrmarConfig(
+            tablename=table_name,
+            database=self.owner.ormar_config.database,
+            metadata=self.owner.ormar_config.metadata,
+        )
         through_model = type(
             class_name,
             (ormar.Model,),
-            {"Meta": new_meta, "id": ormar.Integer(name="id", primary_key=True)},
+            {
+                **base_namespace,
+                "ormar_config": new_config,
+                "id": ormar.Integer(name="id", primary_key=True),
+            },
         )
         self.through = cast(Type["Model"], through_model)

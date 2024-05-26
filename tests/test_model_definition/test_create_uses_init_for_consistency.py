@@ -1,21 +1,14 @@
 import uuid
 from typing import ClassVar
 
-import databases
-import pytest
-import sqlalchemy
-from pydantic import root_validator
-
 import ormar
-from tests.settings import DATABASE_URL
+import pytest
+from pydantic import model_validator
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = create_config()
 
 
 class Mol(ormar.Model):
@@ -24,8 +17,7 @@ class Mol(ormar.Model):
         "12345678-abcd-1234-abcd-123456789abc"
     )
 
-    class Meta(BaseMeta):
-        tablename = "mols"
+    ormar_config = base_ormar_config.copy(tablename="mols")
 
     id: uuid.UUID = ormar.UUID(primary_key=True, index=True, uuid_format="hex")
     smiles: str = ormar.String(nullable=False, unique=True, max_length=256)
@@ -36,7 +28,7 @@ class Mol(ormar.Model):
             kwargs["id"] = self._UUID_NAMESPACE
         super().__init__(**kwargs)
 
-    @root_validator()
+    @model_validator(mode="before")
     def make_canonical_smiles_and_uuid(cls, values):
         values["id"], values["smiles"] = cls.uuid(values["smiles"])
         return values
@@ -47,17 +39,12 @@ class Mol(ormar.Model):
         return id_, smiles
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_json_column():
-    async with database:
+    async with base_ormar_config.database:
         await Mol.objects.create(smiles="Cc1ccccc1")
         count = await Mol.objects.count()
         assert count == 1

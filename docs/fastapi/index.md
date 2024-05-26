@@ -16,17 +16,18 @@ Here you can find a very simple sample application code.
     It's divided into subsections for clarity.
 
 !!!note
-        If you want to read more on how you can use ormar models in fastapi requests and 
-        responses check the [responses](response.md) and [requests](requests.md) documentation.
+    If you want to read more on how you can use ormar models in fastapi requests and 
+    responses check the [responses](response.md) and [requests](requests.md) documentation.
 
 ## Quick Start
 
 !!!note
-        Note that you can find the full quick start script in the [github](https://github.com/collerek/ormar) repo under examples.
+    Note that you can find the full quick start script in the [github](https://github.com/collerek/ormar) repo under examples.
 
 ### Imports and initialization 
 
-First take care of the imports and initialization 
+Define startup and shutdown procedures using FastAPI lifespan and use is in the
+application.
 ```python
 from typing import List, Optional
 
@@ -36,29 +37,26 @@ from fastapi import FastAPI
 
 import ormar
 
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database("sqlite:///test.db")
-app.state.database = database
-```
-
-### Database connection 
-
-Next define startup and shutdown events (or use middleware)
-- note that this is `databases` specific setting not the ormar one
-```python
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
 
 
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    if not config.database.is_connected:
+        await config.database.connect()
+
+    yield
+
+    if config.database.is_connected:
+        await config.database.disconnect()
+
+
+base_ormar_config = ormar.OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=databases.Database("sqlite:///test.db"),
+)
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 ```
 
 !!!info
@@ -71,21 +69,21 @@ Define ormar models with appropriate fields.
 Those models will be used instead of pydantic ones.
 
 ```python
+base_ormar_config = OrmarConfig(
+    metadata = metadata
+    database = database
+)
+
+
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    class Meta:
-        tablename = "items"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -122,7 +120,7 @@ async def create_category(category: Category):
 @app.put("/items/{item_id}")
 async def get_item(item_id: int, item: Item):
     item_db = await Item.objects.get(pk=item_id)
-    return await item_db.update(**item.dict())
+    return await item_db.update(**item.model_dump())
 
 
 @app.delete("/items/{item_id}")
@@ -197,14 +195,14 @@ def test_all_endpoints():
         assert items[0] == item
 
         item.name = "New name"
-        response = client.put(f"/items/{item.pk}", json=item.dict())
-        assert response.json() == item.dict()
+        response = client.put(f"/items/{item.pk}", json=item.model_dump())
+        assert response.json() == item.model_dump()
 
         response = client.get("/items/")
         items = [Item(**item) for item in response.json()]
         assert items[0].name == "New name"
 
-        response = client.delete(f"/items/{item.pk}", json=item.dict())
+        response = client.delete(f"/items/{item.pk}", json=item.model_dump())
         assert response.json().get("deleted_rows", "__UNDEFINED__") != "__UNDEFINED__"
         response = client.get("/items/")
         items = response.json()

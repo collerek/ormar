@@ -1,29 +1,20 @@
-import databases
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
 
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
 
 
 class Library(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Package(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     library: Library = ormar.ForeignKey(Library, related_name="packages")
@@ -31,8 +22,7 @@ class Package(ormar.Model):
 
 
 class Ticket(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     number: int = ormar.Integer()
@@ -40,8 +30,7 @@ class Ticket(ormar.Model):
 
 
 class TicketPackage(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     status: str = ormar.String(max_length=100)
@@ -49,11 +38,16 @@ class TicketPackage(ormar.Model):
     package: Package = ormar.ForeignKey(Package, related_name="tickets")
 
 
+create_test_database = init_tests(base_ormar_config)
+
+
 def test_have_proper_children():
     TicketPackageOut = TicketPackage.get_pydantic(exclude={"ticket"})
-    assert "package" in TicketPackageOut.__fields__
-    PydanticPackage = TicketPackageOut.__fields__["package"].type_
-    assert "library" in PydanticPackage.__fields__
+    assert "package" in TicketPackageOut.model_fields
+    PydanticPackage = TicketPackageOut.__pydantic_core_schema__["schema"]["fields"][
+        "package"
+    ]["schema"]["schema"]["schema"]["cls"]
+    assert "library" in PydanticPackage.model_fields
 
 
 def test_casts_properly():
@@ -69,7 +63,7 @@ def test_casts_properly():
     }
     test_package = TicketPackage(**payload)
     TicketPackageOut = TicketPackage.get_pydantic(exclude={"ticket"})
-    parsed = TicketPackageOut(**test_package.dict()).dict()
+    parsed = TicketPackageOut(**test_package.model_dump()).model_dump()
     assert "ticket" not in parsed
     assert "package" in parsed
     assert "library" in parsed.get("package")

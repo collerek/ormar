@@ -1,6 +1,6 @@
-from typing import Any
+from typing import Any, Optional
 
-from sqlalchemy import Index, UniqueConstraint, CheckConstraint
+from sqlalchemy import CheckConstraint, Index, UniqueConstraint
 
 
 class UniqueColumns(UniqueConstraint):
@@ -11,7 +11,7 @@ class UniqueColumns(UniqueConstraint):
 
 
 class IndexColumns(Index):
-    def __init__(self, *args: Any, name: str = None, **kw: Any) -> None:
+    def __init__(self, *args: Any, name: Optional[str] = None, **kw: Any) -> None:
         if not name:
             name = "TEMPORARY_NAME"
         super().__init__(name, *args, **kw)
