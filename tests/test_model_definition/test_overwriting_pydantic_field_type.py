@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 
 import ormar
+import pydantic
 import pytest
 from pydantic import Json, PositiveInt, ValidationError
 
@@ -20,20 +21,35 @@ class OverwriteTest(ormar.Model):
     )  # type: ignore
 
 
+class User(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="users")
+    id: int = ormar.Integer(primary_key=True)
+    email: str = ormar.String(
+        max_length=255,
+        unique=True,
+        nullable=False,
+        overwrite_pydantic_type=pydantic.EmailStr,
+    )
+
+
 create_test_database = init_tests(base_ormar_config)
 
 
 def test_constraints():
-    with pytest.raises(ValidationError) as e:
+    with pytest.raises(ValidationError, match="Input should be greater than 0"):
         OverwriteTest(my_int=-10)
-    assert "Input should be greater than 0" in str(e.value)
 
-    with pytest.raises(ValidationError) as e:
+    with pytest.raises(
+        ValidationError,
+        match="Input should be a valid integer, unable to parse string as an integer",
+    ):
         OverwriteTest(my_int=10, constraint_dict={"aa": "ab"})
-    assert (
-        "Input should be a valid integer, unable to parse string as an integer"
-        in str(e.value)
-    )
+
+    with pytest.raises(
+        ValidationError,
+        match="The email address is not valid. It must have exactly one @-sign",
+    ):
+        User(email="wrong")
 
 
 @pytest.mark.asyncio
@@ -44,3 +60,7 @@ async def test_saving():
         test = await OverwriteTest.objects.get()
         assert test.my_int == 5
         assert test.constraint_dict == {"aa": 123}
+
+        await User(email="test@as.eu").save()
+        test = await User.objects.get()
+        assert test.email == "test@as.eu"

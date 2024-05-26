@@ -246,11 +246,12 @@ class Model(ModelRow):
         self_fields.pop(self.get_column_name_from_alias(self.ormar_config.pkname))
         if _columns:
             self_fields = {k: v for k, v in self_fields.items() if k in _columns}
-        self_fields = self.translate_columns_to_aliases(self_fields)
-        expr = self.ormar_config.table.update().values(**self_fields)
-        expr = expr.where(self.pk_column == getattr(self, self.ormar_config.pkname))
+        if self_fields:
+            self_fields = self.translate_columns_to_aliases(self_fields)
+            expr = self.ormar_config.table.update().values(**self_fields)
+            expr = expr.where(self.pk_column == getattr(self, self.ormar_config.pkname))
 
-        await self.ormar_config.database.execute(expr)
+            await self.ormar_config.database.execute(expr)
         self.set_save_status(True)
         await self.signals.post_update.send(sender=self.__class__, instance=self)
         return self
