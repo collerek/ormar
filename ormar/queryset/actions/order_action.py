@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Optional, Type
 
 import sqlalchemy
 from sqlalchemy import text
@@ -20,7 +20,7 @@ class OrderAction(QueryAction):
     """
 
     def __init__(
-        self, order_str: str, model_cls: Type["Model"], alias: str = None
+        self, order_str: str, model_cls: Type["Model"], alias: Optional[str] = None
     ) -> None:
         self.direction: str = ""
         super().__init__(query_str=order_str, model_cls=model_cls)
@@ -36,8 +36,10 @@ class OrderAction(QueryAction):
 
     @property
     def is_postgres_bool(self) -> bool:
-        dialect = self.target_model.Meta.database._backend._dialect.name
-        field_type = self.target_model.Meta.model_fields[self.field_name].__type__
+        dialect = self.target_model.ormar_config.database._backend._dialect.name
+        field_type = self.target_model.ormar_config.model_fields[
+            self.field_name
+        ].__type__
         return dialect == "postgresql" and field_type == bool
 
     def get_field_name_text(self) -> str:
@@ -78,14 +80,17 @@ class OrderAction(QueryAction):
         :return: complied and escaped clause
         :rtype: sqlalchemy.sql.elements.TextClause
         """
+        dialect = self.target_model.ormar_config.database._backend._dialect
+        quoter = dialect.identifier_preparer.quote
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
         table_name = self.table.name
         field_name = self.field_alias
         if not prefix:
-            dialect = self.target_model.Meta.database._backend._dialect
-            table_name = dialect.identifier_preparer.quote(table_name)
-            field_name = dialect.identifier_preparer.quote(field_name)
-        return text(f"{prefix}{table_name}" f".{field_name} {self.direction}")
+            table_name = quoter(table_name)
+        else:
+            table_name = quoter(f"{prefix}{table_name}")
+        field_name = quoter(field_name)
+        return text(f"{table_name}.{field_name} {self.direction}")
 
     def _split_value_into_parts(self, order_str: str) -> None:
         if order_str.startswith("-"):

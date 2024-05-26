@@ -1,54 +1,22 @@
 from typing import List, Optional
 from uuid import UUID, uuid4
 
-import databases
+import ormar
 import pydantic
 import pytest
-import sqlalchemy
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
-import ormar
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests, lifespan
+from tests.settings import create_config
 
-app = FastAPI()
-
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
-
-app.state.database = database
-
-
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
-
-
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
-
-
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 class OtherThing(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "other_things"
+    ormar_config = base_ormar_config.copy(tablename="other_things")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
@@ -56,13 +24,15 @@ class OtherThing(ormar.Model):
 
 
 class Thing(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "things"
+    ormar_config = base_ormar_config.copy(tablename="things")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
     js: pydantic.Json = ormar.JSON(nullable=True)
     other_thing: Optional[OtherThing] = ormar.ForeignKey(OtherThing, nullable=True)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 @app.post("/test/1")
@@ -97,7 +67,7 @@ async def get_test_3():
     ot = await OtherThing.objects.select_related("things").get()
     # exclude unwanted field while ot is still in scope
     # in order not to pass it to fastapi
-    return [t.dict(exclude={"other_thing"}) for t in ot.things]
+    return [t.model_dump(exclude={"other_thing"}) for t in ot.things]
 
 
 @app.get("/test/4", response_model=List[Thing], response_model_exclude={"other_thing"})
@@ -133,29 +103,30 @@ async def get_weakref():
     return ts
 
 
-def test_endpoints():
-    client = TestClient(app)
-    with client:
-        resp = client.post("/test/1")
+@pytest.mark.asyncio
+async def test_endpoints():
+    client = AsyncClient(app=app, base_url="http://testserver")
+    async with client, LifespanManager(app):
+        resp = await client.post("/test/1")
         assert resp.status_code == 200
 
-        resp2 = client.get("/test/2")
+        resp2 = await client.get("/test/2")
         assert resp2.status_code == 200
         assert len(resp2.json()) == 3
 
-        resp3 = client.get("/test/3")
+        resp3 = await client.get("/test/3")
         assert resp3.status_code == 200
         assert len(resp3.json()) == 3
 
-        resp4 = client.get("/test/4")
+        resp4 = await client.get("/test/4")
         assert resp4.status_code == 200
         assert len(resp4.json()) == 3
 
-        ot = OtherThing(**client.get("/get_ot/").json())
-        resp5 = client.get(f"/test/5/{ot.id}")
+        ot = OtherThing(**(await client.get("/get_ot/")).json())
+        resp5 = await client.get(f"/test/5/{ot.id}")
         assert resp5.status_code == 200
         assert len(resp5.json()) == 3
 
-        resp6 = client.get("/test/error")
+        resp6 = await client.get("/test/error")
         assert resp6.status_code == 200
         assert len(resp6.json()) == 3

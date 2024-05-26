@@ -1,13 +1,11 @@
 from enum import Enum
 
-import databases
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config()
 
 
 class MyEnum(Enum):
@@ -16,18 +14,17 @@ class MyEnum(Enum):
 
 
 class EnumExample(ormar.Model):
-    class Meta:
-        tablename = "enum_example"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="enum_example")
 
     id: int = ormar.Integer(primary_key=True)
     size: MyEnum = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
 
 
+create_test_database = init_tests(base_ormar_config)
+
+
 def test_proper_schema():
-    schema = EnumExample.schema_json()
-    assert (
-        '{"MyEnum": {"title": "MyEnum", "description": "An enumeration.", '
-        '"enum": [1, 2]}}' in schema
-    )
+    schema = EnumExample.model_json_schema()
+    assert {"MyEnum": {"title": "MyEnum", "enum": [1, 2], "type": "integer"}} == schema[
+        "$defs"
+    ]

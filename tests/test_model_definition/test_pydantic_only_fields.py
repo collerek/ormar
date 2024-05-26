@@ -1,32 +1,28 @@
 import datetime
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from ormar import property_field
-from tests.settings import DATABASE_URL
+import pydantic
+import pytest
+from pydantic import computed_field
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
+
+base_ormar_config = create_config()
 
 
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="albums")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    timestamp: datetime.datetime = ormar.DateTime(pydantic_only=True)
+    timestamp: datetime.datetime = pydantic.Field(default=None)
 
-    @property_field
+    @computed_field
     def name10(self) -> str:
         return self.name + "_10"
 
-    @property_field
+    @computed_field
     def name20(self) -> str:
         return self.name + "_20"
 
@@ -34,24 +30,18 @@ class Album(ormar.Model):
     def name30(self) -> str:
         return self.name + "_30"
 
-    @property_field
+    @computed_field
     def name40(self) -> str:
         return self.name + "_40"
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_pydantic_only_fields():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             album = await Album.objects.create(name="Hitchcock")
             assert album.pk is not None
             assert album.saved
@@ -63,14 +53,14 @@ async def test_pydantic_only_fields():
             album = await Album.objects.fields({"name", "timestamp"}).get()
             assert album.timestamp is None
 
-            test_dict = album.dict()
+            test_dict = album.model_dump()
             assert "timestamp" in test_dict
             assert test_dict["timestamp"] is None
 
             assert album.name30 == "Hitchcock_30"
 
             album.timestamp = datetime.datetime.now()
-            test_dict = album.dict()
+            test_dict = album.model_dump()
             assert "timestamp" in test_dict
             assert test_dict["timestamp"] is not None
             assert test_dict.get("name10") == "Hitchcock_10"

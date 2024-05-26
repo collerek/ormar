@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Type, Union
 
 import sqlalchemy
 from sqlalchemy import Table, text
@@ -6,14 +6,14 @@ from sqlalchemy.sql import Join
 
 import ormar  # noqa I100
 from ormar.models.helpers.models import group_related_list
-from ormar.queryset.queries import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
 from ormar.queryset.actions.filter_action import FilterAction
 from ormar.queryset.join import SqlJoin
+from ormar.queryset.queries import FilterQuery, LimitQuery, OffsetQuery, OrderQuery
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
-    from ormar.queryset import OrderAction
     from ormar.models.excludable import ExcludableItems
+    from ormar.queryset import OrderAction
 
 
 class Query:
@@ -37,7 +37,7 @@ class Query:
         self.excludable = excludable
 
         self.model_cls = model_cls
-        self.table = self.model_cls.Meta.table
+        self.table = self.model_cls.ormar_config.table
 
         self.used_aliases: List[str] = []
 
@@ -75,10 +75,10 @@ class Query:
 
     def _apply_default_model_sorting(self) -> None:
         """
-        Applies orders_by from model Meta class (if provided), if it was not provided
-        it was filled by metaclass so it's always there and falls back to pk column
+        Applies orders_by from model OrmarConfig (if provided), if it was not provided
+        it was filled by metaclass, so it's always there and falls back to pk column
         """
-        for order_by in self.model_cls.Meta.orders_by:
+        for order_by in self.model_cls.ormar_config.orders_by:
             clause = ormar.OrderAction(order_str=order_by, model_cls=self.model_cls)
             self.sorted_orders[clause] = clause.get_text_clause()
 
@@ -97,7 +97,7 @@ class Query:
             and self._select_related
         )
 
-    def build_select_expression(self) -> Tuple[sqlalchemy.sql.select, List[str]]:
+    def build_select_expression(self) -> sqlalchemy.sql.select:
         """
         Main entry point from outside (after proper initialization).
 
@@ -113,7 +113,7 @@ class Query:
         self_related_fields = self.model_cls.own_table_columns(
             model=self.model_cls, excludable=self.excludable, use_alias=True
         )
-        self.columns = self.model_cls.Meta.alias_manager.prefixed_columns(
+        self.columns = self.model_cls.ormar_config.alias_manager.prefixed_columns(
             "", self.table, self_related_fields
         )
         self.apply_order_bys_for_primary_model()
@@ -179,7 +179,7 @@ class Query:
         The condition is added to filters to filter out desired number of main model
         primary key values. Whole query is used to determine the values.
         """
-        pk_alias = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
+        pk_alias = self.model_cls.get_column_alias(self.model_cls.ormar_config.pkname)
         pk_aliased_name = f"{self.table.name}.{pk_alias}"
         qry_text = sqlalchemy.text(f"{pk_aliased_name}")
         maxes = {}
@@ -223,7 +223,7 @@ class Query:
 
         :param expr: select expression before clauses
         :type expr: sqlalchemy.sql.selectable.Select
-        :return: expresion with all present clauses applied
+        :return: expression with all present clauses applied
         :rtype: sqlalchemy.sql.selectable.Select
         """
         expr = FilterQuery(filter_clauses=self.filter_clauses).apply(expr)

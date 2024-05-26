@@ -1,10 +1,9 @@
-import inspect
 from types import MappingProxyType
-from typing import Dict, Optional, TYPE_CHECKING, Tuple, Type, Union
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, Type, Union
 
 import pydantic
-from pydantic.fields import ModelField
-from pydantic.utils import lenient_issubclass
+from pydantic import ConfigDict
+from pydantic.fields import FieldInfo
 
 from ormar.exceptions import ModelDefinitionError  # noqa: I100, I202
 from ormar.fields import BaseField
@@ -30,35 +29,10 @@ def create_pydantic_field(
     :param model_field: relation field from which through model is extracted
     :type model_field: ManyToManyField class
     """
-    model_field.through.__fields__[field_name] = ModelField(
-        name=field_name,
-        type_=model,
-        model_config=model.__config__,
-        required=False,
-        class_validators={},
+    model_field.through.model_fields[field_name] = FieldInfo.from_annotated_attribute(
+        annotation=Optional[model], default=None  # type: ignore
     )
-
-
-def get_pydantic_field(field_name: str, model: Type["Model"]) -> "ModelField":
-    """
-    Extracts field type and if it's required from Model model_fields by passed
-    field_name. Returns a pydantic field with type of field_name field type.
-
-    :param field_name: field name to fetch from Model and name of pydantic field
-    :type field_name: str
-    :param model: type of field to register
-    :type model: Model class
-    :return: newly created pydantic field
-    :rtype: pydantic.ModelField
-    """
-    type_ = model.Meta.model_fields[field_name].__type__
-    return ModelField(
-        name=field_name,
-        type_=type_,  # type: ignore
-        model_config=model.__config__,
-        required=not model.Meta.model_fields[field_name].nullable,
-        class_validators={},
-    )
+    model_field.through.model_rebuild(force=True)
 
 
 def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
@@ -107,23 +81,21 @@ def merge_or_generate_pydantic_config(attrs: Dict, name: str) -> None:
 
     :rtype: None
     """
-    DefaultConfig = get_pydantic_base_orm_config()
-    if "Config" in attrs:
-        ProvidedConfig = attrs["Config"]
-        if not inspect.isclass(ProvidedConfig):
+    default_config = get_pydantic_base_orm_config()
+    if "model_config" in attrs:
+        provided_config = attrs["model_config"]
+        if not isinstance(provided_config, dict):
             raise ModelDefinitionError(
-                f"Config provided for class {name} has to be a class."
+                f"Config provided for class {name} has to be a dictionary."
             )
 
-        class Config(ProvidedConfig, DefaultConfig):  # type: ignore
-            pass
-
-        attrs["Config"] = Config
+        config = {**default_config, **provided_config}
+        attrs["model_config"] = config
     else:
-        attrs["Config"] = DefaultConfig
+        attrs["model_config"] = default_config
 
 
-def get_pydantic_base_orm_config() -> Type[pydantic.BaseConfig]:
+def get_pydantic_base_orm_config() -> pydantic.ConfigDict:
     """
     Returns empty pydantic Config with orm_mode set to True.
 
@@ -131,11 +103,7 @@ def get_pydantic_base_orm_config() -> Type[pydantic.BaseConfig]:
     :rtype: pydantic Config
     """
 
-    class Config(pydantic.BaseConfig):
-        orm_mode = True
-        validate_assignment = True
-
-    return Config
+    return ConfigDict(validate_assignment=True, ser_json_bytes="base64")
 
 
 def get_potential_fields(attrs: Union[Dict, MappingProxyType]) -> Dict:
@@ -150,7 +118,10 @@ def get_potential_fields(attrs: Union[Dict, MappingProxyType]) -> Dict:
     return {
         k: v
         for k, v in attrs.items()
-        if (lenient_issubclass(v, BaseField) or isinstance(v, BaseField))
+        if (
+            (isinstance(v, type) and issubclass(v, BaseField))
+            or isinstance(v, BaseField)
+        )
     }
 
 
@@ -161,8 +132,11 @@ def remove_excluded_parent_fields(model: Type["Model"]) -> None:
     :param model:
     :type model: Type["Model"]
     """
-    excludes = {*model.Meta.exclude_parent_fields} - {*model.Meta.model_fields.keys()}
+    excludes = {*model.ormar_config.exclude_parent_fields} - {
+        *model.ormar_config.model_fields.keys()
+    }
     if excludes:
-        model.__fields__ = {
-            k: v for k, v in model.__fields__.items() if k not in excludes
+        model.model_fields = {
+            k: v for k, v in model.model_fields.items() if k not in excludes
         }
+        model.model_rebuild(force=True)

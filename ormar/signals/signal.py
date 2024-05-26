@@ -1,6 +1,6 @@
 import asyncio
 import inspect
-from typing import Any, Callable, Dict, TYPE_CHECKING, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Tuple, Type, Union
 
 from ormar.exceptions import SignalDefinitionError
 

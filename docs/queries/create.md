@@ -30,10 +30,12 @@ The allowed kwargs are `Model` fields names and proper value types.
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "album"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+        tablename="album"
+    )
+
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -52,7 +54,7 @@ await malibu.save()
 ```
 
 !!!tip 
-        Check other `Model` methods in [models][models]
+    Check other `Model` methods in [models][models]
 
 ## get_or_create
 
@@ -68,10 +70,11 @@ i.e. `get_or_create(_defaults: {"title": "I win"}, title="never used")` will alw
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "album"
-        metadata = metadata
-        database = database
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+        tablename="album"
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -93,7 +96,7 @@ assert album == album2
 !!!warning 
     Despite being a equivalent row from database the `album` and `album2` in
     example above are 2 different python objects!
-    Updating one of them will not refresh the second one until you excplicitly load() the
+    Updating one of them will not refresh the second one until you explicitly load() the
     fresh data from db.
 
 !!!note 
@@ -106,7 +109,7 @@ assert album == album2
 
 Updates the model, or in case there is no match in database creates a new one.
 
-```Python hl_lines="26-32"
+```Python hl_lines="40-48"
 --8<-- "../docs_src/queries/docs003.py"
 ```
 
@@ -122,7 +125,7 @@ Allows you to create multiple objects at once.
 
 A valid list of `Model` objects needs to be passed.
 
-```python hl_lines="21-27"
+```python hl_lines="26-32"
 --8<-- "../docs_src/queries/docs004.py"
 ```
 

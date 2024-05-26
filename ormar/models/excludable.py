@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, List, Set, TYPE_CHECKING, Tuple, Type, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Type, Union
 
 from ormar.queryset.utils import get_relationship_alias_model_and_str
 
@@ -186,7 +186,7 @@ class ExcludableItems:
         source_model: Type["Model"],
         model_cls: Type["Model"],
         is_exclude: bool,
-        related_items: List = None,
+        related_items: Optional[List] = None,
         alias: str = "",
     ) -> None:
         """

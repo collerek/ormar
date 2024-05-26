@@ -2,14 +2,17 @@
 Contains set of fields/methods etc names that are used to bypass the checks in
 NewBaseModel __getattribute__ calls to speed the calls.
 """
+
 quick_access_set = {
     "Config",
-    "Meta",
+    "model_config",
+    "model_fields",
+    "__cached_hash__",
     "__class__",
     "__config__",
     "__custom_root_type__",
     "__dict__",
-    "__fields__",
+    "model_fields",
     "__fields_set__",
     "__json_encoder__",
     "__pk_only__",
@@ -18,7 +21,6 @@ quick_access_set = {
     "__private_attributes__",
     "__same__",
     "_calculate_keys",
-    "_choices_fields",
     "_convert_json",
     "_extract_db_related_names",
     "_extract_model_db_fields",
