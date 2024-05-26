@@ -1,45 +1,49 @@
+from typing import ForwardRef, Optional
+
+import ormar
 import pytest
-import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-from tests.settings import DATABASE_URL
-from tests.test_inheritance_and_pydantic_generation.test_geting_pydantic_models import (
-    Category,
-    SelfRef,
-    database,
-    metadata,
-)  # type: ignore
+from tests.lifespan import init_tests, lifespan
+from tests.settings import create_config
 
-app = FastAPI()
-app.state.database = database
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
+class SelfRef(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="self_refs")
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, default="selfref")
+    parent = ormar.ForeignKey(ForwardRef("SelfRef"), related_name="children")
 
 
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
+SelfRef.update_forward_refs()
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+class Category(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="categories")
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
+class Item(ormar.Model):
+    ormar_config = base_ormar_config.copy()
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100, default="test")
+    category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 async def create_category(category: Category):
-    return await Category(**category.dict()).save()
+    return await Category(**category.model_dump()).save()
 
 
 create_category.__annotations__["category"] = Category.get_pydantic(exclude={"id"})
@@ -55,7 +59,7 @@ async def create_selfref(
         exclude={"children__name"}  # noqa: F821
     ),
 ):
-    selfr = SelfRef(**selfref.dict())
+    selfr = SelfRef(**selfref.model_dump())
     await selfr.save()
     if selfr.children:
         for child in selfr.children:
@@ -107,12 +111,12 @@ async def test_read_main():
         assert self_ref.id == 3
         assert self_ref.name == "test3"
         assert self_ref.parent is None
-        assert self_ref.children[0].dict() == {"id": 4}
+        assert self_ref.children[0].model_dump() == {"id": 4}
 
         response = await client.get("/selfrefs/3/")
         assert response.status_code == 200
         check_children = SelfRef(**response.json())
-        assert check_children.children[0].dict() == {
+        assert check_children.children[0].model_dump() == {
             "children": [],
             "id": 4,
             "name": "selfref",
@@ -122,9 +126,19 @@ async def test_read_main():
         response = await client.get("/selfrefs/2/")
         assert response.status_code == 200
         check_children = SelfRef(**response.json())
-        assert check_children.dict() == {
+        assert check_children.model_dump() == {
             "children": [],
             "id": 2,
             "name": "test2",
             "parent": {"id": 1},
+        }
+
+        response = await client.get("/selfrefs/1/")
+        assert response.status_code == 200
+        check_children = SelfRef(**response.json())
+        assert check_children.model_dump() == {
+            "children": [{"id": 2, "name": "test2"}],
+            "id": 1,
+            "name": "test",
+            "parent": None,
         }

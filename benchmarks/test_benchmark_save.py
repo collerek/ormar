@@ -15,7 +15,7 @@ async def test_saving_models_individually(aio_benchmark, num_models: int):
         authors = [
             Author(
                 name="".join(random.sample(string.ascii_letters, 5)),
-                score=random.random() * 100,
+                score=int(random.random() * 100),
             )
             for i in range(0, num_models)
         ]

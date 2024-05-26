@@ -1,7 +1,7 @@
 import itertools
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Generator, List, TYPE_CHECKING, Tuple, Type
+from typing import TYPE_CHECKING, Any, Generator, List, Optional, Tuple, Type
 
 import sqlalchemy
 
@@ -52,8 +52,8 @@ class FilterGroup:
     def resolve(
         self,
         model_cls: Type["Model"],
-        select_related: List = None,
-        filter_clauses: List = None,
+        select_related: Optional[List] = None,
+        filter_clauses: Optional[List] = None,
     ) -> Tuple[List[FilterAction], List[str]]:
         """
         Resolves the FilterGroups actions to use proper target model, replace
@@ -180,12 +180,11 @@ class QueryClause:
     def __init__(
         self, model_cls: Type["Model"], filter_clauses: List, select_related: List
     ) -> None:
-
         self._select_related = select_related[:]
         self.filter_clauses = filter_clauses[:]
 
         self.model_cls = model_cls
-        self.table = self.model_cls.Meta.table
+        self.table = self.model_cls.ormar_config.table
 
     def prepare_filter(  # noqa: A003
         self, _own_only: bool = False, **kwargs: Any
@@ -203,7 +202,9 @@ class QueryClause:
         :rtype: Tuple[List[sqlalchemy.sql.elements.TextClause], List[str]]
         """
         if kwargs.get("pk"):
-            pk_name = self.model_cls.get_column_alias(self.model_cls.Meta.pkname)
+            pk_name = self.model_cls.get_column_alias(
+                self.model_cls.ormar_config.pkname
+            )
             kwargs[pk_name] = kwargs.pop("pk")
 
         filter_clauses, select_related = self._populate_filter_clauses(
@@ -262,7 +263,7 @@ class QueryClause:
         """
         prefixes = self._parse_related_prefixes(select_related=select_related)
 
-        manager = self.model_cls.Meta.alias_manager
+        manager = self.model_cls.ormar_config.alias_manager
         filtered_prefixes = sorted(prefixes, key=lambda x: x.table_prefix)
         grouped = itertools.groupby(filtered_prefixes, key=lambda x: x.table_prefix)
         for _, group in grouped:
@@ -320,7 +321,7 @@ class QueryClause:
         :param action: action to switch prefix in
         :type action: ormar.queryset.actions.filter_action.FilterAction
         """
-        manager = self.model_cls.Meta.alias_manager
+        manager = self.model_cls.ormar_config.alias_manager
         new_alias = manager.resolve_relation_alias(self.model_cls, action.related_str)
         if "__" in action.related_str and new_alias:
             action.table_prefix = new_alias

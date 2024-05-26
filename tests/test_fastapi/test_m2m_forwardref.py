@@ -1,42 +1,17 @@
-from typing import List, Optional
-
-import databases
-import pytest
-import sqlalchemy
-from asgi_lifespan import LifespanManager
-from fastapi import FastAPI
-from pydantic.schema import ForwardRef
-from starlette import status
-from httpx import AsyncClient
+from typing import ForwardRef, List, Optional
 
 import ormar
+import pytest
+from asgi_lifespan import LifespanManager
+from fastapi import FastAPI
+from httpx import AsyncClient
+from starlette import status
 
-app = FastAPI()
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests, lifespan
+from tests.settings import create_config
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
-
-app.state.database = database
-
-
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
-
-
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 CityRef = ForwardRef("City")
@@ -45,8 +20,7 @@ CountryRef = ForwardRef("Country")
 
 # models.py
 class Country(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "countries"
+    ormar_config = base_ormar_config.copy(tablename="countries")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128, unique=True)
@@ -64,8 +38,7 @@ class Country(ormar.Model):
 
 
 class City(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "cities"
+    ormar_config = base_ormar_config.copy(tablename="cities")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=128)
@@ -77,12 +50,7 @@ class City(ormar.Model):
 Country.update_forward_refs()
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @app.post("/", response_model=Country, status_code=status.HTTP_201_CREATED)

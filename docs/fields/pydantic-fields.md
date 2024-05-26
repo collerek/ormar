@@ -22,17 +22,14 @@ If you set a field as `Optional`, it defaults to `None` if not provided and that
 exactly what's going to happen during loading from database.
 
 ```python
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = ormar.OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=databases.Database(DATABASE_URL),
+)
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-    
 class ModelTest(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)
@@ -57,17 +54,14 @@ By setting a default value, this value will be set on initialization and databas
 Note that setting a default to `None` is the same as setting the field to `Optional`.
 
 ```python
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = ormar.OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=databases.Database(DATABASE_URL),
+)
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-    
 class ModelTest(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)
@@ -97,13 +91,12 @@ on initialization and each database load.
 from pydantic import Field, PaymentCardNumber
 # ...
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
 
+base_ormar_config = ormar.OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=databases.Database(DATABASE_URL),
+)
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
 
 CARD_NUMBERS = [
     "123456789007",
@@ -119,8 +112,7 @@ def get_number():
 
 
 class ModelTest2(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=200)
@@ -149,13 +141,12 @@ You can provide a value for the field in your `__init__()` method before calling
 from pydantic import BaseModel
 # ...
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
 
+base_ormar_config = ormar.OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=databases.Database(DATABASE_URL),
+)
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
 
 class PydanticTest(BaseModel):
     aa: str
@@ -163,8 +154,7 @@ class PydanticTest(BaseModel):
 
 
 class ModelTest3(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     # provide your custom init function
     def __init__(self, **kwargs):
@@ -192,4 +182,4 @@ assert test_check.pydantic_test.aa == "random"
 ```
 
 !!!warning
-        If you do not provide a value in one of the above ways `ValidationError` will be raised on load from database.
+    If you do not provide a value in one of the above ways `ValidationError` will be raised on load from database.

@@ -1,29 +1,20 @@
 # type: ignore
 import base64
+import datetime
 import decimal
 import hashlib
 import uuid
-import datetime
 from typing import Any
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
+import pytest
 from ormar import ModelDefinitionError, NoMatch
 from ormar.fields.sqlalchemy_encrypted import EncryptedString
-from tests.settings import DATABASE_URL
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
-
+base_ormar_config = create_config()
 default_fernet = dict(
     encrypt_secret="asd123", encrypt_backend=ormar.EncryptBackends.FERNET
 )
@@ -41,8 +32,7 @@ class DummyBackend(ormar.fields.EncryptBackend):
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy(tablename="authors")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, **default_fernet)
@@ -70,6 +60,10 @@ class Author(ormar.Model):
     test_smallint: int = ormar.SmallInteger(default=0, **default_fernet)
     test_decimal = ormar.Decimal(scale=2, precision=10, **default_fernet)
     test_decimal2 = ormar.Decimal(max_digits=10, decimal_places=2, **default_fernet)
+    test_bytes = ormar.LargeBinary(max_length=100, **default_fernet)
+    test_b64bytes = ormar.LargeBinary(
+        max_length=100, represent_as_base64_str=True, **default_fernet
+    )
     custom_backend: str = ormar.String(
         max_length=200,
         encrypt_secret="asda8",
@@ -79,8 +73,7 @@ class Author(ormar.Model):
 
 
 class Hash(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "hashes"
+    ormar_config = base_ormar_config.copy(tablename="hashes")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(
@@ -91,8 +84,7 @@ class Hash(ormar.Model):
 
 
 class Filter(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "filters"
+    ormar_config = base_ormar_config.copy(tablename="filters")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, **default_fernet)
@@ -100,29 +92,21 @@ class Filter(ormar.Model):
 
 
 class Report(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "reports"
+    ormar_config = base_ormar_config.copy(tablename="reports")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     filters = ormar.ManyToMany(Filter)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_error_on_encrypted_pk():
     with pytest.raises(ModelDefinitionError):
 
         class Wrong(ormar.Model):
-            class Meta(BaseMeta):
-                tablename = "wrongs"
+            ormar_config = base_ormar_config.copy(tablename="wrongs")
 
             id: int = ormar.Integer(
                 primary_key=True,
@@ -135,8 +119,7 @@ def test_error_on_encrypted_relation():
     with pytest.raises(ModelDefinitionError):
 
         class Wrong2(ormar.Model):
-            class Meta(BaseMeta):
-                tablename = "wrongs2"
+            ormar_config = base_ormar_config.copy(tablename="wrongs2")
 
             id: int = ormar.Integer(primary_key=True)
             author = ormar.ForeignKey(
@@ -150,8 +133,7 @@ def test_error_on_encrypted_m2m_relation():
     with pytest.raises(ModelDefinitionError):
 
         class Wrong3(ormar.Model):
-            class Meta(BaseMeta):
-                tablename = "wrongs3"
+            ormar_config = base_ormar_config.copy(tablename="wrongs3")
 
             id: int = ormar.Integer(primary_key=True)
             author = ormar.ManyToMany(
@@ -165,8 +147,7 @@ def test_wrong_backend():
     with pytest.raises(ModelDefinitionError):
 
         class Wrong3(ormar.Model):
-            class Meta(BaseMeta):
-                tablename = "wrongs3"
+            ormar_config = base_ormar_config.copy(tablename="wrongs3")
 
             id: int = ormar.Integer(primary_key=True)
             author = ormar.Integer(
@@ -177,12 +158,12 @@ def test_wrong_backend():
 
 
 def test_db_structure():
-    assert Author.Meta.table.c.get("name").type.__class__ == EncryptedString
+    assert Author.ormar_config.table.c.get("name").type.__class__ == EncryptedString
 
 
 @pytest.mark.asyncio
 async def test_save_and_retrieve():
-    async with database:
+    async with base_ormar_config.database:
         test_uuid = uuid.uuid4()
         await Author(
             name="Test",
@@ -191,10 +172,12 @@ async def test_save_and_retrieve():
             uuid_test=test_uuid,
             test_float=1.2,
             test_bool=True,
-            test_decimal=decimal.Decimal(3.5),
+            test_decimal=3.57,
             test_decimal2=decimal.Decimal(5.5),
             test_json=dict(aa=12),
             custom_backend="test12",
+            test_bytes=b"test",
+            test_b64bytes=b"test2",
         ).save()
         author = await Author.objects.get()
 
@@ -214,14 +197,17 @@ async def test_save_and_retrieve():
         assert author.test_float2 is None
         assert author.test_bigint == 0
         assert author.test_json == {"aa": 12}
-        assert author.test_decimal == 3.5
+        assert float(author.test_decimal) == 3.57
         assert author.test_decimal2 == 5.5
         assert author.custom_backend == "test12"
+        assert author.test_bytes == "test".encode("utf-8")
+        assert author.test_b64bytes == "dGVzdDI="
+        assert base64.b64decode(author.test_b64bytes) == b"test2"
 
 
 @pytest.mark.asyncio
 async def test_fernet_filters_nomatch():
-    async with database:
+    async with base_ormar_config.database:
         await Filter(name="test1").save()
         await Filter(name="test1").save()
 
@@ -236,7 +222,7 @@ async def test_fernet_filters_nomatch():
 
 @pytest.mark.asyncio
 async def test_hash_filters_works():
-    async with database:
+    async with base_ormar_config.database:
         await Hash(name="test1").save()
         await Hash(name="test2").save()
 
@@ -253,7 +239,7 @@ async def test_hash_filters_works():
 
 @pytest.mark.asyncio
 async def test_related_model_fields_properly_decrypted():
-    async with database:
+    async with base_ormar_config.database:
         hash1 = await Hash(name="test1").save()
         report = await Report.objects.create(name="Report1")
         await report.filters.create(name="test1", hash=hash1)

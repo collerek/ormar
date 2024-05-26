@@ -1,41 +1,139 @@
 import datetime
-from typing import List
+from typing import List, Optional
 
+import ormar
 import pytest
-import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
+from ormar.relations.relation_proxy import RelationProxy
+from pydantic import computed_field
 
-from tests.settings import DATABASE_URL
-from tests.test_inheritance_and_pydantic_generation.test_inheritance_concrete import (  # type: ignore
-    Category,
-    Subject,
-    Person,
-    Bus,
-    Truck,
-    Bus2,
-    Truck2,
-    db as database,
-    metadata,
-)
+from tests.lifespan import init_tests, lifespan
+from tests.settings import create_config
 
-app = FastAPI()
-app.state.database = database
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
+class AuditModel(ormar.Model):
+    ormar_config = base_ormar_config.copy(abstract=True)
+
+    created_by: str = ormar.String(max_length=100)
+    updated_by: str = ormar.String(max_length=100, default="Sam")
+
+    @computed_field
+    def audit(self) -> str:  # pragma: no cover
+        return f"{self.created_by} {self.updated_by}"
 
 
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
+class DateFieldsModelNoSubclass(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="test_date_models")
+
+    date_id: int = ormar.Integer(primary_key=True)
+    created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
+    updated_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
+
+
+class DateFieldsModel(ormar.Model):
+    ormar_config = base_ormar_config.copy(
+        abstract=True,
+        constraints=[
+            ormar.fields.constraints.UniqueColumns(
+                "creation_date",
+                "modification_date",
+            ),
+            ormar.fields.constraints.CheckColumns(
+                "creation_date <= modification_date",
+            ),
+        ],
+    )
+
+    created_date: datetime.datetime = ormar.DateTime(
+        default=datetime.datetime.now, name="creation_date"
+    )
+    updated_date: datetime.datetime = ormar.DateTime(
+        default=datetime.datetime.now, name="modification_date"
+    )
+
+
+class Person(ormar.Model):
+    ormar_config = base_ormar_config.copy()
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
+class Car(ormar.Model):
+    ormar_config = base_ormar_config.copy(abstract=True)
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=50)
+    owner: Person = ormar.ForeignKey(Person)
+    co_owner: Person = ormar.ForeignKey(Person, related_name="coowned")
+    created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
+
+
+class Car2(ormar.Model):
+    ormar_config = base_ormar_config.copy(abstract=True)
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=50)
+    owner: Person = ormar.ForeignKey(Person, related_name="owned")
+    co_owners: RelationProxy[Person] = ormar.ManyToMany(Person, related_name="coowned")
+    created_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
+
+
+class Bus(Car):
+    ormar_config = base_ormar_config.copy(tablename="buses")
+
+    owner: Person = ormar.ForeignKey(Person, related_name="buses")
+    max_persons: int = ormar.Integer()
+
+
+class Bus2(Car2):
+    ormar_config = base_ormar_config.copy(tablename="buses2")
+
+    max_persons: int = ormar.Integer()
+
+
+class Category(DateFieldsModel, AuditModel):
+    ormar_config = base_ormar_config.copy(tablename="categories")
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=50, unique=True, index=True)
+    code: int = ormar.Integer()
+
+    @computed_field
+    def code_name(self) -> str:
+        return f"{self.code}:{self.name}"
+
+    @computed_field
+    def audit(self) -> str:
+        return f"{self.created_by} {self.updated_by}"
+
+
+class Subject(DateFieldsModel):
+    ormar_config = base_ormar_config.copy()
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=50, unique=True, index=True)
+    category: Optional[Category] = ormar.ForeignKey(Category)
+
+
+class Truck(Car):
+    ormar_config = base_ormar_config.copy()
+
+    max_capacity: int = ormar.Integer()
+
+
+class Truck2(Car2):
+    ormar_config = base_ormar_config.copy(tablename="trucks2")
+
+    max_capacity: int = ormar.Integer()
+
+
+create_test_database = init_tests(base_ormar_config)
 
 
 @app.post("/subjects/", response_model=Subject)
@@ -111,14 +209,6 @@ async def add_truck_coowner(item_id: int, person: Person):
     return truck
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
-
-
 @pytest.mark.asyncio
 async def test_read_main():
     client = AsyncClient(app=app, base_url="http://testserver")
@@ -134,7 +224,7 @@ async def test_read_main():
         assert cat.created_date is not None
         assert cat.id == 1
 
-        cat_dict = cat.dict()
+        cat_dict = cat.model_dump()
         cat_dict["updated_date"] = cat_dict["updated_date"].strftime(
             "%Y-%m-%d %H:%M:%S.%f"
         )
@@ -160,11 +250,14 @@ async def test_inheritance_with_relation():
         truck_dict = dict(
             name="Shelby wanna be",
             max_capacity=1400,
-            owner=sam.dict(),
-            co_owner=joe.dict(),
+            owner=sam.model_dump(),
+            co_owner=joe.model_dump(),
         )
         bus_dict = dict(
-            name="Unicorn", max_persons=50, owner=sam.dict(), co_owner=joe.dict()
+            name="Unicorn",
+            max_persons=50,
+            owner=sam.model_dump(),
+            co_owner=joe.model_dump(),
         )
         unicorn = Bus(**(await client.post("/buses/", json=bus_dict)).json())
         shelby = Truck(**(await client.post("/trucks/", json=truck_dict)).json())
@@ -201,21 +294,25 @@ async def test_inheritance_with_m2m_relation():
         joe = Person(**(await client.post("/persons/", json={"name": "Joe"})).json())
         alex = Person(**(await client.post("/persons/", json={"name": "Alex"})).json())
 
-        truck_dict = dict(name="Shelby wanna be", max_capacity=2000, owner=sam.dict())
-        bus_dict = dict(name="Unicorn", max_persons=80, owner=sam.dict())
+        truck_dict = dict(
+            name="Shelby wanna be", max_capacity=2000, owner=sam.model_dump()
+        )
+        bus_dict = dict(name="Unicorn", max_persons=80, owner=sam.model_dump())
 
         unicorn = Bus2(**(await client.post("/buses2/", json=bus_dict)).json())
         shelby = Truck2(**(await client.post("/trucks2/", json=truck_dict)).json())
 
         unicorn = Bus2(
             **(
-                await client.post(f"/buses2/{unicorn.pk}/add_coowner/", json=joe.dict())
+                await client.post(
+                    f"/buses2/{unicorn.pk}/add_coowner/", json=joe.model_dump()
+                )
             ).json()
         )
         unicorn = Bus2(
             **(
                 await client.post(
-                    f"/buses2/{unicorn.pk}/add_coowner/", json=alex.dict()
+                    f"/buses2/{unicorn.pk}/add_coowner/", json=alex.model_dump()
                 )
             ).json()
         )
@@ -232,11 +329,13 @@ async def test_inheritance_with_m2m_relation():
         assert unicorn.co_owners[1] == alex
         assert unicorn.max_persons == 80
 
-        await client.post(f"/trucks2/{shelby.pk}/add_coowner/", json=alex.dict())
+        await client.post(f"/trucks2/{shelby.pk}/add_coowner/", json=alex.model_dump())
 
         shelby = Truck2(
             **(
-                await client.post(f"/trucks2/{shelby.pk}/add_coowner/", json=joe.dict())
+                await client.post(
+                    f"/trucks2/{shelby.pk}/add_coowner/", json=joe.model_dump()
+                )
             ).json()
         )
 

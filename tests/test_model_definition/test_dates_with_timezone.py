@@ -1,21 +1,16 @@
-from datetime import timezone, timedelta, datetime, date, time
-
-import databases
-import pytest
-import sqlalchemy
+from datetime import date, datetime, time, timedelta, timezone
 
 import ormar
+import pytest
 
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = create_config()
 
 
 class DateFieldsModel(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     created_date: datetime = ormar.DateTime(
@@ -29,27 +24,21 @@ class DateFieldsModel(ormar.Model):
 
 
 class SampleModel(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     updated_at: datetime = ormar.DateTime()
 
 
 class TimeModel(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     elapsed: time = ormar.Time()
 
 
 class DateModel(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     creation_date: date = ormar.Date()
@@ -59,24 +48,15 @@ class MyModel(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     created_at: datetime = ormar.DateTime(timezone=True, nullable=False)
 
-    class Meta:
-        tablename = "mymodels"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy(tablename="mymodels")
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_model_crud_with_timezone():
-    async with database:
+    async with base_ormar_config.database:
         datemodel = await DateFieldsModel().save()
         assert datemodel.created_date is not None
         assert datemodel.updated_date is not None
@@ -84,7 +64,7 @@ async def test_model_crud_with_timezone():
 
 @pytest.mark.asyncio
 async def test_query_with_datetime_in_filter():
-    async with database:
+    async with base_ormar_config.database:
         creation_dt = datetime(2021, 5, 18, 0, 0, 0, 0)
         sample = await SampleModel.objects.create(updated_at=creation_dt)
 
@@ -98,7 +78,7 @@ async def test_query_with_datetime_in_filter():
 
 @pytest.mark.asyncio
 async def test_query_with_date_in_filter():
-    async with database:
+    async with base_ormar_config.database:
         sample = await TimeModel.objects.create(elapsed=time(0, 20, 20))
         await TimeModel.objects.create(elapsed=time(0, 12, 0))
         await TimeModel.objects.create(elapsed=time(0, 19, 55))
@@ -114,7 +94,7 @@ async def test_query_with_date_in_filter():
 
 @pytest.mark.asyncio
 async def test_query_with_time_in_filter():
-    async with database:
+    async with base_ormar_config.database:
         await DateModel.objects.create(creation_date=date(2021, 5, 18))
         sample2 = await DateModel.objects.create(creation_date=date(2021, 5, 19))
         sample3 = await DateModel.objects.create(creation_date=date(2021, 5, 20))
@@ -130,7 +110,7 @@ async def test_query_with_time_in_filter():
 
 @pytest.mark.asyncio
 async def test_filtering_by_timezone_with_timedelta():
-    async with database:
+    async with base_ormar_config.database:
         now_utc = datetime.now(timezone.utc)
         object = MyModel(created_at=now_utc)
         await object.save()

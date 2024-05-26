@@ -35,20 +35,14 @@ a filter across an FK relationship.
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     is_best_seller: bool = ormar.Boolean(default=False)
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -197,20 +191,14 @@ conditions.
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     is_best_seller: bool = ormar.Boolean(default=False)
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -245,26 +233,21 @@ Since it sounds more complicated than it is, let's look at some examples.
 
 Given a sample models like this:
 ```python
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
-
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database(DATABASE_URL),
+    metadata=sqlalchemy.MetaData(),
+)
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
@@ -721,7 +704,7 @@ Ordering in sql will be applied in order of names you provide in order_by.
 Given sample Models like following:
 
 ```python
---8 < -- "../../docs_src/queries/docs007.py"
+--8<-- "../docs_src/queries/docs007.py"
 ```
 
 To order by main model field just provide a field name
@@ -808,7 +791,7 @@ Since order of rows in a database is not guaranteed, `ormar` **always** issues a
 
 When querying the database with given model by default the `Model` is ordered by the `primary_key`
 column ascending. If you wish to change the default behaviour you can do it by providing `orders_by`
-parameter to model `Meta` class.
+parameter to `ormar_config`.
 
 !!!tip
     To read more about models sort order visit [models](../models/index.md#model-sort-order) section of documentation
@@ -823,8 +806,8 @@ Order in which order_by clauses are applied is as follows:
 
   * Explicitly passed `order_by()` calls in query
   * Relation passed `orders_by` and `related_orders_by` if exists
-  * Model `Meta` class `orders_by`
-  * Model `primary_key` column ascending (fallback, used if none of above provided)
+  * Model's `ormar_config` object `orders_by`
+  * Model's `primary_key` column ascending (fallback, used if none of above provided)
 
 **Order from only one source is applied to each `Model` (so that you can always overwrite it in a single query).**
 

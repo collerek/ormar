@@ -1,19 +1,19 @@
 import asyncio
 from typing import (
+    TYPE_CHECKING,
     Any,
+    AsyncGenerator,
     Dict,
     Generic,
     List,
     Optional,
     Sequence,
     Set,
-    TYPE_CHECKING,
     Tuple,
     Type,
     TypeVar,
     Union,
     cast,
-    AsyncGenerator,
 )
 
 import databases
@@ -46,8 +46,8 @@ from ormar.queryset.reverse_alias_resolver import ReverseAliasResolver
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.models import T
-    from ormar.models.metaclass import ModelMeta
     from ormar.models.excludable import ExcludableItems
+    from ormar.models.ormar_config import OrmarConfig
 else:
     T = TypeVar("T", bound="Model")
 
@@ -60,14 +60,14 @@ class QuerySet(Generic[T]):
     def __init__(  # noqa CFQ002
         self,
         model_cls: Optional[Type["T"]] = None,
-        filter_clauses: List = None,
-        exclude_clauses: List = None,
-        select_related: List = None,
-        limit_count: int = None,
-        offset: int = None,
-        excludable: "ExcludableItems" = None,
-        order_bys: List = None,
-        prefetch_related: List = None,
+        filter_clauses: Optional[List] = None,
+        exclude_clauses: Optional[List] = None,
+        select_related: Optional[List] = None,
+        limit_count: Optional[int] = None,
+        offset: Optional[int] = None,
+        excludable: Optional["ExcludableItems"] = None,
+        order_bys: Optional[List] = None,
+        prefetch_related: Optional[List] = None,
         limit_raw_sql: bool = False,
         proxy_source_model: Optional[Type["Model"]] = None,
     ) -> None:
@@ -84,16 +84,16 @@ class QuerySet(Generic[T]):
         self.limit_sql_raw = limit_raw_sql
 
     @property
-    def model_meta(self) -> "ModelMeta":
+    def model_config(self) -> "OrmarConfig":
         """
-        Shortcut to model class Meta set on QuerySet model.
+        Shortcut to model class OrmarConfig set on QuerySet model.
 
-        :return: Meta class of the model
-        :rtype: model Meta class
+        :return: OrmarConfig of the model
+        :rtype: model's OrmarConfig
         """
         if not self.model_cls:  # pragma nocover
             raise ValueError("Model class of QuerySet is not initialized")
-        return self.model_cls.Meta
+        return self.model_cls.ormar_config
 
     @property
     def model(self) -> Type["T"]:
@@ -109,15 +109,15 @@ class QuerySet(Generic[T]):
 
     def rebuild_self(  # noqa: CFQ002
         self,
-        filter_clauses: List = None,
-        exclude_clauses: List = None,
-        select_related: List = None,
-        limit_count: int = None,
-        offset: int = None,
-        excludable: "ExcludableItems" = None,
-        order_bys: List = None,
-        prefetch_related: List = None,
-        limit_raw_sql: bool = None,
+        filter_clauses: Optional[List] = None,
+        exclude_clauses: Optional[List] = None,
+        select_related: Optional[List] = None,
+        limit_count: Optional[int] = None,
+        offset: Optional[int] = None,
+        excludable: Optional["ExcludableItems"] = None,
+        order_bys: Optional[List] = None,
+        prefetch_related: Optional[List] = None,
+        limit_raw_sql: Optional[bool] = None,
         proxy_source_model: Optional[Type["Model"]] = None,
     ) -> "QuerySet":
         """
@@ -172,7 +172,7 @@ class QuerySet(Generic[T]):
             select_related=self._select_related,
             orders_by=self.order_bys,
         )
-        return await query.prefetch_related(models=models, rows=rows)  # type: ignore
+        return await query.prefetch_related(models=models)  # type: ignore
 
     async def _process_query_result_rows(self, rows: List) -> List["T"]:
         """
@@ -247,25 +247,28 @@ class QuerySet(Generic[T]):
     @property
     def database(self) -> databases.Database:
         """
-        Shortcut to models database from Meta class.
+        Shortcut to models database from OrmarConfig class.
 
         :return: database
         :rtype: databases.Database
         """
-        return self.model_meta.database
+        return self.model_config.database
 
     @property
     def table(self) -> sqlalchemy.Table:
         """
-        Shortcut to models table from Meta class.
+        Shortcut to models table from OrmarConfig.
 
         :return: database table
         :rtype: sqlalchemy.Table
         """
-        return self.model_meta.table
+        return self.model_config.table
 
     def build_select_expression(
-        self, limit: int = None, offset: int = None, order_bys: List = None
+        self,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        order_bys: Optional[List] = None,
     ) -> sqlalchemy.sql.select:
         """
         Constructs the actual database query used in the QuerySet.
@@ -575,9 +578,11 @@ class QuerySet(Generic[T]):
             columns = [columns]
 
         orders_by = [
-            OrderAction(order_str=x, model_cls=self.model_cls)  # type: ignore
-            if not isinstance(x, OrderAction)
-            else x
+            (
+                OrderAction(order_str=x, model_cls=self.model_cls)  # type: ignore
+                if not isinstance(x, OrderAction)
+                else x
+            )
             for x in columns
         ]
 
@@ -586,7 +591,7 @@ class QuerySet(Generic[T]):
 
     async def values(
         self,
-        fields: Union[List, str, Set, Dict] = None,
+        fields: Union[List, str, Set, Dict, None] = None,
         exclude_through: bool = False,
         _as_dict: bool = True,
         _flatten: bool = False,
@@ -641,7 +646,7 @@ class QuerySet(Generic[T]):
 
     async def values_list(
         self,
-        fields: Union[List, str, Set, Dict] = None,
+        fields: Union[List, str, Set, Dict, None] = None,
         flatten: bool = False,
         exclude_through: bool = False,
     ) -> List:
@@ -702,7 +707,7 @@ class QuerySet(Generic[T]):
         expr = self.build_select_expression().alias("subquery_for_count")
         expr = sqlalchemy.func.count().select().select_from(expr)
         if distinct:
-            pk_column_name = self.model.get_column_alias(self.model_meta.pkname)
+            pk_column_name = self.model.get_column_alias(self.model_config.pkname)
             expr_distinct = expr.group_by(pk_column_name).alias("subquery_for_group")
             expr = sqlalchemy.func.count().select().select_from(expr_distinct)
         return await self.database.fetch_val(expr)
@@ -796,7 +801,7 @@ class QuerySet(Generic[T]):
             self.model.extract_related_names()
         )
         updates = {k: v for k, v in kwargs.items() if k in self_fields}
-        updates = self.model.validate_choices(updates)
+        updates = self.model.validate_enums(updates)
         updates = self.model.translate_columns_to_aliases(updates)
 
         expr = FilterQuery(filter_clauses=self.filter_clauses).apply(
@@ -855,7 +860,9 @@ class QuerySet(Generic[T]):
         query_offset = (page - 1) * page_size
         return self.rebuild_self(limit_count=limit_count, offset=query_offset)
 
-    def limit(self, limit_count: int, limit_raw_sql: bool = None) -> "QuerySet[T]":
+    def limit(
+        self, limit_count: int, limit_raw_sql: Optional[bool] = None
+    ) -> "QuerySet[T]":
         """
         You can limit the results to desired number of parent models.
 
@@ -872,7 +879,9 @@ class QuerySet(Generic[T]):
         limit_raw_sql = self.limit_sql_raw if limit_raw_sql is None else limit_raw_sql
         return self.rebuild_self(limit_count=limit_count, limit_raw_sql=limit_raw_sql)
 
-    def offset(self, offset: int, limit_raw_sql: bool = None) -> "QuerySet[T]":
+    def offset(
+        self, offset: int, limit_raw_sql: Optional[bool] = None
+    ) -> "QuerySet[T]":
         """
         You can also offset the results by desired number of main models.
 
@@ -908,7 +917,7 @@ class QuerySet(Generic[T]):
             order_bys=(
                 [
                     OrderAction(
-                        order_str=f"{self.model.Meta.pkname}",
+                        order_str=f"{self.model.ormar_config.pkname}",
                         model_cls=self.model_cls,  # type: ignore
                     )
                 ]
@@ -970,7 +979,7 @@ class QuerySet(Generic[T]):
                 order_bys=(
                     [
                         OrderAction(
-                            order_str=f"-{self.model.Meta.pkname}",
+                            order_str=f"-{self.model.ormar_config.pkname}",
                             model_cls=self.model_cls,  # type: ignore
                         )
                     ]
@@ -1027,7 +1036,7 @@ class QuerySet(Generic[T]):
         :return: updated or created model
         :rtype: Model
         """
-        pk_name = self.model_meta.pkname
+        pk_name = self.model_config.pkname
         if "pk" in kwargs:
             kwargs[pk_name] = kwargs.pop("pk")
         if pk_name not in kwargs or kwargs.get(pk_name) is None:
@@ -1093,7 +1102,7 @@ class QuerySet(Generic[T]):
 
         rows: list = []
         last_primary_key = None
-        pk_alias = self.model.get_column_alias(self.model_meta.pkname)
+        pk_alias = self.model.get_column_alias(self.model_config.pkname)
 
         async for row in self.database.iterate(query=expr):
             current_primary_key = row[pk_alias]
@@ -1144,7 +1153,7 @@ class QuerySet(Generic[T]):
 
         ready_objects = []
         for obj in objects:
-            ready_objects.append(obj.prepare_model_to_save(obj.dict()))
+            ready_objects.append(obj.prepare_model_to_save(obj.model_dump()))
             await asyncio.sleep(0)  # Allow context switching to prevent blocking
 
         # don't use execute_many, as in databases it's executed in a loop
@@ -1156,7 +1165,7 @@ class QuerySet(Generic[T]):
             obj.set_save_status(True)
 
     async def bulk_update(  # noqa:  CCR001
-        self, objects: List["T"], columns: List[str] = None
+        self, objects: List["T"], columns: Optional[List[str]] = None
     ) -> None:
         """
         Performs bulk update in one database session to speed up the process.
@@ -1179,7 +1188,7 @@ class QuerySet(Generic[T]):
             raise ModelListEmptyError("Bulk update objects are empty!")
 
         ready_objects = []
-        pk_name = self.model_meta.pkname
+        pk_name = self.model_config.pkname
         if not columns:
             columns = list(
                 self.model.extract_db_own_fields().union(
@@ -1193,7 +1202,7 @@ class QuerySet(Generic[T]):
         columns = [self.model.get_column_alias(k) for k in columns]
 
         for obj in objects:
-            new_kwargs = obj.dict()
+            new_kwargs = obj.model_dump()
             if new_kwargs.get(pk_name) is None:
                 raise ModelPersistenceError(
                     "You cannot update unsaved objects. "
@@ -1205,9 +1214,9 @@ class QuerySet(Generic[T]):
             )
             await asyncio.sleep(0)
 
-        pk_column = self.model_meta.table.c.get(self.model.get_column_alias(pk_name))
+        pk_column = self.model_config.table.c.get(self.model.get_column_alias(pk_name))
         pk_column_name = self.model.get_column_alias(pk_name)
-        table_columns = [c.name for c in self.model_meta.table.c]
+        table_columns = [c.name for c in self.model_config.table.c]
         expr = self.table.update().where(
             pk_column == bindparam("new_" + pk_column_name)
         )
@@ -1226,6 +1235,8 @@ class QuerySet(Generic[T]):
         for obj in objects:
             obj.set_save_status(True)
 
-        await cast(Type["Model"], self.model_cls).Meta.signals.post_bulk_update.send(
+        await cast(
+            Type["Model"], self.model_cls
+        ).ormar_config.signals.post_bulk_update.send(
             sender=self.model_cls, instances=objects  # type: ignore
         )

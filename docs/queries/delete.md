@@ -26,7 +26,7 @@ If you do not provide this flag or a filter a `QueryDefinitionError` will be rai
 
 Return number of rows deleted.
 
-```python hl_lines="26-30"
+```python hl_lines="40-44"
 --8<-- "../docs_src/queries/docs005.py"
 ```
 
@@ -59,20 +59,14 @@ If you specify the keep_reversed flag to `False` `ormar` will also delete the re
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     is_best_seller: bool = ormar.Boolean(default=False)
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)
@@ -104,20 +98,14 @@ If you specify the keep_reversed flag to `False` `ormar` will also delete the re
 
 ```python
 class Album(ormar.Model):
-    class Meta:
-        tablename = "albums"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     is_best_seller: bool = ormar.Boolean(default=False)
 
 class Track(ormar.Model):
-    class Meta:
-        tablename = "tracks"
-        metadata = metadata
-        database = database
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     album: Optional[Album] = ormar.ForeignKey(Album)

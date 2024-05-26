@@ -29,7 +29,7 @@ If you do not provide this flag or a filter a `QueryDefinitionError` will be rai
 
 Return number of rows updated.
 
-```Python hl_lines="26-28"
+```Python hl_lines="42-44"
 --8<-- "../docs_src/queries/docs002.py"
 ```
 
@@ -44,7 +44,7 @@ Return number of rows updated.
 
 Updates the model, or in case there is no match in database creates a new one.
 
-```Python hl_lines="26-32"
+```Python hl_lines="40-48"
 --8<-- "../docs_src/queries/docs003.py"
 ```
 

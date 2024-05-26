@@ -1,12 +1,11 @@
 import itertools
 import sqlite3
-from typing import Any, Dict, List, TYPE_CHECKING, Tuple, Type
+from typing import TYPE_CHECKING, Any, Dict, ForwardRef, List, Tuple, Type
 
 import pydantic
-from pydantic.typing import ForwardRef
+
 import ormar  # noqa: I100
 from ormar.models.helpers.pydantic import populate_pydantic_default_values
-from ormar.models.utils import Extra
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -32,7 +31,7 @@ def populate_default_options_values(  # noqa: CCR001
     new_model: Type["Model"], model_fields: Dict
 ) -> None:
     """
-    Sets all optional Meta values to it's defaults
+    Sets all optional OrmarConfig values to its defaults
     and set model_fields that were already previously extracted.
 
     Here should live all options that are not overwritten/set for all models.
@@ -46,38 +45,19 @@ def populate_default_options_values(  # noqa: CCR001
     :param model_fields: dict of model fields
     :type model_fields: Union[Dict[str, type], Dict]
     """
-    defaults = {
-        "queryset_class": ormar.QuerySet,
-        "constraints": [],
-        "model_fields": model_fields,
-        "abstract": False,
-        "extra": Extra.forbid,
-        "orders_by": [],
-        "exclude_parent_fields": [],
-    }
-    for key, value in defaults.items():
-        if not hasattr(new_model.Meta, key):
-            setattr(new_model.Meta, key, value)
-
-    if any(
-        is_field_an_forward_ref(field) for field in new_model.Meta.model_fields.values()
-    ):
-        new_model.Meta.requires_ref_update = True
-    else:
-        new_model.Meta.requires_ref_update = False
+    new_model.ormar_config.model_fields.update(model_fields)
+    if any(is_field_an_forward_ref(field) for field in model_fields.values()):
+        new_model.ormar_config.requires_ref_update = True
 
     new_model._json_fields = {
-        name
-        for name, field in new_model.Meta.model_fields.items()
-        if field.__type__ == pydantic.Json
+        name for name, field in model_fields.items() if field.__type__ == pydantic.Json
     }
     new_model._bytes_fields = {
-        name
-        for name, field in new_model.Meta.model_fields.items()
-        if field.__type__ == bytes
+        name for name, field in model_fields.items() if field.__type__ == bytes
     }
 
     new_model.__relation_map__ = None
+    new_model.__ormar_fields_validators__ = None
 
 
 class Connection(sqlite3.Connection):
@@ -94,7 +74,7 @@ def substitue_backend_pool_for_sqlite(new_model: Type["Model"]) -> None:
     :param new_model: newly declared ormar Model
     :type new_model: Model class
     """
-    backend = new_model.Meta.database._backend
+    backend = new_model.ormar_config.database._backend
     if (
         backend._dialect.name == "sqlite" and "factory" not in backend._options
     ):  # pragma: no cover
@@ -103,7 +83,7 @@ def substitue_backend_pool_for_sqlite(new_model: Type["Model"]) -> None:
         backend._pool = old_pool.__class__(backend._database_url, **backend._options)
 
 
-def check_required_meta_parameters(new_model: Type["Model"]) -> None:
+def check_required_config_parameters(new_model: Type["Model"]) -> None:
     """
     Verifies if ormar.Model has database and metadata set.
 
@@ -112,20 +92,17 @@ def check_required_meta_parameters(new_model: Type["Model"]) -> None:
     :param new_model: newly declared ormar Model
     :type new_model: Model class
     """
-    if not hasattr(new_model.Meta, "database"):
-        if not getattr(new_model.Meta, "abstract", False):
-            raise ormar.ModelDefinitionError(
-                f"{new_model.__name__} does not have database defined."
-            )
-
-    else:
+    if new_model.ormar_config.database is None and not new_model.ormar_config.abstract:
+        raise ormar.ModelDefinitionError(
+            f"{new_model.__name__} does not have database defined."
+        )
+    elif not new_model.ormar_config.abstract:
         substitue_backend_pool_for_sqlite(new_model=new_model)
 
-    if not hasattr(new_model.Meta, "metadata"):
-        if not getattr(new_model.Meta, "abstract", False):
-            raise ormar.ModelDefinitionError(
-                f"{new_model.__name__} does not have metadata defined."
-            )
+    if new_model.ormar_config.metadata is None and not new_model.ormar_config.abstract:
+        raise ormar.ModelDefinitionError(
+            f"{new_model.__name__} does not have metadata defined."
+        )
 
 
 def extract_annotations_and_default_vals(attrs: Dict) -> Tuple[Dict, Dict]:
@@ -176,9 +153,9 @@ def group_related_list(list_: List) -> Dict:
     return dict(sorted(result_dict.items(), key=lambda item: len(item[1])))
 
 
-def meta_field_not_set(model: Type["Model"], field_name: str) -> bool:
+def config_field_not_set(model: Type["Model"], field_name: str) -> bool:
     """
-    Checks if field with given name is already present in model.Meta.
+    Checks if field with given name is already present in model.OrmarConfig.
     Then check if it's set to something truthful
     (in practice meaning not None, as it's non or ormar Field only).
 
@@ -189,4 +166,4 @@ def meta_field_not_set(model: Type["Model"], field_name: str) -> bool:
     :return: result of the check
     :rtype: bool
     """
-    return not hasattr(model.Meta, field_name) or not getattr(model.Meta, field_name)
+    return not getattr(model.ormar_config, field_name)
