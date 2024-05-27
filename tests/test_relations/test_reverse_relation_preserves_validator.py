@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional, Union
 
 import pytest_asyncio
 from pydantic import field_validator
@@ -18,7 +18,7 @@ class Author(ormar.Model):
 
     @field_validator("name", mode="before")
     @classmethod
-    def validate_name(cls, v: str | list[str]) -> str:
+    def validate_name(cls, v: Union[str, List[str]]) -> str:
         if isinstance(v, list):
             v = " ".join(v)
         return v
