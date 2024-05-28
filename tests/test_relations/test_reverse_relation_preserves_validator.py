@@ -1,9 +1,9 @@
 from typing import List, Optional, Union
 
+import ormar
 import pytest_asyncio
 from pydantic import field_validator
 
-import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
