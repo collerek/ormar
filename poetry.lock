@@ -1314,27 +1314,32 @@ mkdocs = ">=1.0.3"
 
 [[package]]
 name = "mkdocs-material"
-version = "9.2.8"
+version = "9.5.25"
 description = "Documentation that simply works"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "mkdocs_material-9.2.8-py3-none-any.whl", hash = "sha256:6bc8524f8047a4f060d6ab0925b9d7cb61b3b5e6d5ca8a8e8085f8bfdeca1b71"},
-    {file = "mkdocs_material-9.2.8.tar.gz", hash = "sha256:ec839dc5eaf42d8525acd1d6420fd0a0583671a4f98a9b3ff7897ae8628dbc2d"},
+    {file = "mkdocs_material-9.5.25-py3-none-any.whl", hash = "sha256:68fdab047a0b9bfbefe79ce267e8a7daaf5128bcf7867065fcd201ee335fece1"},
+    {file = "mkdocs_material-9.5.25.tar.gz", hash = "sha256:d0662561efb725b712207e0ee01f035ca15633f29a64628e24f01ec99d7078f4"},
 ]
 
 [package.dependencies]
-babel = ">=2.12,<3.0"
+babel = ">=2.10,<3.0"
 colorama = ">=0.4,<1.0"
-jinja2 = ">=3.1,<4.0"
-markdown = ">=3.4,<4.0"
-mkdocs = ">=1.5,<2.0"
-mkdocs-material-extensions = ">=1.1,<2.0"
+jinja2 = ">=3.0,<4.0"
+markdown = ">=3.2,<4.0"
+mkdocs = ">=1.6,<2.0"
+mkdocs-material-extensions = ">=1.3,<2.0"
 paginate = ">=0.5,<1.0"
 pygments = ">=2.16,<3.0"
-pymdown-extensions = ">=10.3,<11.0"
-regex = ">=2023.8,<2024.0"
-requests = ">=2.31,<3.0"
+pymdown-extensions = ">=10.2,<11.0"
+regex = ">=2022.4"
+requests = ">=2.26,<3.0"
+
+[package.extras]
+git = ["mkdocs-git-committers-plugin-2 (>=1.1,<2.0)", "mkdocs-git-revision-date-localized-plugin (>=1.2.4,<2.0)"]
+imaging = ["cairosvg (>=2.6,<3.0)", "pillow (>=10.2,<11.0)"]
+recommended = ["mkdocs-minify-plugin (>=0.7,<1.0)", "mkdocs-redirects (>=1.2,<2.0)", "mkdocs-rss-plugin (>=1.6,<2.0)"]
 
 [[package]]
 name = "mkdocs-material-extensions"
@@ -3176,4 +3181,4 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.0"
-content-hash = "df8bbc385ff28c6015ab005e69ed08d688a66109e45c3aa5a46d4a4b23b12ad0"
+content-hash = "16d35cfa499e31aa8bf83ff35c75435becb2e6f2869b13d31f79d805834c43c2"
