@@ -121,7 +121,7 @@ yappi = "^1.6.0"
 pytest-benchmark = "^4.0.0"
 nest-asyncio = "^1.6.0"
 
-pre-commit = "^2.21.0"
+pre-commit = ">=2.21,<4.0"
 httpx = ">=0.24.1,<0.28.0"
 asgi-lifespan = "^2.1.0"
 pydantic-extra-types = "^2.5.0"
