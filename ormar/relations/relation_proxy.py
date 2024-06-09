@@ -325,7 +325,7 @@ class RelationProxy(Generic[T], List[T]):
         :param item: child to add to relation
         :type item: Model
         """
-        new_idx = len(self)
+        new_idx = len(self) if item not in self else self.index(item)
         relation_name = self.related_field_name
         await self._owner.signals.pre_relation_add.send(
             sender=self._owner.__class__,
