@@ -1,5 +1,26 @@
 # Release notes
 
+## 0.20.1
+
+### ✨ Breaking changes
+
+* Note that this is the first non-beta release of ormar with support for Pydantic v2. Check release notes for 0.20.0 and https://collerek.github.io/ormar/0.20.0b1/migration/
+
+### 🐛 Fixes
+
+* Fix merging same target models when using `select_related` with `prefetch_related` [#906](https://github.com/collerek/ormar/issues/906)
+* Fix saving related with pk only models [#812](https://github.com/collerek/ormar/issues/812)
+* Fix adding the same relation multiple times corrupting relation cache [#1335](https://github.com/collerek/ormar/issues/1335)
+
+### ✨ Features
+
+* Allow adding indexed on foreign keys by @cmflynn [#1276](https://github.com/collerek/ormar/pull/1276)
+
+### 💬 Other
+*  Some docs fixes by @Chaoyingz, thanks!
+
+
+
 ## 0.20.0
 
 ### ✨ Breaking changes
