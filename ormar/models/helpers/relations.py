@@ -172,8 +172,8 @@ def add_field_serializer_for_reverse_relations(
                     "ignore", message="Pydantic serializer warnings"
                 )
                 return handler(children)
-        except ValueError as exc:
-            if not str(exc).startswith("Circular reference"):  # pragma: no cover
+        except ValueError as exc:  # pragma: no cover
+            if not str(exc).startswith("Circular reference"):
                 raise exc
 
             result = []

@@ -35,7 +35,7 @@ class Post(ormar.Model):
 create_test_database = init_tests(base_ormar_config)
 
 
-@pytest_asyncio.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function", autouse=True)
 async def cleanup():
     yield
     async with base_ormar_config.database:
