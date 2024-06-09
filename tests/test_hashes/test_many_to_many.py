@@ -54,29 +54,31 @@ create_test_database = init_tests(base_ormar_config)
 
 @pytest.mark.asyncio
 async def test_adding_same_m2m_model_twice():
-    async with base_ormar_config.database.transaction(rollback=True):
-        post = await Post.objects.create(title="Hello, M2M")
-        news = await Category(name="News").save()
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(rollback=True):
+            post = await Post.objects.create(title="Hello, M2M")
+            news = await Category(name="News").save()
 
-        await post.categories.add(news)
-        await post.categories.add(news)
+            await post.categories.add(news)
+            await post.categories.add(news)
 
-        categories = await post.categories.all()
-        assert categories == [news]
+            categories = await post.categories.all()
+            assert categories == [news]
 
 
 @pytest.mark.asyncio
 async def test_adding_same_m2m_model_twice_with_unique():
-    async with base_ormar_config.database.transaction(rollback=True):
-        post = await Post.objects.create(title="Hello, M2M")
-        redactor = await Author(name="News").save()
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(rollback=True):
+            post = await Post.objects.create(title="Hello, M2M")
+            redactor = await Author(name="News").save()
 
-        await post.authors.add(redactor)
-        with pytest.raises(
-            (
-                sqlite3.IntegrityError,
-                pymysql.IntegrityError,
-                asyncpg.exceptions.UniqueViolationError,
-            )
-        ):
             await post.authors.add(redactor)
+            with pytest.raises(
+                (
+                    sqlite3.IntegrityError,
+                    pymysql.IntegrityError,
+                    asyncpg.exceptions.UniqueViolationError,
+                )
+            ):
+                await post.authors.add(redactor)
