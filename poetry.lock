@@ -1888,13 +1888,13 @@ typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
 name = "pydantic-extra-types"
-version = "2.7.0"
+version = "2.8.0"
 description = "Extra Pydantic types."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pydantic_extra_types-2.7.0-py3-none-any.whl", hash = "sha256:ac01bbdaa4f85e4c4744a9792c5b0cfe61efa5028a0e670c3d8bfbf8b36c8543"},
-    {file = "pydantic_extra_types-2.7.0.tar.gz", hash = "sha256:b9d9ddd755fa5960ec5a77cffcbd5d8796a0116e1dfc8f7c3a27fa0041693382"},
+    {file = "pydantic_extra_types-2.8.0-py3-none-any.whl", hash = "sha256:39cc533f996514966d885e7a54af4b52e19160a5a7c36fd585a44a5ed16ec7be"},
+    {file = "pydantic_extra_types-2.8.0.tar.gz", hash = "sha256:17a677c4e45716a7d8f347e91c411af4954b4e92042f24973b96a140581ba706"},
 ]
 
 [package.dependencies]
@@ -1902,6 +1902,10 @@ pydantic = ">=2.5.2"
 
 [package.extras]
 all = ["pendulum (>=3.0.0,<4.0.0)", "phonenumbers (>=8,<9)", "pycountry (>=23)", "python-ulid (>=1,<2)", "python-ulid (>=1,<3)"]
+pendulum = ["pendulum (>=3.0.0,<4.0.0)"]
+phonenumbers = ["phonenumbers (>=8,<9)"]
+pycountry = ["pycountry (>=23)"]
+python-ulid = ["python-ulid (>=1,<2)", "python-ulid (>=1,<3)"]
 
 [[package]]
 name = "pygments"
