@@ -933,6 +933,23 @@ class QuerySet(Generic[T]):
         self.check_single_result_rows_count(processed_rows)
         return processed_rows[0]  # type: ignore
 
+    async def first_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
+        """
+        Gets the first row from the db ordered by primary key column ascending.
+
+        If no match is found None will be returned.
+
+        :raises MultipleMatches: if more than 1 row is returned.
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: returned model
+        :rtype: Model
+        """
+        try:
+            return await self.first(*args, **kwargs)
+        except ormar.NoMatch:
+            return None
+
     async def get_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
         """
         Gets the first row from the db meeting the criteria set by kwargs.
@@ -942,8 +959,9 @@ class QuerySet(Generic[T]):
         Passing a criteria is actually calling filter(*args, **kwargs) method described
         below.
 
-        If not match is found None will be returned.
+        If no match is found None will be returned.
 
+        :raises MultipleMatches: if more than 1 row is returned.
         :param kwargs: fields names and proper value types
         :type kwargs: Any
         :return: returned model
