@@ -5,9 +5,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Type, Union, cast
 from pydantic import BaseModel, create_model, field_serializer
 from pydantic._internal._decorators import DecoratorInfos
 from pydantic.fields import FieldInfo
-from pydantic_core.core_schema import (
-    SerializerFunctionWrapHandler,
-)
+from pydantic_core.core_schema import SerializerFunctionWrapHandler
 
 import ormar
 from ormar import ForeignKey, ManyToMany
@@ -174,8 +172,8 @@ def add_field_serializer_for_reverse_relations(
                     "ignore", message="Pydantic serializer warnings"
                 )
                 return handler(children)
-        except ValueError as exc:
-            if not str(exc).startswith("Circular reference"):  # pragma: no cover
+        except ValueError as exc:  # pragma: no cover
+            if not str(exc).startswith("Circular reference"):
                 raise exc
 
             result = []
@@ -188,7 +186,18 @@ def add_field_serializer_for_reverse_relations(
         serialize
     )
     setattr(to_model, f"serialize_{related_name}", decorator)
-    DecoratorInfos.build(to_model)
+    # DecoratorInfos.build will overwrite __pydantic_decorators__ on to_model,
+    # deleting the previous decorators. We need to save them and then merge them.
+    prev_decorators = getattr(to_model, "__pydantic_decorators__", DecoratorInfos())
+    new_decorators = DecoratorInfos.build(to_model)
+    prev_decorators.validators.update(new_decorators.validators)
+    prev_decorators.field_validators.update(new_decorators.field_validators)
+    prev_decorators.root_validators.update(new_decorators.root_validators)
+    prev_decorators.field_serializers.update(new_decorators.field_serializers)
+    prev_decorators.model_serializers.update(new_decorators.model_serializers)
+    prev_decorators.model_validators.update(new_decorators.model_validators)
+    prev_decorators.computed_fields.update(new_decorators.computed_fields)
+    setattr(to_model, "__pydantic_decorators__", prev_decorators)
 
 
 def replace_models_with_copy(

@@ -97,7 +97,25 @@ async def test_related_with_defaults(sample_data):
                         "year": 2021,
                     }
                 ],
-                "country": {"authors": [{"id": 1}], "id": 1},
+                "country": {
+                    "authors": [
+                        {
+                            "books": [
+                                {
+                                    "author": {"id": 1},
+                                    "id": 1,
+                                    "title": "Bug caused by " "default value",
+                                    "year": 2021,
+                                }
+                            ],
+                            "country": {"id": 1},
+                            "id": 1,
+                            "name": "bug",
+                            "rating": 5,
+                        }
+                    ],
+                    "id": 1,
+                },
                 "id": 1,
                 "name": "bug",
                 "rating": 5,
