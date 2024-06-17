@@ -1888,13 +1888,13 @@ typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
 name = "pydantic-extra-types"
-version = "2.8.1"
+version = "2.8.2"
 description = "Extra Pydantic types."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pydantic_extra_types-2.8.1-py3-none-any.whl", hash = "sha256:ca3fce71ee46bc1043bdf3d0e3c149a09ab162cb305c4ed8c501a5034a592dd6"},
-    {file = "pydantic_extra_types-2.8.1.tar.gz", hash = "sha256:c7cabe403234658207dcefed3489f2e8bfc8f4a8e305e7ab25ee29eceed65b39"},
+    {file = "pydantic_extra_types-2.8.2-py3-none-any.whl", hash = "sha256:f2400b3c3553fb7fa09a131967b4edf2d53f01ad9fa89d158784653f2e5c13d1"},
+    {file = "pydantic_extra_types-2.8.2.tar.gz", hash = "sha256:4d2b3c52c1e2e4dfa31bf1d5a37b841b09e3c5a08ec2bffca0e07fc2ad7d5c4a"},
 ]
 
 [package.dependencies]
