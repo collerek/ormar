@@ -42,7 +42,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.8.0"
-databases = "^0.7.0"
+databases = ">=0.7,<0.9"
 pydantic = "v2.5.3"
 SQLAlchemy = "^1.4.42"
 cryptography = { version = ">=41.0.3,<43.0.0", optional = true }
