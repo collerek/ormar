@@ -128,7 +128,7 @@ pydantic-extra-types = "^2.5.0"
 watchdog = "<5.0.0"
 pytest-codspeed = "^2.2.0"
 mike = "^2.0.0"
-faker = ">=24.3,<26.0"
+faker = ">=26.0.0,<27.0"
 email-validator = "^2.1.1"
 
 [build-system]
