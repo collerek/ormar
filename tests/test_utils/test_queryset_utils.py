@@ -20,6 +20,12 @@ def test_list_to_dict_translation():
     }
 
 
+def test_list_to_dict_translation_with_default():
+    tet_list = ["aa", "aa__inner", "bb"]
+    test = translate_list_to_dict(tet_list, default={})
+    assert test == {"aa": {"inner": {}}, "bb": {}}
+
+
 def test_updating_dict_with_list():
     curr_dict = {
         "aa": Ellipsis,
