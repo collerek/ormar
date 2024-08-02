@@ -214,7 +214,7 @@ def replace_models_with_copy(
     if inspect.isclass(annotation) and issubclass(annotation, ormar.Model):
         return create_copy_to_avoid_circular_references(model=annotation)
     elif hasattr(annotation, "__origin__") and annotation.__origin__ in {list, Union}:
-        if annotation.__origin__ == list:
+        if annotation.__origin__ is list:
             return List[  # type: ignore
                 replace_models_with_copy(
                     annotation=annotation.__args__[0],
