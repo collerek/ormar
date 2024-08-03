@@ -64,7 +64,7 @@ def translate_list_to_dict(  # noqa: CCR001
     for path in list_to_trans:
         current_level = new_dict
         parts = path.split("__")
-        def_val: Any = default
+        def_val: Any = copy.copy(default)
         for ind, part in enumerate(parts):
             is_last = ind == len(parts) - 1
             if check_node_not_dict_or_not_last_node(
