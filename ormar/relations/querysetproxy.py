@@ -1,3 +1,4 @@
+from _weakref import CallableProxyType
 from typing import (  # noqa: I100, I201
     TYPE_CHECKING,
     Any,
@@ -15,8 +16,6 @@ from typing import (  # noqa: I100, I201
     Union,
     cast,
 )
-
-from _weakref import CallableProxyType
 
 import ormar  # noqa: I100, I202
 from ormar.exceptions import ModelPersistenceError, NoMatch, QueryDefinitionError
