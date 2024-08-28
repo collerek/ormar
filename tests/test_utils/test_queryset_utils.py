@@ -22,8 +22,17 @@ def test_list_to_dict_translation():
 
 def test_list_to_dict_translation_with_default():
     tet_list = ["aa", "aa__inner", "bb"]
-    test = translate_list_to_dict(tet_list, default={})
-    assert test == {"aa": {"inner": {}}, "bb": {}}
+    testshallow = translate_list_to_dict(tet_list, default={})
+    assert testshallow == {"aa": {"inner": {}}, "bb": {}}
+
+    tet_list = ["aa", "aa__inner", "bb"]
+    testdeep = translate_list_to_dict(tet_list, default={"foo": {}})
+    assert testdeep == {"aa": {"foo": {}, "inner": {"foo": {}}}, "bb": {"foo": {}}}
+    testdeep["aa"]["foo"]["bar"] = 1234
+    assert testdeep == {
+        "aa": {"foo": {"bar": 1234}, "inner": {"foo": {}}},
+        "bb": {"foo": {}},
+    }
 
 
 def test_updating_dict_with_list():
