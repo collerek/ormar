@@ -43,7 +43,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.8.0"
 databases = "^0.7.0"
-pydantic = "v2.5.3"
+pydantic = { version = ">=2.5.3,<3.0.0" }
 SQLAlchemy = "^1.4.42"
 cryptography = { version = ">=41.0.3,<43.0.0", optional = true }
 # Async database drivers
@@ -124,7 +124,7 @@ nest-asyncio = "^1.6.0"
 pre-commit = ">=2.21,<4.0"
 httpx = ">=0.24.1,<0.28.0"
 asgi-lifespan = "^2.1.0"
-pydantic-extra-types = "^2.5.0"
+pydantic-extra-types = { version = ">=2.5.0,<3.0.0" }
 watchdog = "<5.0.0"
 pytest-codspeed = "^2.2.0"
 mike = "^2.0.0"
