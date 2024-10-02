@@ -13,7 +13,10 @@ from typing import (
     cast,
 )
 
-from pydantic.plugin._schema_validator import create_schema_validator
+from pydantic.plugin._schema_validator import (
+    PluggableSchemaValidator,
+    create_schema_validator,
+)
 from pydantic_core import CoreSchema, SchemaValidator
 
 import ormar  # noqa: I100, I202
@@ -36,7 +39,9 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         _json_fields: Set[str]
         _bytes_fields: Set[str]
         __pydantic_core_schema__: CoreSchema
-        __ormar_fields_validators__: Optional[Dict[str, SchemaValidator]]
+        __ormar_fields_validators__: Optional[
+            Dict[str, SchemaValidator | PluggableSchemaValidator]
+        ]
 
     @classmethod
     def prepare_model_to_save(cls, new_kwargs: dict) -> dict:
