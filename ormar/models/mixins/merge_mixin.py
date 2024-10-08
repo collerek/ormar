@@ -87,9 +87,7 @@ class MergeModelMixin:
         :rtype: Model
         """
         relation_map = (
-            relation_map
-            if relation_map is not None
-            else translate_list_to_dict(one._iterate_related_models())
+            relation_map if relation_map is not None else one._related_models_dict()
         )
         for field_name in relation_map:
             current_field = getattr(one, field_name)
