@@ -407,9 +407,9 @@ class LoadNode(Node):
             )
             self.models.append(instance)
 
-    def _hash_item(self, item: Dict | List) -> Tuple:
+    def _hash_item(self, item: Union[Dict, List]) -> Tuple:
         """
-        Converts a model dictionary or list into a hashable tuple to allow its use
+        Converts model dictionary or list into a hashable tuple to allow its use
         as a dictionary key - used to ensure unique instances of related models.
 
         :param item: instance dictionary or list
