@@ -412,7 +412,7 @@ class LoadNode(Node):
         Converts a model dictionary or list into a hashable tuple to allow its use
         as a dictionary key - used to ensure unique instances of related models.
 
-        :param item: Instance dictionary or list
+        :param item: instance dictionary or list
         :type item: Dict or List
         :return: tuple out of model dictionary or list
         :rtype: Tuple
