@@ -30,4 +30,5 @@ create_test_database = init_tests(base_ormar_config)
 
 @pytest.mark.asyncio
 async def test_tables_are_created():
-    assert await Book.objects.all() == []
+    async with base_ormar_config.database:
+        assert await Book.objects.all() == []
