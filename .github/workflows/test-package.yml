@@ -52,7 +52,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Poetry
-      uses: snok/install-poetry@v1.3.3
+      uses: snok/install-poetry@v1.4
       with:
         version: 1.4.2
         virtualenvs-create: false
@@ -105,14 +105,14 @@ jobs:
       run: bash scripts/test.sh
 
     - name: Upload coverage
-      uses: codecov/codecov-action@v4.5.0
+      uses: codecov/codecov-action@v4.6.0
       with:
         name: codecov-umbrella
         token: ${{ secrets.CODCOV_TOKEN }}
         verbose: true
 
     - name: Test & publish code coverage
-      uses: paambaati/codeclimate-action@v6.0.0
+      uses: paambaati/codeclimate-action@v8.0.0
       if: github.event.pull_request.head.repo.full_name == 'collerek/ormar'
       env:
         CC_TEST_REPORTER_ID:  ${{ secrets.CC_COVERAGE_TOKEN }}

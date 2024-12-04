@@ -544,7 +544,7 @@ def add_field_descriptor(
         setattr(new_model, name, RelationDescriptor(name=name))
     elif field.__type__ == pydantic.Json:
         setattr(new_model, name, JsonDescriptor(name=name))
-    elif field.__type__ == bytes:
+    elif field.__type__ is bytes:
         setattr(new_model, name, BytesDescriptor(name=name))
     else:
         setattr(new_model, name, PydanticDescriptor(name=name))

@@ -53,7 +53,7 @@ def populate_default_options_values(  # noqa: CCR001
         name for name, field in model_fields.items() if field.__type__ == pydantic.Json
     }
     new_model._bytes_fields = {
-        name for name, field in model_fields.items() if field.__type__ == bytes
+        name for name, field in model_fields.items() if field.__type__ is bytes
     }
 
     new_model.__relation_map__ = None
