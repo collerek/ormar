@@ -91,7 +91,11 @@ def expand_reverse_relationships(model: Type["Model"]) -> None:
     """
     model_fields = list(model.ormar_config.model_fields.values())
     for model_field in model_fields:
-        if model_field.is_relation and not model_field.has_unresolved_forward_refs():
+        if (
+            model_field.is_relation
+            and not model_field.has_unresolved_forward_refs()
+            and not model_field.is_through
+        ):
             model_field = cast("ForeignKeyField", model_field)
             expand_reverse_relationship(model_field=model_field)
 
