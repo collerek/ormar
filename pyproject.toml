@@ -43,9 +43,9 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.8.0"
 databases = "^0.7.0"
-pydantic = "v2.5.3"
+pydantic = ">=2.5.3,<2.9.0"
 SQLAlchemy = "^1.4.42"
-cryptography = { version = ">=41.0.3,<43.0.0", optional = true }
+cryptography = { version = ">=41.0.3,<44.0.0", optional = true }
 # Async database drivers
 aiosqlite = { version = ">=0.19,<0.21", optional = true }
 aiomysql = { version = ">=0.1.0", optional = true }
@@ -89,7 +89,7 @@ pytest = ">=7.4.4,<9.0.0"
 pytest-cov = ">=4,<6"
 codecov = "^2.1.13"
 pytest-asyncio = ">=0.21,<0.24"
-fastapi = ">=0.109.1,<0.112.0"
+fastapi = ">=0.109.1,<0.115.6"
 
 black = "^24.1.0"
 ruff = ">=0.5.1,<0.5.2"

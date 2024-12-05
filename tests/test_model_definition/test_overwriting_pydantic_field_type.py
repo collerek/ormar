@@ -47,7 +47,10 @@ def test_constraints():
 
     with pytest.raises(
         ValidationError,
-        match="The email address is not valid. It must have exactly one @-sign",
+        match=(
+            r"The email address is not valid. It must have exactly one @-sign|"
+            r"An email address must have an @-sign"
+        ),
     ):
         User(email="wrong")
 
