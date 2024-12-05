@@ -318,7 +318,7 @@ class Item(ormar.Model):
 You can generate pydantic models out of it with a one simple call.
 
 ```python
-PydanticCategory = Category.get_pydantic(include={"id", "name"}
+PydanticCategory = Category.get_pydantic(include={"id", "name"})
 ```
 
 Which will generate model equivalent of:
