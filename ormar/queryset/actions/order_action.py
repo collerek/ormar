@@ -40,7 +40,7 @@ class OrderAction(QueryAction):
         field_type = self.target_model.ormar_config.model_fields[
             self.field_name
         ].__type__
-        return dialect == "postgresql" and field_type == bool
+        return dialect == "postgresql" and field_type is bool
 
     def get_field_name_text(self) -> str:
         """

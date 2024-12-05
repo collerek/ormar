@@ -17,7 +17,7 @@ jobs:
           python-version: '3.8'
       - name: Install dependencies
         run: |
-          python -m pip install poetry==1.4.1
+          python -m pip install poetry==1.8.4
           poetry install --extras "all"
         env:
           POETRY_VIRTUALENVS_CREATE: false
