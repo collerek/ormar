@@ -79,6 +79,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     if TYPE_CHECKING:  # pragma no cover
         pk: Any
         __relation_map__: Optional[List[str]]
+        __relation_map_dict__: Optional[dict[str, Any]]
         __cached_hash__: Optional[int]
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
@@ -880,9 +881,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         )
 
         relation_map = (
-            relation_map
-            if relation_map is not None
-            else translate_list_to_dict(self._iterate_related_models())
+            relation_map if relation_map is not None else self._related_models_dict()
         )
         pk_only = getattr(self, "__pk_only__", False)
         if relation_map and not pk_only:
