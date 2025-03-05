@@ -1,5 +1,6 @@
 [project]
 name = "ormar"
+version = "0.20.1"
 
 [tool.poetry]
 name = "ormar"
