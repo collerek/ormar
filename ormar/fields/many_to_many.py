@@ -130,6 +130,8 @@ def ManyToMany(  # type: ignore
 
     through_relation_name = kwargs.pop("through_relation_name", None)
     through_reverse_relation_name = kwargs.pop("through_reverse_relation_name", None)
+    is_through_relation_column_nullable = kwargs.pop("is_through_relation_column_nullable", None)
+    is_through_reverse_relation_column_nullable = kwargs.pop("is_through_reverse_relation_column_nullable", None)
 
     if through is not None and through.__class__ != ForwardRef:
         forbid_through_relations(cast(Type["Model"], through))
@@ -173,6 +175,8 @@ def ManyToMany(  # type: ignore
         skip_field=skip_field,
         through_relation_name=through_relation_name,
         through_reverse_relation_name=through_reverse_relation_name,
+        is_through_reverse_relation_column_nullable=is_through_reverse_relation_column_nullable,
+        is_through_relation_column_nullable=is_through_relation_column_nullable,
     )
 
     Field = type("ManyToMany", (ManyToManyField, BaseField), {})
