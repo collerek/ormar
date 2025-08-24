@@ -13,7 +13,7 @@ To read more about methods, possibilities, definition etc. please read the subse
 
 To define many-to-one relation use `ForeignKey` field.
 
-```Python hl_lines="17"
+```Python hl_lines="26"
 --8<-- "../docs_src/relations/docs003.py"
 ```
 
@@ -24,13 +24,11 @@ To define many-to-one relation use `ForeignKey` field.
 
 The definition of one-to-many relation also uses `ForeignKey`, and it's registered for you automatically.
 
-So in relation ato example above.
+So in relation to example above.
 
-```Python hl_lines="17"
+```Python hl_lines="7-8"
 class Department(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -52,21 +50,22 @@ class Department(ormar.Model):
 
 To define many-to-many relation use `ManyToMany` field.
 
-```python hl_lines="18"
+```python hl_lines="19"
 class Category(ormar.Model):
-    class Meta:
-        tablename = "categories"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+        tablename="categories",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
 
 class Post(ormar.Model):
-    class Meta:
-        tablename = "posts"
-        database = database
-        metadata = metadata
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -92,18 +91,24 @@ side of the current query for m2m models.
 So if you query from model `A` to model `B`, only model `B` has through field exposed.
 Which kind of make sense, since it's a one through model/field for each of related models.
 
-```python hl_lines="10-15"
+```python hl_lines="12-21"
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+        tablename="categories",
+    )
 
     id = ormar.Integer(primary_key=True)
     name = ormar.String(max_length=40)
 
 # you can specify additional fields on through model
 class PostCategory(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "posts_x_categories"
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+        tablename="posts_x_categories",
+    )
 
     id: int = ormar.Integer(primary_key=True)
     sort_order: int = ormar.Integer(nullable=True)
@@ -111,8 +116,10 @@ class PostCategory(ormar.Model):
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=metadata,
+    )
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -130,7 +137,7 @@ class Post(ormar.Model):
 
 ## Relationship default sort order
 
-By default relations follow model default sort order so `primary_key` column ascending, or any sort order se in `Meta` class.
+By default relations follow model default sort order so `primary_key` column ascending, or any sort order se in `ormar_config` object.
 
 !!!tip
     To read more about models sort order visit [models](../models/index.md#model-sort-order) section of documentation
@@ -143,27 +150,26 @@ columns also `Through` model columns `{through_field_name}__{column_name}`
 
 Sample configuration might look like this:
 
-```python hl_lines="24"
+```python hl_lines="23"
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = ormar.OrmarConfig(
+    database=database,
+    metadata=metadata,
+)
 
 
 class Author(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "authors"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "books"
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(
@@ -186,14 +192,12 @@ In order to create auto-relation or create two models that reference each other 
 different relations (remember the reverse side is auto-registered for you), you need to use
 `ForwardRef` from `typing` module.
 
-```python hl_lines="1 11 14"
+```python hl_lines="1 9 12"
 PersonRef = ForwardRef("Person")
 
 
 class Person(ormar.Model):
-    class Meta(ModelMeta):
-        metadata = metadata
-        database = db
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)

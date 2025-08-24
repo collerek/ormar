@@ -16,16 +16,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 
     - name: Install Poetry
-      uses: snok/install-poetry@v1.3
+      uses: snok/install-poetry@v1.4
       with:
-        version: 1.4.1
+        version: 1.8.4
         virtualenvs-create: true
         virtualenvs-in-project: true
 

@@ -1,12 +1,12 @@
-from typing import Dict, List, Optional, Sequence, TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Type, Union
 from weakref import proxy
 
 from ormar.relations.relation import Relation, RelationType
 from ormar.relations.utils import get_relations_sides_and_names
 
 if TYPE_CHECKING:  # pragma no cover
-    from ormar.models import NewBaseModel, Model
-    from ormar.fields import ForeignKeyField, BaseField
+    from ormar.fields import BaseField, ForeignKeyField
+    from ormar.models import Model, NewBaseModel
 
 
 class RelationsManager:
@@ -16,7 +16,7 @@ class RelationsManager:
 
     def __init__(
         self,
-        related_fields: List["ForeignKeyField"] = None,
+        related_fields: Optional[List["ForeignKeyField"]] = None,
         owner: Optional["Model"] = None,
     ) -> None:
         self.owner = proxy(owner)
@@ -120,7 +120,7 @@ class RelationsManager:
         :param name: name of the relation
         :type name: str
         """
-        relation_name = item.Meta.model_fields[name].get_related_name()
+        relation_name = item.ormar_config.model_fields[name].get_related_name()
         item._orm.remove(name, parent)
         parent._orm.remove(relation_name, item)
 

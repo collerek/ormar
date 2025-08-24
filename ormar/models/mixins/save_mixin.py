@@ -2,6 +2,7 @@ import base64
 import uuid
 from enum import Enum
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Collection,
@@ -9,11 +10,14 @@ from typing import (
     List,
     Optional,
     Set,
-    TYPE_CHECKING,
     cast,
 )
 
-import pydantic
+from pydantic.plugin._schema_validator import (
+    PluggableSchemaValidator,
+    create_schema_validator,
+)
+from pydantic_core import CoreSchema, SchemaValidator
 
 import ormar  # noqa: I100, I202
 from ormar.exceptions import ModelPersistenceError
@@ -31,11 +35,13 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
     """
 
     if TYPE_CHECKING:  # pragma: nocover
-        _choices_fields: Optional[Set]
         _skip_ellipsis: Callable
         _json_fields: Set[str]
         _bytes_fields: Set[str]
-        __fields__: Dict[str, pydantic.fields.ModelField]
+        __pydantic_core_schema__: CoreSchema
+        __ormar_fields_validators__: Optional[
+            Dict[str, SchemaValidator | PluggableSchemaValidator]
+        ]
 
     @classmethod
     def prepare_model_to_save(cls, new_kwargs: dict) -> dict:
@@ -95,9 +101,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict[str, str]
         """
-        ormar_fields = {
-            k for k, v in cls.Meta.model_fields.items() if not v.pydantic_only
-        }
+        ormar_fields = {k for k, v in cls.ormar_config.model_fields.items()}
         new_kwargs = {k: v for k, v in new_kwargs.items() if k in ormar_fields}
         return new_kwargs
 
@@ -112,8 +116,8 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict[str, str]
         """
-        pkname = cls.Meta.pkname
-        pk = cls.Meta.model_fields[pkname]
+        pkname = cls.ormar_config.pkname
+        pk = cls.ormar_config.model_fields[pkname]
         if new_kwargs.get(pkname, ormar.Undefined) is None and (
             pk.nullable or pk.autoincrement
         ):
@@ -131,7 +135,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict
         """
-        for name, field in cls.Meta.model_fields.items():
+        for name, field in cls.ormar_config.model_fields.items():
             if field.__type__ == uuid.UUID and name in model_dict:
                 parsers = {"string": lambda x: str(x), "hex": lambda x: "%.32x" % x.int}
                 uuid_format = field.column_type.uuid_format
@@ -153,8 +157,8 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         for field in cls.extract_related_names():
             field_value = model_dict.get(field, None)
             if field_value is not None:
-                target_field = cls.Meta.model_fields[field]
-                target_pkname = target_field.to.Meta.pkname
+                target_field = cls.ormar_config.model_fields[field]
+                target_pkname = target_field.to.ormar_config.pkname
                 if isinstance(field_value, ormar.Model):  # pragma: no cover
                     pk_value = getattr(field_value, target_pkname)
                     if not pk_value:
@@ -187,7 +191,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         """
         bytes_base64_fields = {
             name
-            for name, field in cls.Meta.model_fields.items()
+            for name, field in cls.ormar_config.model_fields.items()
             if field.represent_as_base64_str
         }
         for key, value in model_dict.items():
@@ -227,12 +231,8 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict
         """
-        for field_name, field in cls.Meta.model_fields.items():
-            if (
-                field_name not in new_kwargs
-                and field.has_default(use_server=False)
-                and not field.pydantic_only
-            ):
+        for field_name, field in cls.ormar_config.model_fields.items():
+            if field_name not in new_kwargs and field.has_default(use_server=False):
                 new_kwargs[field_name] = field.get_default()
             # clear fields with server_default set as None
             if (
@@ -243,7 +243,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return new_kwargs
 
     @classmethod
-    def validate_choices(cls, new_kwargs: Dict) -> Dict:
+    def validate_enums(cls, new_kwargs: Dict) -> Dict:
         """
         Receives dictionary of model that is about to be saved and validates the
         fields with choices set to see if the value is allowed.
@@ -253,22 +253,46 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :return: dictionary of model that is about to be saved
         :rtype: Dict
         """
-        if not cls._choices_fields:
-            return new_kwargs
-
-        fields_to_check = [
-            field
-            for field in cls.Meta.model_fields.values()
-            if field.name in cls._choices_fields and field.name in new_kwargs
-        ]
-        for field in fields_to_check:
-            if new_kwargs[field.name] not in field.choices:
-                raise ValueError(
-                    f"{field.name}: '{new_kwargs[field.name]}' "
-                    f"not in allowed choices set:"
-                    f" {field.choices}"
-                )
+        validators = cls._build_individual_schema_validator()
+        for key, value in new_kwargs.items():
+            if key in validators:
+                validators[key].validate_python(value)
         return new_kwargs
+
+    @classmethod
+    def _build_individual_schema_validator(cls) -> Any:
+        if cls.__ormar_fields_validators__ is not None:
+            return cls.__ormar_fields_validators__
+        field_validators = {}
+        for key, field in cls._extract_pydantic_fields().items():
+            if cls.__pydantic_core_schema__["type"] == "definitions":
+                schema = {
+                    "type": "definitions",
+                    "schema": field["schema"],
+                    "definitions": cls.__pydantic_core_schema__["definitions"],
+                }
+            else:
+                schema = field["schema"]
+            field_validators[key] = create_schema_validator(
+                schema, cls, cls.__module__, cls.__qualname__, "BaseModel"
+            )
+        cls.__ormar_fields_validators__ = field_validators
+        return cls.__ormar_fields_validators__
+
+    @classmethod
+    def _extract_pydantic_fields(cls) -> Any:
+        if cls.__pydantic_core_schema__["type"] == "model":
+            return cls.__pydantic_core_schema__["schema"]["fields"]
+        elif cls.__pydantic_core_schema__["type"] == "definitions":
+            main_schema = cls.__pydantic_core_schema__["schema"]
+            if "schema_ref" in main_schema:
+                reference_id = main_schema["schema_ref"]
+                return next(
+                    ref
+                    for ref in cls.__pydantic_core_schema__["definitions"]
+                    if ref["ref"] == reference_id
+                )["schema"]["fields"]
+            return main_schema["schema"]["fields"]
 
     @staticmethod
     async def _upsert_model(
@@ -329,12 +353,12 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :param previous_model: previous model from which method came
         :type previous_model: Model
         """
-        through_name = previous_model.Meta.model_fields[
+        through_name = previous_model.ormar_config.model_fields[
             relation_field.name
         ].through.get_name()
         through = getattr(instance, through_name)
         if through:
-            through_dict = through.dict(exclude=through.extract_related_names())
+            through_dict = through.model_dump(exclude=through.extract_related_names())
         else:
             through_dict = {}
         await getattr(

@@ -1,8 +1,9 @@
 import datetime
 import decimal
 import uuid
-from enum import Enum as E, EnumMeta
-from typing import Any, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union, overload
+from enum import Enum as E
+from enum import EnumMeta
+from typing import TYPE_CHECKING, Any, Optional, Type, TypeVar, Union, overload
 
 import pydantic
 import sqlalchemy
@@ -17,13 +18,17 @@ try:
     from typing import Literal  # type: ignore
 except ImportError:  # pragma: no cover
     from typing_extensions import Literal  # type: ignore
+    
+try:
+    from typing import Self  # type: ignore
+except ImportError:  # pragma: no cover
+    from typing_extensions import Self  # type: ignore
 
 
 def is_field_nullable(
     nullable: Optional[bool],
     default: Any,
     server_default: Any,
-    pydantic_only: Optional[bool],
 ) -> bool:
     """
     Checks if the given field should be nullable/ optional based on parameters given.
@@ -34,17 +39,11 @@ def is_field_nullable(
     :type default: Any
     :param server_default: function to be called as default by sql server
     :type server_default: Any
-    :param pydantic_only: flag if fields should not be included in the sql table
-    :type pydantic_only: Optional[bool]
     :return: result of the check
     :rtype: bool
     """
     if nullable is None:
-        return (
-            default is not None
-            or server_default is not None
-            or (pydantic_only is not None and pydantic_only)
-        )
+        return default is not None or server_default is not None
     return nullable
 
 
@@ -62,49 +61,6 @@ def is_auto_primary_key(primary_key: bool, autoincrement: bool) -> bool:
     return primary_key and autoincrement
 
 
-def convert_choices_if_needed(
-    field_type: "Type",
-    choices: Set,
-    nullable: bool,
-    scale: int = None,
-    represent_as_str: bool = False,
-) -> Set:
-    """
-    Converts dates to isoformat as fastapi can check this condition in routes
-    and the fields are not yet parsed.
-    Converts enums to list of it's values.
-    Converts uuids to strings.
-    Converts decimal to float with given scale.
-
-    :param field_type: type o the field
-    :type field_type: Type
-    :param choices: set of choices
-    :type choices: Set
-    :param scale: scale for decimals
-    :type scale: int
-    :param nullable: flag if field_nullable
-    :type nullable: bool
-    :param represent_as_str: flag for bytes fields
-    :type represent_as_str: bool
-    :param scale: scale for decimals
-    :type scale: int
-    :return: value, choices list
-    :rtype: Tuple[Any, Set]
-    """
-    choices = {o.value if isinstance(o, E) else o for o in choices}
-    encoder = ormar.ENCODERS_MAP.get(field_type, lambda x: x)
-    if field_type == decimal.Decimal:
-        precision = scale
-        choices = {encoder(o, precision) for o in choices}
-    elif field_type == bytes:
-        choices = {encoder(o, represent_as_str) for o in choices}
-    elif encoder:
-        choices = {encoder(o) for o in choices}
-    if nullable:
-        choices.add(None)
-    return choices
-
-
 class ModelFieldFactory:
     """
     Default field factory that construct Field classes and populated their values.
@@ -114,14 +70,13 @@ class ModelFieldFactory:
     _type: Any = None
     _sample: Any = None
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> BaseField:  # type: ignore
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:  # type: ignore
         cls.validate(**kwargs)
 
         default = kwargs.pop("default", None)
         server_default = kwargs.pop("server_default", None)
         nullable = kwargs.pop("nullable", None)
         sql_nullable = kwargs.pop("sql_nullable", None)
-        pydantic_only = kwargs.pop("pydantic_only", False)
 
         primary_key = kwargs.pop("primary_key", False)
         autoincrement = kwargs.pop("autoincrement", False)
@@ -133,7 +88,7 @@ class ModelFieldFactory:
         overwrite_pydantic_type = kwargs.pop("overwrite_pydantic_type", None)
 
         nullable = is_field_nullable(
-            nullable, default, server_default, pydantic_only
+            nullable, default, server_default
         ) or is_auto_primary_key(primary_key, autoincrement)
         sql_nullable = (
             False
@@ -141,23 +96,16 @@ class ModelFieldFactory:
             else (nullable if sql_nullable is None else sql_nullable)
         )
 
-        choices = set(kwargs.pop("choices", []))
-        if choices:
-            choices = convert_choices_if_needed(
-                field_type=cls._type,
-                choices=choices,
-                nullable=nullable,
-                scale=kwargs.get("scale", None),
-                represent_as_str=kwargs.get("represent_as_base64_str", False),
-            )
         enum_class = kwargs.pop("enum_class", None)
         field_type = cls._type if enum_class is None else enum_class
 
         namespace = dict(
             __type__=field_type,
-            __pydantic_type__=overwrite_pydantic_type
-            if overwrite_pydantic_type is not None
-            else field_type,
+            __pydantic_type__=(
+                overwrite_pydantic_type
+                if overwrite_pydantic_type is not None
+                else field_type
+            ),
             __sample__=cls._sample,
             alias=kwargs.pop("name", None),
             name=None,
@@ -165,15 +113,14 @@ class ModelFieldFactory:
             default=default,
             server_default=server_default,
             nullable=nullable,
+            annotation=field_type,
             sql_nullable=sql_nullable,
             index=kwargs.pop("index", False),
             unique=kwargs.pop("unique", False),
-            pydantic_only=pydantic_only,
             autoincrement=autoincrement,
             column_type=cls.get_column_type(
                 **kwargs, sql_nullable=sql_nullable, enum_class=enum_class
             ),
-            choices=choices,
             encrypt_secret=encrypt_secret,
             encrypt_backend=encrypt_backend,
             encrypt_custom_backend=encrypt_custom_backend,
@@ -216,10 +163,10 @@ class String(ModelFieldFactory, str):
         cls,
         *,
         max_length: int,
-        min_length: int = None,
-        regex: str = None,
+        min_length: Optional[int] = None,
+        regex: Optional[str] = None,
         **kwargs: Any
-    ) -> BaseField:  # type: ignore
+    ) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -268,11 +215,11 @@ class Integer(ModelFieldFactory, int):
     def __new__(  # type: ignore
         cls,
         *,
-        minimum: int = None,
-        maximum: int = None,
-        multiple_of: int = None,
+        minimum: Optional[int] = None,
+        maximum: Optional[int] = None,
+        multiple_of: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
             autoincrement
@@ -313,7 +260,7 @@ class Text(ModelFieldFactory, str):
     _type = str
     _sample = "text"
 
-    def __new__(cls, **kwargs: Any) -> BaseField:  # type: ignore
+    def __new__(cls, **kwargs: Any) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -349,11 +296,11 @@ class Float(ModelFieldFactory, float):
     def __new__(  # type: ignore
         cls,
         *,
-        minimum: float = None,
-        maximum: float = None,
-        multiple_of: int = None,
+        minimum: Optional[float] = None,
+        maximum: Optional[float] = None,
+        multiple_of: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         kwargs = {
             **kwargs,
             **{
@@ -419,7 +366,7 @@ class DateTime(ModelFieldFactory, datetime.datetime):
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, timezone: bool = False, **kwargs: Any
-    ) -> BaseField:  # type: ignore
+    ) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -476,7 +423,7 @@ class Time(ModelFieldFactory, datetime.time):
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, timezone: bool = False, **kwargs: Any
-    ) -> BaseField:  # type: ignore
+    ) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -528,20 +475,17 @@ if TYPE_CHECKING:  # pragma: nocover # noqa: C901
     @overload
     def LargeBinary(  # type: ignore
         max_length: int, *, represent_as_base64_str: Literal[True], **kwargs: Any
-    ) -> str:
-        ...
+    ) -> str: ...
 
     @overload
     def LargeBinary(  # type: ignore
         max_length: int, *, represent_as_base64_str: Literal[False], **kwargs: Any
-    ) -> bytes:
-        ...
+    ) -> bytes: ...
 
     @overload
     def LargeBinary(
         max_length: int, represent_as_base64_str: Literal[False] = ..., **kwargs: Any
-    ) -> bytes:
-        ...
+    ) -> bytes: ...
 
     def LargeBinary(
         max_length: int, represent_as_base64_str: bool = False, **kwargs: Any
@@ -565,7 +509,7 @@ else:
             max_length: int,
             represent_as_base64_str: bool = False,
             **kwargs: Any
-        ) -> BaseField:  # type: ignore
+        ) -> Self:  # type: ignore
             kwargs = {
                 **kwargs,
                 **{
@@ -614,11 +558,11 @@ class BigInteger(Integer, int):
     def __new__(  # type: ignore
         cls,
         *,
-        minimum: int = None,
-        maximum: int = None,
-        multiple_of: int = None,
+        minimum: Optional[int] = None,
+        maximum: Optional[int] = None,
+        multiple_of: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
             autoincrement
@@ -662,11 +606,11 @@ class SmallInteger(Integer, int):
     def __new__(  # type: ignore
         cls,
         *,
-        minimum: int = None,
-        maximum: int = None,
-        multiple_of: int = None,
+        minimum: Optional[int] = None,
+        maximum: Optional[int] = None,
+        multiple_of: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
             autoincrement
@@ -710,15 +654,15 @@ class Decimal(ModelFieldFactory, decimal.Decimal):
     def __new__(  # type: ignore # noqa CFQ002
         cls,
         *,
-        minimum: float = None,
-        maximum: float = None,
-        multiple_of: int = None,
-        precision: int = None,
-        scale: int = None,
-        max_digits: int = None,
-        decimal_places: int = None,
+        minimum: Optional[float] = None,
+        maximum: Optional[float] = None,
+        multiple_of: Optional[int] = None,
+        precision: Optional[int] = None,
+        scale: Optional[int] = None,
+        max_digits: Optional[int] = None,
+        decimal_places: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         kwargs = {
             **kwargs,
             **{
@@ -782,7 +726,7 @@ class UUID(ModelFieldFactory, uuid.UUID):
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, uuid_format: str = "hex", **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         kwargs = {
             **kwargs,
             **{
@@ -810,7 +754,6 @@ class UUID(ModelFieldFactory, uuid.UUID):
 
 
 if TYPE_CHECKING:  # pragma: nocover
-
     T = TypeVar("T", bound=E)
 
     def Enum(enum_class: Type[T], **kwargs: Any) -> T:
@@ -828,8 +771,7 @@ else:
 
         def __new__(  # type: ignore # noqa CFQ002
             cls, *, enum_class: Type[E], **kwargs: Any
-        ) -> BaseField:
-
+        ) -> Self:
             kwargs = {
                 **kwargs,
                 **{

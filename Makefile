@@ -15,18 +15,22 @@ test_mysql:
 test_sqlite:
 	bash scripts/test.sh -svv
 
+test_docs:
+	bash scripts/test_docs.sh -svv
+
 test:
-	pytest
+	pytest -svv tests/
 
 coverage:
-	pytest --cov=ormar --cov=tests --cov-fail-under=100 --cov-report=term-missing
+	pytest --cov=ormar --cov=tests --cov-fail-under=100 --cov-report=term-missing tests
 
-black:
-	black ormar tests
+type_check:
+	mkdir -p .mypy_cache && poetry run python -m mypy ormar tests --ignore-missing-imports --install-types --non-interactive
 
 lint:
-	black ormar tests
-	flake8 ormar
+	poetry run python -m ruff check . --fix
 
-mypy:
-	mypy ormar tests
+fmt:
+	poetry run python -m black .
+
+pre-commit: fmt lint type_check

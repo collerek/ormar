@@ -9,7 +9,7 @@ Sqlalchemy column and Type are automatically taken from target `Model`.
 
 ## Defining Models
 
-```Python hl_lines="40"
+```Python hl_lines="34"
 --8<-- "../docs_src/relations/docs002.py"
 ```
 
@@ -24,20 +24,18 @@ news = await Category.objects.create(name="News")
 
 `ForeignKey` fields are automatically registering reverse side of the relation.
 
-By default it's child (source) `Model` name + s, like courses in snippet below: 
+By default it's child (source) `Model` name + s, like `posts` in snippet below: 
 
-```python
+```python hl_lines="25-26"
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -81,31 +79,31 @@ categories: Optional[Union[Category, List[Category]]] = ormar.ManyToMany(
 If you are sure you don't want the reverse relation you can use `skip_reverse=True` 
 flag of the `ManyToMany`.
 
-  If you set `skip_reverse` flag internally the field is still registered on the other 
-  side of the relationship so you can:
+If you set `skip_reverse` flag internally the field is still registered on the other 
+side of the relationship so you can:
+
   * `filter` by related models fields from reverse model
   * `order_by` by related models fields from reverse model 
   
-  But you cannot:
+But you cannot:
+
   * access the related field from reverse model with `related_name`
   * even if you `select_related` from reverse side of the model the returned models won't be populated in reversed instance (the join is not prevented so you still can `filter` and `order_by` over the relation)
-  * the relation won't be populated in `dict()` and `json()`
+  * the relation won't be populated in `model_dump()` and `json()`
   * you cannot pass the nested related objects when populating from dictionary or json (also through `fastapi`). It will be either ignored or error will be raised depending on `extra` setting in pydantic `Config`.
 
 Example:
 
 ```python
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
 
 
 class Post(ormar.Model):
-    class Meta(BaseMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
@@ -126,8 +124,8 @@ categories = (
 assert categories[0].first_name == "Test"
 
 # note that posts are not populated for author even if explicitly
-# included in select_related - note no posts in dict()
-assert news.dict(exclude={"id"}) == {"name": "News"}
+# included in select_related - note no posts in model_dump()
+assert news.model_dump(exclude={"id"}) == {"name": "News"}
 
 # still can filter through fields of related model
 categories = await Category.objects.filter(posts__title="Hello, M2M").all()
@@ -141,7 +139,7 @@ assert len(categories) == 1
 Optionally if you want to add additional fields you can explicitly create and pass
 the through model class.
 
-```Python hl_lines="14-20 29"
+```Python hl_lines="19-24 32"
 --8<-- "../docs_src/relations/docs004.py"
 ```
 
@@ -170,9 +168,7 @@ So in example like this:
 ```python
 ... # course declaration omitted
 class Student(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -180,10 +176,7 @@ class Student(ormar.Model):
 
 # will produce default Through model like follows (example simplified)
 class StudentCourse(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
-        tablename = "students_courses"
+    ormar_config = base_ormar_config.copy(tablename="students_courses")
 
     id: int = ormar.Integer(primary_key=True)
     student = ormar.ForeignKey(Student) # default name
@@ -199,10 +192,14 @@ Example:
 
 ```python
 ... # course declaration omitted
+base_ormar_config = ormar.OrmarConfig(
+    database=databases.Database("sqlite:///db.sqlite"),
+    metadata=sqlalchemy.MetaData(),
+)
+
+
 class Student(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -212,10 +209,7 @@ class Student(ormar.Model):
 
 # will produce Through model like follows (example simplified)
 class StudentCourse(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
-        tablename = "students_courses"
+    ormar_config = base_ormar_config.copy(tablename="student_courses")
 
     id: int = ormar.Integer(primary_key=True)
     student_id = ormar.ForeignKey(Student) # set by through_relation_name
@@ -238,7 +232,7 @@ so it's useful only when additional fields are provided on `Through` model.
 
 In a sample model setup as following:
 
-```Python hl_lines="14-20 29"
+```Python hl_lines="19-24 32"
 --8<-- "../docs_src/relations/docs004.py"
 ```
 

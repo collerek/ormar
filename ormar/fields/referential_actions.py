@@ -2,7 +2,6 @@
 Gathers all referential actions by ormar.
 """
 
-
 from enum import Enum
 
 

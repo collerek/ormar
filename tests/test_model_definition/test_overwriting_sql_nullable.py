@@ -2,28 +2,19 @@ import sqlite3
 from typing import Optional
 
 import asyncpg
-import databases
-import pymysql
-import sqlalchemy
-from sqlalchemy import create_engine, text
-
 import ormar
+import pymysql
 import pytest
+from sqlalchemy import text
 
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-db = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
-
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = db
+base_ormar_config = create_config()
 
 
 class PrimaryModel(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "primary_models"
+    ormar_config = base_ormar_config.copy(tablename="primary_models")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=255, index=True)
@@ -33,17 +24,12 @@ class PrimaryModel(ormar.Model):
     )
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_create_models():
-    async with db:
+    async with base_ormar_config.database:
         primary = await PrimaryModel(
             name="Foo", some_text="Bar", some_other_text="Baz"
         ).save()

@@ -1,14 +1,15 @@
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Generic,
     List,
     Optional,
-    TYPE_CHECKING,
     Set,
     Type,
     TypeVar,
 )
+
 from typing_extensions import SupportsIndex
 
 import ormar
@@ -18,8 +19,8 @@ from ormar.relations.querysetproxy import QuerysetProxy
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model, RelationType
     from ormar.models import T
-    from ormar.relations import Relation
     from ormar.queryset import QuerySet
+    from ormar.relations import Relation
 else:
     T = TypeVar("T", bound="Model")
 
@@ -71,7 +72,7 @@ class RelationProxy(Generic[T], List[T]):
         """
         if self._related_field_name:
             return self._related_field_name
-        owner_field = self._owner.Meta.model_fields[self.field_name]
+        owner_field = self._owner.ormar_config.model_fields[self.field_name]
         self._related_field_name = owner_field.get_related_name()
 
         return self._related_field_name
@@ -245,7 +246,7 @@ class RelationProxy(Generic[T], List[T]):
         :rtype: QuerySet
         """
         related_field_name = self.related_field_name
-        pkname = self._owner.get_column_alias(self._owner.Meta.pkname)
+        pkname = self._owner.get_column_alias(self._owner.ormar_config.pkname)
         self._check_if_model_saved()
         kwargs = {f"{related_field_name}__{pkname}": self._owner.pk}
         queryset = (
@@ -324,7 +325,7 @@ class RelationProxy(Generic[T], List[T]):
         :param item: child to add to relation
         :type item: Model
         """
-        new_idx = len(self)
+        new_idx = len(self) if item not in self else self.index(item)
         relation_name = self.related_field_name
         await self._owner.signals.pre_relation_add.send(
             sender=self._owner.__class__,

@@ -1,60 +1,63 @@
+import copy
+import sys
+import warnings
+from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
+    Callable,
     Dict,
     List,
     Optional,
     Set,
-    TYPE_CHECKING,
     Tuple,
     Type,
     Union,
     cast,
-    Callable,
 )
 
-import databases
 import pydantic
 import sqlalchemy
+from pydantic import field_serializer
+from pydantic._internal._generics import PydanticGenericMetadata
+from pydantic.fields import ComputedFieldInfo, FieldInfo
+from pydantic_core.core_schema import SerializerFunctionWrapHandler
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
 import ormar  # noqa I100
 import ormar.fields.constraints
-from ormar.fields.constraints import UniqueColumns, IndexColumns, CheckColumns
 from ormar import ModelDefinitionError  # noqa I100
 from ormar.exceptions import ModelError
 from ormar.fields import BaseField
+from ormar.fields.constraints import CheckColumns, IndexColumns, UniqueColumns
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.many_to_many import ManyToManyField
 from ormar.models.descriptors import (
     JsonDescriptor,
     PkDescriptor,
-    PropertyDescriptor,
     PydanticDescriptor,
     RelationDescriptor,
 )
 from ormar.models.descriptors.descriptors import BytesDescriptor
 from ormar.models.helpers import (
-    alias_manager,
-    check_required_meta_parameters,
+    check_required_config_parameters,
+    config_field_not_set,
     expand_reverse_relationships,
     extract_annotations_and_default_vals,
     get_potential_fields,
-    get_pydantic_field,
     merge_or_generate_pydantic_config,
-    meta_field_not_set,
-    populate_choices_validators,
+    modify_schema_example,
+    populate_config_sqlalchemy_table_if_required,
+    populate_config_tablename_columns_and_pk,
     populate_default_options_values,
-    populate_meta_sqlalchemy_table_if_required,
-    populate_meta_tablename_columns_and_pk,
     register_relation_in_alias_manager,
     remove_excluded_parent_fields,
     sqlalchemy_columns_from_model_fields,
 )
+from ormar.models.ormar_config import OrmarConfig
 from ormar.models.quick_access_views import quick_access_set
-from ormar.models.utils import Extra
 from ormar.queryset import FieldAccessor, QuerySet
-from ormar.relations.alias_manager import AliasManager
-from ormar.signals import Signal, SignalEmitter
+from ormar.signals import Signal
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
@@ -62,32 +65,6 @@ if TYPE_CHECKING:  # pragma no cover
 
 CONFIG_KEY = "Config"
 PARSED_FIELDS_KEY = "__parsed_fields__"
-
-
-class ModelMeta:
-    """
-    Class used for type hinting.
-    Users can subclass this one for convenience but it's not required.
-    The only requirement is that ormar.Model has to have inner class with name Meta.
-    """
-
-    tablename: str
-    table: sqlalchemy.Table
-    metadata: sqlalchemy.MetaData
-    database: databases.Database
-    columns: List[sqlalchemy.Column]
-    constraints: List[ColumnCollectionConstraint]
-    pkname: str
-    model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]]
-    alias_manager: AliasManager
-    property_fields: Set
-    signals: SignalEmitter
-    abstract: bool
-    requires_ref_update: bool
-    orders_by: List[str]
-    exclude_parent_fields: List[str]
-    extra: Extra
-    queryset_class: Type[QuerySet]
 
 
 def add_cached_properties(new_model: Type["Model"]) -> None:
@@ -108,15 +85,14 @@ def add_cached_properties(new_model: Type["Model"]) -> None:
     new_model._related_names = None
     new_model._through_names = None
     new_model._related_fields = None
-    new_model._pydantic_fields = {name for name in new_model.__fields__}
     new_model._json_fields = set()
     new_model._bytes_fields = set()
 
 
 def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa: CCR001
     """
-    Checks class namespace for properties or functions with __property_field__.
-    If attribute have __property_field__ it was decorated with @property_field.
+    Checks class namespace for properties or functions with computed_field.
+    If attribute have decorator_info it was decorated with @computed_field.
 
     Functions like this are exposed in dict() (therefore also fastapi result).
     Names of property fields are cached for quicker access / extraction.
@@ -128,21 +104,22 @@ def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa:
     """
     props = set()
     for var_name, value in attrs.items():
-        if isinstance(value, property):
-            value = value.fget
-        field_config = getattr(value, "__property_field__", None)
-        if field_config:
+        if hasattr(value, "decorator_info") and isinstance(
+            value.decorator_info, ComputedFieldInfo
+        ):
             props.add(var_name)
 
-    if meta_field_not_set(model=new_model, field_name="property_fields"):
-        new_model.Meta.property_fields = props
+    if config_field_not_set(model=new_model, field_name="property_fields"):
+        new_model.ormar_config.property_fields = props
     else:
-        new_model.Meta.property_fields = new_model.Meta.property_fields.union(props)
+        new_model.ormar_config.property_fields = (
+            new_model.ormar_config.property_fields.union(props)
+        )
 
 
 def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
     """
-    Registers on model's SignalEmmiter and sets pre defined signals.
+    Registers on model's SignalEmmiter and sets pre-defined signals.
     Predefined signals are (pre/post) + (save/update/delete).
 
     Signals are emitted in both model own methods and in selected queryset ones.
@@ -150,8 +127,8 @@ def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
     :param new_model: newly constructed model
     :type new_model: Model class
     """
-    if meta_field_not_set(model=new_model, field_name="signals"):
-        signals = SignalEmitter()
+    if config_field_not_set(model=new_model, field_name="signals"):
+        signals = new_model.ormar_config.signals
         signals.pre_save = Signal()
         signals.pre_update = Signal()
         signals.pre_delete = Signal()
@@ -163,7 +140,6 @@ def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
         signals.pre_relation_remove = Signal()
         signals.post_relation_remove = Signal()
         signals.post_bulk_update = Signal()
-        new_model.Meta.signals = signals
 
 
 def verify_constraint_names(
@@ -182,7 +158,9 @@ def verify_constraint_names(
     :type parent_value: List
     """
     new_aliases = {x.name: x.get_alias() for x in model_fields.values()}
-    old_aliases = {x.name: x.get_alias() for x in base_class.Meta.model_fields.values()}
+    old_aliases = {
+        x.name: x.get_alias() for x in base_class.ormar_config.model_fields.values()
+    }
     old_aliases.update(new_aliases)
     constraints_columns = [x._pending_colargs for x in parent_value]
     for column_set in constraints_columns:
@@ -224,11 +202,11 @@ def get_constraint_copy(
     return constructor(constraint)
 
 
-def update_attrs_from_base_meta(  # noqa: CCR001
+def update_attrs_from_base_config(  # noqa: CCR001
     base_class: "Model", attrs: Dict, model_fields: Dict
 ) -> None:
     """
-    Updates Meta parameters in child from parent if needed.
+    Updates OrmarConfig parameters in child from parent if needed.
 
     :param base_class: one of the parent classes
     :type base_class: Model or model parent class
@@ -240,9 +218,13 @@ def update_attrs_from_base_meta(  # noqa: CCR001
 
     params_to_update = ["metadata", "database", "constraints", "property_fields"]
     for param in params_to_update:
-        current_value = attrs.get("Meta", {}).__dict__.get(param, ormar.Undefined)
+        current_value = attrs.get("ormar_config", {}).__dict__.get(
+            param, ormar.Undefined
+        )
         parent_value = (
-            base_class.Meta.__dict__.get(param) if hasattr(base_class, "Meta") else None
+            base_class.ormar_config.__dict__.get(param)
+            if hasattr(base_class, "ormar_config")
+            else None
         )
         if parent_value:
             if param == "constraints":
@@ -255,7 +237,7 @@ def update_attrs_from_base_meta(  # noqa: CCR001
             if isinstance(current_value, list):
                 current_value.extend(parent_value)
             else:
-                setattr(attrs["Meta"], param, parent_value)
+                setattr(attrs["ormar_config"], param, parent_value)
 
 
 def copy_and_replace_m2m_through_model(  # noqa: CFQ002
@@ -264,7 +246,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     table_name: str,
     parent_fields: Dict,
     attrs: Dict,
-    meta: ModelMeta,
+    ormar_config: OrmarConfig,
     base_class: Type["Model"],
 ) -> None:
     """
@@ -291,8 +273,8 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     :type parent_fields: Dict
     :param attrs: new namespace for class being constructed
     :type attrs: Dict
-    :param meta: metaclass of currently created model
-    :type meta: ModelMeta
+    :param ormar_config: metaclass of currently created model
+    :type ormar_config: OrmarConfig
     """
     Field: Type[BaseField] = type(  # type: ignore
         field.__class__.__name__, (ManyToManyField, BaseField), {}
@@ -306,32 +288,51 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
         field.owner = base_class
         field.create_default_through_model()
         through_class = field.through
-    new_meta: ormar.ModelMeta = type(  # type: ignore
-        "Meta", (), dict(through_class.Meta.__dict__)
+    new_config = ormar.OrmarConfig(
+        tablename=through_class.ormar_config.tablename,
+        metadata=through_class.ormar_config.metadata,
+        database=through_class.ormar_config.database,
+        abstract=through_class.ormar_config.abstract,
+        exclude_parent_fields=through_class.ormar_config.exclude_parent_fields,
+        queryset_class=through_class.ormar_config.queryset_class,
+        extra=through_class.ormar_config.extra,
+        constraints=through_class.ormar_config.constraints,
+        order_by=through_class.ormar_config.orders_by,
+    )
+    new_config.table = through_class.ormar_config.pkname
+    new_config.pkname = through_class.ormar_config.pkname
+    new_config.alias_manager = through_class.ormar_config.alias_manager
+    new_config.signals = through_class.ormar_config.signals
+    new_config.requires_ref_update = through_class.ormar_config.requires_ref_update
+    new_config.model_fields = copy.deepcopy(through_class.ormar_config.model_fields)
+    new_config.property_fields = copy.deepcopy(
+        through_class.ormar_config.property_fields
     )
     copy_name = through_class.__name__ + attrs.get("__name__", "")
-    copy_through = type(copy_name, (ormar.Model,), {"Meta": new_meta})
-    new_meta.tablename += "_" + meta.tablename
+    copy_through = cast(
+        Type[ormar.Model], type(copy_name, (ormar.Model,), {"ormar_config": new_config})
+    )
     # create new table with copied columns but remove foreign keys
     # they will be populated later in expanding reverse relation
-    if hasattr(new_meta, "table"):
-        del new_meta.table
-    new_meta.model_fields = {
+    # if hasattr(new_config, "table"):
+    new_config.tablename += "_" + ormar_config.tablename
+    new_config.table = None
+    new_config.model_fields = {
         name: field
-        for name, field in new_meta.model_fields.items()
+        for name, field in new_config.model_fields.items()
         if not field.is_relation
     }
     _, columns = sqlalchemy_columns_from_model_fields(
-        new_meta.model_fields, copy_through
+        new_config.model_fields, copy_through
     )  # type: ignore
-    new_meta.columns = columns
-    populate_meta_sqlalchemy_table_if_required(new_meta)
+    new_config.columns = columns
+    populate_config_sqlalchemy_table_if_required(config=new_config)
     copy_field.through = copy_through
 
     parent_fields[field_name] = copy_field
 
-    if through_class.Meta.table in through_class.Meta.metadata:
-        through_class.Meta.metadata.remove(through_class.Meta.table)
+    if through_class.ormar_config.table in through_class.ormar_config.metadata:
+        through_class.ormar_config.metadata.remove(through_class.ormar_config.table)
 
 
 def copy_data_from_parent_model(  # noqa: CCR001
@@ -361,32 +362,32 @@ def copy_data_from_parent_model(  # noqa: CCR001
     :return: updated attrs and model_fields
     :rtype: Tuple[Dict, Dict]
     """
-    if attrs.get("Meta"):
-        if model_fields and not base_class.Meta.abstract:  # type: ignore
+    if attrs.get("ormar_config"):
+        if model_fields and not base_class.ormar_config.abstract:  # type: ignore
             raise ModelDefinitionError(
                 f"{curr_class.__name__} cannot inherit "
                 f"from non abstract class {base_class.__name__}"
             )
-        update_attrs_from_base_meta(
+        update_attrs_from_base_config(
             base_class=base_class,  # type: ignore
             attrs=attrs,
             model_fields=model_fields,
         )
         parent_fields: Dict = dict()
-        meta = attrs.get("Meta")
-        if not meta:  # pragma: no cover
+        ormar_config = attrs.get("ormar_config")
+        if not ormar_config:  # pragma: no cover
             raise ModelDefinitionError(
-                f"Model {curr_class.__name__} declared without Meta"
+                f"Model {curr_class.__name__} declared without ormar_config"
             )
         table_name = (
-            meta.tablename
-            if hasattr(meta, "tablename") and meta.tablename
+            ormar_config.tablename
+            if hasattr(ormar_config, "tablename") and ormar_config.tablename
             else attrs.get("__name__", "").lower() + "s"
         )
-        for field_name, field in base_class.Meta.model_fields.items():
+        for field_name, field in base_class.ormar_config.model_fields.items():
             if (
-                hasattr(meta, "exclude_parent_fields")
-                and field_name in meta.exclude_parent_fields
+                hasattr(ormar_config, "exclude_parent_fields")
+                and field_name in ormar_config.exclude_parent_fields
             ):
                 continue
             if field.is_multi:
@@ -397,7 +398,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
                     table_name=table_name,
                     parent_fields=parent_fields,
                     attrs=attrs,
-                    meta=meta,
+                    ormar_config=ormar_config,
                     base_class=base_class,  # type: ignore
                 )
 
@@ -446,7 +447,7 @@ def extract_from_parents_definition(  # noqa: CCR001
     :return: updated attrs and model_fields
     :rtype: Tuple[Dict, Dict]
     """
-    if hasattr(base_class, "Meta"):
+    if hasattr(base_class, "ormar_config"):
         base_class = cast(Type["Model"], base_class)
         return copy_data_from_parent_model(
             base_class=base_class,
@@ -503,7 +504,7 @@ def update_attrs_and_fields(
 ) -> Dict:
     """
     Updates __annotations__, values of model fields (so pydantic FieldInfos)
-    as well as model.Meta.model_fields definitions from parents.
+    as well as model.ormar_config.model_fields definitions from parents.
 
     :param attrs: new namespace for class being constructed
     :type attrs: Dict
@@ -543,16 +544,48 @@ def add_field_descriptor(
         setattr(new_model, name, RelationDescriptor(name=name))
     elif field.__type__ == pydantic.Json:
         setattr(new_model, name, JsonDescriptor(name=name))
-    elif field.__type__ == bytes:
+    elif field.__type__ is bytes:
         setattr(new_model, name, BytesDescriptor(name=name))
     else:
         setattr(new_model, name, PydanticDescriptor(name=name))
 
 
-class ModelMetaclass(pydantic.main.ModelMetaclass):
+def get_serializer() -> Callable:
+    def serialize(
+        self: "Model",
+        value: Optional["Model"],
+        handler: SerializerFunctionWrapHandler,
+    ) -> Any:
+        """
+        Serialize a value if it's not expired weak reference.
+        """
+        try:
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore", message="Pydantic serializer warnings"
+                )
+                return handler(value)
+        except ReferenceError:
+            return None
+        except ValueError as exc:
+            if not str(exc).startswith("Circular reference"):
+                raise exc
+            return {value.ormar_config.pkname: value.pk} if value else None
+
+    return serialize
+
+
+class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
     def __new__(  # type: ignore # noqa: CCR001
-        mcs: "ModelMetaclass", name: str, bases: Any, attrs: dict
-    ) -> "ModelMetaclass":
+        mcs: "ModelMetaclass",
+        name: str,
+        bases: Any,
+        attrs: dict,
+        __pydantic_generic_metadata__: Union[PydanticGenericMetadata, None] = None,
+        __pydantic_reset_parent_namespace__: bool = True,
+        _create_model_module: Union[str, None] = None,
+        **kwargs,
+    ) -> type:
         """
         Metaclass used by ormar Models that performs configuration
         and build of ormar Models.
@@ -563,18 +596,19 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         updates class namespace.
 
         Extracts settings and fields from parent classes.
-        Fetches methods decorated with @property_field decorator
+        Fetches methods decorated with @computed_field decorator
         to expose them later in dict().
 
         Construct parent pydantic Metaclass/ Model.
 
-        If class has Meta class declared (so actual ormar Models) it also:
+        If class has ormar_config declared (so actual ormar Models) it also:
 
         * populate sqlalchemy columns, pkname and tables from model_fields
         * register reverse relationships on related models
         * registers all relations in alias manager that populates table_prefixes
         * exposes alias manager on each Model
         * creates QuerySet for each model and exposes it on a class
+        * sets custom serializers for relation models
 
         :param name: name of current class
         :type name: str
@@ -593,63 +627,74 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
             attrs, model_fields = extract_from_parents_definition(
                 base_class=base, curr_class=mcs, attrs=attrs, model_fields=model_fields
             )
-        new_model = super().__new__(mcs, name, bases, attrs)  # type: ignore
+        if "ormar_config" in attrs:
+            attrs["model_config"]["ignored_types"] = (OrmarConfig,)
+            attrs["model_config"]["from_attributes"] = True
+            for field_name, field in model_fields.items():
+                if field.is_relation:
+                    decorator = field_serializer(
+                        field_name, mode="wrap", check_fields=False
+                    )(get_serializer())
+                    attrs[f"serialize_{field_name}"] = decorator
+
+        new_model = super().__new__(
+            mcs,  # type: ignore
+            name,
+            bases,
+            attrs,
+            __pydantic_generic_metadata__=__pydantic_generic_metadata__,
+            __pydantic_reset_parent_namespace__=__pydantic_reset_parent_namespace__,
+            _create_model_module=_create_model_module,
+            **kwargs,
+        )
 
         add_cached_properties(new_model)
 
-        if hasattr(new_model, "Meta"):
+        if hasattr(new_model, "ormar_config"):
             populate_default_options_values(new_model, model_fields)
-            check_required_meta_parameters(new_model)
+            check_required_config_parameters(new_model)
             add_property_fields(new_model, attrs)
             register_signals(new_model=new_model)
-            populate_choices_validators(new_model)
+            modify_schema_example(model=new_model)
 
-            if not new_model.Meta.abstract:
-                new_model = populate_meta_tablename_columns_and_pk(name, new_model)
-                populate_meta_sqlalchemy_table_if_required(new_model.Meta)
+            if not new_model.ormar_config.abstract:
+                new_model = populate_config_tablename_columns_and_pk(name, new_model)
+                populate_config_sqlalchemy_table_if_required(new_model.ormar_config)
                 expand_reverse_relationships(new_model)
-                # TODO: iterate only related fields
-                for field_name, field in new_model.Meta.model_fields.items():
+                for field_name, field in new_model.ormar_config.model_fields.items():
                     register_relation_in_alias_manager(field=field)
                     add_field_descriptor(
                         name=field_name, field=field, new_model=new_model
                     )
 
                 if (
-                    new_model.Meta.pkname
-                    and new_model.Meta.pkname not in attrs["__annotations__"]
-                    and new_model.Meta.pkname not in new_model.__fields__
+                    new_model.ormar_config.pkname
+                    and new_model.ormar_config.pkname not in attrs["__annotations__"]
+                    and new_model.ormar_config.pkname not in new_model.model_fields
                 ):
-                    field_name = new_model.Meta.pkname
-                    attrs["__annotations__"][field_name] = Optional[int]  # type: ignore
-                    attrs[field_name] = None
-                    new_model.__fields__[field_name] = get_pydantic_field(
-                        field_name=field_name, model=new_model
+                    field_name = new_model.ormar_config.pkname
+                    new_model.model_fields[field_name] = (
+                        FieldInfo.from_annotated_attribute(
+                            Optional[int],  # type: ignore
+                            None,
+                        )
                     )
-                new_model.Meta.alias_manager = alias_manager
+                    new_model.model_rebuild(force=True)
 
-                for item in new_model.Meta.property_fields:
-                    function = getattr(new_model, item)
-                    setattr(
-                        new_model,
-                        item,
-                        PropertyDescriptor(name=item, function=function),
-                    )
-
-                new_model.pk = PkDescriptor(name=new_model.Meta.pkname)
+                new_model.pk = PkDescriptor(name=new_model.ormar_config.pkname)
                 remove_excluded_parent_fields(new_model)
 
         return new_model
 
     @property
     def objects(cls: Type["T"]) -> "QuerySet[T]":  # type: ignore
-        if cls.Meta.requires_ref_update:
+        if cls.ormar_config.requires_ref_update:
             raise ModelError(
                 f"Model {cls.get_name()} has not updated "
                 f"ForwardRefs. \nBefore using the model you "
                 f"need to call update_forward_refs()."
             )
-        return cls.Meta.queryset_class(model_cls=cls)
+        return cls.ormar_config.queryset_class(model_cls=cls)
 
     def __getattr__(self, item: str) -> Any:
         """
@@ -661,10 +706,19 @@ class ModelMetaclass(pydantic.main.ModelMetaclass):
         :return: FieldAccessor for given field
         :rtype: FieldAccessor
         """
+        # Ugly workaround for name shadowing warnings in pydantic
+        frame = sys._getframe(1)
+        file_name = Path(frame.f_code.co_filename)
+        if (
+            frame.f_code.co_name == "collect_model_fields"
+            and file_name.name == "_fields.py"
+            and file_name.parent.parent.name == "pydantic"
+        ):
+            raise AttributeError()
         if item == "pk":
-            item = self.Meta.pkname
-        if item in object.__getattribute__(self, "Meta").model_fields:
-            field = self.Meta.model_fields.get(item)
+            item = self.ormar_config.pkname
+        if item in object.__getattribute__(self, "ormar_config").model_fields:
+            field = self.ormar_config.model_fields.get(item)
             if field.is_relation:
                 return FieldAccessor(
                     source_model=cast(Type["Model"], self),

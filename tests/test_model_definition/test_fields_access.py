@@ -1,31 +1,22 @@
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
+import pytest
 from ormar import BaseField
-from tests.settings import DATABASE_URL
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
 
 
 class PriceList(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "price_lists"
+    ormar_config = base_ormar_config.copy(tablename="price_lists")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Category(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -33,8 +24,7 @@ class Category(ormar.Model):
 
 
 class Product(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "product"
+    ormar_config = base_ormar_config.copy(tablename="product")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
@@ -42,19 +32,13 @@ class Product(ormar.Model):
     category = ormar.ForeignKey(Category)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_fields_access():
     # basic access
-    assert Product.id._field == Product.Meta.model_fields["id"]
-    assert Product.id.id == Product.Meta.model_fields["id"]
+    assert Product.id._field == Product.ormar_config.model_fields["id"]
+    assert Product.id.id == Product.ormar_config.model_fields["id"]
     assert Product.pk.id == Product.id.id
     assert isinstance(Product.id._field, BaseField)
     assert Product.id._access_chain == "id"
@@ -62,19 +46,19 @@ def test_fields_access():
 
     # nested models
     curr_field = Product.category.name
-    assert curr_field._field == Category.Meta.model_fields["name"]
+    assert curr_field._field == Category.ormar_config.model_fields["name"]
     assert curr_field._access_chain == "category__name"
     assert curr_field._source_model == Product
 
     # deeper nesting
     curr_field = Product.category.price_lists.name
-    assert curr_field._field == PriceList.Meta.model_fields["name"]
+    assert curr_field._field == PriceList.ormar_config.model_fields["name"]
     assert curr_field._access_chain == "category__price_lists__name"
     assert curr_field._source_model == Product
 
     # reverse nesting
     curr_field = PriceList.categories.products.rating
-    assert curr_field._field == Product.Meta.model_fields["rating"]
+    assert curr_field._field == Product.ormar_config.model_fields["rating"]
     assert curr_field._access_chain == "categories__products__rating"
     assert curr_field._source_model == PriceList
 
@@ -191,8 +175,8 @@ def test_combining_groups_together():
 
 @pytest.mark.asyncio
 async def test_filtering_by_field_access():
-    async with database:
-        async with database.transaction(force_rollback=True):
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             category = await Category(name="Toys").save()
             product2 = await Product(
                 name="My Little Pony", rating=3.8, category=category

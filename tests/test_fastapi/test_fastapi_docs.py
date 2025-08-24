@@ -1,40 +1,19 @@
 import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 
-import databases
+import ormar
 import pydantic
 import pytest
-import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
+from pydantic import Field
 
-import ormar
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests, lifespan
+from tests.settings import create_config
 
-app = FastAPI()
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL, force_rollback=True)
-app.state.database = database
-
-
-@app.on_event("startup")
-async def startup() -> None:
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
-
-
-class LocalMeta:
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
+app = FastAPI(lifespan=lifespan(base_ormar_config))
 
 
 class PTestA(pydantic.BaseModel):
@@ -49,35 +28,31 @@ class PTestP(pydantic.BaseModel):
 
 
 class Category(ormar.Model):
-    class Meta(LocalMeta):
-        tablename = "categories"
+    ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Item(ormar.Model):
-    class Meta(LocalMeta):
-        pass
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    pydantic_int: Optional[int]
-    test_P: Optional[List[PTestP]]
+    pydantic_int: Optional[int] = None
+    test_P: List[PTestP] = Field(default_factory=list)
+    test_P_or_A: Union[int, str, None] = None
     categories = ormar.ManyToMany(Category)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @app.get("/items/", response_model=List[Item])
 async def get_items():
     items = await Item.objects.select_related("categories").all()
+    for item in items:
+        item.test_P_or_A = 2
     return items
 
 
@@ -104,26 +79,35 @@ async def test_all_endpoints():
     client = AsyncClient(app=app, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         response = await client.post("/categories/", json={"name": "test cat"})
+        assert response.status_code == 200
         category = response.json()
         response = await client.post("/categories/", json={"name": "test cat2"})
+        assert response.status_code == 200
         category2 = response.json()
 
-        response = await client.post("/items/", json={"name": "test", "id": 1})
+        response = await client.post(
+            "/items/", json={"name": "test", "id": 1, "test_P_or_A": 0}
+        )
+        assert response.status_code == 200
         item = Item(**response.json())
         assert item.pk is not None
 
         response = await client.post(
-            "/items/add_category/", json={"item": item.dict(), "category": category}
+            "/items/add_category/",
+            json={"item": item.model_dump(), "category": category},
         )
+        assert response.status_code == 200
         item = Item(**response.json())
         assert len(item.categories) == 1
         assert item.categories[0].name == "test cat"
 
         await client.post(
-            "/items/add_category/", json={"item": item.dict(), "category": category2}
+            "/items/add_category/",
+            json={"item": item.model_dump(), "category": category2},
         )
 
         response = await client.get("/items/")
+        assert response.status_code == 200
         items = [Item(**item) for item in response.json()]
         assert items[0] == item
         assert len(items[0].categories) == 2
@@ -136,7 +120,7 @@ async def test_all_endpoints():
 
 
 def test_schema_modification():
-    schema = Item.schema()
+    schema = Item.model_json_schema()
     assert any(
         x.get("type") == "array" for x in schema["properties"]["categories"]["anyOf"]
     )
@@ -147,10 +131,11 @@ def test_schema_modification():
         "name": "string",
         "pydantic_int": 0,
         "test_P": [{"a": 0, "b": {"c": "string", "d": "string", "e": "string"}}],
+        "test_P_or_A": (0, "string"),
     }
 
-    schema = Category.schema()
-    assert schema["example"] == {
+    schema = Category.model_json_schema()
+    assert schema["$defs"]["Category"]["example"] == {
         "id": 0,
         "name": "string",
         "items": [
@@ -161,6 +146,7 @@ def test_schema_modification():
                 "test_P": [
                     {"a": 0, "b": {"c": "string", "d": "string", "e": "string"}}
                 ],
+                "test_P_or_A": (0, "string"),
             }
         ],
     }
@@ -169,4 +155,6 @@ def test_schema_modification():
 def test_schema_gen():
     schema = app.openapi()
     assert "Category" in schema["components"]["schemas"]
-    assert "Item" in schema["components"]["schemas"]
+    subschemas = [x.split("__")[-1] for x in schema["components"]["schemas"]]
+    assert "Item-Input" in subschemas
+    assert "Item-Output" in subschemas

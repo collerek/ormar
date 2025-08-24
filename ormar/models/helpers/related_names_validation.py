@@ -1,6 +1,5 @@
-from typing import Dict, List, Optional, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Dict, ForwardRef, List, Optional, Type
 
-from pydantic.typing import ForwardRef
 import ormar  # noqa: I100
 
 if TYPE_CHECKING:  # pragma no cover

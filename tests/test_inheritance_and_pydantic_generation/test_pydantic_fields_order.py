@@ -1,23 +1,13 @@
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from tests.settings import DATABASE_URL
 
-metadata = sqlalchemy.MetaData()
-database = databases.Database(DATABASE_URL)
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+base_ormar_config = create_config()
 
 
 class NewTestModel(ormar.Model):
-    class Meta:
-        database = database
-        metadata = metadata
+    ormar_config = base_ormar_config.copy()
 
     a: int = ormar.Integer(primary_key=True)
     b: str = ormar.String(max_length=1)
@@ -27,15 +17,9 @@ class NewTestModel(ormar.Model):
     f: str = ormar.String(max_length=1)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 def test_model_field_order():
     TestCreate = NewTestModel.get_pydantic(exclude={"a"})
-    assert list(TestCreate.__fields__.keys()) == ["b", "c", "d", "e", "f"]
+    assert list(TestCreate.model_fields.keys()) == ["b", "c", "d", "e", "f"]

@@ -4,19 +4,13 @@ from datetime import date
 from enum import Enum
 from typing import Optional
 
-from pydantic import EmailStr
-
-import databases
-import sqlalchemy
-from sqlalchemy import create_engine
-
 import ormar
 import pytest
 
-from tests.settings import DATABASE_URL
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
-metadata = sqlalchemy.MetaData()
+base_ormar_config = create_config(force_rollback=True)
 
 
 class PrimaryKeyMixin:
@@ -28,26 +22,18 @@ class Level(Enum):
     STAFF = "1"
 
 
-class MainMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
-
-
 class User(PrimaryKeyMixin, ormar.Model):
     """User Model Class to Implement Method for Operations of User Entity"""
 
     mobile: str = ormar.String(unique=True, index=True, max_length=10)
     password: str = ormar.String(max_length=128)
-    level: str = ormar.String(
-        max_length=1, choices=list(Level), default=Level.STAFF.value
-    )
+    level: Level = ormar.Enum(default=Level.STAFF, enum_class=Level)
     email: Optional[str] = ormar.String(max_length=255, nullable=True, default=None)
     avatar: Optional[str] = ormar.String(max_length=255, nullable=True, default=None)
     fullname: Optional[str] = ormar.String(max_length=64, nullable=True, default=None)
     is_active: bool = ormar.Boolean(index=True, nullable=False, default=True)
 
-    class Meta(MainMeta):
-        orders_by = ["-is_active", "-level"]
+    ormar_config = base_ormar_config.copy(order_by=["-is_active", "-level"])
 
 
 class Task(PrimaryKeyMixin, ormar.Model):
@@ -60,24 +46,20 @@ class Task(PrimaryKeyMixin, ormar.Model):
     is_halted: bool = ormar.Boolean(index=True, nullable=False, default=True)
     user: User = ormar.ForeignKey(to=User)
 
-    class Meta(MainMeta):
-        orders_by = ["-end_date", "-start_date"]
-        constraints = [
+    ormar_config = base_ormar_config.copy(
+        order_by=["-end_date", "-start_date"],
+        constraints=[
             ormar.UniqueColumns("user", "name"),
-        ]
+        ],
+    )
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = create_engine(DATABASE_URL)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_selecting_related_with_limit():
-    async with database:
+    async with base_ormar_config.database:
         user1 = await User(mobile="9928917653", password="pass1").save()
         user2 = await User(mobile="9928917654", password="pass2").save()
         await Task(name="one", user=user1).save()

@@ -1,27 +1,25 @@
 from typing import Any, Dict, List, Tuple, Type, cast
 from uuid import UUID, uuid4
 
-import databases
-import pytest
-import sqlalchemy
-
 import ormar
-from ormar import ModelDefinitionError, Model, QuerySet, pre_relation_remove, pre_update
-from ormar import pre_save
-from tests.settings import DATABASE_URL
+import pytest
+from ormar import (
+    Model,
+    ModelDefinitionError,
+    QuerySet,
+    pre_relation_remove,
+    pre_save,
+    pre_update,
+)
 
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+from tests.lifespan import init_tests
+from tests.settings import create_config
 
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
+base_ormar_config = create_config()
 
 
 class Animal(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "animals"
+    ormar_config = base_ormar_config.copy(tablename="animals")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
@@ -29,8 +27,7 @@ class Animal(ormar.Model):
 
 
 class Link(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "link_table"
+    ormar_config = base_ormar_config.copy(tablename="link_table")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     animal_order: int = ormar.Integer(nullable=True)
@@ -38,8 +35,7 @@ class Link(ormar.Model):
 
 
 class Human(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "humans"
+    ormar_config = base_ormar_config.copy(tablename="humans")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
@@ -53,8 +49,7 @@ class Human(ormar.Model):
 
 
 class Human2(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "humans2"
+    ormar_config = base_ormar_config.copy(tablename="humans2")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
@@ -63,18 +58,12 @@ class Human2(ormar.Model):
     )
 
 
-@pytest.fixture(autouse=True, scope="module")
-def create_test_database():
-    engine = sqlalchemy.create_engine(DATABASE_URL)
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    yield
-    metadata.drop_all(engine)
+create_test_database = init_tests(base_ormar_config)
 
 
 @pytest.mark.asyncio
 async def test_ordering_by_through_fail():
-    async with database:
+    async with base_ormar_config.database:
         alice = await Human2(name="Alice").save()
         spot = await Animal(name="Spot").save()
         await alice.favoriteAnimals.add(spot)
@@ -99,8 +88,8 @@ def _get_through_model_relations(
     sender: Type[Model], instance: Model
 ) -> Tuple[Type[Model], Type[Model]]:
     relations = list(instance.extract_related_names())
-    rel_one = sender.Meta.model_fields[relations[0]].to
-    rel_two = sender.Meta.model_fields[relations[1]].to
+    rel_one = sender.ormar_config.model_fields[relations[0]].to
+    rel_two = sender.ormar_config.model_fields[relations[1]].to
     return rel_one, rel_two
 
 
@@ -223,7 +212,7 @@ async def reorder_links_on_remove(
 
     Note that if classes have many relations you need to check if current one is ordered
     """
-    through_class = sender.Meta.model_fields[relation_name].through
+    through_class = sender.ormar_config.model_fields[relation_name].through
     through_instance = getattr(instance, through_class.get_name())
     if not through_instance:
         parent_pk = instance.pk
@@ -249,7 +238,7 @@ async def reorder_links_on_remove(
 
 @pytest.mark.asyncio
 async def test_ordering_by_through_on_m2m_field():
-    async with database:
+    async with base_ormar_config.database:
 
         def verify_order(instance, expected):
             field_name = (
