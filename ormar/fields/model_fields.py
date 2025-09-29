@@ -18,6 +18,11 @@ try:
     from typing import Literal  # type: ignore
 except ImportError:  # pragma: no cover
     from typing_extensions import Literal  # type: ignore
+    
+try:
+    from typing import Self  # type: ignore
+except ImportError:  # pragma: no cover
+    from typing_extensions import Self  # type: ignore
 
 
 def is_field_nullable(
@@ -65,7 +70,7 @@ class ModelFieldFactory:
     _type: Any = None
     _sample: Any = None
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> BaseField:  # type: ignore
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:  # type: ignore
         cls.validate(**kwargs)
 
         default = kwargs.pop("default", None)
@@ -161,7 +166,7 @@ class String(ModelFieldFactory, str):
         min_length: Optional[int] = None,
         regex: Optional[str] = None,
         **kwargs: Any
-    ) -> BaseField:  # type: ignore
+    ) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -214,7 +219,7 @@ class Integer(ModelFieldFactory, int):
         maximum: Optional[int] = None,
         multiple_of: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
             autoincrement
@@ -255,7 +260,7 @@ class Text(ModelFieldFactory, str):
     _type = str
     _sample = "text"
 
-    def __new__(cls, **kwargs: Any) -> BaseField:  # type: ignore
+    def __new__(cls, **kwargs: Any) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -295,7 +300,7 @@ class Float(ModelFieldFactory, float):
         maximum: Optional[float] = None,
         multiple_of: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         kwargs = {
             **kwargs,
             **{
@@ -361,7 +366,7 @@ class DateTime(ModelFieldFactory, datetime.datetime):
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, timezone: bool = False, **kwargs: Any
-    ) -> BaseField:  # type: ignore
+    ) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -418,7 +423,7 @@ class Time(ModelFieldFactory, datetime.time):
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, timezone: bool = False, **kwargs: Any
-    ) -> BaseField:  # type: ignore
+    ) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -504,7 +509,7 @@ else:
             max_length: int,
             represent_as_base64_str: bool = False,
             **kwargs: Any
-        ) -> BaseField:  # type: ignore
+        ) -> Self:  # type: ignore
             kwargs = {
                 **kwargs,
                 **{
@@ -557,7 +562,7 @@ class BigInteger(Integer, int):
         maximum: Optional[int] = None,
         multiple_of: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
             autoincrement
@@ -605,7 +610,7 @@ class SmallInteger(Integer, int):
         maximum: Optional[int] = None,
         multiple_of: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
             autoincrement
@@ -657,7 +662,7 @@ class Decimal(ModelFieldFactory, decimal.Decimal):
         max_digits: Optional[int] = None,
         decimal_places: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         kwargs = {
             **kwargs,
             **{
@@ -721,7 +726,7 @@ class UUID(ModelFieldFactory, uuid.UUID):
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, uuid_format: str = "hex", **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         kwargs = {
             **kwargs,
             **{
@@ -766,7 +771,7 @@ else:
 
         def __new__(  # type: ignore # noqa CFQ002
             cls, *, enum_class: Type[E], **kwargs: Any
-        ) -> BaseField:
+        ) -> Self:
             kwargs = {
                 **kwargs,
                 **{
