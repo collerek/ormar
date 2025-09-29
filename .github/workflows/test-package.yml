@@ -17,7 +17,7 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'collerek/ormar'
     strategy:
       matrix:
-        python-version: [3.8, 3.9, "3.10", 3.11]
+        python-version: [3.8, 3.9, "3.10", 3.11, 3.12]
       fail-fast: false
     services:
       mysql:
@@ -54,7 +54,7 @@ jobs:
     - name: Install Poetry
       uses: snok/install-poetry@v1.4
       with:
-        version: 1.4.2
+        version: 1.8.4
         virtualenvs-create: false
 
     - name: Poetry details
@@ -105,7 +105,7 @@ jobs:
       run: bash scripts/test.sh
 
     - name: Upload coverage
-      uses: codecov/codecov-action@v4.5.0
+      uses: codecov/codecov-action@v4.6.0
       with:
         name: codecov-umbrella
         token: ${{ secrets.CODCOV_TOKEN }}
