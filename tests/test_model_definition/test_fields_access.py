@@ -168,8 +168,8 @@ def test_combining_groups_together():
     category_prefix = group._nested_groups[1]._nested_groups[1].actions[0].table_prefix
     assert group_str == (
         f"((product.name LIKE '%Test%') "
-        f"OR (({price_list_prefix}_price_lists.name LIKE 'Aa%') "
-        f"OR ({category_prefix}_categories.name IN ('Toys', 'Books'))))"
+        f"OR ({price_list_prefix}_price_lists.name LIKE 'Aa%') "
+        f"OR ({category_prefix}_categories.name IN ('Toys', 'Books')))"
     )
 
 

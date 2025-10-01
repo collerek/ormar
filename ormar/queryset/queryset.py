@@ -629,7 +629,7 @@ class QuerySet(Generic[T]):
             exclude_through=exclude_through,
         )
         column_map = alias_resolver.resolve_columns(
-            columns_names=list(cast(LegacyRow, rows[0]).keys())
+            columns_names=rows[0].keys()
         )
         result = [
             {column_map.get(k): v for k, v in dict(x).items() if k in column_map}
@@ -724,7 +724,7 @@ class QuerySet(Generic[T]):
                 )
         select_columns = [x.apply_func(func, use_label=True) for x in select_actions]
         expr = self.build_select_expression().alias(f"subquery_for_{func_name}")
-        expr = sqlalchemy.select(select_columns).select_from(expr)
+        expr = sqlalchemy.select(*select_columns).select_from(expr)
         # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
         result = await self.database.fetch_one(expr)
         return dict(result) if len(result) > 1 else result[0]  # type: ignore
