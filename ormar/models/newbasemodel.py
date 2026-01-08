@@ -517,7 +517,14 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 update_column_definition(model=cls, field=field)
         populate_config_sqlalchemy_table_if_required(config=cls.ormar_config)
         # super().update_forward_refs(**localns)
-        cls.model_rebuild(force=True)
+        cls.model_rebuild(
+            force=True,
+            _types_namespace={
+                field.to.__name__: field.to
+                for field in fields_to_check.values()
+                if field.is_relation
+            },
+        )
         cls.ormar_config.requires_ref_update = False
 
     @staticmethod

@@ -11,7 +11,7 @@ class OrderQuery:
     def __init__(self, sorted_orders: Dict) -> None:
         self.sorted_orders = sorted_orders
 
-    def apply(self, expr: sqlalchemy.sql.select) -> sqlalchemy.sql.select:
+    def apply(self, expr: sqlalchemy.sql.Select) -> sqlalchemy.sql.Select:
         """
         Applies all order_by clauses if set.
 

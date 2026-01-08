@@ -51,7 +51,6 @@ from ormar.models.helpers import (
     populate_config_tablename_columns_and_pk,
     populate_default_options_values,
     register_relation_in_alias_manager,
-    remove_excluded_parent_fields,
     sqlalchemy_columns_from_model_fields,
 )
 from ormar.models.ormar_config import OrmarConfig
@@ -293,7 +292,6 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
         metadata=through_class.ormar_config.metadata,
         database=through_class.ormar_config.database,
         abstract=through_class.ormar_config.abstract,
-        exclude_parent_fields=through_class.ormar_config.exclude_parent_fields,
         queryset_class=through_class.ormar_config.queryset_class,
         extra=through_class.ormar_config.extra,
         constraints=through_class.ormar_config.constraints,
@@ -385,11 +383,6 @@ def copy_data_from_parent_model(  # noqa: CCR001
             else attrs.get("__name__", "").lower() + "s"
         )
         for field_name, field in base_class.ormar_config.model_fields.items():
-            if (
-                hasattr(ormar_config, "exclude_parent_fields")
-                and field_name in ormar_config.exclude_parent_fields
-            ):
-                continue
             if field.is_multi:
                 field = cast(ManyToManyField, field)
                 copy_and_replace_m2m_through_model(
@@ -682,7 +675,6 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
                     new_model.model_rebuild(force=True)
 
                 new_model.pk = PkDescriptor(name=new_model.ormar_config.pkname)
-                remove_excluded_parent_fields(new_model)
 
         return new_model
 

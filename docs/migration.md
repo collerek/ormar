@@ -57,7 +57,6 @@ engine: Optional[sqlalchemy.engine.Engine]
 tablename: Optional[str]
 order_by: Optional[List[str]]
 abstract: bool
-exclude_parent_fields: Optional[List[str]]
 queryset_class: Type[QuerySet]
 extra: Extra
 constraints: Optional[List[ColumnCollectionConstraint]]

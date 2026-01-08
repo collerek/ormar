@@ -4,7 +4,7 @@ from random import choices
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
 
 import sqlalchemy
-from sqlalchemy import text
+from sqlalchemy import TextClause
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import Model
@@ -35,7 +35,7 @@ class AliasManager:
     def __init__(self) -> None:
         self._aliases_new: Dict[str, str] = dict()
         self._reversed_aliases: Dict[str, str] = dict()
-        self._prefixed_tables: Dict[str, text] = dict()
+        self._prefixed_tables: Dict[str, TextClause] = dict()
 
     def __contains__(self, item: str) -> bool:
         return self._aliases_new.__contains__(item)
@@ -60,7 +60,7 @@ class AliasManager:
     @staticmethod
     def prefixed_columns(
         alias: str, table: sqlalchemy.Table, fields: Optional[List] = None
-    ) -> List[text]:
+    ) -> List[TextClause]:
         """
         Creates a list of aliases sqlalchemy text clauses from
         string alias and sqlalchemy.Table.
@@ -90,7 +90,7 @@ class AliasManager:
         )
         return [column.label(f"{alias}{column.name}") for column in all_columns]
 
-    def prefixed_table_name(self, alias: str, table: sqlalchemy.Table) -> text:
+    def prefixed_table_name(self, alias: str, table: sqlalchemy.Table) -> TextClause:
         """
         Creates text clause with table name with aliased name.
 

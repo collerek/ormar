@@ -32,7 +32,6 @@ class OrmarConfig:
         tablename: Optional[str] = None,
         order_by: Optional[List[str]] = None,
         abstract: bool = False,
-        exclude_parent_fields: Optional[List[str]] = None,
         queryset_class: Type[QuerySet] = QuerySet,
         extra: Extra = Extra.forbid,
         constraints: Optional[List[ColumnCollectionConstraint]] = None,
@@ -53,7 +52,6 @@ class OrmarConfig:
         self.signals: SignalEmitter = SignalEmitter()
         self.abstract = abstract
         self.requires_ref_update: bool = False
-        self.exclude_parent_fields = exclude_parent_fields or []
         self.extra = extra
         self.queryset_class = queryset_class
         self.table: sqlalchemy.Table = None
@@ -66,7 +64,6 @@ class OrmarConfig:
         tablename: Optional[str] = None,
         order_by: Optional[List[str]] = None,
         abstract: Optional[bool] = None,
-        exclude_parent_fields: Optional[List[str]] = None,
         queryset_class: Optional[Type[QuerySet]] = None,
         extra: Optional[Extra] = None,
         constraints: Optional[List[ColumnCollectionConstraint]] = None,
@@ -78,7 +75,6 @@ class OrmarConfig:
             tablename=tablename,
             order_by=order_by,
             abstract=abstract or self.abstract,
-            exclude_parent_fields=exclude_parent_fields,
             queryset_class=queryset_class or self.queryset_class,
             extra=extra or self.extra,
             constraints=constraints,
