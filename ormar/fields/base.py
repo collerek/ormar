@@ -1,4 +1,14 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Type,
+    Union,
+    overload,
+)
 
 import sqlalchemy
 from pydantic.fields import FieldInfo, _Unset
@@ -167,8 +177,23 @@ class BaseField(FieldInfo):
             return dict(default=default)
         return None
 
+    @overload
     def get_default(
-        self, use_server: bool = False, call_default_factory: bool = True
+        self,
+        *,
+        call_default_factory: Literal[True],
+        validated_data: dict[str, Any] | None = None,
+    ) -> Any: ...
+
+    @overload
+    def get_default(self, *, call_default_factory: Literal[False] = ...) -> Any: ...
+
+    def get_default(
+        self,
+        *,
+        call_default_factory: bool = True,
+        validated_data: dict[str, Any] | None = None,
+        use_server: bool = False,
     ) -> Any:  # noqa CCR001
         """
         Return default value for a field.

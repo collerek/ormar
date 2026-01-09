@@ -1,6 +1,7 @@
-from typing import List
+from typing import Any, List
 
 import sqlalchemy
+from sqlalchemy import ColumnElement, Select, TextClause
 
 from ormar.queryset.actions.filter_action import FilterAction
 
@@ -16,7 +17,10 @@ class FilterQuery:
         self.exclude = exclude
         self.filter_clauses = filter_clauses
 
-    def apply(self, expr: sqlalchemy.sql.select) -> sqlalchemy.sql.select:
+    def apply(
+        self,
+        expr: Select[Any],
+    ) -> Select[Any]:
         """
         Applies all filter clauses if set.
 
@@ -27,7 +31,9 @@ class FilterQuery:
         """
         if self.filter_clauses:
             if len(self.filter_clauses) == 1:
-                clause = self.filter_clauses[0].get_text_clause()
+                clause: TextClause | ColumnElement[Any] = self.filter_clauses[
+                    0
+                ].get_text_clause()
             else:
                 clause = sqlalchemy.sql.and_(
                     *[x.get_text_clause() for x in self.filter_clauses]

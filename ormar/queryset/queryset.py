@@ -619,7 +619,7 @@ class QuerySet(Generic[T]):
             model_cls=self.model_cls,  # type: ignore
             exclude_through=exclude_through,
         )
-        column_map = alias_resolver.resolve_columns(columns_names=list(rows[0].keys()))
+        column_map = alias_resolver.resolve_columns(columns_names=list(rows[0].keys()))  # type: ignore
         result = [
             {column_map.get(k): v for k, v in dict(x).items() if k in column_map}
             for x in rows
@@ -694,11 +694,11 @@ class QuerySet(Generic[T]):
         :rtype: int
         """
         expr = self.build_select_expression().alias("subquery_for_count")
-        expr = sqlalchemy.func.count().select().select_from(expr)
+        expr = sqlalchemy.func.count().select().select_from(expr)  # type: ignore
         if distinct:
             pk_column_name = self.model.get_column_alias(self.model_config.pkname)
-            expr_distinct = expr.group_by(pk_column_name).alias("subquery_for_group")
-            expr = sqlalchemy.func.count().select().select_from(expr_distinct)
+            expr_distinct = expr.group_by(pk_column_name).alias("subquery_for_group")  # type: ignore
+            expr = sqlalchemy.func.count().select().select_from(expr_distinct)  # type: ignore
         return await self.database.fetch_val(expr)
 
     async def _query_aggr_function(self, func_name: str, columns: List) -> Any:
@@ -713,7 +713,7 @@ class QuerySet(Generic[T]):
                 )
         select_columns = [x.apply_func(func, use_label=True) for x in select_actions]
         expr = self.build_select_expression().alias(f"subquery_for_{func_name}")
-        expr = sqlalchemy.select(*select_columns).select_from(expr)
+        expr = sqlalchemy.select(*select_columns).select_from(expr)  # type: ignore
         # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
         result = await self.database.fetch_one(expr)
         return dict(result) if len(result) > 1 else result[0]  # type: ignore
@@ -794,7 +794,7 @@ class QuerySet(Generic[T]):
         updates = self.model.translate_columns_to_aliases(updates)
 
         expr = FilterQuery(filter_clauses=self.filter_clauses).apply(
-            self.table.update().values(**updates)
+            self.table.update().values(**updates)  # type: ignore
         )
         expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
             expr
@@ -823,7 +823,7 @@ class QuerySet(Generic[T]):
                 "If you want to delete all rows use delete(each=True)"
             )
         expr = FilterQuery(filter_clauses=self.filter_clauses).apply(
-            self.table.delete()
+            self.table.delete()  # type: ignore
         )
         expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
             expr
@@ -1236,7 +1236,7 @@ class QuerySet(Generic[T]):
         )
         # databases bind params only where query is passed as string
         # otherwise it just passes all data to values and results in unconsumed columns
-        expr = str(expr)
+        expr = str(expr)  # type: ignore
         await self.database.execute_many(expr, ready_objects)
 
         for obj in objects:

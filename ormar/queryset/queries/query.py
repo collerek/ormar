@@ -1,7 +1,7 @@
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union
 
 import sqlalchemy
-from sqlalchemy import Table, text
+from sqlalchemy import Column, Select, Table, TextClause
 from sqlalchemy.sql import Join
 
 import ormar  # noqa I100
@@ -42,9 +42,9 @@ class Query:
         self.used_aliases: List[str] = []
 
         self.select_from: Union[Join, Table, List[str]] = []
-        self.columns = [sqlalchemy.Column]
+        self.columns: List[Column] = []
         self.order_columns = order_bys
-        self.sorted_orders: Dict[OrderAction, text] = {}
+        self.sorted_orders: Dict[OrderAction, TextClause] = {}
         self._init_sorted_orders()
 
         self.limit_raw_sql = limit_raw_sql
@@ -55,7 +55,7 @@ class Query:
         """
         if self.order_columns:
             for clause in self.order_columns:
-                self.sorted_orders[clause] = None
+                self.sorted_orders[clause] = None  # type: ignore
 
     def apply_order_bys_for_primary_model(self) -> None:  # noqa: CCR001
         """
@@ -113,7 +113,7 @@ class Query:
         self_related_fields = self.model_cls.own_table_columns(
             model=self.model_cls, excludable=self.excludable, use_alias=True
         )
-        self.columns = self.model_cls.ormar_config.alias_manager.prefixed_columns(
+        self.columns = self.model_cls.ormar_config.alias_manager.prefixed_columns(  # type: ignore
             "", self.table, self_related_fields
         )
         self.apply_order_bys_for_primary_model()
@@ -127,7 +127,7 @@ class Query:
                 remainder = related_models[related]
             sql_join = SqlJoin(
                 used_aliases=self.used_aliases,
-                select_from=self.select_from,
+                select_from=self.select_from,  # type: ignore
                 columns=self.columns,
                 excludable=self.excludable,
                 order_columns=self.order_columns,
@@ -143,7 +143,7 @@ class Query:
                 self.select_from,
                 self.columns,
                 self.sorted_orders,
-            ) = sql_join.build_join()
+            ) = sql_join.build_join()  # type: ignore
 
         if self._pagination_query_required():
             limit_qry, on_clause = self._build_pagination_condition()
@@ -191,8 +191,8 @@ class Query:
             elif order.get_field_name_text() == pk_aliased_name:
                 maxes[pk_aliased_name] = order.get_text_clause()
 
-        limit_qry = sqlalchemy.sql.select(qry_text)
-        limit_qry = limit_qry.select_from(self.select_from)
+        limit_qry: Select[Any] = sqlalchemy.sql.select(qry_text)
+        limit_qry = limit_qry.select_from(self.select_from)  # type: ignore
         limit_qry = FilterQuery(filter_clauses=self.filter_clauses).apply(limit_qry)
         limit_qry = FilterQuery(
             filter_clauses=self.exclude_clauses, exclude=True
@@ -202,11 +202,11 @@ class Query:
             limit_qry = limit_qry.order_by(order_by)
         limit_qry = LimitQuery(limit_count=self.limit_count).apply(limit_qry)
         limit_qry = OffsetQuery(query_offset=self.query_offset).apply(limit_qry)
-        limit_qry = limit_qry.alias("limit_query")
+        limit_qry = limit_qry.alias("limit_query")  # type: ignore
         on_clause = sqlalchemy.text(
             f"limit_query.{pk_alias}={self.table.name}.{pk_alias}"
         )
-        return limit_qry, on_clause
+        return limit_qry, on_clause  # type: ignore
 
     def _apply_expression_modifiers(
         self, expr: sqlalchemy.sql.Select

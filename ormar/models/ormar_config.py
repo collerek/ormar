@@ -54,7 +54,7 @@ class OrmarConfig:
         self.requires_ref_update: bool = False
         self.extra = extra
         self.queryset_class = queryset_class
-        self.table: sqlalchemy.Table = None
+        self.table: sqlalchemy.Table = None  # type: ignore
 
     def copy(
         self,

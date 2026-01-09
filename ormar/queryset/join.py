@@ -305,7 +305,7 @@ class SqlJoin:
             self.next_alias, self.to_table
         )
         self.select_from = sqlalchemy.sql.outerjoin(
-            self.select_from, target_table, on_clause
+            self.select_from, target_table, on_clause  # type: ignore
         )
 
         self._get_order_bys()
@@ -317,8 +317,8 @@ class SqlJoin:
             use_alias=True,
         )
         self.columns.extend(
-            self.alias_manager.prefixed_columns(
-                self.next_alias, target_table, self_related_fields
+            self.alias_manager.prefixed_columns(  # type: ignore
+                self.next_alias, target_table, self_related_fields  # type: ignore
             )
         )
         self.used_aliases.append(self.next_alias)

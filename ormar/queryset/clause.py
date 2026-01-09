@@ -4,6 +4,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Generator, List, Optional, Tuple, Type
 
 import sqlalchemy
+from sqlalchemy import ColumnElement
 
 import ormar  # noqa I100
 from ormar.queryset.actions.filter_action import FilterAction
@@ -100,7 +101,9 @@ class FilterGroup:
             yield from group._iter()
         yield from self.actions
 
-    def _get_text_clauses(self) -> List[sqlalchemy.sql.expression.TextClause]:
+    def _get_text_clauses(
+        self,
+    ) -> List[sqlalchemy.sql.expression.TextClause | ColumnElement[Any]]:
         """
         Helper to return list of text queries from actions and nested groups
         :return: list of text queries from actions and nested groups
@@ -110,7 +113,7 @@ class FilterGroup:
             x.get_text_clause() for x in self.actions
         ]
 
-    def get_text_clause(self) -> sqlalchemy.sql.expression.TextClause:
+    def get_text_clause(self) -> ColumnElement[bool]:
         """
         Returns all own actions and nested groups conditions compiled and joined
         inside parentheses.

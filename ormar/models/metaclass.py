@@ -194,7 +194,9 @@ def get_constraint_copy(
     }
     checks = (key if isinstance(constraint, key) else None for key in constraints)
     target_class = next((target for target in checks if target is not None), None)
-    constructor: Optional[Callable] = constraints.get(target_class)
+    constructor: Optional[Callable] = (
+        constraints.get(target_class) if target_class else None
+    )
     if not constructor:
         raise ValueError(f"{constraint} must be a ColumnCollectionMixin!")
 
@@ -297,7 +299,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
         constraints=through_class.ormar_config.constraints,
         order_by=through_class.ormar_config.orders_by,
     )
-    new_config.table = through_class.ormar_config.pkname
+    new_config.table = through_class.ormar_config.pkname  # type: ignore
     new_config.pkname = through_class.ormar_config.pkname
     new_config.alias_manager = through_class.ormar_config.alias_manager
     new_config.signals = through_class.ormar_config.signals
@@ -314,7 +316,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     # they will be populated later in expanding reverse relation
     # if hasattr(new_config, "table"):
     new_config.tablename += "_" + ormar_config.tablename
-    new_config.table = None
+    new_config.table = None  # type: ignore
     new_config.model_fields = {
         name: field
         for name, field in new_config.model_fields.items()

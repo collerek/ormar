@@ -44,7 +44,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.9.0"
 databases = "^0.9.0"
-pydantic = "2.11.9"
+pydantic = "^2.11.9"
 SQLAlchemy = {version = "^2.0.40", extras = ["asyncio"]}
 cryptography = { version = ">=41.0.3,<44.0.0", optional = true }
 # Async database drivers
@@ -56,7 +56,6 @@ asyncpg = { version = ">=0.28,<0.31", optional = true }
 psycopg2-binary = { version = "^2.9.1", optional = true }
 mysqlclient = { version = "^2.1.0", optional = true }
 PyMySQL = { version = "^1.1.0", optional = true }
-setuptools = "^75.1.0"
 
 
 [tool.poetry.dependencies.orjson]
@@ -90,10 +89,12 @@ pytest = ">=7.4.4,<9.0.0"
 pytest-cov = ">=4,<6"
 codecov = "^2.1.13"
 pytest-asyncio = ">=0.21,<0.24"
-fastapi = ">=0.109.1,<0.115.7"
+fastapi = ">=0.125.0"
 
 black = "^24.1.0"
 ruff = ">=0.5.1,<0.8.3"
+
+setuptools = "^78.1.1"
 
 # types
 mypy = "^1.8.0"
@@ -104,7 +105,7 @@ types-enum34 = "^1.1.1"
 types-cryptography = "^3.3.23"
 types-orjson = "^3.6.1"
 types-aiofiles = "^23.2.0"
-types-requests = "^2.31.0"
+types-requests = "^2.32.0"
 types-toml = "^0.10.8"
 
 # Documentation
