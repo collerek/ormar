@@ -286,7 +286,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         """
         property_fields = self.ormar_config.property_fields
         model_fields = self.ormar_config.model_fields
-        pydantic_fields = set(self.model_fields.keys())
+        pydantic_fields = set(self.__class__.model_fields.keys())
 
         # remove property fields
         for prop_filed in property_fields:

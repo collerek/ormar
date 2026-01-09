@@ -266,7 +266,7 @@ class BaseField(FieldInfo):
         :rtype: sqlalchemy.Column
         """
         if self.encrypt_backend == EncryptBackends.NONE:
-            column = sqlalchemy.Column(
+            column: sqlalchemy.Column = sqlalchemy.Column(
                 self.db_alias or name,
                 self.column_type,
                 *self.construct_constraints(),
@@ -295,7 +295,7 @@ class BaseField(FieldInfo):
             raise ModelDefinitionError(
                 "Primary key field and relations fields" "cannot be encrypted!"
             )
-        column = sqlalchemy.Column(
+        column: sqlalchemy.Column = sqlalchemy.Column(
             self.db_alias or name,
             EncryptedString(
                 _field_type=self,

@@ -37,7 +37,7 @@ class OrmarConfig:
         constraints: Optional[List[ColumnCollectionConstraint]] = None,
     ) -> None:
         self.pkname = None  # type: ignore
-        self.metadata = metadata
+        self.metadata = metadata  # type: ignore
         self.database = database  # type: ignore
         self.engine = engine  # type: ignore
         self.tablename = tablename  # type: ignore

@@ -97,7 +97,7 @@ class Query:
             and self._select_related
         )
 
-    def build_select_expression(self) -> sqlalchemy.sql.select:
+    def build_select_expression(self) -> sqlalchemy.sql.Select:
         """
         Main entry point from outside (after proper initialization).
 
@@ -209,8 +209,8 @@ class Query:
         return limit_qry, on_clause
 
     def _apply_expression_modifiers(
-        self, expr: sqlalchemy.sql.select
-    ) -> sqlalchemy.sql.select:
+        self, expr: sqlalchemy.sql.Select
+    ) -> sqlalchemy.sql.Select:
         """
         Receives the select query (might be join) and applies:
         * Filter clauses

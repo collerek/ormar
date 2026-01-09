@@ -173,8 +173,8 @@ def test_combining_groups_together():
     )
 
     group = (Product.name % "Test") & (
-            (Product.category.price_lists.name.startswith("Aa"))
-            | (Product.category.name << (["Toys", "Books"]))
+        (Product.category.price_lists.name.startswith("Aa"))
+        | (Product.category.name << (["Toys", "Books"]))
     )
     group.resolve(model_cls=Product)
     assert len(group._nested_groups) == 2

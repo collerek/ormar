@@ -20,7 +20,6 @@ import databases
 import sqlalchemy
 from sqlalchemy import bindparam
 
-
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
 from ormar.exceptions import (
@@ -261,7 +260,7 @@ class QuerySet(Generic[T]):
         limit: Optional[int] = None,
         offset: Optional[int] = None,
         order_bys: Optional[List] = None,
-    ) -> sqlalchemy.sql.select:
+    ) -> sqlalchemy.sql.Select:
         """
         Constructs the actual database query used in the QuerySet.
         If any of the params is not passed the QuerySet own value is used.
@@ -620,9 +619,7 @@ class QuerySet(Generic[T]):
             model_cls=self.model_cls,  # type: ignore
             exclude_through=exclude_through,
         )
-        column_map = alias_resolver.resolve_columns(
-            columns_names=list(rows[0].keys())
-        )
+        column_map = alias_resolver.resolve_columns(columns_names=list(rows[0].keys()))
         result = [
             {column_map.get(k): v for k, v in dict(x).items() if k in column_map}
             for x in rows
