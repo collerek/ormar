@@ -75,12 +75,12 @@ async def test_prefetch_related_with_same_model_relations() -> None:
         prefetch_result = await Book.objects.prefetch_related(
             ["authors", "co_authors"]
         ).all()
-        prefetch_dict_result = [x.dict() for x in prefetch_result if x.id == 1][0]
+        prefetch_dict_result = [x.model_dump() for x in prefetch_result if x.id == 1][0]
         select_result = await Book.objects.select_related(
             ["authors", "co_authors"]
         ).all()
         select_dict_result = [
-            x.dict(
+            x.model_dump(
                 exclude={
                     "authors": {"bookauthor": ...},
                     "co_authors": {"bookcoauthor": ...},
@@ -107,7 +107,7 @@ async def test_prefetch_related_with_self_referencing() -> None:
         select_result = await SelfRef.objects.select_related(
             ["main_child", "children"]
         ).get(name="Main")
-        print(select_result.json(indent=4))
+        print(select_result.model_dump_json(indent=4))
 
         prefetch_result = await SelfRef.objects.prefetch_related(
             ["main_child", "children"]

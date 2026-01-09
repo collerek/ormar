@@ -32,7 +32,7 @@ class UUID(TypeDecorator):
             else dialect.type_descriptor(CHAR(32))
         )
 
-    def process_bind_param(self, value: uuid.UUID, dialect: Dialect) -> Optional[str]:
+    def process_bind_param(self, value: Any, dialect: Dialect) -> Optional[str]:
         if value is None:
             return value
         return str(value) if self.uuid_format == "string" else "%.32x" % value.int
@@ -40,7 +40,7 @@ class UUID(TypeDecorator):
     def process_result_value(
         self, value: Optional[str], dialect: Dialect
     ) -> Optional[uuid.UUID]:
-        if value is None:
+        if value is None:  # pragma: no cover
             return value
         if not isinstance(value, uuid.UUID):
             return uuid.UUID(value)

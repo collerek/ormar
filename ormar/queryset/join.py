@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, cast
 
 import sqlalchemy
-from sqlalchemy import text
+from sqlalchemy import TextClause, text
 
 import ormar  # noqa I100
 from ormar.exceptions import ModelDefinitionError, RelationshipInstanceError
@@ -17,7 +17,7 @@ class SqlJoin:
     def __init__(  # noqa:  CFQ002
         self,
         used_aliases: List,
-        select_from: sqlalchemy.sql.select,
+        select_from: sqlalchemy.sql.Select,
         columns: List[sqlalchemy.Column],
         excludable: "ExcludableItems",
         order_columns: Optional[List["OrderAction"]],
@@ -101,7 +101,7 @@ class SqlJoin:
         from_column_name: str,
         to_table_name: str,
         to_column_name: str,
-    ) -> text:
+    ) -> TextClause:
         """
         Receives aliases and names of both ends of the join and combines them
         into one text clause used in joins.
@@ -133,7 +133,7 @@ class SqlJoin:
 
         return text(f"{left_part}={right_part}")
 
-    def build_join(self) -> Tuple[List, sqlalchemy.sql.select, List, Dict]:
+    def build_join(self) -> Tuple[List, sqlalchemy.sql.Select, List, Dict]:
         """
         Main external access point for building a join.
         Splits the join definition, updates fields and exclude_fields if needed,
@@ -305,7 +305,7 @@ class SqlJoin:
             self.next_alias, self.to_table
         )
         self.select_from = sqlalchemy.sql.outerjoin(
-            self.select_from, target_table, on_clause
+            self.select_from, target_table, on_clause  # type: ignore
         )
 
         self._get_order_bys()
@@ -317,8 +317,8 @@ class SqlJoin:
             use_alias=True,
         )
         self.columns.extend(
-            self.alias_manager.prefixed_columns(
-                self.next_alias, target_table, self_related_fields
+            self.alias_manager.prefixed_columns(  # type: ignore
+                self.next_alias, target_table, self_related_fields  # type: ignore
             )
         )
         self.used_aliases.append(self.next_alias)

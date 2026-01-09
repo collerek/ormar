@@ -10,6 +10,7 @@ from typing import (
     List,
     Optional,
     Set,
+    Union,
     cast,
 )
 
@@ -40,7 +41,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         _bytes_fields: Set[str]
         __pydantic_core_schema__: CoreSchema
         __ormar_fields_validators__: Optional[
-            Dict[str, SchemaValidator | PluggableSchemaValidator]
+            Dict[str, Union[SchemaValidator, PluggableSchemaValidator]]
         ]
 
     @classmethod
@@ -285,7 +286,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
             return cls.__pydantic_core_schema__["schema"]["fields"]
         elif cls.__pydantic_core_schema__["type"] == "definitions":
             main_schema = cls.__pydantic_core_schema__["schema"]
-            if "schema_ref" in main_schema:
+            if "schema_ref" in main_schema:  # pragma: no cover
                 reference_id = main_schema["schema_ref"]
                 return next(
                     ref

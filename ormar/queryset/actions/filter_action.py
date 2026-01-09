@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Type
 
-import sqlalchemy
+from sqlalchemy import TextClause
 
 import ormar  # noqa: I100, I202
 from ormar.exceptions import QueryDefinitionError
@@ -124,7 +124,7 @@ class FilterAction(QueryAction):
         sufix = "%" if "end" not in self.operator else ""
         self.filter_value = f"{prefix}{self.filter_value}{sufix}"
 
-    def get_text_clause(self) -> sqlalchemy.sql.expression.BinaryExpression:
+    def get_text_clause(self) -> TextClause:
         """
         Escapes characters if it's required.
         Substitutes values of the models if value is a ormar Model with its pk value.

@@ -11,7 +11,7 @@ class LimitQuery:
     def __init__(self, limit_count: Optional[int]) -> None:
         self.limit_count = limit_count
 
-    def apply(self, expr: sqlalchemy.sql.select) -> sqlalchemy.sql.select:
+    def apply(self, expr: sqlalchemy.sql.Select) -> sqlalchemy.sql.Select:
         """
         Applies the limit clause.
 

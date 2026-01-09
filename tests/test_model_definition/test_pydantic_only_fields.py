@@ -16,7 +16,7 @@ class Album(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    timestamp: datetime.datetime = pydantic.Field(default=None)
+    timestamp: datetime.datetime = pydantic.Field(default=None)  # type: ignore
 
     @computed_field
     def name10(self) -> str:

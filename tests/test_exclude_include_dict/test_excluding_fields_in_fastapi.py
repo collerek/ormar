@@ -79,7 +79,7 @@ class User2(ormar.Model):
     first_name: str = ormar.String(max_length=255)
     last_name: str = ormar.String(max_length=255)
     category: str = ormar.String(max_length=255, nullable=True)
-    timestamp: datetime.datetime = pydantic.Field(default=datetime.datetime.now)
+    timestamp: datetime.datetime = pydantic.Field(default_factory=datetime.datetime.now)
 
 
 create_test_database = init_tests(base_ormar_config)

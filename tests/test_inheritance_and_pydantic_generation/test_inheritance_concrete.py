@@ -508,4 +508,4 @@ def test_custom_config() -> None:
 
 def test_get_constraint_copy() -> None:
     with pytest.raises(ValueError):
-        get_constraint_copy("INVALID CONSTRAINT")
+        get_constraint_copy("INVALID CONSTRAINT")  # type: ignore

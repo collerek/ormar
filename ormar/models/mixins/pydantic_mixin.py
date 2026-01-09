@@ -18,7 +18,6 @@ from typing import (
 import pydantic
 from pydantic import BaseModel
 from pydantic._internal._decorators import DecoratorInfos
-from pydantic.fields import FieldInfo
 
 from ormar.fields import BaseField, ForeignKeyField, ManyToManyField
 from ormar.models.mixins.relation_mixin import RelationMixin  # noqa: I100, I202
@@ -30,7 +29,6 @@ class PydanticMixin(RelationMixin):
 
     if TYPE_CHECKING:  # pragma: no cover
         __pydantic_decorators__: DecoratorInfos
-        model_fields: Dict[str, FieldInfo]
         _skip_ellipsis: Callable
         _get_not_excluded_fields: Callable
 
@@ -126,7 +124,7 @@ class PydanticMixin(RelationMixin):
                 relation_map=relation_map,
             )
         elif not field.is_relation:
-            defaults[name] = cls.model_fields[name].default
+            defaults[name] = cls.model_fields[name].default  # type: ignore
             target = field.__type__
         if target is not None and field.nullable:
             target = Optional[target]

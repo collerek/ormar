@@ -1,4 +1,3 @@
-import asyncio
 import itertools
 from typing import List, Optional
 
@@ -57,15 +56,9 @@ class Car(ormar.Model):
 create_test_database = init_tests(base_ormar_config)
 
 
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest_asyncio.fixture(autouse=True, scope="module")
-async def sample_data(event_loop, create_test_database):
+@pytest.mark.usefixtures("create_test_database")
+async def sample_data():
     async with base_ormar_config.database:
         nick1 = await NickNames.objects.create(name="Nippon", is_lame=False)
         nick2 = await NickNames.objects.create(name="EroCherry", is_lame=True)
