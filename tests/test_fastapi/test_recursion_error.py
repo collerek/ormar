@@ -6,7 +6,7 @@ import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import Depends, FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from pydantic import BaseModel, Json
 
 from tests.lifespan import init_tests, lifespan
@@ -91,7 +91,8 @@ async def create_quiz_lol(
 
 @pytest.mark.asyncio
 async def test_quiz_creation():
-    client = AsyncClient(app=router, base_url="http://testserver")
+    transport = ASGITransport(app=router)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(router):
         payload = {
             "title": "Some test question",
