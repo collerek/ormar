@@ -1,6 +1,6 @@
 import inspect
 import warnings
-from typing import TYPE_CHECKING, Any, List, Optional, Type, Union, cast
+from typing import TYPE_CHECKING, Any, ForwardRef, List, Optional, Type, Union, cast
 
 from pydantic import BaseModel, create_model, field_serializer
 from pydantic._internal._decorators import DecoratorInfos
@@ -156,7 +156,17 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
         add_field_serializer_for_reverse_relations(
             to_model=model_field.to, related_name=related_name
         )
-        model_field.to.model_rebuild(force=True)
+        model_field.to.model_rebuild(
+            force=True,
+            _types_namespace={
+                **{model_field.owner.__name__: model_field.owner},
+                **{
+                    field.to.__name__: field.to
+                    for field in related_model_fields.values()
+                    if field.is_relation and field.to.__class__ != ForwardRef
+                },
+            },
+        )
         setattr(model_field.to, related_name, RelationDescriptor(name=related_name))
 
 

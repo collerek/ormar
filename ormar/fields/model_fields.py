@@ -18,7 +18,7 @@ try:
     from typing import Literal  # type: ignore
 except ImportError:  # pragma: no cover
     from typing_extensions import Literal  # type: ignore
-    
+
 try:
     from typing import Self  # type: ignore
 except ImportError:  # pragma: no cover

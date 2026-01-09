@@ -1,4 +1,14 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Type,
+    Union,
+    overload,
+)
 
 import sqlalchemy
 from pydantic.fields import FieldInfo, _Unset
@@ -167,8 +177,23 @@ class BaseField(FieldInfo):
             return dict(default=default)
         return None
 
+    @overload
     def get_default(
-        self, use_server: bool = False, call_default_factory: bool = True
+        self,
+        *,
+        call_default_factory: Literal[True],
+        validated_data: Union[dict[str, Any], None] = None,
+    ) -> Any: ...
+
+    @overload
+    def get_default(self, *, call_default_factory: Literal[False] = ...) -> Any: ...
+
+    def get_default(
+        self,
+        *,
+        call_default_factory: bool = True,
+        validated_data: Union[dict[str, Any], None] = None,
+        use_server: bool = False,
     ) -> Any:  # noqa CCR001
         """
         Return default value for a field.
@@ -192,7 +217,7 @@ class BaseField(FieldInfo):
                 call_default_factory=call_default_factory,
             )
 
-    def _get_default_server_value(self, use_server: bool) -> Any:
+    def _get_default_server_value(self, use_server: bool) -> Any:  # pragma: no cover
         """
         Return default value for a server side if use_server is True
         """
@@ -266,7 +291,7 @@ class BaseField(FieldInfo):
         :rtype: sqlalchemy.Column
         """
         if self.encrypt_backend == EncryptBackends.NONE:
-            column = sqlalchemy.Column(
+            column: sqlalchemy.Column = sqlalchemy.Column(
                 self.db_alias or name,
                 self.column_type,
                 *self.construct_constraints(),
@@ -295,7 +320,7 @@ class BaseField(FieldInfo):
             raise ModelDefinitionError(
                 "Primary key field and relations fields" "cannot be encrypted!"
             )
-        column = sqlalchemy.Column(
+        column: sqlalchemy.Column = sqlalchemy.Column(
             self.db_alias or name,
             EncryptedString(
                 _field_type=self,

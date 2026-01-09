@@ -47,6 +47,13 @@ async def test_read_main():
         assert response.json() == {
             "category": {
                 "id": None,
+                "items": [
+                    {
+                        "category": {"id": None, "name": "test cat"},
+                        "id": 1,
+                        "name": "test",
+                    }
+                ],
                 "name": "test cat",
             },
             "id": 1,
