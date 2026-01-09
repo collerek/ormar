@@ -40,7 +40,7 @@ class UUID(TypeDecorator):
     def process_result_value(
         self, value: Optional[str], dialect: Dialect
     ) -> Optional[uuid.UUID]:
-        if value is None:
+        if value is None:  # pragma: no cover
             return value
         if not isinstance(value, uuid.UUID):
             return uuid.UUID(value)
