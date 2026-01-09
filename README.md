@@ -69,7 +69,6 @@ Ormar is built with:
 * [`sqlalchemy core`][sqlalchemy-core] for query building.
 * [`databases`][databases] for cross-database async support.
 * [`pydantic`][pydantic] for data validation.
-* `typing_extensions` for python 3.6 - 3.7
 
 ### License
 
