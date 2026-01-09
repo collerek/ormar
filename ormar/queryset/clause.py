@@ -1,7 +1,7 @@
 import itertools
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Generator, List, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Any, Generator, List, Optional, Tuple, Type, Union
 
 import sqlalchemy
 from sqlalchemy import ColumnElement
@@ -103,7 +103,7 @@ class FilterGroup:
 
     def _get_text_clauses(
         self,
-    ) -> List[sqlalchemy.sql.expression.TextClause | ColumnElement[Any]]:
+    ) -> List[Union[sqlalchemy.sql.expression.TextClause, ColumnElement[Any]]]:
         """
         Helper to return list of text queries from actions and nested groups
         :return: list of text queries from actions and nested groups

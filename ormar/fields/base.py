@@ -182,7 +182,7 @@ class BaseField(FieldInfo):
         self,
         *,
         call_default_factory: Literal[True],
-        validated_data: dict[str, Any] | None = None,
+        validated_data: Union[dict[str, Any], None] = None,
     ) -> Any: ...
 
     @overload
@@ -192,7 +192,7 @@ class BaseField(FieldInfo):
         self,
         *,
         call_default_factory: bool = True,
-        validated_data: dict[str, Any] | None = None,
+        validated_data: Union[dict[str, Any], None] = None,
         use_server: bool = False,
     ) -> Any:  # noqa CCR001
         """
@@ -217,7 +217,7 @@ class BaseField(FieldInfo):
                 call_default_factory=call_default_factory,
             )
 
-    def _get_default_server_value(self, use_server: bool) -> Any:
+    def _get_default_server_value(self, use_server: bool) -> Any:  # pragma: no cover
         """
         Return default value for a server side if use_server is True
         """

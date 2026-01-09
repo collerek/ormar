@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Union
 
 import sqlalchemy
 from sqlalchemy import ColumnElement, Select, TextClause
@@ -31,7 +31,7 @@ class FilterQuery:
         """
         if self.filter_clauses:
             if len(self.filter_clauses) == 1:
-                clause: TextClause | ColumnElement[Any] = self.filter_clauses[
+                clause: Union[TextClause, ColumnElement[Any]] = self.filter_clauses[
                     0
                 ].get_text_clause()
             else:
