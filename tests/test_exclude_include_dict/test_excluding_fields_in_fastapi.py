@@ -8,7 +8,7 @@ import pytest
 import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from ormar import post_save
 from pydantic import ConfigDict, computed_field
 
@@ -123,7 +123,8 @@ async def create_user7(user: RandomModel):
 
 @pytest.mark.asyncio
 async def test_excluding_fields_in_endpoints():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         user = {
             "email": "test@domain.com",
@@ -197,7 +198,8 @@ async def test_excluding_fields_in_endpoints():
 
 @pytest.mark.asyncio
 async def test_adding_fields_in_endpoints():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         user3 = {"last_name": "Test", "full_name": "deleted"}
         response = await client.post("/random/", json=user3)
@@ -226,7 +228,8 @@ async def test_adding_fields_in_endpoints():
 
 @pytest.mark.asyncio
 async def test_adding_fields_in_endpoints2():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         user3 = {"last_name": "Test"}
         response = await client.post("/random2/", json=user3)
@@ -249,7 +252,8 @@ async def test_excluding_property_field_in_endpoints2():
     async def after_save(sender, instance, **kwargs):
         dummy_registry[instance.pk] = instance.model_dump()
 
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         user3 = {"last_name": "Test"}
         response = await client.post("/random3/", json=user3)

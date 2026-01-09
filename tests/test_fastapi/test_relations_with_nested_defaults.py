@@ -5,7 +5,7 @@ import pytest
 import pytest_asyncio
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
@@ -66,7 +66,8 @@ async def get_book_with_author_by_id(book_id: int):
 
 @pytest.mark.asyncio
 async def test_related_with_defaults(sample_data):
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         response = await client.get("/books/1")
         assert response.json() == {

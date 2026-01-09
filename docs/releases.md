@@ -1,5 +1,30 @@
 # Release notes
 
+## 0.21.0
+
+### 🐛 Breaking changes
+
+* Drop support for Python 3.8
+* Remove the possibility to exclude parents' fields in children models (discouraged as bad practice anyway)
+* Add support for Sqlalchemy 2.0 and drop for 1.4
+
+### 💬 Other
+* Bump dependencies to newer versions: among others pydantic, databases and fastapi
+* Move setuptools to dev dependencies
+* Solve vulnerabilities in dependencies
+
+
+### 🐛 Fixes
+
+* Fix mutable default argument in translate list to dict  - thanks @cadlagtrader [#1382](https://github.com/collerek/ormar/pull/1382)
+* Fix fastapi docs - thanks @inktrap [#1362](https://github.com/collerek/ormar/pull/1362)
+* Fix clashing many to many fields names [#1407](https://github.com/collerek/ormar/pull/1407)
+
+### 💬 Other
+* Add official support for python 3.12 - thanks @ChristopherMacGown [#1395](https://github.com/collerek/ormar/pull/1395)
+* Unpin pydantic allowing pydantic versions <2.9.0 - thanks @camillol [#1388](https://github.com/collerek/ormar/pull/1388)
+
+
 ## 0.20.2
 
 ### 🐛 Fixes

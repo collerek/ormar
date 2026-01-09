@@ -7,7 +7,7 @@ import pydantic
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
@@ -100,7 +100,8 @@ async def test_setting_values_after_init():
 
 @pytest.mark.asyncio
 async def test_read_main():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         response = await client.get("/things_with_sample")
         assert response.status_code == 200

@@ -6,7 +6,7 @@ import pydantic
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from pydantic import Field
 
 from tests.lifespan import init_tests, lifespan
@@ -76,7 +76,8 @@ async def create_category(category: Category):
 
 @pytest.mark.asyncio
 async def test_all_endpoints():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         response = await client.post("/categories/", json={"name": "test cat"})
         assert response.status_code == 200
