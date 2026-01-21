@@ -159,16 +159,6 @@ class String(ModelFieldFactory, str):
     _type = str
     _sample = "string"
 
-    @overload
-    def __new__(
-        cls, *, max_length: int, nullable: Literal[False] = False, **kwargs: Any
-    ) -> str: ...
-
-    @overload
-    def __new__(
-        cls, *, max_length: int, nullable: Literal[True], **kwargs: Any
-    ) -> str | None: ...
-
     def __new__(  # type: ignore # noqa CFQ002
         cls,
         *,
@@ -222,12 +212,6 @@ class Integer(ModelFieldFactory, int):
     _type = int
     _sample = 0
 
-    @overload
-    def __new__(cls, *, nullable: Literal[False] = False, **kwargs: Any) -> int: ...
-
-    @overload
-    def __new__(cls, *, nullable: Literal[True], **kwargs: Any) -> int | None: ...
-
     def __new__(  # type: ignore
         cls,
         *,
@@ -276,12 +260,6 @@ class Text(ModelFieldFactory, str):
     _type = str
     _sample = "text"
 
-    @overload
-    def __new__(cls, *, nullable: Literal[False] = False, **kwargs: Any) -> str: ...
-
-    @overload
-    def __new__(cls, *, nullable: Literal[True], **kwargs: Any) -> str | None: ...
-
     def __new__(cls, **kwargs: Any) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
@@ -314,12 +292,6 @@ class Float(ModelFieldFactory, float):
 
     _type = float
     _sample = 0.0
-
-    @overload
-    def __new__(cls, *, nullable: Literal[False] = False, **kwargs: Any) -> float: ...
-
-    @overload
-    def __new__(cls, *, nullable: Literal[True], **kwargs: Any) -> float | None: ...
 
     def __new__(  # type: ignore
         cls,
@@ -392,16 +364,6 @@ class DateTime(ModelFieldFactory, datetime.datetime):
     _type = datetime.datetime
     _sample = "datetime"
 
-    @overload
-    def __new__(
-        cls, *, nullable: Literal[False] = False, **kwargs: Any
-    ) -> datetime.datetime: ...
-
-    @overload
-    def __new__(
-        cls, *, nullable: Literal[True], **kwargs: Any
-    ) -> datetime.datetime | None: ...
-
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, timezone: bool = False, **kwargs: Any
     ) -> Self:  # type: ignore
@@ -437,27 +399,6 @@ class Date(ModelFieldFactory, datetime.date):
     _type = datetime.date
     _sample = "date"
 
-    @overload
-    def __new__(
-        cls, *, nullable: Literal[False] = False, **kwargs: Any
-    ) -> datetime.date: ...
-
-    @overload
-    def __new__(
-        cls, *, nullable: Literal[True], **kwargs: Any
-    ) -> datetime.date | None: ...
-
-    def __new__(cls, **kwargs: Any) -> Self:  # type: ignore
-        kwargs = {
-            **kwargs,
-            **{
-                k: v
-                for k, v in locals().items()
-                if k not in ["cls", "__class__", "kwargs"]
-            },
-        }
-        return super().__new__(cls, **kwargs)
-
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
         """
@@ -479,16 +420,6 @@ class Time(ModelFieldFactory, datetime.time):
 
     _type = datetime.time
     _sample = "time"
-
-    @overload
-    def __new__(
-        cls, *, nullable: Literal[False] = False, **kwargs: Any
-    ) -> datetime.time: ...
-
-    @overload
-    def __new__(
-        cls, *, nullable: Literal[True], **kwargs: Any
-    ) -> datetime.time | None: ...
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, timezone: bool = False, **kwargs: Any
@@ -524,23 +455,6 @@ class JSON(ModelFieldFactory, pydantic.Json):
 
     _type = pydantic.Json
     _sample = '{"json": "json"}'
-
-    @overload
-    def __new__(cls, *, nullable: Literal[False] = False, **kwargs: Any) -> Any: ...
-
-    @overload
-    def __new__(cls, *, nullable: Literal[True], **kwargs: Any) -> Any | None: ...
-
-    def __new__(cls, **kwargs: Any) -> Self:  # type: ignore
-        kwargs = {
-            **kwargs,
-            **{
-                k: v
-                for k, v in locals().items()
-                if k not in ["cls", "__class__", "kwargs"]
-            },
-        }
-        return super().__new__(cls, **kwargs)
 
     @classmethod
     def get_column_type(cls, **kwargs: Any) -> Any:
@@ -641,12 +555,6 @@ class BigInteger(Integer, int):
     _type = int
     _sample = 0
 
-    @overload
-    def __new__(cls, *, nullable: Literal[False] = False, **kwargs: Any) -> int: ...
-
-    @overload
-    def __new__(cls, *, nullable: Literal[True], **kwargs: Any) -> int | None: ...
-
     def __new__(  # type: ignore
         cls,
         *,
@@ -695,12 +603,6 @@ class SmallInteger(Integer, int):
     _type = int
     _sample = 0
 
-    @overload
-    def __new__(cls, *, nullable: Literal[False] = False, **kwargs: Any) -> int: ...
-
-    @overload
-    def __new__(cls, *, nullable: Literal[True], **kwargs: Any) -> int | None: ...
-
     def __new__(  # type: ignore
         cls,
         *,
@@ -748,26 +650,6 @@ class Decimal(ModelFieldFactory, decimal.Decimal):
 
     _type = decimal.Decimal
     _sample = 0.0
-
-    @overload
-    def __new__(
-        cls,
-        *,
-        max_digits: int,
-        decimal_places: int,
-        nullable: Literal[False] = False,
-        **kwargs: Any
-    ) -> decimal.Decimal: ...
-
-    @overload
-    def __new__(
-        cls,
-        *,
-        max_digits: int,
-        decimal_places: int,
-        nullable: Literal[True],
-        **kwargs: Any
-    ) -> decimal.Decimal | None: ...
 
     def __new__(  # type: ignore # noqa CFQ002
         cls,
@@ -841,14 +723,6 @@ class UUID(ModelFieldFactory, uuid.UUID):
 
     _type = uuid.UUID
     _sample = "uuid"
-
-    @overload
-    def __new__(
-        cls, *, nullable: Literal[False] = False, **kwargs: Any
-    ) -> uuid.UUID: ...
-
-    @overload
-    def __new__(cls, *, nullable: Literal[True], **kwargs: Any) -> uuid.UUID | None: ...
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, uuid_format: str = "hex", **kwargs: Any
