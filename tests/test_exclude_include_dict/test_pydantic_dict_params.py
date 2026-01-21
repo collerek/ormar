@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import ormar
 import pytest
@@ -13,7 +13,7 @@ class Category(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=100, default="Test", nullable=True)
+    name: Optional[str] = ormar.String(max_length=100, default="Test", nullable=True)
     visibility: bool = ormar.Boolean(default=True)
 
 

@@ -4,6 +4,7 @@ import datetime
 import os
 import uuid
 from enum import Enum
+from typing import Optional
 
 import ormar
 import pydantic
@@ -126,7 +127,9 @@ class NullableCountry(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="country2")
 
     id: int = ormar.Integer(primary_key=True)
-    name: CountryNameEnum = ormar.Enum(enum_class=CountryNameEnum, nullable=True)
+    name: Optional[CountryNameEnum] = ormar.Enum(
+        enum_class=CountryNameEnum, nullable=True
+    )
 
 
 class NotNullableCountry(ormar.Model):
