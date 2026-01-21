@@ -44,10 +44,10 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
     )
 
     create_and_append_m2m_fk(
-        model=model_field.to, model_field=model_field, field_name=parent_name
+        model=model_field.to, model_field=model_field, field_name=parent_name, nullable=model_field.is_through_reverse_relation_column_nullable,
     )
     create_and_append_m2m_fk(
-        model=model_field.owner, model_field=model_field, field_name=child_name
+        model=model_field.owner, model_field=model_field, field_name=child_name, nullable=model_field.is_through_relation_column_nullable,
     )
 
     create_pydantic_field(parent_name, model_field.to, model_field)
@@ -58,7 +58,7 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
 
 
 def create_and_append_m2m_fk(
-    model: Type["Model"], model_field: "ManyToManyField", field_name: str
+    model: Type["Model"], model_field: "ManyToManyField", field_name: str, nullable: bool
 ) -> None:
     """
     Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.
@@ -91,6 +91,7 @@ def create_and_append_m2m_fk(
             name=f"fk_{model_field.through.ormar_config.tablename}_{model.ormar_config.tablename}"
             f"_{field_name}_{pk_alias}",
         ),
+        nullable=nullable,
     )
     model_field.through.ormar_config.columns.append(column)
     model_field.through.ormar_config.table.append_column(column, replace_existing=True)
