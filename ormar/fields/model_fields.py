@@ -197,7 +197,7 @@ class String(ModelFieldFactory, str):
         :param kwargs: all params passed during construction
         :type kwargs: Any
         """
-        max_length = kwargs.get("max_length", None)
+        max_length = kwargs.get("max_length", -1)
         if max_length <= 0:
             raise ModelDefinitionError(
                 "Parameter max_length is required for field String"
