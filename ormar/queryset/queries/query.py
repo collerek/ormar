@@ -1,8 +1,9 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import sqlalchemy
 from sqlalchemy import Column, Select, Table, TextClause
 from sqlalchemy.sql import Join
+from sqlalchemy.sql.roles import FromClauseRole
 
 import ormar  # noqa I100
 from ormar.models.helpers.models import group_related_list
@@ -148,11 +149,11 @@ class Query:
         if self._pagination_query_required():
             limit_qry, on_clause = self._build_pagination_condition()
             self.select_from = sqlalchemy.sql.join(
-                self.select_from, limit_qry, on_clause
+                cast("FromClauseRole", self.select_from), limit_qry, on_clause
             )
 
         expr = sqlalchemy.sql.select(*self.columns)
-        expr = expr.select_from(self.select_from)
+        expr = expr.select_from(cast("FromClauseRole", self.select_from))
 
         expr = self._apply_expression_modifiers(expr)
 

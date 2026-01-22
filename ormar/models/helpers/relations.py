@@ -16,7 +16,7 @@ from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
-    from ormar.fields import ForeignKeyField, ManyToManyField
+    from ormar.fields import BaseField, ForeignKeyField, ManyToManyField
 
 alias_manager = AliasManager()
 
@@ -288,7 +288,7 @@ def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:
     setattr(model_field.to, through_name, RelationDescriptor(name=through_name))
 
 
-def register_relation_in_alias_manager(field: "ForeignKeyField") -> None:
+def register_relation_in_alias_manager(field: "BaseField") -> None:
     """
     Registers the relation (and reverse relation) in alias manager.
     The m2m relations require registration of through model between
@@ -309,7 +309,7 @@ def register_relation_in_alias_manager(field: "ForeignKeyField") -> None:
     elif field.is_relation and not field.is_through:
         if field.has_unresolved_forward_refs():
             return
-        register_relation_on_build(field=field)
+        register_relation_on_build(field=cast("ForeignKeyField", field))
 
 
 def verify_related_name_dont_duplicate(

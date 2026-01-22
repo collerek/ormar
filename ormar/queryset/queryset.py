@@ -1221,7 +1221,9 @@ class QuerySet(Generic[T]):
             )
             await asyncio.sleep(0)
 
-        pk_column = self.model_config.table.c.get(self.model.get_column_alias(pk_name))
+        pk_column: sqlalchemy.Column = self.model_config.table.c[
+            self.model.get_column_alias(pk_name)
+        ]
         pk_column_name = self.model.get_column_alias(pk_name)
         table_columns = [c.name for c in self.model_config.table.c]
         expr = self.table.update().where(
