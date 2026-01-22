@@ -73,6 +73,7 @@ class ReverseAliasResolver:
         :type prefix: str
         """
         relation = self.reversed_aliases.get(prefix, None)
+        assert relation is not None, "Prefix not found in reversed aliases"
         relation_str = self._prefixes.get(relation, None)
         field = self._fields.get(relation, None)
         if relation_str is None or field is None:
