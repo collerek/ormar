@@ -1,6 +1,6 @@
 import inspect
 import warnings
-from typing import TYPE_CHECKING, Any, List, Optional, Type, Union, cast
+from typing import TYPE_CHECKING, Any, ForwardRef, List, Optional, Type, Union, cast
 
 from pydantic import BaseModel, create_model, field_serializer
 from pydantic._internal._decorators import DecoratorInfos
@@ -16,7 +16,7 @@ from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
-    from ormar.fields import ForeignKeyField, ManyToManyField
+    from ormar.fields import BaseField, ForeignKeyField, ManyToManyField
 
 alias_manager = AliasManager()
 
@@ -156,7 +156,17 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
         add_field_serializer_for_reverse_relations(
             to_model=model_field.to, related_name=related_name
         )
-        model_field.to.model_rebuild(force=True)
+        model_field.to.model_rebuild(
+            force=True,
+            _types_namespace={
+                **{model_field.owner.__name__: model_field.owner},
+                **{
+                    field.to.__name__: field.to
+                    for field in related_model_fields.values()
+                    if field.is_relation and field.to.__class__ != ForwardRef
+                },
+            },
+        )
         setattr(model_field.to, related_name, RelationDescriptor(name=related_name))
 
 
@@ -278,7 +288,7 @@ def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:
     setattr(model_field.to, through_name, RelationDescriptor(name=through_name))
 
 
-def register_relation_in_alias_manager(field: "ForeignKeyField") -> None:
+def register_relation_in_alias_manager(field: "BaseField") -> None:
     """
     Registers the relation (and reverse relation) in alias manager.
     The m2m relations require registration of through model between
@@ -299,7 +309,7 @@ def register_relation_in_alias_manager(field: "ForeignKeyField") -> None:
     elif field.is_relation and not field.is_through:
         if field.has_unresolved_forward_refs():
             return
-        register_relation_on_build(field=field)
+        register_relation_on_build(field=cast("ForeignKeyField", field))
 
 
 def verify_related_name_dont_duplicate(

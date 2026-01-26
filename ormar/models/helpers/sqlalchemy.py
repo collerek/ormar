@@ -100,7 +100,7 @@ def create_and_append_m2m_fk(
         ),
     )
     model_field.through.ormar_config.columns.append(column)
-    model_field.through.ormar_config.table.append_column(column)
+    model_field.through.ormar_config.table.append_column(column, replace_existing=True)
 
 
 def check_pk_column_validity(
