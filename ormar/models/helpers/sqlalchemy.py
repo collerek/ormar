@@ -34,7 +34,7 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
         real_name=parent_name,
         ondelete="CASCADE",
         owner=model_field.through,
-    )
+    ) 
 
     model_fields[child_name] = ormar.ForeignKey(  # type: ignore
         model_field.owner,
@@ -81,11 +81,12 @@ def create_and_append_m2m_fk(
         raise ormar.ModelDefinitionError(
             "ManyToMany relation cannot lead to field without pk"
         )
+    
     column = sqlalchemy.Column(
         field_name,
         pk_column.type,
         sqlalchemy.schema.ForeignKey(
-            model.ormar_config.tablename + "." + pk_alias,
+            model.ormar_config.tablename + "." + pk_alias if not model.ormar_config.schema else model.ormar_config.schema + '.' +  model.ormar_config.tablename + "." + pk_alias,
             ondelete="CASCADE",
             onupdate="CASCADE",
             name=f"fk_{model_field.through.ormar_config.tablename}_{model.ormar_config.tablename}"
@@ -283,8 +284,9 @@ def populate_config_sqlalchemy_table_if_required(config: "OrmarConfig") -> None:
         config=config
     ):
         set_constraint_names(config=config)
+        schema_name = getattr(config, "schema", None) or None
         table = sqlalchemy.Table(
-            config.tablename, config.metadata, *config.columns, *config.constraints
+            config.tablename, config.metadata, schema=schema_name, *config.columns, *config.constraints
         )
         config.table = table
 

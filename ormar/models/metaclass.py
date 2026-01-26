@@ -290,6 +290,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
         through_class = field.through
     new_config = ormar.OrmarConfig(
         tablename=through_class.ormar_config.tablename,
+        schema=through_class.ormar_config.schema,
         metadata=through_class.ormar_config.metadata,
         database=through_class.ormar_config.database,
         abstract=through_class.ormar_config.abstract,

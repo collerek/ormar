@@ -19,6 +19,7 @@ class OrmarConfig:
         metadata: sqlalchemy.MetaData
         database: databases.Database
         tablename: str
+        schema: str
         order_by: List[str]
         abstract: bool
         exclude_parent_fields: List[str]
@@ -30,6 +31,7 @@ class OrmarConfig:
         database: Optional[databases.Database] = None,
         engine: Optional[sqlalchemy.engine.Engine] = None,
         tablename: Optional[str] = None,
+        schema: Optional[str] = None,
         order_by: Optional[List[str]] = None,
         abstract: bool = False,
         exclude_parent_fields: Optional[List[str]] = None,
@@ -42,6 +44,7 @@ class OrmarConfig:
         self.database = database  # type: ignore
         self.engine = engine  # type: ignore
         self.tablename = tablename  # type: ignore
+        self.schema = schema  # type: ignore
         self.orders_by = order_by or []
         self.columns: List[sqlalchemy.Column] = []
         self.constraints = constraints or []
@@ -64,6 +67,7 @@ class OrmarConfig:
         database: Optional[databases.Database] = None,
         engine: Optional[sqlalchemy.engine.Engine] = None,
         tablename: Optional[str] = None,
+        schema: Optional[str] = None,
         order_by: Optional[List[str]] = None,
         abstract: Optional[bool] = None,
         exclude_parent_fields: Optional[List[str]] = None,
@@ -76,6 +80,7 @@ class OrmarConfig:
             database=database or self.database,
             engine=engine or self.engine,
             tablename=tablename,
+            schema=schema or self.schema,
             order_by=order_by,
             abstract=abstract or self.abstract,
             exclude_parent_fields=exclude_parent_fields,
