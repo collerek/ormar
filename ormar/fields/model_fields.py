@@ -327,33 +327,26 @@ class Float(ModelFieldFactory, float):
         return sqlalchemy.Float()
 
 
-if TYPE_CHECKING:  # pragma: nocover
+class Boolean(ModelFieldFactory, int):
+    """
+    Boolean field factory that construct Field classes and populated their values.
+    """
 
-    def Boolean(**kwargs: Any) -> bool:
-        pass
+    _type = bool
+    _sample = True
 
-else:
-
-    class Boolean(ModelFieldFactory, int):
+    @classmethod
+    def get_column_type(cls, **kwargs: Any) -> Any:
         """
-        Boolean field factory that construct Field classes and populated their values.
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
         """
-
-        _type = bool
-        _sample = True
-
-        @classmethod
-        def get_column_type(cls, **kwargs: Any) -> Any:
-            """
-            Return proper type of db column for given field type.
-            Accepts required and optional parameters that each column type accepts.
-
-            :param kwargs: key, value pairs of sqlalchemy options
-            :type kwargs: Any
-            :return: initialized column with proper options
-            :rtype: sqlalchemy Column
-            """
-            return sqlalchemy.Boolean()
+        return sqlalchemy.Boolean()
 
 
 class DateTime(ModelFieldFactory, datetime.datetime):
@@ -753,42 +746,34 @@ class UUID(ModelFieldFactory, uuid.UUID):
         return sqlalchemy_uuid.UUID(uuid_format=uuid_format)
 
 
-if TYPE_CHECKING:  # pragma: nocover
-    T = TypeVar("T", bound=E)
+class Enum(ModelFieldFactory):
+    """
+    Enum field factory that construct Field classes and populated their values.
+    """
 
-    def Enum(enum_class: Type[T], **kwargs: Any) -> T:
-        pass
+    _type = E
+    _sample = None
 
-else:
+    def __new__(  # type: ignore # noqa CFQ002
+        cls, *, enum_class: Type[E], **kwargs: Any
+    ) -> Self:
+        kwargs = {
+            **kwargs,
+            **{
+                k: v
+                for k, v in locals().items()
+                if k not in ["cls", "__class__", "kwargs"]
+            },
+        }
+        return super().__new__(cls, **kwargs)
 
-    class Enum(ModelFieldFactory):
-        """
-        Enum field factory that construct Field classes and populated their values.
-        """
+    @classmethod
+    def validate(cls, **kwargs: Any) -> None:
+        enum_class = kwargs.get("enum_class")
+        if enum_class is None or not isinstance(enum_class, EnumMeta):
+            raise ModelDefinitionError("Enum Field choices must be EnumType")
 
-        _type = E
-        _sample = None
-
-        def __new__(  # type: ignore # noqa CFQ002
-            cls, *, enum_class: Type[E], **kwargs: Any
-        ) -> Self:
-            kwargs = {
-                **kwargs,
-                **{
-                    k: v
-                    for k, v in locals().items()
-                    if k not in ["cls", "__class__", "kwargs"]
-                },
-            }
-            return super().__new__(cls, **kwargs)
-
-        @classmethod
-        def validate(cls, **kwargs: Any) -> None:
-            enum_class = kwargs.get("enum_class")
-            if enum_class is None or not isinstance(enum_class, EnumMeta):
-                raise ModelDefinitionError("Enum Field choices must be EnumType")
-
-        @classmethod
-        def get_column_type(cls, **kwargs: Any) -> Any:
-            enum_cls = kwargs.get("enum_class")
-            return sqlalchemy.Enum(enum_cls)
+    @classmethod
+    def get_column_type(cls, **kwargs: Any) -> Any:
+        enum_cls = kwargs.get("enum_class")
+        return sqlalchemy.Enum(enum_cls)

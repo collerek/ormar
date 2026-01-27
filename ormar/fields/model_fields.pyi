@@ -8,7 +8,10 @@ from uuid import UUID as UuidType
 
 T = TypeVar("T", bound=EnumBase)
 
-def Boolean(**kwargs: Any) -> bool: ...
+@overload
+def Boolean(*, nullable: Literal[False] = False, **kwargs: Any) -> bool: ...
+@overload
+def Boolean(*, nullable: Literal[True], **kwargs: Any) -> bool | None: ...
 @overload
 def String(
     *, max_length: int, nullable: Literal[False] = False, **kwargs: Any
@@ -81,4 +84,17 @@ def LargeBinary(
 def LargeBinary(
     max_length: int, represent_as_base64_str: Literal[False] = ..., **kwargs: Any
 ) -> bytes: ...
-def Enum(enum_class: Type[T], **kwargs: Any) -> T: ...
+@overload
+def Enum(
+    enum_class: Type[T],
+    *,
+    nullable: Literal[False] = False,
+    **kwargs: Any,
+) -> T: ...
+@overload
+def Enum(
+    enum_class: Type[T],
+    *,
+    nullable: Literal[True],
+    **kwargs: Any,
+) -> T | None: ...
