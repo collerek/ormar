@@ -18,3 +18,4 @@ profile.py
 *.db-journal
 *coverage.xml
 .benchmarks/
+.env
