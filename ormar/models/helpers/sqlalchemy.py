@@ -86,7 +86,13 @@ def create_and_append_m2m_fk(
         field_name,
         pk_column.type,
         sqlalchemy.schema.ForeignKey(
-            model.ormar_config.tablename + "." + pk_alias if not model.ormar_config.schema else model.ormar_config.schema + '.' +  model.ormar_config.tablename + "." + pk_alias,
+            model.ormar_config.tablename + "." + pk_alias
+            if not model.ormar_config.schema
+            else model.ormar_config.schema
+            + "."
+            + model.ormar_config.tablename
+            + "."
+            + pk_alias,
             ondelete="CASCADE",
             onupdate="CASCADE",
             name=f"fk_{model_field.through.ormar_config.tablename}_{model.ormar_config.tablename}"
@@ -94,7 +100,7 @@ def create_and_append_m2m_fk(
         ),
     )
     model_field.through.ormar_config.columns.append(column)
-    model_field.through.ormar_config.table.append_column(column)
+    model_field.through.ormar_config.table.append_column(column, replace_existing=True)
 
 
 def check_pk_column_validity(

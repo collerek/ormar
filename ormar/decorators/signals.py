@@ -159,7 +159,7 @@ def pre_relation_remove(senders: Union[Type["Model"], List[Type["Model"]]]) -> C
 
 
 def post_relation_remove(
-    senders: Union[Type["Model"], List[Type["Model"]]]
+    senders: Union[Type["Model"], List[Type["Model"]]],
 ) -> Callable:
     """
     Connect given function to all senders for post_relation_remove signal.

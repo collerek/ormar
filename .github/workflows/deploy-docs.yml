@@ -4,6 +4,9 @@ on:
     # Pattern matched against refs/tags
     tags:
       - '**'
+  workflow_dispatch:
+    tags:
+      - '**'
 jobs:
   build:
     name: Build and Deploy Documentation
@@ -11,10 +14,10 @@ jobs:
     steps:
       - name: Checkout Master
         uses: actions/checkout@v5
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v6
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: Install Poetry
         uses: snok/install-poetry@v1.4
         with:

@@ -4,7 +4,7 @@ import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from ormar.queryset.utils import translate_list_to_dict
 
 from tests.lifespan import init_tests, lifespan
@@ -107,7 +107,8 @@ async def get_department_exclude_all(department_name: str):
 
 @pytest.mark.asyncio
 async def test_saving_related_in_fastapi():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         payload = {
             "department_name": "Ormar",
