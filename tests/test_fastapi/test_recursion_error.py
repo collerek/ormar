@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 import ormar
 import pytest
@@ -27,7 +27,7 @@ class User(ormar.Model):
     username: str = ormar.String(unique=True, max_length=100)
     password: str = ormar.String(unique=True, max_length=100)
     verified: bool = ormar.Boolean(default=False)
-    verify_key: str = ormar.String(unique=True, max_length=100, nullable=True)
+    verify_key: Optional[str] = ormar.String(unique=True, max_length=100, nullable=True)
     created_at: datetime = ormar.DateTime(default=datetime.now())
 
     ormar_config = base_ormar_config.copy(tablename="users")
@@ -65,7 +65,7 @@ class QuizInput(BaseModel):
 class Quiz(ormar.Model):
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     title: str = ormar.String(max_length=100)
-    description: str = ormar.String(max_length=300, nullable=True)
+    description: Optional[str] = ormar.String(max_length=300, nullable=True)
     created_at: datetime = ormar.DateTime(default=datetime.now())
     updated_at: datetime = ormar.DateTime(default=datetime.now())
     user_id: uuid.UUID = ormar.UUID(foreign_key=User.id)

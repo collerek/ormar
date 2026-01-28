@@ -22,7 +22,7 @@ class Book(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
     title: str = ormar.String(max_length=100)
-    year: int = ormar.Integer(nullable=True)
+    year: Optional[int] = ormar.Integer(nullable=True)
 
 
 class JsonModel(ormar.Model):

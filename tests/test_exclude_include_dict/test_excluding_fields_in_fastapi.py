@@ -1,6 +1,7 @@
 import datetime
 import random
 import string
+from typing import Optional
 
 import ormar
 import pydantic
@@ -64,10 +65,10 @@ class User(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255)
-    password: str = ormar.String(max_length=255, nullable=True)
+    password: Optional[str] = ormar.String(max_length=255, nullable=True)
     first_name: str = ormar.String(max_length=255)
     last_name: str = ormar.String(max_length=255)
-    category: str = ormar.String(max_length=255, nullable=True)
+    category: Optional[str] = ormar.String(max_length=255, nullable=True)
 
 
 class User2(ormar.Model):
@@ -78,7 +79,7 @@ class User2(ormar.Model):
     password: str = ormar.String(max_length=255)
     first_name: str = ormar.String(max_length=255)
     last_name: str = ormar.String(max_length=255)
-    category: str = ormar.String(max_length=255, nullable=True)
+    category: Optional[str] = ormar.String(max_length=255, nullable=True)
     timestamp: datetime.datetime = pydantic.Field(default_factory=datetime.datetime.now)
 
 

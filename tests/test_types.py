@@ -1,3 +1,5 @@
+from typing import Optional
+
 import databases
 import ormar
 import pytest
@@ -42,8 +44,8 @@ class Book(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     author = ormar.ForeignKey(Author)
     title: str = ormar.String(max_length=100)
-    year: int = ormar.Integer(nullable=True)
-    ranking: int = ormar.Integer(nullable=True)
+    year: Optional[int] = ormar.Integer(nullable=True)
+    ranking: Optional[int] = ormar.Integer(nullable=True)
 
 
 @pytest.fixture(autouse=True, scope="module")

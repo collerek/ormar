@@ -28,7 +28,7 @@ class Thing(ormar.Model):
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
-    js: pydantic.Json = ormar.JSON(nullable=True)
+    js: Optional[pydantic.Json] = ormar.JSON(nullable=True)
     other_thing: Optional[OtherThing] = ormar.ForeignKey(OtherThing, nullable=True)
 
 

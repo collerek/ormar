@@ -1,6 +1,6 @@
 # type: ignore
 import uuid
-from typing import List
+from typing import List, Optional
 
 import ormar
 import pydantic
@@ -79,7 +79,7 @@ async def test_json_is_not_required_if_nullable():
 
         id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
         name: str = ormar.Text(default="")
-        js: pydantic.Json = ormar.JSON(nullable=True)
+        js: Optional[pydantic.Json] = ormar.JSON(nullable=True)
 
     Thing2()
 
