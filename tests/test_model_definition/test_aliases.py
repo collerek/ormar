@@ -15,7 +15,7 @@ class Child(ormar.Model):
     id: int = ormar.Integer(name="child_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)
     last_name: str = ormar.String(name="lname", max_length=100)
-    born_year: int = ormar.Integer(name="year_born", nullable=True)
+    born_year: Optional[int] = ormar.Integer(name="year_born", nullable=True)
 
 
 class Artist(ormar.Model):

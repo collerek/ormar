@@ -4,7 +4,7 @@ import datetime
 import decimal
 import hashlib
 import uuid
-from typing import Any
+from typing import Any, Optional
 
 import ormar
 import pytest
@@ -51,7 +51,7 @@ class Author(ormar.Model):
     test_text: str = ormar.Text(default="", **default_fernet)
     test_bool: bool = ormar.Boolean(nullable=False, **default_fernet)
     test_float: float = ormar.Float(**default_fernet)
-    test_float2: float = ormar.Float(nullable=True, **default_fernet)
+    test_float2: Optional[float] = ormar.Float(nullable=True, **default_fernet)
     test_datetime = ormar.DateTime(default=datetime.datetime.now, **default_fernet)
     test_date = ormar.Date(default=datetime.date.today, **default_fernet)
     test_time = ormar.Time(default=datetime.time, **default_fernet)
