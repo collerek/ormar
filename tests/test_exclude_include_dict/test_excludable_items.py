@@ -14,7 +14,7 @@ class NickNames(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
-    is_lame: bool = ormar.Boolean(nullable=True)
+    is_lame: Optional[bool] = ormar.Boolean(nullable=True)
 
 
 class NicksHq(ormar.Model):
@@ -34,7 +34,7 @@ class Company(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
-    founded: int = ormar.Integer(nullable=True)
+    founded: Optional[int] = ormar.Integer(nullable=True)
     hq: HQ = ormar.ForeignKey(HQ)
 
 
@@ -44,10 +44,10 @@ class Car(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     manufacturer: Optional[Company] = ormar.ForeignKey(Company)
     name: str = ormar.String(max_length=100)
-    year: int = ormar.Integer(nullable=True)
-    gearbox_type: str = ormar.String(max_length=20, nullable=True)
-    gears: int = ormar.Integer(nullable=True)
-    aircon_type: str = ormar.String(max_length=20, nullable=True)
+    year: Optional[int] = ormar.Integer(nullable=True)
+    gearbox_type: Optional[str] = ormar.String(max_length=20, nullable=True)
+    gears: Optional[int] = ormar.Integer(nullable=True)
+    aircon_type: Optional[str] = ormar.String(max_length=20, nullable=True)
 
 
 create_test_database = init_tests(base_ormar_config)

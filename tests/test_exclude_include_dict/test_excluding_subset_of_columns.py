@@ -15,7 +15,7 @@ class Company(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False)
-    founded: int = ormar.Integer(nullable=True)
+    founded: Optional[int] = ormar.Integer(nullable=True)
 
 
 class Car(ormar.Model):
@@ -24,10 +24,10 @@ class Car(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     manufacturer: Optional[Company] = ormar.ForeignKey(Company)
     name: str = ormar.String(max_length=100)
-    year: int = ormar.Integer(nullable=True)
-    gearbox_type: str = ormar.String(max_length=20, nullable=True)
-    gears: int = ormar.Integer(nullable=True, name="gears_number")
-    aircon_type: str = ormar.String(max_length=20, nullable=True)
+    year: Optional[int] = ormar.Integer(nullable=True)
+    gearbox_type: Optional[str] = ormar.String(max_length=20, nullable=True)
+    gears: Optional[int] = ormar.Integer(nullable=True, name="gears_number")
+    aircon_type: Optional[str] = ormar.String(max_length=20, nullable=True)
 
 
 create_test_database = init_tests(base_ormar_config)

@@ -1,4 +1,4 @@
-from typing import Any, ForwardRef
+from typing import Any, ForwardRef, Optional
 
 import ormar
 import pytest
@@ -20,7 +20,7 @@ class PostCategory(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="posts_x_categories")
 
     id: int = ormar.Integer(primary_key=True)
-    sort_order: int = ormar.Integer(nullable=True)
+    sort_order: Optional[int] = ormar.Integer(nullable=True)
     param_name: str = ormar.String(default="Name", max_length=200)
 
 
@@ -47,7 +47,7 @@ class PostCategory2(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="posts_x_categories2")
 
     id: int = ormar.Integer(primary_key=True)
-    sort_order: int = ormar.Integer(nullable=True)
+    sort_order: Optional[int] = ormar.Integer(nullable=True)
 
 
 class Post2(ormar.Model):

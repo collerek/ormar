@@ -31,7 +31,7 @@ class Category(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=40)
-    sort_order: int = ormar.Integer(nullable=True)
+    sort_order: Optional[int] = ormar.Integer(nullable=True)
     created_by: Optional[User] = ormar.ForeignKey(User, related_name="categories")
 
 

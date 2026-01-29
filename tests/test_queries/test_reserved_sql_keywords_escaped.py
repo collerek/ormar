@@ -1,3 +1,5 @@
+from typing import Optional
+
 import ormar
 import pytest
 
@@ -20,14 +22,14 @@ class User(ormar.Model):
     display_name: str = ormar.String(
         unique=True, index=True, nullable=False, max_length=255
     )
-    pic_url: str = ormar.Text(nullable=True)
+    pic_url: Optional[str] = ormar.Text(nullable=True)
 
 
 class Task(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="task")
 
     id: int = ormar.Integer(primary_key=True, autoincrement=True, nullable=False)
-    from_: str = ormar.String(name="from", nullable=True, max_length=200)
+    from_: Optional[str] = ormar.String(name="from", nullable=True, max_length=200)
     user = ormar.ForeignKey(User)
 
 

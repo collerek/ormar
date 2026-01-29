@@ -1,4 +1,5 @@
 import datetime
+from typing import Optional
 
 import ormar
 import pytest
@@ -17,8 +18,10 @@ class TableBase(ormar.Model):
     created_at: datetime.datetime = ormar.DateTime(
         timezone=True, default=datetime.datetime.now
     )
-    last_modified_by: str = ormar.String(max_length=20, nullable=True)
-    last_modified_at: datetime.datetime = ormar.DateTime(timezone=True, nullable=True)
+    last_modified_by: Optional[str] = ormar.String(max_length=20, nullable=True)
+    last_modified_at: Optional[datetime.datetime] = ormar.DateTime(
+        timezone=True, nullable=True
+    )
 
 
 class NationBase(ormar.Model):
