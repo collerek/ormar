@@ -329,6 +329,7 @@ class ManyToManyField(  # type: ignore
             tablename=table_name,
             database=self.owner.ormar_config.database,
             metadata=self.owner.ormar_config.metadata,
+            schema=self.owner.ormar_config.schema
         )
         through_model = type(
             class_name,
