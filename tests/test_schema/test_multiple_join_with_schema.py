@@ -1,6 +1,7 @@
+from typing import Optional
+
 import ormar
 import pytest
-from typing import Optional
 
 from tests.lifespan import init_tests
 from tests.settings import create_config

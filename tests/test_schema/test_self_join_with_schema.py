@@ -1,6 +1,7 @@
+from typing import ForwardRef, Optional
+
 import ormar
 import pytest
-from typing import ForwardRef
 
 from tests.lifespan import init_tests
 from tests.settings import create_config
@@ -16,7 +17,7 @@ class Category(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
-    parent: "Category | None" = ormar.ForeignKey(
+    parent: Optional[CategoryRef] = ormar.ForeignKey(
         CategoryRef,
         related_name="children",
         nullable=True,
@@ -40,7 +41,9 @@ async def test_self_join_select_related_and_reverse():
         assert fetched_child.parent.name == "root"
 
         # reverse relation (children)
-        fetched_root = await Category.objects.prefetch_related("children").get(id=root.id)
+        fetched_root = await Category.objects.prefetch_related("children").get(
+            id=root.id
+        )
 
         assert len(fetched_root.children) == 1
         assert fetched_root.children[0].name == "child"

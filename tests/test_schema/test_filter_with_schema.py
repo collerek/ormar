@@ -1,6 +1,7 @@
+from typing import Optional
+
 import ormar
 import pytest
-from typing import Optional
 
 from tests.lifespan import init_tests
 from tests.settings import create_config
@@ -32,9 +33,9 @@ async def test_filter_with_schema():
         author1 = await Author.objects.create(name="Tolkien")
         author2 = await Author.objects.create(name="Rowling")
 
-        book1 = await Book.objects.create(title="LOTR", author=author1)
-        book2 = await Book.objects.create(title="Hobbit", author=author1)
-        book3 = await Book.objects.create(title="HP", author=author2)
+        await Book.objects.create(title="LOTR", author=author1)
+        await Book.objects.create(title="Hobbit", author=author1)
+        await Book.objects.create(title="HP", author=author2)
 
         # фильтрация через join к таблице в другой схеме
         books = await Book.objects.filter(author__name="Tolkien").all()
@@ -65,8 +66,8 @@ async def test_filter_with_schema_and_null_fk():
     async with base_ormar_config.database:
         author = await Author.objects.create(name="Orphan Author")
 
-        book1 = await Book.objects.create(title="With Author", author=author)
-        book2 = await Book.objects.create(title="Without Author", author=None)
+        await Book.objects.create(title="With Author", author=author)
+        await Book.objects.create(title="Without Author", author=None)
 
         books = await Book.objects.filter(author__isnull=True).all()
 
