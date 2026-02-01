@@ -49,6 +49,7 @@ class Album(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: Optional[str] = ormar.String(max_length=100, nullable=True)
     shops: List[Shop] = ormar.ManyToMany(to=Shop, through=AlbumShops)
+    sides: list = ormar.JSON(default=list)
 
 
 class Track(ormar.Model):
