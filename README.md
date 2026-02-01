@@ -569,6 +569,29 @@ for func in [
 base_ormar_config.metadata.drop_all(base_ormar_config.engine)
 ```
 
+
+### Include schema in model
+
+You can also include schema in model configuration like this:
+
+```python
+class HrEmployees(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="employees", schema="Hr")
+
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(max_length=200)
+
+class ItEmployees(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="employees", schema="It")
+
+    id = ormar.Integer(primary_key=True)
+    name = ormar.String(max_length=200)
+
+# note This allows you to have multiple tables with the same name (employees) in different schemas (Hr.employees and It.employees), which is particularly useful for logical data separation—e.g., when modeling department-specific entities while avoiding naming collisions.
+```
+
+
+
 ## Ormar Specification
 
 ### QuerySet methods

@@ -113,6 +113,9 @@ def populate_fk_params_based_on_to_model(
     fk_string = (
         to.ormar_config.tablename + "." + to.get_column_alias(to.ormar_config.pkname)
     )
+    if to.ormar_config.schema:
+        fk_string = to.ormar_config.schema + "." + fk_string
+
     to_field = to.ormar_config.model_fields[to.ormar_config.pkname]
     pk_only_model = create_dummy_model(to, to_field)
     __type__ = (
