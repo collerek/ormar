@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, ForwardRef, Optional, Type
+from typing import TYPE_CHECKING, ForwardRef, Optional
 
 import ormar  # noqa: I100
 
@@ -7,7 +7,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def validate_related_names_in_relations(  # noqa CCR001
-    model_fields: dict, new_model: Type["Model"]
+    model_fields: dict, new_model: type["Model"]
 ) -> None:
     """
     Performs a validation of relation_names in relation fields.

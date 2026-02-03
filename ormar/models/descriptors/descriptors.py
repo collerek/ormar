@@ -1,5 +1,5 @@
 import base64
-from typing import TYPE_CHECKING, Any, Type
+from typing import TYPE_CHECKING, Any
 
 from ormar.fields.parsers import decode_bytes, encode_json
 
@@ -15,7 +15,7 @@ class PydanticDescriptor:
     def __init__(self, name: str) -> None:
         self.name = name
 
-    def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
+    def __get__(self, instance: "Model", owner: type["Model"]) -> Any:
         value = instance.__dict__.get(self.name, None)
         return value
 
@@ -32,7 +32,7 @@ class JsonDescriptor:
     def __init__(self, name: str) -> None:
         self.name = name
 
-    def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
+    def __get__(self, instance: "Model", owner: type["Model"]) -> Any:
         value = instance.__dict__.get(self.name, None)
         return value
 
@@ -51,7 +51,7 @@ class BytesDescriptor:
     def __init__(self, name: str) -> None:
         self.name = name
 
-    def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
+    def __get__(self, instance: "Model", owner: type["Model"]) -> Any:
         value = instance.__dict__.get(self.name, None)
         field = instance.ormar_config.model_fields[self.name]
         if (
@@ -81,7 +81,7 @@ class PkDescriptor:
     def __init__(self, name: str) -> None:
         self.name = name
 
-    def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
+    def __get__(self, instance: "Model", owner: type["Model"]) -> Any:
         value = instance.__dict__.get(self.name, None)
         return value
 
@@ -100,7 +100,7 @@ class RelationDescriptor:
     def __init__(self, name: str) -> None:
         self.name = name
 
-    def __get__(self, instance: "Model", owner: Type["Model"]) -> Any:
+    def __get__(self, instance: "Model", owner: type["Model"]) -> Any:
         if self.name in instance._orm:
             return instance._orm.get(self.name)  # type: ignore
         return None  # pragma no cover

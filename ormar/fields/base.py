@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Literal, Optional, Type, Union, overload
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union, overload
 
 import sqlalchemy
 from pydantic.fields import FieldInfo, _Unset
@@ -61,10 +61,10 @@ class BaseField(FieldInfo):
         self.skip_reverse: bool = kwargs.pop("skip_reverse", False)
         self.skip_field: bool = kwargs.pop("skip_field", False)
 
-        self.owner: Type["Model"] = kwargs.pop("owner", None)
-        self.to: Type["Model"] = kwargs.pop("to", None)
-        self.to_pk_only: Type["Model"] = kwargs.pop("to_pk_only", None)
-        self.through: Type["Model"] = kwargs.pop("through", None)
+        self.owner: type["Model"] = kwargs.pop("owner", None)
+        self.to: type["Model"] = kwargs.pop("to", None)
+        self.to_pk_only: type["Model"] = kwargs.pop("to_pk_only", None)
+        self.through: type["Model"] = kwargs.pop("through", None)
         self.self_reference: bool = kwargs.pop("self_reference", False)
         self.self_reference_primary: Optional[str] = kwargs.pop(
             "self_reference_primary", None
@@ -78,7 +78,7 @@ class BaseField(FieldInfo):
         self.encrypt_backend: EncryptBackends = kwargs.pop(
             "encrypt_backend", EncryptBackends.NONE
         )
-        self.encrypt_custom_backend: Optional[Type[EncryptBackend]] = kwargs.pop(
+        self.encrypt_custom_backend: Optional[type[EncryptBackend]] = kwargs.pop(
             "encrypt_custom_backend", None
         )
 

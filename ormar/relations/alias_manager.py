@@ -1,7 +1,7 @@
 import string
 import uuid
 from random import choices
-from typing import TYPE_CHECKING, Any, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import sqlalchemy
 from sqlalchemy import Label
@@ -110,7 +110,7 @@ class AliasManager:
 
     def add_relation_type(
         self,
-        source_model: Type["Model"],
+        source_model: type["Model"],
         relation_name: str,
         reverse_name: Optional[str] = None,
     ) -> None:
@@ -160,7 +160,7 @@ class AliasManager:
         return alias
 
     def resolve_relation_alias(
-        self, from_model: Union[Type["Model"], Type["ModelRow"]], relation_name: str
+        self, from_model: Union[type["Model"], type["ModelRow"]], relation_name: str
     ) -> str:
         """
         Given model and relation name returns the alias for this relation.
@@ -177,7 +177,7 @@ class AliasManager:
 
     def resolve_relation_alias_after_complex(
         self,
-        source_model: Union[Type["Model"], Type["ModelRow"]],
+        source_model: Union[type["Model"], type["ModelRow"]],
         relation_str: str,
         relation_field: "ForeignKeyField",
     ) -> str:

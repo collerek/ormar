@@ -3,7 +3,7 @@ import decimal
 import uuid
 from enum import Enum as E
 from enum import EnumMeta
-from typing import Any, Optional, Type
+from typing import Any, Optional
 
 import pydantic
 import sqlalchemy
@@ -722,7 +722,7 @@ class Enum(ModelFieldFactory):
     _sample = None
 
     def __new__(  # type: ignore # noqa CFQ002
-        cls, *, enum_class: Type[E], **kwargs: Any
+        cls, *, enum_class: type[E], **kwargs: Any
     ) -> Self:
         kwargs = {
             **kwargs,

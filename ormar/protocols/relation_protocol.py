@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Type, Union
+from typing import TYPE_CHECKING, Union
 
 try:
     from typing import Protocol
@@ -12,4 +12,4 @@ if TYPE_CHECKING:  # pragma: nocover
 class RelationProtocol(Protocol):  # pragma: nocover
     def add(self, child: "Model") -> None: ...
 
-    def remove(self, child: Union["Model", Type["Model"]]) -> None: ...
+    def remove(self, child: Union["Model", type["Model"]]) -> None: ...

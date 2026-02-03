@@ -1,5 +1,5 @@
 import sys
-from typing import TYPE_CHECKING, Any, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from ormar.fields.base import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
@@ -10,9 +10,9 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
 
     if sys.version_info < (3, 7):
-        ToType = Type[Model]
+        ToType = type[Model]
     else:
-        ToType = Union[Type[Model], ForwardRef]
+        ToType = Union[type[Model], ForwardRef]
 
 
 def Through(  # noqa CFQ002

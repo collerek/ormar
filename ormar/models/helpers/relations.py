@@ -1,6 +1,6 @@
 import inspect
 import warnings
-from typing import TYPE_CHECKING, Any, ForwardRef, Optional, Type, Union, cast
+from typing import TYPE_CHECKING, Any, ForwardRef, Optional, Union, cast
 
 from pydantic import BaseModel, create_model, field_serializer
 from pydantic._internal._decorators import DecoratorInfos
@@ -79,7 +79,7 @@ def expand_reverse_relationship(model_field: "ForeignKeyField") -> None:
         register_reverse_model_fields(model_field=model_field)
 
 
-def expand_reverse_relationships(model: Type["Model"]) -> None:
+def expand_reverse_relationships(model: type["Model"]) -> None:
     """
     Iterates through model_fields of given model and verifies if all reverse
     relation have been populated on related models.
@@ -171,7 +171,7 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
 
 
 def add_field_serializer_for_reverse_relations(
-    to_model: Type["Model"], related_name: str
+    to_model: type["Model"], related_name: str
 ) -> None:
     def serialize(
         self: "Model", children: list["Model"], handler: SerializerFunctionWrapHandler
@@ -215,15 +215,15 @@ def add_field_serializer_for_reverse_relations(
 
 
 def replace_models_with_copy(
-    annotation: Type, source_model_field: Optional[str] = None
+    annotation: type, source_model_field: Optional[str] = None
 ) -> Any:
     """
     Replaces all models in annotation with their copies to avoid circular references.
 
     :param annotation: annotation to replace models in
-    :type annotation: Type
+    :type annotation: type
     :return: annotation with replaced models
-    :rtype: Type
+    :rtype: type
     """
     if inspect.isclass(annotation) and issubclass(annotation, ormar.Model):
         return create_copy_to_avoid_circular_references(model=annotation)
@@ -248,7 +248,7 @@ def replace_models_with_copy(
         return annotation
 
 
-def create_copy_to_avoid_circular_references(model: Type["Model"]) -> Type["BaseModel"]:
+def create_copy_to_avoid_circular_references(model: type["Model"]) -> type["BaseModel"]:
     new_model = create_model(
         model.__name__,
         __base__=model,

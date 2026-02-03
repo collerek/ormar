@@ -6,7 +6,6 @@ from typing import (  # noqa: I100, I201
     MutableSequence,
     Optional,
     Sequence,
-    Type,
     TypeVar,
     Union,
     cast,
@@ -38,7 +37,7 @@ class QuerysetProxy(Generic[T]):
     def __init__(
         self,
         relation: "Relation",
-        to: Type["T"],
+        to: type["T"],
         type_: "RelationType",
         qryset: Optional["QuerySet[T]"] = None,
     ) -> None:
@@ -49,7 +48,7 @@ class QuerysetProxy(Generic[T]):
         self.related_field_name = self._owner.ormar_config.model_fields[
             self.relation.field_name
         ].get_related_name()
-        self.to: Type[T] = to
+        self.to: type[T] = to
         self.related_field = to.ormar_config.model_fields[self.related_field_name]
         self.owner_pk_value = self._owner.pk
         self.through_model_name = (

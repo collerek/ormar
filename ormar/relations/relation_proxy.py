@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Generic, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar
 
 from typing_extensions import SupportsIndex
 
@@ -24,7 +24,7 @@ class RelationProxy(Generic[T], list[T]):
         self,
         relation: "Relation",
         type_: "RelationType",
-        to: Type["T"],
+        to: type["T"],
         field_name: str,
         data_: Any = None,
     ) -> None:

@@ -257,7 +257,7 @@ engine: Optional[sqlalchemy.engine.Engine]
 tablename: Optional[str]
 order_by: Optional[list[str]]
 abstract: bool
-queryset_class: Type[QuerySet]
+queryset_class: type[QuerySet]
 extra: Extra
 constraints: Optional[list[ColumnCollectionConstraint]]
 ```

@@ -9,7 +9,6 @@ from typing import (
     Mapping,
     MutableSequence,
     Optional,
-    Type,
     TypeVar,
     Union,
     cast,
@@ -973,7 +972,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         category=OrmarDeprecatedSince020,
     )
     def construct(
-        cls: Type["T"], _fields_set: Union[set[str], None] = None, **values: Any
+        cls: type["T"], _fields_set: Union[set[str], None] = None, **values: Any
     ) -> "T":  # pragma: no cover
         warnings.warn(
             "The `construct` method is deprecated; use `model_construct` instead.",
@@ -983,7 +982,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     @classmethod
     def model_construct(
-        cls: Type["T"], _fields_set: Optional["SetStr"] = None, **values: Any
+        cls: type["T"], _fields_set: Optional["SetStr"] = None, **values: Any
     ) -> "T":
         own_values = {
             k: v for k, v in values.items() if k not in cls.extract_related_names()
@@ -1013,7 +1012,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     @classmethod
     def _pydantic_model_construct_finalizer(
-        cls: Type["T"], model: "T", extra_allowed: bool, **values: Any
+        cls: type["T"], model: "T", extra_allowed: bool, **values: Any
     ) -> "T":
         """
         Recreate pydantic model_construct logic here as we do not call super method.
@@ -1039,7 +1038,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         return model
 
     @classmethod
-    def _construct_relations(cls: Type["T"], model: "T", values: dict) -> None:
+    def _construct_relations(cls: type["T"], model: "T", values: dict) -> None:
         present_relations = [
             relation for relation in cls.extract_related_names() if relation in values
         ]

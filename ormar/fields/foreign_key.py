@@ -3,7 +3,7 @@ import sys
 import uuid
 from dataclasses import dataclass
 from random import choices
-from typing import TYPE_CHECKING, Any, ForwardRef, Optional, Type, Union, overload
+from typing import TYPE_CHECKING, Any, ForwardRef, Optional, Union, overload
 
 import sqlalchemy
 from pydantic import BaseModel, create_model
@@ -18,7 +18,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, NewBaseModel, T
 
 
-def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
+def create_dummy_instance(fk: type["T"], pk: Any = None) -> "T":
     """
     Ormar never returns you a raw data.
     So if you have a related field that has a value populated
@@ -49,9 +49,9 @@ def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
 
 
 def create_dummy_model(
-    base_model: Type["T"],
+    base_model: type["T"],
     pk_field: Union[BaseField, "ForeignKeyField", "ManyToManyField"],
-) -> Type["BaseModel"]:
+) -> type["BaseModel"]:
     """
     Used to construct a dummy pydantic model for type hints and pydantic validation.
     Populates only pk field and set it to desired type.
@@ -77,7 +77,7 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-    to: Type["T"],
+    to: type["T"],
     nullable: bool,
     onupdate: Optional[str] = None,
     ondelete: Optional[str] = None,
@@ -184,7 +184,7 @@ class ForeignKeyConstraint:
 
 
 @overload
-def ForeignKey(to: Type["T"], **kwargs: Any) -> "T":  # pragma: no cover
+def ForeignKey(to: type["T"], **kwargs: Any) -> "T":  # pragma: no cover
     ...
 
 
@@ -194,7 +194,7 @@ def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":  # pragma: no cover
 
 
 def ForeignKey(  # type: ignore # noqa CFQ002
-    to: Union[Type["T"], "ForwardRef"],
+    to: Union[type["T"], "ForwardRef"],
     *,
     name: Optional[str] = None,
     unique: bool = False,
@@ -313,7 +313,7 @@ class ForeignKeyField(BaseField):
     def __init__(self, **kwargs: Any) -> None:
         if TYPE_CHECKING:  # pragma: no cover
             self.__type__: type
-            self.to: Type["Model"]
+            self.to: type["Model"]
         self.ondelete: str = kwargs.pop("ondelete", None)
         self.onupdate: str = kwargs.pop("onupdate", None)
         super().__init__(**kwargs)
@@ -355,7 +355,7 @@ class ForeignKeyField(BaseField):
         prefix = "to_" if self.self_reference else ""
         return self.through_relation_name or f"{prefix}{self.owner.get_name()}"
 
-    def get_filter_clause_target(self) -> Type["Model"]:
+    def get_filter_clause_target(self) -> type["Model"]:
         return self.to
 
     def get_model_relation_fields(self, use_alias: bool = False) -> str:
@@ -636,11 +636,11 @@ class ForeignKeyField(BaseField):
         """
         return self.name
 
-    def get_source_model(self) -> Type["Model"]:  # pragma: no cover
+    def get_source_model(self) -> type["Model"]:  # pragma: no cover
         """
         Returns model from which the relation comes -> either owner or through model
 
         :return: source model
-        :rtype: Type["Model"]
+        :rtype: type["Model"]
         """
         return self.owner

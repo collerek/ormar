@@ -1,7 +1,7 @@
 import copy
 import string
 from random import choices
-from typing import TYPE_CHECKING, Any, Callable, Optional, Type, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union, cast
 
 import pydantic
 from pydantic import BaseModel
@@ -13,7 +13,7 @@ from ormar.queryset.utils import translate_list_to_dict
 
 
 class PydanticMixin(RelationMixin):
-    __cache__: dict[str, Type[pydantic.BaseModel]] = {}
+    __cache__: dict[str, type[pydantic.BaseModel]] = {}
 
     if TYPE_CHECKING:  # pragma: no cover
         __pydantic_decorators__: DecoratorInfos
@@ -26,7 +26,7 @@ class PydanticMixin(RelationMixin):
         *,
         include: Union[set, dict, None] = None,
         exclude: Union[set, dict, None] = None,
-    ) -> Type[pydantic.BaseModel]:
+    ) -> type[pydantic.BaseModel]:
         """
         Returns a pydantic model out of ormar model.
 
@@ -51,7 +51,7 @@ class PydanticMixin(RelationMixin):
         relation_map: dict[str, Any],
         include: Union[set, dict, None] = None,
         exclude: Union[set, dict, None] = None,
-    ) -> Type[pydantic.BaseModel]:
+    ) -> type[pydantic.BaseModel]:
         if include and isinstance(include, set):
             include = translate_list_to_dict(include)
         if exclude and isinstance(exclude, set):
@@ -86,7 +86,7 @@ class PydanticMixin(RelationMixin):
             (pydantic.BaseModel,),
             {"__annotations__": fields_dict, **defaults},
         )
-        model = cast(Type[pydantic.BaseModel], model)
+        model = cast(type[pydantic.BaseModel], model)
         cls._copy_field_validators(model=model)
         cls.__cache__[cache_key] = model
         return model
@@ -127,7 +127,7 @@ class PydanticMixin(RelationMixin):
         exclude: Union[set, dict, None],
         defaults: dict,
         relation_map: dict[str, Any],
-    ) -> tuple[Type[BaseModel], dict]:
+    ) -> tuple[type[BaseModel], dict]:
         target = field.to._convert_ormar_to_pydantic(
             include=cls._skip_ellipsis(include, name),
             exclude=cls._skip_ellipsis(exclude, name),
@@ -140,7 +140,7 @@ class PydanticMixin(RelationMixin):
         return target, defaults
 
     @classmethod
-    def _copy_field_validators(cls, model: Type[pydantic.BaseModel]) -> None:
+    def _copy_field_validators(cls, model: type[pydantic.BaseModel]) -> None:
         """
         Copy field validators from ormar model to generated pydantic model.
         """
@@ -164,7 +164,7 @@ class PydanticMixin(RelationMixin):
 
     @classmethod
     def copy_selected_validators_type(
-        cls, model: Type[pydantic.BaseModel], fields: list[str], validator_type: str
+        cls, model: type[pydantic.BaseModel], fields: list[str], validator_type: str
     ) -> None:
         """
         Copy field validators from ormar model to generated pydantic model.

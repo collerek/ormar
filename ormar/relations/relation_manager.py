@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING, Optional, Sequence, Union
 from weakref import proxy
 
 from ormar.relations.relation import Relation, RelationType
@@ -88,7 +88,7 @@ class RelationsManager:
             child_relation.add(parent)
 
     def remove(
-        self, name: str, child: Union["NewBaseModel", Type["NewBaseModel"]]
+        self, name: str, child: Union["NewBaseModel", type["NewBaseModel"]]
     ) -> None:
         """
         Removes given child from relation with given name.
@@ -98,7 +98,7 @@ class RelationsManager:
         :param name: name of the relation
         :type name: str
         :param child: child to remove from relation
-        :type child: Union[Model, Type[Model]]
+        :type child: Union[Model, type[Model]]
         """
         relation = self._get(name)
         if relation:
@@ -106,7 +106,7 @@ class RelationsManager:
 
     @staticmethod
     def remove_parent(
-        item: Union["NewBaseModel", Type["NewBaseModel"]], parent: "Model", name: str
+        item: Union["NewBaseModel", type["NewBaseModel"]], parent: "Model", name: str
     ) -> None:
         """
         Removes given parent from relation with given name.
@@ -114,7 +114,7 @@ class RelationsManager:
         of relation from which you want to remove the parent.
 
         :param item: model with parent registered
-        :type item: Union[Model, Type[Model]]
+        :type item: Union[Model, type[Model]]
         :param parent: parent Model
         :type parent: Model
         :param name: name of the relation

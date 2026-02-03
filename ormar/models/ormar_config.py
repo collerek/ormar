@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional, Type, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -34,7 +34,7 @@ class OrmarConfig:
         tablename: Optional[str] = None,
         order_by: Optional[list[str]] = None,
         abstract: bool = False,
-        queryset_class: Type[QuerySet] = QuerySet,
+        queryset_class: type[QuerySet] = QuerySet,
         extra: Extra = Extra.forbid,
         constraints: Optional[list[ColumnCollectionConstraint]] = None,
     ) -> None:
@@ -66,7 +66,7 @@ class OrmarConfig:
         tablename: Optional[str] = None,
         order_by: Optional[list[str]] = None,
         abstract: Optional[bool] = None,
-        queryset_class: Optional[Type[QuerySet]] = None,
+        queryset_class: Optional[type[QuerySet]] = None,
         extra: Optional[Extra] = None,
         constraints: Optional[list[ColumnCollectionConstraint]] = None,
     ) -> "OrmarConfig":

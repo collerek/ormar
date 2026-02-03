@@ -4,7 +4,6 @@ from typing import (
     Any,
     Mapping,
     Optional,
-    Type,
     Union,
     cast,
 )
@@ -49,7 +48,7 @@ class ExcludableMixin(RelationMixin):
 
     @staticmethod
     def _populate_pk_column(
-        model: Union[Type["Model"], Type["ModelRow"]],
+        model: Union[type["Model"], type["ModelRow"]],
         columns: list[str],
         use_alias: bool = False,
     ) -> list[str]:
@@ -58,7 +57,7 @@ class ExcludableMixin(RelationMixin):
         column names that are selected.
 
         :param model: model on columns are selected
-        :type model: Type["Model"]
+        :type model: type["Model"]
         :param columns: list of columns names
         :type columns: list[str]
         :param use_alias: flag to set if aliases or field names should be used
@@ -78,7 +77,7 @@ class ExcludableMixin(RelationMixin):
     @classmethod
     def own_table_columns(
         cls,
-        model: Union[Type["Model"], Type["ModelRow"]],
+        model: Union[type["Model"], type["ModelRow"]],
         excludable: ExcludableItems,
         alias: str = "",
         use_alias: bool = False,
@@ -100,7 +99,7 @@ class ExcludableMixin(RelationMixin):
         :param excludable: structure of fields to include and exclude
         :type excludable: ExcludableItems
         :param model: model on columns are selected
-        :type model: Type["Model"]
+        :type model: type["Model"]
         :param use_alias: flag if aliases or field names should be used
         :type use_alias: bool
         :return: list of column field names or aliases
@@ -201,7 +200,7 @@ class ExcludableMixin(RelationMixin):
         :return: set of field names that should be excluded
         :rtype: set
         """
-        model = cast(Type["Model"], cls)
+        model = cast(type["Model"], cls)
         model_excludable = excludable.get(model_cls=model, alias=alias)
         fields_names = cls.extract_db_own_fields()
         if model_excludable.include:

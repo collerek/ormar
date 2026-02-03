@@ -1,6 +1,6 @@
 import collections.abc
 import copy
-from typing import TYPE_CHECKING, Any, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import BaseField, Model
@@ -174,17 +174,17 @@ def update_dict_from_list(curr_dict: dict, list_to_update: Union[list, set]) -> 
 
 
 def get_relationship_alias_model_and_str(
-    source_model: Type["Model"], related_parts: list
-) -> tuple[str, Type["Model"], str, bool]:
+    source_model: type["Model"], related_parts: list
+) -> tuple[str, type["Model"], str, bool]:
     """
     Walks the relation to retrieve the actual model on which the clause should be
     constructed, extracts alias based on last relation leading to target model.
     :param related_parts: list of related names extracted from string
     :type related_parts: Union[list, list[str]]
     :param source_model: model from which relation starts
-    :type source_model: Type[Model]
+    :type source_model: type[Model]
     :return: table prefix, target model and relation string
-    :rtype: tuple[str, Type["Model"], str]
+    :rtype: tuple[str, type["Model"], str]
     """
     table_prefix = ""
     is_through = False
@@ -222,9 +222,9 @@ def _process_through_field(
     related_parts: list,
     relation: Optional[str],
     related_field: "BaseField",
-    previous_model: Type["Model"],
-    previous_models: list[Type["Model"]],
-) -> tuple[Type["Model"], Optional[str], bool]:
+    previous_model: type["Model"],
+    previous_models: list[type["Model"]],
+) -> tuple[type["Model"], Optional[str], bool]:
     """
     Helper processing through models as they need to be treated differently.
 
@@ -235,11 +235,11 @@ def _process_through_field(
     :param related_field: field with relation declaration
     :type related_field: "ForeignKeyField"
     :param previous_model: model from which relation is coming
-    :type previous_model: Type["Model"]
+    :type previous_model: type["Model"]
     :param previous_models: list of already visited models in relation chain
-    :type previous_models: list[Type["Model"]]
+    :type previous_models: list[type["Model"]]
     :return: previous_model, relation, is_through
-    :rtype: tuple[Type["Model"], str, bool]
+    :rtype: tuple[type["Model"], str, bool]
     """
     is_through = True
     related_parts.remove(relation)

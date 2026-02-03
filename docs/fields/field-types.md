@@ -215,10 +215,10 @@ So which one to use depends on the backend you use and on the column/ data type 
 
 #### Enum - Field
 
-`Enum(enum_class=Type[Enum])` has a required `enum_class` parameter.  
+`Enum(enum_class=type[Enum])` has a required `enum_class` parameter.  
 
 * Sqlalchemy column: `sqlalchemy.Enum`  
-* Type (used for pydantic): `Type[Enum]`
+* Type (used for pydantic): `type[Enum]`
 
 
 [relations]: ../relations/index.md

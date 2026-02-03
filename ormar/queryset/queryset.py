@@ -6,7 +6,6 @@ from typing import (
     Generic,
     Optional,
     Sequence,
-    Type,
     TypeVar,
     Union,
     cast,
@@ -45,7 +44,7 @@ class QuerySet(Generic[T]):
 
     def __init__(  # noqa CFQ002
         self,
-        model_cls: Optional[Type["T"]] = None,
+        model_cls: Optional[type["T"]] = None,
         filter_clauses: Optional[list] = None,
         exclude_clauses: Optional[list] = None,
         select_related: Optional[list] = None,
@@ -55,7 +54,7 @@ class QuerySet(Generic[T]):
         order_bys: Optional[list] = None,
         prefetch_related: Optional[list] = None,
         limit_raw_sql: bool = False,
-        proxy_source_model: Optional[Type["Model"]] = None,
+        proxy_source_model: Optional[type["Model"]] = None,
     ) -> None:
         self.proxy_source_model = proxy_source_model
         self.model_cls = model_cls
@@ -82,12 +81,12 @@ class QuerySet(Generic[T]):
         return self.model_cls.ormar_config
 
     @property
-    def model(self) -> Type["T"]:
+    def model(self) -> type["T"]:
         """
         Shortcut to model class set on QuerySet.
 
         :return: model class
-        :rtype: Type[Model]
+        :rtype: type[Model]
         """
         if not self.model_cls:  # pragma nocover
             raise ValueError("Model class of QuerySet is not initialized")
@@ -104,7 +103,7 @@ class QuerySet(Generic[T]):
         order_bys: Optional[list] = None,
         prefetch_related: Optional[list] = None,
         limit_raw_sql: Optional[bool] = None,
-        proxy_source_model: Optional[Type["Model"]] = None,
+        proxy_source_model: Optional[type["Model"]] = None,
     ) -> "QuerySet":
         """
         Method that returns new instance of queryset based on passed params,
@@ -1247,7 +1246,7 @@ class QuerySet(Generic[T]):
             obj.set_save_status(True)
 
         await cast(
-            Type["Model"], self.model_cls
+            type["Model"], self.model_cls
         ).ormar_config.signals.post_bulk_update.send(
             sender=self.model_cls, instances=objects  # type: ignore
         )

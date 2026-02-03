@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime, time
 from decimal import Decimal as DecimalType
 from enum import Enum as EnumBase
-from typing import Any, Literal, Type, TypeVar, Union, overload
+from typing import Any, Literal, TypeVar, Union, overload
 from uuid import UUID as UuidType
 
 T = TypeVar("T", bound=EnumBase)
@@ -90,14 +90,14 @@ def LargeBinary(
 ) -> Union[str, bytes]: ...
 @overload
 def Enum(
-    enum_class: Type[T],
+    enum_class: type[T],
     *,
     nullable: Literal[False] = False,
     **kwargs: Any,
 ) -> T: ...
 @overload
 def Enum(
-    enum_class: Type[T],
+    enum_class: type[T],
     *,
     nullable: Literal[True],
     **kwargs: Any,

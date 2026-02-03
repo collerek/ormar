@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Optional, Type
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models.mixins.relation_mixin import RelationMixin
@@ -17,7 +17,7 @@ class NodeList:
 
     def add(
         self,
-        node_class: Type["RelationMixin"],
+        node_class: type["RelationMixin"],
         relation_name: Optional[str] = None,
         parent_node: Optional["Node"] = None,
     ) -> "Node":
@@ -48,7 +48,7 @@ class NodeList:
 
     def find(
         self,
-        node_class: Type["RelationMixin"],
+        node_class: type["RelationMixin"],
         relation_name: Optional[str] = None,
         parent_node: Optional["Node"] = None,
     ) -> Optional["Node"]:
@@ -77,7 +77,7 @@ class NodeList:
 class Node:
     def __init__(
         self,
-        node_class: Type["RelationMixin"],
+        node_class: type["RelationMixin"],
         relation_name: Optional[str] = None,
         parent_node: Optional["Node"] = None,
     ) -> None:

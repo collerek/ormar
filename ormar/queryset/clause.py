@@ -1,7 +1,7 @@
 import itertools
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Generator, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Generator, Optional, Union
 
 import sqlalchemy
 from sqlalchemy import ColumnElement
@@ -52,7 +52,7 @@ class FilterGroup:
 
     def resolve(
         self,
-        model_cls: Type["Model"],
+        model_cls: type["Model"],
         select_related: Optional[list] = None,
         filter_clauses: Optional[list] = None,
     ) -> tuple[list[FilterAction], list[str]]:
@@ -61,7 +61,7 @@ class FilterGroup:
         complex relation prefixes if needed and nested groups also resolved.
 
         :param model_cls: model from which the query is run
-        :type model_cls: Type["Model"]
+        :type model_cls: type["Model"]
         :param select_related: list of models to join
         :type select_related: list[str]
         :param filter_clauses: list of filter conditions
@@ -163,9 +163,9 @@ def and_(*args: FilterGroup, **kwargs: Any) -> FilterGroup:
 
 @dataclass
 class Prefix:
-    source_model: Type["Model"]
+    source_model: type["Model"]
     table_prefix: str
-    model_cls: Type["Model"]
+    model_cls: type["Model"]
     relation_str: str
     is_through: bool
 
@@ -181,7 +181,7 @@ class QueryClause:
     """
 
     def __init__(
-        self, model_cls: Type["Model"], filter_clauses: list, select_related: list
+        self, model_cls: type["Model"], filter_clauses: list, select_related: list
     ) -> None:
         self._select_related = select_related[:]
         self.filter_clauses = filter_clauses[:]

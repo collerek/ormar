@@ -1,7 +1,7 @@
 import abc
 import logging
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Sequence, Type, Union, cast
+from typing import TYPE_CHECKING, Any, Sequence, Union, cast
 
 import ormar  # noqa:  I100, I202
 from ormar.queryset.clause import QueryClause
@@ -197,7 +197,7 @@ class LoadNode(Node):
         excludable: "ExcludableItems",
         orders_by: list["OrderAction"],
         parent: "Node",
-        source_model: Type["Model"],
+        source_model: type["Model"],
     ) -> None:
         super().__init__(relation_field=relation_field, parent=parent)
         self.excludable = excludable
@@ -485,7 +485,7 @@ class PrefetchQuery:
 
     def __init__(  # noqa: CFQ002
         self,
-        model_cls: Type["Model"],
+        model_cls: type["Model"],
         excludable: "ExcludableItems",
         prefetch_related: list,
         select_related: list,
@@ -531,7 +531,7 @@ class PrefetchQuery:
         select_dict: dict,
         prefetch_dict: dict,
         parent: Node,
-        model: Type["Model"],
+        model: type["Model"],
     ) -> None:
         """
         Build a tree of already loaded nodes and nodes that need

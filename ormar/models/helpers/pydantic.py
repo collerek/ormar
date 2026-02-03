@@ -1,5 +1,5 @@
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Optional, Type, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import pydantic
 from pydantic import ConfigDict
@@ -14,7 +14,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def create_pydantic_field(
-    field_name: str, model: Type["Model"], model_field: "ManyToManyField"
+    field_name: str, model: type["Model"], model_field: "ManyToManyField"
 ) -> None:
     """
     Registers pydantic field on through model that leads to passed model

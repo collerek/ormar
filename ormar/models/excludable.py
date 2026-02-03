@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Optional, Type, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from ormar.queryset.utils import get_relationship_alias_model_and_str
 
@@ -96,7 +96,7 @@ class ExcludableItems:
             count += len(self.items[key].include)
         return count
 
-    def get(self, model_cls: Type["Model"], alias: str = "") -> Excludable:
+    def get(self, model_cls: type["Model"], alias: str = "") -> Excludable:
         """
         Return Excludable for given model and alias.
 
@@ -117,7 +117,7 @@ class ExcludableItems:
     def build(
         self,
         items: Union[list[str], str, tuple[str], set[str], dict],
-        model_cls: Type["Model"],
+        model_cls: type["Model"],
         is_exclude: bool = False,
     ) -> None:
         """
@@ -183,8 +183,8 @@ class ExcludableItems:
     def _traverse_dict(  # noqa: CFQ002
         self,
         values: dict,
-        source_model: Type["Model"],
-        model_cls: Type["Model"],
+        source_model: type["Model"],
+        model_cls: type["Model"],
         is_exclude: bool,
         related_items: Optional[list] = None,
         alias: str = "",
@@ -253,7 +253,7 @@ class ExcludableItems:
             )
 
     def _traverse_list(
-        self, values: set[str], model_cls: Type["Model"], is_exclude: bool
+        self, values: set[str], model_cls: type["Model"], is_exclude: bool
     ) -> None:
         """
         Goes through list of values and construct/update Excludables.

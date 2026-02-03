@@ -1,5 +1,5 @@
 import abc
-from typing import TYPE_CHECKING, Any, Type
+from typing import TYPE_CHECKING, Any
 
 import sqlalchemy
 
@@ -14,7 +14,7 @@ class QueryAction(abc.ABC):
     Base QueryAction class with common params for Filter and Order actions.
     """
 
-    def __init__(self, query_str: str, model_cls: Type["Model"]) -> None:
+    def __init__(self, query_str: str, model_cls: type["Model"]) -> None:
         self.query_str = query_str
         self.field_name: str = ""
         self.related_parts: list[str] = []

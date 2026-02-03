@@ -2,7 +2,7 @@
 import abc
 import base64
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
 import sqlalchemy.types as types
 from sqlalchemy.engine import Dialect
@@ -121,7 +121,7 @@ class EncryptedString(types.TypeDecorator):
         self,
         encrypt_secret: Union[str, Callable],
         encrypt_backend: EncryptBackends = EncryptBackends.FERNET,
-        encrypt_custom_backend: Optional[Type[EncryptBackend]] = None,
+        encrypt_custom_backend: Optional[type[EncryptBackend]] = None,
         **kwargs: Any,
     ) -> None:
         _field_type = kwargs.pop("_field_type")

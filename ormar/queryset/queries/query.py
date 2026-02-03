@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Optional, Type, Union, cast
+from typing import TYPE_CHECKING, Any, Optional, Union, cast
 
 import sqlalchemy
 from sqlalchemy import Column, Select, Table, TextClause
@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma no cover
 class Query:
     def __init__(  # noqa CFQ002
         self,
-        model_cls: Type["Model"],
+        model_cls: type["Model"],
         filter_clauses: list[FilterAction],
         exclude_clauses: list[FilterAction],
         select_related: list,

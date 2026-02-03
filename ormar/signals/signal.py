@@ -1,6 +1,6 @@
 import asyncio
 import inspect
-from typing import TYPE_CHECKING, Any, Callable, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Union
 
 from ormar.exceptions import SignalDefinitionError
 
@@ -81,11 +81,11 @@ class Signal:
         )
         return True if receiver_func is not None else False
 
-    async def send(self, sender: Type["Model"], **kwargs: Any) -> None:
+    async def send(self, sender: type["Model"], **kwargs: Any) -> None:
         """
         Notifies all receiver functions with given kwargs
         :param sender: model that sends the signal
-        :type sender: Type["Model"]
+        :type sender: type["Model"]
         :param kwargs: arguments passed to receivers
         :type kwargs: Any
         """

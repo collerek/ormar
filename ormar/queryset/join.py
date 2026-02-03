@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Optional, Type, cast
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 import sqlalchemy
 from sqlalchemy import TextClause, text
@@ -22,12 +22,12 @@ class SqlJoin:
         excludable: "ExcludableItems",
         order_columns: Optional[list["OrderAction"]],
         sorted_orders: dict,
-        main_model: Type["Model"],
+        main_model: type["Model"],
         relation_name: str,
         relation_str: str,
         related_models: Any = None,
         own_alias: str = "",
-        source_model: Optional[Type["Model"]] = None,
+        source_model: Optional[type["Model"]] = None,
         already_sorted: Optional[dict] = None,
     ) -> None:
         self.relation_name = relation_name
@@ -47,14 +47,14 @@ class SqlJoin:
             self.relation_name
         ]
 
-        self._next_model: Optional[Type["Model"]] = None
+        self._next_model: Optional[type["Model"]] = None
         self._next_alias: Optional[str] = None
 
         self.relation_str = relation_str
         self.source_model = source_model
 
     @property
-    def next_model(self) -> Type["Model"]:
+    def next_model(self) -> type["Model"]:
         if not self._next_model:  # pragma: nocover
             raise RelationshipInstanceError(
                 "Cannot link to related table if relation.to model is not set."
@@ -62,7 +62,7 @@ class SqlJoin:
         return self._next_model
 
     @next_model.setter
-    def next_model(self, value: Type["Model"]) -> None:
+    def next_model(self, value: type["Model"]) -> None:
         self._next_model = value
 
     @property
@@ -342,14 +342,14 @@ class SqlJoin:
                 "You can order the relation only " "by related or link table columns!"
             )
 
-    def _get_alias_and_model(self, order_by: str) -> tuple[str, Type["Model"]]:
+    def _get_alias_and_model(self, order_by: str) -> tuple[str, type["Model"]]:
         """
         Returns proper model and alias to be applied in the clause.
 
         :param order_by: string with order by definition
         :type order_by: str
         :return: alias and model to be used in clause
-        :rtype: tuple[str, Type["Model"]]
+        :rtype: tuple[str, type["Model"]]
         """
         if self.target_field.is_multi and "__" in order_by:
             self._verify_allowed_order_field(order_by=order_by)

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Type, cast
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import ForeignKeyField, Model
@@ -13,7 +13,7 @@ class ReverseAliasResolver:
 
     def __init__(
         self,
-        model_cls: Type["Model"],
+        model_cls: type["Model"],
         excludable: "ExcludableItems",
         select_related: list[str],
         exclude_through: bool = False,
@@ -195,7 +195,7 @@ class ReverseAliasResolver:
 
     def _handle_through_fields_and_prefix(
         self,
-        model_cls: Type["Model"],
+        model_cls: type["Model"],
         field: "ForeignKeyField",
         previous_related_str: str,
         relation: str,
@@ -208,7 +208,7 @@ class ReverseAliasResolver:
         Nested relations are a chain of relation names with __ in between.
 
         :param model_cls: model of current relation
-        :type model_cls: Type["Model"]
+        :type model_cls: type["Model"]
         :param field: field with relation
         :type field: ForeignKeyField
         :param previous_related_str: concatenated chain linked with "__"

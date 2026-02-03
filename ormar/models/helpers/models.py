@@ -1,4 +1,5 @@
 import itertools
+import sqlite3
 from typing import TYPE_CHECKING, Any, ForwardRef
 
 import pydantic
@@ -17,7 +18,7 @@ def is_field_an_forward_ref(field: "BaseField") -> bool:
     are ForwardRefs that needs to be updated before proceeding.
 
     :param field: model field to verify
-    :type field: Type[BaseField]
+    :type field: type[BaseField]
     :return: result of the check
     :rtype: bool
     """

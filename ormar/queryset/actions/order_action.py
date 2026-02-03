@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy
 from sqlalchemy import text
@@ -20,7 +20,7 @@ class OrderAction(QueryAction):
     """
 
     def __init__(
-        self, order_str: str, model_cls: Type["Model"], alias: Optional[str] = None
+        self, order_str: str, model_cls: type["Model"], alias: Optional[str] = None
     ) -> None:
         self.direction: str = ""
         super().__init__(query_str=order_str, model_cls=model_cls)
@@ -100,12 +100,12 @@ class OrderAction(QueryAction):
         self.field_name = parts[-1]
         self.related_parts = parts[:-1]
 
-    def check_if_filter_apply(self, target_model: Type["Model"], alias: str) -> bool:
+    def check_if_filter_apply(self, target_model: type["Model"], alias: str) -> bool:
         """
         Checks filter conditions to find if they apply to current join.
 
         :param target_model: model which is now processed
-        :type target_model: Type["Model"]
+        :type target_model: type["Model"]
         :param alias: prefix of the relation
         :type alias: str
         :return: result of the check

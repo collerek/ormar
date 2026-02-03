@@ -2,16 +2,7 @@ import copy
 import sys
 import warnings
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Optional,
-    Type,
-    Union,
-    cast,
-    dict,
-)
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union, cast
 
 import pydantic
 import sqlalchemy
@@ -63,7 +54,7 @@ CONFIG_KEY = "Config"
 PARSED_FIELDS_KEY = "__parsed_fields__"
 
 
-def add_cached_properties(new_model: Type["Model"]) -> None:
+def add_cached_properties(new_model: type["Model"]) -> None:
     """
     Sets cached properties for both pydantic and ormar models.
 
@@ -85,7 +76,7 @@ def add_cached_properties(new_model: Type["Model"]) -> None:
     new_model._bytes_fields = set()
 
 
-def add_property_fields(new_model: Type["Model"], attrs: dict) -> None:  # noqa: CCR001
+def add_property_fields(new_model: type["Model"], attrs: dict) -> None:  # noqa: CCR001
     """
     Checks class namespace for properties or functions with computed_field.
     If attribute have decorator_info it was decorated with @computed_field.
@@ -113,7 +104,7 @@ def add_property_fields(new_model: Type["Model"], attrs: dict) -> None:  # noqa:
         )
 
 
-def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
+def register_signals(new_model: type["Model"]) -> None:  # noqa: CCR001
     """
     Registers on model's SignalEmmiter and sets pre-defined signals.
     Predefined signals are (pre/post) + (save/update/delete).
@@ -245,7 +236,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     parent_fields: dict,
     attrs: dict,
     ormar_config: OrmarConfig,
-    base_class: Type["Model"],
+    base_class: type["Model"],
 ) -> None:
     """
     Clones class with Through model for m2m relations, appends child name to the name
@@ -260,7 +251,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     Removes the original sqlalchemy table from metadata if it was not removed.
 
     :param base_class: base class model
-    :type base_class: Type["Model"]
+    :type base_class: type["Model"]
     :param field: field with relations definition
     :type field: ManyToManyField
     :param field_name: name of the relation field
@@ -274,7 +265,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     :param ormar_config: metaclass of currently created model
     :type ormar_config: OrmarConfig
     """
-    Field: Type[BaseField] = type(  # type: ignore
+    Field: type[BaseField] = type(  # type: ignore
         field.__class__.__name__, (ManyToManyField, BaseField), {}
     )
     copy_field = Field(**dict(field.__dict__))
@@ -307,7 +298,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     )
     copy_name = through_class.__name__ + attrs.get("__name__", "")
     copy_through = cast(
-        Type[ormar.Model], type(copy_name, (ormar.Model,), {"ormar_config": new_config})
+        type[ormar.Model], type(copy_name, (ormar.Model,), {"ormar_config": new_config})
     )
     # create new table with copied columns but remove foreign keys
     # they will be populated later in expanding reverse relation
@@ -333,7 +324,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
 
 
 def copy_data_from_parent_model(  # noqa: CCR001
-    base_class: Type["Model"],
+    base_class: type["Model"],
     curr_class: type,
     attrs: dict,
     model_fields: dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
@@ -440,7 +431,7 @@ def extract_from_parents_definition(  # noqa: CCR001
     :rtype: tuple[dict, dict]
     """
     if hasattr(base_class, "ormar_config"):
-        base_class = cast(Type["Model"], base_class)
+        base_class = cast(type["Model"], base_class)
         return copy_data_from_parent_model(
             base_class=base_class,
             curr_class=curr_class,
@@ -518,7 +509,7 @@ def update_attrs_and_fields(
 
 
 def add_field_descriptor(
-    name: str, field: "BaseField", new_model: Type["Model"]
+    name: str, field: "BaseField", new_model: type["Model"]
 ) -> None:
     """
     Sets appropriate descriptor for each model field.
@@ -530,7 +521,7 @@ def add_field_descriptor(
     :param field: model field to add descriptor for
     :type field: BaseField
     :param new_model: model with fields
-    :type new_model: Type["Model]
+    :type new_model: type["Model]
     """
     if field.is_relation:
         setattr(new_model, name, RelationDescriptor(name=name))
@@ -678,7 +669,7 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
         return new_model
 
     @property
-    def objects(cls: Type["T"]) -> "QuerySet[T]":  # type: ignore
+    def objects(cls: type["T"]) -> "QuerySet[T]":  # type: ignore
         if cls.ormar_config.requires_ref_update:
             raise ModelError(
                 f"Model {cls.get_name()} has not updated "
@@ -712,11 +703,11 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
             field = self.ormar_config.model_fields.get(item)
             if field.is_relation:
                 return FieldAccessor(
-                    source_model=cast(Type["Model"], self),
+                    source_model=cast(type["Model"], self),
                     model=field.to,
                     access_chain=item,
                 )
             return FieldAccessor(
-                source_model=cast(Type["Model"], self), field=field, access_chain=item
+                source_model=cast(type["Model"], self), field=field, access_chain=item
             )
         return object.__getattribute__(self, item)

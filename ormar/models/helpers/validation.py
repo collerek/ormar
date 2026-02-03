@@ -1,6 +1,6 @@
 import decimal
 import numbers
-from typing import TYPE_CHECKING, Any, Callable, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
 try:
     import orjson as json
@@ -18,13 +18,13 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def generate_model_example(
-    model: Type["Model"], relation_map: Optional[dict] = None
+    model: type["Model"], relation_map: Optional[dict] = None
 ) -> dict:
     """
     Generates example to be included in schema in fastapi.
 
     :param model: ormar.Model
-    :type model: Type["Model"]
+    :type model: type["Model"]
     :param relation_map: dict with relations to follow
     :type relation_map: Optional[dict]
     :return: dict with example values
@@ -95,13 +95,13 @@ def get_nested_model_example(
 
 
 def generate_pydantic_example(
-    pydantic_model: Type[pydantic.BaseModel], exclude: Optional[set] = None
+    pydantic_model: type[pydantic.BaseModel], exclude: Optional[set] = None
 ) -> dict:
     """
     Generates dict with example.
 
     :param pydantic_model: model to parse
-    :type pydantic_model: Type[pydantic.BaseModel]
+    :type pydantic_model: type[pydantic.BaseModel]
     :param exclude: list of fields to exclude
     :type exclude: Optional[set]
     :return: dict with fields and sample values
@@ -159,7 +159,7 @@ def generate_example_for_union(type_: Any) -> Any:
 
 
 def overwrite_example_and_description(
-    schema: dict[str, Any], model: Type["Model"]
+    schema: dict[str, Any], model: type["Model"]
 ) -> None:
     """
     Overwrites the example with properly nested children models.
@@ -168,12 +168,12 @@ def overwrite_example_and_description(
     :param schema: schema of current model
     :type schema: dict[str, Any]
     :param model: model class
-    :type model: Type["Model"]
+    :type model: type["Model"]
     """
     schema["example"] = generate_model_example(model=model)
 
 
-def overwrite_binary_format(schema: dict[str, Any], model: Type["Model"]) -> None:
+def overwrite_binary_format(schema: dict[str, Any], model: type["Model"]) -> None:
     """
     Overwrites format of the field if it's a LargeBinary field with
     a flag to represent the field as base64 encoded string.
@@ -181,7 +181,7 @@ def overwrite_binary_format(schema: dict[str, Any], model: Type["Model"]) -> Non
     :param schema: schema of current model
     :type schema: dict[str, Any]
     :param model: model class
-    :type model: Type["Model"]
+    :type model: type["Model"]
     """
     for field_id, prop in schema.get("properties", {}).items():
         if (
@@ -202,14 +202,14 @@ def construct_schema_function() -> Callable:
     :rtype: Callable
     """
 
-    def schema_extra(schema: dict[str, Any], model: Type["Model"]) -> None:
+    def schema_extra(schema: dict[str, Any], model: type["Model"]) -> None:
         overwrite_example_and_description(schema=schema, model=model)
         overwrite_binary_format(schema=schema, model=model)
 
     return staticmethod(schema_extra)  # type: ignore
 
 
-def modify_schema_example(model: Type["Model"]) -> None:  # noqa CCR001
+def modify_schema_example(model: type["Model"]) -> None:  # noqa CCR001
     """
     Modifies the schema example in openapi schema.
 
