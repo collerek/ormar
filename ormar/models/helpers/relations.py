@@ -1,6 +1,15 @@
 import inspect
 import warnings
-from typing import TYPE_CHECKING, Any, ForwardRef, Optional, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ForwardRef,
+    Optional,
+    Union,
+    cast,
+    get_args,
+    get_origin,
+)
 
 from pydantic import BaseModel, create_model, field_serializer
 from pydantic._internal._decorators import DecoratorInfos
@@ -215,7 +224,7 @@ def add_field_serializer_for_reverse_relations(
 
 
 def replace_models_with_copy(
-    annotation: type, source_model_field: Optional[str] = None
+    annotation: Any, source_model_field: Optional[str] = None
 ) -> Any:
     """
     Replaces all models in annotation with their copies to avoid circular references.
@@ -227,16 +236,20 @@ def replace_models_with_copy(
     """
     if inspect.isclass(annotation) and issubclass(annotation, ormar.Model):
         return create_copy_to_avoid_circular_references(model=annotation)
-    elif hasattr(annotation, "__origin__") and annotation.__origin__ in {list, Union}:
-        if annotation.__origin__ is list:
+    else:
+        origin = get_origin(annotation)
+        if origin is list:
+            args = get_args(annotation)
+            if not args:
+                return annotation
             return list[  # type: ignore
                 replace_models_with_copy(
-                    annotation=annotation.__args__[0],
+                    annotation=args[0],
                     source_model_field=source_model_field,
                 )
             ]
-        elif annotation.__origin__ == Union:
-            args = annotation.__args__
+        elif origin is Union:
+            args = get_args(annotation)
             new_args = [
                 replace_models_with_copy(
                     annotation=arg, source_model_field=source_model_field
@@ -244,7 +257,6 @@ def replace_models_with_copy(
                 for arg in args
             ]
             return Union[tuple(new_args)]
-    else:
         return annotation
 
 

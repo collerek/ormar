@@ -767,8 +767,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def dict(  # type: ignore # noqa A003
         self,
         *,
-        include: Union[set, dict, None] = None,
-        exclude: Union[set, dict, None] = None,
+        include: Union[set, __builtins__.dict, None] = None,
+        exclude: Union[set, __builtins__.dict, None] = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -776,7 +776,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude_primary_keys: bool = False,
         exclude_through_models: bool = False,
         exclude_list: bool = False,
-        relation_map: Optional[dict] = None,
+        relation_map: Optional[__builtins__.dict] = None,
     ) -> "DictStrAny":  # noqa: A003 # pragma: no cover
         warnings.warn(
             "The `dict` method is deprecated; use `model_dump` instead.",
@@ -799,8 +799,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         self,
         *,
         mode: Union[Literal["json", "python"], str] = "python",
-        include: Union[set, dict, None] = None,
-        exclude: Union[set, dict, None] = None,
+        include: Union[set, __builtins__.dict, None] = None,
+        exclude: Union[set, __builtins__.dict, None] = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -808,7 +808,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude_primary_keys: bool = False,
         exclude_through_models: bool = False,
         exclude_list: bool = False,
-        relation_map: Optional[dict] = None,
+        relation_map: Optional[__builtins__.dict] = None,
         round_trip: bool = False,
         warnings: bool = True,
     ) -> "DictStrAny":  # noqa: A003'
@@ -908,8 +908,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def json(  # type: ignore # noqa A003
         self,
         *,
-        include: Union[set, dict, None] = None,
-        exclude: Union[set, dict, None] = None,
+        include: Union[set, __builtins__.dict, None] = None,
+        exclude: Union[set, __builtins__.dict, None] = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -937,8 +937,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def model_dump_json(  # type: ignore # noqa A003
         self,
         *,
-        include: Union[set, dict, None] = None,
-        exclude: Union[set, dict, None] = None,
+        include: Union[set, __builtins__.dict, None] = None,
+        exclude: Union[set, __builtins__.dict, None] = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -1038,7 +1038,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         return model
 
     @classmethod
-    def _construct_relations(cls: type["T"], model: "T", values: dict) -> None:
+    def _construct_relations(
+        cls: type["T"], model: "T", values: __builtins__.dict
+    ) -> None:
         present_relations = [
             relation for relation in cls.extract_related_names() if relation in values
         ]
@@ -1060,7 +1062,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     field=cast("ForeignKeyField", relation_field),
                 )
 
-    def update_from_dict(self, value_dict: dict) -> "NewBaseModel":
+    def update_from_dict(self, value_dict: __builtins__.dict) -> "NewBaseModel":
         """
         Updates self with values of fields passed in the dictionary.
 
@@ -1073,7 +1075,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             setattr(self, key, value)
         return self
 
-    def _convert_to_bytes(self, column_name: str, value: Any) -> Union[str, dict]:
+    def _convert_to_bytes(
+        self, column_name: str, value: Any
+    ) -> Union[str, __builtins__.dict]:
         """
         Converts value to bytes from string
 
@@ -1093,7 +1097,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             )
         return value
 
-    def _convert_bytes_to_str(self, column_name: str, value: Any) -> Union[str, dict]:
+    def _convert_bytes_to_str(
+        self, column_name: str, value: Any
+    ) -> Union[str, __builtins__.dict]:
         """
         Converts value to str from bytes for represent_as_base64_str columns.
 
@@ -1115,7 +1121,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             return base64.b64encode(value).decode()
         return value
 
-    def _convert_json(self, column_name: str, value: Any) -> Union[str, dict, None]:
+    def _convert_json(
+        self, column_name: str, value: Any
+    ) -> Union[str, __builtins__.dict, None]:
         """
         Converts value to/from json if needed (for Json columns).
 
@@ -1130,7 +1138,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             return value
         return encode_json(value)
 
-    def _extract_own_model_fields(self) -> dict:
+    def _extract_own_model_fields(self) -> __builtins__.dict:
         """
         Returns a dictionary with field names and values for fields that are not
         relations fields (ForeignKey, ManyToMany etc.)
@@ -1142,7 +1150,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         self_fields = {k: v for k, v in self.__dict__.items() if k not in related_names}
         return self_fields
 
-    def _extract_model_db_fields(self) -> dict:
+    def _extract_model_db_fields(self) -> __builtins__.dict:
         """
         Returns a dictionary with field names and values for fields that are stored in
         current model's table.
