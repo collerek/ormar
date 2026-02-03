@@ -68,19 +68,14 @@ class Connection(sqlite3.Connection):
 
 def substitue_backend_pool_for_sqlite(new_model: Type["Model"]) -> None:
     """
-    Recreates Connection pool for sqlite3 with new factory that
-    executes "PRAGMA foreign_keys=1; on initialization to enable foreign keys.
+    SQLite foreign keys are now handled in DatabaseConnection.connect().
+    This function is kept for backward compatibility but does nothing.
 
     :param new_model: newly declared ormar Model
     :type new_model: Model class
     """
-    backend = new_model.ormar_config.database._backend
-    if (
-        backend._dialect.name == "sqlite" and "factory" not in backend._options
-    ):  # pragma: no cover
-        backend._options["factory"] = Connection
-        old_pool = backend._pool
-        backend._pool = old_pool.__class__(backend._database_url, **backend._options)
+    # Foreign keys pragma is now set up in DatabaseConnection when engine is created
+    pass
 
 
 def check_required_config_parameters(new_model: Type["Model"]) -> None:

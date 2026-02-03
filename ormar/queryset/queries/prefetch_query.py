@@ -14,6 +14,7 @@ from typing import (
 )
 
 import ormar  # noqa:  I100, I202
+from ormar.query_executor import QueryExecutor
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.queries.query import Query
 from ormar.queryset.utils import translate_list_to_dict
@@ -251,11 +252,13 @@ class LoadNode(Node):
             expr = qry.build_select_expression()
             logger.debug(
                 expr.compile(
-                    dialect=self.source_model.ormar_config.database._backend._dialect,
+                    dialect=self.source_model.ormar_config.database.dialect,
                     compile_kwargs={"literal_binds": True},
                 )
             )
-            self.rows = await query_target.ormar_config.database.fetch_all(expr)
+            async with query_target.ormar_config.database.connection() as conn:
+                executor = QueryExecutor(conn)
+                self.rows = await executor.fetch_all(expr)
 
             for child in self.children:
                 await child.load_data()

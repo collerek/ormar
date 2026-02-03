@@ -1,8 +1,10 @@
 import asyncio
+from contextlib import asynccontextmanager
 from typing import (
     TYPE_CHECKING,
     Any,
     AsyncGenerator,
+    AsyncIterator,
     Dict,
     Generic,
     List,
@@ -16,17 +18,18 @@ from typing import (
     cast,
 )
 
-import databases
 import sqlalchemy
 from sqlalchemy import bindparam
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
+from ormar.connection import DatabaseConnection
 from ormar.exceptions import (
     ModelListEmptyError,
     ModelPersistenceError,
     QueryDefinitionError,
 )
+from ormar.query_executor import QueryExecutor
 from ormar.queryset import FieldAccessor, FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
@@ -143,6 +146,21 @@ class QuerySet(Generic[T]):
             proxy_source_model=replace_if_none("proxy_source_model"),
         )
 
+    @asynccontextmanager
+    async def _get_connection(self) -> AsyncIterator[QueryExecutor]:
+        """
+        Get connection, reusing transaction connection if in transaction.
+
+        :return: QueryExecutor wrapping a connection
+        :rtype: QueryExecutor
+        """
+        trans_conn = self.model_config.database.get_transaction_connection()
+        if trans_conn is not None:
+            yield QueryExecutor(trans_conn)
+        else:
+            async with self.model_config.database.connection() as conn:
+                yield QueryExecutor(conn)
+
     async def _prefetch_related_models(
         self, models: List["T"], rows: List
     ) -> List["T"]:
@@ -236,12 +254,12 @@ class QuerySet(Generic[T]):
             raise MultipleMatches()
 
     @property
-    def database(self) -> databases.Database:
+    def database(self) -> DatabaseConnection:
         """
         Shortcut to models database from OrmarConfig class.
 
         :return: database
-        :rtype: databases.Database
+        :rtype: DatabaseConnection
         """
         return self.model_config.database
 
@@ -610,7 +628,8 @@ class QuerySet(Generic[T]):
                 _as_dict=_as_dict, _flatten=_flatten, exclude_through=exclude_through
             )
         expr = self.build_select_expression()
-        rows = await self.database.fetch_all(expr)
+        async with self._get_connection() as executor:
+            rows = await executor.fetch_all(expr)
         if not rows:
             return []
         alias_resolver = ReverseAliasResolver(
@@ -675,7 +694,9 @@ class QuerySet(Generic[T]):
         """
         expr = self.build_select_expression()
         expr = sqlalchemy.exists(expr).select()
-        return await self.database.fetch_val(expr)
+        async with self._get_connection() as executor:
+            result = await executor.fetch_val(expr)
+            return bool(result)
 
     async def count(self, distinct: bool = True) -> int:
         """
@@ -699,7 +720,9 @@ class QuerySet(Generic[T]):
             pk_column_name = self.model.get_column_alias(self.model_config.pkname)
             expr_distinct = expr.group_by(pk_column_name).alias("subquery_for_group")  # type: ignore
             expr = sqlalchemy.func.count().select().select_from(expr_distinct)  # type: ignore
-        return await self.database.fetch_val(expr)
+        async with self._get_connection() as executor:
+            result = await executor.fetch_val(expr)  # type: ignore
+            return int(result) if result is not None else 0
 
     async def _query_aggr_function(self, func_name: str, columns: List) -> Any:
         func = getattr(sqlalchemy.func, func_name)
@@ -715,7 +738,8 @@ class QuerySet(Generic[T]):
         expr = self.build_select_expression().alias(f"subquery_for_{func_name}")
         expr = sqlalchemy.select(*select_columns).select_from(expr)  # type: ignore
         # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
-        result = await self.database.fetch_one(expr)
+        async with self._get_connection() as executor:
+            result = await executor.fetch_one(expr)  # type: ignore
         return dict(result) if len(result) > 1 else result[0]  # type: ignore
 
     async def max(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
@@ -799,7 +823,8 @@ class QuerySet(Generic[T]):
         expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
             expr
         )
-        return await self.database.execute(expr)
+        async with self._get_connection() as executor:
+            return await executor.execute(expr)
 
     async def delete(self, *args: Any, each: bool = False, **kwargs: Any) -> int:
         """
@@ -828,7 +853,8 @@ class QuerySet(Generic[T]):
         expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
             expr
         )
-        return await self.database.execute(expr)
+        async with self._get_connection() as executor:
+            return await executor.execute(expr)
 
     def paginate(self, page: int, page_size: int = 20) -> "QuerySet[T]":
         """
@@ -915,7 +941,8 @@ class QuerySet(Generic[T]):
             )
             + self.order_bys,
         )
-        rows = await self.database.fetch_all(expr)
+        async with self._get_connection() as executor:
+            rows = await executor.fetch_all(expr)
         processed_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and processed_rows:
             processed_rows = await self._prefetch_related_models(processed_rows, rows)
@@ -998,7 +1025,8 @@ class QuerySet(Generic[T]):
         else:
             expr = self.build_select_expression()
 
-        rows = await self.database.fetch_all(expr)
+        async with self._get_connection() as executor:
+            rows = await executor.fetch_all(expr)
         processed_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and processed_rows:
             processed_rows = await self._prefetch_related_models(processed_rows, rows)
@@ -1069,7 +1097,8 @@ class QuerySet(Generic[T]):
             return await self.filter(*args, **kwargs).all()
 
         expr = self.build_select_expression()
-        rows = await self.database.fetch_all(expr)
+        async with self._get_connection() as executor:
+            rows = await executor.fetch_all(expr)
         result_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and result_rows:
             result_rows = await self._prefetch_related_models(result_rows, rows)
@@ -1111,19 +1140,20 @@ class QuerySet(Generic[T]):
         last_primary_key = None
         pk_alias = self.model.get_column_alias(self.model_config.pkname)
 
-        async for row in self.database.iterate(query=expr):
-            current_primary_key = row[pk_alias]
-            if last_primary_key == current_primary_key or last_primary_key is None:
+        async with self._get_connection() as executor:
+            async for row in executor.iterate(expr):
+                current_primary_key = row[pk_alias]
+                if last_primary_key == current_primary_key or last_primary_key is None:
+                    last_primary_key = current_primary_key
+                    rows.append(row)
+                    continue
+
+                yield (await self._process_query_result_rows(rows))[0]
                 last_primary_key = current_primary_key
-                rows.append(row)
-                continue
+                rows = [row]
 
-            yield (await self._process_query_result_rows(rows))[0]
-            last_primary_key = current_primary_key
-            rows = [row]
-
-        if rows:
-            yield (await self._process_query_result_rows(rows))[0]
+            if rows:
+                yield (await self._process_query_result_rows(rows))[0]
 
     async def create(self, **kwargs: Any) -> "T":
         """
@@ -1166,7 +1196,8 @@ class QuerySet(Generic[T]):
         # don't use execute_many, as in databases it's executed in a loop
         # instead of using execute_many from drivers
         expr = self.table.insert().values(ready_objects)
-        await self.database.execute(expr)
+        async with self._get_connection() as executor:
+            await executor.execute(expr)
 
         for obj in objects:
             obj.set_save_status(True)
@@ -1239,7 +1270,8 @@ class QuerySet(Generic[T]):
         # databases bind params only where query is passed as string
         # otherwise it just passes all data to values and results in unconsumed columns
         expr = str(expr)  # type: ignore
-        await self.database.execute_many(expr, ready_objects)
+        async with self._get_connection() as executor:
+            await executor.execute_many(expr, ready_objects)
 
         for obj in objects:
             obj.set_save_status(True)

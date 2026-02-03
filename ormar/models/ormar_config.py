@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Type, Union
 
-import databases
 import sqlalchemy
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
+from ormar.connection import DatabaseConnection
 from ormar.fields import BaseField, ForeignKeyField, ManyToManyField
 from ormar.models.helpers import alias_manager
 from ormar.models.utils import Extra
@@ -17,7 +18,7 @@ class OrmarConfig:
     if TYPE_CHECKING:  # pragma: no cover
         pkname: str
         metadata: sqlalchemy.MetaData
-        database: databases.Database
+        database: DatabaseConnection
         tablename: str
         order_by: List[str]
         abstract: bool
@@ -27,8 +28,8 @@ class OrmarConfig:
     def __init__(
         self,
         metadata: Optional[sqlalchemy.MetaData] = None,
-        database: Optional[databases.Database] = None,
-        engine: Optional[sqlalchemy.engine.Engine] = None,
+        database: Optional[DatabaseConnection] = None,
+        engine: Optional[AsyncEngine] = None,
         tablename: Optional[str] = None,
         order_by: Optional[List[str]] = None,
         abstract: bool = False,
@@ -59,8 +60,8 @@ class OrmarConfig:
     def copy(
         self,
         metadata: Optional[sqlalchemy.MetaData] = None,
-        database: Optional[databases.Database] = None,
-        engine: Optional[sqlalchemy.engine.Engine] = None,
+        database: Optional[DatabaseConnection] = None,
+        engine: Optional[AsyncEngine] = None,
         tablename: Optional[str] = None,
         order_by: Optional[List[str]] = None,
         abstract: Optional[bool] = None,

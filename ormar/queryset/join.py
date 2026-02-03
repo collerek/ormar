@@ -119,7 +119,7 @@ class SqlJoin:
         :return: clause combining all strings
         :rtype: sqlalchemy.text
         """
-        dialect = self.main_model.ormar_config.database._backend._dialect
+        dialect = self.main_model.ormar_config.database.dialect
         quoter = dialect.identifier_preparer.quote
         left_part = (
             f"{quoter(f'{self.next_alias}_{to_table_name}')}.{quoter(to_column_name)}"

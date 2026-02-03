@@ -1,14 +1,14 @@
 from typing import Optional
 
-import databases
 import ormar
 import pytest
 import sqlalchemy
+from ormar.connection import DatabaseConnection
 from ormar.models.ormar_config import OrmarConfig
 
-from tests.settings import DATABASE_URL
+from tests.settings import ASYNC_DATABASE_URL, DATABASE_URL
 
-database = databases.Database(DATABASE_URL)
+database = DatabaseConnection(ASYNC_DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 

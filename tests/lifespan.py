@@ -1,8 +1,7 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
-import pytest
-import sqlalchemy
+import pytest_asyncio
 from fastapi import FastAPI
 
 
@@ -21,13 +20,15 @@ def lifespan(config):
 
 
 def init_tests(config, scope="module"):
-    @pytest.fixture(autouse=True, scope=scope)
-    def create_database():
-        config.engine = sqlalchemy.create_engine(config.database.url._url)
-        config.metadata.create_all(config.engine)
+    @pytest_asyncio.fixture(autouse=True, scope=scope)
+    async def create_database():
+        # Use async engine for DDL operations
+        async with config.engine.begin() as conn:
+            await conn.run_sync(config.metadata.create_all)
 
         yield
 
-        config.metadata.drop_all(config.engine)
+        async with config.engine.begin() as conn:
+            await conn.run_sync(config.metadata.drop_all)
 
     return create_database

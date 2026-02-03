@@ -4,6 +4,7 @@ import ormar.queryset  # noqa I100
 from ormar.exceptions import ModelPersistenceError, NoMatch
 from ormar.models import NewBaseModel  # noqa I100
 from ormar.models.model_row import ModelRow
+from ormar.query_executor import QueryExecutor
 from ormar.queryset.utils import subtract_dict, translate_list_to_dict
 
 T = TypeVar("T", bound="Model")
@@ -41,7 +42,9 @@ class Model(ModelRow):
         force_save = kwargs.pop("__force_save__", False)
         if force_save:
             expr = self.ormar_config.table.select().where(self.pk_column == self.pk)
-            row = await self.ormar_config.database.fetch_one(expr)
+            async with self.ormar_config.database.connection() as conn:
+                executor = QueryExecutor(conn)
+                row = await executor.fetch_one(expr)
             if not row:
                 return await self.save()
             return await self.update(**kwargs)
@@ -94,7 +97,9 @@ class Model(ModelRow):
         expr = self.ormar_config.table.insert()
         expr = expr.values(**self_fields)
 
-        pk = await self.ormar_config.database.execute(expr)
+        async with self.ormar_config.database.connection() as conn:
+            executor = QueryExecutor(conn)
+            pk = await executor.execute(expr)
         if pk and isinstance(pk, self.pk_type()):
             setattr(self, self.ormar_config.pkname, pk)
 
@@ -251,7 +256,9 @@ class Model(ModelRow):
             expr = self.ormar_config.table.update().values(**self_fields)
             expr = expr.where(self.pk_column == getattr(self, self.ormar_config.pkname))
 
-            await self.ormar_config.database.execute(expr)
+            async with self.ormar_config.database.connection() as conn:
+                executor = QueryExecutor(conn)
+                await executor.execute(expr)
         self.set_save_status(True)
         await self.signals.post_update.send(sender=self.__class__, instance=self)
         return self
@@ -274,7 +281,9 @@ class Model(ModelRow):
         await self.signals.pre_delete.send(sender=self.__class__, instance=self)
         expr = self.ormar_config.table.delete()
         expr = expr.where(self.pk_column == (getattr(self, self.ormar_config.pkname)))
-        result = await self.ormar_config.database.execute(expr)
+        async with self.ormar_config.database.connection() as conn:
+            executor = QueryExecutor(conn)
+            result = await executor.execute(expr)
         self.set_save_status(False)
         await self.signals.post_delete.send(sender=self.__class__, instance=self)
         return result
@@ -291,7 +300,9 @@ class Model(ModelRow):
         :rtype: Model
         """
         expr = self.ormar_config.table.select().where(self.pk_column == self.pk)
-        row = await self.ormar_config.database.fetch_one(expr)
+        async with self.ormar_config.database.connection() as conn:
+            executor = QueryExecutor(conn)
+            row = await executor.fetch_one(expr)
         if not row:  # pragma nocover
             raise NoMatch("Instance was deleted from database and cannot be refreshed")
         kwargs = dict(row)
