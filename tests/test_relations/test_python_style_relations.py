@@ -1,9 +1,9 @@
 from typing import Optional
 
+import ormar
 import pytest
 import pytest_asyncio
 
-import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

@@ -1,12 +1,12 @@
 # type: ignore
 from typing import ForwardRef, Optional
 
+import ormar
 import pytest
 import pytest_asyncio
 import sqlalchemy as sa
-
-import ormar
 from ormar.exceptions import ModelError
+
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

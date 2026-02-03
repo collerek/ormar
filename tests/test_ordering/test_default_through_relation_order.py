@@ -1,9 +1,8 @@
 from typing import Any, Optional, cast
 from uuid import UUID, uuid4
 
-import pytest
-
 import ormar
+import pytest
 from ormar import (
     Model,
     ModelDefinitionError,
@@ -12,6 +11,7 @@ from ormar import (
     pre_save,
     pre_update,
 )
+
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

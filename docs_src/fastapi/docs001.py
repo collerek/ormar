@@ -1,8 +1,7 @@
 from typing import Optional
 
-from fastapi import FastAPI
-
 import ormar
+from fastapi import FastAPI
 from tests.lifespan import lifespan
 from tests.settings import create_config
 

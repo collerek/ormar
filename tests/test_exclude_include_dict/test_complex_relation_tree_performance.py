@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import Optional, Union
 
+import ormar as orm
 import pydantic
 import pytest
 
-import ormar as orm
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

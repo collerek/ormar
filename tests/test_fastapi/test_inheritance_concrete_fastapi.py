@@ -1,14 +1,14 @@
 import datetime
 from typing import Optional
 
+import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from ormar.relations.relation_proxy import RelationProxy
 from pydantic import computed_field
 
-import ormar
-from ormar.relations.relation_proxy import RelationProxy
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 

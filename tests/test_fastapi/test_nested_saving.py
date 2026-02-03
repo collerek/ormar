@@ -1,12 +1,12 @@
 from typing import Any, Optional, Union, cast
 
+import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
-
-import ormar
 from ormar.queryset.utils import translate_list_to_dict
+
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 

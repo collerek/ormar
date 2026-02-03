@@ -1,6 +1,7 @@
 import datetime
 from typing import Optional, Union
 
+import ormar
 import pydantic
 import pytest
 from asgi_lifespan import LifespanManager
@@ -8,7 +9,6 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from pydantic import Field
 
-import ormar
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 

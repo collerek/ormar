@@ -1,9 +1,9 @@
 from typing import Optional, Union
 
-import pytest
-
 import ormar
+import pytest
 from ormar.exceptions import QueryDefinitionError
+
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

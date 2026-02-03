@@ -3,16 +3,16 @@ import random
 import string
 from typing import Optional
 
+import ormar
 import pydantic
 import pytest
 import sqlalchemy
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from ormar import post_save
 from pydantic import ConfigDict, computed_field
 
-import ormar
-from ormar import post_save
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 

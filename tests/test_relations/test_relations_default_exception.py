@@ -1,10 +1,10 @@
 # type: ignore
 from typing import Optional
 
-import pytest
-
 import ormar
+import pytest
 from ormar.exceptions import ModelDefinitionError
+
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
