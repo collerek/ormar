@@ -85,7 +85,7 @@ all = [
 [tool.poetry.group.dev.dependencies]
 # Testing
 pytest = ">=7.4.4,<9.0.0"
-pytest-cov = ">=4,<6"
+pytest-cov = ">=4,<8"
 codecov = "^2.1.13"
 pytest-asyncio = ">=0.21,<0.24"
 fastapi = ">=0.125.0"
