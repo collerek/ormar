@@ -241,7 +241,7 @@ def replace_models_with_copy(
         if origin is list:
             args = get_args(annotation)
             if not args:
-                return annotation
+                return annotation  # pragma: no cover
             return list[  # type: ignore
                 replace_models_with_copy(
                     annotation=args[0],
