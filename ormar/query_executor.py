@@ -65,9 +65,7 @@ class QueryExecutor:
         """
         result: CursorResult[Any] = await self._connection.execute(query)
 
-        # Only commit if not in a transaction (connection has no active transaction)
-        if not self._connection.in_transaction():
-            await self._connection.commit()
+        # Don't commit - let connection context manager or transaction handle it
 
         # Return lastrowid for INSERT, rowcount for UPDATE/DELETE
         if hasattr(result, "lastrowid") and result.lastrowid:
@@ -94,9 +92,7 @@ class QueryExecutor:
         for value_dict in values:
             await self._connection.execute(exec_query, value_dict)
 
-        # Only commit if not in a transaction
-        if not self._connection.in_transaction():
-            await self._connection.commit()
+        # Don't commit - let connection context manager or transaction handle it
 
     async def iterate(self, query: Executable) -> AsyncIterator[Any]:
         """

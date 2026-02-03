@@ -42,9 +42,15 @@ class Model(ModelRow):
         force_save = kwargs.pop("__force_save__", False)
         if force_save:
             expr = self.ormar_config.table.select().where(self.pk_column == self.pk)
-            async with self.ormar_config.database.connection() as conn:
-                executor = QueryExecutor(conn)
+            # Check if in transaction, otherwise use begin() for auto-commit
+            trans_conn = self.ormar_config.database.get_transaction_connection()
+            if trans_conn is not None:
+                executor = QueryExecutor(trans_conn)
                 row = await executor.fetch_one(expr)
+            else:
+                async with self.ormar_config.database.engine.begin() as conn:
+                    executor = QueryExecutor(conn)
+                    row = await executor.fetch_one(expr)
             if not row:
                 return await self.save()
             return await self.update(**kwargs)
@@ -97,9 +103,15 @@ class Model(ModelRow):
         expr = self.ormar_config.table.insert()
         expr = expr.values(**self_fields)
 
-        async with self.ormar_config.database.connection() as conn:
-            executor = QueryExecutor(conn)
+        # Check if in transaction, otherwise use begin() for auto-commit
+        trans_conn = self.ormar_config.database.get_transaction_connection()
+        if trans_conn is not None:
+            executor = QueryExecutor(trans_conn)
             pk = await executor.execute(expr)
+        else:
+            async with self.ormar_config.database.engine.begin() as conn:
+                executor = QueryExecutor(conn)
+                pk = await executor.execute(expr)
         if pk and isinstance(pk, self.pk_type()):
             setattr(self, self.ormar_config.pkname, pk)
 
@@ -256,9 +268,15 @@ class Model(ModelRow):
             expr = self.ormar_config.table.update().values(**self_fields)
             expr = expr.where(self.pk_column == getattr(self, self.ormar_config.pkname))
 
-            async with self.ormar_config.database.connection() as conn:
-                executor = QueryExecutor(conn)
+            # Check if in transaction, otherwise use begin() for auto-commit
+            trans_conn = self.ormar_config.database.get_transaction_connection()
+            if trans_conn is not None:
+                executor = QueryExecutor(trans_conn)
                 await executor.execute(expr)
+            else:
+                async with self.ormar_config.database.engine.begin() as conn:
+                    executor = QueryExecutor(conn)
+                    await executor.execute(expr)
         self.set_save_status(True)
         await self.signals.post_update.send(sender=self.__class__, instance=self)
         return self
@@ -281,9 +299,15 @@ class Model(ModelRow):
         await self.signals.pre_delete.send(sender=self.__class__, instance=self)
         expr = self.ormar_config.table.delete()
         expr = expr.where(self.pk_column == (getattr(self, self.ormar_config.pkname)))
-        async with self.ormar_config.database.connection() as conn:
-            executor = QueryExecutor(conn)
+        # Check if in transaction, otherwise use begin() for auto-commit
+        trans_conn = self.ormar_config.database.get_transaction_connection()
+        if trans_conn is not None:
+            executor = QueryExecutor(trans_conn)
             result = await executor.execute(expr)
+        else:
+            async with self.ormar_config.database.engine.begin() as conn:
+                executor = QueryExecutor(conn)
+                result = await executor.execute(expr)
         self.set_save_status(False)
         await self.signals.post_delete.send(sender=self.__class__, instance=self)
         return result
@@ -300,9 +324,15 @@ class Model(ModelRow):
         :rtype: Model
         """
         expr = self.ormar_config.table.select().where(self.pk_column == self.pk)
-        async with self.ormar_config.database.connection() as conn:
-            executor = QueryExecutor(conn)
+        # Check if in transaction, otherwise use begin() for auto-commit
+        trans_conn = self.ormar_config.database.get_transaction_connection()
+        if trans_conn is not None:
+            executor = QueryExecutor(trans_conn)
             row = await executor.fetch_one(expr)
+        else:
+            async with self.ormar_config.database.engine.begin() as conn:
+                executor = QueryExecutor(conn)
+                row = await executor.fetch_one(expr)
         if not row:  # pragma nocover
             raise NoMatch("Instance was deleted from database and cannot be refreshed")
         kwargs = dict(row)

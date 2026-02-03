@@ -156,9 +156,11 @@ class QuerySet(Generic[T]):
         """
         trans_conn = self.model_config.database.get_transaction_connection()
         if trans_conn is not None:
+            # Inside a transaction - reuse the transaction's connection
             yield QueryExecutor(trans_conn)
         else:
-            async with self.model_config.database.connection() as conn:
+            # Outside transaction - use begin() for auto-commit
+            async with self.model_config.database.engine.begin() as conn:
                 yield QueryExecutor(conn)
 
     async def _prefetch_related_models(

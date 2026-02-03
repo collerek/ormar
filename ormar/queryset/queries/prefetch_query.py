@@ -256,9 +256,15 @@ class LoadNode(Node):
                     compile_kwargs={"literal_binds": True},
                 )
             )
-            async with query_target.ormar_config.database.connection() as conn:
-                executor = QueryExecutor(conn)
+            # Check if in transaction, otherwise use begin() for auto-commit
+            trans_conn = query_target.ormar_config.database.get_transaction_connection()
+            if trans_conn is not None:
+                executor = QueryExecutor(trans_conn)
                 self.rows = await executor.fetch_all(expr)
+            else:
+                async with query_target.ormar_config.database.engine.begin() as conn:
+                    executor = QueryExecutor(conn)
+                    self.rows = await executor.fetch_all(expr)
 
             for child in self.children:
                 await child.load_data()

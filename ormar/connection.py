@@ -29,6 +29,11 @@ class DatabaseConnection:
         :param options: Additional engine options
         """
         self._url = url
+        # Set reasonable pool defaults if not provided
+        if "pool_size" not in options:
+            options["pool_size"] = 5
+        if "max_overflow" not in options:
+            options["max_overflow"] = 10
         self._options = options
         self._engine: Optional[AsyncEngine] = None
 
