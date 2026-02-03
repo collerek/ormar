@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Tuple, Union
 
 try:
     from typing import Protocol
@@ -51,10 +51,10 @@ class QuerySetProtocol(Protocol):  # pragma: nocover
 
     async def update_or_create(self, **kwargs: Any) -> "Model": ...
 
-    def fields(self, columns: Union[List, str, Set, dict]) -> "QuerysetProxy": ...
+    def fields(self, columns: Union[List, str, set, dict]) -> "QuerysetProxy": ...
 
     def exclude_fields(
-        self, columns: Union[List, str, Set, dict]
+        self, columns: Union[List, str, set, dict]
     ) -> "QuerysetProxy": ...
 
     def order_by(self, columns: Union[List, str]) -> "QuerysetProxy": ...

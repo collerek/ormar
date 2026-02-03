@@ -7,7 +7,6 @@ from typing import (
     Callable,
     List,
     Optional,
-    Set,
     Tuple,
     Type,
     Union,
@@ -35,8 +34,8 @@ class PydanticMixin(RelationMixin):
     def get_pydantic(
         cls,
         *,
-        include: Union[Set, dict, None] = None,
-        exclude: Union[Set, dict, None] = None,
+        include: Union[set, dict, None] = None,
+        exclude: Union[set, dict, None] = None,
     ) -> Type[pydantic.BaseModel]:
         """
         Returns a pydantic model out of ormar model.
@@ -46,9 +45,9 @@ class PydanticMixin(RelationMixin):
         Can be used to fully exclude certain fields in fastapi response and requests.
 
         :param include: fields of own and nested models to include
-        :type include: Union[Set, dict, None]
+        :type include: Union[set, dict, None]
         :param exclude: fields of own and nested models to exclude
-        :type exclude: Union[Set, dict, None]
+        :type exclude: Union[set, dict, None]
         """
         relation_map = translate_list_to_dict(cls._iterate_related_models())
 
@@ -60,12 +59,12 @@ class PydanticMixin(RelationMixin):
     def _convert_ormar_to_pydantic(
         cls,
         relation_map: dict[str, Any],
-        include: Union[Set, dict, None] = None,
-        exclude: Union[Set, dict, None] = None,
+        include: Union[set, dict, None] = None,
+        exclude: Union[set, dict, None] = None,
     ) -> Type[pydantic.BaseModel]:
-        if include and isinstance(include, Set):
+        if include and isinstance(include, set):
             include = translate_list_to_dict(include)
-        if exclude and isinstance(exclude, Set):
+        if exclude and isinstance(exclude, set):
             exclude = translate_list_to_dict(exclude)
         fields_dict: dict[str, Any] = dict()
         defaults: dict[str, Any] = dict()
@@ -107,8 +106,8 @@ class PydanticMixin(RelationMixin):
         cls,
         name: str,
         defaults: dict,
-        include: Union[Set, dict, None],
-        exclude: Union[Set, dict, None],
+        include: Union[set, dict, None],
+        exclude: Union[set, dict, None],
         relation_map: dict[str, Any],
     ) -> Any:
         field = cls.ormar_config.model_fields[name]
@@ -134,8 +133,8 @@ class PydanticMixin(RelationMixin):
         cls,
         name: str,
         field: Union[BaseField, ForeignKeyField, ManyToManyField],
-        include: Union[Set, dict, None],
-        exclude: Union[Set, dict, None],
+        include: Union[set, dict, None],
+        exclude: Union[set, dict, None],
         defaults: dict,
         relation_map: dict[str, Any],
     ) -> Tuple[Type[BaseModel], dict]:

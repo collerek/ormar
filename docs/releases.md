@@ -1091,7 +1091,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
   *  `save_all:bool` -> By default (so with `save_all=False`) `ormar` only upserts models that are not saved (so new or updated ones), 
   with `save_all=True` all related models are saved, regardless of `saved` status, which might be useful if updated
   models comes from api call, so are not changed in the backend.
-  *  `exclude: Union[Set, dict, None]` -> set/dict of relations to exclude from save, those relation won't be saved even with `follow=True` and `save_all=True`. 
+  *  `exclude: Union[set, dict, None]` -> set/dict of relations to exclude from save, those relation won't be saved even with `follow=True` and `save_all=True`. 
      To exclude nested relations pass a nested dictionary like: `exclude={"child":{"sub_child": {"exclude_sub_child_realtion"}}}`. The allowed values follow
      the `fields/exclude_fields` (from `QuerySet`) methods schema so when in doubt you can refer to docs in queries -> selecting subset of fields -> fields.
 *  `Model.update()` method now accepts `_columns: List[str] = None` parameter, that accepts list of column names to update. If passed only those columns will be updated in database.

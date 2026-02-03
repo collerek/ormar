@@ -10,7 +10,6 @@ from typing import (
     Mapping,
     MutableSequence,
     Optional,
-    Set,
     Tuple,
     Type,
     TypeVar,
@@ -49,7 +48,7 @@ if TYPE_CHECKING:  # pragma no cover
 
     IntStr = Union[int, str]
     DictStrAny = dict[str, Any]
-    SetStr = Set[str]
+    SetStr = set[str]
     AbstractSetIntStr = AbstractSet[IntStr]
     MappingIntStrAny = Mapping[IntStr, Any]
 
@@ -83,12 +82,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         _orm: RelationsManager
         _orm_id: int
         _orm_saved: bool
-        _related_names: Optional[Set]
-        _through_names: Optional[Set]
+        _related_names: Optional[set]
+        _through_names: Optional[set]
         _related_names_hash: str
-        _quick_access_fields: Set
-        _json_fields: Set
-        _bytes_fields: Set
+        _quick_access_fields: set
+        _json_fields: set
+        _bytes_fields: set
         ormar_config: OrmarConfig
 
     # noinspection PyMissingConstructor
@@ -292,7 +291,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         for prop_filed in property_fields:
             kwargs.pop(prop_filed, None)
 
-        excluded: Set[str] = kwargs.pop("__excluded__", set())
+        excluded: set[str] = kwargs.pop("__excluded__", set())
         if "pk" in kwargs:
             kwargs[self.ormar_config.pkname] = kwargs.pop("pk")
 
@@ -334,7 +333,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         return new_kwargs, through_tmp_dict
 
     def _remove_extra_parameters_if_they_should_be_ignored(
-        self, kwargs: dict, model_fields: dict, pydantic_fields: Set
+        self, kwargs: dict, model_fields: dict, pydantic_fields: set
     ) -> dict:
         """
         Removes the extra fields from kwargs if they should be ignored.
@@ -344,7 +343,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :param model_fields: dictionary of model fields
         :type model_fields: dict
         :param pydantic_fields: set of pydantic fields names
-        :type pydantic_fields: Set
+        :type pydantic_fields: set
         :return: dict without extra fields
         :rtype: dict
         """
@@ -529,15 +528,15 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     @staticmethod
     def _get_not_excluded_fields(
-        fields: Union[List, Set], include: Optional[dict], exclude: Optional[dict]
+        fields: Union[List, set], include: Optional[dict], exclude: Optional[dict]
     ) -> List:
         """
         Returns related field names applying on them include and exclude set.
 
         :param include: fields to include
-        :type include: Union[Set, dict, None]
+        :type include: Union[set, dict, None]
         :param exclude: fields to exclude
-        :type exclude: Union[Set, dict, None]
+        :type exclude: Union[set, dict, None]
         :return:
         :rtype: List of fields with relations that is not excluded
         """
@@ -560,8 +559,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def _extract_nested_models_from_list(
         relation_map: dict,
         models: MutableSequence,
-        include: Union[Set, dict, None],
-        exclude: Union[Set, dict, None],
+        include: Union[set, dict, None],
+        exclude: Union[set, dict, None],
         exclude_primary_keys: bool,
         exclude_through_models: bool,
     ) -> List:
@@ -571,9 +570,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :param models: List of models
         :type models: List
         :param include: fields to include
-        :type include: Union[Set, dict, None]
+        :type include: Union[set, dict, None]
         :param exclude: fields to exclude
-        :type exclude: Union[Set, dict, None]
+        :type exclude: Union[set, dict, None]
         :return: list of models converted to dictionaries
         :rtype: List[dict]
         """
@@ -604,8 +603,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def populate_through_models(
         model: "Model",
         model_dict: dict,
-        include: Union[Set, dict],
-        exclude: Union[Set, dict],
+        include: Union[set, dict],
+        exclude: Union[set, dict],
         relation_map: dict,
     ) -> None:
         """
@@ -627,12 +626,12 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         include_dict = (
             translate_list_to_dict(include)
-            if (include and isinstance(include, Set))
+            if (include and isinstance(include, set))
             else include
         )
         exclude_dict = (
             translate_list_to_dict(exclude)
-            if (exclude and isinstance(exclude, Set))
+            if (exclude and isinstance(exclude, set))
             else exclude
         )
         models_to_populate = model._get_not_excluded_fields(
@@ -653,31 +652,31 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     @classmethod
     def _skip_ellipsis(
-        cls, items: Union[Set, dict, None], key: str, default_return: Any = None
-    ) -> Union[Set, dict, None]:
+        cls, items: Union[set, dict, None], key: str, default_return: Any = None
+    ) -> Union[set, dict, None]:
         """
         Helper to traverse the include/exclude dictionaries.
         In model_dump() Ellipsis should be skipped as it indicates all fields required
         and not the actual set/dict with fields names.
 
         :param items: current include/exclude value
-        :type items: Union[Set, dict, None]
+        :type items: Union[set, dict, None]
         :param key: key for nested relations to check
         :type key: str
         :return: nested value of the items
-        :rtype: Union[Set, dict, None]
+        :rtype: Union[set, dict, None]
         """
         result = cls.get_child(items, key)
         return result if result is not Ellipsis else default_return
 
     @staticmethod
-    def _convert_all(items: Union[Set, dict, None]) -> Union[Set, dict, None]:
+    def _convert_all(items: Union[set, dict, None]) -> Union[set, dict, None]:
         """
         Helper to convert __all__ pydantic special index to ormar which does not
         support index based exclusions.
 
         :param items: current include/exclude value
-        :type items: Union[Set, dict, None]
+        :type items: Union[set, dict, None]
         """
         if isinstance(items, dict) and "__all__" in items:
             return items.get("__all__")
@@ -771,8 +770,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def dict(  # type: ignore # noqa A003
         self,
         *,
-        include: Union[Set, dict, None] = None,
-        exclude: Union[Set, dict, None] = None,
+        include: Union[set, dict, None] = None,
+        exclude: Union[set, dict, None] = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -803,8 +802,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         self,
         *,
         mode: Union[Literal["json", "python"], str] = "python",
-        include: Union[Set, dict, None] = None,
-        exclude: Union[Set, dict, None] = None,
+        include: Union[set, dict, None] = None,
+        exclude: Union[set, dict, None] = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -830,9 +829,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :param exclude_primary_keys: flag to exclude primary keys from dict
         :type exclude_primary_keys: bool
         :param include: fields to include
-        :type include: Union[Set, dict, None]
+        :type include: Union[set, dict, None]
         :param exclude: fields to exclude
-        :type exclude: Union[Set, dict, None]
+        :type exclude: Union[set, dict, None]
         :param by_alias: flag to get values by alias - passed to pydantic
         :type by_alias: bool
         :param exclude_unset: flag to exclude not set values - passed to pydantic
@@ -880,10 +879,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         }
 
         include_dict = (
-            translate_list_to_dict(include) if isinstance(include, Set) else include
+            translate_list_to_dict(include) if isinstance(include, set) else include
         )
         exclude_dict = (
-            translate_list_to_dict(exclude) if isinstance(exclude, Set) else exclude
+            translate_list_to_dict(exclude) if isinstance(exclude, set) else exclude
         )
 
         relation_map = (
@@ -912,8 +911,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def json(  # type: ignore # noqa A003
         self,
         *,
-        include: Union[Set, dict, None] = None,
-        exclude: Union[Set, dict, None] = None,
+        include: Union[set, dict, None] = None,
+        exclude: Union[set, dict, None] = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -941,8 +940,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def model_dump_json(  # type: ignore # noqa A003
         self,
         *,
-        include: Union[Set, dict, None] = None,
-        exclude: Union[Set, dict, None] = None,
+        include: Union[set, dict, None] = None,
+        exclude: Union[set, dict, None] = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -976,7 +975,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         category=OrmarDeprecatedSince020,
     )
     def construct(
-        cls: Type["T"], _fields_set: Union[Set[str], None] = None, **values: Any
+        cls: Type["T"], _fields_set: Union[set[str], None] = None, **values: Any
     ) -> "T":  # pragma: no cover
         warnings.warn(
             "The `construct` method is deprecated; use `model_construct` instead.",

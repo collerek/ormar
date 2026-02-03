@@ -5,7 +5,6 @@ from typing import (
     Any,
     List,
     Optional,
-    Set,
     Tuple,
     Type,
     Union,
@@ -40,7 +39,7 @@ def check_node_not_dict_or_not_last_node(
 
 
 def translate_list_to_dict(  # noqa: CCR001
-    list_to_trans: Union[List, Set], default: Any = ...
+    list_to_trans: Union[List, set], default: Any = ...
 ) -> dict:
     """
     Splits the list of strings by '__' and converts them to dictionary with nested
@@ -50,7 +49,7 @@ def translate_list_to_dict(  # noqa: CCR001
     Default required key ise Ellipsis like in pydantic.
 
     :param list_to_trans: input list
-    :type list_to_trans: Union[List, Set]
+    :type list_to_trans: Union[List, set]
     :param default: value to use as a default value
     :type default: Any
     :param is_order: flag if change affects order_by clauses are they require special
@@ -137,7 +136,7 @@ def subtract_dict(current_dict: Any, updating_dict: Any) -> dict:  # noqa: CCR00
     """
     for key, value in updating_dict.items():
         old_key = current_dict.get(key, {})
-        new_value: Optional[Union[dict, Set]] = None
+        new_value: Optional[Union[dict, set]] = None
         if not old_key:
             continue
         if isinstance(value, set) and isinstance(old_key, set):
@@ -164,7 +163,7 @@ def subtract_dict(current_dict: Any, updating_dict: Any) -> dict:  # noqa: CCR00
     return current_dict
 
 
-def update_dict_from_list(curr_dict: dict, list_to_update: Union[List, Set]) -> dict:
+def update_dict_from_list(curr_dict: dict, list_to_update: Union[List, set]) -> dict:
     """
     Converts the list into dictionary and later performs special update, where
     nested keys that are sets or dicts are combined and not overwritten.

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional, Set, Type, Union
+from typing import TYPE_CHECKING, List, Optional, Type, Union
 
 import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -50,7 +50,7 @@ class OrmarConfig:
             str, Union[BaseField, ForeignKeyField, ManyToManyField]
         ] = {}
         self.alias_manager: AliasManager = alias_manager
-        self.property_fields: Set = set()
+        self.property_fields: set = set()
         self.signals: SignalEmitter = SignalEmitter()
         self.abstract = abstract
         self.requires_ref_update: bool = False

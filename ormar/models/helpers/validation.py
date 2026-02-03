@@ -1,15 +1,6 @@
 import decimal
 import numbers
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    List,
-    Optional,
-    Set,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type, Union
 
 try:
     import orjson as json
@@ -104,7 +95,7 @@ def get_nested_model_example(
 
 
 def generate_pydantic_example(
-    pydantic_model: Type[pydantic.BaseModel], exclude: Optional[Set] = None
+    pydantic_model: Type[pydantic.BaseModel], exclude: Optional[set] = None
 ) -> dict:
     """
     Generates dict with example.
@@ -112,7 +103,7 @@ def generate_pydantic_example(
     :param pydantic_model: model to parse
     :type pydantic_model: Type[pydantic.BaseModel]
     :param exclude: list of fields to exclude
-    :type exclude: Optional[Set]
+    :type exclude: Optional[set]
     :return: dict with fields and sample values
     :rtype: dict
     """

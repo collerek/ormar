@@ -47,14 +47,14 @@ Explanation of model_dump parameters:
 
 ### include (`ormar` modified)
 
-`include: Union[Set, dict] = None`
+`include: Union[set, dict] = None`
 
 Set or dictionary of field names to include in returned dictionary.
 
 Note that `pydantic` has an uncommon pattern of including/ excluding fields in lists (so also nested models) by an index.
 And if you want to exclude the field in all children you need to pass a `__all__` key to dictionary. 
 
-You cannot exclude nested models in `Set`s in `pydantic` but you can in `ormar` 
+You cannot exclude nested models in `set`s in `pydantic` but you can in `ormar` 
 (by adding double underscore on relation name i.e. to exclude name of category for a book you can use `exclude={"book__category__name"}`)
 
 `ormar` does not support by index exclusion/ inclusions and accepts a simplified and more user-friendly notation.
@@ -66,14 +66,14 @@ To check how you can include/exclude fields, including nested fields check out [
 
 ### exclude (`ormar` modified)
 
-`exclude: Union[Set, dict] = None`
+`exclude: Union[set, dict] = None`
 
 Set or dictionary of field names to exclude in returned dictionary.
 
 Note that `pydantic` has an uncommon pattern of including/ excluding fields in lists (so also nested models) by an index.
 And if you want to exclude the field in all children you need to pass a `__all__` key to dictionary. 
 
-You cannot exclude nested models in `Set`s in `pydantic` but you can in `ormar` 
+You cannot exclude nested models in `set`s in `pydantic` but you can in `ormar` 
 (by adding double underscore on relation name i.e. to exclude name of category for a book you cen use `exclude={"book__category__name"}`)
 
 `ormar` does not support by index exclusion/ inclusions and accepts a simplified and more user-friendly notation.
@@ -278,7 +278,7 @@ Of course the end result is a string with json representation and not a dictiona
 
 ## get_pydantic()
 
-`get_pydantic(include: Union[Set, dict] = None, exclude: Union[Set, dict] = None)`
+`get_pydantic(include: Union[set, dict] = None, exclude: Union[set, dict] = None)`
 
 This method allows you to generate `pydantic` models from your ormar models without you needing to retype all the fields.
 
@@ -380,7 +380,7 @@ track.album.name # will return 'Malibu'
 
 ## load_all()
 
-`load_all(follow: bool = False, exclude: Union[List, str, Set, dict] = None) -> Model`
+`load_all(follow: bool = False, exclude: Union[List, str, set, dict] = None) -> Model`
 
 Method works like `load()` but also goes through all relations of the `Model` on which the method is called, 
 and reloads them from database.
@@ -511,7 +511,7 @@ await track.delete() # will delete the model from database
 
 ## save_related()
 
-`save_related(follow: bool = False, save_all: bool = False, exclude=Optional[Union[Set, dict]]) -> None`
+`save_related(follow: bool = False, save_all: bool = False, exclude=Optional[Union[set, dict]]) -> None`
 
 Method goes through all relations of the `Model` on which the method is called, 
 and calls `upsert()` method on each model that is **not** saved. 

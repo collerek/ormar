@@ -8,11 +8,11 @@ from typing import (
     Callable,
     List,
     Optional,
-    Set,
     Tuple,
     Type,
     Union,
     cast,
+    dict,
 )
 
 import pydantic
@@ -494,7 +494,7 @@ def update_attrs_and_fields(
     new_attrs: dict,
     model_fields: dict,
     new_model_fields: dict,
-    new_fields: Set,
+    new_fields: set,
 ) -> dict:
     """
     Updates __annotations__, values of model fields (so pydantic FieldInfos)
@@ -509,7 +509,7 @@ def update_attrs_and_fields(
     :param new_model_fields: ormar fields defined in parent classes
     :type new_model_fields: dict[str, BaseField]
     :param new_fields: set of new fields names
-    :type new_fields: Set[str]
+    :type new_fields: set[str]
     """
     key = "__annotations__"
     attrs[key].update(new_attrs[key])

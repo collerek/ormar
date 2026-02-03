@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, List, Optional, Set, cast
+from typing import TYPE_CHECKING, Callable, List, Optional, cast
 
 from ormar import BaseField, ForeignKeyField
 from ormar.models.traversible import NodeList
@@ -14,18 +14,18 @@ class RelationMixin:
 
         ormar_config: OrmarConfig
         __relation_map__: Optional[List[str]]
-        _related_names: Optional[Set]
-        _through_names: Optional[Set]
+        _related_names: Optional[set]
+        _through_names: Optional[set]
         _related_fields: Optional[List]
         get_name: Callable
 
     @classmethod
-    def extract_db_own_fields(cls) -> Set:
+    def extract_db_own_fields(cls) -> set:
         """
         Returns only fields that are stored in the own database table, exclude all
         related fields.
         :return: set of model fields with relation fields excluded
-        :rtype: Set
+        :rtype: set
         """
         related_names = cls.extract_related_names()
         self_fields = {
@@ -57,12 +57,12 @@ class RelationMixin:
         return related_fields
 
     @classmethod
-    def extract_through_names(cls) -> Set[str]:
+    def extract_through_names(cls) -> set[str]:
         """
         Extracts related fields through names which are shortcuts to through models.
 
         :return: set of related through fields names
-        :rtype: Set
+        :rtype: set
         """
         if cls._through_names is not None:
             return cls._through_names
@@ -76,13 +76,13 @@ class RelationMixin:
         return related_names
 
     @classmethod
-    def extract_related_names(cls) -> Set[str]:
+    def extract_related_names(cls) -> set[str]:
         """
         Returns List of fields names for all relations declared on a model.
         List is cached in cls._related_names for quicker access.
 
         :return: set of related fields names
-        :rtype: Set
+        :rtype: set
         """
         if cls._related_names is not None:
             return cls._related_names
@@ -101,12 +101,12 @@ class RelationMixin:
         return related_names
 
     @classmethod
-    def _extract_db_related_names(cls) -> Set:
+    def _extract_db_related_names(cls) -> set:
         """
         Returns only fields that are stored in the own database table, exclude
         related fields that are not stored as foreign keys on given model.
         :return: set of model fields with non fk relation fields excluded
-        :rtype: Set
+        :rtype: set
         """
         related_names = cls.extract_related_names()
         related_names = {

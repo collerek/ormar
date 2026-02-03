@@ -4,7 +4,6 @@ from typing import (
     Generic,
     List,
     Optional,
-    Set,
     Type,
     TypeVar,
 )
@@ -116,12 +115,12 @@ class RelationProxy(Generic[T], List[T]):
         """
         return self._relation_cache[item.__hash__()]
 
-    def _get_list_of_missing_weakrefs(self) -> Set[int]:
+    def _get_list_of_missing_weakrefs(self) -> set[int]:
         """
         Iterates through the list and checks for weakrefs.
 
         :return: The set of missing weakref indices
-        :rtype: Set[int]
+        :rtype: set[int]
         """
         to_remove = set()
         for ind, relation_child in enumerate(self[:]):

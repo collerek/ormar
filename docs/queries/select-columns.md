@@ -27,7 +27,7 @@ Given a sample data like following:
 --8<-- "../docs_src/select_columns/docs001.py"
 ```
 
-You can select specified fields by passing a `str, List[str], Set[str] or dict` with
+You can select specified fields by passing a `str, List[str], set[str] or dict` with
 nested definition.
 
 To include related models use

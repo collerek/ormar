@@ -8,7 +8,6 @@ from typing import (
     Collection,
     List,
     Optional,
-    Set,
     Union,
     cast,
 )
@@ -36,8 +35,8 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
 
     if TYPE_CHECKING:  # pragma: nocover
         _skip_ellipsis: Callable
-        _json_fields: Set[str]
-        _bytes_fields: Set[str]
+        _json_fields: set[str]
+        _bytes_fields: set[str]
         __pydantic_core_schema__: CoreSchema
         __ormar_fields_validators__: Optional[
             dict[str, Union[SchemaValidator, PluggableSchemaValidator]]

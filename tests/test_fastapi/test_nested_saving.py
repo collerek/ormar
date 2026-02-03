@@ -1,4 +1,4 @@
-from typing import Any, Optional, Set, Type, Union, cast
+from typing import Any, Optional, Type, Union, cast
 
 import ormar
 import pytest
@@ -57,7 +57,7 @@ to_exclude_ormar = {
 create_test_database = init_tests(base_ormar_config)
 
 
-def auto_exclude_id_field(to_exclude: Any) -> Union[dict, Set]:
+def auto_exclude_id_field(to_exclude: Any) -> Union[dict, set]:
     if isinstance(to_exclude, dict):
         for key in to_exclude.keys():
             to_exclude[key] = auto_exclude_id_field(to_exclude[key])

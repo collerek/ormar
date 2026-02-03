@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, List, Optional, Set, Tuple, Type, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Type, Union
 
 from ormar.queryset.utils import get_relationship_alias_model_and_str
 
@@ -13,8 +13,8 @@ class Excludable:
     Class that keeps sets of fields to exclude and include
     """
 
-    include: Set = field(default_factory=set)
-    exclude: Set = field(default_factory=set)
+    include: set = field(default_factory=set)
+    exclude: set = field(default_factory=set)
 
     def get_copy(self) -> "Excludable":
         """
@@ -27,7 +27,7 @@ class Excludable:
         _copy.exclude = {x for x in self.exclude}
         return _copy
 
-    def set_values(self, value: Set, is_exclude: bool) -> None:
+    def set_values(self, value: set, is_exclude: bool) -> None:
         """
         Appends the data to include/exclude sets.
 
@@ -116,7 +116,7 @@ class ExcludableItems:
 
     def build(
         self,
-        items: Union[List[str], str, Tuple[str], Set[str], dict],
+        items: Union[List[str], str, Tuple[str], set[str], dict],
         model_cls: Type["Model"],
         is_exclude: bool = False,
     ) -> None:
@@ -127,7 +127,7 @@ class ExcludableItems:
         Each excludable has two sets of values - one to include, one to exclude.
 
         :param items: values to be included or excluded
-        :type items: Union[List[str], str, Tuple[str], Set[str], dict]
+        :type items: Union[List[str], str, Tuple[str], set[str], dict]
         :param model_cls: source model from which relations are constructed
         :type model_cls: ormar.models.metaclass.ModelMetaclass
         :param is_exclude: flag if items should be included or excluded
@@ -159,7 +159,7 @@ class ExcludableItems:
                 )
 
     def _set_excludes(
-        self, items: Set, model_name: str, is_exclude: bool, alias: str = ""
+        self, items: set, model_name: str, is_exclude: bool, alias: str = ""
     ) -> None:
         """
         Sets set of values to be included or excluded for given key and model.
@@ -253,7 +253,7 @@ class ExcludableItems:
             )
 
     def _traverse_list(
-        self, values: Set[str], model_cls: Type["Model"], is_exclude: bool
+        self, values: set[str], model_cls: Type["Model"], is_exclude: bool
     ) -> None:
         """
         Goes through list of values and construct/update Excludables.

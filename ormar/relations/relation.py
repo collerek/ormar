@@ -1,15 +1,5 @@
 from enum import Enum
-from typing import (
-    TYPE_CHECKING,
-    Generic,
-    List,
-    Optional,
-    Set,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Generic, List, Optional, Type, TypeVar, Union, cast
 
 import ormar  # noqa I100
 from ormar.exceptions import RelationshipInstanceError  # noqa I100
@@ -70,7 +60,7 @@ class Relation(Generic[T]):
         self.manager = manager
         self._owner: "Model" = manager.owner
         self._type: RelationType = type_
-        self._to_remove: Set = set()
+        self._to_remove: set = set()
         self.to: Type["T"] = to
         self._through = through
         self.field_name: str = field_name
