@@ -1,16 +1,7 @@
 import base64
 import uuid
 from enum import Enum
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Collection,
-    List,
-    Optional,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, Collection, Optional, Union, cast
 
 from pydantic.plugin._schema_validator import (
     PluggableSchemaValidator,
@@ -435,14 +426,14 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
                     )
         return update_count
 
-    def _get_field_values(self, name: str) -> List:
+    def _get_field_values(self, name: str) -> list:
         """
         Extract field values and ensures it is a list.
 
         :param name: name of the field
         :type name: str
         :return: list of values
-        :rtype: List
+        :rtype: list
         """
         values = getattr(self, name) or []
         if not isinstance(values, list):

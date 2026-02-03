@@ -1,7 +1,7 @@
 import copy
 import string
 from random import choices
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Optional, Type, Union, cast
 
 import pydantic
 from pydantic import BaseModel
@@ -134,7 +134,7 @@ class PydanticMixin(RelationMixin):
             relation_map=cls._skip_ellipsis(relation_map, name, default_return=dict()),
         )
         if field.is_multi or field.virtual:
-            target = List[target]  # type: ignore
+            target = list[target]  # type: ignore
         if field.nullable:
             defaults[name] = None
         return target, defaults
@@ -164,7 +164,7 @@ class PydanticMixin(RelationMixin):
 
     @classmethod
     def copy_selected_validators_type(
-        cls, model: Type[pydantic.BaseModel], fields: List[str], validator_type: str
+        cls, model: Type[pydantic.BaseModel], fields: list[str], validator_type: str
     ) -> None:
         """
         Copy field validators from ormar model to generated pydantic model.

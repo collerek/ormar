@@ -234,8 +234,8 @@ Send for `Model.relation_name.remove()` method for `ManyToMany` relations and re
 
 ### post_bulk_update
 
-`post_bulk_update(sender: Type["Model"], instances: List["Model"], **kwargs)`, 
-Send for `Model.objects.bulk_update(List[objects])` method.
+`post_bulk_update(sender: Type["Model"], instances: list["Model"], **kwargs)`, 
+Send for `Model.objects.bulk_update(list[objects])` method.
 
 
 ## Defining your own signals

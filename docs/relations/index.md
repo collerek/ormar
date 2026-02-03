@@ -33,7 +33,7 @@ class Department(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     # there is a virtual field here like follows
-    courses: Optional[List[Course]] = ormar.ForeignKey(Course, virtual=True)
+    courses: Optional[list[Course]] = ormar.ForeignKey(Course, virtual=True)
     # note that you DO NOT define it yourself, ormar does it for you.
 ```
 
@@ -69,7 +69,7 @@ class Post(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
-    categories: Optional[List[Category]] = ormar.ManyToMany(Category)
+    categories: Optional[list[Category]] = ormar.ManyToMany(Category)
 ```
 
 

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, List, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union
 
 from sqlalchemy import Executable
 
@@ -224,7 +224,7 @@ class Model(ModelRow):
 
         return update_count
 
-    async def update(self: T, _columns: Optional[List[str]] = None, **kwargs: Any) -> T:
+    async def update(self: T, _columns: Optional[list[str]] = None, **kwargs: Any) -> T:
         """
         Performs update of Model instance in the database.
         Fields can be updated before or you can pass them as kwargs.
@@ -234,7 +234,7 @@ class Model(ModelRow):
         Sets model save status to True.
 
         :param _columns: list of columns to update, if None all are updated
-        :type _columns: List
+        :type _columns: list
         :raises ModelPersistenceError: If the pk column is not set
 
         :param kwargs: list of fields to update as field=value pairs
@@ -313,8 +313,8 @@ class Model(ModelRow):
     async def load_all(
         self: T,
         follow: bool = False,
-        exclude: Union[List, str, set, dict, None] = None,
-        order_by: Union[List, str, None] = None,
+        exclude: Union[list, str, set, dict, None] = None,
+        order_by: Union[list, str, None] = None,
     ) -> T:
         """
         Allow to refresh existing Models fields from database.
@@ -333,11 +333,11 @@ class Model(ModelRow):
         Nested relations of those kind need to be loaded manually.
 
         :param order_by: columns by which models should be sorted
-        :type order_by: Union[List, str]
+        :type order_by: Union[list, str]
         :raises NoMatch: If given pk is not found in database.
 
         :param exclude: related models to exclude
-        :type exclude: Union[List, str, set, dict]
+        :type exclude: Union[list, str, set, dict]
         :param follow: flag to trigger deep save -
         by default only directly related models are saved
         with follow=True also related models of related models are saved

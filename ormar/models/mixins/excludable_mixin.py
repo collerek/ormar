@@ -2,7 +2,6 @@ from typing import (
     TYPE_CHECKING,
     AbstractSet,
     Any,
-    List,
     Mapping,
     Optional,
     Type,
@@ -51,9 +50,9 @@ class ExcludableMixin(RelationMixin):
     @staticmethod
     def _populate_pk_column(
         model: Union[Type["Model"], Type["ModelRow"]],
-        columns: List[str],
+        columns: list[str],
         use_alias: bool = False,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Adds primary key column/alias (depends on use_alias flag) to list of
         column names that are selected.
@@ -61,11 +60,11 @@ class ExcludableMixin(RelationMixin):
         :param model: model on columns are selected
         :type model: Type["Model"]
         :param columns: list of columns names
-        :type columns: List[str]
+        :type columns: list[str]
         :param use_alias: flag to set if aliases or field names should be used
         :type use_alias: bool
         :return: list of columns names with pk column in it
-        :rtype: List[str]
+        :rtype: list[str]
         """
         pk_alias = (
             model.get_column_alias(model.ormar_config.pkname)
@@ -84,7 +83,7 @@ class ExcludableMixin(RelationMixin):
         alias: str = "",
         use_alias: bool = False,
         add_pk_columns: bool = True,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Returns list of aliases or field names for given model.
         Aliases/names switch is use_alias flag.
@@ -105,7 +104,7 @@ class ExcludableMixin(RelationMixin):
         :param use_alias: flag if aliases or field names should be used
         :type use_alias: bool
         :return: list of column field names or aliases
-        :rtype: List[str]
+        :rtype: list[str]
         """
         model_excludable = excludable.get(model_cls=model, alias=alias)  # type: ignore
         columns = [

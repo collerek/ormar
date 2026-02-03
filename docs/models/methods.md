@@ -109,7 +109,7 @@ class Item(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     price: float = ormar.Float(default=9.99)
-    categories: List[Category] = ormar.ManyToMany(Category)
+    categories: list[Category] = ormar.ManyToMany(Category)
 
 category = Category(name="Test 2")
 assert category.model_dump() == {'id': None, 'items': [], 'name': 'Test 2',
@@ -146,7 +146,7 @@ class Item(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     price: float = ormar.Float(default=9.99)
-    categories: List[Category] = ormar.ManyToMany(Category)
+    categories: list[Category] = ormar.ManyToMany(Category)
     
 category = Category()
 # note that Integer pk is by default autoincrement so optional
@@ -182,7 +182,7 @@ class Item(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     price: float = ormar.Float(default=9.99)
-    categories: List[Category] = ormar.ManyToMany(Category)
+    categories: list[Category] = ormar.ManyToMany(Category)
 
 
 category = Category(name=None)
@@ -239,7 +239,7 @@ class Item(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    categories: List[Category] = ormar.ManyToMany(Category)
+    categories: list[Category] = ormar.ManyToMany(Category)
 
 # tree defining the models
 item_dict = {
@@ -348,7 +348,7 @@ class Item(BaseModel):
     
 class Category(BaseModel):
     id: Optional[int]
-    items: Optional[List[Item]]
+    items: Optional[list[Item]]
 ```
 
 Of course, you can use also deeply nested structures and ormar will generate it's pydantic equivalent for you (in a way that exclude loops).
@@ -380,7 +380,7 @@ track.album.name # will return 'Malibu'
 
 ## load_all()
 
-`load_all(follow: bool = False, exclude: Union[List, str, set, dict] = None) -> Model`
+`load_all(follow: bool = False, exclude: Union[list, str, set, dict] = None) -> Model`
 
 Method works like `load()` but also goes through all relations of the `Model` on which the method is called, 
 and reloads them from database.
@@ -432,7 +432,7 @@ await track.save() # will raise integrity error as pk is populated
 
 ## update()
 
-`update(_columns: List[str] = None, **kwargs) -> self`
+`update(_columns: list[str] = None, **kwargs) -> self`
 
 You can update models by using `QuerySet.update()` method or by updating your model attributes (fields) and calling `update()` method.
 

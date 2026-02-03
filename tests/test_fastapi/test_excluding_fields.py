@@ -1,11 +1,9 @@
-from typing import List
-
-import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
+import ormar
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 
@@ -25,7 +23,7 @@ class Item(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    categories: List[Category] = ormar.ManyToMany(Category)
+    categories: list[Category] = ormar.ManyToMany(Category)
 
 
 create_test_database = init_tests(base_ormar_config)

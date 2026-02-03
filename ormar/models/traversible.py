@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, List, Optional, Type
+from typing import TYPE_CHECKING, Any, Optional, Type
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models.mixins.relation_mixin import RelationMixin
@@ -10,7 +10,7 @@ class NodeList:
     """
 
     def __init__(self) -> None:
-        self.node_list: List["Node"] = []
+        self.node_list: list["Node"] = []
 
     def __getitem__(self, item: Any) -> Any:
         return self.node_list.__getitem__(item)
@@ -84,7 +84,7 @@ class Node:
         self.relation_name = relation_name
         self.node_class = node_class
         self.parent_node = parent_node
-        self.visited_children: List["Node"] = []
+        self.visited_children: list["Node"] = []
         if self.parent_node:
             self.parent_node.visited_children.append(self)
 

@@ -2,7 +2,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ForwardRef,
-    List,
     Optional,
     Type,
     Union,
@@ -52,7 +51,7 @@ def populate_m2m_params_based_on_to_model(
     :type to: Model class
     :param nullable: marks field as optional/ required
     :type nullable: bool
-    :return: tuple[List, Any]
+    :return: tuple[list, Any]
     :rtype: tuple with target pydantic type and target col type
     """
     to_field = to.ormar_config.model_fields[to.ormar_config.pkname]
@@ -61,8 +60,8 @@ def populate_m2m_params_based_on_to_model(
         to_field.__type__,  # type: ignore
         to,  # type: ignore
         pk_only_model,  # type: ignore
-        List[to],  # type: ignore
-        List[pk_only_model],  # type: ignore
+        list[to],  # type: ignore
+        list[pk_only_model],  # type: ignore
     ]
     __type__ = (
         base_type  # type: ignore
@@ -137,9 +136,9 @@ def ManyToMany(  # type: ignore
     pk_only_model = None
     if to.__class__ == ForwardRef:
         __type__ = (
-            Union[to, List[to]]  # type: ignore
+            Union[to, list[to]]  # type: ignore
             if not nullable
-            else Optional[Union[to, List[to]]]  # type: ignore
+            else Optional[Union[to, list[to]]]  # type: ignore
         )
         column_type = None
     else:
@@ -278,7 +277,7 @@ class ManyToManyField(  # type: ignore
         :param use_alias: use db names aliases or model fields
         :type use_alias: bool
         :return: name or names of the related columns/ fields
-        :rtype: Union[str, List[str]]
+        :rtype: Union[str, list[str]]
         """
         pk_field = self.owner.ormar_config.model_fields[self.owner.ormar_config.pkname]
         result = pk_field.get_alias() if use_alias else pk_field.name
@@ -299,14 +298,14 @@ class ManyToManyField(  # type: ignore
         sub_field = self.through.ormar_config.model_fields[field_name]
         return sub_field.get_alias()
 
-    def get_related_field_name(self) -> Union[str, List[str]]:
+    def get_related_field_name(self) -> Union[str, list[str]]:
         """
         Returns name of the relation field that should be used in prefetch query.
         This field is later used to register relation in prefetch query,
         populate relations dict, and populate nested model in prefetch query.
 
         :return: name(s) of the field
-        :rtype: Union[str, List[str]]
+        :rtype: Union[str, list[str]]
         """
         if self.self_reference and self.self_reference_primary == self.name:
             return self.default_target_field_name()

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Type, cast
+from typing import TYPE_CHECKING, Type, cast
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import ForeignKeyField, Model
@@ -15,7 +15,7 @@ class ReverseAliasResolver:
         self,
         model_cls: Type["Model"],
         excludable: "ExcludableItems",
-        select_related: List[str],
+        select_related: list[str],
         exclude_through: bool = False,
     ) -> None:
         self.select_related = select_related
@@ -28,16 +28,16 @@ class ReverseAliasResolver:
 
         self._fields: dict[str, "ForeignKeyField"] = dict()
         self._prefixes: dict[str, str] = dict()
-        self._previous_prefixes: List[str] = [""]
+        self._previous_prefixes: list[str] = [""]
         self._resolved_names: dict[str, str] = dict()
 
-    def resolve_columns(self, columns_names: List[str]) -> dict:
+    def resolve_columns(self, columns_names: list[str]) -> dict:
         """
         Takes raw query prefixed column and resolves the prefixes to
         relation strings (relation names connected with dunders).
 
         :param columns_names: list of column names with prefixes from query
-        :type columns_names: List[str]
+        :type columns_names: list[str]
         :return: dictionary of prefix: resolved names
         :rtype: Union[None, dict[str, str]]
         """

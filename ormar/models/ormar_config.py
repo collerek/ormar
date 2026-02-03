@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Optional, Type, Union
 
 import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -21,10 +21,10 @@ class OrmarConfig:
         database: DatabaseConnection
         engine: AsyncEngine
         tablename: str
-        order_by: List[str]
+        order_by: list[str]
         abstract: bool
-        exclude_parent_fields: List[str]
-        constraints: List[ColumnCollectionConstraint]
+        exclude_parent_fields: list[str]
+        constraints: list[ColumnCollectionConstraint]
 
     def __init__(
         self,
@@ -32,11 +32,11 @@ class OrmarConfig:
         database: Optional[DatabaseConnection] = None,
         engine: Optional[AsyncEngine] = None,
         tablename: Optional[str] = None,
-        order_by: Optional[List[str]] = None,
+        order_by: Optional[list[str]] = None,
         abstract: bool = False,
         queryset_class: Type[QuerySet] = QuerySet,
         extra: Extra = Extra.forbid,
-        constraints: Optional[List[ColumnCollectionConstraint]] = None,
+        constraints: Optional[list[ColumnCollectionConstraint]] = None,
     ) -> None:
         self.pkname = None  # type: ignore
         self.metadata = metadata  # type: ignore
@@ -44,7 +44,7 @@ class OrmarConfig:
         self.engine = engine  # type: ignore
         self.tablename = tablename  # type: ignore
         self.orders_by = order_by or []
-        self.columns: List[sqlalchemy.Column] = []
+        self.columns: list[sqlalchemy.Column] = []
         self.constraints = constraints or []
         self.model_fields: dict[
             str, Union[BaseField, ForeignKeyField, ManyToManyField]
@@ -64,11 +64,11 @@ class OrmarConfig:
         database: Optional[DatabaseConnection] = None,
         engine: Optional[AsyncEngine] = None,
         tablename: Optional[str] = None,
-        order_by: Optional[List[str]] = None,
+        order_by: Optional[list[str]] = None,
         abstract: Optional[bool] = None,
         queryset_class: Optional[Type[QuerySet]] = None,
         extra: Optional[Extra] = None,
-        constraints: Optional[List[ColumnCollectionConstraint]] = None,
+        constraints: Optional[list[ColumnCollectionConstraint]] = None,
     ) -> "OrmarConfig":
         return OrmarConfig(
             metadata=metadata or self.metadata,

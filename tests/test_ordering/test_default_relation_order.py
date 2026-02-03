@@ -1,10 +1,10 @@
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID, uuid4
 
-import ormar
 import pytest
 import pytest_asyncio
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -43,7 +43,7 @@ class Human(ormar.Model):
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
-    pets: List[Animal] = ormar.ManyToMany(
+    pets: list[Animal] = ormar.ManyToMany(
         Animal,
         related_name="care_takers",
         orders_by=["specie", "-name"],

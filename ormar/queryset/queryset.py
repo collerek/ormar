@@ -4,7 +4,6 @@ from typing import (
     Any,
     AsyncGenerator,
     Generic,
-    List,
     Optional,
     Sequence,
     Type,
@@ -47,14 +46,14 @@ class QuerySet(Generic[T]):
     def __init__(  # noqa CFQ002
         self,
         model_cls: Optional[Type["T"]] = None,
-        filter_clauses: Optional[List] = None,
-        exclude_clauses: Optional[List] = None,
-        select_related: Optional[List] = None,
+        filter_clauses: Optional[list] = None,
+        exclude_clauses: Optional[list] = None,
+        select_related: Optional[list] = None,
         limit_count: Optional[int] = None,
         offset: Optional[int] = None,
         excludable: Optional["ExcludableItems"] = None,
-        order_bys: Optional[List] = None,
-        prefetch_related: Optional[List] = None,
+        order_bys: Optional[list] = None,
+        prefetch_related: Optional[list] = None,
         limit_raw_sql: bool = False,
         proxy_source_model: Optional[Type["Model"]] = None,
     ) -> None:
@@ -96,14 +95,14 @@ class QuerySet(Generic[T]):
 
     def rebuild_self(  # noqa: CFQ002
         self,
-        filter_clauses: Optional[List] = None,
-        exclude_clauses: Optional[List] = None,
-        select_related: Optional[List] = None,
+        filter_clauses: Optional[list] = None,
+        exclude_clauses: Optional[list] = None,
+        select_related: Optional[list] = None,
         limit_count: Optional[int] = None,
         offset: Optional[int] = None,
         excludable: Optional["ExcludableItems"] = None,
-        order_bys: Optional[List] = None,
-        prefetch_related: Optional[List] = None,
+        order_bys: Optional[list] = None,
+        prefetch_related: Optional[list] = None,
         limit_raw_sql: Optional[bool] = None,
         proxy_source_model: Optional[Type["Model"]] = None,
     ) -> "QuerySet":
@@ -140,17 +139,17 @@ class QuerySet(Generic[T]):
         )
 
     async def _prefetch_related_models(
-        self, models: List["T"], rows: List
-    ) -> List["T"]:
+        self, models: list["T"], rows: list
+    ) -> list["T"]:
         """
         Performs prefetch query for selected models names.
 
         :param models: list of already parsed main Models from main query
-        :type models: List[Model]
+        :type models: list[Model]
         :param rows: database rows from main query
-        :type rows: List[sqlalchemy.engine.result.RowProxy]
+        :type rows: list[sqlalchemy.engine.result.RowProxy]
         :return: list of models with prefetch models populated
-        :rtype: List[Model]
+        :rtype: list[Model]
         """
         query = PrefetchQuery(
             model_cls=self.model,
@@ -161,14 +160,14 @@ class QuerySet(Generic[T]):
         )
         return await query.prefetch_related(models=models)  # type: ignore
 
-    async def _process_query_result_rows(self, rows: List) -> List["T"]:
+    async def _process_query_result_rows(self, rows: list) -> list["T"]:
         """
         Process database rows and initialize ormar Model from each of the rows.
 
         :param rows: list of database rows from query result
-        :type rows: List[sqlalchemy.engine.result.RowProxy]
+        :type rows: list[sqlalchemy.engine.result.RowProxy]
         :return: list of models
-        :rtype: List[Model]
+        :rtype: list[Model]
         """
         result_rows = []
         for i, row in enumerate(rows):
@@ -186,18 +185,18 @@ class QuerySet(Generic[T]):
 
         if result_rows:
             return self.model.merge_instances_list(result_rows)  # type: ignore
-        return cast(List["T"], result_rows)
+        return cast(list["T"], result_rows)
 
     def _resolve_filter_groups(
         self, groups: Any
-    ) -> tuple[List[FilterGroup], List[str]]:
+    ) -> tuple[list[FilterGroup], list[str]]:
         """
         Resolves filter groups to populate FilterAction params in group tree.
 
         :param groups: tuple of FilterGroups
         :type groups: Any
         :return: list of resolver groups
-        :rtype: tuple[List[FilterGroup], List[str]]
+        :rtype: tuple[list[FilterGroup], list[str]]
         """
         filter_groups = []
         select_related = self._select_related
@@ -225,7 +224,7 @@ class QuerySet(Generic[T]):
         Verifies if the result has one and only one row.
 
         :param rows: one element list of Models
-        :type rows: List[Model]
+        :type rows: list[Model]
         """
         if not rows or rows[0] is None:
             raise NoMatch()
@@ -246,7 +245,7 @@ class QuerySet(Generic[T]):
         self,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-        order_bys: Optional[List] = None,
+        order_bys: Optional[list] = None,
     ) -> sqlalchemy.sql.Select:
         """
         Constructs the actual database query used in the QuerySet.
@@ -257,7 +256,7 @@ class QuerySet(Generic[T]):
         :param offset: number to offset by
         :type offset: int
         :param order_bys: list of order-by fields names
-        :type order_bys: List
+        :type order_bys: list
         :return: built sqlalchemy select expression
         :rtype: sqlalchemy.sql.selectable.Select
         """
@@ -352,7 +351,7 @@ class QuerySet(Generic[T]):
         """
         return self.filter(_exclude=True, *args, **kwargs)
 
-    def select_related(self, related: Union[List, str, FieldAccessor]) -> "QuerySet[T]":
+    def select_related(self, related: Union[list, str, FieldAccessor]) -> "QuerySet[T]":
         """
         Allows to prefetch related models during the same query.
 
@@ -365,7 +364,7 @@ class QuerySet(Generic[T]):
         To chain related `Models` relation use double underscores between names.
 
         :param related: list of relation field names, can be linked by '__' to nest
-        :type related: Union[List, str]
+        :type related: Union[list, str]
         :return: QuerySet
         :rtype: QuerySet
         """
@@ -406,7 +405,7 @@ class QuerySet(Generic[T]):
         return self.rebuild_self(select_related=relations)
 
     def prefetch_related(
-        self, related: Union[List, str, FieldAccessor]
+        self, related: Union[list, str, FieldAccessor]
     ) -> "QuerySet[T]":
         """
         Allows to prefetch related models during query - but opposite to
@@ -421,7 +420,7 @@ class QuerySet(Generic[T]):
         To chain related `Models` relation use double underscores between names.
 
         :param related: list of relation field names, can be linked by '__' to nest
-        :type related: Union[List, str]
+        :type related: Union[list, str]
         :return: QuerySet
         :rtype: QuerySet
         """
@@ -436,7 +435,7 @@ class QuerySet(Generic[T]):
         return self.rebuild_self(prefetch_related=related)
 
     def fields(
-        self, columns: Union[List, str, set, dict], _is_exclude: bool = False
+        self, columns: Union[list, str, set, dict], _is_exclude: bool = False
     ) -> "QuerySet[T]":
         """
         With `fields()` you can select subset of model columns to limit the data load.
@@ -446,7 +445,7 @@ class QuerySet(Generic[T]):
         as well as `select_related` and `prefetch_related`
         models (with nested notation).
 
-        You can select specified fields by passing a `str, List[str], set[str] or
+        You can select specified fields by passing a `str, list[str], set[str] or
         dict` with nested definition.
 
         To include related models use notation
@@ -478,7 +477,7 @@ class QuerySet(Generic[T]):
         :param _is_exclude: flag if it's exclude or include operation
         :type _is_exclude: bool
         :param columns: columns to include
-        :type columns: Union[List, str, set, dict]
+        :type columns: Union[list, str, set, dict]
         :return: QuerySet
         :rtype: QuerySet
         """
@@ -491,7 +490,7 @@ class QuerySet(Generic[T]):
 
         return self.rebuild_self(excludable=excludable)
 
-    def exclude_fields(self, columns: Union[List, str, set, dict]) -> "QuerySet[T]":
+    def exclude_fields(self, columns: Union[list, str, set, dict]) -> "QuerySet[T]":
         """
         With `exclude_fields()` you can select subset of model columns that will
         be excluded to limit the data load.
@@ -514,13 +513,13 @@ class QuerySet(Generic[T]):
         if explicitly excluded.
 
         :param columns: columns to exclude
-        :type columns: Union[List, str, set, dict]
+        :type columns: Union[list, str, set, dict]
         :return: QuerySet
         :rtype: QuerySet
         """
         return self.fields(columns=columns, _is_exclude=True)
 
-    def order_by(self, columns: Union[List, str, OrderAction]) -> "QuerySet[T]":
+    def order_by(self, columns: Union[list, str, OrderAction]) -> "QuerySet[T]":
         """
         With `order_by()` you can order the results from database based on your
         choice of fields.
@@ -548,7 +547,7 @@ class QuerySet(Generic[T]):
         To sort in descending order provide a hyphen in front of the field name
 
         :param columns: columns by which models should be sorted
-        :type columns: Union[List, str]
+        :type columns: Union[list, str]
         :return: QuerySet
         :rtype: QuerySet
         """
@@ -569,11 +568,11 @@ class QuerySet(Generic[T]):
 
     async def values(
         self,
-        fields: Union[List, str, set, dict, None] = None,
+        fields: Union[list, str, set, dict, None] = None,
         exclude_through: bool = False,
         _as_dict: bool = True,
         _flatten: bool = False,
-    ) -> List:
+    ) -> list:
         """
         Return a list of dictionaries with column values in order of the fields
         passed or all fields from queried models.
@@ -590,7 +589,7 @@ class QuerySet(Generic[T]):
         :param _as_dict: internal parameter if return dict or tuples
         :type _as_dict: bool
         :param fields: field name or list of field names to extract from db
-        :type fields:  Union[List, str, set, dict]
+        :type fields:  Union[list, str, set, dict]
         """
         if fields:
             return await self.fields(columns=fields).values(
@@ -623,10 +622,10 @@ class QuerySet(Generic[T]):
 
     async def values_list(
         self,
-        fields: Union[List, str, set, dict, None] = None,
+        fields: Union[list, str, set, dict, None] = None,
         flatten: bool = False,
         exclude_through: bool = False,
-    ) -> List:
+    ) -> list:
         """
         Return a list of tuples with column values in order of the fields passed or
         all fields from queried models.
@@ -642,7 +641,7 @@ class QuerySet(Generic[T]):
         :param exclude_through: flag if through models should be excluded
         :type exclude_through: bool
         :param fields: field name or list of field names to extract from db
-        :type fields: Union[str, List[str]]
+        :type fields: Union[str, list[str]]
         :param flatten: when one field is passed you can flatten the list of tuples
         :type flatten: bool
         """
@@ -693,7 +692,7 @@ class QuerySet(Generic[T]):
             result = await executor.fetch_val(expr)  # type: ignore
             return int(result) if result is not None else 0
 
-    async def _query_aggr_function(self, func_name: str, columns: List) -> Any:
+    async def _query_aggr_function(self, func_name: str, columns: list) -> Any:
         func = getattr(sqlalchemy.func, func_name)
         select_actions = [
             SelectAction(select_str=column, model_cls=self.model) for column in columns
@@ -711,7 +710,7 @@ class QuerySet(Generic[T]):
             result = await executor.fetch_one(expr)  # type: ignore
         return dict(result) if len(result) > 1 else result[columns[0]]  # type: ignore
 
-    async def max(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
+    async def max(self, columns: Union[str, list[str]]) -> Any:  # noqa: A003
         """
         Returns max value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -723,7 +722,7 @@ class QuerySet(Generic[T]):
             columns = [columns]
         return await self._query_aggr_function(func_name="max", columns=columns)
 
-    async def min(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
+    async def min(self, columns: Union[str, list[str]]) -> Any:  # noqa: A003
         """
         Returns min value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -735,7 +734,7 @@ class QuerySet(Generic[T]):
             columns = [columns]
         return await self._query_aggr_function(func_name="min", columns=columns)
 
-    async def sum(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
+    async def sum(self, columns: Union[str, list[str]]) -> Any:  # noqa: A003
         """
         Returns sum value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -747,13 +746,13 @@ class QuerySet(Generic[T]):
             columns = [columns]
         return await self._query_aggr_function(func_name="sum", columns=columns)
 
-    async def avg(self, columns: Union[str, List[str]]) -> Any:
+    async def avg(self, columns: Union[str, list[str]]) -> Any:
         """
         Returns avg value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
 
         :return: avg value of columns
-        :rtype: Union[int, float, List]
+        :rtype: Union[int, float, list]
         """
         if not isinstance(columns, list):
             columns = [columns]
@@ -1048,7 +1047,7 @@ class QuerySet(Generic[T]):
         model = await self.get(pk=kwargs[pk_name])
         return await model.update(**kwargs)
 
-    async def all(self, *args: Any, **kwargs: Any) -> List["T"]:  # noqa: A003
+    async def all(self, *args: Any, **kwargs: Any) -> list["T"]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 
@@ -1060,7 +1059,7 @@ class QuerySet(Generic[T]):
         :param kwargs: fields names and proper value types
         :type kwargs: Any
         :return: list of returned models
-        :rtype: List[Model]
+        :rtype: list[Model]
         """
         if kwargs or args:
             return await self.filter(*args, **kwargs).all()
@@ -1140,7 +1139,7 @@ class QuerySet(Generic[T]):
         instance = await instance.save()
         return instance
 
-    async def bulk_create(self, objects: List["T"]) -> None:
+    async def bulk_create(self, objects: list["T"]) -> None:
         """
         Performs a bulk create in one database session to speed up the process.
 
@@ -1151,7 +1150,7 @@ class QuerySet(Generic[T]):
         Bulk operations do not send signals.
 
         :param objects: list of ormar models already initialized and ready to save.
-        :type objects: List[Model]
+        :type objects: list[Model]
         """
 
         if not objects:
@@ -1173,7 +1172,7 @@ class QuerySet(Generic[T]):
             obj.set_save_status(True)
 
     async def bulk_update(  # noqa:  CCR001
-        self, objects: List["T"], columns: Optional[List[str]] = None
+        self, objects: list["T"], columns: Optional[list[str]] = None
     ) -> None:
         """
         Performs bulk update in one database session to speed up the process.
@@ -1188,9 +1187,9 @@ class QuerySet(Generic[T]):
         Bulk operations do not send signals.
 
         :param objects: list of ormar models
-        :type objects: List[Model]
+        :type objects: list[Model]
         :param columns: list of columns to update
-        :type columns: List[str]
+        :type columns: list[str]
         """
         if not objects:
             raise ModelListEmptyError("Bulk update objects are empty!")

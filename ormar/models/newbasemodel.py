@@ -5,7 +5,6 @@ from typing import (
     TYPE_CHECKING,
     AbstractSet,
     Any,
-    List,
     Literal,
     Mapping,
     MutableSequence,
@@ -75,7 +74,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     if TYPE_CHECKING:  # pragma no cover
         pk: Any
-        __relation_map__: Optional[List[str]]
+        __relation_map__: Optional[list[str]]
         __cached_hash__: Optional[int]
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
@@ -224,7 +223,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :type new_hash: int
         """
 
-        def _update_cache(relations: List[Relation], recurse: bool = True) -> None:
+        def _update_cache(relations: list[Relation], recurse: bool = True) -> None:
             for relation in relations:
                 relation_proxy = relation.get()
 
@@ -527,8 +526,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
     @staticmethod
     def _get_not_excluded_fields(
-        fields: Union[List, set], include: Optional[dict], exclude: Optional[dict]
-    ) -> List:
+        fields: Union[list, set], include: Optional[dict], exclude: Optional[dict]
+    ) -> list:
         """
         Returns related field names applying on them include and exclude set.
 
@@ -537,7 +536,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :param exclude: fields to exclude
         :type exclude: Union[set, dict, None]
         :return:
-        :rtype: List of fields with relations that is not excluded
+        :rtype: list of fields with relations that is not excluded
         """
         fields = [*fields] if not isinstance(fields, list) else fields
         if include:
@@ -562,18 +561,18 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude: Union[set, dict, None],
         exclude_primary_keys: bool,
         exclude_through_models: bool,
-    ) -> List:
+    ) -> list:
         """
         Converts list of models into list of dictionaries.
 
-        :param models: List of models
-        :type models: List
+        :param models: list of models
+        :type models: list
         :param include: fields to include
         :type include: Union[set, dict, None]
         :param exclude: fields to exclude
         :type exclude: Union[set, dict, None]
         :return: list of models converted to dictionaries
-        :rtype: List[dict]
+        :rtype: list[dict]
         """
         result = []
         for model in models:

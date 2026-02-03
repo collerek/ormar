@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING, Optional, Sequence, Type, Union
 from weakref import proxy
 
 from ormar.relations.relation import Relation, RelationType
@@ -16,7 +16,7 @@ class RelationsManager:
 
     def __init__(
         self,
-        related_fields: Optional[List["ForeignKeyField"]] = None,
+        related_fields: Optional[list["ForeignKeyField"]] = None,
         owner: Optional["Model"] = None,
     ) -> None:
         self.owner = proxy(owner)
@@ -49,7 +49,7 @@ class RelationsManager:
         :param name: name of the relation
         :type name: str
         :return: related model or list of related models if set
-        :rtype: Optional[Union[Model, List[Model]]
+        :rtype: Optional[Union[Model, list[Model]]
         """
         relation = self._relations.get(name, None)
         if relation is not None:

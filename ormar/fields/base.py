@@ -1,13 +1,4 @@
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    List,
-    Literal,
-    Optional,
-    Type,
-    Union,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, Literal, Optional, Type, Union, overload
 
 import sqlalchemy
 from pydantic.fields import FieldInfo, _Unset
@@ -42,7 +33,7 @@ class BaseField(FieldInfo):
         self.related_name = kwargs.pop("related_name", None)
 
         self.column_type: sqlalchemy.Column = kwargs.pop("column_type", None)
-        self.constraints: List = kwargs.pop("constraints", list())
+        self.constraints: list = kwargs.pop("constraints", list())
         self.name: str = kwargs.pop("name", None)
         self.db_alias: str = kwargs.pop("alias", None)
 
@@ -78,8 +69,8 @@ class BaseField(FieldInfo):
         self.self_reference_primary: Optional[str] = kwargs.pop(
             "self_reference_primary", None
         )
-        self.orders_by: Optional[List[str]] = kwargs.pop("orders_by", None)
-        self.related_orders_by: Optional[List[str]] = kwargs.pop(
+        self.orders_by: Optional[list[str]] = kwargs.pop("orders_by", None)
+        self.related_orders_by: Optional[list[str]] = kwargs.pop(
             "related_orders_by", None
         )
 
@@ -257,14 +248,14 @@ class BaseField(FieldInfo):
             return self.autoincrement
         return False
 
-    def construct_constraints(self) -> List:
+    def construct_constraints(self) -> list:
         """
         Converts list of ormar constraints into sqlalchemy ForeignKeys.
         Has to be done dynamically as sqlalchemy binds ForeignKey to the table.
         And we need a new ForeignKey for subclasses of current model
 
-        :return: List of sqlalchemy foreign keys - by default one.
-        :rtype: List[sqlalchemy.schema.ForeignKey]
+        :return: list of sqlalchemy foreign keys - by default one.
+        :rtype: list[sqlalchemy.schema.ForeignKey]
         """
         constraints = [
             sqlalchemy.ForeignKey(

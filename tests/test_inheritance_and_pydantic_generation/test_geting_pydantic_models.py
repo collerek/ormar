@@ -1,9 +1,9 @@
-from typing import ForwardRef, List, Optional
+from typing import ForwardRef, Optional
 
-import ormar
 import pydantic
 from pydantic_core import PydanticUndefined
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -91,7 +91,7 @@ def test_getting_pydantic_model():
     )
     assert (
         PydanticCategory.model_fields["items"].annotation
-        == Optional[List[PydanticItem]]
+        == Optional[list[PydanticItem]]
     )
     assert issubclass(PydanticItem, pydantic.BaseModel)
     assert not PydanticItem.model_fields["name"].is_required()

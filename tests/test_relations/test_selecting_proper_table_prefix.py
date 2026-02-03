@@ -1,8 +1,8 @@
-from typing import List, Optional
+from typing import Optional
 
-import ormar
 import pytest
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -29,7 +29,7 @@ class Session(ormar.Model):
     name: str = ormar.String(max_length=255, index=True)
     some_text: str = ormar.Text()
     some_other_text: Optional[str] = ormar.Text(nullable=True)
-    students: Optional[List[User]] = ormar.ManyToMany(User, through=Signup)
+    students: Optional[list[User]] = ormar.ManyToMany(User, through=Signup)
 
 
 create_test_database = init_tests(base_ormar_config)

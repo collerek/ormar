@@ -108,9 +108,9 @@ def group_related_list(list_: list) -> dict:
     Result dictionary is sorted by length of the values and by key
 
     :param list_: list of related models used in select related
-    :type list_: List[str]
+    :type list_: list[str]
     :return: list converted to dictionary to avoid repetition and group nested models
-    :rtype: dict[str, List]
+    :rtype: dict[str, list]
     """
     result_dict: dict[str, Any] = dict()
     list_.sort(key=lambda x: x.split("__")[0])

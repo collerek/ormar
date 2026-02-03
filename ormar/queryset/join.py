@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, List, Optional, Type, cast
+from typing import TYPE_CHECKING, Any, Optional, Type, cast
 
 import sqlalchemy
 from sqlalchemy import TextClause, text
@@ -16,11 +16,11 @@ if TYPE_CHECKING:  # pragma no cover
 class SqlJoin:
     def __init__(  # noqa:  CFQ002
         self,
-        used_aliases: List,
+        used_aliases: list,
         select_from: sqlalchemy.sql.Select,
-        columns: List[sqlalchemy.Column],
+        columns: list[sqlalchemy.Column],
         excludable: "ExcludableItems",
-        order_columns: Optional[List["OrderAction"]],
+        order_columns: Optional[list["OrderAction"]],
         sorted_orders: dict,
         main_model: Type["Model"],
         relation_name: str,
@@ -133,7 +133,7 @@ class SqlJoin:
 
         return text(f"{left_part}={right_part}")
 
-    def build_join(self) -> tuple[List, sqlalchemy.sql.Select, List, dict]:
+    def build_join(self) -> tuple[list, sqlalchemy.sql.Select, list, dict]:
         """
         Main external access point for building a join.
         Splits the join definition, updates fields and exclude_fields if needed,
@@ -141,7 +141,7 @@ class SqlJoin:
         used_aliases and sort_orders.
 
         :return: list of used aliases, select from, list of aliased columns, sort orders
-        :rtype: tuple[List[str], Join, List[TextClause], dict]
+        :rtype: tuple[list[str], Join, list[TextClause], dict]
         """
         if self.target_field.is_multi:
             self._process_m2m_through_table()

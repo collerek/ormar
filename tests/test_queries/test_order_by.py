@@ -1,8 +1,8 @@
-from typing import List, Optional
+from typing import Optional
 
-import ormar
 import pytest
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -67,7 +67,7 @@ class User(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    cars: List[Car] = ormar.ManyToMany(Car)
+    cars: list[Car] = ormar.ManyToMany(Car)
 
 
 create_test_database = init_tests(base_ormar_config)

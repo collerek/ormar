@@ -1,10 +1,10 @@
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import Optional, Union
 
-import ormar as orm
 import pydantic
 import pytest
 
+import ormar as orm
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -104,7 +104,7 @@ class Project(orm.Model):
     name: str = orm.String(max_length=100)
     description: str = orm.Text(default="")
     git_url: str = orm.String(max_length=500, default="")
-    labels: Optional[Union[List[Label], Label]] = orm.ManyToMany(
+    labels: Optional[Union[list[Label], Label]] = orm.ManyToMany(
         Label, through=ProjectLabel, ondelete="CASCADE", onupdate="CASCADE"
     )
     changelog_jira_tag: str = orm.String(max_length=100, default="")
@@ -176,10 +176,10 @@ class Commit(orm.Model):
     message: str = orm.Text(default="")
     url = orm.String(max_length=500, default="")
     author_name = orm.String(max_length=500, default="")
-    labels: Optional[Union[List[Label], Label]] = orm.ManyToMany(
+    labels: Optional[Union[list[Label], Label]] = orm.ManyToMany(
         Label, through=CommitLabel, ondelete="CASCADE", onupdate="CASCADE"
     )
-    issues: Optional[Union[List[Issue], Issue]] = orm.ManyToMany(
+    issues: Optional[Union[list[Issue], Issue]] = orm.ManyToMany(
         Issue, through=CommitIssue, ondelete="CASCADE", onupdate="CASCADE"
     )
 
@@ -195,13 +195,13 @@ class MergeRequest(orm.Model):
     description: str = orm.Text(default="")
     source: Branch = orm.ForeignKey(Branch, related_name="source")
     target: Branch = orm.ForeignKey(Branch, related_name="target")
-    labels: Optional[Union[List[Label], Label]] = orm.ManyToMany(
+    labels: Optional[Union[list[Label], Label]] = orm.ManyToMany(
         Label, through=MergeRequestLabel, ondelete="CASCADE", onupdate="CASCADE"
     )
-    commits: Optional[Union[List[Commit], Commit]] = orm.ManyToMany(
+    commits: Optional[Union[list[Commit], Commit]] = orm.ManyToMany(
         Commit, through=MergeRequestCommit, ondelete="CASCADE", onupdate="CASCADE"
     )
-    issues: Optional[Union[List[Issue], Issue]] = orm.ManyToMany(
+    issues: Optional[Union[list[Issue], Issue]] = orm.ManyToMany(
         Issue, through=MergeRequestIssue, ondelete="CASCADE", onupdate="CASCADE"
     )
     project: Project = orm.ForeignKey(Project, ondelete="CASCADE", onupdate="CASCADE")
@@ -216,10 +216,10 @@ class Push(orm.Model):
     )
     has_locking_changes: bool = orm.Boolean(default=False)
     sha: str = orm.String(max_length=200)
-    labels: Optional[Union[List[Label], Label]] = orm.ManyToMany(
+    labels: Optional[Union[list[Label], Label]] = orm.ManyToMany(
         Label, through=PushLabel, ondelete="CASCADE", onupdate="CASCADE"
     )
-    commits: Optional[Union[List[Commit], Commit]] = orm.ManyToMany(
+    commits: Optional[Union[list[Commit], Commit]] = orm.ManyToMany(
         Commit,
         through=PushCommit,
         through_relation_name="push",
@@ -240,7 +240,7 @@ class Tag(orm.Model):
     project: Project = orm.ForeignKey(Project, ondelete="CASCADE", onupdate="CASCADE")
     title: str = orm.String(max_length=200, default="")
     description: str = orm.Text(default="")
-    commits: Optional[Union[List[Commit], Commit]] = orm.ManyToMany(
+    commits: Optional[Union[list[Commit], Commit]] = orm.ManyToMany(
         Commit,
         through=TagCommit,
         through_relation_name="tag",
@@ -248,10 +248,10 @@ class Tag(orm.Model):
         ondelete="CASCADE",
         onupdate="CASCADE",
     )
-    issues: Optional[Union[List[Issue], Issue]] = orm.ManyToMany(
+    issues: Optional[Union[list[Issue], Issue]] = orm.ManyToMany(
         Issue, through=TagIssue, ondelete="CASCADE", onupdate="CASCADE"
     )
-    labels: Optional[Union[List[Label], Label]] = orm.ManyToMany(
+    labels: Optional[Union[list[Label], Label]] = orm.ManyToMany(
         Label, through=TagLabel, ondelete="CASCADE", onupdate="CASCADE"
     )
     user: User = orm.ForeignKey(
@@ -269,7 +269,7 @@ class Release(orm.Model):
     title: str = orm.String(max_length=200, default="")
     description: str = orm.Text(default="")
     tag: Tag = orm.ForeignKey(Tag, ondelete="CASCADE", onupdate="CASCADE")
-    changelogs: List[Changelog] = orm.ManyToMany(
+    changelogs: list[Changelog] = orm.ManyToMany(
         Changelog, through=ChagenlogRelease, ondelete="CASCADE", onupdate="CASCADE"
     )
     data: pydantic.Json = orm.JSON(default={})

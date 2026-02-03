@@ -1,8 +1,9 @@
-from typing import Any, List, Optional, Type, cast
+from typing import Any, Optional, Type, cast
 from uuid import UUID, uuid4
 
-import ormar
 import pytest
+
+import ormar
 from ormar import (
     Model,
     ModelDefinitionError,
@@ -11,7 +12,6 @@ from ormar import (
     pre_save,
     pre_update,
 )
-
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -39,7 +39,7 @@ class Human(ormar.Model):
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
-    favoriteAnimals: List[Animal] = ormar.ManyToMany(
+    favoriteAnimals: list[Animal] = ormar.ManyToMany(
         Animal,
         through=Link,
         related_name="favoriteHumans",
@@ -53,7 +53,7 @@ class Human2(ormar.Model):
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
-    favoriteAnimals: List[Animal] = ormar.ManyToMany(
+    favoriteAnimals: list[Animal] = ormar.ManyToMany(
         Animal, related_name="favoriteHumans2", orders_by=["link__animal_order__fail"]
     )
 
@@ -148,7 +148,7 @@ async def _reorder_on_update(
                 else:
                     setattr(link, order, ind + 1)
             await sender.objects.bulk_update(
-                cast(List[Model], to_reorder), columns=[order]
+                cast(list[Model], to_reorder), columns=[order]
             )
 
 

@@ -1,7 +1,7 @@
 import string
 import uuid
 from random import choices
-from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Type, Union
 
 import sqlalchemy
 from sqlalchemy import Label
@@ -60,8 +60,8 @@ class AliasManager:
 
     @staticmethod
     def prefixed_columns(
-        alias: str, table: sqlalchemy.Table, fields: Optional[List] = None
-    ) -> List[Label[Any]]:
+        alias: str, table: sqlalchemy.Table, fields: Optional[list] = None
+    ) -> list[Label[Any]]:
         """
         Creates a list of aliases sqlalchemy text clauses from
         string alias and sqlalchemy.Table.
@@ -74,9 +74,9 @@ class AliasManager:
         :param table: table from which fields should be aliased
         :type table: sqlalchemy.Table
         :param fields: fields to include
-        :type fields: Optional[List[str]]
+        :type fields: Optional[list[str]]
         :return: list of sqlalchemy text clauses with "column name as aliased name"
-        :rtype: List[text]
+        :rtype: list[text]
         """
         alias = f"{alias}_" if alias else ""
         aliased_fields = [f"{alias}{x}" for x in fields] if fields else []

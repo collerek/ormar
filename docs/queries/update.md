@@ -4,7 +4,7 @@ Following methods and functions allow updating existing data in the database.
 
 * `update(each: bool = False, **kwargs) -> int`
 * `update_or_create(**kwargs) -> Model`
-* `bulk_update(objects: List[Model], columns: List[str] = None) -> None`
+* `bulk_update(objects: list[Model], columns: list[str] = None) -> None`
 
 
 * `Model`
@@ -54,7 +54,7 @@ Updates the model, or in case there is no match in database creates a new one.
 
 ## bulk_update
 
-`bulk_update(objects: List["Model"], columns: List[str] = None) -> None`
+`bulk_update(objects: list["Model"], columns: list[str] = None) -> None`
 
 Allows to update multiple instance at once.
 

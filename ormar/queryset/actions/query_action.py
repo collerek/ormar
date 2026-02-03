@@ -1,5 +1,5 @@
 import abc
-from typing import TYPE_CHECKING, Any, List, Type
+from typing import TYPE_CHECKING, Any, Type
 
 import sqlalchemy
 
@@ -17,7 +17,7 @@ class QueryAction(abc.ABC):
     def __init__(self, query_str: str, model_cls: Type["Model"]) -> None:
         self.query_str = query_str
         self.field_name: str = ""
-        self.related_parts: List[str] = []
+        self.related_parts: list[str] = []
         self.related_str: str = ""
 
         self.table_prefix = ""
@@ -62,16 +62,16 @@ class QueryAction(abc.ABC):
         aliased_name = self.target_model.get_column_alias(self.field_name)
         return self.target_model.ormar_config.table.columns[aliased_name]
 
-    def update_select_related(self, select_related: List[str]) -> List[str]:
+    def update_select_related(self, select_related: list[str]) -> list[str]:
         """
         Updates list of select related with related part included in the filter key.
         That way If you want to just filter by relation you do not have to provide
         select_related separately.
 
         :param select_related: list of relation join strings
-        :type select_related: List[str]
+        :type select_related: list[str]
         :return: list of relation joins with implied joins from filter added
-        :rtype: List[str]
+        :rtype: list[str]
         """
         select_related = select_related[:]
         if self.related_str and not any(

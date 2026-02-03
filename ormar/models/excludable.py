@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Optional, Type, Union
 
 from ormar.queryset.utils import get_relationship_alias_model_and_str
 
@@ -116,7 +116,7 @@ class ExcludableItems:
 
     def build(
         self,
-        items: Union[List[str], str, tuple[str], set[str], dict],
+        items: Union[list[str], str, tuple[str], set[str], dict],
         model_cls: Type["Model"],
         is_exclude: bool = False,
     ) -> None:
@@ -127,7 +127,7 @@ class ExcludableItems:
         Each excludable has two sets of values - one to include, one to exclude.
 
         :param items: values to be included or excluded
-        :type items: Union[List[str], str, tuple[str], set[str], dict]
+        :type items: Union[list[str], str, tuple[str], set[str], dict]
         :param model_cls: source model from which relations are constructed
         :type model_cls: ormar.models.metaclass.ModelMetaclass
         :param is_exclude: flag if items should be included or excluded
@@ -186,7 +186,7 @@ class ExcludableItems:
         source_model: Type["Model"],
         model_cls: Type["Model"],
         is_exclude: bool,
-        related_items: Optional[List] = None,
+        related_items: Optional[list] = None,
         alias: str = "",
     ) -> None:
         """
@@ -201,7 +201,7 @@ class ExcludableItems:
         :param is_exclude: flag if values should be included or excluded
         :type is_exclude: bool
         :param related_items: list of names of related fields chain
-        :type related_items: List
+        :type related_items: list
         :param alias: alias of relation
         :type alias: str
         """

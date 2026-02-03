@@ -1,13 +1,6 @@
 import collections.abc
 import copy
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    List,
-    Optional,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Optional, Type, Union
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import BaseField, Model
@@ -38,7 +31,7 @@ def check_node_not_dict_or_not_last_node(
 
 
 def translate_list_to_dict(  # noqa: CCR001
-    list_to_trans: Union[List, set], default: Any = ...
+    list_to_trans: Union[list, set], default: Any = ...
 ) -> dict:
     """
     Splits the list of strings by '__' and converts them to dictionary with nested
@@ -48,7 +41,7 @@ def translate_list_to_dict(  # noqa: CCR001
     Default required key ise Ellipsis like in pydantic.
 
     :param list_to_trans: input list
-    :type list_to_trans: Union[List, set]
+    :type list_to_trans: Union[list, set]
     :param default: value to use as a default value
     :type default: Any
     :param is_order: flag if change affects order_by clauses are they require special
@@ -162,7 +155,7 @@ def subtract_dict(current_dict: Any, updating_dict: Any) -> dict:  # noqa: CCR00
     return current_dict
 
 
-def update_dict_from_list(curr_dict: dict, list_to_update: Union[List, set]) -> dict:
+def update_dict_from_list(curr_dict: dict, list_to_update: Union[list, set]) -> dict:
     """
     Converts the list into dictionary and later performs special update, where
     nested keys that are sets or dicts are combined and not overwritten.
@@ -170,7 +163,7 @@ def update_dict_from_list(curr_dict: dict, list_to_update: Union[List, set]) -> 
     :param curr_dict: dict to update
     :type curr_dict: dict
     :param list_to_update: list with values to update the dict
-    :type list_to_update: List[str]
+    :type list_to_update: list[str]
     :return: updated dict
     :rtype: dict
     """
@@ -181,13 +174,13 @@ def update_dict_from_list(curr_dict: dict, list_to_update: Union[List, set]) -> 
 
 
 def get_relationship_alias_model_and_str(
-    source_model: Type["Model"], related_parts: List
+    source_model: Type["Model"], related_parts: list
 ) -> tuple[str, Type["Model"], str, bool]:
     """
     Walks the relation to retrieve the actual model on which the clause should be
     constructed, extracts alias based on last relation leading to target model.
     :param related_parts: list of related names extracted from string
-    :type related_parts: Union[List, List[str]]
+    :type related_parts: Union[list, list[str]]
     :param source_model: model from which relation starts
     :type source_model: Type[Model]
     :return: table prefix, target model and relation string
@@ -226,17 +219,17 @@ def get_relationship_alias_model_and_str(
 
 
 def _process_through_field(
-    related_parts: List,
+    related_parts: list,
     relation: Optional[str],
     related_field: "BaseField",
     previous_model: Type["Model"],
-    previous_models: List[Type["Model"]],
+    previous_models: list[Type["Model"]],
 ) -> tuple[Type["Model"], Optional[str], bool]:
     """
     Helper processing through models as they need to be treated differently.
 
     :param related_parts: split relation string
-    :type related_parts: List[str]
+    :type related_parts: list[str]
     :param relation: relation name
     :type relation: str
     :param related_field: field with relation declaration
@@ -244,7 +237,7 @@ def _process_through_field(
     :param previous_model: model from which relation is coming
     :type previous_model: Type["Model"]
     :param previous_models: list of already visited models in relation chain
-    :type previous_models: List[Type["Model"]]
+    :type previous_models: list[Type["Model"]]
     :return: previous_model, relation, is_through
     :rtype: tuple[Type["Model"], str, bool]
     """

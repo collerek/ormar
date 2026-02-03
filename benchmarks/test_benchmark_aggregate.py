@@ -1,5 +1,3 @@
-from typing import List
-
 import pytest
 
 from benchmarks.conftest import Author
@@ -8,7 +6,7 @@ pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.parametrize("num_models", [250, 500, 1000])
-async def test_count(aio_benchmark, num_models: int, authors_in_db: List[Author]):
+async def test_count(aio_benchmark, num_models: int, authors_in_db: list[Author]):
     @aio_benchmark
     async def count():
         return await Author.objects.count()
@@ -18,7 +16,7 @@ async def test_count(aio_benchmark, num_models: int, authors_in_db: List[Author]
 
 
 @pytest.mark.parametrize("num_models", [250, 500, 1000])
-async def test_avg(aio_benchmark, num_models: int, authors_in_db: List[Author]):
+async def test_avg(aio_benchmark, num_models: int, authors_in_db: list[Author]):
     @aio_benchmark
     async def avg():
         return await Author.objects.avg("score")
@@ -28,7 +26,7 @@ async def test_avg(aio_benchmark, num_models: int, authors_in_db: List[Author]):
 
 
 @pytest.mark.parametrize("num_models", [250, 500, 1000])
-async def test_sum(aio_benchmark, num_models: int, authors_in_db: List[Author]):
+async def test_sum(aio_benchmark, num_models: int, authors_in_db: list[Author]):
     @aio_benchmark
     async def sum_():
         return await Author.objects.sum("score")
@@ -38,7 +36,7 @@ async def test_sum(aio_benchmark, num_models: int, authors_in_db: List[Author]):
 
 
 @pytest.mark.parametrize("num_models", [250, 500, 1000])
-async def test_min(aio_benchmark, num_models: int, authors_in_db: List[Author]):
+async def test_min(aio_benchmark, num_models: int, authors_in_db: list[Author]):
     @aio_benchmark
     async def min_():
         return await Author.objects.min("score")
@@ -48,7 +46,7 @@ async def test_min(aio_benchmark, num_models: int, authors_in_db: List[Author]):
 
 
 @pytest.mark.parametrize("num_models", [250, 500, 1000])
-async def test_max(aio_benchmark, num_models: int, authors_in_db: List[Author]):
+async def test_max(aio_benchmark, num_models: int, authors_in_db: list[Author]):
     @aio_benchmark
     async def max_():
         return await Author.objects.max("score")

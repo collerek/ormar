@@ -1,11 +1,11 @@
 import itertools
-from typing import List, Optional
+from typing import Optional
 
-import ormar
 import pydantic
 import pytest
 import pytest_asyncio
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -29,7 +29,7 @@ class HQ(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
-    nicks: List[NickNames] = ormar.ManyToMany(NickNames, through=NicksHq)
+    nicks: list[NickNames] = ormar.ManyToMany(NickNames, through=NicksHq)
 
 
 class Company(ormar.Model):

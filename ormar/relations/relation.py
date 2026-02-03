@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import TYPE_CHECKING, Generic, List, Optional, Type, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Generic, Optional, Type, TypeVar, Union, cast
 
 import ormar  # noqa I100
 from ormar.exceptions import RelationshipInstanceError  # noqa I100
@@ -155,7 +155,7 @@ class Relation(Generic[T]):
                 self._populate_owner_side_dict(rel=rel, child=child)
                 self._owner.__dict__[relation_name] = rel
 
-    def _populate_owner_side_dict(self, rel: List["Model"], child: "Model") -> None:
+    def _populate_owner_side_dict(self, rel: list["Model"], child: "Model") -> None:
         try:
             if child not in rel:
                 rel.append(child)
@@ -182,12 +182,12 @@ class Relation(Generic[T]):
                 self.related_models.pop(position)  # type: ignore
                 del self._owner.__dict__[relation_name][position]
 
-    def get(self) -> Optional[Union[List["Model"], "Model"]]:
+    def get(self) -> Optional[Union[list["Model"], "Model"]]:
         """
         Return the related model or models from RelationProxy.
 
         :return: related model/models if set
-        :rtype: Optional[Union[List[Model], Model]]
+        :rtype: Optional[Union[list[Model], Model]]
         """
         if self._to_remove:
             self._clean_related()

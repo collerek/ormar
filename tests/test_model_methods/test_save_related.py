@@ -1,8 +1,8 @@
-from typing import List, Optional
+from typing import Optional
 
-import ormar
 import pytest
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -34,7 +34,7 @@ class HQ(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
-    nicks: List[NickName] = ormar.ManyToMany(NickName, through=NicksHq)
+    nicks: list[NickName] = ormar.ManyToMany(NickName, through=NicksHq)
 
 
 class Company(ormar.Model):

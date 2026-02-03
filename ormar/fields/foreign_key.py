@@ -3,16 +3,7 @@ import sys
 import uuid
 from dataclasses import dataclass
 from random import choices
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ForwardRef,
-    List,
-    Optional,
-    Type,
-    Union,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, ForwardRef, Optional, Type, Union, overload
 
 import sqlalchemy
 from pydantic import BaseModel, create_model
@@ -90,7 +81,7 @@ def populate_fk_params_based_on_to_model(
     nullable: bool,
     onupdate: Optional[str] = None,
     ondelete: Optional[str] = None,
-) -> tuple[Any, List, Any, Any]:
+) -> tuple[Any, list, Any, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
     pydantic field to use, ForeignKey constraint and type of the target column field.
@@ -106,7 +97,7 @@ def populate_fk_params_based_on_to_model(
     How to treat child rows on delete of parent (the one where FK is defined) model.
     :type ondelete: str
     :return: tuple with target pydantic type, list of fk constraints and target col type
-    :rtype: tuple[Any, List, Any]
+    :rtype: tuple[Any, list, Any]
     """
     fk_string = (
         to.ormar_config.tablename + "." + to.get_column_alias(to.ormar_config.pkname)
@@ -266,7 +257,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     pk_only_model = None
     if to.__class__ == ForwardRef:
         __type__ = to if not nullable else Optional[to]
-        constraints: List = []
+        constraints: list = []
         column_type = None
     else:
         (
@@ -376,7 +367,7 @@ class ForeignKeyField(BaseField):
         :param use_alias: use db names aliases or model fields
         :type use_alias: bool
         :return: name or names of the related columns/ fields
-        :rtype: Union[str, List[str]]
+        :rtype: Union[str, list[str]]
         """
         if use_alias:
             return self._get_model_relation_fields_alias()
@@ -409,14 +400,14 @@ class ForeignKeyField(BaseField):
         target_field = self.to.get_column_alias(self.to.ormar_config.pkname)
         return target_field
 
-    def get_related_field_name(self) -> Union[str, List[str]]:
+    def get_related_field_name(self) -> Union[str, list[str]]:
         """
         Returns name of the relation field that should be used in prefetch query.
         This field is later used to register relation in prefetch query,
         populate relations dict, and populate nested model in prefetch query.
 
         :return: name(s) of the field
-        :rtype: Union[str, List[str]]
+        :rtype: Union[str, list[str]]
         """
         if self.virtual:
             return self.get_related_name()
@@ -459,8 +450,8 @@ class ForeignKeyField(BaseField):
             )
 
     def _extract_model_from_sequence(
-        self, value: List, child: "Model", to_register: bool
-    ) -> List["Model"]:
+        self, value: list, child: "Model", to_register: bool
+    ) -> list["Model"]:
         """
         Takes a list of Models and registers them on parent.
         Registration is mutual, so children have also reference to parent.
@@ -468,13 +459,13 @@ class ForeignKeyField(BaseField):
         Used in reverse FK relations.
 
         :param value: list of Model
-        :type value: List
+        :type value: list
         :param child: child/ related Model
         :type child: Model
         :param to_register: flag if the relation should be set in RelationshipManager
         :type to_register: bool
         :return: list (if needed) registered Models
-        :rtype: List["Model"]
+        :rtype: list["Model"]
         """
         return [
             self.expand_relationship(  # type: ignore
@@ -604,7 +595,7 @@ class ForeignKeyField(BaseField):
         value: Any,
         child: Union["Model", "NewBaseModel"],
         to_register: bool = True,
-    ) -> Optional[Union["Model", List["Model"]]]:
+    ) -> Optional[Union["Model", list["Model"]]]:
         """
         For relations the child model is first constructed (if needed),
         registered in relation and returned.
@@ -620,7 +611,7 @@ class ForeignKeyField(BaseField):
         :param to_register: flag if the relation should be set in RelationshipManager
         :type to_register: bool
         :return: returns a Model or a list of Models
-        :rtype: Optional[Union["Model", List["Model"]]]
+        :rtype: Optional[Union["Model", list["Model"]]]
         """
         if value is None:
             return None if not self.virtual else []

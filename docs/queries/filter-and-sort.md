@@ -7,7 +7,7 @@ You can use following methods to filter the data (sql where clause).
 * `get(*args, **kwargs) -> Model`
 * `get_or_none(*args, **kwargs) -> Optional[Model]`
 * `get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs) -> tuple[Model, bool]`
-* `all(*args, **kwargs) -> List[Optional[Model]]`
+* `all(*args, **kwargs) -> list[Optional[Model]]`
 
 
 * `QuerysetProxy`
@@ -20,9 +20,9 @@ You can use following methods to filter the data (sql where clause).
 
 And following methods to sort the data (sql order by clause).
 
-* `order_by(columns:Union[List, str, OrderAction]) -> QuerySet`
+* `order_by(columns:Union[list, str, OrderAction]) -> QuerySet`
 * `QuerysetProxy`
-    * `QuerysetProxy.order_by(columns:Union[List, str, OrderAction])` method
+    * `QuerysetProxy.order_by(columns:Union[list, str, OrderAction])` method
 
 ## Filtering
 
@@ -598,7 +598,7 @@ When any args and/or kwargs are passed it's a shortcut equivalent to calling `fi
 
 ## all
 
-`all(*args, **kwargs) -> List[Optional["Model"]]`
+`all(*args, **kwargs) -> list[Optional["Model"]]`
 
 Returns all rows from a database for given model for set filter options.
 
@@ -668,7 +668,7 @@ objects from other side of the relation.
 
 ### order_by
 
-`order_by(columns: Union[List, str, OrderAction]) -> QuerySet`
+`order_by(columns: Union[list, str, OrderAction]) -> QuerySet`
 
 With `order_by()` you can order the results from database based on your choice of
 fields.

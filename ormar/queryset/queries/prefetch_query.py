@@ -1,7 +1,7 @@
 import abc
 import logging
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, List, Sequence, Type, Union, cast
+from typing import TYPE_CHECKING, Any, Sequence, Type, Union, cast
 
 import ormar  # noqa:  I100, I202
 from ormar.queryset.clause import QueryClause
@@ -35,13 +35,13 @@ class Node(abc.ABC):
 
     def __init__(self, relation_field: "ForeignKeyField", parent: "Node") -> None:
         self.parent = parent
-        self.children: List["Node"] = []
+        self.children: list["Node"] = []
         if self.parent:
             self.parent.children.append(self)
         self.relation_field = relation_field
         self.table_prefix = ""
-        self.rows: List = []
-        self.models: List["Model"] = []
+        self.rows: list = []
+        self.models: list["Model"] = []
         self.use_alias: bool = False
 
     @property
@@ -63,7 +63,7 @@ class Node(abc.ABC):
             return self.relation_field.default_target_field_name()
 
     @abstractmethod
-    def extract_related_ids(self, column_name: str) -> List:  # pragma: no cover
+    def extract_related_ids(self, column_name: str) -> list:  # pragma: no cover
         pass
 
     @abstractmethod
@@ -74,14 +74,14 @@ class Node(abc.ABC):
     async def load_data(self) -> None:  # pragma: no cover
         pass
 
-    def get_filter_for_prefetch(self) -> List["FilterAction"]:
+    def get_filter_for_prefetch(self) -> list["FilterAction"]:
         """
         Populates where clause with condition to return only models within the
         set of extracted ids.
         If there are no ids for relation the empty list is returned.
 
         :return: list of filter clauses based on original models
-        :rtype: List[sqlalchemy.sql.elements.TextClause]
+        :rtype: list[sqlalchemy.sql.elements.TextClause]
         """
         column_name = self.relation_field.get_model_relation_fields(
             self.parent.use_alias
@@ -93,15 +93,15 @@ class Node(abc.ABC):
             return self._prepare_filter_clauses(ids=ids)
         return []
 
-    def _prepare_filter_clauses(self, ids: List) -> List["FilterAction"]:
+    def _prepare_filter_clauses(self, ids: list) -> list["FilterAction"]:
         """
         Gets the list of ids and construct a list of filter queries on
         extracted appropriate column names
 
         :param ids: list of ids that should be used to fetch data
-        :type ids: List
+        :type ids: list
         :return: list of filter actions to use in query
-        :rtype: List["FilterAction"]
+        :rtype: list["FilterAction"]
         """
         clause_target = self.relation_field.get_filter_clause_target()
         filter_column = self.relation_field.get_related_field_alias()
@@ -151,15 +151,15 @@ class AlreadyLoadedNode(Node):
         for child in self.children:
             child.reload_tree()
 
-    def extract_related_ids(self, column_name: str) -> List:
+    def extract_related_ids(self, column_name: str) -> list:
         """
         Extracts the selected column(s) values from own models.
         Those values are used to construct filter clauses and populate child models.
 
         :param column_name: names of the column(s) that holds the relation info
-        :type column_name: Union[str, List[str]]
-        :return: List of extracted values of relation columns
-        :rtype: List
+        :type column_name: Union[str, list[str]]
+        :return: list of extracted values of relation columns
+        :rtype: list
         """
         list_of_ids = UniqueList()
         for model in self.models:
@@ -176,7 +176,7 @@ class RootNode(AlreadyLoadedNode):
     Root model Node from which both main and prefetch query originated
     """
 
-    def __init__(self, models: List["Model"]) -> None:
+    def __init__(self, models: list["Model"]) -> None:
         self.models = models
         self.use_alias = False
         self.children = []
@@ -195,7 +195,7 @@ class LoadNode(Node):
         self,
         relation_field: "ForeignKeyField",
         excludable: "ExcludableItems",
-        orders_by: List["OrderAction"],
+        orders_by: list["OrderAction"],
         parent: "Node",
         source_model: Type["Model"],
     ) -> None:
@@ -204,7 +204,7 @@ class LoadNode(Node):
         self.exclude_prefix: str = ""
         self.orders_by = orders_by
         self.use_alias = True
-        self.grouped_models: dict[Any, List["Model"]] = dict()
+        self.grouped_models: dict[Any, list["Model"]] = dict()
         self.source_model = source_model
 
     async def load_data(self) -> None:
@@ -290,7 +290,7 @@ class LoadNode(Node):
         relation_key = self._build_relation_string()
         return relation_key
 
-    def _extract_own_order_bys(self) -> List["OrderAction"]:
+    def _extract_own_order_bys(self) -> list["OrderAction"]:
         """
         Extracts list of order actions related to current model.
         Since same model can happen multiple times in a tree we check not only the
@@ -298,7 +298,7 @@ class LoadNode(Node):
         path in order action.
 
         :return: list of order actions related to current model
-        :rtype: List[OrderAction]
+        :rtype: list[OrderAction]
         """
         own_order_bys = []
         own_path = self._get_full_tree_path()
@@ -326,15 +326,15 @@ class LoadNode(Node):
             relation_str = f"{node.relation_field.name}__{relation_str}"
         return relation_str
 
-    def extract_related_ids(self, column_name: str) -> List:
+    def extract_related_ids(self, column_name: str) -> list:
         """
         Extracts the selected column(s) values from own models.
         Those values are used to construct filter clauses and populate child models.
 
         :param column_names: names of the column(s) that holds the relation info
-        :type column_names: Union[str, List[str]]
-        :return: List of extracted values of relation columns
-        :rtype: List
+        :type column_names: Union[str, list[str]]
+        :return: list of extracted values of relation columns
+        :rtype: list
         """
         column_name = self._prefix_column_names_with_table_prefix(
             column_name=column_name
@@ -344,14 +344,14 @@ class LoadNode(Node):
     def _prefix_column_names_with_table_prefix(self, column_name: str) -> str:
         return (f"{self.table_prefix}_" if self.table_prefix else "") + column_name
 
-    def _extract_simple_relation_keys(self, column_name: str) -> List:
+    def _extract_simple_relation_keys(self, column_name: str) -> list:
         """
         Extracts simple relation keys values.
 
         :param column_name: names of the column(s) that holds the relation info
         :type column_name: str
-        :return: List of extracted values of relation columns
-        :rtype: List
+        :return: list of extracted values of relation columns
+        :rtype: list
         """
         list_of_ids = UniqueList()
         for row in self.rows:
@@ -449,7 +449,7 @@ class LoadNode(Node):
         in linking between own models and parent models
 
         :return: tuple of name and alias of relation columns
-        :rtype: List[tuple[str, str]]
+        :rtype: list[tuple[str, str]]
         """
         column_name = self.relation_field.get_model_relation_fields(False)
         column_alias = self.relation_field.get_model_relation_fields(True)
@@ -457,7 +457,7 @@ class LoadNode(Node):
 
     def _get_own_models_related_to_parent(
         self, model: "Model", relation_key: tuple[str, str]
-    ) -> List["Model"]:
+    ) -> list["Model"]:
         """
         Extracts related column values from parent and based on this key gets the
         own grouped models.
@@ -465,9 +465,9 @@ class LoadNode(Node):
         :param model: parent model from parent node
         :type model: Model
         :param relation_key: name and aliases linking relations
-        :type relation_key: List[tuple[str, str]]
+        :type relation_key: list[tuple[str, str]]
         :return: list of own models to set on parent
-        :rtype: List[Model]
+        :rtype: list[Model]
         """
         column_name, column_alias = relation_key
         model_value = getattr(model, column_name)
@@ -487,16 +487,16 @@ class PrefetchQuery:
         self,
         model_cls: Type["Model"],
         excludable: "ExcludableItems",
-        prefetch_related: List,
-        select_related: List,
-        orders_by: List["OrderAction"],
+        prefetch_related: list,
+        select_related: list,
+        orders_by: list["OrderAction"],
     ) -> None:
         self.model = model_cls
         self.excludable = excludable
         self.select_dict = translate_list_to_dict(select_related, default={})
         self.prefetch_dict = translate_list_to_dict(prefetch_related, default={})
         self.orders_by = orders_by
-        self.load_tasks: List[Node] = []
+        self.load_tasks: list[Node] = []
 
     async def prefetch_related(self, models: Sequence["Model"]) -> Sequence["Model"]:
         """
@@ -511,11 +511,11 @@ class PrefetchQuery:
         :param models: list of already instantiated models from main query
         :type models: Sequence[Model]
         :param rows: row sql result of the main query before the prefetch
-        :type rows: List[sqlalchemy.engine.result.RowProxy]
+        :type rows: list[sqlalchemy.engine.result.RowProxy]
         :return: list of models with children prefetched
-        :rtype: List[Model]
+        :rtype: list[Model]
         """
-        parent_task = RootNode(models=cast(List["Model"], models))
+        parent_task = RootNode(models=cast(list["Model"], models))
         self._build_load_tree(
             prefetch_dict=self.prefetch_dict,
             select_dict=self.select_dict,

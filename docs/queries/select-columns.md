@@ -2,17 +2,17 @@
 
 To select only chosen columns of your model you can use following functions.
 
-* `fields(columns: Union[List, str, set, dict]) -> QuerySet`
-* `exclude_fields(columns: Union[List, str, set, dict]) -> QuerySet`
+* `fields(columns: Union[list, str, set, dict]) -> QuerySet`
+* `exclude_fields(columns: Union[list, str, set, dict]) -> QuerySet`
 
 
 * `QuerysetProxy`
-    * `QuerysetProxy.fields(columns: Union[List, str, set, dict])` method
-    * `QuerysetProxy.exclude_fields(columns: Union[List, str, set, dict])` method
+    * `QuerysetProxy.fields(columns: Union[list, str, set, dict])` method
+    * `QuerysetProxy.exclude_fields(columns: Union[list, str, set, dict])` method
 
 ## fields
 
-`fields(columns: Union[List, str, set, dict]) -> QuerySet`
+`fields(columns: Union[list, str, set, dict]) -> QuerySet`
 
 With `fields()` you can select subset of model columns to limit the data load.
 
@@ -27,7 +27,7 @@ Given a sample data like following:
 --8<-- "../docs_src/select_columns/docs001.py"
 ```
 
-You can select specified fields by passing a `str, List[str], set[str] or dict` with
+You can select specified fields by passing a `str, list[str], set[str] or dict` with
 nested definition.
 
 To include related models use
@@ -185,7 +185,7 @@ await (
 
 ## exclude_fields
 
-`exclude_fields(columns: Union[List, str, set, dict]) -> QuerySet`
+`exclude_fields(columns: Union[list, str, set, dict]) -> QuerySet`
 
 With `exclude_fields()` you can select subset of model columns that will be excluded to
 limit the data load.

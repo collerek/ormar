@@ -1,7 +1,8 @@
-from typing import List, Optional
+from typing import Optional
+
+from fastapi import FastAPI
 
 import ormar
-from fastapi import FastAPI
 from tests.lifespan import lifespan
 from tests.settings import create_config
 
@@ -24,7 +25,7 @@ class Item(ormar.Model):
     category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
 
 
-@app.get("/items/", response_model=List[Item])
+@app.get("/items/", response_model=list[Item])
 async def get_items():
     items = await Item.objects.select_related("category").all()
     return items
@@ -53,4 +54,5 @@ async def delete_item(item_id: int, item: Item = None):
     if item:
         return {"deleted_rows": await item.delete()}
     item_db = await Item.objects.get(pk=item_id)
+    return {"deleted_rows": await item_db.delete()}
     return {"deleted_rows": await item_db.delete()}

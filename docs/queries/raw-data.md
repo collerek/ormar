@@ -2,8 +2,8 @@
 
 Following methods allow you to execute a query but instead of returning ormar models those will return list of dicts or tuples.
 
-* `values(fields = None, exclude_through = False) -> List[dict]`
-* `values_list(fields = None, exclude_through = False, flatten = False) -> List`
+* `values(fields = None, exclude_through = False) -> list[dict]`
+* `values_list(fields = None, exclude_through = False, flatten = False) -> list`
 
 
 * `QuerysetProxy`
@@ -21,7 +21,7 @@ Following methods allow you to execute a query but instead of returning ormar mo
 
 ## values
 
-`values(fields: Union[List, str, set, dict] = None, exclude_through: bool = False) -> List[dict]`
+`values(fields: Union[list, str, set, dict] = None, exclude_through: bool = False) -> list[dict]`
 
 Return a list of dictionaries representing the values of the columns coming from the database.
 
@@ -92,7 +92,7 @@ class Role(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    users: List[User] = ormar.ManyToMany(User)
+    users: list[User] = ormar.ManyToMany(User)
 
 # sample data
 creator = await User(name="Anonymous").save()
@@ -188,7 +188,7 @@ assert user == [
 
 ## values_list
 
-`values_list(fields: Union[List, str, set, dict] = None, flatten: bool = False, exclude_through: bool = False) -> List`
+`values_list(fields: Union[list, str, set, dict] = None, flatten: bool = False, exclude_through: bool = False) -> list`
 
 Return a list of tuples representing the values of the columns coming from the database.
 

@@ -1,12 +1,4 @@
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Generic,
-    List,
-    Optional,
-    Type,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, Generic, Optional, Type, TypeVar
 
 from typing_extensions import SupportsIndex
 
@@ -23,7 +15,7 @@ else:
     T = TypeVar("T", bound="Model")
 
 
-class RelationProxy(Generic[T], List[T]):
+class RelationProxy(Generic[T], list[T]):
     """
     Proxy of the Relation that is a list with special methods.
     """

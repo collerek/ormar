@@ -57,7 +57,7 @@ def re_dump_value(value: str) -> Union[str, bytes]:
     :param value: string to re-dump
     :type value: str
     :return: re-dumped value
-    :rtype: List[str]
+    :rtype: list[str]
     """
     try:
         result: Union[str, bytes] = json.dumps(json.loads(value))

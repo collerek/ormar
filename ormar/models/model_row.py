@@ -1,10 +1,9 @@
-from typing import TYPE_CHECKING, Any, List, Optional, Type, Union, cast
+from typing import TYPE_CHECKING, Any, Optional, Type, Union, cast
 
 try:
     from sqlalchemy.engine.result import ResultProxy  # type: ignore
 except ImportError:  # pragma: no cover
     from sqlalchemy.engine.result import Row as ResultProxy  # type: ignore
-
 
 from ormar.models import NewBaseModel  # noqa: I202
 from ormar.models.excludable import ExcludableItems
@@ -21,13 +20,13 @@ class ModelRow(NewBaseModel):
         cls,
         row: ResultProxy,
         source_model: Type["Model"],
-        select_related: Optional[List] = None,
+        select_related: Optional[list] = None,
         related_models: Any = None,
         related_field: Optional["ForeignKeyField"] = None,
         excludable: Optional[ExcludableItems] = None,
         current_relation_str: str = "",
         proxy_source_model: Optional[Type["Model"]] = None,
-        used_prefixes: Optional[List[str]] = None,
+        used_prefixes: Optional[list[str]] = None,
     ) -> Optional["Model"]:
         """
         Model method to convert raw sql row from database into ormar.Model instance.
@@ -43,7 +42,7 @@ class ModelRow(NewBaseModel):
         nested models in result.
 
         :param used_prefixes: list of already extracted prefixes
-        :type used_prefixes: List[str]
+        :type used_prefixes: list[str]
         :param proxy_source_model: source model from which querysetproxy is constructed
         :type proxy_source_model: Optional[Type["ModelRow"]]
         :param excludable: structure of fields to include and exclude
@@ -55,9 +54,9 @@ class ModelRow(NewBaseModel):
         :param row: raw result row from the database
         :type row: ResultProxy
         :param select_related: list of names of related models fetched from database
-        :type select_related: List
+        :type select_related: list
         :param related_models: list or dict of related models
-        :type related_models: Union[List, dict]
+        :type related_models: Union[list, dict]
         :param related_field: field with relation declaration
         :type related_field: ForeignKeyField
         :return: returns model if model is populated from database
@@ -111,7 +110,7 @@ class ModelRow(NewBaseModel):
         source_model: Type["Model"],
         current_relation_str: str,
         related_field: "ForeignKeyField",
-        used_prefixes: List[str],
+        used_prefixes: list[str],
     ) -> str:
         """
 
@@ -122,7 +121,7 @@ class ModelRow(NewBaseModel):
         :param related_field: field with relation declaration
         :type related_field: "ForeignKeyField"
         :param used_prefixes: list of already extracted prefixes
-        :type used_prefixes: List[str]
+        :type used_prefixes: list[str]
         :return: table_prefix to use
         :rtype: str
         """
@@ -152,7 +151,7 @@ class ModelRow(NewBaseModel):
         related_models: Any,
         excludable: ExcludableItems,
         table_prefix: str,
-        used_prefixes: List[str],
+        used_prefixes: list[str],
         current_relation_str: Optional[str] = None,
         proxy_source_model: Optional[Type["Model"]] = None,
     ) -> dict:
@@ -179,7 +178,7 @@ class ModelRow(NewBaseModel):
         :param row: raw result row from the database
         :type row: ResultProxy
         :param related_models: list or dict of related models
-        :type related_models: Union[dict, List]
+        :type related_models: Union[dict, list]
         :return: dictionary with keys corresponding to model fields names
         and values are database values
         :rtype: dict
@@ -229,15 +228,15 @@ class ModelRow(NewBaseModel):
 
     @staticmethod
     def _process_remainder_and_relation_string(
-        related_models: Union[dict, List],
+        related_models: Union[dict, list],
         current_relation_str: Optional[str],
         related: str,
-    ) -> tuple[str, Optional[Union[dict, List]]]:
+    ) -> tuple[str, Optional[Union[dict, list]]]:
         """
         Process remainder models and relation string
 
         :param related_models: list or dict of related models
-        :type related_models: Union[dict, List]
+        :type related_models: Union[dict, list]
         :param current_relation_str: current relation string
         :type current_relation_str: Optional[str]
         :param related: name of the relation

@@ -1,6 +1,6 @@
 import decimal
 import numbers
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Type, Union
 
 try:
     import orjson as json
@@ -76,7 +76,7 @@ def populates_sample_fields_values(
 
 def get_nested_model_example(
     name: str, field: "BaseField", relation_map: dict
-) -> Union[List, dict]:
+) -> Union[list, dict]:
     """
     Gets representation of nested model.
 
@@ -87,10 +87,10 @@ def get_nested_model_example(
     :param relation_map: dict with relation map
     :type relation_map: dict
     :return: nested model or list of nested model repr
-    :rtype: Union[List, dict]
+    :rtype: Union[list, dict]
     """
     value = generate_model_example(field.to, relation_map=relation_map.get(name, {}))
-    new_value: Union[List, dict] = [value] if field.is_multi or field.virtual else value
+    new_value: Union[list, dict] = [value] if field.is_multi or field.virtual else value
     return new_value
 
 
@@ -139,7 +139,7 @@ def get_pydantic_example_repr(type_: Any) -> Any:
 
 def generate_example_for_nested_types(type_: Any) -> Any:
     """
-    Process nested types like Union[X, Y] or List[X]
+    Process nested types like Union[X, Y] or list[X]
     """
     if type_.__origin__ == Union:
         return generate_example_for_union(type_=type_)

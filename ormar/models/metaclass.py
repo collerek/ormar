@@ -6,7 +6,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    List,
     Optional,
     Type,
     Union,
@@ -140,7 +139,7 @@ def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
 
 
 def verify_constraint_names(
-    base_class: "Model", model_fields: dict, parent_value: List
+    base_class: "Model", model_fields: dict, parent_value: list
 ) -> None:
     """
     Verifies if redefined fields that are overwritten in subclasses did not remove
@@ -152,7 +151,7 @@ def verify_constraint_names(
     :param model_fields: ormar fields in defined in current class
     :type model_fields: dict[str, BaseField]
     :param parent_value: list of base class constraints
-    :type parent_value: List
+    :type parent_value: list
     """
     new_aliases = {x.name: x.get_alias() for x in model_fields.values()}
     old_aliases = {

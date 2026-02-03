@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, ForwardRef, List, Optional, Type
+from typing import TYPE_CHECKING, ForwardRef, Optional, Type
 
 import ormar  # noqa: I100
 
@@ -22,7 +22,7 @@ def validate_related_names_in_relations(  # noqa CCR001
     :param new_model:
     :type new_model: Model class
     """
-    already_registered: dict[str, List[Optional[str]]] = dict()
+    already_registered: dict[str, list[Optional[str]]] = dict()
     for field in model_fields.values():
         if field.is_relation:
             to_name = (
