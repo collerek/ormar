@@ -55,4 +55,3 @@ async def delete_item(item_id: int, item: Item = None):
         return {"deleted_rows": await item.delete()}
     item_db = await Item.objects.get(pk=item_id)
     return {"deleted_rows": await item_db.delete()}
-    return {"deleted_rows": await item_db.delete()}
