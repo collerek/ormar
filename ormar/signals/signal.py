@@ -1,6 +1,6 @@
 import asyncio
 import inspect
-from typing import TYPE_CHECKING, Any, Callable, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Type, Union
 
 from ormar.exceptions import SignalDefinitionError
 
@@ -24,7 +24,7 @@ def callable_accepts_kwargs(func: Callable) -> bool:
     )
 
 
-def make_id(target: Any) -> Union[int, Tuple[int, int]]:
+def make_id(target: Any) -> Union[int, tuple[int, int]]:
     """
     Creates id of a function or method to be used as key to store signal
 
@@ -45,7 +45,7 @@ class Signal:
     """
 
     def __init__(self) -> None:
-        self._receivers: dict[Union[int, Tuple[int, int]], Callable] = {}
+        self._receivers: dict[Union[int, tuple[int, int]], Callable] = {}
 
     def connect(self, receiver: Callable) -> None:
         """

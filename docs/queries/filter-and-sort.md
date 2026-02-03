@@ -6,7 +6,7 @@ You can use following methods to filter the data (sql where clause).
 * `exclude(*args, **kwargs) -> QuerySet`
 * `get(*args, **kwargs) -> Model`
 * `get_or_none(*args, **kwargs) -> Optional[Model]`
-* `get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
+* `get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs) -> tuple[Model, bool]`
 * `all(*args, **kwargs) -> List[Optional[Model]]`
 
 
@@ -581,7 +581,7 @@ Exact equivalent of get described above but instead of raising the exception ret
 
 ## get_or_create
 
-`get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
+`get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs) -> tuple[Model, bool]`
 
 Combination of create and get methods.
 

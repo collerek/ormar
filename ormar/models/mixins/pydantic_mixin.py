@@ -1,17 +1,7 @@
 import copy
 import string
 from random import choices
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type, Union, cast
 
 import pydantic
 from pydantic import BaseModel
@@ -137,7 +127,7 @@ class PydanticMixin(RelationMixin):
         exclude: Union[set, dict, None],
         defaults: dict,
         relation_map: dict[str, Any],
-    ) -> Tuple[Type[BaseModel], dict]:
+    ) -> tuple[Type[BaseModel], dict]:
         target = field.to._convert_ormar_to_pydantic(
             include=cls._skip_ellipsis(include, name),
             exclude=cls._skip_ellipsis(exclude, name),

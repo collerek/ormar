@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, cast
+from typing import TYPE_CHECKING, Any, List, Optional, Type, cast
 
 import sqlalchemy
 from sqlalchemy import TextClause, text
@@ -133,7 +133,7 @@ class SqlJoin:
 
         return text(f"{left_part}={right_part}")
 
-    def build_join(self) -> Tuple[List, sqlalchemy.sql.Select, List, dict]:
+    def build_join(self) -> tuple[List, sqlalchemy.sql.Select, List, dict]:
         """
         Main external access point for building a join.
         Splits the join definition, updates fields and exclude_fields if needed,
@@ -141,7 +141,7 @@ class SqlJoin:
         used_aliases and sort_orders.
 
         :return: list of used aliases, select from, list of aliased columns, sort orders
-        :rtype: Tuple[List[str], Join, List[TextClause], dict]
+        :rtype: tuple[List[str], Join, List[TextClause], dict]
         """
         if self.target_field.is_multi:
             self._process_m2m_through_table()
@@ -342,14 +342,14 @@ class SqlJoin:
                 "You can order the relation only " "by related or link table columns!"
             )
 
-    def _get_alias_and_model(self, order_by: str) -> Tuple[str, Type["Model"]]:
+    def _get_alias_and_model(self, order_by: str) -> tuple[str, Type["Model"]]:
         """
         Returns proper model and alias to be applied in the clause.
 
         :param order_by: string with order by definition
         :type order_by: str
         :return: alias and model to be used in clause
-        :rtype: Tuple[str, Type["Model"]]
+        :rtype: tuple[str, Type["Model"]]
         """
         if self.target_field.is_multi and "__" in order_by:
             self._verify_allowed_order_field(order_by=order_by)
@@ -403,14 +403,14 @@ class SqlJoin:
         if not current_table_sorted and not self.target_field.is_multi:
             self._set_default_primary_key_order_by()
 
-    def _get_to_and_from_keys(self) -> Tuple[str, str]:
+    def _get_to_and_from_keys(self) -> tuple[str, str]:
         """
         Based on the relation type, name of the relation and previous models and parts
         stored in JoinParameters it resolves the current to and from keys, which are
         different for ManyToMany relation, ForeignKey and reverse related of relations.
 
         :return: to key and from key
-        :rtype: Tuple[str, str]
+        :rtype: tuple[str, str]
         """
         if self.target_field.is_multi:
             to_key = self._process_m2m_related_name_change(reverse=True)

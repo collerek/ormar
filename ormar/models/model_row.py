@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING, Any, List, Optional, Type, Union, cast
 
 try:
     from sqlalchemy.engine.result import ResultProxy  # type: ignore
@@ -232,7 +232,7 @@ class ModelRow(NewBaseModel):
         related_models: Union[dict, List],
         current_relation_str: Optional[str],
         related: str,
-    ) -> Tuple[str, Optional[Union[dict, List]]]:
+    ) -> tuple[str, Optional[Union[dict, List]]]:
         """
         Process remainder models and relation string
 

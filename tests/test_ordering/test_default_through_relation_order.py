@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple, Type, cast
+from typing import Any, List, Optional, Type, cast
 from uuid import UUID, uuid4
 
 import ormar
@@ -86,7 +86,7 @@ def _get_filtered_query(
 
 def _get_through_model_relations(
     sender: Type[Model], instance: Model
-) -> Tuple[Type[Model], Type[Model]]:
+) -> tuple[Type[Model], Type[Model]]:
     relations = list(instance.extract_related_names())
     rel_one = sender.ormar_config.model_fields[relations[0]].to
     rel_two = sender.ormar_config.model_fields[relations[1]].to

@@ -604,7 +604,7 @@ asyncio.run(cleanup_database())
 *  `create(**kwargs): -> Model`
 *  `get(*args, **kwargs): -> Model`
 *  `get_or_none(*args, **kwargs): -> Optional[Model]`
-*  `get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
+*  `get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs) -> tuple[Model, bool]`
 *  `first(*args, **kwargs): -> Model`
 *  `update(each: bool = False, **kwargs) -> int`
 *  `update_or_create(**kwargs) -> Model`

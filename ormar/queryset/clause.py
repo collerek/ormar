@@ -1,7 +1,7 @@
 import itertools
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Generator, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Generator, List, Optional, Type, Union
 
 import sqlalchemy
 from sqlalchemy import ColumnElement
@@ -55,7 +55,7 @@ class FilterGroup:
         model_cls: Type["Model"],
         select_related: Optional[List] = None,
         filter_clauses: Optional[List] = None,
-    ) -> Tuple[List[FilterAction], List[str]]:
+    ) -> tuple[List[FilterAction], List[str]]:
         """
         Resolves the FilterGroups actions to use proper target model, replace
         complex relation prefixes if needed and nested groups also resolved.
@@ -67,7 +67,7 @@ class FilterGroup:
         :param filter_clauses: list of filter conditions
         :type filter_clauses: List[FilterAction]
         :return: list of filter conditions and select_related list
-        :rtype: Tuple[List[FilterAction], List[str]]
+        :rtype: tuple[List[FilterAction], List[str]]
         """
         select_related = select_related if select_related is not None else []
         filter_clauses = filter_clauses if filter_clauses is not None else []
@@ -138,7 +138,7 @@ def or_(*args: FilterGroup, **kwargs: Any) -> FilterGroup:
     Construct or filter from nested groups and keyword arguments
 
     :param args: nested filter groups
-    :type args: Tuple[FilterGroup]
+    :type args: tuple[FilterGroup]
     :param kwargs: fields names and proper value types
     :type kwargs: Any
     :return: FilterGroup ready to be resolved
@@ -152,7 +152,7 @@ def and_(*args: FilterGroup, **kwargs: Any) -> FilterGroup:
     Construct and filter from nested groups and keyword arguments
 
     :param args: nested filter groups
-    :type args: Tuple[FilterGroup]
+    :type args: tuple[FilterGroup]
     :param kwargs: fields names and proper value types
     :type kwargs: Any
     :return: FilterGroup ready to be resolved
@@ -191,7 +191,7 @@ class QueryClause:
 
     def prepare_filter(  # noqa: A003
         self, _own_only: bool = False, **kwargs: Any
-    ) -> Tuple[List[FilterAction], List[str]]:
+    ) -> tuple[List[FilterAction], List[str]]:
         """
         Main external access point that processes the clauses into sqlalchemy text
         clauses and updates select_related list with implicit related tables
@@ -201,8 +201,8 @@ class QueryClause:
         :type _own_only:
         :param kwargs: key, value pair with column names and values
         :type kwargs: Any
-        :return: Tuple with list of where clauses and updated select_related list
-        :rtype: Tuple[List[sqlalchemy.sql.elements.TextClause], List[str]]
+        :return: tuple with list of where clauses and updated select_related list
+        :rtype: tuple[List[sqlalchemy.sql.elements.TextClause], List[str]]
         """
         if kwargs.get("pk"):
             pk_name = self.model_cls.get_column_alias(
@@ -218,7 +218,7 @@ class QueryClause:
 
     def _populate_filter_clauses(
         self, _own_only: bool, **kwargs: Any
-    ) -> Tuple[List[FilterAction], List[str]]:
+    ) -> tuple[List[FilterAction], List[str]]:
         """
         Iterates all clauses and extracts used operator and field from related
         models if needed. Based on the chain of related names the target table
@@ -226,8 +226,8 @@ class QueryClause:
 
         :param kwargs: key, value pair with column names and values
         :type kwargs: Any
-        :return: Tuple with list of where clauses and updated select_related list
-        :rtype: Tuple[List[sqlalchemy.sql.elements.TextClause], List[str]]
+        :return: tuple with list of where clauses and updated select_related list
+        :rtype: tuple[List[sqlalchemy.sql.elements.TextClause], List[str]]
         """
         filter_clauses = self.filter_clauses
         own_filter_clauses = []

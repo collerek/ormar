@@ -7,7 +7,6 @@ from typing import (  # noqa: I100, I201
     MutableSequence,
     Optional,
     Sequence,
-    Tuple,
     Type,
     TypeVar,
     Union,
@@ -520,7 +519,7 @@ class QuerysetProxy(Generic[T]):
         _defaults: Optional[dict[str, Any]] = None,
         *args: Any,
         **kwargs: Any,
-    ) -> Tuple["T", bool]:
+    ) -> tuple["T", bool]:
         """
         Combination of create and get methods.
 
@@ -533,7 +532,7 @@ class QuerysetProxy(Generic[T]):
         :param _defaults: default values for creating object
         :type _defaults: Optional[dict[str, Any]]
         :return: model instance and a boolean
-        :rtype: Tuple("T", bool)
+        :rtype: tuple("T", bool)
         """
         try:
             return await self.get(*args, **kwargs), False

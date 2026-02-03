@@ -4,7 +4,6 @@ from typing import (
     ForwardRef,
     List,
     Optional,
-    Tuple,
     Type,
     Union,
     cast,
@@ -44,7 +43,7 @@ def forbid_through_relations(through: Type["Model"]) -> None:
 
 def populate_m2m_params_based_on_to_model(
     to: Type["Model"], nullable: bool
-) -> Tuple[Any, Any, Any]:
+) -> tuple[Any, Any, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
     pydantic field to use and type of the target column field.
@@ -53,7 +52,7 @@ def populate_m2m_params_based_on_to_model(
     :type to: Model class
     :param nullable: marks field as optional/ required
     :type nullable: bool
-    :return: Tuple[List, Any]
+    :return: tuple[List, Any]
     :rtype: tuple with target pydantic type and target col type
     """
     to_field = to.ormar_config.model_fields[to.ormar_config.pkname]

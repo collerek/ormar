@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Union
 
 try:
     from typing import Protocol
@@ -47,7 +47,7 @@ class QuerySetProtocol(Protocol):  # pragma: nocover
         self,
         _defaults: Optional[dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> Tuple["Model", bool]: ...
+    ) -> tuple["Model", bool]: ...
 
     async def update_or_create(self, **kwargs: Any) -> "Model": ...
 

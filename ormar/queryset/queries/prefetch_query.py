@@ -1,16 +1,7 @@
 import abc
 import logging
 from abc import abstractmethod
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    List,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, List, Sequence, Type, Union, cast
 
 import ormar  # noqa:  I100, I202
 from ormar.queryset.clause import QueryClause
@@ -393,7 +384,7 @@ class LoadNode(Node):
         fields_to_exclude = self.relation_field.to.get_names_to_exclude(
             excludable=self.excludable, alias=self.exclude_prefix
         )
-        parsed_rows: dict[Tuple, "Model"] = {}
+        parsed_rows: dict[tuple, "Model"] = {}
         for row in self.rows:
             item = self.relation_field.to.extract_prefixed_table_columns(
                 item={},
@@ -408,7 +399,7 @@ class LoadNode(Node):
             )
             self.models.append(instance)
 
-    def _hash_item(self, item: Union[dict, list]) -> Tuple:
+    def _hash_item(self, item: Union[dict, list]) -> tuple:
         """
         Converts model dictionary or list into a hashable tuple to allow its use
         as a dictionary key - used to ensure unique instances of related models.
@@ -416,10 +407,12 @@ class LoadNode(Node):
         :param item: instance dictionary or list
         :type item: dict or list
         :return: tuple out of model dictionary or list
-        :rtype: Tuple
+        :rtype: tuple
         """
         result = []
-        for key, value in (sorted(item.items()) if isinstance(item, dict) else enumerate(item)):
+        for key, value in (
+            sorted(item.items()) if isinstance(item, dict) else enumerate(item)
+        ):
             if isinstance(value, (dict, list)):
                 value = self._hash_item(value)
             result.append((key, value))
@@ -450,20 +443,20 @@ class LoadNode(Node):
             for child in children:
                 setattr(model, self.relation_field.name, child)
 
-    def _get_relation_key_linking_models(self) -> Tuple[str, str]:
+    def _get_relation_key_linking_models(self) -> tuple[str, str]:
         """
         Extract names and aliases of relation columns to use
         in linking between own models and parent models
 
         :return: tuple of name and alias of relation columns
-        :rtype: List[Tuple[str, str]]
+        :rtype: List[tuple[str, str]]
         """
         column_name = self.relation_field.get_model_relation_fields(False)
         column_alias = self.relation_field.get_model_relation_fields(True)
         return column_name, column_alias
 
     def _get_own_models_related_to_parent(
-        self, model: "Model", relation_key: Tuple[str, str]
+        self, model: "Model", relation_key: tuple[str, str]
     ) -> List["Model"]:
         """
         Extracts related column values from parent and based on this key gets the
@@ -472,7 +465,7 @@ class LoadNode(Node):
         :param model: parent model from parent node
         :type model: Model
         :param relation_key: name and aliases linking relations
-        :type relation_key: List[Tuple[str, str]]
+        :type relation_key: List[tuple[str, str]]
         :return: list of own models to set on parent
         :rtype: List[Model]
         """

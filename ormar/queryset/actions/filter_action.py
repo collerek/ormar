@@ -85,7 +85,7 @@ class FilterAction(QueryAction):
         :raises QueryDefinitionError: if contains or icontains is used with
         ormar model instance
         :return: escaped value and flag if escaping is needed
-        :rtype: Tuple[Any, bool]
+        :rtype: tuple[Any, bool]
         """
         self.has_escaped_character = False
         if self.operator in [

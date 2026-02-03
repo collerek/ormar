@@ -8,7 +8,6 @@ from typing import (
     Callable,
     List,
     Optional,
-    Tuple,
     Type,
     Union,
     cast,
@@ -339,7 +338,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
     curr_class: type,
     attrs: dict,
     model_fields: dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
-) -> Tuple[dict, dict]:
+) -> tuple[dict, dict]:
     """
     Copy the key parameters [database, metadata, property_fields and constraints]
     and fields from parent models. Overwrites them if needed.
@@ -359,7 +358,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
     :param model_fields: ormar fields in defined in current class
     :type model_fields: dict[str, BaseField]
     :return: updated attrs and model_fields
-    :rtype: Tuple[dict, dict]
+    :rtype: tuple[dict, dict]
     """
     if attrs.get("ormar_config"):
         if model_fields and not base_class.ormar_config.abstract:  # type: ignore
@@ -417,7 +416,7 @@ def extract_from_parents_definition(  # noqa: CCR001
     curr_class: type,
     attrs: dict,
     model_fields: dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
-) -> Tuple[dict, dict]:
+) -> tuple[dict, dict]:
     """
     Extracts fields from base classes if they have valid ormar fields.
 
@@ -439,7 +438,7 @@ def extract_from_parents_definition(  # noqa: CCR001
     :param model_fields: ormar fields in defined in current class
     :type model_fields: dict[str, BaseField]
     :return: updated attrs and model_fields
-    :rtype: Tuple[dict, dict]
+    :rtype: tuple[dict, dict]
     """
     if hasattr(base_class, "ormar_config"):
         base_class = cast(Type["Model"], base_class)
@@ -607,7 +606,7 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
         :param name: name of current class
         :type name: str
         :param bases: base classes
-        :type bases: Tuple
+        :type bases: tuple
         :param attrs: class namespace
         :type attrs: dict
         """

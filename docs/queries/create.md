@@ -3,7 +3,7 @@
 Following methods allow you to insert data into the database.
 
 * `create(**kwargs) -> Model`
-* `get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+* `get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
 * `update_or_create(**kwargs) -> Model`
 * `bulk_create(objects: List[Model]) -> None`
 
@@ -58,7 +58,7 @@ await malibu.save()
 
 ## get_or_create
 
-`get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+`get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
 
 Combination of create and get methods.
 

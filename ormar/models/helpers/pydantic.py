@@ -1,5 +1,5 @@
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Optional, Type, Union
 
 import pydantic
 from pydantic import ConfigDict
@@ -37,7 +37,7 @@ def create_pydantic_field(
     )
 
 
-def populate_pydantic_default_values(attrs: dict) -> Tuple[dict, dict]:
+def populate_pydantic_default_values(attrs: dict) -> tuple[dict, dict]:
     """
     Extracts ormar fields from annotations (deprecated) and from namespace
     dictionary of the class. Fields declared on model are all subclasses of the
@@ -53,7 +53,7 @@ def populate_pydantic_default_values(attrs: dict) -> Tuple[dict, dict]:
     :param attrs: current class namespace
     :type attrs: dict
     :return: namespace of the class updated, dict of extracted model_fields
-    :rtype: Tuple[dict, dict]
+    :rtype: tuple[dict, dict]
     """
     model_fields = {}
     potential_fields = {}

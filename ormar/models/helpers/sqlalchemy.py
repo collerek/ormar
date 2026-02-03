@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, ForwardRef, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, ForwardRef, List, Optional, Type, Union
 
 import sqlalchemy
 
@@ -120,7 +120,7 @@ def check_pk_column_validity(
 
 def sqlalchemy_columns_from_model_fields(
     model_fields: dict, new_model: Type["Model"]
-) -> Tuple[Optional[str], List[sqlalchemy.Column]]:
+) -> tuple[Optional[str], List[sqlalchemy.Column]]:
     """
     Iterates over declared on Model model fields and extracts fields that
     should be treated as database fields.
@@ -143,7 +143,7 @@ def sqlalchemy_columns_from_model_fields(
     :param new_model:
     :type new_model: Model class
     :return: pkname, list of sqlalchemy columns
-    :rtype: Tuple[Optional[str], List[sqlalchemy.Column]]
+    :rtype: tuple[Optional[str], List[sqlalchemy.Column]]
     """
     if len(model_fields.keys()) == 0:
         model_fields["id"] = ormar.Integer(name="id", primary_key=True)
@@ -157,7 +157,7 @@ def sqlalchemy_columns_from_model_fields(
 
 def _process_fields(
     model_fields: dict, new_model: Type["Model"]
-) -> Tuple[Optional[str], List[sqlalchemy.Column]]:
+) -> tuple[Optional[str], List[sqlalchemy.Column]]:
     """
     Helper method.
 
@@ -172,7 +172,7 @@ def _process_fields(
     :param new_model:
     :type new_model: Model class
     :return: pkname, list of sqlalchemy columns
-    :rtype: Tuple[Optional[str], List[sqlalchemy.Column]]
+    :rtype: tuple[Optional[str], List[sqlalchemy.Column]]
     """
     columns = []
     pkname = None

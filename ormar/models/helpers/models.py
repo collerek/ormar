@@ -87,7 +87,7 @@ def extract_annotations_and_default_vals(attrs: dict) -> tuple[dict, dict]:
     :param attrs: namespace of the class created
     :type attrs: dict
     :return: namespace of the class updated, dict of extracted model_fields
-    :rtype: Tuple[dict, dict]
+    :rtype: tuple[dict, dict]
     """
     key = "__annotations__"
     attrs[key] = attrs.get(key, {})

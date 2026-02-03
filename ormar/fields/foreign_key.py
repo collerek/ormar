@@ -9,7 +9,6 @@ from typing import (
     ForwardRef,
     List,
     Optional,
-    Tuple,
     Type,
     Union,
     overload,
@@ -91,7 +90,7 @@ def populate_fk_params_based_on_to_model(
     nullable: bool,
     onupdate: Optional[str] = None,
     ondelete: Optional[str] = None,
-) -> Tuple[Any, List, Any, Any]:
+) -> tuple[Any, List, Any, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
     pydantic field to use, ForeignKey constraint and type of the target column field.
@@ -107,7 +106,7 @@ def populate_fk_params_based_on_to_model(
     How to treat child rows on delete of parent (the one where FK is defined) model.
     :type ondelete: str
     :return: tuple with target pydantic type, list of fk constraints and target col type
-    :rtype: Tuple[Any, List, Any]
+    :rtype: tuple[Any, List, Any]
     """
     fk_string = (
         to.ormar_config.tablename + "." + to.get_column_alias(to.ormar_config.pkname)

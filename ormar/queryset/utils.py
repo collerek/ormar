@@ -5,7 +5,6 @@ from typing import (
     Any,
     List,
     Optional,
-    Tuple,
     Type,
     Union,
 )
@@ -183,7 +182,7 @@ def update_dict_from_list(curr_dict: dict, list_to_update: Union[List, set]) -> 
 
 def get_relationship_alias_model_and_str(
     source_model: Type["Model"], related_parts: List
-) -> Tuple[str, Type["Model"], str, bool]:
+) -> tuple[str, Type["Model"], str, bool]:
     """
     Walks the relation to retrieve the actual model on which the clause should be
     constructed, extracts alias based on last relation leading to target model.
@@ -192,7 +191,7 @@ def get_relationship_alias_model_and_str(
     :param source_model: model from which relation starts
     :type source_model: Type[Model]
     :return: table prefix, target model and relation string
-    :rtype: Tuple[str, Type["Model"], str]
+    :rtype: tuple[str, Type["Model"], str]
     """
     table_prefix = ""
     is_through = False
@@ -232,7 +231,7 @@ def _process_through_field(
     related_field: "BaseField",
     previous_model: Type["Model"],
     previous_models: List[Type["Model"]],
-) -> Tuple[Type["Model"], Optional[str], bool]:
+) -> tuple[Type["Model"], Optional[str], bool]:
     """
     Helper processing through models as they need to be treated differently.
 
@@ -247,7 +246,7 @@ def _process_through_field(
     :param previous_models: list of already visited models in relation chain
     :type previous_models: List[Type["Model"]]
     :return: previous_model, relation, is_through
-    :rtype: Tuple[Type["Model"], str, bool]
+    :rtype: tuple[Type["Model"], str, bool]
     """
     is_through = True
     related_parts.remove(relation)

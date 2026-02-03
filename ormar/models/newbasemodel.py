@@ -10,7 +10,6 @@ from typing import (
     Mapping,
     MutableSequence,
     Optional,
-    Tuple,
     Type,
     TypeVar,
     Union,
@@ -266,7 +265,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 f"need to call update_forward_refs()."
             )
 
-    def _process_kwargs(self, kwargs: dict) -> Tuple[dict, dict]:  # noqa: CCR001
+    def _process_kwargs(self, kwargs: dict) -> tuple[dict, dict]:  # noqa: CCR001
         """
         Initializes nested models.
 
@@ -281,7 +280,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :param kwargs: passed to init keyword arguments
         :type kwargs: dict
         :return: modified kwargs
-        :rtype: Tuple[dict, dict]
+        :rtype: tuple[dict, dict]
         """
         property_fields = self.ormar_config.property_fields
         model_fields = self.ormar_config.model_fields

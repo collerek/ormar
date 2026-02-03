@@ -24,7 +24,7 @@ To read more about any specific section or function please refer to the details 
 ###[Insert data into database](./create.md)
 
 * `create(**kwargs) -> Model`
-* `get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+* `get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
 * `update_or_create(**kwargs) -> Model`
 * `bulk_create(objects: List[Model]) -> None`
 
@@ -47,7 +47,7 @@ To read more about any specific section or function please refer to the details 
 
 * `get(**kwargs) -> Model`
 * `get_or_none(**kwargs) -> Optional[Model]`
-* `get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+* `get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
 * `first() -> Model`
 * `all(**kwargs) -> List[Optional[Model]]`
 
@@ -140,7 +140,7 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
 * `order_by(columns:Union[List, str]) -> QuerySet`
 * `get(**kwargs) -> Model`
 * `get_or_none(**kwargs) -> Optional[Model]`
-* `get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+* `get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
 * `all(**kwargs) -> List[Optional[Model]]`
 
 

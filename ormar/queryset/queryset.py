@@ -7,7 +7,6 @@ from typing import (
     List,
     Optional,
     Sequence,
-    Tuple,
     Type,
     TypeVar,
     Union,
@@ -191,14 +190,14 @@ class QuerySet(Generic[T]):
 
     def _resolve_filter_groups(
         self, groups: Any
-    ) -> Tuple[List[FilterGroup], List[str]]:
+    ) -> tuple[List[FilterGroup], List[str]]:
         """
         Resolves filter groups to populate FilterAction params in group tree.
 
         :param groups: tuple of FilterGroups
         :type groups: Any
         :return: list of resolver groups
-        :rtype: Tuple[List[FilterGroup], List[str]]
+        :rtype: tuple[List[FilterGroup], List[str]]
         """
         filter_groups = []
         select_related = self._select_related
@@ -1008,7 +1007,7 @@ class QuerySet(Generic[T]):
         _defaults: Optional[dict[str, Any]] = None,
         *args: Any,
         **kwargs: Any,
-    ) -> Tuple["T", bool]:
+    ) -> tuple["T", bool]:
         """
         Combination of create and get methods.
 
@@ -1024,7 +1023,7 @@ class QuerySet(Generic[T]):
         :param _defaults: default values for creating object
         :type _defaults: Optional[dict[str, Any]]
         :return: model instance and a boolean
-        :rtype: Tuple("T", bool)
+        :rtype: tuple("T", bool)
         """
         try:
             return await self.get(*args, **kwargs), False

@@ -56,7 +56,7 @@ assert post.categories[0] == news
 
 ### get_or_create
 
-`get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+`get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
 
 Tries to get a row meeting the criteria and if `NoMatch` exception is raised it creates a new one with given kwargs and _defaults.
 
@@ -146,7 +146,7 @@ await post.categories.create(
 
 ### get_or_create
 
-`get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+`get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
 
 Tries to get a row meeting the criteria and if NoMatch exception is raised it creates a new one with given kwargs.
 

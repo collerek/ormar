@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING, Any, List, Optional, Type, Union, cast
 
 import sqlalchemy
 from sqlalchemy import Column, Select, Table, TextClause
@@ -164,7 +164,7 @@ class Query:
 
     def _build_pagination_condition(
         self,
-    ) -> Tuple[
+    ) -> tuple[
         sqlalchemy.sql.expression.TextClause, sqlalchemy.sql.expression.TextClause
     ]:
         """
