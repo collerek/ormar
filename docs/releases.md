@@ -232,11 +232,11 @@
     database: Optional[databases.Database]
     engine: Optional[sqlalchemy.engine.Engine]
     tablename: Optional[str]
-    order_by: Optional[list[str]]
+    order_by: Optional[List[str]]
     abstract: bool
     queryset_class: Type[QuerySet]
     extra: Extra
-    constraints: Optional[list[ColumnCollectionConstraint]]
+    constraints: Optional[List[ColumnCollectionConstraint]]
     ```
 
 * `BaseMeta` equivalent - best practice
@@ -866,7 +866,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
 ###🐛 Fixes
 
 *  Fix bug in `fastapi-pagination` [#73](https://github.com/uriyyo/fastapi-pagination/issues/73)
-*  Remove unnecessary `Optional` in `list[Optional[T]]` in return value for `QuerySet.all()` and `Querysetproxy.all()` return values [#174](https://github.com/collerek/ormar/issues/174)
+*  Remove unnecessary `Optional` in `List[Optional[T]]` in return value for `QuerySet.all()` and `Querysetproxy.all()` return values [#174](https://github.com/collerek/ormar/issues/174)
 *  Run tests coverage publish only on internal prs instead of all in github action.
 
 ##0.10.4
@@ -1091,10 +1091,10 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
   *  `save_all:bool` -> By default (so with `save_all=False`) `ormar` only upserts models that are not saved (so new or updated ones), 
   with `save_all=True` all related models are saved, regardless of `saved` status, which might be useful if updated
   models comes from api call, so are not changed in the backend.
-  *  `exclude: Union[set, dict, None]` -> set/dict of relations to exclude from save, those relation won't be saved even with `follow=True` and `save_all=True`. 
+  *  `exclude: Union[Set, Dict, None]` -> set/dict of relations to exclude from save, those relation won't be saved even with `follow=True` and `save_all=True`. 
      To exclude nested relations pass a nested dictionary like: `exclude={"child":{"sub_child": {"exclude_sub_child_realtion"}}}`. The allowed values follow
      the `fields/exclude_fields` (from `QuerySet`) methods schema so when in doubt you can refer to docs in queries -> selecting subset of fields -> fields.
-*  `Model.update()` method now accepts `_columns: list[str] = None` parameter, that accepts list of column names to update. If passed only those columns will be updated in database.
+*  `Model.update()` method now accepts `_columns: List[str] = None` parameter, that accepts list of column names to update. If passed only those columns will be updated in database.
    Note that `update()` does not refresh the instance of the Model, so if you change more columns than you pass in `_columns` list your Model instance will have different values than the database!
 *  `Model.model_dump()` method previously included only directly related models or nested models if they were not nullable and not virtual, 
    now all related models not previously visited without loops are included in `dict()`. This should be not breaking
@@ -1158,9 +1158,9 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
 
 ### Features
 *  Add possibility to change default ordering of relations and models.
-    * To change model sorting pass `orders_by = [columns]` where `columns: list[str]` to model `Meta` class
-    * To change relation order_by pass `orders_by = [columns]` where `columns: list[str]`
-    * To change reverse relation order_by pass `related_orders_by = [columns]` where `columns: list[str]`
+    * To change model sorting pass `orders_by = [columns]` where `columns: List[str]` to model `Meta` class
+    * To change relation order_by pass `orders_by = [columns]` where `columns: List[str]`
+    * To change reverse relation order_by pass `related_orders_by = [columns]` where `columns: List[str]`
     * Arguments can be column names or `-{col_name}` to sort descending
     * In relations you can sort only by directly related model columns 
       or for `ManyToMany` columns also `Through` model columns `"{through_field_name}__{column_name}"`
@@ -1183,7 +1183,7 @@ In 0.10.9 ormar excludes versions with vulnerability in pinned dependencies.
     *  Signals receive following args: `sender: Type[Model]` - sender class, 
        `instance: Model` - instance to which related model is added, `child: Model` - model being added,
        `relation_name: str` - name of the relation to which child is added, 
-       for add signals also `passed_kwargs: dict` - dict of kwargs passed to `add()`
+       for add signals also `passed_kwargs: Dict` - dict of kwargs passed to `add()`
 
 ### Changes
 * `Through` models for ManyToMany relations are now instantiated on creation, deletion and update, so you can provide not only
