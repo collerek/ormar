@@ -1,7 +1,6 @@
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
     Generic,
     List,
     Optional,
@@ -47,7 +46,7 @@ class RelationProxy(Generic[T], List[T]):
         )
         self._related_field_name: Optional[str] = None
 
-        self._relation_cache: Dict[int, int] = {}
+        self._relation_cache: dict[int, int] = {}
 
         validated_data = []
         if data_ is not None:

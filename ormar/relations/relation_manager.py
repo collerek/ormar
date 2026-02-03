@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING, List, Optional, Sequence, Type, Union
 from weakref import proxy
 
 from ormar.relations.relation import Relation, RelationType
@@ -22,7 +22,7 @@ class RelationsManager:
         self.owner = proxy(owner)
         self._related_fields = related_fields or []
         self._related_names = [field.name for field in self._related_fields]
-        self._relations: Dict[str, Relation] = dict()
+        self._relations: dict[str, Relation] = dict()
         for field in self._related_fields:
             self._add_relation(field)
 

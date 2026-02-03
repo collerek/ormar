@@ -2,7 +2,7 @@
 import abc
 import base64
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Type, Union
 
 import sqlalchemy.types as types
 from sqlalchemy.engine import Dialect
@@ -198,7 +198,7 @@ class EncryptedString(types.TypeDecorator):
             return self._field_type.__type__(decrypted_value)  # type: ignore
 
     def _get_coder_type_and_params(
-        self, coders: Dict[type, Callable]
+        self, coders: dict[type, Callable]
     ) -> Tuple[Optional[Callable], Optional[str]]:
         coder = coders.get(self.type_, None)
         additional_parameter: Optional[str] = None

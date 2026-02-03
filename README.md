@@ -602,7 +602,7 @@ asyncio.run(cleanup_database())
 *  `create(**kwargs): -> Model`
 *  `get(*args, **kwargs): -> Model`
 *  `get_or_none(*args, **kwargs): -> Optional[Model]`
-*  `get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
+*  `get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 *  `first(*args, **kwargs): -> Model`
 *  `update(each: bool = False, **kwargs) -> int`
 *  `update_or_create(**kwargs) -> Model`
@@ -626,8 +626,8 @@ asyncio.run(cleanup_database())
 *  `fields(columns: Union[List, str, set, dict]) -> QuerySet`
 *  `exclude_fields(columns: Union[List, str, set, dict]) -> QuerySet`
 *  `order_by(columns:Union[List, str]) -> QuerySet`
-*  `values(fields: Union[List, str, Set, Dict])`
-*  `values_list(fields: Union[List, str, Set, Dict])`
+*  `values(fields: Union[List, str, Set, dict])`
+*  `values_list(fields: Union[List, str, Set, dict])`
 
 
 #### Relation types

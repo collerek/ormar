@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, List, Optional, cast
 
 import ormar
 from ormar.queryset.utils import translate_list_to_dict
@@ -56,7 +56,7 @@ class MergeModelMixin:
         :rtype: List["Model"]
         """
         merged_rows: List["Model"] = []
-        grouped_instances: Dict = {}
+        grouped_instances: dict = {}
 
         for model in result_rows:
             grouped_instances.setdefault(model.pk, []).append(model)
@@ -69,7 +69,7 @@ class MergeModelMixin:
 
     @classmethod
     def merge_two_instances(
-        cls, one: "Model", other: "Model", relation_map: Optional[Dict] = None
+        cls, one: "Model", other: "Model", relation_map: Optional[dict] = None
     ) -> "Model":
         """
         Merges current (other) Model and previous one (one) and returns the current
@@ -78,7 +78,7 @@ class MergeModelMixin:
         If needed it's calling itself recurrently and merges also children models.
 
         :param relation_map: map of models relations to follow
-        :type relation_map: Dict
+        :type relation_map: dict
         :param one: previous model instance
         :type one: Model
         :param other: current model instance
@@ -127,7 +127,7 @@ class MergeModelMixin:
         field_name: str,
         current_field: List,
         other_value: List,
-        relation_map: Optional[Dict],
+        relation_map: Optional[dict],
     ) -> List:
         """
         Takes two list of nested models and process them going deeper
@@ -145,7 +145,7 @@ class MergeModelMixin:
         :param other_value: list of nested models from other model
         :type other_value: List[Model]
         :param relation_map: map of relations to follow
-        :type relation_map: Dict
+        :type relation_map: dict
         :return: merged list of models
         :rtype: List[Model]
         """

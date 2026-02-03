@@ -6,7 +6,6 @@ from typing import (
     Any,
     Callable,
     Collection,
-    Dict,
     List,
     Optional,
     Set,
@@ -41,7 +40,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         _bytes_fields: Set[str]
         __pydantic_core_schema__: CoreSchema
         __ormar_fields_validators__: Optional[
-            Dict[str, Union[SchemaValidator, PluggableSchemaValidator]]
+            dict[str, Union[SchemaValidator, PluggableSchemaValidator]]
         ]
 
     @classmethod
@@ -55,9 +54,9 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         Translate columns into aliases (db names).
 
         :param new_kwargs: dictionary of model that is about to be saved
-        :type new_kwargs: Dict[str, str]
+        :type new_kwargs: dict[str, str]
         :return: dictionary of model that is about to be saved
-        :rtype: Dict[str, str]
+        :rtype: dict[str, str]
         """
         new_kwargs = cls._remove_pk_from_kwargs(new_kwargs)
         new_kwargs = cls._remove_not_ormar_fields(new_kwargs)
@@ -72,9 +71,9 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         """
         Combines all preparation methods before updating.
         :param new_kwargs: dictionary of model that is about to be saved
-        :type new_kwargs: Dict[str, str]
+        :type new_kwargs: dict[str, str]
         :return: dictionary of model that is about to be updated
-        :rtype: Dict[str, str]
+        :rtype: dict[str, str]
         """
         new_kwargs = cls.parse_non_db_fields(new_kwargs)
         new_kwargs = cls.substitute_models_with_pks(new_kwargs)
@@ -98,9 +97,9 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         and it's set to None.
 
         :param new_kwargs: dictionary of model that is about to be saved
-        :type new_kwargs: Dict[str, str]
+        :type new_kwargs: dict[str, str]
         :return: dictionary of model that is about to be saved
-        :rtype: Dict[str, str]
+        :rtype: dict[str, str]
         """
         ormar_fields = {k for k, v in cls.ormar_config.model_fields.items()}
         new_kwargs = {k: v for k, v in new_kwargs.items() if k in ormar_fields}
@@ -113,9 +112,9 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         and it's set to None.
 
         :param new_kwargs: dictionary of model that is about to be saved
-        :type new_kwargs: Dict[str, str]
+        :type new_kwargs: dict[str, str]
         :return: dictionary of model that is about to be saved
-        :rtype: Dict[str, str]
+        :rtype: dict[str, str]
         """
         pkname = cls.ormar_config.pkname
         pk = cls.ormar_config.model_fields[pkname]
@@ -126,15 +125,15 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return new_kwargs
 
     @classmethod
-    def parse_non_db_fields(cls, model_dict: Dict) -> Dict:
+    def parse_non_db_fields(cls, model_dict: dict) -> dict:
         """
         Receives dictionary of model that is about to be saved and changes uuid fields
         to strings in bulk_update.
 
         :param model_dict: dictionary of model that is about to be saved
-        :type model_dict: Dict
+        :type model_dict: dict
         :return: dictionary of model that is about to be saved
-        :rtype: Dict
+        :rtype: dict
         """
         for name, field in cls.ormar_config.model_fields.items():
             if field.__type__ == uuid.UUID and name in model_dict:
@@ -145,15 +144,15 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return model_dict
 
     @classmethod
-    def substitute_models_with_pks(cls, model_dict: Dict) -> Dict:  # noqa  CCR001
+    def substitute_models_with_pks(cls, model_dict: dict) -> dict:  # noqa  CCR001
         """
         Receives dictionary of model that is about to be saved and changes all related
         models that are stored as foreign keys to their fk value.
 
         :param model_dict: dictionary of model that is about to be saved
-        :type model_dict: Dict
+        :type model_dict: dict
         :return: dictionary of model that is about to be saved
-        :rtype: Dict
+        :rtype: dict
         """
         for field in cls.extract_related_names():
             field_value = model_dict.get(field, None)
@@ -180,15 +179,15 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return model_dict
 
     @classmethod
-    def reconvert_str_to_bytes(cls, model_dict: Dict) -> Dict:
+    def reconvert_str_to_bytes(cls, model_dict: dict) -> dict:
         """
         Receives dictionary of model that is about to be saved and changes
         all bytes fields that are represented as strings back into bytes.
 
         :param model_dict: dictionary of model that is about to be saved
-        :type model_dict: Dict
+        :type model_dict: dict
         :return: dictionary of model that is about to be saved
-        :rtype: Dict
+        :rtype: dict
         """
         bytes_base64_fields = {
             name
@@ -205,15 +204,15 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return model_dict
 
     @classmethod
-    def dump_all_json_fields_to_str(cls, model_dict: Dict) -> Dict:
+    def dump_all_json_fields_to_str(cls, model_dict: dict) -> dict:
         """
         Receives dictionary of model that is about to be saved and changes
         all json fields into strings
 
         :param model_dict: dictionary of model that is about to be saved
-        :type model_dict: Dict
+        :type model_dict: dict
         :return: dictionary of model that is about to be saved
-        :rtype: Dict
+        :rtype: dict
         """
         for key, value in model_dict.items():
             if key in cls._json_fields:
@@ -221,7 +220,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return model_dict
 
     @classmethod
-    def serialize_nested_models_json_fields(cls, kwargs: Dict) -> Dict:
+    def serialize_nested_models_json_fields(cls, kwargs: dict) -> dict:
         """
         Serializes JSON fields in nested model instances to strings.
         This ensures that when models with JSON fields are nested in other models,
@@ -240,16 +239,16 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return kwargs
 
     @classmethod
-    def populate_default_values(cls, new_kwargs: Dict) -> Dict:
+    def populate_default_values(cls, new_kwargs: dict) -> dict:
         """
         Receives dictionary of model that is about to be saved and populates the default
         value on the fields that have the default value set, but no actual value was
         passed by the user.
 
         :param new_kwargs: dictionary of model that is about to be saved
-        :type new_kwargs: Dict
+        :type new_kwargs: dict
         :return: dictionary of model that is about to be saved
-        :rtype: Dict
+        :rtype: dict
         """
         for field_name, field in cls.ormar_config.model_fields.items():
             if field_name not in new_kwargs and field.has_default(use_server=False):
@@ -263,15 +262,15 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return new_kwargs
 
     @classmethod
-    def validate_enums(cls, new_kwargs: Dict) -> Dict:
+    def validate_enums(cls, new_kwargs: dict) -> dict:
         """
         Receives dictionary of model that is about to be saved and validates the
         fields with choices set to see if the value is allowed.
 
         :param new_kwargs: dictionary of model that is about to be saved
-        :type new_kwargs: Dict
+        :type new_kwargs: dict
         :return: dictionary of model that is about to be saved
-        :rtype: Dict
+        :rtype: dict
         """
         validators = cls._build_individual_schema_validator()
         for key, value in new_kwargs.items():
@@ -390,7 +389,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         fields_list: Collection["ForeignKeyField"],
         follow: bool,
         save_all: bool,
-        relation_map: Dict,
+        relation_map: dict,
         update_count: int,
     ) -> int:
         """
@@ -402,7 +401,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         :param fields_list: list of ormar fields to follow and save
         :type fields_list: Collection["ForeignKeyField"]
         :param relation_map: map of relations to follow
-        :type relation_map: Dict
+        :type relation_map: dict
         :param follow: flag to trigger deep save -
         by default only directly related models are saved
         with follow=True also related models of related models are saved

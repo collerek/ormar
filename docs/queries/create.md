@@ -3,7 +3,7 @@
 Following methods allow you to insert data into the database.
 
 * `create(**kwargs) -> Model`
-* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+* `get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
 * `update_or_create(**kwargs) -> Model`
 * `bulk_create(objects: List[Model]) -> None`
 
@@ -16,7 +16,7 @@ Following methods allow you to insert data into the database.
 
 * `QuerysetProxy`
       * `QuerysetProxy.create(**kwargs)` method
-      * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs)` method
+      * `QuerysetProxy.get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs)` method
       * `QuerysetProxy.update_or_create(**kwargs)` method
 
 ## create
@@ -58,7 +58,7 @@ await malibu.save()
 
 ## get_or_create
 
-`get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+`get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
 
 Combination of create and get methods.
 

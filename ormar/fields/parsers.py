@@ -2,7 +2,7 @@ import base64
 import datetime
 import decimal
 import uuid
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import pydantic
 from pydantic_core import SchemaValidator, core_schema
@@ -66,7 +66,7 @@ def re_dump_value(value: str) -> Union[str, bytes]:
     return result
 
 
-ENCODERS_MAP: Dict[type, Callable] = {
+ENCODERS_MAP: dict[type, Callable] = {
     datetime.datetime: lambda x: x.isoformat(),
     datetime.date: lambda x: x.isoformat(),
     datetime.time: lambda x: x.isoformat(),
@@ -76,15 +76,15 @@ ENCODERS_MAP: Dict[type, Callable] = {
     bytes: encode_bytes,
 }
 
-SQL_ENCODERS_MAP: Dict[type, Callable] = {bool: encode_bool, **ENCODERS_MAP}
+SQL_ENCODERS_MAP: dict[type, Callable] = {bool: encode_bool, **ENCODERS_MAP}
 
-ADDITIONAL_PARAMETERS_MAP: Dict[type, str] = {
+ADDITIONAL_PARAMETERS_MAP: dict[type, str] = {
     bytes: "represent_as_base64_str",
     decimal.Decimal: "decimal_places",
 }
 
 
-DECODERS_MAP: Dict[type, Callable] = {
+DECODERS_MAP: dict[type, Callable] = {
     bool: parse_bool,
     datetime.datetime: SchemaValidator(core_schema.datetime_schema()).validate_python,
     datetime.date: SchemaValidator(core_schema.date_schema()).validate_python,

@@ -6,7 +6,6 @@ from random import choices
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
     ForwardRef,
     List,
     Optional,
@@ -129,7 +128,7 @@ def populate_fk_params_based_on_to_model(
     return __type__, constraints, column_type, pk_only_model
 
 
-def validate_not_allowed_fields(kwargs: Dict) -> None:
+def validate_not_allowed_fields(kwargs: dict) -> None:
     """
     Verifies if not allowed parameters are set on relation models.
     Usually they are omitted later anyway but this way it's explicitly
@@ -137,7 +136,7 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
 
     :raises ModelDefinitionError: if any forbidden field is set
     :param kwargs: dict of kwargs to verify passed to relation field
-    :type kwargs: Dict
+    :type kwargs: dict
     """
     default = kwargs.pop("default", None)
     encrypt_secret = kwargs.pop("encrypt_secret", None)
@@ -402,7 +401,7 @@ class ForeignKeyField(BaseField):
         with given relation based to use as a target in filter clause.
 
         :return: name or names of the related columns/ fields
-        :rtype: Union[str, Dict[str, str]]
+        :rtype: Union[str, dict[str, str]]
         """
         if self.virtual:
             field_name = self.get_related_name()

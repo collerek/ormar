@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, cast
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, cast
 
 import sqlalchemy
 from sqlalchemy import TextClause, text
@@ -21,14 +21,14 @@ class SqlJoin:
         columns: List[sqlalchemy.Column],
         excludable: "ExcludableItems",
         order_columns: Optional[List["OrderAction"]],
-        sorted_orders: Dict,
+        sorted_orders: dict,
         main_model: Type["Model"],
         relation_name: str,
         relation_str: str,
         related_models: Any = None,
         own_alias: str = "",
         source_model: Optional[Type["Model"]] = None,
-        already_sorted: Optional[Dict] = None,
+        already_sorted: Optional[dict] = None,
     ) -> None:
         self.relation_name = relation_name
         self.related_models = related_models or []
@@ -133,7 +133,7 @@ class SqlJoin:
 
         return text(f"{left_part}={right_part}")
 
-    def build_join(self) -> Tuple[List, sqlalchemy.sql.Select, List, Dict]:
+    def build_join(self) -> Tuple[List, sqlalchemy.sql.Select, List, dict]:
         """
         Main external access point for building a join.
         Splits the join definition, updates fields and exclude_fields if needed,
@@ -141,7 +141,7 @@ class SqlJoin:
         used_aliases and sort_orders.
 
         :return: list of used aliases, select from, list of aliased columns, sort orders
-        :rtype: Tuple[List[str], Join, List[TextClause], Dict]
+        :rtype: Tuple[List[str], Join, List[TextClause], dict]
         """
         if self.target_field.is_multi:
             self._process_m2m_through_table()

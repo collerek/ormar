@@ -3,7 +3,6 @@ import copy
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
     List,
     Optional,
     Set,
@@ -42,7 +41,7 @@ def check_node_not_dict_or_not_last_node(
 
 def translate_list_to_dict(  # noqa: CCR001
     list_to_trans: Union[List, Set], default: Any = ...
-) -> Dict:
+) -> dict:
     """
     Splits the list of strings by '__' and converts them to dictionary with nested
     models grouped by parent model. That way each model appears only once in the whole
@@ -58,9 +57,9 @@ def translate_list_to_dict(  # noqa: CCR001
     default value with sort order.
     :type is_order: bool
     :return: converted to dictionary input list
-    :rtype: Dict
+    :rtype: dict
     """
-    new_dict: Dict = dict()
+    new_dict: dict = dict()
     for path in list_to_trans:
         current_level = new_dict
         parts = path.split("__")
@@ -77,7 +76,7 @@ def translate_list_to_dict(  # noqa: CCR001
     return new_dict
 
 
-def convert_set_to_required_dict(set_to_convert: set) -> Dict:
+def convert_set_to_required_dict(set_to_convert: set) -> dict:
     """
     Converts set to dictionary of required keys.
     Required key is Ellipsis.
@@ -85,7 +84,7 @@ def convert_set_to_required_dict(set_to_convert: set) -> Dict:
     :param set_to_convert: set to convert to dict
     :type set_to_convert: set
     :return: set converted to dict of ellipsis
-    :rtype: Dict
+    :rtype: dict
     """
     new_dict = dict()
     for key in set_to_convert:
@@ -93,7 +92,7 @@ def convert_set_to_required_dict(set_to_convert: set) -> Dict:
     return new_dict
 
 
-def update(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR001
+def update(current_dict: Any, updating_dict: Any) -> dict:  # noqa: CCR001
     """
     Update one dict with another but with regard for nested keys.
 
@@ -101,11 +100,11 @@ def update(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR001
     only other values are overwritten.
 
     :param current_dict: dict to update
-    :type current_dict: Dict[str, ellipsis]
+    :type current_dict: dict[str, ellipsis]
     :param updating_dict: dict with values to update
-    :type updating_dict: Dict
+    :type updating_dict: dict
     :return: combination of both dicts
-    :rtype: Dict
+    :rtype: dict
     """
     if current_dict is Ellipsis:
         current_dict = dict()
@@ -122,7 +121,7 @@ def update(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR001
     return current_dict
 
 
-def subtract_dict(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR001
+def subtract_dict(current_dict: Any, updating_dict: Any) -> dict:  # noqa: CCR001
     """
     Update one dict with another but with regard for nested keys.
 
@@ -130,15 +129,15 @@ def subtract_dict(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR00
     only other values are overwritten.
 
     :param current_dict: dict to update
-    :type current_dict: Dict[str, ellipsis]
+    :type current_dict: dict[str, ellipsis]
     :param updating_dict: dict with values to update
-    :type updating_dict: Dict
+    :type updating_dict: dict
     :return: combination of both dicts
-    :rtype: Dict
+    :rtype: dict
     """
     for key, value in updating_dict.items():
         old_key = current_dict.get(key, {})
-        new_value: Optional[Union[Dict, Set]] = None
+        new_value: Optional[Union[dict, Set]] = None
         if not old_key:
             continue
         if isinstance(value, set) and isinstance(old_key, set):
@@ -165,17 +164,17 @@ def subtract_dict(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR00
     return current_dict
 
 
-def update_dict_from_list(curr_dict: Dict, list_to_update: Union[List, Set]) -> Dict:
+def update_dict_from_list(curr_dict: dict, list_to_update: Union[List, Set]) -> dict:
     """
     Converts the list into dictionary and later performs special update, where
     nested keys that are sets or dicts are combined and not overwritten.
 
     :param curr_dict: dict to update
-    :type curr_dict: Dict
+    :type curr_dict: dict
     :param list_to_update: list with values to update the dict
     :type list_to_update: List[str]
     :return: updated dict
-    :rtype: Dict
+    :rtype: dict
     """
     updated_dict = copy.copy(curr_dict)
     dict_to_update = translate_list_to_dict(list_to_update)

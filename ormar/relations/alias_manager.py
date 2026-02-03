@@ -1,7 +1,7 @@
 import string
 import uuid
 from random import choices
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
 
 import sqlalchemy
 from sqlalchemy import Label
@@ -34,9 +34,9 @@ class AliasManager:
     """
 
     def __init__(self) -> None:
-        self._aliases_new: Dict[str, str] = dict()
-        self._reversed_aliases: Dict[str, str] = dict()
-        self._prefixed_tables: Dict[str, NamedFromClause] = dict()
+        self._aliases_new: dict[str, str] = dict()
+        self._reversed_aliases: dict[str, str] = dict()
+        self._prefixed_tables: dict[str, NamedFromClause] = dict()
 
     def __contains__(self, item: str) -> bool:
         return self._aliases_new.__contains__(item)
@@ -45,12 +45,12 @@ class AliasManager:
         return self._aliases_new.__getitem__(key)
 
     @property
-    def reversed_aliases(self) -> Dict:
+    def reversed_aliases(self) -> dict:
         """
         Returns swapped key-value pairs from aliases where alias is the key.
 
         :return: dictionary of prefix to relation
-        :rtype: Dict
+        :rtype: dict
         """
         if self._reversed_aliases:
             return self._reversed_aliases

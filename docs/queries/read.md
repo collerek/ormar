@@ -3,7 +3,7 @@
 Following methods allow you to load data from the database.
 
 * `get(*args, **kwargs) -> Model`
-* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
+* `get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 * `first(*args, **kwargs) -> Model`
 * `all(*args, **kwargs) -> List[Optional[Model]]`
 * `iterate(*args, **kwargs) -> AsyncGenerator[Model]`
@@ -15,7 +15,7 @@ Following methods allow you to load data from the database.
 
 * `QuerysetProxy`
     * `QuerysetProxy.get(*args, **kwargs)` method
-    * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs)` method
+    * `QuerysetProxy.get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs)` method
     * `QuerysetProxy.first(*args, **kwargs)` method
     * `QuerysetProxy.all(*args, **kwargs)` method
 
@@ -66,7 +66,7 @@ Exact equivalent of get described above but instead of raising the exception ret
 
 ## get_or_create
 
-`get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
+`get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
 
 Combination of create and get methods.
 

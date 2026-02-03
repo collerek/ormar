@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, Union, cast
 
 import sqlalchemy
 from sqlalchemy import Column, Select, Table, TextClause
@@ -45,7 +45,7 @@ class Query:
         self.select_from: Union[Join, Table, List[str]] = []
         self.columns: List[Column] = []
         self.order_columns = order_bys
-        self.sorted_orders: Dict[OrderAction, TextClause] = {}
+        self.sorted_orders: dict[OrderAction, TextClause] = {}
         self._init_sorted_orders()
 
         self.limit_raw_sql = limit_raw_sql

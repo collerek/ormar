@@ -2,7 +2,6 @@ from typing import (
     TYPE_CHECKING,
     AbstractSet,
     Any,
-    Dict,
     List,
     Mapping,
     Optional,
@@ -34,17 +33,17 @@ class ExcludableMixin(RelationMixin):
 
     @staticmethod
     def get_child(
-        items: Union[Set, Dict, None], key: Optional[str] = None
-    ) -> Union[Set, Dict, None]:
+        items: Union[Set, dict, None], key: Optional[str] = None
+    ) -> Union[Set, dict, None]:
         """
         Used to get nested dictionaries keys if they exists otherwise returns
         passed items.
         :param items: bag of items to include or exclude
-        :type items:  Union[Set, Dict, None]
+        :type items:  Union[Set, dict, None]
         :param key: name of the child to extract
         :type key: str
         :return: child extracted from items if exists
-        :rtype: Union[Set, Dict, None]
+        :rtype: Union[Set, dict, None]
         """
         if isinstance(items, dict):
             return items.get(key, {})
@@ -140,7 +139,7 @@ class ExcludableMixin(RelationMixin):
         return columns
 
     @classmethod
-    def _update_excluded_with_related(cls, exclude: Union[Set, Dict, None]) -> Set:
+    def _update_excluded_with_related(cls, exclude: Union[Set, dict, None]) -> Set:
         """
         Used during generation of the dict().
         To avoid cyclical references and max recurrence limit nested models have to
@@ -150,9 +149,9 @@ class ExcludableMixin(RelationMixin):
         exclusion, for nested models all related models are excluded.
 
         :param exclude: set/dict with fields to exclude
-        :type exclude: Union[Set, Dict, None]
+        :type exclude: Union[Set, dict, None]
         :return: set or dict with excluded fields added.
-        :rtype: Union[Set, Dict]
+        :rtype: Union[Set, dict]
         """
         exclude = exclude or set()
         related_set = cls.extract_related_names()

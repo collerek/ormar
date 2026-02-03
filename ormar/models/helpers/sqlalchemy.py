@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Dict, ForwardRef, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, ForwardRef, List, Optional, Tuple, Type, Union
 
 import sqlalchemy
 
@@ -119,7 +119,7 @@ def check_pk_column_validity(
 
 
 def sqlalchemy_columns_from_model_fields(
-    model_fields: Dict, new_model: Type["Model"]
+    model_fields: dict, new_model: Type["Model"]
 ) -> Tuple[Optional[str], List[sqlalchemy.Column]]:
     """
     Iterates over declared on Model model fields and extracts fields that
@@ -139,7 +139,7 @@ def sqlalchemy_columns_from_model_fields(
     :raises ModelDefinitionError: if validation of related_names fail,
     or pkname validation fails.
     :param model_fields: dictionary of declared ormar model fields
-    :type model_fields: Dict[str, ormar.Field]
+    :type model_fields: dict[str, ormar.Field]
     :param new_model:
     :type new_model: Model class
     :return: pkname, list of sqlalchemy columns
@@ -156,7 +156,7 @@ def sqlalchemy_columns_from_model_fields(
 
 
 def _process_fields(
-    model_fields: Dict, new_model: Type["Model"]
+    model_fields: dict, new_model: Type["Model"]
 ) -> Tuple[Optional[str], List[sqlalchemy.Column]]:
     """
     Helper method.
@@ -168,7 +168,7 @@ def _process_fields(
     :raises ModelDefinitionError: if validation of related_names fail,
     or pkname validation fails.
     :param model_fields: dictionary of declared ormar model fields
-    :type model_fields: Dict[str, ormar.Field]
+    :type model_fields: dict[str, ormar.Field]
     :param new_model:
     :type new_model: Model class
     :return: pkname, list of sqlalchemy columns

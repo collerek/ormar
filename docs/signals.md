@@ -195,7 +195,7 @@ Send for `Model.update()` method.
 ### pre_relation_add
 
 `pre_relation_add(sender: Type["Model"], instance: "Model", child: "Model", 
-relation_name: str, passed_args: Dict)`
+relation_name: str, passed_args: dict)`
 
 Send for `Model.relation_name.add()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
 
@@ -205,7 +205,7 @@ Send for `Model.relation_name.add()` method for `ManyToMany` relations and rever
 ### post_relation_add
 
 `post_relation_add(sender: Type["Model"], instance: "Model", child: "Model", 
-relation_name: str, passed_args: Dict)`
+relation_name: str, passed_args: dict)`
 
 Send for `Model.relation_name.add()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
 
@@ -225,7 +225,7 @@ Send for `Model.relation_name.remove()` method for `ManyToMany` relations and re
 ### post_relation_remove
 
 `post_relation_remove(sender: Type["Model"], instance: "Model", child: "Model", 
-relation_name: str, passed_args: Dict)`
+relation_name: str, passed_args: dict)`
 
 Send for `Model.relation_name.remove()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
 

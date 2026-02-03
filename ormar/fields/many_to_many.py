@@ -291,7 +291,7 @@ class ManyToManyField(  # type: ignore
         with given relation based to use as a target in filter clause.
 
         :return: name or names of the related columns/ fields
-        :rtype: Union[str, Dict[str, str]]
+        :rtype: Union[str, dict[str, str]]
         """
         if self.self_reference and self.self_reference_primary == self.name:
             field_name = self.default_target_field_name()

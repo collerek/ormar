@@ -1,6 +1,6 @@
 import asyncio
 import inspect
-from typing import TYPE_CHECKING, Any, Callable, Dict, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Tuple, Type, Union
 
 from ormar.exceptions import SignalDefinitionError
 
@@ -45,7 +45,7 @@ class Signal:
     """
 
     def __init__(self) -> None:
-        self._receivers: Dict[Union[int, Tuple[int, int]], Callable] = {}
+        self._receivers: dict[Union[int, Tuple[int, int]], Callable] = {}
 
     def connect(self, receiver: Callable) -> None:
         """

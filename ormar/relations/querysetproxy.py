@@ -3,7 +3,6 @@ from typing import (  # noqa: I100, I201
     TYPE_CHECKING,
     Any,
     AsyncGenerator,
-    Dict,
     Generic,
     List,
     MutableSequence,
@@ -287,7 +286,7 @@ class QuerysetProxy(Generic[T]):
 
     async def values(
         self,
-        fields: Union[List, str, Set, Dict, None] = None,
+        fields: Union[List, str, Set, dict, None] = None,
         exclude_through: bool = False,
     ) -> List:
         """
@@ -302,7 +301,7 @@ class QuerysetProxy(Generic[T]):
         :param exclude_through: flag if through models should be excluded
         :type exclude_through: bool
         :param fields: field name or list of field names to extract from db
-        :type fields:  Union[List, str, Set, Dict]
+        :type fields:  Union[List, str, Set, dict]
         """
         return await self.queryset.values(
             fields=fields, exclude_through=exclude_through
@@ -310,7 +309,7 @@ class QuerysetProxy(Generic[T]):
 
     async def values_list(
         self,
-        fields: Union[List, str, Set, Dict, None] = None,
+        fields: Union[List, str, Set, dict, None] = None,
         flatten: bool = False,
         exclude_through: bool = False,
     ) -> List:
@@ -518,7 +517,7 @@ class QuerysetProxy(Generic[T]):
 
     async def get_or_create(
         self,
-        _defaults: Optional[Dict[str, Any]] = None,
+        _defaults: Optional[dict[str, Any]] = None,
         *args: Any,
         **kwargs: Any,
     ) -> Tuple["T", bool]:
@@ -532,7 +531,7 @@ class QuerysetProxy(Generic[T]):
         :param kwargs: fields names and proper value types
         :type kwargs: Any
         :param _defaults: default values for creating object
-        :type _defaults: Optional[Dict[str, Any]]
+        :type _defaults: Optional[dict[str, Any]]
         :return: model instance and a boolean
         :rtype: Tuple("T", bool)
         """
@@ -752,7 +751,7 @@ class QuerysetProxy(Generic[T]):
             relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
         )
 
-    def fields(self, columns: Union[List, str, Set, Dict]) -> "QuerysetProxy[T]":
+    def fields(self, columns: Union[List, str, Set, dict]) -> "QuerysetProxy[T]":
         """
         With `fields()` you can select subset of model columns to limit the data load.
 
@@ -793,7 +792,7 @@ class QuerysetProxy(Generic[T]):
         Actual call delegated to QuerySet.
 
         :param columns: columns to include
-        :type columns: Union[List, str, Set, Dict]
+        :type columns: Union[List, str, Set, dict]
         :return: QuerysetProxy
         :rtype: QuerysetProxy
         """
@@ -803,7 +802,7 @@ class QuerysetProxy(Generic[T]):
         )
 
     def exclude_fields(
-        self, columns: Union[List, str, Set, Dict]
+        self, columns: Union[List, str, Set, dict]
     ) -> "QuerysetProxy[T]":
         """
         With `exclude_fields()` you can select subset of model columns that will
@@ -829,7 +828,7 @@ class QuerysetProxy(Generic[T]):
         Actual call delegated to QuerySet.
 
         :param columns: columns to exclude
-        :type columns: Union[List, str, Set, Dict]
+        :type columns: Union[List, str, Set, dict]
         :return: QuerysetProxy
         :rtype: QuerysetProxy
         """

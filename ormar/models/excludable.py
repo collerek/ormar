@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Type, Union
+from typing import TYPE_CHECKING, List, Optional, Set, Tuple, Type, Union
 
 from ormar.queryset.utils import get_relationship_alias_model_and_str
 
@@ -70,7 +70,7 @@ class ExcludableItems:
     """
 
     def __init__(self) -> None:
-        self.items: Dict[str, Excludable] = dict()
+        self.items: dict[str, Excludable] = dict()
 
     @classmethod
     def from_excludable(cls, other: "ExcludableItems") -> "ExcludableItems":
@@ -116,7 +116,7 @@ class ExcludableItems:
 
     def build(
         self,
-        items: Union[List[str], str, Tuple[str], Set[str], Dict],
+        items: Union[List[str], str, Tuple[str], Set[str], dict],
         model_cls: Type["Model"],
         is_exclude: bool = False,
     ) -> None:
@@ -127,7 +127,7 @@ class ExcludableItems:
         Each excludable has two sets of values - one to include, one to exclude.
 
         :param items: values to be included or excluded
-        :type items: Union[List[str], str, Tuple[str], Set[str], Dict]
+        :type items: Union[List[str], str, Tuple[str], Set[str], dict]
         :param model_cls: source model from which relations are constructed
         :type model_cls: ormar.models.metaclass.ModelMetaclass
         :param is_exclude: flag if items should be included or excluded
@@ -136,7 +136,7 @@ class ExcludableItems:
         if isinstance(items, str):
             items = {items}
 
-        if isinstance(items, Dict):
+        if isinstance(items, dict):
             self._traverse_dict(
                 values=items,
                 source_model=model_cls,
@@ -182,7 +182,7 @@ class ExcludableItems:
 
     def _traverse_dict(  # noqa: CFQ002
         self,
-        values: Dict,
+        values: dict,
         source_model: Type["Model"],
         model_cls: Type["Model"],
         is_exclude: bool,
@@ -193,7 +193,7 @@ class ExcludableItems:
         Goes through dict of nested values and construct/update Excludables.
 
         :param values: items to include/exclude
-        :type values: Dict
+        :type values: dict
         :param source_model: source model from which relations are constructed
         :type source_model: ormar.models.metaclass.ModelMetaclass
         :param model_cls: model from which current relation is constructed

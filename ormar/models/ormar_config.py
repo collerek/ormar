@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, List, Optional, Set, Type, Union
+from typing import TYPE_CHECKING, List, Optional, Set, Type, Union
 
 import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -46,7 +46,7 @@ class OrmarConfig:
         self.orders_by = order_by or []
         self.columns: List[sqlalchemy.Column] = []
         self.constraints = constraints or []
-        self.model_fields: Dict[
+        self.model_fields: dict[
             str, Union[BaseField, ForeignKeyField, ManyToManyField]
         ] = {}
         self.alias_manager: AliasManager = alias_manager

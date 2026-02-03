@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Type, cast
+from typing import Any, List, Optional, Tuple, Type, cast
 from uuid import UUID, uuid4
 
 import ormar
@@ -126,7 +126,7 @@ async def _reorder_on_update(
     instance: Model,
     from_class: Type[Model],
     to_class: Type[Model],
-    passed_args: Dict,
+    passed_args: dict,
 ):
     """
     Helper function.
@@ -170,7 +170,7 @@ async def order_link_on_insert(sender: Type[Model], instance: Model, **kwargs: A
 
 @pre_update(Link)
 async def reorder_links_on_update(
-    sender: Type[ormar.Model], instance: ormar.Model, passed_args: Dict, **kwargs: Any
+    sender: Type[ormar.Model], instance: ormar.Model, passed_args: dict, **kwargs: Any
 ):
     """
     Signal receiver registered on Link model, triggered every time before one is updated

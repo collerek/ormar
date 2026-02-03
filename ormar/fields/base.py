@@ -1,7 +1,6 @@
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
     List,
     Literal,
     Optional,
@@ -132,7 +131,7 @@ class BaseField(FieldInfo):
         """
         return self.db_alias if self.db_alias else self.name
 
-    def get_pydantic_default(self) -> Dict:
+    def get_pydantic_default(self) -> dict:
         """
         Generates base pydantic.FieldInfo with only default and optionally
         required to fix pydantic Json field being set to required=False.
@@ -146,7 +145,7 @@ class BaseField(FieldInfo):
             base = dict(default=None) if self.nullable else dict(default=_Unset)
         return base
 
-    def default_value(self, use_server: bool = False) -> Optional[Dict]:
+    def default_value(self, use_server: bool = False) -> Optional[dict]:
         """
         Returns a FieldInfo instance with populated default
         (static) or default_factory (function).

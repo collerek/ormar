@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, cast
+from typing import TYPE_CHECKING, Callable, List, Optional, Set, cast
 
 from ormar import BaseField, ForeignKeyField
 from ormar.models.traversible import NodeList
@@ -120,7 +120,7 @@ class RelationMixin:
     def _iterate_related_models(  # noqa: CCR001
         cls,
         node_list: Optional[NodeList] = None,
-        parsed_map: Optional[Dict] = None,
+        parsed_map: Optional[dict] = None,
         source_relation: Optional[str] = None,
         recurrent: bool = False,
     ) -> List[str]:
@@ -150,7 +150,7 @@ class RelationMixin:
                     parent_node=current_node,
                 )
                 relation_key = f"{cls.get_name()}_{relation}"
-                parsed_map = cast(Dict, parsed_map)
+                parsed_map = cast(dict, parsed_map)
                 deep_relations = parsed_map.get(relation_key)
                 if not deep_relations:
                     deep_relations = target_model._iterate_related_models(

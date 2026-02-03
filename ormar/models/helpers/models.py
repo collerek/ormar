@@ -1,5 +1,5 @@
 import itertools
-from typing import TYPE_CHECKING, Any, Dict, ForwardRef, List, Tuple, Type
+from typing import TYPE_CHECKING, Any, ForwardRef
 
 import pydantic
 
@@ -27,7 +27,7 @@ def is_field_an_forward_ref(field: "BaseField") -> bool:
 
 
 def populate_default_options_values(  # noqa: CCR001
-    new_model: Type["Model"], model_fields: Dict
+    new_model: type["Model"], model_fields: dict
 ) -> None:
     """
     Sets all optional OrmarConfig values to its defaults
@@ -42,7 +42,7 @@ def populate_default_options_values(  # noqa: CCR001
     :param new_model: newly constructed Model
     :type new_model: Model class
     :param model_fields: dict of model fields
-    :type model_fields: Union[Dict[str, type], Dict]
+    :type model_fields: Union[dict[str, type], dict]
     """
     new_model.ormar_config.model_fields.update(model_fields)
     if any(is_field_an_forward_ref(field) for field in model_fields.values()):
@@ -59,7 +59,7 @@ def populate_default_options_values(  # noqa: CCR001
     new_model.__ormar_fields_validators__ = None
 
 
-def check_required_config_parameters(new_model: Type["Model"]) -> None:
+def check_required_config_parameters(new_model: type["Model"]) -> None:
     """
     Verifies if ormar.Model has database and metadata set.
 
@@ -79,15 +79,15 @@ def check_required_config_parameters(new_model: Type["Model"]) -> None:
         )
 
 
-def extract_annotations_and_default_vals(attrs: Dict) -> Tuple[Dict, Dict]:
+def extract_annotations_and_default_vals(attrs: dict) -> tuple[dict, dict]:
     """
     Extracts annotations from class namespace dict and triggers
     extraction of ormar model_fields.
 
     :param attrs: namespace of the class created
-    :type attrs: Dict
+    :type attrs: dict
     :return: namespace of the class updated, dict of extracted model_fields
-    :rtype: Tuple[Dict, Dict]
+    :rtype: Tuple[dict, dict]
     """
     key = "__annotations__"
     attrs[key] = attrs.get(key, {})
@@ -95,7 +95,7 @@ def extract_annotations_and_default_vals(attrs: Dict) -> Tuple[Dict, Dict]:
     return attrs, model_fields
 
 
-def group_related_list(list_: List) -> Dict:
+def group_related_list(list_: list) -> dict:
     """
     Translates the list of related strings into a dictionary.
     That way nested models are grouped to traverse them in a right order
@@ -110,9 +110,9 @@ def group_related_list(list_: List) -> Dict:
     :param list_: list of related models used in select related
     :type list_: List[str]
     :return: list converted to dictionary to avoid repetition and group nested models
-    :rtype: Dict[str, List]
+    :rtype: dict[str, List]
     """
-    result_dict: Dict[str, Any] = dict()
+    result_dict: dict[str, Any] = dict()
     list_.sort(key=lambda x: x.split("__")[0])
     grouped = itertools.groupby(list_, key=lambda x: x.split("__")[0])
     for key, group in grouped:
@@ -127,7 +127,7 @@ def group_related_list(list_: List) -> Dict:
     return dict(sorted(result_dict.items(), key=lambda item: len(item[1])))
 
 
-def config_field_not_set(model: Type["Model"], field_name: str) -> bool:
+def config_field_not_set(model: type["Model"], field_name: str) -> bool:
     """
     Checks if field with given name is already present in model.OrmarConfig.
     Then check if it's set to something truthful
