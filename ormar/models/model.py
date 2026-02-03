@@ -1,3 +1,4 @@
+import builtins
 from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union
 
 from sqlalchemy import Executable
@@ -125,8 +126,8 @@ class Model(ModelRow):
         self,
         follow: bool = False,
         save_all: bool = False,
-        relation_map: Optional[dict] = None,
-        exclude: Union[set, dict, None] = None,
+        relation_map: Optional[builtins.dict] = None,
+        exclude: Union[set, builtins.dict, None] = None,
         update_count: int = 0,
         previous_model: Optional["Model"] = None,
         relation_field: Optional["ForeignKeyField"] = None,
