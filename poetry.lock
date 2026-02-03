@@ -2,15 +2,15 @@
 
 [[package]]
 name = "aiomysql"
-version = "0.3.0"
+version = "0.3.2"
 description = "MySQL driver for asyncio."
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"all\" or extra == \"mysql\""
 files = [
-    {file = "aiomysql-0.3.0-py3-none-any.whl", hash = "sha256:448b31e0d11b6e8dd6e8356b7f39cec0e44293b2c6e368c9e8eeeaff77b3cbec"},
-    {file = "aiomysql-0.3.0.tar.gz", hash = "sha256:9e850677d456dc4fea59ad871d4bcdb6adbce02326aaa32a97a43125256f23de"},
+    {file = "aiomysql-0.3.2-py3-none-any.whl", hash = "sha256:c82c5ba04137d7afd5c693a258bea8ead2aad77101668044143a991e04632eb2"},
+    {file = "aiomysql-0.3.2.tar.gz", hash = "sha256:72d15ef5cfc34c03468eb41e1b90adb9fd9347b0b589114bd23ead569a02ac1a"},
 ]
 
 [package.dependencies]
