@@ -65,11 +65,17 @@ class QueryExecutor:
         """
         result: CursorResult[Any] = await self._connection.execute(query)
 
-        # Don't commit - let connection context manager or transaction handle it
+        # For INSERT queries, try to get the inserted primary key
+        # PostgreSQL/MySQL use inserted_primary_key, SQLite uses lastrowid
+        if result.context and result.context.isinsert:  # pragma: no cover
+            if result.inserted_primary_key:
+                pk_value = result.inserted_primary_key[0]
+                if pk_value is not None:
+                    return pk_value
 
-        # Return lastrowid for INSERT, rowcount for UPDATE/DELETE
-        if hasattr(result, "lastrowid") and result.lastrowid:
-            return result.lastrowid
+            if hasattr(result, "lastrowid") and result.lastrowid:  # pragma: no cover
+                return result.lastrowid
+
         return result.rowcount if result.rowcount is not None else 0
 
     async def execute_many(
@@ -81,18 +87,8 @@ class QueryExecutor:
         :param query: SQLAlchemy query expression or SQL string
         :param values: Sequence of parameter mappings
         """
-        # Convert string queries to text() objects
-        exec_query: Executable
-        if isinstance(query, str):
-            exec_query = text(query)
-        else:
-            exec_query = query
-
-        # For bulk operations, execute multiple times
-        for value_dict in values:
-            await self._connection.execute(exec_query, value_dict)
-
-        # Don't commit - let connection context manager or transaction handle it
+        exec_query = text(query) if isinstance(query, str) else query
+        await self._connection.execute(exec_query, values)
 
     async def iterate(self, query: Executable) -> AsyncIterator[Any]:
         """

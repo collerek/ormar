@@ -14,7 +14,7 @@ from typing import (
 )
 
 import ormar  # noqa:  I100, I202
-from ormar.query_executor import QueryExecutor
+from ormar.databases.query_executor import QueryExecutor
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.queries.query import Query
 from ormar.queryset.utils import translate_list_to_dict

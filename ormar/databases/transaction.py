@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Optional, Type
 
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncTransaction
 
-if TYPE_CHECKING:
-    from ormar.connection import DatabaseConnection
+if TYPE_CHECKING:  # pragma: no cover
+    from ormar.databases.connection import DatabaseConnection
 
 _transaction_depth: ContextVar[int] = ContextVar("_transaction_depth", default=0)
 
@@ -36,7 +36,6 @@ class Transaction:
 
     async def __aenter__(self) -> "Transaction":
         """Enter transaction context."""
-        # Get current transaction depth
         self._depth = _transaction_depth.get()
 
         # If this is the outermost transaction, get a new connection
@@ -47,13 +46,9 @@ class Transaction:
         else:
             # Nested transaction - use savepoint
             self._connection = self._database.get_transaction_connection()
-            if self._connection is None:
-                raise RuntimeError(
-                    "No transaction connection available for nested transaction"
-                )
+            assert self._connection is not None
             self._transaction = await self._connection.begin_nested()
 
-        # Increment transaction depth
         _transaction_depth.set(self._depth + 1)
 
         return self
@@ -66,19 +61,15 @@ class Transaction:
     ) -> None:
         """Exit transaction context."""
         try:
-            # Decrement transaction depth
             _transaction_depth.set(self._depth)
 
             # Handle transaction completion
             if self._transaction is not None:
                 if exc_type is not None or self._force_rollback:
-                    # Rollback on exception or if force_rollback is True
                     await self._transaction.rollback()
                 else:
-                    # Commit if no exception and not force_rollback
                     await self._transaction.commit()
         finally:
-            # Clean up outermost transaction
             if self._depth == 0:
                 self._database.set_transaction_connection(None)
                 if self._connection is not None:

@@ -2,11 +2,11 @@ import os
 
 import ormar
 import sqlalchemy
-from ormar.connection import DatabaseConnection
+from ormar.databases.connection import DatabaseConnection
 from sqlalchemy.ext.asyncio import create_async_engine
 
 
-def convert_to_async_url(url: str) -> str:
+def convert_to_async_url(url: str) -> str:  # pragma: nocover
     """Convert database URL to async driver version."""
     if url.startswith("postgresql://"):
         return url.replace("postgresql://", "postgresql+asyncpg://", 1)

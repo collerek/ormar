@@ -50,13 +50,16 @@ make pre-commit           # Run fmt + lint + type_check
 - **Metaclass registration**: Model metaclass registers SQLAlchemy tables in metadata
 - **Dual model**: Each Model is both an ORM model and Pydantic model
 - **OrmarConfig**: Configuration holder for database, metadata, engine, tablename
-- **Async operations**: Uses `databases` library for async DB access
+- **Async operations**: Uses `sqlalchemy` library for async DB access
 - **Automatic reverse relations**: ForeignKey/ManyToMany create reverse accessors
 
 
 ## Code Quality Requirements
 
+- All code must pass `make pre-commit`
+- All files, classes, and functions must have docstrings with current formatting
 - 100% test coverage required
 - Type hints required (mypy strict mode)
 - Tests must pass on Python 3.9-3.12
 - Tests run against SQLite, PostgreSQL, and MySQL in CI
+- Avoid adding information about claude.ai to the code

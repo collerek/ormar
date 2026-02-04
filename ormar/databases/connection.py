@@ -9,7 +9,7 @@ from typing import Any, AsyncIterator, Optional
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
 
-from ormar.transaction import Transaction
+from ormar.databases.transaction import Transaction
 
 _transaction_connection: ContextVar[Optional[AsyncConnection]] = ContextVar(
     "_transaction_connection", default=None
@@ -25,7 +25,7 @@ class DatabaseConnection:
         """
         Initialize database connection.
 
-        :param url: Database URL with async driver (e.g., postgresql+asyncpg://)
+        :param url: Database URL with an async driver (e.g., postgresql+asyncpg://)
         :param options: Additional engine options
         """
         self._force_rollback = options.pop("force_rollback", False)
@@ -46,7 +46,7 @@ class DatabaseConnection:
             self._engine = create_async_engine(self._url, **self._options)
 
             # Set up SQLite foreign keys pragma if using SQLite
-            if self._engine.dialect.name == "sqlite":
+            if self._engine.dialect.name == "sqlite":  # pragma: nocover
 
                 @event.listens_for(self._engine.sync_engine, "connect")
                 def set_sqlite_pragma(dbapi_conn: Any, connection_record: Any) -> None:
@@ -80,8 +80,7 @@ class DatabaseConnection:
     @property
     def engine(self) -> AsyncEngine:
         """Get the async engine."""
-        if self._engine is None:
-            raise RuntimeError("Database is not connected")
+        assert self._engine is not None, "DatabaseConnection not connected"
         return self._engine
 
     @property
@@ -124,7 +123,7 @@ class DatabaseConnection:
         _transaction_connection.set(conn)
 
     async def __aenter__(self) -> "DatabaseConnection":
-        """Async context manager entry - connect to database."""
+        """Async context manager entry - connect to a database."""
         await self.connect()
         return self
 

@@ -23,13 +23,12 @@ from sqlalchemy import bindparam
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
-from ormar.connection import DatabaseConnection
+from ormar.databases.query_executor import QueryExecutor
 from ormar.exceptions import (
     ModelListEmptyError,
     ModelPersistenceError,
     QueryDefinitionError,
 )
-from ormar.query_executor import QueryExecutor
 from ormar.queryset import FieldAccessor, FilterQuery, SelectAction
 from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.clause import FilterGroup, QueryClause
@@ -254,16 +253,6 @@ class QuerySet(Generic[T]):
             raise NoMatch()
         if len(rows) > 1:
             raise MultipleMatches()
-
-    @property
-    def database(self) -> DatabaseConnection:
-        """
-        Shortcut to models database from OrmarConfig class.
-
-        :return: database
-        :rtype: DatabaseConnection
-        """
-        return self.model_config.database
 
     @property
     def table(self) -> sqlalchemy.Table:

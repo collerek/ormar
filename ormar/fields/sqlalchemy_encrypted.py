@@ -115,6 +115,8 @@ class EncryptedString(types.TypeDecorator):
 
     impl = types.TypeEngine
 
+    cache_ok = True
+
     def __init__(
         self,
         encrypt_secret: Union[str, Callable],

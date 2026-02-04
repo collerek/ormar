@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, TypeVar, Union
 
 import ormar.queryset  # noqa I100
+from ormar.databases.query_executor import QueryExecutor
 from ormar.exceptions import ModelPersistenceError, NoMatch
 from ormar.models import NewBaseModel  # noqa I100
 from ormar.models.model_row import ModelRow
-from ormar.query_executor import QueryExecutor
 from ormar.queryset.utils import subtract_dict, translate_list_to_dict
 
 T = TypeVar("T", bound="Model")

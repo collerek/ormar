@@ -6,7 +6,7 @@ import pytest
 import pytest_asyncio
 import sqlalchemy
 from ormar import Float, String
-from ormar.connection import DatabaseConnection
+from ormar.databases.connection import DatabaseConnection
 from sqlalchemy import create_engine
 
 from tests.settings import ASYNC_DATABASE_URL, DATABASE_URL

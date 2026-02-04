@@ -4,7 +4,7 @@ import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.sql.schema import ColumnCollectionConstraint
 
-from ormar.connection import DatabaseConnection
+from ormar.databases.connection import DatabaseConnection
 from ormar.fields import BaseField, ForeignKeyField, ManyToManyField
 from ormar.models.helpers import alias_manager
 from ormar.models.utils import Extra
