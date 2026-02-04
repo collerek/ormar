@@ -50,7 +50,7 @@ def init_tests(config, scope="module"):
 
         # For PostgreSQL and MySQL, recreate engine to avoid event loop conflicts
         # asyncpg and aiomysql are strict about event loops
-        if config.engine.dialect.name in ("postgresql", "mysql"):
+        if config.engine.dialect.name in ("postgresql", "mysql"):  # pragma: no cover
             await config.engine.dispose()
             config._original_engine = config.engine
             config.engine = create_async_engine(ASYNC_DATABASE_URL)
@@ -58,7 +58,7 @@ def init_tests(config, scope="module"):
         yield
 
         # Restore the original engine if it was swapped
-        if hasattr(config, "_original_engine"):
+        if hasattr(config, "_original_engine"):  # pragma: no cover
             await config.engine.dispose()
             config.engine = config._original_engine
             delattr(config, "_original_engine")
