@@ -3,7 +3,8 @@ Transaction module - provides transaction management with savepoint support.
 """
 
 from contextvars import ContextVar
-from typing import TYPE_CHECKING, Any, Optional
+from types import TracebackType
+from typing import TYPE_CHECKING, Optional, Type
 
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncTransaction
 
@@ -57,7 +58,12 @@ class Transaction:
 
         return self
 
-    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]] = None,
+        exc_value: Optional[BaseException] = None,
+        traceback: Optional[TracebackType] = None,
+    ) -> None:
         """Exit transaction context."""
         try:
             # Decrement transaction depth

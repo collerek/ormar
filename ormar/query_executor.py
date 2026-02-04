@@ -4,7 +4,7 @@ QueryExecutor module - executes database queries using SQLAlchemy async API.
 
 from typing import Any, AsyncIterator, List, Mapping, Optional, Sequence, Union
 
-from sqlalchemy import text
+from sqlalchemy import RowMapping, text
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncConnection
 from sqlalchemy.sql import Executable
@@ -34,7 +34,7 @@ class QueryExecutor:
         result: CursorResult[Any] = await self._connection.execute(query)
         return list(result.mappings().all())
 
-    async def fetch_one(self, query: Executable) -> Optional[Any]:
+    async def fetch_one(self, query: Executable) -> Optional[RowMapping]:
         """
         Execute a query and fetch one row.
 

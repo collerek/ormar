@@ -742,7 +742,7 @@ class QuerySet(Generic[T]):
         # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
         async with self._get_connection() as executor:
             result = await executor.fetch_one(expr)  # type: ignore
-        return dict(result) if len(result) > 1 else result[0]  # type: ignore
+        return dict(result) if len(result) > 1 else result[columns[0]]  # type: ignore
 
     async def max(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
         """

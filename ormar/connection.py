@@ -28,6 +28,7 @@ class DatabaseConnection:
         :param url: Database URL with async driver (e.g., postgresql+asyncpg://)
         :param options: Additional engine options
         """
+        self._force_rollback = options.pop("force_rollback", False)
         self._url = url
         # Set reasonable pool defaults if not provided
         if "pool_size" not in options:
@@ -36,6 +37,8 @@ class DatabaseConnection:
             options["max_overflow"] = 10
         self._options = options
         self._engine: Optional[AsyncEngine] = None
+
+        self._global_transaction: Optional[Transaction] = None
 
     async def connect(self) -> None:
         """Connect to the database by creating the async engine."""
@@ -51,9 +54,21 @@ class DatabaseConnection:
                     cursor.execute("PRAGMA foreign_keys=ON")
                     cursor.close()
 
+            if self._force_rollback:
+                assert self._global_transaction is None
+                self._global_transaction = Transaction(
+                    self, force_rollback=self._force_rollback
+                )
+                await self._global_transaction.__aenter__()
+
     async def disconnect(self) -> None:
-        """Disconnect from the database by disposing the engine."""
+        """Disconnect from the database by disposing of the engine."""
         if self._engine is not None:
+            if self._force_rollback:
+                assert self._global_transaction is not None
+                await self._global_transaction.__aexit__()
+                self._global_transaction = None
+
             await self._engine.dispose()
             self._engine = None
 
