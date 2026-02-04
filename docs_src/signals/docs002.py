@@ -1,16 +1,21 @@
 import asyncio
 
-import databases
 import ormar
 import sqlalchemy
 from examples import create_drop_database
-from ormar import pre_update
+from ormar import DatabaseConnection, pre_update
+from sqlalchemy.ext.asyncio import create_async_engine
 
-DATABASE_URL = "sqlite:///test.db"
+DATABASE_URL = "sqlite+aiosqlite:///signals_docs002.db"
+
+database = DatabaseConnection(DATABASE_URL)
+metadata = sqlalchemy.MetaData()
+engine = create_async_engine(DATABASE_URL)
 
 ormar_base_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
-    metadata=sqlalchemy.MetaData(),
+    database=database,
+    metadata=metadata,
+    engine=engine,
 )
 
 
@@ -33,7 +38,7 @@ async def before_update(sender, instance, **kwargs):
 
 @create_drop_database(base_config=ormar_base_config)
 async def run_query():
-    # here album.play_count ans is_best_seller get default values
+    # here album.play_count and is_best_seller get default values
     album = await Album.objects.create(name="Venice")
     assert not album.is_best_seller
     assert album.play_count == 0

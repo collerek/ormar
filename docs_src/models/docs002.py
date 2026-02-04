@@ -1,9 +1,11 @@
-import databases
 import ormar
 import sqlalchemy
+from ormar import DatabaseConnection
+from sqlalchemy.ext.asyncio import create_async_engine
 
-database = databases.Database("sqlite:///db.sqlite")
+database = DatabaseConnection("sqlite+aiosqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
+engine = create_async_engine(database.url)
 
 
 class Course(ormar.Model):
@@ -11,6 +13,7 @@ class Course(ormar.Model):
     ormar_config = ormar.OrmarConfig(
         database=database,
         metadata=metadata,
+        engine=engine,
         # if you omit this parameter it will be created automatically
         # as class.__name__.lower()+'s' -> "courses" in this example
         tablename="my_courses",

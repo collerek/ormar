@@ -1,13 +1,13 @@
 from typing import Optional
 
-import databases
 import ormar
 import sqlalchemy
+from ormar import DatabaseConnection
 
-DATABASE_URL = "sqlite:///test.db"
+DATABASE_URL = "sqlite+aiosqlite:///fields_docs002.db"
 
 ormar_base_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL), metadata=sqlalchemy.MetaData()
+    database=DatabaseConnection(DATABASE_URL), metadata=sqlalchemy.MetaData()
 )
 
 

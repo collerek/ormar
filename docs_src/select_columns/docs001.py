@@ -1,14 +1,21 @@
 import asyncio
 
-import databases
 import ormar
 import sqlalchemy
 from examples import create_drop_database
-from tests.settings import DATABASE_URL
+from ormar import DatabaseConnection
+from sqlalchemy.ext.asyncio import create_async_engine
+
+DATABASE_URL = "sqlite+aiosqlite:///select_columns_docs001.db"
+
+database = DatabaseConnection(DATABASE_URL)
+metadata = sqlalchemy.MetaData()
+engine = create_async_engine(DATABASE_URL)
 
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL, force_rollback=True),
-    metadata=sqlalchemy.MetaData(),
+    database=database,
+    metadata=metadata,
+    engine=engine,
 )
 
 

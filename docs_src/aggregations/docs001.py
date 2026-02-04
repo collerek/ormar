@@ -1,17 +1,21 @@
 from typing import Optional
 
-import databases
 import ormar
 import sqlalchemy
-from tests.settings import DATABASE_URL
+from ormar import DatabaseConnection
+from sqlalchemy.ext.asyncio import create_async_engine
 
-database = databases.Database(DATABASE_URL)
+DATABASE_URL = "sqlite+aiosqlite:///aggregations_docs001.db"
+
+database = DatabaseConnection(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
+engine = create_async_engine(DATABASE_URL)
 
 
 base_ormar_config = ormar.OrmarConfig(
     metadata=metadata,
     database=database,
+    engine=engine,
 )
 
 
