@@ -14,7 +14,6 @@ from typing import (
 )
 
 import ormar  # noqa:  I100, I202
-from ormar.databases.query_executor import QueryExecutor
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.queries.query import Query
 from ormar.queryset.utils import translate_list_to_dict
@@ -256,15 +255,9 @@ class LoadNode(Node):
                     compile_kwargs={"literal_binds": True},
                 )
             )
-            # Check if in transaction, otherwise use begin() for auto-commit
-            trans_conn = query_target.ormar_config.database.get_transaction_connection()
-            if trans_conn is not None:
-                executor = QueryExecutor(trans_conn)
-                self.rows = await executor.fetch_all(expr)
-            else:
-                async with query_target.ormar_config.database.engine.begin() as conn:
-                    executor = QueryExecutor(conn)
-                    self.rows = await executor.fetch_all(expr)
+
+            async with query_target.ormar_config.database.get_query_executor() as exctr:
+                self.rows = await exctr.fetch_all(expr)
 
             for child in self.children:
                 await child.load_data()
