@@ -157,28 +157,27 @@ async def test_delete_and_update():
 @pytest.mark.asyncio
 async def test_get_or_create():
     async with base_ormar_config.database:
-        async with base_ormar_config.database.transaction(force_rollback=True):
-            tom, created = await Book.objects.get_or_create(
+        tom, created = await Book.objects.get_or_create(
+            title="Volume I", author="Anonymous", genre="Fiction"
+        )
+        assert await Book.objects.count() == 1
+        assert created is True
+
+        second_tom, created = await Book.objects.get_or_create(
+            title="Volume I", author="Anonymous", genre="Fiction"
+        )
+
+        assert second_tom.pk == tom.pk
+        assert created is False
+        assert await Book.objects.count() == 1
+
+        assert await Book.objects.create(
+            title="Volume I", author="Anonymous", genre="Fiction"
+        )
+        with pytest.raises(ormar.exceptions.MultipleMatches):
+            await Book.objects.get_or_create(
                 title="Volume I", author="Anonymous", genre="Fiction"
             )
-            assert await Book.objects.count() == 1
-            assert created is True
-
-            second_tom, created = await Book.objects.get_or_create(
-                title="Volume I", author="Anonymous", genre="Fiction"
-            )
-
-            assert second_tom.pk == tom.pk
-            assert created is False
-            assert await Book.objects.count() == 1
-
-            assert await Book.objects.create(
-                title="Volume I", author="Anonymous", genre="Fiction"
-            )
-            with pytest.raises(ormar.exceptions.MultipleMatches):
-                await Book.objects.get_or_create(
-                    title="Volume I", author="Anonymous", genre="Fiction"
-                )
 
 
 @pytest.mark.asyncio
