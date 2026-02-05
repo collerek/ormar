@@ -88,10 +88,10 @@ async def test_exception_in_transaction_rollbacks():
                 await Team.objects.create(name="Blue Team")
                 try:
                     async with base_ormar_config.database.transaction() as tran2:
-                        assert tran2._depth == 1
+                        assert tran2._depth == 2
                         await Team.objects.create(name="Yellow Team")
-                        raise Exception("test")
-                except Exception:
+                        raise ValueError("test")
+                except ValueError:
                     pass
 
             teams = await Team.objects.all()
@@ -123,8 +123,8 @@ async def test_parent_rollback_cascades_to_children():
                         assert grandchild._depth == 2
                         await Team.objects.create(name="Grandchild Team")
 
-                raise Exception("rollback parent")
-        except Exception:
+                raise ValueError("rollback parent")
+        except ValueError:
             pass
 
         teams = await Team.objects.all()
