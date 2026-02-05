@@ -1,10 +1,8 @@
 import asyncio
-from contextlib import asynccontextmanager
 from typing import (
     TYPE_CHECKING,
     Any,
     AsyncGenerator,
-    AsyncIterator,
     Dict,
     Generic,
     List,
@@ -23,7 +21,6 @@ from sqlalchemy import bindparam
 
 import ormar  # noqa I100
 from ormar import MultipleMatches, NoMatch
-from ormar.databases.query_executor import QueryExecutor
 from ormar.exceptions import (
     ModelListEmptyError,
     ModelPersistenceError,
@@ -144,23 +141,6 @@ class QuerySet(Generic[T]):
             limit_raw_sql=replace_if_none("limit_raw_sql"),
             proxy_source_model=replace_if_none("proxy_source_model"),
         )
-
-    @asynccontextmanager
-    async def _get_connection(self) -> AsyncIterator[QueryExecutor]:
-        """
-        Get connection, reusing transaction connection if in transaction.
-
-        :return: QueryExecutor wrapping a connection
-        :rtype: QueryExecutor
-        """
-        trans_conn = self.model_config.database.get_transaction_connection()
-        if trans_conn is not None:
-            # Inside a transaction - reuse the transaction's connection
-            yield QueryExecutor(trans_conn)
-        else:
-            # Outside transaction - use begin() for auto-commit
-            async with self.model_config.database.engine.begin() as conn:
-                yield QueryExecutor(conn)
 
     async def _prefetch_related_models(
         self, models: List["T"], rows: List
@@ -619,7 +599,7 @@ class QuerySet(Generic[T]):
                 _as_dict=_as_dict, _flatten=_flatten, exclude_through=exclude_through
             )
         expr = self.build_select_expression()
-        async with self._get_connection() as executor:
+        async with self.model_config.database.get_query_executor() as executor:
             rows = await executor.fetch_all(expr)
         if not rows:
             return []
@@ -685,7 +665,7 @@ class QuerySet(Generic[T]):
         """
         expr = self.build_select_expression()
         expr = sqlalchemy.exists(expr).select()
-        async with self._get_connection() as executor:
+        async with self.model_config.database.get_query_executor() as executor:
             result = await executor.fetch_val(expr)
             return bool(result)
 
@@ -711,7 +691,7 @@ class QuerySet(Generic[T]):
             pk_column_name = self.model.get_column_alias(self.model_config.pkname)
             expr_distinct = expr.group_by(pk_column_name).alias("subquery_for_group")  # type: ignore
             expr = sqlalchemy.func.count().select().select_from(expr_distinct)  # type: ignore
-        async with self._get_connection() as executor:
+        async with self.model_config.database.get_query_executor() as executor:
             result = await executor.fetch_val(expr)  # type: ignore
             return int(result) if result is not None else 0
 
@@ -729,7 +709,7 @@ class QuerySet(Generic[T]):
         expr = self.build_select_expression().alias(f"subquery_for_{func_name}")
         expr = sqlalchemy.select(*select_columns).select_from(expr)  # type: ignore
         # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
-        async with self._get_connection() as executor:
+        async with self.model_config.database.get_query_executor() as executor:
             result = await executor.fetch_one(expr)  # type: ignore
         return dict(result) if len(result) > 1 else result[columns[0]]  # type: ignore
 
@@ -814,7 +794,7 @@ class QuerySet(Generic[T]):
         expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
             expr
         )
-        async with self._get_connection() as executor:
+        async with self.model_config.database.get_query_executor() as executor:
             return await executor.execute(expr)
 
     async def delete(self, *args: Any, each: bool = False, **kwargs: Any) -> int:
@@ -844,7 +824,7 @@ class QuerySet(Generic[T]):
         expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
             expr
         )
-        async with self._get_connection() as executor:
+        async with self.model_config.database.get_query_executor() as executor:
             return await executor.execute(expr)
 
     def paginate(self, page: int, page_size: int = 20) -> "QuerySet[T]":
@@ -932,7 +912,7 @@ class QuerySet(Generic[T]):
             )
             + self.order_bys,
         )
-        async with self._get_connection() as executor:
+        async with self.model_config.database.get_query_executor() as executor:
             rows = await executor.fetch_all(expr)
         processed_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and processed_rows:
@@ -1016,7 +996,7 @@ class QuerySet(Generic[T]):
         else:
             expr = self.build_select_expression()
 
-        async with self._get_connection() as executor:
+        async with self.model_config.database.get_query_executor() as executor:
             rows = await executor.fetch_all(expr)
         processed_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and processed_rows:
@@ -1088,7 +1068,7 @@ class QuerySet(Generic[T]):
             return await self.filter(*args, **kwargs).all()
 
         expr = self.build_select_expression()
-        async with self._get_connection() as executor:
+        async with self.model_config.database.get_query_executor() as executor:
             rows = await executor.fetch_all(expr)
         result_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and result_rows:
@@ -1131,7 +1111,7 @@ class QuerySet(Generic[T]):
         last_primary_key = None
         pk_alias = self.model.get_column_alias(self.model_config.pkname)
 
-        async with self._get_connection() as executor:
+        async with self.model_config.database.get_query_executor() as executor:
             async for row in executor.iterate(expr):
                 current_primary_key = row[pk_alias]
                 if last_primary_key == current_primary_key or last_primary_key is None:
@@ -1187,7 +1167,7 @@ class QuerySet(Generic[T]):
         # don't use execute_many, as in databases it's executed in a loop
         # instead of using execute_many from drivers
         expr = self.table.insert().values(ready_objects)
-        async with self._get_connection() as executor:
+        async with self.model_config.database.get_query_executor() as executor:
             await executor.execute(expr)
 
         for obj in objects:
@@ -1261,7 +1241,7 @@ class QuerySet(Generic[T]):
         # databases bind params only where query is passed as string
         # otherwise it just passes all data to values and results in unconsumed columns
         expr = str(expr)  # type: ignore
-        async with self._get_connection() as executor:
+        async with self.model_config.database.get_query_executor() as executor:
             await executor.execute_many(expr, ready_objects)
 
         for obj in objects:

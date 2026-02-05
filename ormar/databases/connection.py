@@ -9,6 +9,7 @@ from typing import Any, AsyncIterator, Optional
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
 
+from ormar.databases.query_executor import QueryExecutor
 from ormar.databases.transaction import Transaction
 
 _transaction_connection: ContextVar[Optional[AsyncConnection]] = ContextVar(
@@ -116,6 +117,23 @@ class DatabaseConnection:
         :param force_rollback: If True, always rollback (used for testing)
         """
         return Transaction(self, force_rollback=force_rollback)
+
+    @asynccontextmanager
+    async def get_query_executor(self) -> AsyncIterator[QueryExecutor]:
+        """
+        Get connection, reusing transaction connection if in transaction.
+
+        :return: QueryExecutor wrapping a connection
+        :rtype: QueryExecutor
+        """
+        trans_conn = self.get_transaction_connection()
+        if trans_conn is not None:
+            # Inside a transaction - reuse the transaction's connection
+            yield QueryExecutor(trans_conn)
+        else:
+            # Outside transaction - use begin() for auto-commit
+            async with self.engine.begin() as conn:
+                yield QueryExecutor(conn)
 
     def get_transaction_connection(self) -> Optional[AsyncConnection]:
         """Get the current transaction connection if in a transaction."""

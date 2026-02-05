@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, TypeVar, Union
 from sqlalchemy import Executable
 
 import ormar.queryset  # noqa I100
-from ormar.databases.query_executor import QueryExecutor
 from ormar.exceptions import ModelPersistenceError, NoMatch
 from ormar.models import NewBaseModel  # noqa I100
 from ormar.models.model_row import ModelRow
@@ -30,22 +29,12 @@ class Model(ModelRow):
         return f"{self.__class__.__name__}({str(_repr)})"
 
     async def _execute_query(self, expr: Executable, is_select: bool = False) -> Any:
-        trans_conn = self.ormar_config.database.get_transaction_connection()
-        if trans_conn is not None:
-            executor = QueryExecutor(trans_conn)
+        async with self.ormar_config.database.get_query_executor() as executor:
             row = (
                 await executor.fetch_one(expr)
                 if is_select
                 else await executor.execute(expr)
             )
-        else:
-            async with self.ormar_config.database.engine.begin() as conn:
-                executor = QueryExecutor(conn)
-                row = (
-                    await executor.fetch_one(expr)
-                    if is_select
-                    else await executor.execute(expr)
-                )
         return row
 
     async def upsert(self: T, **kwargs: Any) -> T:
