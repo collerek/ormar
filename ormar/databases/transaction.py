@@ -20,7 +20,9 @@ class Transaction:
     """
 
     def __init__(
-        self, database: "DatabaseConnection", force_rollback: bool = False
+        self,
+        database: "DatabaseConnection",
+        force_rollback: bool = False,
     ) -> None:
         """
         Initialize transaction.

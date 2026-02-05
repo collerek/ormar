@@ -57,21 +57,93 @@ async def test_getting_raw_connection():
 @pytest.mark.asyncio
 async def test_getting_commit_in_transaction():
     async with base_ormar_config.database:
-        async with base_ormar_config.database.transaction() as tran:
+        async with base_ormar_config.database.transaction(force_rollback=True) as tran:
             assert tran._depth == 0
-            await Team.objects.create(name="Red Team")
-            await Team.objects.create(name="Blue Team")
             async with base_ormar_config.database.transaction() as tran2:
                 assert tran2._depth == 1
-                await Team.objects.create(name="Yellow Team")
-            yellow = await Team.objects.get(name="Yellow Team")
-            yellow.name = "Green Team"
-            await yellow.update()
+                await Team.objects.create(name="Red Team")
+                await Team.objects.create(name="Blue Team")
+                async with base_ormar_config.database.transaction() as tran3:
+                    assert tran3._depth == 2
+                    await Team.objects.create(name="Yellow Team")
+                yellow = await Team.objects.get(name="Yellow Team")
+                yellow.name = "Green Team"
+                await yellow.update()
+
+            teams = await Team.objects.all()
+            assert len(teams) == 3
+            assert {teams.name for teams in teams} == {
+                "Red Team",
+                "Blue Team",
+                "Green Team",
+            }
+
+
+@pytest.mark.asyncio
+async def test_exception_in_transaction_rollbacks():
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            async with base_ormar_config.database.transaction():
+                await Team.objects.create(name="Red Team")
+                await Team.objects.create(name="Blue Team")
+                try:
+                    async with base_ormar_config.database.transaction() as tran2:
+                        assert tran2._depth == 1
+                        await Team.objects.create(name="Yellow Team")
+                        raise Exception("test")
+                except Exception:
+                    pass
+
+            teams = await Team.objects.all()
+            assert len(teams) == 2
+            assert {teams.name for teams in teams} == {
+                "Red Team",
+                "Blue Team",
+            }
+
+
+@pytest.mark.asyncio
+async def test_parent_rollback_cascades_to_children():
+    """Test that rolling back parent transaction also rolls back child transactions."""
+    async with base_ormar_config.database:
+        try:
+            async with base_ormar_config.database.transaction() as parent:
+                assert parent._depth == 0
+                await Team.objects.create(name="Parent Team")
+
+                async with base_ormar_config.database.transaction() as child1:
+                    assert child1._depth == 1
+                    await Team.objects.create(name="Child Team 1")
+
+                async with base_ormar_config.database.transaction() as child2:
+                    assert child2._depth == 1
+                    await Team.objects.create(name="Child Team 2")
+
+                    async with base_ormar_config.database.transaction() as grandchild:
+                        assert grandchild._depth == 2
+                        await Team.objects.create(name="Grandchild Team")
+
+                raise Exception("rollback parent")
+        except Exception:
+            pass
 
         teams = await Team.objects.all()
-        assert len(teams) == 3
-        assert {teams.name for teams in teams} == {
-            "Red Team",
-            "Blue Team",
-            "Green Team",
-        }
+        assert len(teams) == 0
+
+
+@pytest.mark.asyncio
+async def test_force_rollback_cascades():
+    """Test that force_rollback also cascades to children."""
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(
+            force_rollback=True
+        ) as parent:
+            assert parent._depth == 0
+            await Team.objects.create(name="Parent Team")
+
+            async with base_ormar_config.database.transaction() as child:
+                assert child._depth == 1
+                await Team.objects.create(name="Child Team")
+
+        teams = await Team.objects.all()
+        assert len(teams) == 0
