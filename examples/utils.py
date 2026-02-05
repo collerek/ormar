@@ -14,7 +14,7 @@ def create_drop_database(base_config: ormar.OrmarConfig) -> None:
                 await base_config.database.connect()
 
             # Drop and create tables
-            async with base_config.engine.begin() as conn:
+            async with base_config.database.engine.begin() as conn:
                 await conn.run_sync(base_config.metadata.drop_all)
                 await conn.run_sync(base_config.metadata.create_all)
 
@@ -22,7 +22,7 @@ def create_drop_database(base_config: ormar.OrmarConfig) -> None:
                 await func(*args)
             finally:
                 # Drop tables and cleanup
-                async with base_config.engine.begin() as conn:
+                async with base_config.database.engine.begin() as conn:
                     await conn.run_sync(base_config.metadata.drop_all)
 
                 # Disconnect and dispose engine
