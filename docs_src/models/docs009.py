@@ -3,20 +3,17 @@ from typing import Optional
 import ormar
 import sqlalchemy
 from ormar import DatabaseConnection
-from sqlalchemy.ext.asyncio import create_async_engine
 
 database = DatabaseConnection(
     "sqlite+aiosqlite:///models_docs009.db", force_rollback=True
 )
 metadata = sqlalchemy.MetaData()
-engine = create_async_engine(database.url)
 
 
 class Artist(ormar.Model):
     ormar_config = ormar.OrmarConfig(
         database=database,
         metadata=metadata,
-        engine=engine,
         tablename="artists",
     )
 
@@ -31,7 +28,6 @@ class Album(ormar.Model):
     ormar_config = ormar.OrmarConfig(
         database=database,
         metadata=metadata,
-        engine=engine,
         tablename="music_albums",
     )
 

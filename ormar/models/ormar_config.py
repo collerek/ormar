@@ -19,6 +19,7 @@ class OrmarConfig:
         pkname: str
         metadata: sqlalchemy.MetaData
         database: DatabaseConnection
+        engine: AsyncEngine
         tablename: str
         order_by: List[str]
         abstract: bool

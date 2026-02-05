@@ -3,18 +3,15 @@ from typing import Optional
 import ormar
 import sqlalchemy
 from ormar import DatabaseConnection
-from sqlalchemy.ext.asyncio import create_async_engine
 
 database = DatabaseConnection("sqlite+aiosqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
-engine = create_async_engine(database.url)
 
 
 class Department(ormar.Model):
     ormar_config = ormar.OrmarConfig(
         database=database,
         metadata=metadata,
-        engine=engine,
     )
 
     id: int = ormar.Integer(primary_key=True)
@@ -25,7 +22,6 @@ class Course(ormar.Model):
     ormar_config = ormar.OrmarConfig(
         database=database,
         metadata=metadata,
-        engine=engine,
     )
 
     id: int = ormar.Integer(primary_key=True)

@@ -3,19 +3,16 @@ from typing import Optional
 import ormar
 import sqlalchemy
 from ormar import DatabaseConnection
-from sqlalchemy.ext.asyncio import create_async_engine
 
 DATABASE_URL = "sqlite+aiosqlite:///aggregations_docs001.db"
 
 database = DatabaseConnection(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
-engine = create_async_engine(DATABASE_URL)
 
 
 base_ormar_config = ormar.OrmarConfig(
     metadata=metadata,
     database=database,
-    engine=engine,
 )
 
 

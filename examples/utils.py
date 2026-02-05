@@ -28,7 +28,6 @@ def create_drop_database(base_config: ormar.OrmarConfig) -> None:
                 # Disconnect and dispose engine
                 if base_config.database.is_connected:
                     await base_config.database.disconnect()
-                await base_config.engine.dispose()
 
         return wrapped
 

@@ -1,20 +1,17 @@
 import ormar
 import sqlalchemy
 from ormar import DatabaseConnection
-from sqlalchemy.ext.asyncio import create_async_engine
 
 DATABASE_URl = "sqlite+aiosqlite:///models_docs008.db"
 
 database = DatabaseConnection(DATABASE_URl, force_rollback=True)
 metadata = sqlalchemy.MetaData()
-engine = create_async_engine(database.url)
 
 
 class Child(ormar.Model):
     ormar_config = ormar.OrmarConfig(
         database=database,
         metadata=metadata,
-        engine=engine,
         tablename="children",
     )
 
