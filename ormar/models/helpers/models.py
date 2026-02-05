@@ -1,5 +1,4 @@
 import itertools
-import sqlite3
 from typing import TYPE_CHECKING, Any, Dict, ForwardRef, List, Tuple, Type
 
 import pydantic
@@ -60,24 +59,6 @@ def populate_default_options_values(  # noqa: CCR001
     new_model.__ormar_fields_validators__ = None
 
 
-class Connection(sqlite3.Connection):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover
-        super().__init__(*args, **kwargs)
-        self.execute("PRAGMA foreign_keys=1;")
-
-
-def substitue_backend_pool_for_sqlite(new_model: Type["Model"]) -> None:
-    """
-    SQLite foreign keys are now handled in DatabaseConnection.connect().
-    This function is kept for backward compatibility but does nothing.
-
-    :param new_model: newly declared ormar Model
-    :type new_model: Model class
-    """
-    # Foreign keys pragma is now set up in DatabaseConnection when engine is created
-    pass
-
-
 def check_required_config_parameters(new_model: Type["Model"]) -> None:
     """
     Verifies if ormar.Model has database and metadata set.
@@ -91,8 +72,6 @@ def check_required_config_parameters(new_model: Type["Model"]) -> None:
         raise ormar.ModelDefinitionError(
             f"{new_model.__name__} does not have database defined."
         )
-    elif not new_model.ormar_config.abstract:
-        substitue_backend_pool_for_sqlite(new_model=new_model)
 
     if new_model.ormar_config.metadata is None and not new_model.ormar_config.abstract:
         raise ormar.ModelDefinitionError(

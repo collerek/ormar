@@ -62,7 +62,10 @@ class DatabaseConnection:
                 await self._global_transaction.__aenter__()
 
     async def disconnect(self) -> None:
-        """Disconnect from the database by disposing of the engine."""
+        """
+        Disconnect from the database and dispose of the engine.
+        In case of force_rollback, also roll back the global transaction.
+        """
         if self._engine is not None:
             if self._force_rollback:
                 assert self._global_transaction is not None
