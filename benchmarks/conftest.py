@@ -86,7 +86,7 @@ async def authors_in_db(num_models: int):
 
 
 @pytest_asyncio.fixture
-@pytest.mark.benchmark(min_rounds=1, disable_gc=True, warmup=False)
+@pytest.mark.benchmark
 async def aio_benchmark(benchmark):
     def _fixture_wrapper(func):
         def _func_wrapper(*args, **kwargs):
