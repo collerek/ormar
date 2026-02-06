@@ -1,7 +1,6 @@
 import asyncio
 import random
 import string
-import time
 
 import nest_asyncio
 import ormar
@@ -87,17 +86,16 @@ async def authors_in_db(num_models: int):
 
 
 @pytest_asyncio.fixture
-@pytest.mark.benchmark(
-    min_rounds=1, timer=time.process_time, disable_gc=True, warmup=False
-)
-async def aio_benchmark(benchmark, event_loop: asyncio.BaseEventLoop):
+async def aio_benchmark(benchmark):
     def _fixture_wrapper(func):
         def _func_wrapper(*args, **kwargs):
             if asyncio.iscoroutinefunction(func):
+                # Get the running event loop instead of requesting it as a fixture
+                loop = asyncio.get_running_loop()
 
                 @benchmark
                 def benchmarked_func():
-                    a = event_loop.run_until_complete(func(*args, **kwargs))
+                    a = loop.run_until_complete(func(*args, **kwargs))
                     return a
 
                 return benchmarked_func
