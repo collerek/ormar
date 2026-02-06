@@ -76,9 +76,8 @@ Since it can be a function you can set `default=datetime.datetime.now` and get c
 ```python
 # <==part of related code removed for clarity==>
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
+    database=DatabaseConnection(DATABASE_URL),
     metadata=sqlalchemy.MetaData(),
-    engine=sqlalchemy.create_engine(DATABASE_URL),
 )
 
 
@@ -214,12 +213,12 @@ Note that type hints are **optional** so perfectly valid `ormar` code can look l
 
 ### Dependencies
 
-Since ormar depends on [`databases`][databases] and [`sqlalchemy-core`][sqlalchemy-core] for database connection 
+Since ormar depends on [SQLAlchemy async][sqlalchemy-async] and [`sqlalchemy-core`][sqlalchemy-core] for database connection
 and table creation you need to assign each `Model` with two special parameters.
 
-#### Databases
+#### Database Connection
 
-One is `Database` instance created with your database url in [sqlalchemy connection string][sqlalchemy connection string] format.
+One is `DatabaseConnection` instance created with your database url in [sqlalchemy connection string][sqlalchemy connection string] format (with async driver).
 
 Created instance needs to be passed to every `Model` with `ormar_config` object `database` parameter.
 
@@ -228,7 +227,7 @@ Created instance needs to be passed to every `Model` with `ormar_config` object 
 ```
 
 !!! tip
-    You need to create the `Database` instance **only once** and use it for all models. 
+    You need to create the `DatabaseConnection` instance **only once** and use it for all models.
     You can create several ones if you want to use multiple databases.
 
 #### Sqlalchemy
@@ -378,7 +377,7 @@ parameter to model `ormar_config` object.
 Sample default ordering (not specified - so by primary key):
 ```python
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
+    database=DatabaseConnection(DATABASE_URL),
     metadata=sqlalchemy.MetaData(),
 )
 
@@ -395,7 +394,7 @@ class Author(ormar.Model):
 Modified
 ```python hl_lines="9"
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
+    database=DatabaseConnection(DATABASE_URL),
     metadata=sqlalchemy.MetaData(),
 )
 
@@ -466,7 +465,7 @@ You can check if model is saved with `ModelInstance.saved` property
 [pydantic]: https://pydantic-docs.helpmanual.io/
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [sqlalchemy-metadata]: https://docs.sqlalchemy.org/en/13/core/metadata.html
-[databases]: https://github.com/encode/databases
+[sqlalchemy-async]: https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html
 [sqlalchemy connection string]: https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls
 [sqlalchemy table creation]: https://docs.sqlalchemy.org/en/13/core/metadata.html#creating-and-dropping-database-tables
 [alembic]: https://alembic.sqlalchemy.org/en/latest/tutorial.html

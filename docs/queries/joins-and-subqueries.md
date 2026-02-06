@@ -165,7 +165,7 @@ With sample date like follow:
 
 ```python
 base_ormar_config = OrmarConfig(
-    database=databases.Database(DATABASE_URL, force_rollback=True),
+    database=DatabaseConnection(DATABASE_URL),
     metadata=sqlalchemy.MetaData(),
 )
 

@@ -8,15 +8,15 @@ To achieve this you need to register your receiver for a given type of signal fo
 
 Given a sample model like following:
 
-```Python 
-import databases
+```Python
 import sqlalchemy
 
 import ormar
+from ormar import DatabaseConnection
 
 
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database("sqlite:///db.sqlite"),
+    database=DatabaseConnection("sqlite+aiosqlite:///db.sqlite"),
     metadata=sqlalchemy.MetaData(),
 )
 
@@ -246,14 +246,14 @@ and trigger your signals there.
 Creating new signal is super easy. Following example will set a new signal with name your_custom_signal.
 
 ```python hl_lines="21"
-import databases
 import sqlalchemy
 
 import ormar
+from ormar import DatabaseConnection
 
 
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database("sqlite:///db.sqlite"),
+    database=DatabaseConnection("sqlite+aiosqlite:///db.sqlite"),
     metadata=sqlalchemy.MetaData(),
 )
 

@@ -33,9 +33,8 @@ defining `ormar.Fields` as class variables.
 
 ```python
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
+    database=DatabaseConnection(DATABASE_URL),
     metadata=sqlalchemy.MetaData(),
-    engine=sqlalchemy.create_engine(DATABASE_URL),
 )
 
 
@@ -84,7 +83,7 @@ Since this abstract Model will never be initialized you can skip `metadata`
 and `database` in it's `ormar_config` definition.
 
 But if you provide it - it will be inherited, that way you do not have to
-provide `metadata` and `databases` in the final/concrete class
+provide `metadata` and `database` in the final/concrete class
 
 Note that you can always overwrite it in child/concrete class if you need to.
 
@@ -113,7 +112,7 @@ class DateFieldsModel(ormar.Model):
     updated_date: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
 
 
-# that way you do not have to provide metadata and databases in concrete class
+# that way you do not have to provide metadata and database in concrete class
 class Category(DateFieldsModel, AuditModel):
     ormar_config = base_ormar_config.copy(tablename="categories")
 
