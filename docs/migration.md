@@ -1,6 +1,6 @@
 # Migration to 0.22.0 - DatabaseConnection
 
-Version 0.22.0 migrates from the `databases` library to native async SQLAlchemy using ormar's `DatabaseConnection` wrapper. This provides better integration with SQLAlchemy's async ecosystem and improved transaction handling.
+Version 0.22.0 migrates from the `databases` library to native async SQLAlchemy using ormar's `DatabaseConnection` wrapper. This provides better integration with SQLAlchemy's async ecosystem and improved transaction handling and avoid dependency on achived `databases` library.
 
 ## Breaking Changes
 
@@ -108,6 +108,8 @@ async with database.transaction():
 async with database.transaction(force_rollback=True):
     # Your test code - will rollback even on success
     pass
+
+# like in databases `force_rollback` can also be used with DatabaseConnection directly to use one global transaction.
 ```
 
 ### Complete Migration Example
