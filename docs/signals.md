@@ -34,7 +34,7 @@ You can for example define a trigger that will set `album.is_best_seller` status
 
 Import `pre_update` decorator, for list of currently available decorators/ signals check below.
 
-```Python hl_lines="7"
+```Python hl_lines="6"
 --8<-- "../docs_src/signals/docs002.py"
 ```
 
@@ -54,7 +54,7 @@ for which you want to run the signal receiver.
 
 Currently there is no way to set signal for all models at once without explicitly passing them all into registration of receiver.
 
-```Python hl_lines="28-31"
+```Python hl_lines="30-33"
 --8<-- "../docs_src/signals/docs002.py"
 ```
 
@@ -65,7 +65,7 @@ Currently there is no way to set signal for all models at once without explicitl
 Note that our newly created function has instance and class of the instance so you can easily run database 
 queries inside your receivers if you want to.
 
-```Python hl_lines="41-48"
+```Python hl_lines="43-50"
 --8<-- "../docs_src/signals/docs002.py"
 ```
 

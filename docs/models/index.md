@@ -145,7 +145,7 @@ Here you have a sample model with changed names
 ```
 
 Note that you can also change the ForeignKey column name
-```Python hl_lines="34"
+```Python hl_lines="36"
 --8<-- "../docs_src/models/docs009.py"
 ```
 
@@ -223,7 +223,7 @@ One is `Database` instance created with your database url in [sqlalchemy connect
 
 Created instance needs to be passed to every `Model` with `ormar_config` object `database` parameter.
 
-```Python hl_lines="1 5 11"
+```Python hl_lines="3 5 11"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
@@ -237,7 +237,7 @@ Second dependency is sqlalchemy `MetaData` instance.
 
 Created instance needs to be passed to every `Model` with `ormar_config` object `metadata` parameter.
 
-```Python hl_lines="3 6 12"
+```Python hl_lines="2 6 12"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
@@ -416,7 +416,7 @@ There are two ways to create and persist the `Model` instance in the database.
 
 If you plan to modify the instance in the later execution of your program you can initiate your `Model` as a normal class and later await a `save()` call.  
 
-```Python hl_lines="25-26"
+```Python hl_lines="29-30"
 --8<-- "../docs_src/models/docs007.py"
 ```
 
@@ -426,7 +426,7 @@ For creating multiple objects at once a `bulk_create()` QuerySet's method is ava
 
 Each model has a `QuerySet` initialised as `objects` parameter 
 
-```Python hl_lines="28"
+```Python hl_lines="32"
 --8<-- "../docs_src/models/docs007.py"
 ```
 
