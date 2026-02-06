@@ -50,6 +50,17 @@ class Book(ormar.Model):
 create_test_database = init_tests(base_ormar_config, scope="function")
 
 
+@pytest_asyncio.fixture(autouse=True, scope="function")
+async def connect_database(create_test_database):
+    if not base_ormar_config.database.is_connected:
+        await base_ormar_config.database.connect()
+
+    yield
+
+    if base_ormar_config.database.is_connected:
+        await base_ormar_config.database.disconnect()
+
+
 @pytest_asyncio.fixture
 async def author():
     author = await Author(name="Author", score=10).save()
