@@ -35,6 +35,6 @@ jobs:
       - name: Run benchmarks
         uses: CodSpeedHQ/action@v4
         with:
-          mode: instrumentation
+          mode: walltime
           token: ${{ secrets.CODSPEED_TOKEN }}
           run: poetry run pytest benchmarks/ --codspeed
