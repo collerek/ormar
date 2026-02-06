@@ -49,7 +49,7 @@ class Book(ormar.Model):
 
 
 @pytest.fixture(autouse=True, scope="module")
-def create_test_database():
+def create_test_database_for_this_module():
     engine = sqlalchemy.create_engine(DATABASE_URL)
     metadata.drop_all(engine)
     metadata.create_all(engine)
