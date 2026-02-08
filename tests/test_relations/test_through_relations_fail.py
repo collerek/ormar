@@ -11,7 +11,7 @@ from tests.settings import create_config
 base_ormar_config = create_config()
 
 
-def test_through_with_relation_fails():
+def test_through_with_relation_fails() -> None:
     class Category(ormar.Model):
         ormar_config = base_ormar_config.copy(tablename="categories")
 

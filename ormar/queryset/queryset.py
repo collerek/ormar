@@ -174,7 +174,7 @@ class QuerySet(Generic[T]):
         :rtype: List[Model]
         """
         result_rows = []
-        for row in rows:
+        for i, row in enumerate(rows):
             result_rows.append(
                 self.model.from_row(
                     row=row,
@@ -184,7 +184,8 @@ class QuerySet(Generic[T]):
                     proxy_source_model=self.proxy_source_model,
                 )
             )
-            await asyncio.sleep(0)
+            if i % 100 == 99:  # pragma: no cover
+                await asyncio.sleep(0)
 
         if result_rows:
             return self.model.merge_instances_list(result_rows)  # type: ignore
@@ -1160,9 +1161,10 @@ class QuerySet(Generic[T]):
             raise ModelListEmptyError("Bulk create objects are empty!")
 
         ready_objects = []
-        for obj in objects:
+        for i, obj in enumerate(objects):
             ready_objects.append(obj.prepare_model_to_save(obj.model_dump()))
-            await asyncio.sleep(0)  # Allow context switching to prevent blocking
+            if i % 100 == 99:  # pragma: no cover
+                await asyncio.sleep(0)
 
         # don't use execute_many, as in databases it's executed in a loop
         # instead of using execute_many from drivers
@@ -1210,7 +1212,7 @@ class QuerySet(Generic[T]):
 
         columns = [self.model.get_column_alias(k) for k in columns]
 
-        for obj in objects:
+        for i, obj in enumerate(objects):
             new_kwargs = obj.model_dump()
             if new_kwargs.get(pk_name) is None:
                 raise ModelPersistenceError(
@@ -1221,7 +1223,8 @@ class QuerySet(Generic[T]):
             ready_objects.append(
                 {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
             )
-            await asyncio.sleep(0)
+            if i % 100 == 99:  # pragma: no cover
+                await asyncio.sleep(0)
 
         pk_column: sqlalchemy.Column = self.model_config.table.c[
             self.model.get_column_alias(pk_name)

@@ -55,12 +55,6 @@ class DatabaseConnection:
                     cursor.execute("PRAGMA foreign_keys=ON")
                     cursor.close()
 
-                @event.listens_for(self._engine.sync_engine, "begin")
-                def do_begin(conn: Any) -> None:
-                    # Emit our own BEGIN. SQLite3 still emits COMMIT/ROLLBACK correctly
-                    # This ensures nested transaction rollback cascades properly
-                    conn.exec_driver_sql("BEGIN")
-
             if self._force_rollback:
                 assert self._global_transaction is None
                 self._global_transaction = Transaction(
@@ -137,9 +131,10 @@ class DatabaseConnection:
             # Inside a transaction - reuse the transaction's connection
             yield QueryExecutor(trans_conn)
         else:
-            # Outside transaction - use begin() for auto-commit
-            async with self.engine.begin() as conn:
+            # Outside transaction: connect() + commit().
+            async with self.engine.connect() as conn:
                 yield QueryExecutor(conn)
+                await conn.commit()
 
     def get_transaction_connection(self) -> Optional[AsyncConnection]:
         """Get the current transaction connection if in a transaction."""

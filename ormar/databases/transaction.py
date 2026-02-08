@@ -45,6 +45,11 @@ class Transaction:
             self._connection = await self._database.engine.connect().__aenter__()
             self._database.set_transaction_connection(self._connection)
             self._transaction = await self._connection.begin()
+            # SQLite requires an explicit BEGIN before SAVEPOINTs to prevent
+            # RELEASE SAVEPOINT from auto-committing when no outer transaction exists.
+            # Issue after conn.begin() to avoid conflicting with SQLAlchemy's autobegin.
+            if self._database.engine.dialect.name == "sqlite":  # pragma: nocover
+                await self._connection.exec_driver_sql("BEGIN")
         else:
             # Nested transaction - use savepoint
             self._connection = self._database.get_transaction_connection()
