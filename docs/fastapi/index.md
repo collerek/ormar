@@ -31,11 +31,11 @@ application.
 ```python
 from typing import List, Optional, AsyncIterator
 
-import databases
 import sqlalchemy
 from fastapi import FastAPI
 
 import ormar
+from ormar import DatabaseConnection
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -55,7 +55,7 @@ def get_lifespan(config):
 
 base_ormar_config = ormar.OrmarConfig(
     metadata=sqlalchemy.MetaData(),
-    database=databases.Database("sqlite:///test.db"),
+    database=DatabaseConnection("sqlite+aiosqlite:///test.db"),
 )
 
 app = FastAPI(lifespan=get_lifespan(base_ormar_config))

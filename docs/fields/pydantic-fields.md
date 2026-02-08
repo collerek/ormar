@@ -24,7 +24,7 @@ exactly what's going to happen during loading from database.
 ```python
 base_ormar_config = ormar.OrmarConfig(
     metadata=sqlalchemy.MetaData(),
-    database=databases.Database(DATABASE_URL),
+    database=DatabaseConnection(DATABASE_URL),
 )
 
 
@@ -56,7 +56,7 @@ Note that setting a default to `None` is the same as setting the field to `Optio
 ```python
 base_ormar_config = ormar.OrmarConfig(
     metadata=sqlalchemy.MetaData(),
-    database=databases.Database(DATABASE_URL),
+    database=DatabaseConnection(DATABASE_URL),
 )
 
 
@@ -94,7 +94,7 @@ from pydantic import Field, PaymentCardNumber
 
 base_ormar_config = ormar.OrmarConfig(
     metadata=sqlalchemy.MetaData(),
-    database=databases.Database(DATABASE_URL),
+    database=DatabaseConnection(DATABASE_URL),
 )
 
 
@@ -144,7 +144,7 @@ from pydantic import BaseModel
 
 base_ormar_config = ormar.OrmarConfig(
     metadata=sqlalchemy.MetaData(),
-    database=databases.Database(DATABASE_URL),
+    database=DatabaseConnection(DATABASE_URL),
 )
 
 

@@ -122,14 +122,22 @@ async def test_fields_inherited_from_mixin() -> None:
                 field not in Subject.ormar_config.model_fields
                 for field in mixin2_columns
             )
-
-            inspector = sa.inspect(base_ormar_config.engine)
-            assert "categories" in inspector.get_table_names()
-            table_columns = [x.get("name") for x in inspector.get_columns("categories")]
+            async with base_ormar_config.engine.connect() as conn:
+                table_names = await conn.run_sync(
+                    lambda sync_conn: sa.inspect(sync_conn).get_table_names()
+                )
+                categories_column_names = await conn.run_sync(
+                    lambda sync_conn: sa.inspect(sync_conn).get_columns("categories")
+                )
+                subjects_column_names = await conn.run_sync(
+                    lambda sync_conn: sa.inspect(sync_conn).get_columns("subjects")
+                )
+            assert "categories" in table_names
+            table_columns = [x.get("name") for x in categories_column_names]
             assert all(col in table_columns for col in mixin_columns + mixin2_columns)
 
-            assert "subjects" in inspector.get_table_names()
-            table_columns = [x.get("name") for x in inspector.get_columns("subjects")]
+            assert "subjects" in table_names
+            table_columns = [x.get("name") for x in subjects_column_names]
             assert all(col in table_columns for col in mixin_columns)
 
             sub2 = (

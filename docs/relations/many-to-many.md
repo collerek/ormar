@@ -193,7 +193,7 @@ Example:
 ```python
 ... # course declaration omitted
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database("sqlite:///db.sqlite"),
+    database=DatabaseConnection("sqlite+aiosqlite:///db.sqlite"),
     metadata=sqlalchemy.MetaData(),
 )
 

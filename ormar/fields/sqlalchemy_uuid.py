@@ -16,6 +16,8 @@ class UUID(TypeDecorator):
 
     impl = CHAR
 
+    cache_ok = True
+
     def __init__(self, *args: Any, uuid_format: str = "hex", **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.uuid_format = uuid_format

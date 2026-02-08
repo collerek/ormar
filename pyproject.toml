@@ -3,7 +3,7 @@ name = "ormar"
 
 [tool.poetry]
 name = "ormar"
-version = "0.21.0"
+version = "0.22.0"
 description = "An async ORM with fastapi in mind and pydantic validation."
 authors = ["Radosław Drążkiewicz <collerek@gmail.com>"]
 license = "MIT"
@@ -42,7 +42,6 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9.0"
-databases = "^0.9.0"
 pydantic = "^2.11.9"
 SQLAlchemy = {version = "^2.0.40", extras = ["asyncio"]}
 cryptography = { version = ">=41.0.3,<44.0.0", optional = true }
@@ -85,7 +84,7 @@ all = [
 [tool.poetry.group.dev.dependencies]
 # Testing
 pytest = ">=7.4.4,<9.0.0"
-pytest-cov = ">=4,<8"
+pytest-cov = ">=7,<8"
 codecov = "^2.1.13"
 pytest-asyncio = ">=0.21,<0.24"
 fastapi = ">=0.125.0"

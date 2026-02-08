@@ -183,289 +183,313 @@ async def test_get_or_create():
 @pytest.mark.asyncio
 async def test_get_or_create_with_defaults():
     async with base_ormar_config.database:
-        book, created = await Book.objects.get_or_create(
-            title="Nice book", _defaults={"author": "Mojix", "genre": "Historic"}
-        )
-        assert created is True
-        assert book.author == "Mojix"
-        assert book.title == "Nice book"
-        assert book.genre == "Historic"
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            book, created = await Book.objects.get_or_create(
+                title="Nice book", _defaults={"author": "Mojix", "genre": "Historic"}
+            )
+            assert created is True
+            assert book.author == "Mojix"
+            assert book.title == "Nice book"
+            assert book.genre == "Historic"
 
-        book2, created = await Book.objects.get_or_create(
-            author="Mojix", _defaults={"title": "Book2"}
-        )
-        assert created is False
-        assert book2 == book
-        assert book2.title == "Nice book"
-        assert book2.author == "Mojix"
-        assert book2.genre == "Historic"
-        assert await Book.objects.count() == 1
+            book2, created = await Book.objects.get_or_create(
+                author="Mojix", _defaults={"title": "Book2"}
+            )
+            assert created is False
+            assert book2 == book
+            assert book2.title == "Nice book"
+            assert book2.author == "Mojix"
+            assert book2.genre == "Historic"
+            assert await Book.objects.count() == 1
 
-        book, created = await Book.objects.get_or_create(
-            title="doesn't exist",
-            _defaults={"title": "overwritten", "author": "Mojix", "genre": "Historic"},
-        )
-        assert created is True
-        assert book.title == "overwritten"
+            book, created = await Book.objects.get_or_create(
+                title="doesn't exist",
+                _defaults={
+                    "title": "overwritten",
+                    "author": "Mojix",
+                    "genre": "Historic",
+                },
+            )
+            assert created is True
+            assert book.title == "overwritten"
 
-        book2, created = await Book.objects.get_or_create(
-            title="overwritten", _defaults={"title": "doesn't work"}
-        )
-        assert created is False
-        assert book2.title == "overwritten"
-        assert book2 == book
+            book2, created = await Book.objects.get_or_create(
+                title="overwritten", _defaults={"title": "doesn't work"}
+            )
+            assert created is False
+            assert book2.title == "overwritten"
+            assert book2 == book
 
 
 @pytest.mark.asyncio
 async def test_update_or_create():
     async with base_ormar_config.database:
-        tom = await Book.objects.update_or_create(
-            title="Volume I", author="Anonymous", genre="Fiction"
-        )
-        assert await Book.objects.count() == 1
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            tom = await Book.objects.update_or_create(
+                title="Volume I", author="Anonymous", genre="Fiction"
+            )
+            assert await Book.objects.count() == 1
 
-        assert await Book.objects.update_or_create(id=tom.id, genre="Historic")
-        assert await Book.objects.count() == 1
+            assert await Book.objects.update_or_create(id=tom.id, genre="Historic")
+            assert await Book.objects.count() == 1
 
-        assert await Book.objects.update_or_create(pk=tom.id, genre="Fantasy")
-        assert await Book.objects.count() == 1
+            assert await Book.objects.update_or_create(pk=tom.id, genre="Fantasy")
+            assert await Book.objects.count() == 1
 
-        assert await Book.objects.create(
-            title="Volume I", author="Anonymous", genre="Fantasy"
-        )
-        with pytest.raises(ormar.exceptions.MultipleMatches):
-            await Book.objects.get(
+            assert await Book.objects.create(
                 title="Volume I", author="Anonymous", genre="Fantasy"
             )
+            with pytest.raises(ormar.exceptions.MultipleMatches):
+                await Book.objects.get(
+                    title="Volume I", author="Anonymous", genre="Fantasy"
+                )
 
 
 @pytest.mark.asyncio
 async def test_bulk_create():
     async with base_ormar_config.database:
-        await ToDo.objects.bulk_create(
-            [
-                ToDo(text="Buy the groceries."),
-                ToDo(text="Call Mum.", completed=True),
-                ToDo(text="Send invoices.", completed=True),
-            ]
-        )
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            await ToDo.objects.bulk_create(
+                [
+                    ToDo(text="Buy the groceries."),
+                    ToDo(text="Call Mum.", completed=True),
+                    ToDo(text="Send invoices.", completed=True),
+                ]
+            )
 
-        todoes = await ToDo.objects.all()
-        assert len(todoes) == 3
-        for todo in todoes:
-            assert todo.pk is not None
+            todoes = await ToDo.objects.all()
+            assert len(todoes) == 3
+            for todo in todoes:
+                assert todo.pk is not None
 
-        completed = await ToDo.objects.filter(completed=True).all()
-        assert len(completed) == 2
+            completed = await ToDo.objects.filter(completed=True).all()
+            assert len(completed) == 2
 
-        with pytest.raises(ormar.exceptions.ModelListEmptyError):
-            await ToDo.objects.bulk_create([])
+            with pytest.raises(ormar.exceptions.ModelListEmptyError):
+                await ToDo.objects.bulk_create([])
 
 
 @pytest.mark.asyncio
 async def test_bulk_create_json_field():
     async with base_ormar_config.database:
-        json_value = {"a": 1}
-        test_model_1 = JsonTestModel(id=1, json_field=json_value)
-        test_model_2 = JsonTestModel(id=2, json_field=json_value)
+        async with base_ormar_config.database.transaction(
+            force_rollback=True
+        ) as transaction:
+            json_value = {"a": 1}
+            test_model_1 = JsonTestModel(id=1, json_field=json_value)
+            test_model_2 = JsonTestModel(id=2, json_field=json_value)
 
-        # store one with .save() and the other with .bulk_create()
-        await test_model_1.save()
-        await JsonTestModel.objects.bulk_create([test_model_2])
+            # store one with .save() and the other with .bulk_create()
+            await test_model_1.save()
+            await JsonTestModel.objects.bulk_create([test_model_2])
 
-        # refresh from the database
-        await test_model_1.load()
-        await test_model_2.load()
+            # refresh from the database
+            await test_model_1.load()
+            await test_model_2.load()
 
-        assert test_model_1.json_field == test_model_2.json_field  # True
+            assert test_model_1.json_field == test_model_2.json_field  # True
 
-        # try to query the json field
-        table = JsonTestModel.ormar_config.table
-        query = table.select().where(table.c.json_field["a"].as_integer() == 1)
-        res = [
-            JsonTestModel.from_row(record, source_model=JsonTestModel)
-            for record in await base_ormar_config.database.fetch_all(query)
-        ]
+            # try to query the json field
+            table = JsonTestModel.ormar_config.table
+            query = table.select().where(table.c.json_field["a"].as_integer() == 1)
+            res = [
+                JsonTestModel.from_row(record, source_model=JsonTestModel)
+                for record in list(
+                    (await transaction._connection.execute(query)).mappings().all()
+                )
+            ]
 
-        assert test_model_1 in res
-        assert test_model_2 in res
-        assert len(res) == 2
+            assert test_model_1 in res
+            assert test_model_2 in res
+            assert len(res) == 2
 
 
 @pytest.mark.asyncio
 async def test_bulk_create_with_relation():
     async with base_ormar_config.database:
-        category = await Category.objects.create(name="Sample Category")
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            category = await Category.objects.create(name="Sample Category")
 
-        await Note.objects.bulk_create(
-            [
-                Note(text="Buy the groceries.", category=category),
-                Note(text="Call Mum.", category=category),
-            ]
-        )
-
-        todoes = await Note.objects.all()
-        assert len(todoes) == 2
-        for todo in todoes:
-            assert todo.category.pk == category.pk
-
-
-@pytest.mark.asyncio
-async def test_bulk_update():
-    async with base_ormar_config.database:
-        await ToDo.objects.bulk_create(
-            [
-                ToDo(text="Buy the groceries."),
-                ToDo(text="Call Mum.", completed=True),
-                ToDo(text="Send invoices.", completed=True),
-            ]
-        )
-        todoes = await ToDo.objects.all()
-        assert len(todoes) == 3
-
-        for todo in todoes:
-            todo.text = todo.text + "_1"
-            todo.completed = False
-            todo.size = MySize.BIG
-
-        await ToDo.objects.bulk_update(todoes)
-
-        completed = await ToDo.objects.filter(completed=False).all()
-        assert len(completed) == 3
-
-        todoes = await ToDo.objects.all()
-        assert len(todoes) == 3
-
-        for todo in todoes:
-            assert todo.text[-2:] == "_1"
-            assert todo.size == MySize.BIG
-
-
-@pytest.mark.asyncio
-async def test_bulk_update_with_only_selected_columns():
-    async with base_ormar_config.database:
-        await ToDo.objects.bulk_create(
-            [
-                ToDo(text="Reset the world simulation.", completed=False),
-                ToDo(text="Watch kittens.", completed=True),
-            ]
-        )
-
-        todoes = await ToDo.objects.all()
-        assert len(todoes) == 2
-
-        for todo in todoes:
-            todo.text = todo.text + "_1"
-            todo.completed = False
-
-        await ToDo.objects.bulk_update(todoes, columns=["completed"])
-
-        completed = await ToDo.objects.filter(completed=False).all()
-        assert len(completed) == 2
-
-        todoes = await ToDo.objects.all()
-        assert len(todoes) == 2
-
-        for todo in todoes:
-            assert todo.text[-2:] != "_1"
-
-
-@pytest.mark.asyncio
-async def test_bulk_update_with_relation():
-    async with base_ormar_config.database:
-        category = await Category.objects.create(name="Sample Category")
-        category2 = await Category.objects.create(name="Sample II Category")
-
-        await Note.objects.bulk_create(
-            [
-                Note(text="Buy the groceries.", category=category),
-                Note(text="Call Mum.", category=category),
-                Note(text="Text skynet.", category=category),
-            ]
-        )
-
-        notes = await Note.objects.all()
-        assert len(notes) == 3
-
-        for note in notes:
-            note.category = category2
-
-        await Note.objects.bulk_update(notes)
-
-        notes_upd = await Note.objects.all()
-        assert len(notes_upd) == 3
-
-        for note in notes_upd:
-            assert note.category.pk == category2.pk
-
-
-@pytest.mark.asyncio
-async def test_bulk_update_not_saved_objts():
-    async with base_ormar_config.database:
-        category = await Category.objects.create(name="Sample Category")
-        with pytest.raises(ModelPersistenceError):
-            await Note.objects.bulk_update(
+            await Note.objects.bulk_create(
                 [
                     Note(text="Buy the groceries.", category=category),
                     Note(text="Call Mum.", category=category),
                 ]
             )
 
-        with pytest.raises(ModelListEmptyError):
-            await Note.objects.bulk_update([])
+            todoes = await Note.objects.all()
+            assert len(todoes) == 2
+            for todo in todoes:
+                assert todo.category.pk == category.pk
+
+
+@pytest.mark.asyncio
+async def test_bulk_update():
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            await ToDo.objects.bulk_create(
+                [
+                    ToDo(text="Buy the groceries."),
+                    ToDo(text="Call Mum.", completed=True),
+                    ToDo(text="Send invoices.", completed=True),
+                ]
+            )
+            todoes = await ToDo.objects.all()
+            assert len(todoes) == 3
+
+            for todo in todoes:
+                todo.text = todo.text + "_1"
+                todo.completed = False
+                todo.size = MySize.BIG
+
+            await ToDo.objects.bulk_update(todoes)
+
+            completed = await ToDo.objects.filter(completed=False).all()
+            assert len(completed) == 3
+
+            todoes = await ToDo.objects.all()
+            assert len(todoes) == 3
+
+            for todo in todoes:
+                assert todo.text[-2:] == "_1"
+                assert todo.size == MySize.BIG
+
+
+@pytest.mark.asyncio
+async def test_bulk_update_with_only_selected_columns():
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            await ToDo.objects.bulk_create(
+                [
+                    ToDo(text="Reset the world simulation.", completed=False),
+                    ToDo(text="Watch kittens.", completed=True),
+                ]
+            )
+
+            todoes = await ToDo.objects.all()
+            assert len(todoes) == 2
+
+            for todo in todoes:
+                todo.text = todo.text + "_1"
+                todo.completed = False
+
+            await ToDo.objects.bulk_update(todoes, columns=["completed"])
+
+            completed = await ToDo.objects.filter(completed=False).all()
+            assert len(completed) == 2
+
+            todoes = await ToDo.objects.all()
+            assert len(todoes) == 2
+
+            for todo in todoes:
+                assert todo.text[-2:] != "_1"
+
+
+@pytest.mark.asyncio
+async def test_bulk_update_with_relation():
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            category = await Category.objects.create(name="Sample Category")
+            category2 = await Category.objects.create(name="Sample II Category")
+
+            await Note.objects.bulk_create(
+                [
+                    Note(text="Buy the groceries.", category=category),
+                    Note(text="Call Mum.", category=category),
+                    Note(text="Text skynet.", category=category),
+                ]
+            )
+
+            notes = await Note.objects.all()
+            assert len(notes) == 3
+
+            for note in notes:
+                note.category = category2
+
+            await Note.objects.bulk_update(notes)
+
+            notes_upd = await Note.objects.all()
+            assert len(notes_upd) == 3
+
+            for note in notes_upd:
+                assert note.category.pk == category2.pk
+
+
+@pytest.mark.asyncio
+async def test_bulk_update_not_saved_objts():
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            category = await Category.objects.create(name="Sample Category")
+            with pytest.raises(ModelPersistenceError):
+                await Note.objects.bulk_update(
+                    [
+                        Note(text="Buy the groceries.", category=category),
+                        Note(text="Call Mum.", category=category),
+                    ]
+                )
+
+            with pytest.raises(ModelListEmptyError):
+                await Note.objects.bulk_update([])
 
 
 @pytest.mark.asyncio
 async def test_bulk_operations_with_json():
     async with base_ormar_config.database:
-        items = [
-            ItemConfig(item_id="test1"),
-            ItemConfig(item_id="test2"),
-            ItemConfig(item_id="test3"),
-        ]
-        await ItemConfig.objects.bulk_create(items)
-        items = await ItemConfig.objects.all()
-        assert all(x.pairs == ["2", "3"] for x in items)
+        async with base_ormar_config.database.transaction(
+            force_rollback=True
+        ) as transaction:
+            items = [
+                ItemConfig(item_id="test1"),
+                ItemConfig(item_id="test2"),
+                ItemConfig(item_id="test3"),
+            ]
+            await ItemConfig.objects.bulk_create(items)
+            items = await ItemConfig.objects.all()
+            assert all(x.pairs == ["2", "3"] for x in items)
 
-        for item in items:
-            item.pairs = ["1"]
+            for item in items:
+                item.pairs = ["1"]
 
-        await ItemConfig.objects.bulk_update(items)
-        items = await ItemConfig.objects.all()
-        assert all(x.pairs == ["1"] for x in items)
+            await ItemConfig.objects.bulk_update(items)
+            items = await ItemConfig.objects.all()
+            assert all(x.pairs == ["1"] for x in items)
 
-        items = await ItemConfig.objects.filter(ItemConfig.id > 1).all()
-        for item in items:
-            item.pairs = {"b": 2}
-        await ItemConfig.objects.bulk_update(items)
-        items = await ItemConfig.objects.filter(ItemConfig.id > 1).all()
-        assert all(x.pairs == {"b": 2} for x in items)
+            items = await ItemConfig.objects.filter(ItemConfig.id > 1).all()
+            for item in items:
+                item.pairs = {"b": 2}
+            await ItemConfig.objects.bulk_update(items)
+            items = await ItemConfig.objects.filter(ItemConfig.id > 1).all()
+            assert all(x.pairs == {"b": 2} for x in items)
 
-        table = ItemConfig.ormar_config.table
-        query = table.select().where(table.c.pairs["b"].as_integer() == 2)
-        res = [
-            ItemConfig.from_row(record, source_model=ItemConfig)
-            for record in await base_ormar_config.database.fetch_all(query)
-        ]
-        assert len(res) == 2
+            table = ItemConfig.ormar_config.table
+            query = table.select().where(table.c.pairs["b"].as_integer() == 2)
+            res = [
+                ItemConfig.from_row(record, source_model=ItemConfig)
+                for record in list(
+                    (await transaction._connection.execute(query)).mappings().all()
+                )
+            ]
+            assert len(res) == 2
 
 
 @pytest.mark.asyncio
 async def test_custom_queryset_cls():
     async with base_ormar_config.database:
-        with pytest.raises(ValueError):
-            await Customer.objects.first_or_404(id=1)
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            with pytest.raises(ValueError):
+                await Customer.objects.first_or_404(id=1)
 
-        await Customer(name="test").save()
-        c = await Customer.objects.first_or_404(name="test")
-        assert c.name == "test"
+            await Customer(name="test").save()
+            c = await Customer.objects.first_or_404(name="test")
+            assert c.name == "test"
 
 
 @pytest.mark.asyncio
 async def test_filter_enum():
     async with base_ormar_config.database:
-        it = ItemConfig(item_id="test_1")
-        await it.save()
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            it = ItemConfig(item_id="test_1")
+            await it.save()
 
-        it = await ItemConfig.objects.filter(size=MySize.SMALL).first()
-        assert it
+            it = await ItemConfig.objects.filter(size=MySize.SMALL).first()
+            assert it

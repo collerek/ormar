@@ -1,8 +1,6 @@
-import sqlite3
-
-import asyncpg  # type: ignore
 import ormar.fields.constraints
 import pytest
+import sqlalchemy
 
 from tests.lifespan import init_tests
 from tests.settings import create_config
@@ -30,19 +28,14 @@ create_test_database = init_tests(base_ormar_config)
 
 @pytest.mark.asyncio
 async def test_check_columns_exclude_mysql():
-    if Product.ormar_config.database._backend._dialect.name != "mysql":
-        async with base_ormar_config.database:  # pragma: no cover
+    async with base_ormar_config.database:  # pragma: no cover
+        if Product.ormar_config.database.dialect.name != "mysql":
             async with base_ormar_config.database.transaction(force_rollback=True):
                 await Product.objects.create(
                     name="Mars", company="Nestle", inventory=100, buffer=10
                 )
 
-                with pytest.raises(
-                    (
-                        sqlite3.IntegrityError,
-                        asyncpg.exceptions.CheckViolationError,
-                    )
-                ):
+                with pytest.raises((sqlalchemy.exc.IntegrityError)):
                     await Product.objects.create(
                         name="Cookies", company="Nestle", inventory=1, buffer=10
                     )

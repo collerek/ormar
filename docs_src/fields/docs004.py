@@ -1,11 +1,11 @@
 from datetime import datetime
 
-import databases
 import ormar
 import sqlalchemy
+from ormar import DatabaseConnection
 from sqlalchemy import func, text
 
-database = databases.Database("sqlite:///test.db")
+database = DatabaseConnection("sqlite+aiosqlite:///fields_docs004.db")
 metadata = sqlalchemy.MetaData()
 
 

@@ -1,5 +1,125 @@
 # Release notes
 
+## 0.22.0
+
+### 🐛 Breaking changes
+
+* **Migration from `databases` library to native async SQLAlchemy**
+
+    Version 0.22.0 migrates from the `databases` library to native async SQLAlchemy using ormar's `DatabaseConnection` wrapper. This provides better integration with SQLAlchemy's async ecosystem and improved transaction handling and avoid dependency on archived `databases` library.
+
+* **Import changes**
+
+    Replace `databases` import with `DatabaseConnection` from ormar:
+
+    ```python
+    # ormar < 0.22
+    import databases
+    database = databases.Database("sqlite:///db.sqlite")
+
+    # ormar >= 0.22
+    from ormar import DatabaseConnection
+    database = DatabaseConnection("sqlite+aiosqlite:///db.sqlite")
+    ```
+
+* **Database URLs require async drivers**
+
+    Database connection strings must now use async-compatible drivers:
+
+    - SQLite: `sqlite+aiosqlite://` (not `sqlite://`)
+    - PostgreSQL: `postgresql+asyncpg://` (not `postgresql://`)
+    - MySQL: `mysql+aiomysql://` (not `mysql://`)
+
+    ```python
+    # ormar < 0.22
+    database = databases.Database("sqlite:///db.sqlite")
+
+    # ormar >= 0.22
+    database = DatabaseConnection("sqlite+aiosqlite:///db.sqlite")
+    ```
+
+* **Engine parameter removed from OrmarConfig**
+
+    The `engine` parameter is no longer needed in `OrmarConfig` - it's created internally by `DatabaseConnection`:
+
+    ```python
+    # ormar < 0.22
+    import databases
+    import sqlalchemy
+
+    database = databases.Database("sqlite:///db.sqlite")
+    engine = sqlalchemy.create_engine("sqlite:///db.sqlite")
+
+    base_ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=sqlalchemy.MetaData(),
+        engine=engine,  # <- No longer needed
+    )
+
+    # ormar >= 0.22
+    from ormar import DatabaseConnection
+    import sqlalchemy
+
+    database = DatabaseConnection("sqlite+aiosqlite:///db.sqlite")
+
+    base_ormar_config = ormar.OrmarConfig(
+        database=database,
+        metadata=sqlalchemy.MetaData(),
+        # engine is created internally
+    )
+    ```
+
+* **Table creation requires sync engine**
+
+    When using `metadata.create_all()`, you must create a separate sync engine:
+
+    ```python
+    # ormar >= 0.22
+    import sqlalchemy
+    from ormar import DatabaseConnection
+
+    DATABASE_URL = "sqlite+aiosqlite:///db.sqlite"
+    database = DatabaseConnection(DATABASE_URL)
+    metadata = sqlalchemy.MetaData()
+
+    # Create a sync engine for table creation
+    sync_engine = sqlalchemy.create_engine(
+        DATABASE_URL.replace('+aiosqlite', '')
+    )
+    metadata.create_all(sync_engine)
+    ```
+
+### ✨ Features
+
+* **Improved transaction handling**
+
+    Transactions now use context variables and SQLAlchemy savepoints for better nested transaction support:
+
+    ```python
+    # Nested transactions with automatic savepoints
+    async with database.transaction():
+        await Model1.objects.create(...)
+
+        async with database.transaction():  # Uses savepoint
+            await Model2.objects.create(...)
+    ```
+
+* **Enhanced testing support**
+
+    The `force_rollback` parameter for transactions makes testing easier.
+    Like in databases `force_rollback` can also be used with DatabaseConnection directly to use one global transaction.
+
+    ```python
+    async with database.transaction(force_rollback=True):
+        # Your test code - will rollback even on success
+        await Model.objects.create(...)
+    ```
+
+### 💬 Other
+
+* Improved pyright support - thanks @MaximSrour - [#1491](https://github.com/collerek/ormar/pull/1491)
+
+
 ## 0.21.0
 
 ### 🐛 Breaking changes

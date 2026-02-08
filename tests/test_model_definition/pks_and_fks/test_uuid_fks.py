@@ -1,15 +1,15 @@
 import uuid
 
-import databases
 import ormar
 import pytest
 import sqlalchemy
+from ormar.databases.connection import DatabaseConnection
 from sqlalchemy import create_engine
 
-from tests.settings import DATABASE_URL
+from tests.settings import ASYNC_DATABASE_URL, DATABASE_URL
 
 metadata = sqlalchemy.MetaData()
-db = databases.Database(DATABASE_URL)
+db = DatabaseConnection(ASYNC_DATABASE_URL)
 
 
 class User(ormar.Model):

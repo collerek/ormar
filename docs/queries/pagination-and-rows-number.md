@@ -23,7 +23,7 @@ Combines the `offset` and `limit` methods based on page number and size
 ```python
 class Track(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        database=databases.Database(DATABASE_URL),
+        database=DatabaseConnection(DATABASE_URL),
         metadata=sqlalchemy.MetaData(),
         tablename="track"
     )
@@ -54,7 +54,7 @@ use the `limit_raw_sql` parameter flag, and set it to `True`.
 ```python
 class Track(ormar.Model):
     ormar.OrmarConfig(
-        database=databases.Database(DATABASE_URL),
+        database=DatabaseConnection(DATABASE_URL),
         metadata=sqlalchemy.MetaData(),
         tablename="track"
     )
@@ -89,7 +89,7 @@ use the `limit_raw_sql` parameter flag, and set it to `True`.
 ```python
 class Track(ormar.Model):
     ormar.OrmarConfig(
-        database=databases.Database(DATABASE_URL),
+        database=DatabaseConnection(DATABASE_URL),
         metadata=sqlalchemy.MetaData(),
         tablename="track"
     )

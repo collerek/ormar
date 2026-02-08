@@ -16,7 +16,6 @@ from typing import (
     cast,
 )
 
-import databases
 import sqlalchemy
 from sqlalchemy import bindparam
 
@@ -175,7 +174,7 @@ class QuerySet(Generic[T]):
         :rtype: List[Model]
         """
         result_rows = []
-        for row in rows:
+        for i, row in enumerate(rows):
             result_rows.append(
                 self.model.from_row(
                     row=row,
@@ -185,7 +184,8 @@ class QuerySet(Generic[T]):
                     proxy_source_model=self.proxy_source_model,
                 )
             )
-            await asyncio.sleep(0)
+            if i % 100 == 99:  # pragma: no cover
+                await asyncio.sleep(0)
 
         if result_rows:
             return self.model.merge_instances_list(result_rows)  # type: ignore
@@ -234,16 +234,6 @@ class QuerySet(Generic[T]):
             raise NoMatch()
         if len(rows) > 1:
             raise MultipleMatches()
-
-    @property
-    def database(self) -> databases.Database:
-        """
-        Shortcut to models database from OrmarConfig class.
-
-        :return: database
-        :rtype: databases.Database
-        """
-        return self.model_config.database
 
     @property
     def table(self) -> sqlalchemy.Table:
@@ -610,7 +600,8 @@ class QuerySet(Generic[T]):
                 _as_dict=_as_dict, _flatten=_flatten, exclude_through=exclude_through
             )
         expr = self.build_select_expression()
-        rows = await self.database.fetch_all(expr)
+        async with self.model_config.database.get_query_executor() as executor:
+            rows = await executor.fetch_all(expr)
         if not rows:
             return []
         alias_resolver = ReverseAliasResolver(
@@ -675,7 +666,9 @@ class QuerySet(Generic[T]):
         """
         expr = self.build_select_expression()
         expr = sqlalchemy.exists(expr).select()
-        return await self.database.fetch_val(expr)
+        async with self.model_config.database.get_query_executor() as executor:
+            result = await executor.fetch_val(expr)
+            return bool(result)
 
     async def count(self, distinct: bool = True) -> int:
         """
@@ -699,7 +692,9 @@ class QuerySet(Generic[T]):
             pk_column_name = self.model.get_column_alias(self.model_config.pkname)
             expr_distinct = expr.group_by(pk_column_name).alias("subquery_for_group")  # type: ignore
             expr = sqlalchemy.func.count().select().select_from(expr_distinct)  # type: ignore
-        return await self.database.fetch_val(expr)
+        async with self.model_config.database.get_query_executor() as executor:
+            result = await executor.fetch_val(expr)  # type: ignore
+            return int(result) if result is not None else 0
 
     async def _query_aggr_function(self, func_name: str, columns: List) -> Any:
         func = getattr(sqlalchemy.func, func_name)
@@ -715,8 +710,9 @@ class QuerySet(Generic[T]):
         expr = self.build_select_expression().alias(f"subquery_for_{func_name}")
         expr = sqlalchemy.select(*select_columns).select_from(expr)  # type: ignore
         # print("\n", expr.compile(compile_kwargs={"literal_binds": True}))
-        result = await self.database.fetch_one(expr)
-        return dict(result) if len(result) > 1 else result[0]  # type: ignore
+        async with self.model_config.database.get_query_executor() as executor:
+            result = await executor.fetch_one(expr)  # type: ignore
+        return dict(result) if len(result) > 1 else result[columns[0]]  # type: ignore
 
     async def max(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
         """
@@ -799,7 +795,8 @@ class QuerySet(Generic[T]):
         expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
             expr
         )
-        return await self.database.execute(expr)
+        async with self.model_config.database.get_query_executor() as executor:
+            return await executor.execute(expr)
 
     async def delete(self, *args: Any, each: bool = False, **kwargs: Any) -> int:
         """
@@ -828,7 +825,8 @@ class QuerySet(Generic[T]):
         expr = FilterQuery(filter_clauses=self.exclude_clauses, exclude=True).apply(
             expr
         )
-        return await self.database.execute(expr)
+        async with self.model_config.database.get_query_executor() as executor:
+            return await executor.execute(expr)
 
     def paginate(self, page: int, page_size: int = 20) -> "QuerySet[T]":
         """
@@ -915,7 +913,8 @@ class QuerySet(Generic[T]):
             )
             + self.order_bys,
         )
-        rows = await self.database.fetch_all(expr)
+        async with self.model_config.database.get_query_executor() as executor:
+            rows = await executor.fetch_all(expr)
         processed_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and processed_rows:
             processed_rows = await self._prefetch_related_models(processed_rows, rows)
@@ -998,7 +997,8 @@ class QuerySet(Generic[T]):
         else:
             expr = self.build_select_expression()
 
-        rows = await self.database.fetch_all(expr)
+        async with self.model_config.database.get_query_executor() as executor:
+            rows = await executor.fetch_all(expr)
         processed_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and processed_rows:
             processed_rows = await self._prefetch_related_models(processed_rows, rows)
@@ -1069,7 +1069,8 @@ class QuerySet(Generic[T]):
             return await self.filter(*args, **kwargs).all()
 
         expr = self.build_select_expression()
-        rows = await self.database.fetch_all(expr)
+        async with self.model_config.database.get_query_executor() as executor:
+            rows = await executor.fetch_all(expr)
         result_rows = await self._process_query_result_rows(rows)
         if self._prefetch_related and result_rows:
             result_rows = await self._prefetch_related_models(result_rows, rows)
@@ -1111,19 +1112,20 @@ class QuerySet(Generic[T]):
         last_primary_key = None
         pk_alias = self.model.get_column_alias(self.model_config.pkname)
 
-        async for row in self.database.iterate(query=expr):
-            current_primary_key = row[pk_alias]
-            if last_primary_key == current_primary_key or last_primary_key is None:
+        async with self.model_config.database.get_query_executor() as executor:
+            async for row in executor.iterate(expr):
+                current_primary_key = row[pk_alias]
+                if last_primary_key == current_primary_key or last_primary_key is None:
+                    last_primary_key = current_primary_key
+                    rows.append(row)
+                    continue
+
+                yield (await self._process_query_result_rows(rows))[0]
                 last_primary_key = current_primary_key
-                rows.append(row)
-                continue
+                rows = [row]
 
-            yield (await self._process_query_result_rows(rows))[0]
-            last_primary_key = current_primary_key
-            rows = [row]
-
-        if rows:
-            yield (await self._process_query_result_rows(rows))[0]
+            if rows:
+                yield (await self._process_query_result_rows(rows))[0]
 
     async def create(self, **kwargs: Any) -> "T":
         """
@@ -1159,14 +1161,16 @@ class QuerySet(Generic[T]):
             raise ModelListEmptyError("Bulk create objects are empty!")
 
         ready_objects = []
-        for obj in objects:
+        for i, obj in enumerate(objects):
             ready_objects.append(obj.prepare_model_to_save(obj.model_dump()))
-            await asyncio.sleep(0)  # Allow context switching to prevent blocking
+            if i % 100 == 99:  # pragma: no cover
+                await asyncio.sleep(0)
 
         # don't use execute_many, as in databases it's executed in a loop
         # instead of using execute_many from drivers
         expr = self.table.insert().values(ready_objects)
-        await self.database.execute(expr)
+        async with self.model_config.database.get_query_executor() as executor:
+            await executor.execute(expr)
 
         for obj in objects:
             obj.set_save_status(True)
@@ -1208,7 +1212,7 @@ class QuerySet(Generic[T]):
 
         columns = [self.model.get_column_alias(k) for k in columns]
 
-        for obj in objects:
+        for i, obj in enumerate(objects):
             new_kwargs = obj.model_dump()
             if new_kwargs.get(pk_name) is None:
                 raise ModelPersistenceError(
@@ -1219,7 +1223,8 @@ class QuerySet(Generic[T]):
             ready_objects.append(
                 {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
             )
-            await asyncio.sleep(0)
+            if i % 100 == 99:  # pragma: no cover
+                await asyncio.sleep(0)
 
         pk_column: sqlalchemy.Column = self.model_config.table.c[
             self.model.get_column_alias(pk_name)
@@ -1239,7 +1244,8 @@ class QuerySet(Generic[T]):
         # databases bind params only where query is passed as string
         # otherwise it just passes all data to values and results in unconsumed columns
         expr = str(expr)  # type: ignore
-        await self.database.execute_many(expr, ready_objects)
+        async with self.model_config.database.get_query_executor() as executor:
+            await executor.execute_many(expr, ready_objects)
 
         for obj in objects:
             obj.set_save_status(True)

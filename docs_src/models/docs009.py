@@ -1,10 +1,12 @@
 from typing import Optional
 
-import databases
 import ormar
 import sqlalchemy
+from ormar import DatabaseConnection
 
-database = databases.Database("sqlite:///test.db", force_rollback=True)
+database = DatabaseConnection(
+    "sqlite+aiosqlite:///models_docs009.db", force_rollback=True
+)
 metadata = sqlalchemy.MetaData()
 
 

@@ -1,23 +1,34 @@
 import os
 
-import databases
 import ormar
 import sqlalchemy
+from ormar.databases.connection import DatabaseConnection
+from sqlalchemy.ext.asyncio import create_async_engine
+
+
+def convert_to_async_url(url: str) -> str:  # pragma: nocover
+    """Convert database URL to async driver version."""
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    elif url.startswith("mysql://"):
+        return url.replace("mysql://", "mysql+aiomysql://", 1)
+    elif url.startswith("sqlite://"):
+        return url.replace("sqlite://", "sqlite+aiosqlite://", 1)
+    return url
+
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///test.db")
-database_url = databases.DatabaseURL(DATABASE_URL)
-if database_url.scheme == "postgresql+aiopg":  # pragma no cover
-    DATABASE_URL = str(database_url.replace(driver=None))
-print("USED DB:", DATABASE_URL)
+ASYNC_DATABASE_URL = convert_to_async_url(DATABASE_URL)
+print("USED DB:", ASYNC_DATABASE_URL)
 
 
 def create_config(**args):
-    database_ = databases.Database(DATABASE_URL, **args)
+    database_ = DatabaseConnection(ASYNC_DATABASE_URL, **args)
     metadata_ = sqlalchemy.MetaData()
-    engine_ = sqlalchemy.create_engine(DATABASE_URL)
+    async_engine_ = create_async_engine(ASYNC_DATABASE_URL)
 
     return ormar.OrmarConfig(
         metadata=metadata_,
         database=database_,
-        engine=engine_,
+        engine=async_engine_,
     )
