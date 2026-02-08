@@ -59,8 +59,6 @@ Ormar remains sql dialect agnostic - so only columns working in all supported ba
 
 It's relatively easy to implement columns for specific dialects as an extensions of ormar.
 
-Postgres specific columns implementation: [`ormar-postgres-extensions`](https://github.com/tophat/ormar-postgres-extensions)
-
 If you maintain or use a different library and would like it to support `ormar` let us know how we can help.
 
 ### Dependencies
