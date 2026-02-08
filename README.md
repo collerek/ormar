@@ -67,7 +67,7 @@ If you maintain or use a different library and would like it to support `ormar` 
 Ormar is built with:
 
 * [`sqlalchemy core`][sqlalchemy-core] for query building.
-* [`databases`][databases] for cross-database async support.
+* [`sqlalchemy async`][sqlalchemy-async] for cross-database async support.
 * [`pydantic`][pydantic] for data validation.
 
 ### License
@@ -116,18 +116,21 @@ For tests and basic applications the `sqlalchemy` is more than enough:
 # note this is just a partial snippet full working example below
 # 1. Imports
 import sqlalchemy
-import databases
+import ormar
+from ormar import DatabaseConnection
 
 # 2. Initialization
-DATABASE_URL = "sqlite:///db.sqlite"
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+DATABASE_URL = "sqlite+aiosqlite:///db.sqlite"
+base_ormar_config = ormar.OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=DatabaseConnection(DATABASE_URL),
+)
 
 # Define models here
 
 # 3. Database creation and tables creation
-engine = sqlalchemy.create_engine(DATABASE_URL)
-metadata.create_all(engine)
+engine = sqlalchemy.create_engine(DATABASE_URL.replace('+aiosqlite', ''))
+base_ormar_config.metadata.create_all(engine)
 ```
 
 For a sample configuration of alembic and more information regarding migrations and
@@ -163,17 +166,16 @@ Note that you can find the same script in examples folder on github.
 ```python
 from typing import Optional
 
-import databases
 import pydantic
 
 import ormar
 import sqlalchemy
+from ormar import DatabaseConnection
 
-DATABASE_URL = "sqlite:///db.sqlite"
+DATABASE_URL = "sqlite+aiosqlite:///db.sqlite"
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
     metadata=sqlalchemy.MetaData(),
-    engine=sqlalchemy.create_engine(DATABASE_URL),
+    database=DatabaseConnection(DATABASE_URL),
 )
 
 
@@ -205,9 +207,11 @@ class Book(ormar.Model):
 # create the database
 # note that in production you should use migrations
 # note that this is not required if you connect to existing database
+# create a sync engine for table creation
+sync_engine = sqlalchemy.create_engine(DATABASE_URL.replace('+aiosqlite', ''))
 # just to be sure we clear the db before
-base_ormar_config.metadata.drop_all(base_ormar_config.engine)
-base_ormar_config.metadata.create_all(base_ormar_config.engine)
+base_ormar_config.metadata.drop_all(sync_engine)
+base_ormar_config.metadata.create_all(sync_engine)
 
 
 # all functions below are divided into functionality categories
@@ -566,7 +570,7 @@ for func in [
     asyncio.run(with_connect(func))
 
 # drop the database tables
-base_ormar_config.metadata.drop_all(base_ormar_config.engine)
+base_ormar_config.metadata.drop_all(sync_engine)
 ```
 
 ## Ormar Specification
@@ -672,7 +676,7 @@ Signals allow to trigger your function for a given event on a given Model.
 
 
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
-[databases]: https://github.com/encode/databases
+[sqlalchemy-async]: https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html
 [pydantic]: https://pydantic-docs.helpmanual.io/
 [encode/orm]: https://github.com/encode/orm/
 [alembic]: https://alembic.sqlalchemy.org/en/latest/
