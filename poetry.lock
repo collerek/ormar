@@ -1684,14 +1684,14 @@ files = [
 
 [[package]]
 name = "mkdocs-section-index"
-version = "0.3.9"
+version = "0.3.10"
 description = "MkDocs plugin to allow clickable sections that lead to an index page"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "mkdocs_section_index-0.3.9-py3-none-any.whl", hash = "sha256:5e5eb288e8d7984d36c11ead5533f376fdf23498f44e903929d72845b24dfe34"},
-    {file = "mkdocs_section_index-0.3.9.tar.gz", hash = "sha256:b66128d19108beceb08b226ee1ba0981840d14baf8a652b6c59e650f3f92e4f8"},
+    {file = "mkdocs_section_index-0.3.10-py3-none-any.whl", hash = "sha256:bc27c0d0dc497c0ebaee1fc72839362aed77be7318b5ec0c30628f65918e4776"},
+    {file = "mkdocs_section_index-0.3.10.tar.gz", hash = "sha256:a82afbda633c82c5568f0e3b008176b9b365bf4bd8b6f919d6eff09ee146b9f8"},
 ]
 
 [package.dependencies]
