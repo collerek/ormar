@@ -409,21 +409,22 @@ class LoadNode(Node):
             )
             self.models.append(instance)
 
-    def _hash_item(self, item: Dict) -> Tuple:
+    def _hash_item(self, item: Union[Dict, List]) -> Tuple:
         """
-        Converts model dictionary into tuple to make it hashable and allow to use it
+        Converts model dictionary or list into a hashable tuple to allow its use
         as a dictionary key - used to ensure unique instances of related models.
 
-        :param item: instance dictionary
-        :type item: Dict
-        :return: tuple out of model dictionary
+        :param item: instance dictionary or list
+        :type item: Dict or List
+        :return: tuple out of model dictionary or list
         :rtype: Tuple
         """
         result = []
-        for key, value in sorted(item.items()):
-            result.append(
-                (key, self._hash_item(value) if isinstance(value, dict) else value)
-            )
+        for key, value in (sorted(item.items()) if isinstance(item, dict) else enumerate(item)):
+            if isinstance(value, (dict, list)):
+                value = self._hash_item(value)
+            result.append((key, value))
+
         return tuple(result)
 
     def _group_models_by_relation_key(self) -> None:
