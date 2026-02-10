@@ -1,20 +1,18 @@
 from typing import Optional
 
-import databases
 import ormar
 import pydantic
 import sqlalchemy
 
-DATABASE_URL = "sqlite:///db.sqlite"
+DATABASE_URL = "sqlite+aiosqlite:///db.sqlite"
 
 
 # note that this step is optional -> all ormar cares is an individual
 # OrmarConfig for each of the models, but this way you do not
 # have to repeat the same parameters if you use only one database
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
+    database=ormar.DatabaseConnection(DATABASE_URL),
     metadata=sqlalchemy.MetaData(),
-    engine=sqlalchemy.create_engine(DATABASE_URL),
 )
 
 # Note that all type hints are optional
@@ -42,12 +40,26 @@ class Book(ormar.Model):
     year: int = ormar.Integer(nullable=True)
 
 
+# note - normally import should be at the beginning of the file
+import asyncio
+
+
+async def setup_database():
+    """Create all tables in the database."""
+    if not base_ormar_config.database.is_connected:
+        await base_ormar_config.database.connect()
+    async with base_ormar_config.database.engine.begin() as conn:
+        await conn.run_sync(base_ormar_config.metadata.drop_all)
+        await conn.run_sync(base_ormar_config.metadata.create_all)
+    if base_ormar_config.database.is_connected:
+        await base_ormar_config.database.disconnect()
+
+
 # create the database
 # note that in production you should use migrations
 # note that this is not required if you connect to existing database
 # just to be sure we clear the db before
-base_ormar_config.metadata.drop_all(base_ormar_config.engine)
-base_ormar_config.metadata.create_all(base_ormar_config.engine)
+asyncio.run(setup_database())
 
 
 # all functions below are divided into functionality categories
@@ -383,10 +395,17 @@ async def with_connect(function):
     # check https://collerek.github.io/ormar/fastapi/ and section with db connection
 
 
-# gather and execute all functions
-# note - normally import should be at the beginning of the file
-import asyncio
+async def cleanup_database():
+    """Drop all tables from the database."""
+    if not base_ormar_config.database.is_connected:
+        await base_ormar_config.database.connect()
+    async with base_ormar_config.database.engine.begin() as conn:
+        await conn.run_sync(base_ormar_config.metadata.drop_all)
+    if base_ormar_config.database.is_connected:
+        await base_ormar_config.database.disconnect()
 
+
+# gather and execute all functions
 # note that normally you use gather() function to run several functions
 # concurrently but we actually modify the data and we rely on the order of functions
 for func in [
@@ -405,4 +424,4 @@ for func in [
     asyncio.run(with_connect(func))
 
 # drop the database tables
-base_ormar_config.metadata.drop_all(base_ormar_config.engine)
+asyncio.run(cleanup_database())
