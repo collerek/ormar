@@ -32,7 +32,7 @@ create_test_database = init_tests(base_ormar_config)
     sys.version_info < (3, 11), reason="taskgroup requires python3.11 or higher"
 )
 @pytest.mark.asyncio
-async def test_asyncio_run():
+async def test_asyncio_run():  # pragma: no cover
     async with base_ormar_config.database:
         async with base_ormar_config.database.transaction():
             csse = await Department(
