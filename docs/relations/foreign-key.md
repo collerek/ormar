@@ -24,7 +24,7 @@ To define a relation add `ForeignKey` field that points to related `Model`.
 
 By default it's child (source) `Model` name + s, like courses in snippet below: 
 
-```Python hl_lines="29 36"
+```Python hl_lines="33 40"
 --8<-- "../docs_src/fields/docs001.py"
 ```
 

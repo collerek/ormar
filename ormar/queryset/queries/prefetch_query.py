@@ -251,11 +251,13 @@ class LoadNode(Node):
             expr = qry.build_select_expression()
             logger.debug(
                 expr.compile(
-                    dialect=self.source_model.ormar_config.database._backend._dialect,
+                    dialect=self.source_model.ormar_config.database.dialect,
                     compile_kwargs={"literal_binds": True},
                 )
             )
-            self.rows = await query_target.ormar_config.database.fetch_all(expr)
+
+            async with query_target.ormar_config.database.get_query_executor() as exctr:
+                self.rows = await exctr.fetch_all(expr)
 
             for child in self.children:
                 await child.load_data()

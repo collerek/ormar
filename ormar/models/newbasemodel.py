@@ -286,7 +286,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         """
         property_fields = self.ormar_config.property_fields
         model_fields = self.ormar_config.model_fields
-        pydantic_fields = set(self.model_fields.keys())
+        pydantic_fields = set(self.__class__.model_fields.keys())
 
         # remove property fields
         for prop_filed in property_fields:
@@ -471,7 +471,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def db_backend_name(cls) -> str:
         """Shortcut to database dialect,
         cause some dialect require different treatment"""
-        return cls.ormar_config.database._backend._dialect.name
+        return cls.ormar_config.database.dialect.name
 
     def remove(self, parent: "Model", name: str) -> None:
         """Removes child from relation with given name in RelationshipManager"""
@@ -517,7 +517,14 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 update_column_definition(model=cls, field=field)
         populate_config_sqlalchemy_table_if_required(config=cls.ormar_config)
         # super().update_forward_refs(**localns)
-        cls.model_rebuild(force=True)
+        cls.model_rebuild(
+            force=True,
+            _types_namespace={
+                field.to.__name__: field.to
+                for field in fields_to_check.values()
+                if field.is_relation
+            },
+        )
         cls.ormar_config.requires_ref_update = False
 
     @staticmethod

@@ -28,14 +28,14 @@ class Division(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="divisions")
 
     id: int = ormar.Integer(name="division_id", primary_key=True)
-    name: str = ormar.String(max_length=100, nullable=True)
+    name: Optional[str] = ormar.String(max_length=100, nullable=True)
 
 
 class Shop(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="shops")
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=100, nullable=True)
+    name: Optional[str] = ormar.String(max_length=100, nullable=True)
     division: Optional[Division] = ormar.ForeignKey(Division)
 
 
@@ -47,7 +47,7 @@ class Album(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="albums")
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=100, nullable=True)
+    name: Optional[str] = ormar.String(max_length=100, nullable=True)
     shops: List[Shop] = ormar.ManyToMany(to=Shop, through=AlbumShops)
     sides: list = ormar.JSON(default=list)
 
@@ -70,7 +70,7 @@ class Cover(ormar.Model):
         Album, related_name="cover_pictures", name="album_id"
     )
     title: str = ormar.String(max_length=100)
-    artist: str = ormar.String(max_length=200, nullable=True)
+    artist: Optional[str] = ormar.String(max_length=200, nullable=True)
 
 
 create_test_database = init_tests(base_ormar_config)

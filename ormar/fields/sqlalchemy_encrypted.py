@@ -115,6 +115,8 @@ class EncryptedString(types.TypeDecorator):
 
     impl = types.TypeEngine
 
+    cache_ok = True
+
     def __init__(
         self,
         encrypt_secret: Union[str, Callable],
@@ -177,7 +179,7 @@ class EncryptedString(types.TypeDecorator):
         return encrypted_value
 
     def process_result_value(self, value: Any, dialect: Dialect) -> Any:
-        if value is None:
+        if value is None:  # pragma: no cover
             return value
         self._refresh()
         decrypted_value = self.backend.decrypt(value)

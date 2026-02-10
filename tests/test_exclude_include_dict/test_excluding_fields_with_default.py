@@ -19,7 +19,7 @@ class Album(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    is_best_seller: bool = ormar.Boolean(default=False, nullable=True)
+    is_best_seller: Optional[bool] = ormar.Boolean(default=False, nullable=True)
 
 
 class Track(ormar.Model):
@@ -29,7 +29,7 @@ class Track(ormar.Model):
     album: Optional[Album] = ormar.ForeignKey(Album)
     title: str = ormar.String(max_length=100)
     position: int = ormar.Integer(default=get_position)
-    play_count: int = ormar.Integer(nullable=True, default=0)
+    play_count: Optional[int] = ormar.Integer(nullable=True, default=0)
 
 
 create_test_database = init_tests(base_ormar_config)

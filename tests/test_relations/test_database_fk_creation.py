@@ -52,18 +52,23 @@ class C(ormar.Model):
 create_test_database = init_tests(base_ormar_config)
 
 
-def test_simple_cascade():
-    inspector = sqlalchemy.inspect(base_ormar_config.engine)
-    columns = inspector.get_columns("albums")
-    assert len(columns) == 3
-    col_names = [col.get("name") for col in columns]
+@pytest.mark.asyncio
+async def test_simple_cascade():
+    async with base_ormar_config.engine.connect() as conn:
+        albums_columns = await conn.run_sync(
+            lambda sync_conn: sqlalchemy.inspect(sync_conn).get_columns("albums")
+        )
+        albums_fks = await conn.run_sync(
+            lambda sync_conn: sqlalchemy.inspect(sync_conn).get_foreign_keys("albums")
+        )
+    assert len(albums_columns) == 3
+    col_names = [col.get("name") for col in albums_columns]
     assert sorted(["id", "name", "artist"]) == sorted(col_names)
-    fks = inspector.get_foreign_keys("albums")
-    assert len(fks) == 1
-    assert fks[0]["name"] == "fk_albums_artists_id_artist"
-    assert fks[0]["constrained_columns"][0] == "artist"
-    assert fks[0]["referred_columns"][0] == "id"
-    assert fks[0]["options"].get("ondelete") == "CASCADE"
+    assert len(albums_fks) == 1
+    assert albums_fks[0]["name"] == "fk_albums_artists_id_artist"
+    assert albums_fks[0]["constrained_columns"][0] == "artist"
+    assert albums_fks[0]["referred_columns"][0] == "id"
+    assert albums_fks[0]["options"].get("ondelete") == "CASCADE"
 
 
 def test_validations_referential_action():

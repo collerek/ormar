@@ -26,7 +26,7 @@ If you do not provide this flag or a filter a `QueryDefinitionError` will be rai
 
 Return number of rows deleted.
 
-```python hl_lines="40-44"
+```python hl_lines="43-47"
 --8<-- "../docs_src/queries/docs005.py"
 ```
 

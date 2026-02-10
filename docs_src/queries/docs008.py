@@ -1,16 +1,19 @@
 import asyncio
 
-import databases
 import ormar
 import sqlalchemy
 from examples import create_drop_database
+from ormar import DatabaseConnection
 from pydantic import ValidationError
 
-DATABASE_URL = "sqlite:///test.db"
+DATABASE_URL = "sqlite+aiosqlite:///queries_docs008.db"
+
+database = DatabaseConnection(DATABASE_URL)
+metadata = sqlalchemy.MetaData()
 
 ormar_base_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
-    metadata=sqlalchemy.MetaData(),
+    database=database,
+    metadata=metadata,
 )
 
 

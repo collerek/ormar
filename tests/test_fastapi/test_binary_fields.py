@@ -7,7 +7,7 @@ import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
@@ -54,7 +54,8 @@ async def create_things(thing: BinaryThing):
 
 @pytest.mark.asyncio
 async def test_read_main():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         response = await client.post(
             "/things",
@@ -63,10 +64,8 @@ async def test_read_main():
         )
         assert response.status_code == 200
         response = await client.get("/things")
-        assert response.json()[0]["bt"] == blob3.decode()
-        resp_json = response.json()
-        resp_json[0]["bt"] = resp_json[0]["bt"].encode()
-        thing = BinaryThing(**resp_json[0])
+        assert response.json()[0]["bt"] == base64.b64encode(blob3).decode()
+        thing = BinaryThing(**response.json()[0])
         assert thing.__dict__["bt"] == blob3
         assert thing.bt == base64.b64encode(blob3).decode()
 

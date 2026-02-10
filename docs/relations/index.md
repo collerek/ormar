@@ -151,7 +151,7 @@ columns also `Through` model columns `{through_field_name}__{column_name}`
 Sample configuration might look like this:
 
 ```python hl_lines="23"
-database = databases.Database(DATABASE_URL)
+database = DatabaseConnection(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 

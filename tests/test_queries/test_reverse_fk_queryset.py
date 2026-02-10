@@ -32,7 +32,7 @@ class Track(ormar.Model):
     album: Optional[Album] = ormar.ForeignKey(Album, name="album_id")
     title: str = ormar.String(max_length=100)
     position: int = ormar.Integer()
-    play_count: int = ormar.Integer(nullable=True)
+    play_count: Optional[int] = ormar.Integer(nullable=True)
     written_by: Optional[Writer] = ormar.ForeignKey(Writer, name="writer_id")
 
 

@@ -8,7 +8,6 @@ from ormar.models.helpers.pydantic import (
     get_potential_fields,
     get_pydantic_base_orm_config,
     merge_or_generate_pydantic_config,
-    remove_excluded_parent_fields,
 )
 from ormar.models.helpers.relations import (
     alias_manager,

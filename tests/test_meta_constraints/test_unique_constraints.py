@@ -1,9 +1,6 @@
-import sqlite3
-
-import asyncpg  # type: ignore
 import ormar.fields.constraints
-import pymysql
 import pytest
+import sqlalchemy
 
 from tests.lifespan import init_tests
 from tests.settings import create_config
@@ -33,11 +30,5 @@ async def test_unique_columns():
             await Product.objects.create(name="Mars", company="Mars")
             await Product.objects.create(name="Mars", company="Nestle")
 
-            with pytest.raises(
-                (
-                    sqlite3.IntegrityError,
-                    pymysql.IntegrityError,
-                    asyncpg.exceptions.UniqueViolationError,
-                )
-            ):
+            with pytest.raises((sqlalchemy.exc.IntegrityError)):
                 await Product.objects.create(name="Mars", company="Mars")

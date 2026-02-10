@@ -32,7 +32,9 @@ def create_pydantic_field(
     model_field.through.model_fields[field_name] = FieldInfo.from_annotated_attribute(
         annotation=Optional[model], default=None  # type: ignore
     )
-    model_field.through.model_rebuild(force=True)
+    model_field.through.model_rebuild(
+        force=True, _types_namespace={model_field.owner.__name__: model_field.owner}
+    )
 
 
 def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
@@ -123,20 +125,3 @@ def get_potential_fields(attrs: Union[Dict, MappingProxyType]) -> Dict:
             or isinstance(v, BaseField)
         )
     }
-
-
-def remove_excluded_parent_fields(model: Type["Model"]) -> None:
-    """
-    Removes pydantic fields that should be excluded from parent models
-
-    :param model:
-    :type model: Type["Model"]
-    """
-    excludes = {*model.ormar_config.exclude_parent_fields} - {
-        *model.ormar_config.model_fields.keys()
-    }
-    if excludes:
-        model.model_fields = {
-            k: v for k, v in model.model_fields.items() if k not in excludes
-        }
-        model.model_rebuild(force=True)

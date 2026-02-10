@@ -6,7 +6,7 @@ import pydantic
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
@@ -28,7 +28,7 @@ class Thing(ormar.Model):
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
-    js: pydantic.Json = ormar.JSON(nullable=True)
+    js: Optional[pydantic.Json] = ormar.JSON(nullable=True)
     other_thing: Optional[OtherThing] = ormar.ForeignKey(OtherThing, nullable=True)
 
 
@@ -105,7 +105,8 @@ async def get_weakref():
 
 @pytest.mark.asyncio
 async def test_endpoints():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client, LifespanManager(app):
         resp = await client.post("/test/1")
         assert resp.status_code == 200

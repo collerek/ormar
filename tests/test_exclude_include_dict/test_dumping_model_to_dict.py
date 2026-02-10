@@ -21,7 +21,7 @@ class User(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255, nullable=False)
-    password: str = ormar.String(max_length=255, nullable=True)
+    password: Optional[str] = ormar.String(max_length=255, nullable=True)
     first_name: str = ormar.String(max_length=255, nullable=False)
     roles: List[Role] = ormar.ManyToMany(Role)
 
