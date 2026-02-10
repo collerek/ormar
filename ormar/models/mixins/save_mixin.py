@@ -221,6 +221,25 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         return model_dict
 
     @classmethod
+    def serialize_nested_models_json_fields(cls, kwargs: Dict) -> Dict:
+        """
+        Serializes JSON fields in nested model instances to strings.
+        This ensures that when models with JSON fields are nested in other models,
+        the JSON values are properly serialized as strings for Pydantic validation.
+
+        Needed as sqlalchemy auto parses the JSON fields.
+
+        :param kwargs: dictionary of keyword arguments
+        :type kwargs: Dict
+        :return: modified kwargs with serialized JSON fields in nested models
+        :rtype: Dict
+        """
+        for key, value in kwargs.items():
+            if isinstance(value, ormar.Model) and hasattr(value, "_json_fields"):
+                value.dump_all_json_fields_to_str(value.__dict__)
+        return kwargs
+
+    @classmethod
     def populate_default_values(cls, new_kwargs: Dict) -> Dict:
         """
         Receives dictionary of model that is about to be saved and populates the default
