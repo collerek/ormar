@@ -420,14 +420,7 @@ class LoadNode(Node):
         :rtype: Tuple
         """
         result = []
-        if isinstance(item, dict):
-            iterator = sorted(item.items())
-        elif isinstance(item, list):
-            iterator = enumerate(item)
-        else:
-            raise TypeError(f"Item must be a dict or list, got {type(item).__name__}")
-
-        for key, value in iterator:
+        for key, value in (sorted(item.items()) if isinstance(item, dict) else enumerate(item)):
             if isinstance(value, (dict, list)):
                 value = self._hash_item(value)
             result.append((key, value))
