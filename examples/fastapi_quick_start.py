@@ -1,16 +1,15 @@
 from contextlib import asynccontextmanager
 from typing import List, Optional
 
-import databases
 import ormar
 import sqlalchemy
 import uvicorn
 from fastapi import FastAPI
 
-DATABASE_URL = "sqlite:///test.db"
+DATABASE_URL = "sqlite+aiosqlite:///test.db"
 
 ormar_base_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL), metadata=sqlalchemy.MetaData()
+    database=ormar.DatabaseConnection(DATABASE_URL), metadata=sqlalchemy.MetaData()
 )
 
 
@@ -27,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 metadata = sqlalchemy.MetaData()
-database = databases.Database("sqlite:///test.db")
+database = ormar.DatabaseConnection(DATABASE_URL)
 app.state.database = database
 
 

@@ -36,11 +36,11 @@ class OrderAction(QueryAction):
 
     @property
     def is_postgres_bool(self) -> bool:
-        dialect = self.target_model.ormar_config.database._backend._dialect.name
+        dialect = self.target_model.ormar_config.database.dialect.name
         field_type = self.target_model.ormar_config.model_fields[
             self.field_name
         ].__type__
-        return dialect == "postgresql" and field_type == bool
+        return dialect == "postgresql" and field_type is bool
 
     def get_field_name_text(self) -> str:
         """
@@ -80,7 +80,7 @@ class OrderAction(QueryAction):
         :return: complied and escaped clause
         :rtype: sqlalchemy.sql.elements.TextClause
         """
-        dialect = self.target_model.ormar_config.database._backend._dialect
+        dialect = self.target_model.ormar_config.database.dialect
         quoter = dialect.identifier_preparer.quote
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
         table_name = self.table.name

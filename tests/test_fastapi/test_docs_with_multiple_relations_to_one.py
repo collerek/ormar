@@ -5,7 +5,7 @@ import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
@@ -57,7 +57,8 @@ async def get_cb2():  # pragma: no cover
 
 @pytest.mark.asyncio
 async def test_all_endpoints():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         response = await client.get("/openapi.json")
         assert response.status_code == 200, response.text

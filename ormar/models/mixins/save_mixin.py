@@ -10,10 +10,14 @@ from typing import (
     List,
     Optional,
     Set,
+    Union,
     cast,
 )
 
-from pydantic.plugin._schema_validator import create_schema_validator
+from pydantic.plugin._schema_validator import (
+    PluggableSchemaValidator,
+    create_schema_validator,
+)
 from pydantic_core import CoreSchema, SchemaValidator
 
 import ormar  # noqa: I100, I202
@@ -36,7 +40,9 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         _json_fields: Set[str]
         _bytes_fields: Set[str]
         __pydantic_core_schema__: CoreSchema
-        __ormar_fields_validators__: Optional[Dict[str, SchemaValidator]]
+        __ormar_fields_validators__: Optional[
+            Dict[str, Union[SchemaValidator, PluggableSchemaValidator]]
+        ]
 
     @classmethod
     def prepare_model_to_save(cls, new_kwargs: dict) -> dict:
@@ -280,7 +286,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
             return cls.__pydantic_core_schema__["schema"]["fields"]
         elif cls.__pydantic_core_schema__["type"] == "definitions":
             main_schema = cls.__pydantic_core_schema__["schema"]
-            if "schema_ref" in main_schema:
+            if "schema_ref" in main_schema:  # pragma: no cover
                 reference_id = main_schema["schema_ref"]
                 return next(
                     ref

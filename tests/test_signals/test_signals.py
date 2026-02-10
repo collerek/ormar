@@ -3,7 +3,6 @@ from typing import Optional
 import ormar
 import pydantic
 import pytest
-import pytest_asyncio
 from ormar import (
     post_bulk_update,
     post_delete,
@@ -50,13 +49,6 @@ class Album(ormar.Model):
 create_test_database = init_tests(base_ormar_config)
 
 
-@pytest_asyncio.fixture(scope="function")
-async def cleanup():
-    yield
-    async with base_ormar_config.database:
-        await AuditLog.objects.delete(each=True)
-
-
 def test_passing_not_callable():
     with pytest.raises(SignalDefinitionError):
         pre_save(Album)("wrong")
@@ -77,7 +69,7 @@ def test_invalid_signal():
 
 
 @pytest.mark.asyncio
-async def test_signal_functions(cleanup):
+async def test_signal_functions():
     async with base_ormar_config.database:
         async with base_ormar_config.database.transaction(force_rollback=True):
 
@@ -200,7 +192,7 @@ async def test_signal_functions(cleanup):
 
 
 @pytest.mark.asyncio
-async def test_multiple_signals(cleanup):
+async def test_multiple_signals():
     async with base_ormar_config.database:
         async with base_ormar_config.database.transaction(force_rollback=True):
 
@@ -231,7 +223,7 @@ async def test_multiple_signals(cleanup):
 
 
 @pytest.mark.asyncio
-async def test_static_methods_as_signals(cleanup):
+async def test_static_methods_as_signals():
     async with base_ormar_config.database:
         async with base_ormar_config.database.transaction(force_rollback=True):
 
@@ -256,7 +248,7 @@ async def test_static_methods_as_signals(cleanup):
 
 
 @pytest.mark.asyncio
-async def test_methods_as_signals(cleanup):
+async def test_methods_as_signals():
     async with base_ormar_config.database:
         async with base_ormar_config.database.transaction(force_rollback=True):
 
@@ -283,7 +275,7 @@ async def test_methods_as_signals(cleanup):
 
 
 @pytest.mark.asyncio
-async def test_multiple_senders_signal(cleanup):
+async def test_multiple_senders_signal():
     async with base_ormar_config.database:
         async with base_ormar_config.database.transaction(force_rollback=True):
 
@@ -311,7 +303,7 @@ async def test_multiple_senders_signal(cleanup):
 
 
 @pytest.mark.asyncio
-async def test_modifing_the_instance(cleanup):
+async def test_modifing_the_instance():
     async with base_ormar_config.database:
         async with base_ormar_config.database.transaction(force_rollback=True):
 
@@ -337,7 +329,7 @@ async def test_modifing_the_instance(cleanup):
 
 
 @pytest.mark.asyncio
-async def test_custom_signal(cleanup):
+async def test_custom_signal():
     async with base_ormar_config.database:
         async with base_ormar_config.database.transaction(force_rollback=True):
 
@@ -350,7 +342,7 @@ async def test_custom_signal(cleanup):
 
             Album.ormar_config.signals.custom.connect(after_update)
 
-            # here album.play_count ans is_best_seller get default values
+            # here album.play_count and is_best_seller get default values
             album = await Album.objects.create(name="Venice")
             assert not album.is_best_seller
             assert album.play_count == 0

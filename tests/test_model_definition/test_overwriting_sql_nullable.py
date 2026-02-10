@@ -1,10 +1,8 @@
-import sqlite3
 from typing import Optional
 
-import asyncpg
 import ormar
-import pymysql
 import pytest
+import sqlalchemy
 from sqlalchemy import text
 
 from tests.lifespan import init_tests
@@ -38,11 +36,5 @@ async def test_create_models():
         primary2 = await PrimaryModel(name="Foo2", some_text="Bar2").save()
         assert primary2.id == 2
 
-        with pytest.raises(
-            (
-                sqlite3.IntegrityError,
-                pymysql.IntegrityError,
-                asyncpg.exceptions.NotNullViolationError,
-            )
-        ):
+        with pytest.raises((sqlalchemy.exc.IntegrityError)):
             await PrimaryModel(name="Foo3").save()

@@ -296,7 +296,7 @@ Given sample ormar models like follows:
 ```python
 base_ormar_config = ormar.OrmarConfig(
     metadata=sqlalchemy.MetaData(),
-    database=databases.Database(DATABASE_URL, force_rollback=True),
+    database=DatabaseConnection(DATABASE_URL),
 )
 
 
@@ -318,7 +318,7 @@ class Item(ormar.Model):
 You can generate pydantic models out of it with a one simple call.
 
 ```python
-PydanticCategory = Category.get_pydantic(include={"id", "name"}
+PydanticCategory = Category.get_pydantic(include={"id", "name"})
 ```
 
 Which will generate model equivalent of:
@@ -622,7 +622,7 @@ assert department_check.model_dump(exclude=to_exclude) == to_save
 [pydantic]: https://pydantic-docs.helpmanual.io/
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [sqlalchemy-metadata]: https://docs.sqlalchemy.org/en/13/core/metadata.html
-[databases]: https://github.com/encode/databases
+[sqlalchemy-async]: https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html
 [sqlalchemy connection string]: https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls
 [sqlalchemy table creation]: https://docs.sqlalchemy.org/en/13/core/metadata.html#creating-and-dropping-database-tables
 [alembic]: https://alembic.sqlalchemy.org/en/latest/tutorial.html

@@ -25,7 +25,6 @@ import typing_extensions
 
 import ormar  # noqa I100
 from ormar.exceptions import ModelError, ModelPersistenceError
-from ormar.fields import BaseField
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.parsers import decode_bytes, encode_json
 from ormar.models.helpers import register_relation_in_alias_manager
@@ -288,7 +287,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         """
         property_fields = self.ormar_config.property_fields
         model_fields = self.ormar_config.model_fields
-        pydantic_fields = set(self.model_fields.keys())
+        pydantic_fields = set(self.__class__.model_fields.keys())
 
         # remove property fields
         for prop_filed in property_fields:
@@ -473,7 +472,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def db_backend_name(cls) -> str:
         """Shortcut to database dialect,
         cause some dialect require different treatment"""
-        return cls.ormar_config.database._backend._dialect.name
+        return cls.ormar_config.database.dialect.name
 
     def remove(self, parent: "Model", name: str) -> None:
         """Removes child from relation with given name in RelationshipManager"""
@@ -519,7 +518,14 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 update_column_definition(model=cls, field=field)
         populate_config_sqlalchemy_table_if_required(config=cls.ormar_config)
         # super().update_forward_refs(**localns)
-        cls.model_rebuild(force=True)
+        cls.model_rebuild(
+            force=True,
+            _types_namespace={
+                field.to.__name__: field.to
+                for field in fields_to_check.values()
+                if field.is_relation
+            },
+        )
         cls.ormar_config.requires_ref_update = False
 
     @staticmethod
@@ -1166,18 +1172,3 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     f"model without pk set!"
                 )
         return self_fields
-
-    def get_relation_model_id(self, target_field: "BaseField") -> Optional[int]:
-        """
-        Returns an id of the relation side model to use in prefetch query.
-
-        :param target_field: field with relation definition
-        :type target_field: "BaseField"
-        :return: value of pk if set
-        :rtype: Optional[int]
-        """
-        if target_field.virtual or target_field.is_multi:
-            return self.pk
-        related_name = target_field.name
-        related_model = getattr(self, related_name)
-        return None if not related_model else related_model.pk

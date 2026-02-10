@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple, Type, cast
+from typing import Any, Dict, List, Optional, Tuple, Type, cast
 from uuid import UUID, uuid4
 
 import ormar
@@ -30,8 +30,8 @@ class Link(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="link_table")
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
-    animal_order: int = ormar.Integer(nullable=True)
-    human_order: int = ormar.Integer(nullable=True)
+    animal_order: Optional[int] = ormar.Integer(nullable=True)
+    human_order: Optional[int] = ormar.Integer(nullable=True)
 
 
 class Human(ormar.Model):

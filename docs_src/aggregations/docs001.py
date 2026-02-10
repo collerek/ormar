@@ -1,11 +1,12 @@
 from typing import Optional
 
-import databases
 import ormar
 import sqlalchemy
-from tests.settings import DATABASE_URL
+from ormar import DatabaseConnection
 
-database = databases.Database(DATABASE_URL)
+DATABASE_URL = "sqlite+aiosqlite:///aggregations_docs001.db"
+
+database = DatabaseConnection(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 

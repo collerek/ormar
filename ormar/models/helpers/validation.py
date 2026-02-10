@@ -74,7 +74,7 @@ def populates_sample_fields_values(
     :type relation_map: Optional[Dict]
     """
     if not field.is_relation:
-        is_bytes_str = field.__type__ == bytes and field.represent_as_base64_str
+        is_bytes_str = field.__type__ is bytes and field.represent_as_base64_str
         example[name] = field.__sample__ if not is_bytes_str else "string"
     elif isinstance(relation_map, dict) and name in relation_map:
         example[name] = get_nested_model_example(
@@ -151,7 +151,7 @@ def generate_example_for_nested_types(type_: Any) -> Any:
     """
     if type_.__origin__ == Union:
         return generate_example_for_union(type_=type_)
-    if type_.__origin__ == list:
+    if type_.__origin__ is list:
         return [get_pydantic_example_repr(type_.__args__[0])]
 
 

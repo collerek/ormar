@@ -6,15 +6,16 @@
 <a href="https://pypi.org/project/ormar">
     <img src="https://img.shields.io/pypi/pyversions/ormar.svg" alt="Pypi version">
 </a>
-<img src="https://github.com/collerek/ormar/workflows/build/badge.svg" alt="Build Status">
+<a href="https://github.com/collerek/ormar/actions/workflows/test-package.yml">
+<img src="https://github.com/collerek/ormar/actions/workflows/test-package.yml/badge.svg?branch=master" alt="Test package" height="20">
+</a> 
 <a href="https://codecov.io/gh/collerek/ormar">
     <img src="https://codecov.io/gh/collerek/ormar/branch/master/graph/badge.svg" alt="Coverage">
 </a>
 <a href="https://www.codefactor.io/repository/github/collerek/ormar">
 <img src="https://www.codefactor.io/repository/github/collerek/ormar/badge" alt="CodeFactor" />
 </a>
-<a href="https://codeclimate.com/github/collerek/ormar/maintainability">
-<img src="https://api.codeclimate.com/v1/badges/186bc79245724864a7aa/maintainability" /></a>
+<a href="https://qlty.sh/gh/collerek/projects/ormar"><img src="https://qlty.sh/gh/collerek/projects/ormar/maintainability.svg" alt="Maintainability" /></a>
 <a href="https://pepy.tech/project/ormar">
 <img src="https://pepy.tech/badge/ormar"></a>
 </p>
@@ -67,9 +68,8 @@ If you maintain or use a different library and would like it to support `ormar` 
 Ormar is built with:
 
 * [`sqlalchemy core`][sqlalchemy-core] for query building.
-* [`databases`][databases] for cross-database async support.
+* [`sqlalchemy async`][sqlalchemy-async] for cross-database async support.
 * [`pydantic`][pydantic] for data validation.
-* `typing_extensions` for python 3.6 - 3.7
 
 ### License
 
@@ -117,18 +117,21 @@ For tests and basic applications the `sqlalchemy` is more than enough:
 # note this is just a partial snippet full working example below
 # 1. Imports
 import sqlalchemy
-import databases
+import ormar
+from ormar import DatabaseConnection
 
 # 2. Initialization
-DATABASE_URL = "sqlite:///db.sqlite"
-database = databases.Database(DATABASE_URL)
-metadata = sqlalchemy.MetaData()
+DATABASE_URL = "sqlite+aiosqlite:///db.sqlite"
+base_ormar_config = ormar.OrmarConfig(
+    metadata=sqlalchemy.MetaData(),
+    database=DatabaseConnection(DATABASE_URL),
+)
 
 # Define models here
 
 # 3. Database creation and tables creation
-engine = sqlalchemy.create_engine(DATABASE_URL)
-metadata.create_all(engine)
+engine = sqlalchemy.create_engine(DATABASE_URL.replace('+aiosqlite', ''))
+base_ormar_config.metadata.create_all(engine)
 ```
 
 For a sample configuration of alembic and more information regarding migrations and
@@ -164,19 +167,20 @@ Note that you can find the same script in examples folder on github.
 ```python
 from typing import Optional
 
-import databases
-import pydantic
-
 import ormar
+import pydantic
 import sqlalchemy
 
-DATABASE_URL = "sqlite:///db.sqlite"
-base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
-    metadata=sqlalchemy.MetaData(),
-    engine=sqlalchemy.create_engine(DATABASE_URL),
-)
+DATABASE_URL = "sqlite+aiosqlite:///db.sqlite"
 
+
+# note that this step is optional -> all ormar cares is an individual
+# OrmarConfig for each of the models, but this way you do not
+# have to repeat the same parameters if you use only one database
+base_ormar_config = ormar.OrmarConfig(
+    database=ormar.DatabaseConnection(DATABASE_URL),
+    metadata=sqlalchemy.MetaData(),
+)
 
 # Note that all type hints are optional
 # below is a perfectly valid model declaration
@@ -188,14 +192,14 @@ base_ormar_config = ormar.OrmarConfig(
 
 
 class Author(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename="authors")
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
 
 class Book(ormar.Model):
-    ormar_config = base_ormar_config.copy(tablename="books")
+    ormar_config = base_ormar_config.copy()
 
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
@@ -203,12 +207,26 @@ class Book(ormar.Model):
     year: int = ormar.Integer(nullable=True)
 
 
+# note - normally import should be at the beginning of the file
+import asyncio
+
+
+async def setup_database():
+    """Create all tables in the database."""
+    if not base_ormar_config.database.is_connected:
+        await base_ormar_config.database.connect()
+    async with base_ormar_config.database.engine.begin() as conn:
+        await conn.run_sync(base_ormar_config.metadata.drop_all)
+        await conn.run_sync(base_ormar_config.metadata.create_all)
+    if base_ormar_config.database.is_connected:
+        await base_ormar_config.database.disconnect()
+
+
 # create the database
 # note that in production you should use migrations
 # note that this is not required if you connect to existing database
 # just to be sure we clear the db before
-base_ormar_config.metadata.drop_all(base_ormar_config.engine)
-base_ormar_config.metadata.create_all(base_ormar_config.engine)
+asyncio.run(setup_database())
 
 
 # all functions below are divided into functionality categories
@@ -545,10 +563,17 @@ async def with_connect(function):
     # check https://collerek.github.io/ormar/fastapi/ and section with db connection
 
 
-# gather and execute all functions
-# note - normally import should be at the beginning of the file
-import asyncio
+async def cleanup_database():
+    """Drop all tables from the database."""
+    if not base_ormar_config.database.is_connected:
+        await base_ormar_config.database.connect()
+    async with base_ormar_config.database.engine.begin() as conn:
+        await conn.run_sync(base_ormar_config.metadata.drop_all)
+    if base_ormar_config.database.is_connected:
+        await base_ormar_config.database.disconnect()
 
+
+# gather and execute all functions
 # note that normally you use gather() function to run several functions
 # concurrently but we actually modify the data and we rely on the order of functions
 for func in [
@@ -567,7 +592,7 @@ for func in [
     asyncio.run(with_connect(func))
 
 # drop the database tables
-base_ormar_config.metadata.drop_all(base_ormar_config.engine)
+asyncio.run(cleanup_database())
 ```
 
 ## Ormar Specification
@@ -673,7 +698,7 @@ Signals allow to trigger your function for a given event on a given Model.
 
 
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
-[databases]: https://github.com/encode/databases
+[sqlalchemy-async]: https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html
 [pydantic]: https://pydantic-docs.helpmanual.io/
 [encode/orm]: https://github.com/encode/orm/
 [alembic]: https://alembic.sqlalchemy.org/en/latest/

@@ -1,5 +1,4 @@
 import itertools
-import sqlite3
 from typing import TYPE_CHECKING, Any, Dict, ForwardRef, List, Tuple, Type
 
 import pydantic
@@ -53,36 +52,12 @@ def populate_default_options_values(  # noqa: CCR001
         name for name, field in model_fields.items() if field.__type__ == pydantic.Json
     }
     new_model._bytes_fields = {
-        name for name, field in model_fields.items() if field.__type__ == bytes
+        name for name, field in model_fields.items() if field.__type__ is bytes
     }
 
     new_model.__relation_map__ = None
     new_model.__relation_map_dict__ = None
     new_model.__ormar_fields_validators__ = None
-
-
-
-class Connection(sqlite3.Connection):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover
-        super().__init__(*args, **kwargs)
-        self.execute("PRAGMA foreign_keys=1;")
-
-
-def substitue_backend_pool_for_sqlite(new_model: Type["Model"]) -> None:
-    """
-    Recreates Connection pool for sqlite3 with new factory that
-    executes "PRAGMA foreign_keys=1; on initialization to enable foreign keys.
-
-    :param new_model: newly declared ormar Model
-    :type new_model: Model class
-    """
-    backend = new_model.ormar_config.database._backend
-    if (
-        backend._dialect.name == "sqlite" and "factory" not in backend._options
-    ):  # pragma: no cover
-        backend._options["factory"] = Connection
-        old_pool = backend._pool
-        backend._pool = old_pool.__class__(backend._database_url, **backend._options)
 
 
 def check_required_config_parameters(new_model: Type["Model"]) -> None:
@@ -98,8 +73,6 @@ def check_required_config_parameters(new_model: Type["Model"]) -> None:
         raise ormar.ModelDefinitionError(
             f"{new_model.__name__} does not have database defined."
         )
-    elif not new_model.ormar_config.abstract:
-        substitue_backend_pool_for_sqlite(new_model=new_model)
 
     if new_model.ormar_config.metadata is None and not new_model.ormar_config.abstract:
         raise ormar.ModelDefinitionError(

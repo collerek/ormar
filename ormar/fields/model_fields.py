@@ -3,7 +3,7 @@ import decimal
 import uuid
 from enum import Enum as E
 from enum import EnumMeta
-from typing import TYPE_CHECKING, Any, Optional, Type, TypeVar, Union, overload
+from typing import Any, Optional, Type
 
 import pydantic
 import sqlalchemy
@@ -15,9 +15,9 @@ from ormar.fields.base import BaseField  # noqa I101
 from ormar.fields.sqlalchemy_encrypted import EncryptBackends
 
 try:
-    from typing import Literal  # type: ignore
+    from typing import Self  # type: ignore
 except ImportError:  # pragma: no cover
-    from typing_extensions import Literal  # type: ignore
+    from typing_extensions import Self  # type: ignore
 
 
 def is_field_nullable(
@@ -65,7 +65,7 @@ class ModelFieldFactory:
     _type: Any = None
     _sample: Any = None
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> BaseField:  # type: ignore
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:  # type: ignore
         cls.validate(**kwargs)
 
         default = kwargs.pop("default", None)
@@ -161,7 +161,7 @@ class String(ModelFieldFactory, str):
         min_length: Optional[int] = None,
         regex: Optional[str] = None,
         **kwargs: Any
-    ) -> BaseField:  # type: ignore
+    ) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -192,7 +192,7 @@ class String(ModelFieldFactory, str):
         :param kwargs: all params passed during construction
         :type kwargs: Any
         """
-        max_length = kwargs.get("max_length", None)
+        max_length = kwargs.get("max_length", -1)
         if max_length <= 0:
             raise ModelDefinitionError(
                 "Parameter max_length is required for field String"
@@ -214,7 +214,7 @@ class Integer(ModelFieldFactory, int):
         maximum: Optional[int] = None,
         multiple_of: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
             autoincrement
@@ -255,7 +255,7 @@ class Text(ModelFieldFactory, str):
     _type = str
     _sample = "text"
 
-    def __new__(cls, **kwargs: Any) -> BaseField:  # type: ignore
+    def __new__(cls, **kwargs: Any) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -295,7 +295,7 @@ class Float(ModelFieldFactory, float):
         maximum: Optional[float] = None,
         multiple_of: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         kwargs = {
             **kwargs,
             **{
@@ -322,33 +322,26 @@ class Float(ModelFieldFactory, float):
         return sqlalchemy.Float()
 
 
-if TYPE_CHECKING:  # pragma: nocover
+class Boolean(ModelFieldFactory, int):
+    """
+    Boolean field factory that construct Field classes and populated their values.
+    """
 
-    def Boolean(**kwargs: Any) -> bool:
-        pass
+    _type = bool
+    _sample = True
 
-else:
-
-    class Boolean(ModelFieldFactory, int):
+    @classmethod
+    def get_column_type(cls, **kwargs: Any) -> Any:
         """
-        Boolean field factory that construct Field classes and populated their values.
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
         """
-
-        _type = bool
-        _sample = True
-
-        @classmethod
-        def get_column_type(cls, **kwargs: Any) -> Any:
-            """
-            Return proper type of db column for given field type.
-            Accepts required and optional parameters that each column type accepts.
-
-            :param kwargs: key, value pairs of sqlalchemy options
-            :type kwargs: Any
-            :return: initialized column with proper options
-            :rtype: sqlalchemy Column
-            """
-            return sqlalchemy.Boolean()
+        return sqlalchemy.Boolean()
 
 
 class DateTime(ModelFieldFactory, datetime.datetime):
@@ -361,7 +354,7 @@ class DateTime(ModelFieldFactory, datetime.datetime):
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, timezone: bool = False, **kwargs: Any
-    ) -> BaseField:  # type: ignore
+    ) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -418,7 +411,7 @@ class Time(ModelFieldFactory, datetime.time):
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, timezone: bool = False, **kwargs: Any
-    ) -> BaseField:  # type: ignore
+    ) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
             **{
@@ -465,81 +458,53 @@ class JSON(ModelFieldFactory, pydantic.Json):
         return sqlalchemy.JSON(none_as_null=kwargs.get("sql_nullable", False))
 
 
-if TYPE_CHECKING:  # pragma: nocover # noqa: C901
+class LargeBinary(ModelFieldFactory, bytes):
+    """
+    LargeBinary field factory that construct Field classes
+    and populated their values.
+    """
 
-    @overload
-    def LargeBinary(  # type: ignore
-        max_length: int, *, represent_as_base64_str: Literal[True], **kwargs: Any
-    ) -> str: ...
+    _type = bytes
+    _sample = "bytes"
 
-    @overload
-    def LargeBinary(  # type: ignore
-        max_length: int, *, represent_as_base64_str: Literal[False], **kwargs: Any
-    ) -> bytes: ...
+    def __new__(  # type: ignore # noqa CFQ002
+        cls, *, max_length: int, represent_as_base64_str: bool = False, **kwargs: Any
+    ) -> Self:  # type: ignore
+        kwargs = {
+            **kwargs,
+            **{
+                k: v
+                for k, v in locals().items()
+                if k not in ["cls", "__class__", "kwargs"]
+            },
+        }
+        return super().__new__(cls, **kwargs)
 
-    @overload
-    def LargeBinary(
-        max_length: int, represent_as_base64_str: Literal[False] = ..., **kwargs: Any
-    ) -> bytes: ...
-
-    def LargeBinary(
-        max_length: int, represent_as_base64_str: bool = False, **kwargs: Any
-    ) -> Union[str, bytes]:
-        pass
-
-else:
-
-    class LargeBinary(ModelFieldFactory, bytes):
+    @classmethod
+    def get_column_type(cls, **kwargs: Any) -> Any:
         """
-        LargeBinary field factory that construct Field classes
-        and populated their values.
+        Return proper type of db column for given field type.
+        Accepts required and optional parameters that each column type accepts.
+
+        :param kwargs: key, value pairs of sqlalchemy options
+        :type kwargs: Any
+        :return: initialized column with proper options
+        :rtype: sqlalchemy Column
         """
+        return sqlalchemy.LargeBinary(length=kwargs.get("max_length"))
 
-        _type = bytes
-        _sample = "bytes"
-
-        def __new__(  # type: ignore # noqa CFQ002
-            cls,
-            *,
-            max_length: int,
-            represent_as_base64_str: bool = False,
-            **kwargs: Any
-        ) -> BaseField:  # type: ignore
-            kwargs = {
-                **kwargs,
-                **{
-                    k: v
-                    for k, v in locals().items()
-                    if k not in ["cls", "__class__", "kwargs"]
-                },
-            }
-            return super().__new__(cls, **kwargs)
-
-        @classmethod
-        def get_column_type(cls, **kwargs: Any) -> Any:
-            """
-            Return proper type of db column for given field type.
-            Accepts required and optional parameters that each column type accepts.
-
-            :param kwargs: key, value pairs of sqlalchemy options
-            :type kwargs: Any
-            :return: initialized column with proper options
-            :rtype: sqlalchemy Column
-            """
-            return sqlalchemy.LargeBinary(length=kwargs.get("max_length"))
-
-        @classmethod
-        def validate(cls, **kwargs: Any) -> None:
-            """
-            Used to validate if all required parameters on a given field type are set.
-            :param kwargs: all params passed during construction
-            :type kwargs: Any
-            """
-            max_length = kwargs.get("max_length", None)
-            if max_length <= 0:
-                raise ModelDefinitionError(
-                    "Parameter max_length is required for field LargeBinary"
-                )
+    @classmethod
+    def validate(cls, **kwargs: Any) -> None:
+        """
+        Used to validate if all required parameters on a given field type are set.
+        :param kwargs: all params passed during construction
+        :type kwargs: Any
+        """
+        max_length = kwargs.get("max_length", None)
+        if max_length <= 0:
+            raise ModelDefinitionError(
+                "Parameter max_length is required for field LargeBinary"
+            )
 
 
 class BigInteger(Integer, int):
@@ -557,7 +522,7 @@ class BigInteger(Integer, int):
         maximum: Optional[int] = None,
         multiple_of: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
             autoincrement
@@ -605,7 +570,7 @@ class SmallInteger(Integer, int):
         maximum: Optional[int] = None,
         multiple_of: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
             autoincrement
@@ -657,7 +622,7 @@ class Decimal(ModelFieldFactory, decimal.Decimal):
         max_digits: Optional[int] = None,
         decimal_places: Optional[int] = None,
         **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         kwargs = {
             **kwargs,
             **{
@@ -721,7 +686,7 @@ class UUID(ModelFieldFactory, uuid.UUID):
 
     def __new__(  # type: ignore # noqa CFQ002
         cls, *, uuid_format: str = "hex", **kwargs: Any
-    ) -> BaseField:
+    ) -> Self:
         kwargs = {
             **kwargs,
             **{
@@ -748,42 +713,34 @@ class UUID(ModelFieldFactory, uuid.UUID):
         return sqlalchemy_uuid.UUID(uuid_format=uuid_format)
 
 
-if TYPE_CHECKING:  # pragma: nocover
-    T = TypeVar("T", bound=E)
+class Enum(ModelFieldFactory):
+    """
+    Enum field factory that construct Field classes and populated their values.
+    """
 
-    def Enum(enum_class: Type[T], **kwargs: Any) -> T:
-        pass
+    _type = E
+    _sample = None
 
-else:
+    def __new__(  # type: ignore # noqa CFQ002
+        cls, *, enum_class: Type[E], **kwargs: Any
+    ) -> Self:
+        kwargs = {
+            **kwargs,
+            **{
+                k: v
+                for k, v in locals().items()
+                if k not in ["cls", "__class__", "kwargs"]
+            },
+        }
+        return super().__new__(cls, **kwargs)
 
-    class Enum(ModelFieldFactory):
-        """
-        Enum field factory that construct Field classes and populated their values.
-        """
+    @classmethod
+    def validate(cls, **kwargs: Any) -> None:
+        enum_class = kwargs.get("enum_class")
+        if enum_class is None or not isinstance(enum_class, EnumMeta):
+            raise ModelDefinitionError("Enum Field choices must be EnumType")
 
-        _type = E
-        _sample = None
-
-        def __new__(  # type: ignore # noqa CFQ002
-            cls, *, enum_class: Type[E], **kwargs: Any
-        ) -> BaseField:
-            kwargs = {
-                **kwargs,
-                **{
-                    k: v
-                    for k, v in locals().items()
-                    if k not in ["cls", "__class__", "kwargs"]
-                },
-            }
-            return super().__new__(cls, **kwargs)
-
-        @classmethod
-        def validate(cls, **kwargs: Any) -> None:
-            enum_class = kwargs.get("enum_class")
-            if enum_class is None or not isinstance(enum_class, EnumMeta):
-                raise ModelDefinitionError("Enum Field choices must be EnumType")
-
-        @classmethod
-        def get_column_type(cls, **kwargs: Any) -> Any:
-            enum_cls = kwargs.get("enum_class")
-            return sqlalchemy.Enum(enum_cls)
+    @classmethod
+    def get_column_type(cls, **kwargs: Any) -> Any:
+        enum_cls = kwargs.get("enum_class")
+        return sqlalchemy.Enum(enum_cls)

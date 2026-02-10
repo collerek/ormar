@@ -54,6 +54,26 @@ class ExampleModel2(Model):
     test_string: str = ormar.String(max_length=250)
 
 
+class User(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="users")
+
+    id: int = ormar.Integer(primary_key=True)
+
+
+class Account(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="accounts")
+
+    id: int = ormar.Integer(primary_key=True)
+    user: User = ormar.ForeignKey(User, index=False)
+
+
+class Purchase(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="purchases")
+
+    id: int = ormar.Integer(primary_key=True)
+    user: User = ormar.ForeignKey(User, index=True)
+
+
 create_test_database = init_tests(base_ormar_config)
 
 
@@ -146,7 +166,7 @@ def test_primary_key_access_and_setting(example):
 
 def test_pydantic_model_is_created(example):
     assert issubclass(example.__class__, pydantic.BaseModel)
-    assert all([field in example.model_fields for field in fields_to_check])
+    assert all([field in example.__class__.model_fields for field in fields_to_check])
     assert example.test == 1
 
 
@@ -218,3 +238,8 @@ def test_json_conversion_in_model():
             test_string="test",
             test_bool=True,
         )
+
+
+def test_foreign_key_index():
+    assert Account.ormar_config.table.columns.user.index is False
+    assert Purchase.ormar_config.table.columns.user.index is True

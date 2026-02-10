@@ -29,34 +29,36 @@ Here you can find a very simple sample application code.
 Define startup and shutdown procedures using FastAPI lifespan and use is in the
 application.
 ```python
-from typing import List, Optional
+from typing import List, Optional, AsyncIterator
 
-import databases
 import sqlalchemy
 from fastapi import FastAPI
 
 import ormar
+from ormar import DatabaseConnection
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 
-@asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    if not config.database.is_connected:
-        await config.database.connect()
+def get_lifespan(config):
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        if not config.database.is_connected:
+            await config.database.connect()
 
-    yield
+        yield
 
-    if config.database.is_connected:
-        await config.database.disconnect()
-
+        if config.database.is_connected:
+            await config.database.disconnect()
+    return lifespan
 
 base_ormar_config = ormar.OrmarConfig(
     metadata=sqlalchemy.MetaData(),
-    database=databases.Database("sqlite:///test.db"),
+    database=DatabaseConnection("sqlite+aiosqlite:///test.db"),
 )
-app = FastAPI(lifespan=lifespan(base_ormar_config))
+
+app = FastAPI(lifespan=get_lifespan(base_ormar_config))
 ```
 
 !!!info

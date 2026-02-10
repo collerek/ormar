@@ -234,7 +234,7 @@ Since it sounds more complicated than it is, let's look at some examples.
 Given a sample models like this:
 ```python
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
+    database=DatabaseConnection(DATABASE_URL),
     metadata=sqlalchemy.MetaData(),
 )
 

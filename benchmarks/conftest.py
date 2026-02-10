@@ -50,6 +50,17 @@ class Book(ormar.Model):
 create_test_database = init_tests(base_ormar_config, scope="function")
 
 
+@pytest_asyncio.fixture(autouse=True, scope="function")
+async def connect_database(create_test_database):
+    if not base_ormar_config.database.is_connected:
+        await base_ormar_config.database.connect()
+
+    yield
+
+    if base_ormar_config.database.is_connected:
+        await base_ormar_config.database.disconnect()
+
+
 @pytest_asyncio.fixture
 async def author():
     author = await Author(name="Author", score=10).save()
@@ -79,14 +90,16 @@ async def authors_in_db(num_models: int):
 @pytest.mark.benchmark(
     min_rounds=1, timer=time.process_time, disable_gc=True, warmup=False
 )
-async def aio_benchmark(benchmark, event_loop: asyncio.BaseEventLoop):
+async def aio_benchmark(benchmark):
     def _fixture_wrapper(func):
         def _func_wrapper(*args, **kwargs):
             if asyncio.iscoroutinefunction(func):
+                # Get the running event loop instead of requesting it as a fixture
+                loop = asyncio.get_running_loop()
 
                 @benchmark
                 def benchmarked_func():
-                    a = event_loop.run_until_complete(func(*args, **kwargs))
+                    a = loop.run_until_complete(func(*args, **kwargs))
                     return a
 
                 return benchmarked_func

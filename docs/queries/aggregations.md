@@ -33,7 +33,7 @@ the count will be the total number of rows returned
 ```python
 class Book(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        database=databases.Database(DATABASE_URL),
+        database=DatabaseConnection(DATABASE_URL),
         metadata=sqlalchemy.MetaData(),
         tablename="book"
     )
@@ -62,7 +62,7 @@ Returns a bool value to confirm if there are rows matching the given criteria (a
 ```python
 class Book(ormar.Model):
     ormar_config = ormar.OrmarConfig(
-        database=databases.Database(DATABASE_URL),
+        database=DatabaseConnection(DATABASE_URL),
         metadata=sqlalchemy.MetaData(),
         tablename="book"
     )

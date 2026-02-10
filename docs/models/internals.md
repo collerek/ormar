@@ -62,7 +62,7 @@ For example to list table model fields you can:
 [pydantic]: https://pydantic-docs.helpmanual.io/
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [sqlalchemy-metadata]: https://docs.sqlalchemy.org/en/13/core/metadata.html
-[databases]: https://github.com/encode/databases
+[sqlalchemy-async]: https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html
 [sqlalchemy connection string]: https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls
 [sqlalchemy table creation]: https://docs.sqlalchemy.org/en/13/core/metadata.html#creating-and-dropping-database-tables
 [alembic]: https://alembic.sqlalchemy.org/en/latest/tutorial.html

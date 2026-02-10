@@ -1,13 +1,13 @@
 import random
 
-import databases
 import ormar
 import pytest
 import sqlalchemy
+from ormar.databases.connection import DatabaseConnection
 
-from tests.settings import DATABASE_URL
+from tests.settings import ASYNC_DATABASE_URL, DATABASE_URL
 
-database = databases.Database(DATABASE_URL, force_rollback=True)
+database = DatabaseConnection(ASYNC_DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 

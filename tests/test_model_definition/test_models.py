@@ -4,6 +4,7 @@ import datetime
 import os
 import uuid
 from enum import Enum
+from typing import Optional
 
 import ormar
 import pydantic
@@ -126,7 +127,9 @@ class NullableCountry(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="country2")
 
     id: int = ormar.Integer(primary_key=True)
-    name: CountryNameEnum = ormar.Enum(enum_class=CountryNameEnum, nullable=True)
+    name: Optional[CountryNameEnum] = ormar.Enum(
+        enum_class=CountryNameEnum, nullable=True
+    )
 
 
 class NotNullableCountry(ormar.Model):
@@ -451,6 +454,11 @@ async def test_offset():
 async def test_model_first():
     async with base_ormar_config.database:
         async with base_ormar_config.database.transaction(force_rollback=True):
+            with pytest.raises(ormar.NoMatch):
+                await User.objects.first()
+
+            assert await User.objects.first_or_none() is None
+
             tom = await User.objects.create(name="Tom")
             jane = await User.objects.create(name="Jane")
 
@@ -459,6 +467,9 @@ async def test_model_first():
             assert await User.objects.filter(name="Jane").first() == jane
             with pytest.raises(NoMatch):
                 await User.objects.filter(name="Lucy").first()
+
+            assert await User.objects.first_or_none(name="Lucy") is None
+            assert await User.objects.filter(name="Lucy").first_or_none() is None
 
             assert await User.objects.order_by("name").first() == jane
 

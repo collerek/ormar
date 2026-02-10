@@ -1,4 +1,3 @@
-import asyncio
 import itertools
 from typing import List, Optional
 
@@ -18,7 +17,7 @@ class NickNames(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
-    is_lame: bool = ormar.Boolean(nullable=True)
+    is_lame: Optional[bool] = ormar.Boolean(nullable=True)
 
 
 class NicksHq(ormar.Model):
@@ -38,7 +37,7 @@ class Company(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
-    founded: int = ormar.Integer(nullable=True)
+    founded: Optional[int] = ormar.Integer(nullable=True)
     hq: HQ = ormar.ForeignKey(HQ)
 
 
@@ -48,24 +47,18 @@ class Car(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     manufacturer: Optional[Company] = ormar.ForeignKey(Company)
     name: str = ormar.String(max_length=100)
-    year: int = ormar.Integer(nullable=True)
-    gearbox_type: str = ormar.String(max_length=20, nullable=True)
-    gears: int = ormar.Integer(nullable=True)
-    aircon_type: str = ormar.String(max_length=20, nullable=True)
+    year: Optional[int] = ormar.Integer(nullable=True)
+    gearbox_type: Optional[str] = ormar.String(max_length=20, nullable=True)
+    gears: Optional[int] = ormar.Integer(nullable=True)
+    aircon_type: Optional[str] = ormar.String(max_length=20, nullable=True)
 
 
 create_test_database = init_tests(base_ormar_config)
 
 
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest_asyncio.fixture(autouse=True, scope="module")
-async def sample_data(event_loop, create_test_database):
+@pytest.mark.usefixtures("create_test_database")
+async def sample_data():
     async with base_ormar_config.database:
         nick1 = await NickNames.objects.create(name="Nippon", is_lame=False)
         nick2 = await NickNames.objects.create(name="EroCherry", is_lame=True)
