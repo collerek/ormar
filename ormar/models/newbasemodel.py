@@ -135,6 +135,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         new_kwargs, through_tmp_dict = self._process_kwargs(kwargs)
 
         if not pk_only:
+            new_kwargs = self.serialize_nested_models_json_fields(new_kwargs)
             self.__pydantic_validator__.validate_python(
                 new_kwargs, self_instance=self  # type: ignore
             )
