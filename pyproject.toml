@@ -104,7 +104,7 @@ types-ipaddress = "^1.0.1"
 types-enum34 = "^1.1.1"
 types-cryptography = "^3.3.23"
 types-orjson = "^3.6.1"
-types-aiofiles = "^23.2.0"
+types-aiofiles = ">=23.2,<26.0"
 types-requests = "^2.32.0"
 types-toml = "^0.10.8"
 
