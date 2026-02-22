@@ -1,6 +1,6 @@
 # Release notes
 
-## 0.22.1
+## 0.23.0
 
 ### ‼️🚨 Critical vulnerability fixed – please upgrade ASAP
 
