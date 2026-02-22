@@ -269,7 +269,7 @@ class ExcludableItems:
         for key in values:
             key_split = key.split("__")
             related_items, field_name = key_split[:-1], key_split[-1]
-            (table_prefix, target_model, _, _) = get_relationship_alias_model_and_str(
+            table_prefix, target_model, _, _ = get_relationship_alias_model_and_str(
                 source_model=model_cls, related_parts=related_items
             )
             self._set_excludes(

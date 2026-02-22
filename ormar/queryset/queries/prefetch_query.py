@@ -420,7 +420,9 @@ class LoadNode(Node):
         :rtype: Tuple
         """
         result = []
-        for key, value in (sorted(item.items()) if isinstance(item, dict) else enumerate(item)):
+        for key, value in (
+            sorted(item.items()) if isinstance(item, dict) else enumerate(item)
+        ):
             if isinstance(value, (dict, list)):
                 value = self._hash_item(value)
             result.append((key, value))

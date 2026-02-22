@@ -65,7 +65,7 @@ def Through(  # noqa CFQ002
     return Field(**namespace)
 
 
-class ThroughField(ForeignKeyField):
+class ThroughField(ForeignKeyField):  # type: ignore[misc]
     """
     Field class used to access ManyToMany model through model.
     """
