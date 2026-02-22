@@ -73,7 +73,7 @@ class RelationsManager:
         :param field: field with relation definition
         :type field: ForeignKeyField
         """
-        (parent, child, child_name, to_name) = get_relations_sides_and_names(
+        parent, child, child_name, to_name = get_relations_sides_and_names(
             field, parent, child
         )
 
