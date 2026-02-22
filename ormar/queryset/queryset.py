@@ -708,7 +708,8 @@ class QuerySet(Generic[T]):
                 )
         if any(x.field_name not in x.target_model.model_fields for x in select_actions):
             raise QueryDefinitionError(
-                "You can use aggregate functions only on existing columns of the target model"
+                "You can use aggregate functions only on "
+                "existing columns of the target model"
             )
         select_columns = [x.apply_func(func, use_label=True) for x in select_actions]
         expr = self.build_select_expression().alias(f"subquery_for_{func_name}")

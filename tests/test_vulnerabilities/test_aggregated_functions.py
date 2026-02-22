@@ -15,6 +15,7 @@ class Category(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
 
+
 class Item(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="items")
 
@@ -57,7 +58,7 @@ async def test_arbitrary_sql_execution_on_related_model():
 
 @pytest.mark.asyncio
 async def test_schema_extraction():
-    async with (base_ormar_config.database):
+    async with base_ormar_config.database:
         async with base_ormar_config.database.transaction(force_rollback=True):
             if not await Item.objects.count():
                 cat = await Category.objects.create(name="Electronics")
