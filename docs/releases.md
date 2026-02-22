@@ -1,5 +1,15 @@
 # Release notes
 
+## 0.22.1
+
+### ‼️🚨 Critical vulnerability fixed – please upgrade ASAP
+
+* In this version of ormar the critical vulnerability (`CVE-2026-26198`) in aggregate functions was patched - thanks @AAtomical
+ for reporting. The vulnerability was caused by the way ormar generated SQL queries for aggregate functions, allowing arbitrary SQL execution through user input.
+* Affected versions:
+  * `0.9.9 - 0.12.2`
+  * `0.20.0b1 - 0.22.0 (latest)`
+
 ## 0.22.0
 
 ### 🐛 Breaking changes
