@@ -84,7 +84,7 @@ class FilterGroup:
         self._resolved = True
         if self._nested_groups:
             for group in self._nested_groups:
-                (filter_clauses, select_related) = group.resolve(
+                filter_clauses, select_related = group.resolve(
                     model_cls=model_cls,
                     select_related=select_related,
                     filter_clauses=filter_clauses,

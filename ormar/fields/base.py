@@ -15,7 +15,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, NewBaseModel
 
 
-class BaseField(FieldInfo):
+class BaseField(FieldInfo):  # type: ignore[misc]
     """
     BaseField serves as a parent class for all basic Fields in ormar.
     It keeps all common parameters available for all fields as well as

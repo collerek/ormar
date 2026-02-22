@@ -196,7 +196,7 @@ def get_relationship_alias_model_and_str(
         related_field = target_model.ormar_config.model_fields[relation]
 
         if related_field.is_through:
-            (previous_model, relation, is_through) = _process_through_field(
+            previous_model, relation, is_through = _process_through_field(
                 related_parts=related_parts,
                 relation=relation,
                 related_field=related_field,

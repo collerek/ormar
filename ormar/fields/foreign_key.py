@@ -305,7 +305,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     return Field(**namespace)
 
 
-class ForeignKeyField(BaseField):
+class ForeignKeyField(BaseField):  # type: ignore[misc]
     """
     Actual class returned from ForeignKey function call and stored in model_fields.
     """
