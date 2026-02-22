@@ -10,9 +10,19 @@
   * `0.9.9 - 0.12.2`
   * `0.20.0b1 - 0.22.0 (latest)`
 
+### ✨ Breaking changes
+
+* Drop support for Python 3.9
+
+### 🐛 Fixes
+
+* Fix selecting data with nested models with json fields [#1530](https://github.com/collerek/ormar/pull/1530)
+* Fix prefetching JSON list field throwing TypeError - thanks @jannyware-inc [#1402](https://github.com/collerek/ormar/pull/1402)
+
+
 ## 0.22.0
 
-### 🐛 Breaking changes
+### ✨ Breaking changes
 
 * **Migration from `databases` library to native async SQLAlchemy**
 
@@ -132,7 +142,7 @@
 
 ## 0.21.0
 
-### 🐛 Breaking changes
+### ✨ Breaking changes
 
 * Drop support for Python 3.8
 * Remove the possibility to exclude parents' fields in children models (discouraged as bad practice anyway)
