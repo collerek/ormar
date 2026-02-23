@@ -236,28 +236,28 @@ def replace_models_with_copy(
     """
     if inspect.isclass(annotation) and issubclass(annotation, ormar.Model):
         return create_copy_to_avoid_circular_references(model=annotation)
-    else:
-        origin = get_origin(annotation)
-        if origin is list:
-            args = get_args(annotation)
-            if not args:
-                return annotation  # pragma: no cover
-            return list[  # type: ignore
-                replace_models_with_copy(
-                    annotation=args[0],
-                    source_model_field=source_model_field,
-                )
-            ]
-        elif origin is Union:
-            args = get_args(annotation)
-            new_args = [
-                replace_models_with_copy(
-                    annotation=arg, source_model_field=source_model_field
-                )
-                for arg in args
-            ]
-            return Union[tuple(new_args)]
-        return annotation
+
+    origin = get_origin(annotation)
+    if origin is list:
+        args = get_args(annotation)
+        if not args:
+            return annotation  # pragma: no cover
+        return list[  # type: ignore
+            replace_models_with_copy(
+                annotation=args[0],
+                source_model_field=source_model_field,
+            )
+        ]
+    elif origin is Union:
+        args = get_args(annotation)
+        new_args = [
+            replace_models_with_copy(
+                annotation=arg, source_model_field=source_model_field
+            )
+            for arg in args
+        ]
+        return Union[tuple(new_args)]
+    return annotation
 
 
 def create_copy_to_avoid_circular_references(model: type["Model"]) -> type["BaseModel"]:
