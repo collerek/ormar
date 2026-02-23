@@ -1,9 +1,10 @@
 from typing import Optional
 
-import ormar
 from fastapi import FastAPI
 from tests.lifespan import lifespan
 from tests.settings import create_config
+
+import ormar
 
 base_ormar_config = create_config()
 app = FastAPI(lifespan=lifespan(base_ormar_config))

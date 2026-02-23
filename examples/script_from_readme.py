@@ -1,8 +1,9 @@
 from typing import Optional
 
-import ormar
 import pydantic
 import sqlalchemy
+
+import ormar
 
 DATABASE_URL = "sqlite+aiosqlite:///db.sqlite"
 

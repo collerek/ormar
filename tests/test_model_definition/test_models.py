@@ -6,12 +6,12 @@ import uuid
 from enum import Enum
 from typing import Optional
 
-import ormar
 import pydantic
 import pytest
 import sqlalchemy
-from ormar.exceptions import ModelError, NoMatch, QueryDefinitionError
 
+import ormar
+from ormar.exceptions import ModelError, NoMatch, QueryDefinitionError
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

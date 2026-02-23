@@ -20,7 +20,7 @@ def Through(  # noqa CFQ002
     *,
     name: Optional[str] = None,
     related_name: Optional[str] = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> Any:
     """
     Despite a name it's a function that returns constructed ThroughField.

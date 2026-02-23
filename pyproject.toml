@@ -84,14 +84,12 @@ all = [
 
 [tool.poetry.group.dev.dependencies]
 # Testing
-pytest = ">=7.4.4,<9.0.0"
+pytest = ">=8.2,<10.0"
 pytest-cov = ">=7,<8"
 codecov = "^2.1.13"
-pytest-asyncio = ">=0.21,<0.24"
+pytest-asyncio = ">=1.1.0,<2.0"
 fastapi = ">=0.125.0"
 
-
-black = ">=24.1,<27.0"
 ruff = ">=0.5.1,<0.15.3"
 
 setuptools = ">=78.1.1,<83.0.0"
@@ -163,7 +161,16 @@ disable_ending_comma_heuristic = true
 split_arguments_when_comma_terminated = true
 
 [tool.ruff]
-select = ["E", "F", "I"]
-ignore = ["E402"]
 line-length = 88
 src = ["ormar", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E402"]
+
+[tool.ruff.format]
+indent-style = "space"
+docstring-code-format = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["ormar"]

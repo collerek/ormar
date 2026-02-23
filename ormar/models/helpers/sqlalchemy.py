@@ -300,7 +300,7 @@ def set_constraint_names(config: "OrmarConfig") -> None:
         if isinstance(constraint, sqlalchemy.UniqueConstraint) and not constraint.name:
             constraint.name = (
                 f"uc_{config.tablename}_"
-                f'{"_".join([str(col) for col in constraint._pending_colargs])}'
+                f"{'_'.join([str(col) for col in constraint._pending_colargs])}"
             )
         elif (
             isinstance(constraint, sqlalchemy.Index)
@@ -308,7 +308,7 @@ def set_constraint_names(config: "OrmarConfig") -> None:
         ):
             constraint.name = (
                 f"ix_{config.tablename}_"
-                f'{"_".join([col for col in constraint._pending_colargs])}'
+                f"{'_'.join([col for col in constraint._pending_colargs])}"
             )
         elif isinstance(constraint, sqlalchemy.CheckConstraint) and not constraint.name:
             sql_condition: str = str(constraint.sqltext).replace(" ", "_")

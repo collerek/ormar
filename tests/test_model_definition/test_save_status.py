@@ -1,9 +1,9 @@
 from typing import Optional
 
-import ormar
 import pytest
-from ormar.exceptions import ModelPersistenceError
 
+import ormar
+from ormar.exceptions import ModelPersistenceError
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

@@ -1253,5 +1253,6 @@ class QuerySet(Generic[T]):
         await cast(
             type["Model"], self.model_cls
         ).ormar_config.signals.post_bulk_update.send(
-            sender=self.model_cls, instances=objects  # type: ignore
+            sender=self.model_cls,  # type: ignore
+            instances=objects,
         )

@@ -1,7 +1,7 @@
-import ormar
 import pytest
 from sqlalchemy import func
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

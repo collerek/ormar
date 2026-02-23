@@ -1,5 +1,6 @@
-import ormar
 import sqlalchemy
+
+import ormar
 from ormar import DatabaseConnection
 
 DATABASE_URL = "sqlite+aiosqlite:///relations_docs004.db"

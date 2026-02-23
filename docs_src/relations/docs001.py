@@ -1,7 +1,8 @@
 from typing import Optional, Union
 
-import ormar
 import sqlalchemy
+
+import ormar
 from ormar import DatabaseConnection
 
 database = DatabaseConnection("sqlite+aiosqlite:///db.sqlite")

@@ -1,10 +1,10 @@
 from typing import Optional
 
-import ormar
 import pytest
 import pytest_asyncio
-from ormar.exceptions import QueryDefinitionError
 
+import ormar
+from ormar.exceptions import QueryDefinitionError
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

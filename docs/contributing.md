@@ -37,9 +37,10 @@ git checkout -b my-new-feature-branch
 # make your changes...
 
 # 4. Formatting and linting
-# ormar uses black for formatting, flake8 for linting and mypy for type hints check
+# ormar uses ruff for formatting and linting and mypy for type hints check
 # run all of the following as all those calls will be run on travis after every push
-black ormar tests
+ruff format ormar tests
+ruff check ormar tests
 flake8 ormar
 mypy ormar tests
 

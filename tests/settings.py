@@ -1,9 +1,10 @@
 import os
 
-import ormar
 import sqlalchemy
-from ormar.databases.connection import DatabaseConnection
 from sqlalchemy.ext.asyncio import create_async_engine
+
+import ormar
+from ormar.databases.connection import DatabaseConnection
 
 
 def convert_to_async_url(url: str) -> str:  # pragma: nocover

@@ -1,7 +1,7 @@
-import ormar.fields.constraints
 import pytest
 import sqlalchemy
 
+import ormar.fields.constraints
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

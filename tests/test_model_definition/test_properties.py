@@ -1,8 +1,8 @@
 # type: ignore
-import ormar
 import pytest
 from pydantic import PydanticUserError, computed_field
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

@@ -1,8 +1,9 @@
 import asyncio
 
-import ormar
 import sqlalchemy
 from examples import create_drop_database
+
+import ormar
 from ormar import DatabaseConnection
 
 DATABASE_URL = "sqlite+aiosqlite:///select_columns_docs001.db"

@@ -1,8 +1,9 @@
 from typing import Optional
 
-import ormar
 import pydantic
 import pytest
+
+import ormar
 from ormar import (
     post_bulk_update,
     post_delete,
@@ -14,7 +15,6 @@ from ormar import (
 )
 from ormar.exceptions import SignalDefinitionError
 from ormar.signals import SignalEmitter
-
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

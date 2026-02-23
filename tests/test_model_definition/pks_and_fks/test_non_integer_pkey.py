@@ -1,10 +1,10 @@
 import random
 
-import ormar
 import pytest
 import sqlalchemy
-from ormar.databases.connection import DatabaseConnection
 
+import ormar
+from ormar.databases.connection import DatabaseConnection
 from tests.settings import ASYNC_DATABASE_URL, DATABASE_URL
 
 database = DatabaseConnection(ASYNC_DATABASE_URL)

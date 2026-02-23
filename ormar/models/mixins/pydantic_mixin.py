@@ -178,6 +178,6 @@ class PydanticMixin(RelationMixin):
                     for field_name in decorator.info.fields
                     if field_name in fields
                 ]
-                getattr(model.__pydantic_decorators__, validator_type)[
-                    name
-                ] = copied_decorator
+                getattr(model.__pydantic_decorators__, validator_type)[name] = (
+                    copied_decorator
+                )
