@@ -1504,18 +1504,18 @@ pyyaml = ">=5.1"
 
 [[package]]
 name = "mkdocs-literate-nav"
-version = "0.6.1"
+version = "0.6.2"
 description = "MkDocs plugin to specify the navigation in Markdown instead of YAML"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "mkdocs_literate_nav-0.6.1-py3-none-any.whl", hash = "sha256:e70bdc4a07050d32da79c0b697bd88e9a104cf3294282e9cb20eec94c6b0f401"},
-    {file = "mkdocs_literate_nav-0.6.1.tar.gz", hash = "sha256:78a7ab6d878371728acb0cdc6235c9b0ffc6e83c997b037f4a5c6ff7cef7d759"},
+    {file = "mkdocs_literate_nav-0.6.2-py3-none-any.whl", hash = "sha256:0a6489a26ec7598477b56fa112056a5e3a6c15729f0214bea8a4dbc55bd5f630"},
+    {file = "mkdocs_literate_nav-0.6.2.tar.gz", hash = "sha256:760e1708aa4be86af81a2b56e82c739d5a8388a0eab1517ecfd8e5aa40810a75"},
 ]
 
 [package.dependencies]
-mkdocs = ">=1.0.3"
+mkdocs = ">=1.4.1"
 
 [[package]]
 name = "mkdocs-material"
