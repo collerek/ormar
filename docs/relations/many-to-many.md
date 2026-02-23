@@ -39,7 +39,7 @@ class Post(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
-    categories: Optional[List[Category]] = ormar.ManyToMany(Category)
+    categories: Optional[list[Category]] = ormar.ManyToMany(Category)
 
 # create some sample data
 post = await Post.objects.create(title="Hello, M2M")
@@ -63,7 +63,7 @@ By default, the related_name is generated in the same way as for the `ForeignKey
 but in the same way you can overwrite this name by providing `related_name` parameter like below:
 
 ```Python
-categories: Optional[Union[Category, List[Category]]] = ormar.ManyToMany(
+categories: Optional[Union[Category, list[Category]]] = ormar.ManyToMany(
         Category, through=PostCategory, related_name="new_categories"
     )
 ```
@@ -107,7 +107,7 @@ class Post(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
-    categories: Optional[List[Category]] = ormar.ManyToMany(Category, skip_reverse=True)
+    categories: Optional[list[Category]] = ormar.ManyToMany(Category, skip_reverse=True)
 
 # create some sample data
 post = await Post.objects.create(title="Hello, M2M")

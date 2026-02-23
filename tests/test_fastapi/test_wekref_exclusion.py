@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID, uuid4
 
 import ormar
@@ -51,7 +51,7 @@ async def post_test_1():
     # await Thing.objects.bulk_create(things)
 
 
-@app.get("/test/2", response_model=List[Thing])
+@app.get("/test/2", response_model=list[Thing])
 async def get_test_2():
     # if you only query for one use get or first
     ot = await OtherThing.objects.get()
@@ -62,7 +62,7 @@ async def get_test_2():
     return ts
 
 
-@app.get("/test/3", response_model=List[Thing])
+@app.get("/test/3", response_model=list[Thing])
 async def get_test_3():
     ot = await OtherThing.objects.select_related("things").get()
     # exclude unwanted field while ot is still in scope
@@ -70,7 +70,7 @@ async def get_test_3():
     return [t.model_dump(exclude={"other_thing"}) for t in ot.things]
 
 
-@app.get("/test/4", response_model=List[Thing], response_model_exclude={"other_thing"})
+@app.get("/test/4", response_model=list[Thing], response_model_exclude={"other_thing"})
 async def get_test_4():
     ot = await OtherThing.objects.get()
     # query from the active side
@@ -86,7 +86,7 @@ async def get_ot():
 # but query for a specific one by some kind of id
 @app.get(
     "/test/5/{thing_id}",
-    response_model=List[Thing],
+    response_model=list[Thing],
     response_model_exclude={"other_thing"},
 )
 async def get_test_5(thing_id: UUID):
@@ -94,7 +94,7 @@ async def get_test_5(thing_id: UUID):
 
 
 @app.get(
-    "/test/error", response_model=List[Thing], response_model_exclude={"other_thing"}
+    "/test/error", response_model=list[Thing], response_model_exclude={"other_thing"}
 )
 async def get_weakref():
     ots = await OtherThing.objects.all()

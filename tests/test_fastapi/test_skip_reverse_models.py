@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 import ormar
 import pytest
@@ -68,12 +68,12 @@ async def create_post(post: Post):
     return post
 
 
-@app.get("/categories/", response_model=List[Category])
+@app.get("/categories/", response_model=list[Category])
 async def get_categories():
     return await Category.objects.select_related("posts").all()
 
 
-@app.get("/posts/", response_model=List[Post])
+@app.get("/posts/", response_model=list[Post])
 async def get_posts():
     posts = await Post.objects.select_related(["categories", "author"]).all()
     return posts

@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, TypeVar, Union
+import builtins
+from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union
 
 from sqlalchemy import Executable
 
@@ -125,8 +126,8 @@ class Model(ModelRow):
         self,
         follow: bool = False,
         save_all: bool = False,
-        relation_map: Optional[Dict] = None,
-        exclude: Union[Set, Dict, None] = None,
+        relation_map: Optional[builtins.dict] = None,
+        exclude: Union[set, builtins.dict, None] = None,
         update_count: int = 0,
         previous_model: Optional["Model"] = None,
         relation_field: Optional["ForeignKeyField"] = None,
@@ -151,9 +152,9 @@ class Model(ModelRow):
         :param previous_model: previous model from which method came
         :type previous_model: Model
         :param exclude: items to exclude during saving of relations
-        :type exclude: Union[Set, Dict]
+        :type exclude: Union[set, dict]
         :param relation_map: map of relations to follow
-        :type relation_map: Dict
+        :type relation_map: dict
         :param save_all: flag if all models should be saved or only not saved ones
         :type save_all: bool
         :param follow: flag to trigger deep save -
@@ -171,7 +172,7 @@ class Model(ModelRow):
             if relation_map is not None
             else translate_list_to_dict(self._iterate_related_models())
         )
-        if exclude and isinstance(exclude, Set):
+        if exclude and isinstance(exclude, set):
             exclude = translate_list_to_dict(exclude)
         relation_map = subtract_dict(relation_map, exclude or {})
 
@@ -224,7 +225,7 @@ class Model(ModelRow):
 
         return update_count
 
-    async def update(self: T, _columns: Optional[List[str]] = None, **kwargs: Any) -> T:
+    async def update(self: T, _columns: Optional[list[str]] = None, **kwargs: Any) -> T:
         """
         Performs update of Model instance in the database.
         Fields can be updated before or you can pass them as kwargs.
@@ -234,7 +235,7 @@ class Model(ModelRow):
         Sets model save status to True.
 
         :param _columns: list of columns to update, if None all are updated
-        :type _columns: List
+        :type _columns: list
         :raises ModelPersistenceError: If the pk column is not set
 
         :param kwargs: list of fields to update as field=value pairs
@@ -313,8 +314,8 @@ class Model(ModelRow):
     async def load_all(
         self: T,
         follow: bool = False,
-        exclude: Union[List, str, Set, Dict, None] = None,
-        order_by: Union[List, str, None] = None,
+        exclude: Union[list, str, set, dict, None] = None,
+        order_by: Union[list, str, None] = None,
     ) -> T:
         """
         Allow to refresh existing Models fields from database.
@@ -333,11 +334,11 @@ class Model(ModelRow):
         Nested relations of those kind need to be loaded manually.
 
         :param order_by: columns by which models should be sorted
-        :type order_by: Union[List, str]
+        :type order_by: Union[list, str]
         :raises NoMatch: If given pk is not found in database.
 
         :param exclude: related models to exclude
-        :type exclude: Union[List, str, Set, Dict]
+        :type exclude: Union[list, str, set, dict]
         :param follow: flag to trigger deep save -
         by default only directly related models are saved
         with follow=True also related models of related models are saved

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Type, cast
+from typing import Any, Optional, cast
 from uuid import UUID, uuid4
 
 import ormar
@@ -39,7 +39,7 @@ class Human(ormar.Model):
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
-    favoriteAnimals: List[Animal] = ormar.ManyToMany(
+    favoriteAnimals: list[Animal] = ormar.ManyToMany(
         Animal,
         through=Link,
         related_name="favoriteHumans",
@@ -53,7 +53,7 @@ class Human2(ormar.Model):
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
-    favoriteAnimals: List[Animal] = ormar.ManyToMany(
+    favoriteAnimals: list[Animal] = ormar.ManyToMany(
         Animal, related_name="favoriteHumans2", orders_by=["link__animal_order__fail"]
     )
 
@@ -72,7 +72,7 @@ async def test_ordering_by_through_fail():
 
 
 def _get_filtered_query(
-    sender: Type[Model], instance: Model, to_class: Type[Model]
+    sender: type[Model], instance: Model, to_class: type[Model]
 ) -> QuerySet:
     """
     Helper function.
@@ -85,8 +85,8 @@ def _get_filtered_query(
 
 
 def _get_through_model_relations(
-    sender: Type[Model], instance: Model
-) -> Tuple[Type[Model], Type[Model]]:
+    sender: type[Model], instance: Model
+) -> tuple[type[Model], type[Model]]:
     relations = list(instance.extract_related_names())
     rel_one = sender.ormar_config.model_fields[relations[0]].to
     rel_two = sender.ormar_config.model_fields[relations[1]].to
@@ -94,7 +94,7 @@ def _get_through_model_relations(
 
 
 async def _populate_order_on_insert(
-    sender: Type[Model], instance: Model, from_class: Type[Model], to_class: Type[Model]
+    sender: type[Model], instance: Model, from_class: type[Model], to_class: type[Model]
 ):
     """
     Helper function.
@@ -122,11 +122,11 @@ async def _populate_order_on_insert(
 
 
 async def _reorder_on_update(
-    sender: Type[Model],
+    sender: type[Model],
     instance: Model,
-    from_class: Type[Model],
-    to_class: Type[Model],
-    passed_args: Dict,
+    from_class: type[Model],
+    to_class: type[Model],
+    passed_args: dict,
 ):
     """
     Helper function.
@@ -148,12 +148,12 @@ async def _reorder_on_update(
                 else:
                     setattr(link, order, ind + 1)
             await sender.objects.bulk_update(
-                cast(List[Model], to_reorder), columns=[order]
+                cast(list[Model], to_reorder), columns=[order]
             )
 
 
 @pre_save(Link)
-async def order_link_on_insert(sender: Type[Model], instance: Model, **kwargs: Any):
+async def order_link_on_insert(sender: type[Model], instance: Model, **kwargs: Any):
     """
     Signal receiver registered on Link model, triggered every time before one is created
     by calling save() on a model. Note that signal functions for pre_save signal accepts
@@ -170,7 +170,7 @@ async def order_link_on_insert(sender: Type[Model], instance: Model, **kwargs: A
 
 @pre_update(Link)
 async def reorder_links_on_update(
-    sender: Type[ormar.Model], instance: ormar.Model, passed_args: Dict, **kwargs: Any
+    sender: type[ormar.Model], instance: ormar.Model, passed_args: dict, **kwargs: Any
 ):
     """
     Signal receiver registered on Link model, triggered every time before one is updated
@@ -198,7 +198,7 @@ async def reorder_links_on_update(
 
 @pre_relation_remove([Animal, Human])
 async def reorder_links_on_remove(
-    sender: Type[ormar.Model],
+    sender: type[ormar.Model],
     instance: ormar.Model,
     child: ormar.Model,
     relation_name: str,

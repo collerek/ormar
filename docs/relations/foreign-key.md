@@ -5,7 +5,7 @@ related_name: str = None, virtual: bool = False, onupdate: Union[ReferentialActi
 ondelete: Union[ReferentialAction, str] = None, **kwargs: Any)`
 has required parameters `to` that takes target `Model` class.  
 
-Sqlalchemy column and Type are automatically taken from target `Model`.
+Sqlalchemy column and type are automatically taken from target `Model`.
 
 * Sqlalchemy column: class of a target `Model` primary key column  
 * Type (used for pydantic): type of a target `Model` 

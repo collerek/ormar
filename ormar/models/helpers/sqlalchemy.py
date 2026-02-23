@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Dict, ForwardRef, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, ForwardRef, Optional, Union
 
 import sqlalchemy
 
@@ -58,7 +58,7 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
 
 
 def create_and_append_m2m_fk(
-    model: Type["Model"], model_field: "ManyToManyField", field_name: str
+    model: type["Model"], model_field: "ManyToManyField", field_name: str
 ) -> None:
     """
     Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.
@@ -119,8 +119,8 @@ def check_pk_column_validity(
 
 
 def sqlalchemy_columns_from_model_fields(
-    model_fields: Dict, new_model: Type["Model"]
-) -> Tuple[Optional[str], List[sqlalchemy.Column]]:
+    model_fields: dict, new_model: type["Model"]
+) -> tuple[Optional[str], list[sqlalchemy.Column]]:
     """
     Iterates over declared on Model model fields and extracts fields that
     should be treated as database fields.
@@ -139,11 +139,11 @@ def sqlalchemy_columns_from_model_fields(
     :raises ModelDefinitionError: if validation of related_names fail,
     or pkname validation fails.
     :param model_fields: dictionary of declared ormar model fields
-    :type model_fields: Dict[str, ormar.Field]
+    :type model_fields: dict[str, ormar.Field]
     :param new_model:
     :type new_model: Model class
     :return: pkname, list of sqlalchemy columns
-    :rtype: Tuple[Optional[str], List[sqlalchemy.Column]]
+    :rtype: tuple[Optional[str], list[sqlalchemy.Column]]
     """
     if len(model_fields.keys()) == 0:
         model_fields["id"] = ormar.Integer(name="id", primary_key=True)
@@ -156,8 +156,8 @@ def sqlalchemy_columns_from_model_fields(
 
 
 def _process_fields(
-    model_fields: Dict, new_model: Type["Model"]
-) -> Tuple[Optional[str], List[sqlalchemy.Column]]:
+    model_fields: dict, new_model: type["Model"]
+) -> tuple[Optional[str], list[sqlalchemy.Column]]:
     """
     Helper method.
 
@@ -168,11 +168,11 @@ def _process_fields(
     :raises ModelDefinitionError: if validation of related_names fail,
     or pkname validation fails.
     :param model_fields: dictionary of declared ormar model fields
-    :type model_fields: Dict[str, ormar.Field]
+    :type model_fields: dict[str, ormar.Field]
     :param new_model:
     :type new_model: Model class
     :return: pkname, list of sqlalchemy columns
-    :rtype: Tuple[Optional[str], List[sqlalchemy.Column]]
+    :rtype: tuple[Optional[str], list[sqlalchemy.Column]]
     """
     columns = []
     pkname = None
@@ -210,8 +210,8 @@ def _is_db_field(field: "BaseField") -> bool:
 
 
 def populate_config_tablename_columns_and_pk(
-    name: str, new_model: Type["Model"]
-) -> Type["Model"]:
+    name: str, new_model: type["Model"]
+) -> type["Model"]:
     """
     Sets Model tablename if it's not already set in OrmarConfig.
     Default tablename if not present is class name lower + s (i.e. Bed becomes -> beds)
@@ -316,13 +316,13 @@ def set_constraint_names(config: "OrmarConfig") -> None:
 
 
 def update_column_definition(
-    model: Union[Type["Model"], Type["NewBaseModel"]], field: "ForeignKeyField"
+    model: Union[type["Model"], type["NewBaseModel"]], field: "ForeignKeyField"
 ) -> None:
     """
     Updates a column with a new type column based on updated parameters in FK fields.
 
     :param model: model on which columns needs to be updated
-    :type model: Type["Model"]
+    :type model: type["Model"]
     :param field: field with column definition that requires update
     :type field: ForeignKeyField
     :return: None

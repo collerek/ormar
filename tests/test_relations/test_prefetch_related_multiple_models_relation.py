@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 import ormar
 import pytest
@@ -32,7 +32,7 @@ class Session(ormar.Model):
     teacher: Optional[User] = ormar.ForeignKey(
         User, nullable=True, related_name="teaching"
     )
-    students: Optional[List[User]] = ormar.ManyToMany(
+    students: Optional[list[User]] = ormar.ManyToMany(
         User, through=Signup, related_name="attending"
     )
 

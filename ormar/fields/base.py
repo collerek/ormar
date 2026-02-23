@@ -1,14 +1,4 @@
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Type,
-    Union,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union, overload
 
 import sqlalchemy
 from pydantic.fields import FieldInfo, _Unset
@@ -43,7 +33,7 @@ class BaseField(FieldInfo):  # type: ignore[misc]
         self.related_name = kwargs.pop("related_name", None)
 
         self.column_type: sqlalchemy.Column = kwargs.pop("column_type", None)
-        self.constraints: List = kwargs.pop("constraints", list())
+        self.constraints: list = kwargs.pop("constraints", list())
         self.name: str = kwargs.pop("name", None)
         self.db_alias: str = kwargs.pop("alias", None)
 
@@ -71,16 +61,16 @@ class BaseField(FieldInfo):  # type: ignore[misc]
         self.skip_reverse: bool = kwargs.pop("skip_reverse", False)
         self.skip_field: bool = kwargs.pop("skip_field", False)
 
-        self.owner: Type["Model"] = kwargs.pop("owner", None)
-        self.to: Type["Model"] = kwargs.pop("to", None)
-        self.to_pk_only: Type["Model"] = kwargs.pop("to_pk_only", None)
-        self.through: Type["Model"] = kwargs.pop("through", None)
+        self.owner: type["Model"] = kwargs.pop("owner", None)
+        self.to: type["Model"] = kwargs.pop("to", None)
+        self.to_pk_only: type["Model"] = kwargs.pop("to_pk_only", None)
+        self.through: type["Model"] = kwargs.pop("through", None)
         self.self_reference: bool = kwargs.pop("self_reference", False)
         self.self_reference_primary: Optional[str] = kwargs.pop(
             "self_reference_primary", None
         )
-        self.orders_by: Optional[List[str]] = kwargs.pop("orders_by", None)
-        self.related_orders_by: Optional[List[str]] = kwargs.pop(
+        self.orders_by: Optional[list[str]] = kwargs.pop("orders_by", None)
+        self.related_orders_by: Optional[list[str]] = kwargs.pop(
             "related_orders_by", None
         )
 
@@ -88,7 +78,7 @@ class BaseField(FieldInfo):  # type: ignore[misc]
         self.encrypt_backend: EncryptBackends = kwargs.pop(
             "encrypt_backend", EncryptBackends.NONE
         )
-        self.encrypt_custom_backend: Optional[Type[EncryptBackend]] = kwargs.pop(
+        self.encrypt_custom_backend: Optional[type[EncryptBackend]] = kwargs.pop(
             "encrypt_custom_backend", None
         )
 
@@ -132,7 +122,7 @@ class BaseField(FieldInfo):  # type: ignore[misc]
         """
         return self.db_alias if self.db_alias else self.name
 
-    def get_pydantic_default(self) -> Dict:
+    def get_pydantic_default(self) -> dict:
         """
         Generates base pydantic.FieldInfo with only default and optionally
         required to fix pydantic Json field being set to required=False.
@@ -146,7 +136,7 @@ class BaseField(FieldInfo):  # type: ignore[misc]
             base = dict(default=None) if self.nullable else dict(default=_Unset)
         return base
 
-    def default_value(self, use_server: bool = False) -> Optional[Dict]:
+    def default_value(self, use_server: bool = False) -> Optional[dict]:
         """
         Returns a FieldInfo instance with populated default
         (static) or default_factory (function).
@@ -258,14 +248,14 @@ class BaseField(FieldInfo):  # type: ignore[misc]
             return self.autoincrement
         return False
 
-    def construct_constraints(self) -> List:
+    def construct_constraints(self) -> list:
         """
         Converts list of ormar constraints into sqlalchemy ForeignKeys.
         Has to be done dynamically as sqlalchemy binds ForeignKey to the table.
         And we need a new ForeignKey for subclasses of current model
 
-        :return: List of sqlalchemy foreign keys - by default one.
-        :rtype: List[sqlalchemy.schema.ForeignKey]
+        :return: list of sqlalchemy foreign keys - by default one.
+        :rtype: list[sqlalchemy.schema.ForeignKey]
         """
         constraints = [
             sqlalchemy.ForeignKey(

@@ -1,14 +1,4 @@
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    Set,
-    Type,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar
 
 from typing_extensions import SupportsIndex
 
@@ -25,7 +15,7 @@ else:
     T = TypeVar("T", bound="Model")
 
 
-class RelationProxy(Generic[T], List[T]):
+class RelationProxy(Generic[T], list[T]):
     """
     Proxy of the Relation that is a list with special methods.
     """
@@ -34,7 +24,7 @@ class RelationProxy(Generic[T], List[T]):
         self,
         relation: "Relation",
         type_: "RelationType",
-        to: Type["T"],
+        to: type["T"],
         field_name: str,
         data_: Any = None,
     ) -> None:
@@ -47,7 +37,7 @@ class RelationProxy(Generic[T], List[T]):
         )
         self._related_field_name: Optional[str] = None
 
-        self._relation_cache: Dict[int, int] = {}
+        self._relation_cache: dict[int, int] = {}
 
         validated_data = []
         if data_ is not None:
@@ -117,12 +107,12 @@ class RelationProxy(Generic[T], List[T]):
         """
         return self._relation_cache[item.__hash__()]
 
-    def _get_list_of_missing_weakrefs(self) -> Set[int]:
+    def _get_list_of_missing_weakrefs(self) -> set[int]:
         """
         Iterates through the list and checks for weakrefs.
 
         :return: The set of missing weakref indices
-        :rtype: Set[int]
+        :rtype: set[int]
         """
         to_remove = set()
         for ind, relation_child in enumerate(self[:]):

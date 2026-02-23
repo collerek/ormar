@@ -602,32 +602,32 @@ asyncio.run(cleanup_database())
 *  `create(**kwargs): -> Model`
 *  `get(*args, **kwargs): -> Model`
 *  `get_or_none(*args, **kwargs): -> Optional[Model]`
-*  `get_or_create(_defaults: Optional[Dict[str, Any]] = None, *args, **kwargs) -> Tuple[Model, bool]`
+*  `get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs) -> tuple[Model, bool]`
 *  `first(*args, **kwargs): -> Model`
 *  `update(each: bool = False, **kwargs) -> int`
 *  `update_or_create(**kwargs) -> Model`
-*  `bulk_create(objects: List[Model]) -> None`
-*  `bulk_update(objects: List[Model], columns: List[str] = None) -> None`
+*  `bulk_create(objects: list[Model]) -> None`
+*  `bulk_update(objects: list[Model], columns: list[str] = None) -> None`
 *  `delete(*args, each: bool = False, **kwargs) -> int`
-*  `all(*args, **kwargs) -> List[Optional[Model]]`
+*  `all(*args, **kwargs) -> list[Optional[Model]]`
 *  `iterate(*args, **kwargs) -> AsyncGenerator[Model]`
 *  `filter(*args, **kwargs) -> QuerySet`
 *  `exclude(*args, **kwargs) -> QuerySet`
-*  `select_related(related: Union[List, str]) -> QuerySet`
-*  `prefetch_related(related: Union[List, str]) -> QuerySet`
+*  `select_related(related: Union[list, str]) -> QuerySet`
+*  `prefetch_related(related: Union[list, str]) -> QuerySet`
 *  `limit(limit_count: int) -> QuerySet`
 *  `offset(offset: int) -> QuerySet`
 *  `count(distinct: bool = True) -> int`
 *  `exists() -> bool`
-*  `max(columns: List[str]) -> Any`
-*  `min(columns: List[str]) -> Any`
-*  `avg(columns: List[str]) -> Any`
-*  `sum(columns: List[str]) -> Any`
-*  `fields(columns: Union[List, str, set, dict]) -> QuerySet`
-*  `exclude_fields(columns: Union[List, str, set, dict]) -> QuerySet`
-*  `order_by(columns:Union[List, str]) -> QuerySet`
-*  `values(fields: Union[List, str, Set, Dict])`
-*  `values_list(fields: Union[List, str, Set, Dict])`
+*  `max(columns: list[str]) -> Any`
+*  `min(columns: list[str]) -> Any`
+*  `avg(columns: list[str]) -> Any`
+*  `sum(columns: list[str]) -> Any`
+*  `fields(columns: Union[list, str, set, dict]) -> QuerySet`
+*  `exclude_fields(columns: Union[list, str, set, dict]) -> QuerySet`
+*  `order_by(columns:Union[list, str]) -> QuerySet`
+*  `values(fields: Union[list, str, set, dict])`
+*  `values_list(fields: Union[list, str, set, dict])`
 
 
 #### Relation types

@@ -1,10 +1,10 @@
-from typing import ForwardRef, List, Optional
+from typing import ForwardRef, Optional
 
-import ormar
 import pytest
 import pytest_asyncio
 import sqlalchemy
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -30,8 +30,8 @@ class Post(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
-    categories: Optional[List[Category]] = ormar.ManyToMany(Category)
-    authors: Optional[List[Author]] = ormar.ManyToMany(
+    categories: Optional[list[Category]] = ormar.ManyToMany(Category)
+    authors: Optional[list[Author]] = ormar.ManyToMany(
         Author, through=ForwardRef("AuthorXPosts")
     )
 

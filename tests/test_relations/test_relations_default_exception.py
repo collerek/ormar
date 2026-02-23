@@ -1,5 +1,5 @@
 # type: ignore
-from typing import List, Optional
+from typing import Optional
 
 import ormar
 import pytest
@@ -37,7 +37,7 @@ def test_fk_error():
 
             id: int = ormar.Integer(primary_key=True)
             title: str = ormar.String(max_length=200)
-            categories: Optional[List[Category]] = ormar.ManyToMany(Category)
+            categories: Optional[list[Category]] = ormar.ManyToMany(Category)
             author: Optional[Author] = ormar.ForeignKey(Author, default="aa")
 
 
@@ -49,6 +49,6 @@ def test_m2m_error():
 
             id: int = ormar.Integer(primary_key=True)
             title: str = ormar.String(max_length=200)
-            categories: Optional[List[Category]] = ormar.ManyToMany(
+            categories: Optional[list[Category]] = ormar.ManyToMany(
                 Category, default="aa"
             )

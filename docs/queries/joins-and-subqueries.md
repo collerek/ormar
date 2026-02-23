@@ -2,9 +2,9 @@
 
 To join one table to another, so load also related models you can use following methods.
 
-* `select_related(related: Union[List, str]) -> QuerySet`
+* `select_related(related: Union[list, str]) -> QuerySet`
 * `select_all(follow: bool = True) -> QuerySet`
-* `prefetch_related(related: Union[List, str]) -> QuerySet`
+* `prefetch_related(related: Union[list, str]) -> QuerySet`
 
 
 * `Model`
@@ -12,13 +12,13 @@ To join one table to another, so load also related models you can use following 
 
 
 * `QuerysetProxy`
-    * `QuerysetProxy.select_related(related: Union[List, str])` method
+    * `QuerysetProxy.select_related(related: Union[list, str])` method
     * `QuerysetProxy.select_all(follow: bool=True)` method
-    * `QuerysetProxy.prefetch_related(related: Union[List, str])` method
+    * `QuerysetProxy.prefetch_related(related: Union[list, str])` method
 
 ## select_related
 
-`select_related(related: Union[List, str]) -> QuerySet`
+`select_related(related: Union[list, str]) -> QuerySet`
 
 Allows to prefetch related models during the same query.
 
@@ -219,7 +219,7 @@ is also resistant to change in names of relations.
 
 ## prefetch_related
 
-`prefetch_related(related: Union[List, str]) -> QuerySet`
+`prefetch_related(related: Union[list, str]) -> QuerySet`
 
 Allows to prefetch related models during query - but opposite to `select_related` each
 subsequent model is fetched in a separate database query.

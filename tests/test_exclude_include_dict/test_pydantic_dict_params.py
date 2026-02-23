@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 import ormar
 import pytest
@@ -23,7 +23,7 @@ class Item(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     price: float = ormar.Float(default=9.99)
-    categories: List[Category] = ormar.ManyToMany(Category)
+    categories: list[Category] = ormar.ManyToMany(Category)
 
 
 create_test_database = init_tests(base_ormar_config)

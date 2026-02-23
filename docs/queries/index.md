@@ -24,9 +24,9 @@ To read more about any specific section or function please refer to the details 
 ###[Insert data into database](./create.md)
 
 * `create(**kwargs) -> Model`
-* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+* `get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
 * `update_or_create(**kwargs) -> Model`
-* `bulk_create(objects: List[Model]) -> None`
+* `bulk_create(objects: list[Model]) -> None`
 
 
 * `Model`
@@ -37,7 +37,7 @@ To read more about any specific section or function please refer to the details 
 
 * `QuerysetProxy`
     * `QuerysetProxy.create(**kwargs)` method
-    * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs)` method
+    * `QuerysetProxy.get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs)` method
     * `QuerysetProxy.update_or_create(**kwargs)` method
 
 !!!tip
@@ -47,9 +47,9 @@ To read more about any specific section or function please refer to the details 
 
 * `get(**kwargs) -> Model`
 * `get_or_none(**kwargs) -> Optional[Model]`
-* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+* `get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
 * `first() -> Model`
-* `all(**kwargs) -> List[Optional[Model]]`
+* `all(**kwargs) -> list[Optional[Model]]`
 
 
 * `Model`
@@ -59,7 +59,7 @@ To read more about any specific section or function please refer to the details 
 * `QuerysetProxy`
     * `QuerysetProxy.get(**kwargs)` method
     * `QuerysetProxy.get_or_none(**kwargs)` method
-    * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs)` method
+    * `QuerysetProxy.get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs)` method
     * `QuerysetProxy.first()` method
     * `QuerysetProxy.all(**kwargs)` method
 
@@ -70,8 +70,8 @@ To read more about any specific section or function please refer to the details 
 
 Instead of ormar models return raw data in form list of dictionaries or tuples.
 
-* `values(fields = None, exclude_through = False) -> List[Dict]`
-* `values_list(fields = None, exclude_through = False, flatten = False) -> List`
+* `values(fields = None, exclude_through = False) -> list[dict]`
+* `values_list(fields = None, exclude_through = False, flatten = False) -> list`
 
 
 * `QuerysetProxy`
@@ -85,7 +85,7 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
 
 * `update(each: bool = False, **kwargs) -> int`
 * `update_or_create(**kwargs) -> Model`
-* `bulk_update(objects: List[Model], columns: List[str] = None) -> None`
+* `bulk_update(objects: list[Model], columns: list[str] = None) -> None`
 
 
 * `Model`
@@ -118,8 +118,8 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
 
 ### [Joins and subqueries](./joins-and-subqueries.md)
 
-* `select_related(related: Union[List, str]) -> QuerySet`
-* `prefetch_related(related: Union[List, str]) -> QuerySet`
+* `select_related(related: Union[list, str]) -> QuerySet`
+* `prefetch_related(related: Union[list, str]) -> QuerySet`
 
 
 * `Model`
@@ -127,8 +127,8 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
 
 
 * `QuerysetProxy`
-    * `QuerysetProxy.select_related(related: Union[List, str])` method
-    * `QuerysetProxy.prefetch_related(related: Union[List, str])` method
+    * `QuerysetProxy.select_related(related: Union[list, str])` method
+    * `QuerysetProxy.prefetch_related(related: Union[list, str])` method
 
 !!!tip
     To read more about any or all of those functions visit [joins and subqueries](./joins-and-subqueries.md) section.
@@ -137,20 +137,20 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
 
 * `filter(**kwargs) -> QuerySet`
 * `exclude(**kwargs) -> QuerySet`
-* `order_by(columns:Union[List, str]) -> QuerySet`
+* `order_by(columns:Union[list, str]) -> QuerySet`
 * `get(**kwargs) -> Model`
 * `get_or_none(**kwargs) -> Optional[Model]`
-* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
-* `all(**kwargs) -> List[Optional[Model]]`
+* `get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
+* `all(**kwargs) -> list[Optional[Model]]`
 
 
 * `QuerysetProxy`
     * `QuerysetProxy.filter(**kwargs)` method
     * `QuerysetProxy.exclude(**kwargs)` method
-    * `QuerysetProxy.order_by(columns:Union[List, str])` method
+    * `QuerysetProxy.order_by(columns:Union[list, str])` method
     * `QuerysetProxy.get(**kwargs)` method
     * `QuerysetProxy.get_or_none(**kwargs)` method
-    * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs)` method
+    * `QuerysetProxy.get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs)` method
     * `QuerysetProxy.all(**kwargs)` method
 
 !!!tip
@@ -158,13 +158,13 @@ Instead of ormar models return raw data in form list of dictionaries or tuples.
 
 ### [Selecting columns](./select-columns.md)
 
-* `fields(columns: Union[List, str, set, dict]) -> QuerySet`
-* `exclude_fields(columns: Union[List, str, set, dict]) -> QuerySet`
+* `fields(columns: Union[list, str, set, dict]) -> QuerySet`
+* `exclude_fields(columns: Union[list, str, set, dict]) -> QuerySet`
 
 
 * `QuerysetProxy`
-    * `QuerysetProxy.fields(columns: Union[List, str, set, dict])` method
-    * `QuerysetProxy.exclude_fields(columns: Union[List, str, set, dict])` method
+    * `QuerysetProxy.fields(columns: Union[list, str, set, dict])` method
+    * `QuerysetProxy.exclude_fields(columns: Union[list, str, set, dict])` method
 
 !!!tip
     To read more about any or all of those functions visit [selecting columns](./select-columns.md) section.

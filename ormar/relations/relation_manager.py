@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING, Optional, Sequence, Union
 from weakref import proxy
 
 from ormar.relations.relation import Relation, RelationType
@@ -16,13 +16,13 @@ class RelationsManager:
 
     def __init__(
         self,
-        related_fields: Optional[List["ForeignKeyField"]] = None,
+        related_fields: Optional[list["ForeignKeyField"]] = None,
         owner: Optional["Model"] = None,
     ) -> None:
         self.owner = proxy(owner)
         self._related_fields = related_fields or []
         self._related_names = [field.name for field in self._related_fields]
-        self._relations: Dict[str, Relation] = dict()
+        self._relations: dict[str, Relation] = dict()
         for field in self._related_fields:
             self._add_relation(field)
 
@@ -49,7 +49,7 @@ class RelationsManager:
         :param name: name of the relation
         :type name: str
         :return: related model or list of related models if set
-        :rtype: Optional[Union[Model, List[Model]]
+        :rtype: Optional[Union[Model, list[Model]]
         """
         relation = self._relations.get(name, None)
         if relation is not None:
@@ -88,7 +88,7 @@ class RelationsManager:
             child_relation.add(parent)
 
     def remove(
-        self, name: str, child: Union["NewBaseModel", Type["NewBaseModel"]]
+        self, name: str, child: Union["NewBaseModel", type["NewBaseModel"]]
     ) -> None:
         """
         Removes given child from relation with given name.
@@ -98,7 +98,7 @@ class RelationsManager:
         :param name: name of the relation
         :type name: str
         :param child: child to remove from relation
-        :type child: Union[Model, Type[Model]]
+        :type child: Union[Model, type[Model]]
         """
         relation = self._get(name)
         if relation:
@@ -106,7 +106,7 @@ class RelationsManager:
 
     @staticmethod
     def remove_parent(
-        item: Union["NewBaseModel", Type["NewBaseModel"]], parent: "Model", name: str
+        item: Union["NewBaseModel", type["NewBaseModel"]], parent: "Model", name: str
     ) -> None:
         """
         Removes given parent from relation with given name.
@@ -114,7 +114,7 @@ class RelationsManager:
         of relation from which you want to remove the parent.
 
         :param item: model with parent registered
-        :type item: Union[Model, Type[Model]]
+        :type item: Union[Model, type[Model]]
         :param parent: parent Model
         :type parent: Model
         :param name: name of the relation

@@ -1,5 +1,5 @@
 # type: ignore
-from typing import ForwardRef, List, Optional
+from typing import ForwardRef, Optional
 
 import ormar
 import pytest
@@ -134,7 +134,7 @@ async def test_not_updated_model_m2m_through_raises_errors():
 
         id: int = ormar.Integer(primary_key=True)
         name: str = ormar.String(max_length=100)
-        pets: List[Pet] = ormar.ManyToMany(
+        pets: list[Pet] = ormar.ManyToMany(
             Pet, through=PersonPetRef, related_name="owners"
         )
 

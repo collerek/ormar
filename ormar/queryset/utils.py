@@ -1,16 +1,6 @@
 import collections.abc
 import copy
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import BaseField, Model
@@ -41,8 +31,8 @@ def check_node_not_dict_or_not_last_node(
 
 
 def translate_list_to_dict(  # noqa: CCR001
-    list_to_trans: Union[List, Set], default: Any = ...
-) -> Dict:
+    list_to_trans: Union[list, set], default: Any = ...
+) -> dict:
     """
     Splits the list of strings by '__' and converts them to dictionary with nested
     models grouped by parent model. That way each model appears only once in the whole
@@ -51,16 +41,16 @@ def translate_list_to_dict(  # noqa: CCR001
     Default required key ise Ellipsis like in pydantic.
 
     :param list_to_trans: input list
-    :type list_to_trans: Union[List, Set]
+    :type list_to_trans: Union[list, set]
     :param default: value to use as a default value
     :type default: Any
     :param is_order: flag if change affects order_by clauses are they require special
     default value with sort order.
     :type is_order: bool
     :return: converted to dictionary input list
-    :rtype: Dict
+    :rtype: dict
     """
-    new_dict: Dict = dict()
+    new_dict: dict = dict()
     for path in list_to_trans:
         current_level = new_dict
         parts = path.split("__")
@@ -77,7 +67,7 @@ def translate_list_to_dict(  # noqa: CCR001
     return new_dict
 
 
-def convert_set_to_required_dict(set_to_convert: set) -> Dict:
+def convert_set_to_required_dict(set_to_convert: set) -> dict:
     """
     Converts set to dictionary of required keys.
     Required key is Ellipsis.
@@ -85,7 +75,7 @@ def convert_set_to_required_dict(set_to_convert: set) -> Dict:
     :param set_to_convert: set to convert to dict
     :type set_to_convert: set
     :return: set converted to dict of ellipsis
-    :rtype: Dict
+    :rtype: dict
     """
     new_dict = dict()
     for key in set_to_convert:
@@ -93,7 +83,7 @@ def convert_set_to_required_dict(set_to_convert: set) -> Dict:
     return new_dict
 
 
-def update(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR001
+def update(current_dict: Any, updating_dict: Any) -> dict:  # noqa: CCR001
     """
     Update one dict with another but with regard for nested keys.
 
@@ -101,11 +91,11 @@ def update(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR001
     only other values are overwritten.
 
     :param current_dict: dict to update
-    :type current_dict: Dict[str, ellipsis]
+    :type current_dict: dict[str, ellipsis]
     :param updating_dict: dict with values to update
-    :type updating_dict: Dict
+    :type updating_dict: dict
     :return: combination of both dicts
-    :rtype: Dict
+    :rtype: dict
     """
     if current_dict is Ellipsis:
         current_dict = dict()
@@ -122,7 +112,7 @@ def update(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR001
     return current_dict
 
 
-def subtract_dict(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR001
+def subtract_dict(current_dict: Any, updating_dict: Any) -> dict:  # noqa: CCR001
     """
     Update one dict with another but with regard for nested keys.
 
@@ -130,15 +120,15 @@ def subtract_dict(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR00
     only other values are overwritten.
 
     :param current_dict: dict to update
-    :type current_dict: Dict[str, ellipsis]
+    :type current_dict: dict[str, ellipsis]
     :param updating_dict: dict with values to update
-    :type updating_dict: Dict
+    :type updating_dict: dict
     :return: combination of both dicts
-    :rtype: Dict
+    :rtype: dict
     """
     for key, value in updating_dict.items():
         old_key = current_dict.get(key, {})
-        new_value: Optional[Union[Dict, Set]] = None
+        new_value: Optional[Union[dict, set]] = None
         if not old_key:
             continue
         if isinstance(value, set) and isinstance(old_key, set):
@@ -165,17 +155,17 @@ def subtract_dict(current_dict: Any, updating_dict: Any) -> Dict:  # noqa: CCR00
     return current_dict
 
 
-def update_dict_from_list(curr_dict: Dict, list_to_update: Union[List, Set]) -> Dict:
+def update_dict_from_list(curr_dict: dict, list_to_update: Union[list, set]) -> dict:
     """
     Converts the list into dictionary and later performs special update, where
     nested keys that are sets or dicts are combined and not overwritten.
 
     :param curr_dict: dict to update
-    :type curr_dict: Dict
+    :type curr_dict: dict
     :param list_to_update: list with values to update the dict
-    :type list_to_update: List[str]
+    :type list_to_update: list[str]
     :return: updated dict
-    :rtype: Dict
+    :rtype: dict
     """
     updated_dict = copy.copy(curr_dict)
     dict_to_update = translate_list_to_dict(list_to_update)
@@ -184,17 +174,17 @@ def update_dict_from_list(curr_dict: Dict, list_to_update: Union[List, Set]) -> 
 
 
 def get_relationship_alias_model_and_str(
-    source_model: Type["Model"], related_parts: List
-) -> Tuple[str, Type["Model"], str, bool]:
+    source_model: type["Model"], related_parts: list
+) -> tuple[str, type["Model"], str, bool]:
     """
     Walks the relation to retrieve the actual model on which the clause should be
     constructed, extracts alias based on last relation leading to target model.
     :param related_parts: list of related names extracted from string
-    :type related_parts: Union[List, List[str]]
+    :type related_parts: Union[list, list[str]]
     :param source_model: model from which relation starts
-    :type source_model: Type[Model]
+    :type source_model: type[Model]
     :return: table prefix, target model and relation string
-    :rtype: Tuple[str, Type["Model"], str]
+    :rtype: tuple[str, type["Model"], str]
     """
     table_prefix = ""
     is_through = False
@@ -229,27 +219,27 @@ def get_relationship_alias_model_and_str(
 
 
 def _process_through_field(
-    related_parts: List,
+    related_parts: list,
     relation: Optional[str],
     related_field: "BaseField",
-    previous_model: Type["Model"],
-    previous_models: List[Type["Model"]],
-) -> Tuple[Type["Model"], Optional[str], bool]:
+    previous_model: type["Model"],
+    previous_models: list[type["Model"]],
+) -> tuple[type["Model"], Optional[str], bool]:
     """
     Helper processing through models as they need to be treated differently.
 
     :param related_parts: split relation string
-    :type related_parts: List[str]
+    :type related_parts: list[str]
     :param relation: relation name
     :type relation: str
     :param related_field: field with relation declaration
     :type related_field: "ForeignKeyField"
     :param previous_model: model from which relation is coming
-    :type previous_model: Type["Model"]
+    :type previous_model: type["Model"]
     :param previous_models: list of already visited models in relation chain
-    :type previous_models: List[Type["Model"]]
+    :type previous_models: list[type["Model"]]
     :return: previous_model, relation, is_through
-    :rtype: Tuple[Type["Model"], str, bool]
+    :rtype: tuple[type["Model"], str, bool]
     """
     is_through = True
     related_parts.remove(relation)

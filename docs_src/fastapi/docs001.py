@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 import ormar
 from fastapi import FastAPI
@@ -24,7 +24,7 @@ class Item(ormar.Model):
     category: Optional[Category] = ormar.ForeignKey(Category, nullable=True)
 
 
-@app.get("/items/", response_model=List[Item])
+@app.get("/items/", response_model=list[Item])
 async def get_items():
     items = await Item.objects.select_related("category").all()
     return items

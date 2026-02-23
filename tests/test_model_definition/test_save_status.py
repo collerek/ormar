@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 import ormar
 import pytest
@@ -27,7 +27,7 @@ class HQ(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
-    nicks: List[NickNames] = ormar.ManyToMany(NickNames, through=NicksHq)
+    nicks: list[NickNames] = ormar.ManyToMany(NickNames, through=NicksHq)
 
 
 class Company(ormar.Model):

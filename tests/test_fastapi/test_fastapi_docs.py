@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import ormar
 import pydantic
@@ -40,7 +40,7 @@ class Item(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     pydantic_int: Optional[int] = None
-    test_P: List[PTestP] = Field(default_factory=list)
+    test_P: list[PTestP] = Field(default_factory=list)
     test_P_or_A: Union[int, str, None] = None
     categories = ormar.ManyToMany(Category)
 
@@ -48,7 +48,7 @@ class Item(ormar.Model):
 create_test_database = init_tests(base_ormar_config)
 
 
-@app.get("/items/", response_model=List[Item])
+@app.get("/items/", response_model=list[Item])
 async def get_items():
     items = await Item.objects.select_related("categories").all()
     for item in items:

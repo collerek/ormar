@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Optional, cast
 
 import ormar
 from ormar.queryset.utils import translate_list_to_dict
@@ -17,7 +17,7 @@ class MergeModelMixin:
     """
 
     @classmethod
-    def _recursive_add(cls, model_group: List["Model"]) -> List["Model"]:
+    def _recursive_add(cls, model_group: list["Model"]) -> list["Model"]:
         """
         Instead of accumulating the model additions one by one, this recursively adds
         the models. E.G.
@@ -42,7 +42,7 @@ class MergeModelMixin:
         return cls._recursive_add(added_values)
 
     @classmethod
-    def merge_instances_list(cls, result_rows: List["Model"]) -> List["Model"]:
+    def merge_instances_list(cls, result_rows: list["Model"]) -> list["Model"]:
         """
         Merges a list of models into list of unique models.
 
@@ -51,12 +51,12 @@ class MergeModelMixin:
 
         :param result_rows: list of already initialized Models with child models
         populated, each instance is one row in db and some models can duplicate
-        :type result_rows: List["Model"]
+        :type result_rows: list["Model"]
         :return: list of merged models where each main model is unique
-        :rtype: List["Model"]
+        :rtype: list["Model"]
         """
-        merged_rows: List["Model"] = []
-        grouped_instances: Dict = {}
+        merged_rows: list["Model"] = []
+        grouped_instances: dict = {}
 
         for model in result_rows:
             grouped_instances.setdefault(model.pk, []).append(model)
@@ -69,7 +69,7 @@ class MergeModelMixin:
 
     @classmethod
     def merge_two_instances(
-        cls, one: "Model", other: "Model", relation_map: Optional[Dict] = None
+        cls, one: "Model", other: "Model", relation_map: Optional[dict] = None
     ) -> "Model":
         """
         Merges current (other) Model and previous one (one) and returns the current
@@ -78,7 +78,7 @@ class MergeModelMixin:
         If needed it's calling itself recurrently and merges also children models.
 
         :param relation_map: map of models relations to follow
-        :type relation_map: Dict
+        :type relation_map: dict
         :param one: previous model instance
         :type one: Model
         :param other: current model instance
@@ -125,10 +125,10 @@ class MergeModelMixin:
     def _merge_items_lists(
         cls,
         field_name: str,
-        current_field: List,
-        other_value: List,
-        relation_map: Optional[Dict],
-    ) -> List:
+        current_field: list,
+        other_value: list,
+        relation_map: Optional[dict],
+    ) -> list:
         """
         Takes two list of nested models and process them going deeper
         according with the map.
@@ -141,13 +141,13 @@ class MergeModelMixin:
         :param field_name: name of the current relation field
         :type field_name: str
         :param current_field: list of nested models from one model
-        :type current_field: List[Model]
+        :type current_field: list[Model]
         :param other_value: list of nested models from other model
-        :type other_value: List[Model]
+        :type other_value: list[Model]
         :param relation_map: map of relations to follow
-        :type relation_map: Dict
+        :type relation_map: dict
         :return: merged list of models
-        :rtype: List[Model]
+        :rtype: list[Model]
         """
         value_to_set = [x for x in other_value]
         for cur_field in current_field:

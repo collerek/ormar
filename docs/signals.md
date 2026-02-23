@@ -146,7 +146,7 @@ album.signals.pre_save.disconnect(before_save)
 
 ### pre_save
 
-`pre_save(sender: Type["Model"], instance: "Model")`
+`pre_save(sender: type["Model"], instance: "Model")`
 
 Send for `Model.save()` and `Model.objects.create()` methods.
 
@@ -154,7 +154,7 @@ Send for `Model.save()` and `Model.objects.create()` methods.
 
 ### post_save
 
-`post_save(sender: Type["Model"], instance: "Model")`
+`post_save(sender: type["Model"], instance: "Model")`
 
 Send for `Model.save()` and `Model.objects.create()` methods.
 
@@ -162,7 +162,7 @@ Send for `Model.save()` and `Model.objects.create()` methods.
 
 ### pre_update
 
-`pre_update(sender: Type["Model"], instance: "Model")`
+`pre_update(sender: type["Model"], instance: "Model")`
 
 Send for `Model.update()` method.
 
@@ -170,7 +170,7 @@ Send for `Model.update()` method.
 
 ### post_update
 
-`post_update(sender: Type["Model"], instance: "Model")`
+`post_update(sender: type["Model"], instance: "Model")`
 
 Send for `Model.update()` method.
 
@@ -178,7 +178,7 @@ Send for `Model.update()` method.
 
 ### pre_delete
 
-`pre_delete(sender: Type["Model"], instance: "Model")`
+`pre_delete(sender: type["Model"], instance: "Model")`
 
 Send for `Model.save()` and `Model.objects.create()` methods.
 
@@ -186,7 +186,7 @@ Send for `Model.save()` and `Model.objects.create()` methods.
 
 ### post_delete
 
-`post_delete(sender: Type["Model"], instance: "Model")`
+`post_delete(sender: type["Model"], instance: "Model")`
 
 Send for `Model.update()` method.
 
@@ -194,8 +194,8 @@ Send for `Model.update()` method.
 
 ### pre_relation_add
 
-`pre_relation_add(sender: Type["Model"], instance: "Model", child: "Model", 
-relation_name: str, passed_args: Dict)`
+`pre_relation_add(sender: type["Model"], instance: "Model", child: "Model", 
+relation_name: str, passed_args: dict)`
 
 Send for `Model.relation_name.add()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
 
@@ -204,8 +204,8 @@ Send for `Model.relation_name.add()` method for `ManyToMany` relations and rever
 
 ### post_relation_add
 
-`post_relation_add(sender: Type["Model"], instance: "Model", child: "Model", 
-relation_name: str, passed_args: Dict)`
+`post_relation_add(sender: type["Model"], instance: "Model", child: "Model", 
+relation_name: str, passed_args: dict)`
 
 Send for `Model.relation_name.add()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
 
@@ -214,7 +214,7 @@ Send for `Model.relation_name.add()` method for `ManyToMany` relations and rever
 
 ### pre_relation_remove
 
-`pre_relation_remove(sender: Type["Model"], instance: "Model", child: "Model", 
+`pre_relation_remove(sender: type["Model"], instance: "Model", child: "Model", 
 relation_name: str)`
 
 Send for `Model.relation_name.remove()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
@@ -224,8 +224,8 @@ Send for `Model.relation_name.remove()` method for `ManyToMany` relations and re
 
 ### post_relation_remove
 
-`post_relation_remove(sender: Type["Model"], instance: "Model", child: "Model", 
-relation_name: str, passed_args: Dict)`
+`post_relation_remove(sender: type["Model"], instance: "Model", child: "Model", 
+relation_name: str, passed_args: dict)`
 
 Send for `Model.relation_name.remove()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
 
@@ -234,8 +234,8 @@ Send for `Model.relation_name.remove()` method for `ManyToMany` relations and re
 
 ### post_bulk_update
 
-`post_bulk_update(sender: Type["Model"], instances: List["Model"], **kwargs)`, 
-Send for `Model.objects.bulk_update(List[objects])` method.
+`post_bulk_update(sender: type["Model"], instances: list["Model"], **kwargs)`, 
+Send for `Model.objects.bulk_update(list[objects])` method.
 
 
 ## Defining your own signals

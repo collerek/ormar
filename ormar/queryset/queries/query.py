@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING, Any, Optional, Union, cast
 
 import sqlalchemy
 from sqlalchemy import Column, Select, Table, TextClause
@@ -20,14 +20,14 @@ if TYPE_CHECKING:  # pragma no cover
 class Query:
     def __init__(  # noqa CFQ002
         self,
-        model_cls: Type["Model"],
-        filter_clauses: List[FilterAction],
-        exclude_clauses: List[FilterAction],
-        select_related: List,
+        model_cls: type["Model"],
+        filter_clauses: list[FilterAction],
+        exclude_clauses: list[FilterAction],
+        select_related: list,
         limit_count: Optional[int],
         offset: Optional[int],
         excludable: "ExcludableItems",
-        order_bys: Optional[List["OrderAction"]],
+        order_bys: Optional[list["OrderAction"]],
         limit_raw_sql: bool,
     ) -> None:
         self.query_offset = offset
@@ -40,12 +40,12 @@ class Query:
         self.model_cls = model_cls
         self.table = self.model_cls.ormar_config.table
 
-        self.used_aliases: List[str] = []
+        self.used_aliases: list[str] = []
 
-        self.select_from: Union[Join, Table, List[str]] = []
-        self.columns: List[Column] = []
+        self.select_from: Union[Join, Table, list[str]] = []
+        self.columns: list[Column] = []
         self.order_columns = order_bys
-        self.sorted_orders: Dict[OrderAction, TextClause] = {}
+        self.sorted_orders: dict[OrderAction, TextClause] = {}
         self._init_sorted_orders()
 
         self.limit_raw_sql = limit_raw_sql
@@ -164,7 +164,7 @@ class Query:
 
     def _build_pagination_condition(
         self,
-    ) -> Tuple[
+    ) -> tuple[
         sqlalchemy.sql.expression.TextClause, sqlalchemy.sql.expression.TextClause
     ]:
         """

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, ForwardRef, List, Optional, Type
+from typing import TYPE_CHECKING, ForwardRef, Optional
 
 import ormar  # noqa: I100
 
@@ -7,7 +7,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def validate_related_names_in_relations(  # noqa CCR001
-    model_fields: Dict, new_model: Type["Model"]
+    model_fields: dict, new_model: type["Model"]
 ) -> None:
     """
     Performs a validation of relation_names in relation fields.
@@ -18,11 +18,11 @@ def validate_related_names_in_relations(  # noqa CCR001
 
     :raises ModelDefinitionError: if validation of related_names fail
     :param model_fields: dictionary of declared ormar model fields
-    :type model_fields: Dict[str, ormar.Field]
+    :type model_fields: dict[str, ormar.Field]
     :param new_model:
     :type new_model: Model class
     """
-    already_registered: Dict[str, List[Optional[str]]] = dict()
+    already_registered: dict[str, list[Optional[str]]] = dict()
     for field in model_fields.values():
         if field.is_relation:
             to_name = (

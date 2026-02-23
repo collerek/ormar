@@ -255,11 +255,11 @@ metadata: Optional[sqlalchemy.MetaData]
 database: Optional[databases.Database]
 engine: Optional[sqlalchemy.engine.Engine]
 tablename: Optional[str]
-order_by: Optional[List[str]]
+order_by: Optional[list[str]]
 abstract: bool
-queryset_class: Type[QuerySet]
+queryset_class: type[QuerySet]
 extra: Extra
-constraints: Optional[List[ColumnCollectionConstraint]]
+constraints: Optional[list[ColumnCollectionConstraint]]
 ```
 
 ### `BaseMeta` equivalent - best practice

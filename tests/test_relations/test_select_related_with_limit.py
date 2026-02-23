@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 import ormar
 import pytest
@@ -29,7 +29,7 @@ class PrimaryModel(ormar.Model):
     name: str = ormar.String(max_length=255, index=True)
     some_text: str = ormar.Text()
     some_other_text: Optional[str] = ormar.Text(nullable=True)
-    keywords: Optional[List[Keyword]] = ormar.ManyToMany(
+    keywords: Optional[list[Keyword]] = ormar.ManyToMany(
         Keyword, through=KeywordPrimaryModel
     )
 

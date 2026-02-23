@@ -1,5 +1,5 @@
 # Adopted from pydantic
-from typing import Optional, Tuple
+from typing import Optional
 
 
 class OrmarDeprecationWarning(DeprecationWarning):
@@ -16,15 +16,15 @@ class OrmarDeprecationWarning(DeprecationWarning):
     """
 
     message: str
-    since: Tuple[int, int]
-    expected_removal: Tuple[int, int]
+    since: tuple[int, int]
+    expected_removal: tuple[int, int]
 
     def __init__(
         self,
         message: str,
         *args: object,
-        since: Tuple[int, int],
-        expected_removal: Optional[Tuple[int, int]] = None,
+        since: tuple[int, int],
+        expected_removal: Optional[tuple[int, int]] = None,
     ) -> None:  # pragma: no cover
         super().__init__(message, *args)
         self.message = message.rstrip(".")

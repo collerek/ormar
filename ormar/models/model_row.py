@@ -1,10 +1,9 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING, Any, Optional, Union, cast
 
 try:
     from sqlalchemy.engine.result import ResultProxy  # type: ignore
 except ImportError:  # pragma: no cover
     from sqlalchemy.engine.result import Row as ResultProxy  # type: ignore
-
 
 from ormar.models import NewBaseModel  # noqa: I202
 from ormar.models.excludable import ExcludableItems
@@ -20,14 +19,14 @@ class ModelRow(NewBaseModel):
     def from_row(  # noqa: CFQ002
         cls,
         row: ResultProxy,
-        source_model: Type["Model"],
-        select_related: Optional[List] = None,
+        source_model: type["Model"],
+        select_related: Optional[list] = None,
         related_models: Any = None,
         related_field: Optional["ForeignKeyField"] = None,
         excludable: Optional[ExcludableItems] = None,
         current_relation_str: str = "",
-        proxy_source_model: Optional[Type["Model"]] = None,
-        used_prefixes: Optional[List[str]] = None,
+        proxy_source_model: Optional[type["Model"]] = None,
+        used_prefixes: Optional[list[str]] = None,
     ) -> Optional["Model"]:
         """
         Model method to convert raw sql row from database into ormar.Model instance.
@@ -43,27 +42,27 @@ class ModelRow(NewBaseModel):
         nested models in result.
 
         :param used_prefixes: list of already extracted prefixes
-        :type used_prefixes: List[str]
+        :type used_prefixes: list[str]
         :param proxy_source_model: source model from which querysetproxy is constructed
-        :type proxy_source_model: Optional[Type["ModelRow"]]
+        :type proxy_source_model: Optional[type["ModelRow"]]
         :param excludable: structure of fields to include and exclude
         :type excludable: ExcludableItems
         :param current_relation_str: name of the relation field
         :type current_relation_str: str
         :param source_model: model on which relation was defined
-        :type source_model: Type[Model]
+        :type source_model: type[Model]
         :param row: raw result row from the database
         :type row: ResultProxy
         :param select_related: list of names of related models fetched from database
-        :type select_related: List
+        :type select_related: list
         :param related_models: list or dict of related models
-        :type related_models: Union[List, Dict]
+        :type related_models: Union[list, dict]
         :param related_field: field with relation declaration
         :type related_field: ForeignKeyField
         :return: returns model if model is populated from database
         :rtype: Optional[Model]
         """
-        item: Dict[str, Any] = {}
+        item: dict[str, Any] = {}
         select_related = select_related or []
         related_models = related_models or []
         table_prefix = ""
@@ -108,21 +107,21 @@ class ModelRow(NewBaseModel):
     @classmethod
     def _process_table_prefix(
         cls,
-        source_model: Type["Model"],
+        source_model: type["Model"],
         current_relation_str: str,
         related_field: "ForeignKeyField",
-        used_prefixes: List[str],
+        used_prefixes: list[str],
     ) -> str:
         """
 
         :param source_model: model on which relation was defined
-        :type source_model: Type[Model]
+        :type source_model: type[Model]
         :param current_relation_str: current relation string
         :type current_relation_str: str
         :param related_field: field with relation declaration
         :type related_field: "ForeignKeyField"
         :param used_prefixes: list of already extracted prefixes
-        :type used_prefixes: List[str]
+        :type used_prefixes: list[str]
         :return: table_prefix to use
         :rtype: str
         """
@@ -148,13 +147,13 @@ class ModelRow(NewBaseModel):
         cls,
         item: dict,
         row: ResultProxy,
-        source_model: Type["Model"],
+        source_model: type["Model"],
         related_models: Any,
         excludable: ExcludableItems,
         table_prefix: str,
-        used_prefixes: List[str],
+        used_prefixes: list[str],
         current_relation_str: Optional[str] = None,
-        proxy_source_model: Optional[Type["Model"]] = None,
+        proxy_source_model: Optional[type["Model"]] = None,
     ) -> dict:
         """
         Traverses structure of related models and populates the nested models
@@ -167,22 +166,22 @@ class ModelRow(NewBaseModel):
         instances. In the end those instances are added to the final model dictionary.
 
         :param proxy_source_model: source model from which querysetproxy is constructed
-        :type proxy_source_model: Optional[Type["ModelRow"]]
+        :type proxy_source_model: Optional[type["ModelRow"]]
         :param excludable: structure of fields to include and exclude
         :type excludable: ExcludableItems
         :param source_model: source model from which relation started
-        :type source_model: Type[Model]
+        :type source_model: type[Model]
         :param current_relation_str: joined related parts into one string
         :type current_relation_str: str
         :param item: dictionary of already populated nested models, otherwise empty dict
-        :type item: Dict
+        :type item: dict
         :param row: raw result row from the database
         :type row: ResultProxy
         :param related_models: list or dict of related models
-        :type related_models: Union[Dict, List]
+        :type related_models: Union[dict, list]
         :return: dictionary with keys corresponding to model fields names
         and values are database values
-        :rtype: Dict
+        :rtype: dict
         """
 
         for related in related_models:
@@ -190,7 +189,7 @@ class ModelRow(NewBaseModel):
             field = cast("ForeignKeyField", field)
             model_cls = field.to
             model_excludable = excludable.get(
-                model_cls=cast(Type["Model"], cls), alias=table_prefix
+                model_cls=cast(type["Model"], cls), alias=table_prefix
             )
             if model_excludable.is_excluded(related):
                 continue
@@ -229,15 +228,15 @@ class ModelRow(NewBaseModel):
 
     @staticmethod
     def _process_remainder_and_relation_string(
-        related_models: Union[Dict, List],
+        related_models: Union[dict, list],
         current_relation_str: Optional[str],
         related: str,
-    ) -> Tuple[str, Optional[Union[Dict, List]]]:
+    ) -> tuple[str, Optional[Union[dict, list]]]:
         """
         Process remainder models and relation string
 
         :param related_models: list or dict of related models
-        :type related_models: Union[Dict, List]
+        :type related_models: Union[dict, list]
         :param current_relation_str: current relation string
         :type current_relation_str: Optional[str]
         :param related: name of the relation
@@ -258,11 +257,11 @@ class ModelRow(NewBaseModel):
     def _populate_through_instance(  # noqa: CFQ002
         cls,
         row: ResultProxy,
-        item: Dict,
+        item: dict,
         related: str,
         excludable: ExcludableItems,
         child: "Model",
-        proxy_source_model: Optional[Type["Model"]],
+        proxy_source_model: Optional[type["Model"]],
     ) -> None:
         """
         Populates the through model on reverse side of current query.
@@ -271,7 +270,7 @@ class ModelRow(NewBaseModel):
         :param row: row from db result
         :type row: ResultProxy
         :param item: parent item dict
-        :type item: Dict
+        :type item: dict
         :param related: current relation name
         :type related: str
         :param excludable: structure of fields to include and exclude
@@ -279,7 +278,7 @@ class ModelRow(NewBaseModel):
         :param child: child item of parent
         :type child: "Model"
         :param proxy_source_model: source model from which querysetproxy is constructed
-        :type proxy_source_model: Type["Model"]
+        :type proxy_source_model: type["Model"]
         """
         through_name = cls.ormar_config.model_fields[related].through.get_name()
         through_child = cls._create_through_instance(
@@ -340,7 +339,7 @@ class ModelRow(NewBaseModel):
         row: ResultProxy,
         table_prefix: str,
         excludable: ExcludableItems,
-    ) -> Dict:
+    ) -> dict:
         """
         Extracts own fields from raw sql result, using a given prefix.
         Prefix changes depending on the table's position in a join.
@@ -356,7 +355,7 @@ class ModelRow(NewBaseModel):
         :param excludable: structure of fields to include and exclude
         :type excludable: ExcludableItems
         :param item: dictionary of already populated nested models, otherwise empty dict
-        :type item: Dict
+        :type item: dict
         :param row: raw result row from the database
         :type row: sqlalchemy.engine.result.ResultProxy
         :param table_prefix: prefix of the table from AliasManager
@@ -365,7 +364,7 @@ class ModelRow(NewBaseModel):
         :type table_prefix: str
         :return: dictionary with keys corresponding to model fields names
         and values are database values
-        :rtype: Dict
+        :rtype: dict
         """
         selected_columns = cls.own_table_columns(
             model=cls, excludable=excludable, alias=table_prefix, use_alias=False

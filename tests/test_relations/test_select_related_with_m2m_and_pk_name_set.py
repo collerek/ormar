@@ -1,6 +1,6 @@
 # type: ignore
 from datetime import date
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import ormar
 import pytest
@@ -39,7 +39,7 @@ class User(ormar.Model):
     company2: Company = ormar.ForeignKey(Company, related_name="secondary_users")
     name: str = ormar.Text()
     role: Optional[Role] = ormar.ForeignKey(Role)
-    roleforcompanies: Optional[Union[Company, List[Company]]] = ormar.ManyToMany(
+    roleforcompanies: Optional[Union[Company, list[Company]]] = ormar.ManyToMany(
         Company, through=UserRoleCompany, related_name="role_users"
     )
     lastupdate: date = ormar.DateTime(server_default=sqlalchemy.func.now())

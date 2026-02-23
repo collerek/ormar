@@ -1,5 +1,3 @@
-from typing import List
-
 import ormar
 from pydantic import PrivateAttr
 
@@ -15,7 +13,7 @@ class Subscription(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     stripe_subscription_id: str = ormar.String(nullable=False, max_length=256)
 
-    _add_payments: List[str] = PrivateAttr(default_factory=list)
+    _add_payments: list[str] = PrivateAttr(default_factory=list)
 
     def add_payment(self, payment: str):
         self._add_payments.append(payment)

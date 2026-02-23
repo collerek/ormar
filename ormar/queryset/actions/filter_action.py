@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Type
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import TextClause
 
@@ -55,7 +55,7 @@ class FilterAction(QueryAction):
     Extracted in order to easily change table prefixes on complex relations.
     """
 
-    def __init__(self, filter_str: str, value: Any, model_cls: Type["Model"]) -> None:
+    def __init__(self, filter_str: str, value: Any, model_cls: type["Model"]) -> None:
         super().__init__(query_str=filter_str, model_cls=model_cls)
         self.filter_value = value
         self._escape_characters_in_clause()
@@ -85,7 +85,7 @@ class FilterAction(QueryAction):
         :raises QueryDefinitionError: if contains or icontains is used with
         ormar model instance
         :return: escaped value and flag if escaping is needed
-        :rtype: Tuple[Any, bool]
+        :rtype: tuple[Any, bool]
         """
         self.has_escaped_character = False
         if self.operator in [

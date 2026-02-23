@@ -1,4 +1,4 @@
-from typing import ForwardRef, List, Optional
+from typing import ForwardRef, Optional
 
 import ormar
 import pytest
@@ -32,7 +32,7 @@ class Country(ormar.Model):
     capital: Optional[CityRef] = ormar.ForeignKey(  # type: ignore
         CityRef, related_name="capital_city", nullable=True
     )
-    borders: List[Optional[CountryRef]] = ormar.ManyToMany(  # type: ignore
+    borders: list[Optional[CountryRef]] = ormar.ManyToMany(  # type: ignore
         CountryRef, nullable=True, skip_reverse=True
     )
 

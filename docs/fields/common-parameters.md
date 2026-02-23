@@ -197,7 +197,7 @@ class OverwriteTest(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     my_int: str = ormar.Integer(overwrite_pydantic_type=PositiveInt)
     constraint_dict: Json = ormar.JSON(
-        overwrite_pydantic_type=Optional[Json[Dict[str, int]]])
+        overwrite_pydantic_type=Optional[Json[dict[str, int]]])
 ```
 
 [relations]: ../relations/index.md

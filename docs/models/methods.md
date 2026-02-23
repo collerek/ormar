@@ -47,14 +47,14 @@ Explanation of model_dump parameters:
 
 ### include (`ormar` modified)
 
-`include: Union[Set, Dict] = None`
+`include: Union[set, dict] = None`
 
 Set or dictionary of field names to include in returned dictionary.
 
 Note that `pydantic` has an uncommon pattern of including/ excluding fields in lists (so also nested models) by an index.
 And if you want to exclude the field in all children you need to pass a `__all__` key to dictionary. 
 
-You cannot exclude nested models in `Set`s in `pydantic` but you can in `ormar` 
+You cannot exclude nested models in `set`s in `pydantic` but you can in `ormar` 
 (by adding double underscore on relation name i.e. to exclude name of category for a book you can use `exclude={"book__category__name"}`)
 
 `ormar` does not support by index exclusion/ inclusions and accepts a simplified and more user-friendly notation.
@@ -66,14 +66,14 @@ To check how you can include/exclude fields, including nested fields check out [
 
 ### exclude (`ormar` modified)
 
-`exclude: Union[Set, Dict] = None`
+`exclude: Union[set, dict] = None`
 
 Set or dictionary of field names to exclude in returned dictionary.
 
 Note that `pydantic` has an uncommon pattern of including/ excluding fields in lists (so also nested models) by an index.
 And if you want to exclude the field in all children you need to pass a `__all__` key to dictionary. 
 
-You cannot exclude nested models in `Set`s in `pydantic` but you can in `ormar` 
+You cannot exclude nested models in `set`s in `pydantic` but you can in `ormar` 
 (by adding double underscore on relation name i.e. to exclude name of category for a book you cen use `exclude={"book__category__name"}`)
 
 `ormar` does not support by index exclusion/ inclusions and accepts a simplified and more user-friendly notation.
@@ -109,7 +109,7 @@ class Item(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     price: float = ormar.Float(default=9.99)
-    categories: List[Category] = ormar.ManyToMany(Category)
+    categories: list[Category] = ormar.ManyToMany(Category)
 
 category = Category(name="Test 2")
 assert category.model_dump() == {'id': None, 'items': [], 'name': 'Test 2',
@@ -146,7 +146,7 @@ class Item(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     price: float = ormar.Float(default=9.99)
-    categories: List[Category] = ormar.ManyToMany(Category)
+    categories: list[Category] = ormar.ManyToMany(Category)
     
 category = Category()
 # note that Integer pk is by default autoincrement so optional
@@ -182,7 +182,7 @@ class Item(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     price: float = ormar.Float(default=9.99)
-    categories: List[Category] = ormar.ManyToMany(Category)
+    categories: list[Category] = ormar.ManyToMany(Category)
 
 
 category = Category(name=None)
@@ -239,7 +239,7 @@ class Item(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    categories: List[Category] = ormar.ManyToMany(Category)
+    categories: list[Category] = ormar.ManyToMany(Category)
 
 # tree defining the models
 item_dict = {
@@ -278,7 +278,7 @@ Of course the end result is a string with json representation and not a dictiona
 
 ## get_pydantic()
 
-`get_pydantic(include: Union[Set, Dict] = None, exclude: Union[Set, Dict] = None)`
+`get_pydantic(include: Union[set, dict] = None, exclude: Union[set, dict] = None)`
 
 This method allows you to generate `pydantic` models from your ormar models without you needing to retype all the fields.
 
@@ -348,7 +348,7 @@ class Item(BaseModel):
     
 class Category(BaseModel):
     id: Optional[int]
-    items: Optional[List[Item]]
+    items: Optional[list[Item]]
 ```
 
 Of course, you can use also deeply nested structures and ormar will generate it's pydantic equivalent for you (in a way that exclude loops).
@@ -380,7 +380,7 @@ track.album.name # will return 'Malibu'
 
 ## load_all()
 
-`load_all(follow: bool = False, exclude: Union[List, str, Set, Dict] = None) -> Model`
+`load_all(follow: bool = False, exclude: Union[list, str, set, dict] = None) -> Model`
 
 Method works like `load()` but also goes through all relations of the `Model` on which the method is called, 
 and reloads them from database.
@@ -432,7 +432,7 @@ await track.save() # will raise integrity error as pk is populated
 
 ## update()
 
-`update(_columns: List[str] = None, **kwargs) -> self`
+`update(_columns: list[str] = None, **kwargs) -> self`
 
 You can update models by using `QuerySet.update()` method or by updating your model attributes (fields) and calling `update()` method.
 
@@ -511,7 +511,7 @@ await track.delete() # will delete the model from database
 
 ## save_related()
 
-`save_related(follow: bool = False, save_all: bool = False, exclude=Optional[Union[Set, Dict]]) -> None`
+`save_related(follow: bool = False, save_all: bool = False, exclude=Optional[Union[set, dict]]) -> None`
 
 Method goes through all relations of the `Model` on which the method is called, 
 and calls `upsert()` method on each model that is **not** saved. 

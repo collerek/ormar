@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 import ormar
 import pytest
@@ -53,13 +53,13 @@ class QuizAnswer(BaseModel):
 
 class QuizQuestion(BaseModel):
     question: str
-    answers: List[QuizAnswer]
+    answers: list[QuizAnswer]
 
 
 class QuizInput(BaseModel):
     title: str
     description: str
-    questions: List[QuizQuestion]
+    questions: list[QuizQuestion]
 
 
 class Quiz(ormar.Model):

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 import ormar
 import pytest
@@ -23,7 +23,7 @@ class Role(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    users: List[User] = ormar.ManyToMany(User)
+    users: list[User] = ormar.ManyToMany(User)
 
 
 class Category(ormar.Model):

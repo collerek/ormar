@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Optional
+from typing import Optional
 
 import ormar
 import pytest
@@ -159,7 +159,7 @@ async def get_bus(item_id: int):
     return bus
 
 
-@app.get("/buses/", response_model=List[Bus])
+@app.get("/buses/", response_model=list[Bus])
 async def get_buses():
     buses = await Bus.objects.select_related(["owner", "co_owner"]).all()
     return buses
@@ -190,7 +190,7 @@ async def add_bus_coowner(item_id: int, person: Person):
     return bus
 
 
-@app.get("/buses2/", response_model=List[Bus2])
+@app.get("/buses2/", response_model=list[Bus2])
 async def get_buses2():
     buses = await Bus2.objects.select_related(["owner", "co_owners"]).all()
     return buses

@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 import ormar
 import sqlalchemy
@@ -23,4 +23,4 @@ class Course(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    department: Optional[Union[Department, Dict]] = ormar.ForeignKey(Department)
+    department: Optional[Union[Department, dict]] = ormar.ForeignKey(Department)

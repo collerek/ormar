@@ -1,5 +1,3 @@
-from typing import List
-
 import pytest
 
 from benchmarks.conftest import Author
@@ -8,9 +6,9 @@ pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.parametrize("num_models", [250, 500, 1000])
-async def test_values(aio_benchmark, num_models: int, authors_in_db: List[Author]):
+async def test_values(aio_benchmark, num_models: int, authors_in_db: list[Author]):
     @aio_benchmark
-    async def get_all_values(authors: List[Author]):
+    async def get_all_values(authors: list[Author]):
         return await Author.objects.values()
 
     authors_list = get_all_values(authors_in_db)
@@ -19,9 +17,9 @@ async def test_values(aio_benchmark, num_models: int, authors_in_db: List[Author
 
 
 @pytest.mark.parametrize("num_models", [250, 500, 1000])
-async def test_values_list(aio_benchmark, num_models: int, authors_in_db: List[Author]):
+async def test_values_list(aio_benchmark, num_models: int, authors_in_db: list[Author]):
     @aio_benchmark
-    async def get_all_values_list(authors: List[Author]):
+    async def get_all_values_list(authors: list[Author]):
         return await Author.objects.values_list()
 
     authors_list = get_all_values_list(authors_in_db)

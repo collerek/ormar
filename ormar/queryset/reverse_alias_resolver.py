@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, List, Type, cast
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import ForeignKeyField, Model
@@ -13,9 +13,9 @@ class ReverseAliasResolver:
 
     def __init__(
         self,
-        model_cls: Type["Model"],
+        model_cls: type["Model"],
         excludable: "ExcludableItems",
-        select_related: List[str],
+        select_related: list[str],
         exclude_through: bool = False,
     ) -> None:
         self.select_related = select_related
@@ -26,20 +26,20 @@ class ReverseAliasResolver:
         self.excludable = excludable
         self.exclude_through = exclude_through
 
-        self._fields: Dict[str, "ForeignKeyField"] = dict()
-        self._prefixes: Dict[str, str] = dict()
-        self._previous_prefixes: List[str] = [""]
-        self._resolved_names: Dict[str, str] = dict()
+        self._fields: dict[str, "ForeignKeyField"] = dict()
+        self._prefixes: dict[str, str] = dict()
+        self._previous_prefixes: list[str] = [""]
+        self._resolved_names: dict[str, str] = dict()
 
-    def resolve_columns(self, columns_names: List[str]) -> Dict:
+    def resolve_columns(self, columns_names: list[str]) -> dict:
         """
         Takes raw query prefixed column and resolves the prefixes to
         relation strings (relation names connected with dunders).
 
         :param columns_names: list of column names with prefixes from query
-        :type columns_names: List[str]
+        :type columns_names: list[str]
         :return: dictionary of prefix: resolved names
-        :rtype: Union[None, Dict[str, str]]
+        :rtype: Union[None, dict[str, str]]
         """
         self._create_prefixes_map()
         for column_name in columns_names:
@@ -195,7 +195,7 @@ class ReverseAliasResolver:
 
     def _handle_through_fields_and_prefix(
         self,
-        model_cls: Type["Model"],
+        model_cls: type["Model"],
         field: "ForeignKeyField",
         previous_related_str: str,
         relation: str,
@@ -208,7 +208,7 @@ class ReverseAliasResolver:
         Nested relations are a chain of relation names with __ in between.
 
         :param model_cls: model of current relation
-        :type model_cls: Type["Model"]
+        :type model_cls: type["Model"]
         :param field: field with relation
         :type field: ForeignKeyField
         :param previous_related_str: concatenated chain linked with "__"

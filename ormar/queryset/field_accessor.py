@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Optional, Type, cast
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 from ormar.queryset.actions import OrderAction
 from ormar.queryset.actions.filter_action import METHODS_TO_OPERATORS
@@ -16,9 +16,9 @@ class FieldAccessor:
 
     def __init__(
         self,
-        source_model: Type["Model"],
+        source_model: type["Model"],
         field: Optional["BaseField"] = None,
-        model: Optional[Type["Model"]] = None,
+        model: Optional[type["Model"]] = None,
         access_chain: str = "",
     ) -> None:
         self._source_model = source_model

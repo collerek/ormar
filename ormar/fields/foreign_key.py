@@ -3,18 +3,7 @@ import sys
 import uuid
 from dataclasses import dataclass
 from random import choices
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    ForwardRef,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, ForwardRef, Optional, Union, overload
 
 import sqlalchemy
 from pydantic import BaseModel, create_model
@@ -29,7 +18,7 @@ if TYPE_CHECKING:  # pragma no cover
     from ormar.models import Model, NewBaseModel, T
 
 
-def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
+def create_dummy_instance(fk: type["T"], pk: Any = None) -> "T":
     """
     Ormar never returns you a raw data.
     So if you have a related field that has a value populated
@@ -60,9 +49,9 @@ def create_dummy_instance(fk: Type["T"], pk: Any = None) -> "T":
 
 
 def create_dummy_model(
-    base_model: Type["T"],
+    base_model: type["T"],
     pk_field: Union[BaseField, "ForeignKeyField", "ManyToManyField"],
-) -> Type["BaseModel"]:
+) -> type["BaseModel"]:
     """
     Used to construct a dummy pydantic model for type hints and pydantic validation.
     Populates only pk field and set it to desired type.
@@ -88,11 +77,11 @@ def create_dummy_model(
 
 
 def populate_fk_params_based_on_to_model(
-    to: Type["T"],
+    to: type["T"],
     nullable: bool,
     onupdate: Optional[str] = None,
     ondelete: Optional[str] = None,
-) -> Tuple[Any, List, Any, Any]:
+) -> tuple[Any, list, Any, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
     pydantic field to use, ForeignKey constraint and type of the target column field.
@@ -108,7 +97,7 @@ def populate_fk_params_based_on_to_model(
     How to treat child rows on delete of parent (the one where FK is defined) model.
     :type ondelete: str
     :return: tuple with target pydantic type, list of fk constraints and target col type
-    :rtype: Tuple[Any, List, Any]
+    :rtype: tuple[Any, list, Any]
     """
     fk_string = (
         to.ormar_config.tablename + "." + to.get_column_alias(to.ormar_config.pkname)
@@ -129,7 +118,7 @@ def populate_fk_params_based_on_to_model(
     return __type__, constraints, column_type, pk_only_model
 
 
-def validate_not_allowed_fields(kwargs: Dict) -> None:
+def validate_not_allowed_fields(kwargs: dict) -> None:
     """
     Verifies if not allowed parameters are set on relation models.
     Usually they are omitted later anyway but this way it's explicitly
@@ -137,7 +126,7 @@ def validate_not_allowed_fields(kwargs: Dict) -> None:
 
     :raises ModelDefinitionError: if any forbidden field is set
     :param kwargs: dict of kwargs to verify passed to relation field
-    :type kwargs: Dict
+    :type kwargs: dict
     """
     default = kwargs.pop("default", None)
     encrypt_secret = kwargs.pop("encrypt_secret", None)
@@ -195,7 +184,7 @@ class ForeignKeyConstraint:
 
 
 @overload
-def ForeignKey(to: Type["T"], **kwargs: Any) -> "T":  # pragma: no cover
+def ForeignKey(to: type["T"], **kwargs: Any) -> "T":  # pragma: no cover
     ...
 
 
@@ -205,7 +194,7 @@ def ForeignKey(to: ForwardRef, **kwargs: Any) -> "Model":  # pragma: no cover
 
 
 def ForeignKey(  # type: ignore # noqa CFQ002
-    to: Union[Type["T"], "ForwardRef"],
+    to: Union[type["T"], "ForwardRef"],
     *,
     name: Optional[str] = None,
     unique: bool = False,
@@ -268,7 +257,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     pk_only_model = None
     if to.__class__ == ForwardRef:
         __type__ = to if not nullable else Optional[to]
-        constraints: List = []
+        constraints: list = []
         column_type = None
     else:
         (
@@ -324,7 +313,7 @@ class ForeignKeyField(BaseField):  # type: ignore[misc]
     def __init__(self, **kwargs: Any) -> None:
         if TYPE_CHECKING:  # pragma: no cover
             self.__type__: type
-            self.to: Type["Model"]
+            self.to: type["Model"]
         self.ondelete: str = kwargs.pop("ondelete", None)
         self.onupdate: str = kwargs.pop("onupdate", None)
         super().__init__(**kwargs)
@@ -366,7 +355,7 @@ class ForeignKeyField(BaseField):  # type: ignore[misc]
         prefix = "to_" if self.self_reference else ""
         return self.through_relation_name or f"{prefix}{self.owner.get_name()}"
 
-    def get_filter_clause_target(self) -> Type["Model"]:
+    def get_filter_clause_target(self) -> type["Model"]:
         return self.to
 
     def get_model_relation_fields(self, use_alias: bool = False) -> str:
@@ -378,7 +367,7 @@ class ForeignKeyField(BaseField):  # type: ignore[misc]
         :param use_alias: use db names aliases or model fields
         :type use_alias: bool
         :return: name or names of the related columns/ fields
-        :rtype: Union[str, List[str]]
+        :rtype: Union[str, list[str]]
         """
         if use_alias:
             return self._get_model_relation_fields_alias()
@@ -402,7 +391,7 @@ class ForeignKeyField(BaseField):  # type: ignore[misc]
         with given relation based to use as a target in filter clause.
 
         :return: name or names of the related columns/ fields
-        :rtype: Union[str, Dict[str, str]]
+        :rtype: Union[str, dict[str, str]]
         """
         if self.virtual:
             field_name = self.get_related_name()
@@ -411,14 +400,14 @@ class ForeignKeyField(BaseField):  # type: ignore[misc]
         target_field = self.to.get_column_alias(self.to.ormar_config.pkname)
         return target_field
 
-    def get_related_field_name(self) -> Union[str, List[str]]:
+    def get_related_field_name(self) -> Union[str, list[str]]:
         """
         Returns name of the relation field that should be used in prefetch query.
         This field is later used to register relation in prefetch query,
         populate relations dict, and populate nested model in prefetch query.
 
         :return: name(s) of the field
-        :rtype: Union[str, List[str]]
+        :rtype: Union[str, list[str]]
         """
         if self.virtual:
             return self.get_related_name()
@@ -461,8 +450,8 @@ class ForeignKeyField(BaseField):  # type: ignore[misc]
             )
 
     def _extract_model_from_sequence(
-        self, value: List, child: "Model", to_register: bool
-    ) -> List["Model"]:
+        self, value: list, child: "Model", to_register: bool
+    ) -> list["Model"]:
         """
         Takes a list of Models and registers them on parent.
         Registration is mutual, so children have also reference to parent.
@@ -470,13 +459,13 @@ class ForeignKeyField(BaseField):  # type: ignore[misc]
         Used in reverse FK relations.
 
         :param value: list of Model
-        :type value: List
+        :type value: list
         :param child: child/ related Model
         :type child: Model
         :param to_register: flag if the relation should be set in RelationshipManager
         :type to_register: bool
         :return: list (if needed) registered Models
-        :rtype: List["Model"]
+        :rtype: list["Model"]
         """
         return [
             self.expand_relationship(  # type: ignore
@@ -606,7 +595,7 @@ class ForeignKeyField(BaseField):  # type: ignore[misc]
         value: Any,
         child: Union["Model", "NewBaseModel"],
         to_register: bool = True,
-    ) -> Optional[Union["Model", List["Model"]]]:
+    ) -> Optional[Union["Model", list["Model"]]]:
         """
         For relations the child model is first constructed (if needed),
         registered in relation and returned.
@@ -622,7 +611,7 @@ class ForeignKeyField(BaseField):  # type: ignore[misc]
         :param to_register: flag if the relation should be set in RelationshipManager
         :type to_register: bool
         :return: returns a Model or a list of Models
-        :rtype: Optional[Union["Model", List["Model"]]]
+        :rtype: Optional[Union["Model", list["Model"]]]
         """
         if value is None:
             return None if not self.virtual else []
@@ -647,11 +636,11 @@ class ForeignKeyField(BaseField):  # type: ignore[misc]
         """
         return self.name
 
-    def get_source_model(self) -> Type["Model"]:  # pragma: no cover
+    def get_source_model(self) -> type["Model"]:  # pragma: no cover
         """
         Returns model from which the relation comes -> either owner or through model
 
         :return: source model
-        :rtype: Type["Model"]
+        :rtype: type["Model"]
         """
         return self.owner

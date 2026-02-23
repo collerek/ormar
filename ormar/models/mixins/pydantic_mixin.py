@@ -1,19 +1,7 @@
 import copy
 import string
 from random import choices
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union, cast
 
 import pydantic
 from pydantic import BaseModel
@@ -25,7 +13,7 @@ from ormar.queryset.utils import translate_list_to_dict
 
 
 class PydanticMixin(RelationMixin):
-    __cache__: Dict[str, Type[pydantic.BaseModel]] = {}
+    __cache__: dict[str, type[pydantic.BaseModel]] = {}
 
     if TYPE_CHECKING:  # pragma: no cover
         __pydantic_decorators__: DecoratorInfos
@@ -36,9 +24,9 @@ class PydanticMixin(RelationMixin):
     def get_pydantic(
         cls,
         *,
-        include: Union[Set, Dict, None] = None,
-        exclude: Union[Set, Dict, None] = None,
-    ) -> Type[pydantic.BaseModel]:
+        include: Union[set, dict, None] = None,
+        exclude: Union[set, dict, None] = None,
+    ) -> type[pydantic.BaseModel]:
         """
         Returns a pydantic model out of ormar model.
 
@@ -47,9 +35,9 @@ class PydanticMixin(RelationMixin):
         Can be used to fully exclude certain fields in fastapi response and requests.
 
         :param include: fields of own and nested models to include
-        :type include: Union[Set, Dict, None]
+        :type include: Union[set, dict, None]
         :param exclude: fields of own and nested models to exclude
-        :type exclude: Union[Set, Dict, None]
+        :type exclude: Union[set, dict, None]
         """
         relation_map = translate_list_to_dict(cls._iterate_related_models())
 
@@ -60,16 +48,16 @@ class PydanticMixin(RelationMixin):
     @classmethod
     def _convert_ormar_to_pydantic(
         cls,
-        relation_map: Dict[str, Any],
-        include: Union[Set, Dict, None] = None,
-        exclude: Union[Set, Dict, None] = None,
-    ) -> Type[pydantic.BaseModel]:
-        if include and isinstance(include, Set):
+        relation_map: dict[str, Any],
+        include: Union[set, dict, None] = None,
+        exclude: Union[set, dict, None] = None,
+    ) -> type[pydantic.BaseModel]:
+        if include and isinstance(include, set):
             include = translate_list_to_dict(include)
-        if exclude and isinstance(exclude, Set):
+        if exclude and isinstance(exclude, set):
             exclude = translate_list_to_dict(exclude)
-        fields_dict: Dict[str, Any] = dict()
-        defaults: Dict[str, Any] = dict()
+        fields_dict: dict[str, Any] = dict()
+        defaults: dict[str, Any] = dict()
         fields_to_process = cls._get_not_excluded_fields(
             fields={*cls.ormar_config.model_fields.keys()},
             include=include,
@@ -98,7 +86,7 @@ class PydanticMixin(RelationMixin):
             (pydantic.BaseModel,),
             {"__annotations__": fields_dict, **defaults},
         )
-        model = cast(Type[pydantic.BaseModel], model)
+        model = cast(type[pydantic.BaseModel], model)
         cls._copy_field_validators(model=model)
         cls.__cache__[cache_key] = model
         return model
@@ -107,10 +95,10 @@ class PydanticMixin(RelationMixin):
     def _determine_pydantic_field_type(
         cls,
         name: str,
-        defaults: Dict,
-        include: Union[Set, Dict, None],
-        exclude: Union[Set, Dict, None],
-        relation_map: Dict[str, Any],
+        defaults: dict,
+        include: Union[set, dict, None],
+        exclude: Union[set, dict, None],
+        relation_map: dict[str, Any],
     ) -> Any:
         field = cls.ormar_config.model_fields[name]
         target: Any = None
@@ -135,24 +123,24 @@ class PydanticMixin(RelationMixin):
         cls,
         name: str,
         field: Union[BaseField, ForeignKeyField, ManyToManyField],
-        include: Union[Set, Dict, None],
-        exclude: Union[Set, Dict, None],
-        defaults: Dict,
-        relation_map: Dict[str, Any],
-    ) -> Tuple[Type[BaseModel], Dict]:
+        include: Union[set, dict, None],
+        exclude: Union[set, dict, None],
+        defaults: dict,
+        relation_map: dict[str, Any],
+    ) -> tuple[type[BaseModel], dict]:
         target = field.to._convert_ormar_to_pydantic(
             include=cls._skip_ellipsis(include, name),
             exclude=cls._skip_ellipsis(exclude, name),
             relation_map=cls._skip_ellipsis(relation_map, name, default_return=dict()),
         )
         if field.is_multi or field.virtual:
-            target = List[target]  # type: ignore
+            target = list[target]  # type: ignore
         if field.nullable:
             defaults[name] = None
         return target, defaults
 
     @classmethod
-    def _copy_field_validators(cls, model: Type[pydantic.BaseModel]) -> None:
+    def _copy_field_validators(cls, model: type[pydantic.BaseModel]) -> None:
         """
         Copy field validators from ormar model to generated pydantic model.
         """
@@ -176,7 +164,7 @@ class PydanticMixin(RelationMixin):
 
     @classmethod
     def copy_selected_validators_type(
-        cls, model: Type[pydantic.BaseModel], fields: List[str], validator_type: str
+        cls, model: type[pydantic.BaseModel], fields: list[str], validator_type: str
     ) -> None:
         """
         Copy field validators from ormar model to generated pydantic model.

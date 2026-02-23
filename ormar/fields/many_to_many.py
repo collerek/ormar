@@ -2,10 +2,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ForwardRef,
-    List,
     Optional,
-    Tuple,
-    Type,
     Union,
     cast,
     overload,
@@ -27,12 +24,12 @@ if TYPE_CHECKING:  # pragma no cover
 REF_PREFIX = "#/components/schemas/"
 
 
-def forbid_through_relations(through: Type["Model"]) -> None:
+def forbid_through_relations(through: type["Model"]) -> None:
     """
     Verifies if the through model does not have relations.
 
     :param through: through Model to be checked
-    :type through: Type['Model]
+    :type through: type['Model]
     """
     if any(field.is_relation for field in through.ormar_config.model_fields.values()):
         raise ModelDefinitionError(
@@ -43,8 +40,8 @@ def forbid_through_relations(through: Type["Model"]) -> None:
 
 
 def populate_m2m_params_based_on_to_model(
-    to: Type["Model"], nullable: bool
-) -> Tuple[Any, Any, Any]:
+    to: type["Model"], nullable: bool
+) -> tuple[Any, Any, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
     pydantic field to use and type of the target column field.
@@ -53,7 +50,7 @@ def populate_m2m_params_based_on_to_model(
     :type to: Model class
     :param nullable: marks field as optional/ required
     :type nullable: bool
-    :return: Tuple[List, Any]
+    :return: tuple[list, Any]
     :rtype: tuple with target pydantic type and target col type
     """
     to_field = to.ormar_config.model_fields[to.ormar_config.pkname]
@@ -62,8 +59,8 @@ def populate_m2m_params_based_on_to_model(
         to_field.__type__,  # type: ignore
         to,  # type: ignore
         pk_only_model,  # type: ignore
-        List[to],  # type: ignore
-        List[pk_only_model],  # type: ignore
+        list[to],  # type: ignore
+        list[pk_only_model],  # type: ignore
     ]
     __type__ = (
         base_type  # type: ignore
@@ -75,7 +72,7 @@ def populate_m2m_params_based_on_to_model(
 
 
 @overload
-def ManyToMany(to: Type["T"], **kwargs: Any) -> "RelationProxy[T]":  # pragma: no cover
+def ManyToMany(to: type["T"], **kwargs: Any) -> "RelationProxy[T]":  # pragma: no cover
     ...
 
 
@@ -85,8 +82,8 @@ def ManyToMany(to: ForwardRef, **kwargs: Any) -> "RelationProxy":  # pragma: no 
 
 
 def ManyToMany(  # type: ignore
-    to: Union[Type["T"], "ForwardRef"],
-    through: Optional[Union[Type["T"], "ForwardRef"]] = None,
+    to: Union[type["T"], "ForwardRef"],
+    through: Optional[Union[type["T"], "ForwardRef"]] = None,
     *,
     name: Optional[str] = None,
     unique: bool = False,
@@ -132,15 +129,15 @@ def ManyToMany(  # type: ignore
     through_reverse_relation_name = kwargs.pop("through_reverse_relation_name", None)
 
     if through is not None and through.__class__ != ForwardRef:
-        forbid_through_relations(cast(Type["Model"], through))
+        forbid_through_relations(cast(type["Model"], through))
 
     validate_not_allowed_fields(kwargs)
     pk_only_model = None
     if to.__class__ == ForwardRef:
         __type__ = (
-            Union[to, List[to]]  # type: ignore
+            Union[to, list[to]]  # type: ignore
             if not nullable
-            else Optional[Union[to, List[to]]]  # type: ignore
+            else Optional[Union[to, list[to]]]  # type: ignore
         )
         column_type = None
     else:
@@ -191,8 +188,8 @@ class ManyToManyField(  # type: ignore
     def __init__(self, **kwargs: Any) -> None:
         if TYPE_CHECKING:  # pragma: no cover
             self.__type__: type
-            self.to: Type["Model"]
-            self.through: Type["Model"]
+            self.to: type["Model"]
+            self.through: type["Model"]
         super().__init__(**kwargs)
 
     def get_source_related_name(self) -> str:
@@ -259,16 +256,16 @@ class ManyToManyField(  # type: ignore
             return self.default_source_field_name()
         return self.default_target_field_name()
 
-    def get_source_model(self) -> Type["Model"]:
+    def get_source_model(self) -> type["Model"]:
         """
         Returns model from which the relation comes -> either owner or through model
 
         :return: source model
-        :rtype: Type["Model"]
+        :rtype: type["Model"]
         """
         return self.through
 
-    def get_filter_clause_target(self) -> Type["Model"]:
+    def get_filter_clause_target(self) -> type["Model"]:
         return self.through
 
     def get_model_relation_fields(self, use_alias: bool = False) -> str:
@@ -279,7 +276,7 @@ class ManyToManyField(  # type: ignore
         :param use_alias: use db names aliases or model fields
         :type use_alias: bool
         :return: name or names of the related columns/ fields
-        :rtype: Union[str, List[str]]
+        :rtype: Union[str, list[str]]
         """
         pk_field = self.owner.ormar_config.model_fields[self.owner.ormar_config.pkname]
         result = pk_field.get_alias() if use_alias else pk_field.name
@@ -291,7 +288,7 @@ class ManyToManyField(  # type: ignore
         with given relation based to use as a target in filter clause.
 
         :return: name or names of the related columns/ fields
-        :rtype: Union[str, Dict[str, str]]
+        :rtype: Union[str, dict[str, str]]
         """
         if self.self_reference and self.self_reference_primary == self.name:
             field_name = self.default_target_field_name()
@@ -300,14 +297,14 @@ class ManyToManyField(  # type: ignore
         sub_field = self.through.ormar_config.model_fields[field_name]
         return sub_field.get_alias()
 
-    def get_related_field_name(self) -> Union[str, List[str]]:
+    def get_related_field_name(self) -> Union[str, list[str]]:
         """
         Returns name of the relation field that should be used in prefetch query.
         This field is later used to register relation in prefetch query,
         populate relations dict, and populate nested model in prefetch query.
 
         :return: name(s) of the field
-        :rtype: Union[str, List[str]]
+        :rtype: Union[str, list[str]]
         """
         if self.self_reference and self.self_reference_primary == self.name:
             return self.default_target_field_name()
@@ -339,4 +336,4 @@ class ManyToManyField(  # type: ignore
                 "id": ormar.Integer(name="id", primary_key=True),
             },
         )
-        self.through = cast(Type["Model"], through_model)
+        self.through = cast(type["Model"], through_model)

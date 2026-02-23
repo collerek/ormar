@@ -3,15 +3,10 @@ from typing import (  # noqa: I100, I201
     TYPE_CHECKING,
     Any,
     AsyncGenerator,
-    Dict,
     Generic,
-    List,
     MutableSequence,
     Optional,
     Sequence,
-    Set,
-    Tuple,
-    Type,
     TypeVar,
     Union,
     cast,
@@ -41,7 +36,7 @@ class QuerysetProxy(Generic[T]):
     def __init__(
         self,
         relation: "Relation",
-        to: Type["T"],
+        to: type["T"],
         type_: "RelationType",
         qryset: Optional["QuerySet[T]"] = None,
     ) -> None:
@@ -52,7 +47,7 @@ class QuerysetProxy(Generic[T]):
         self.related_field_name = self._owner.ormar_config.model_fields[
             self.relation.field_name
         ].get_related_name()
-        self.to: Type[T] = to
+        self.to: type[T] = to
         self.related_field = to.ormar_config.model_fields[self.related_field_name]
         self.owner_pk_value = self._owner.pk
         self.through_model_name = (
@@ -75,7 +70,7 @@ class QuerysetProxy(Generic[T]):
     @queryset.setter
     def queryset(self, value: "QuerySet") -> None:
         """
-        Set's the queryset. Initialized in RelationProxy.
+        set's the queryset. Initialized in RelationProxy.
         :param value: QuerySet
         :type value: QuerySet
         """
@@ -98,7 +93,7 @@ class QuerysetProxy(Generic[T]):
         Registers child/ children in parents RelationManager.
 
         :param child: child or list of children models to register.
-        :type child: Union[Model,List[Model]]
+        :type child: Union[Model,list[Model]]
         """
         if isinstance(child, list):
             for subchild in child:
@@ -214,7 +209,7 @@ class QuerysetProxy(Generic[T]):
         """
         return await self.queryset.count(distinct=distinct)
 
-    async def max(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
+    async def max(self, columns: Union[str, list[str]]) -> Any:  # noqa: A003
         """
         Returns max value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -224,7 +219,7 @@ class QuerysetProxy(Generic[T]):
         """
         return await self.queryset.max(columns=columns)
 
-    async def min(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
+    async def min(self, columns: Union[str, list[str]]) -> Any:  # noqa: A003
         """
         Returns min value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -234,7 +229,7 @@ class QuerysetProxy(Generic[T]):
         """
         return await self.queryset.min(columns=columns)
 
-    async def sum(self, columns: Union[str, List[str]]) -> Any:  # noqa: A003
+    async def sum(self, columns: Union[str, list[str]]) -> Any:  # noqa: A003
         """
         Returns sum value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
@@ -244,13 +239,13 @@ class QuerysetProxy(Generic[T]):
         """
         return await self.queryset.sum(columns=columns)
 
-    async def avg(self, columns: Union[str, List[str]]) -> Any:
+    async def avg(self, columns: Union[str, list[str]]) -> Any:
         """
         Returns avg value of columns for rows matching the given criteria
         (applied with `filter` and `exclude` if set before).
 
         :return: avg value of columns
-        :rtype: Union[int, float, List]
+        :rtype: Union[int, float, list]
         """
         return await self.queryset.avg(columns=columns)
 
@@ -287,9 +282,9 @@ class QuerysetProxy(Generic[T]):
 
     async def values(
         self,
-        fields: Union[List, str, Set, Dict, None] = None,
+        fields: Union[list, str, set, dict, None] = None,
         exclude_through: bool = False,
-    ) -> List:
+    ) -> list:
         """
         Return a list of dictionaries with column values in order of the fields
         passed or all fields from queried models.
@@ -302,7 +297,7 @@ class QuerysetProxy(Generic[T]):
         :param exclude_through: flag if through models should be excluded
         :type exclude_through: bool
         :param fields: field name or list of field names to extract from db
-        :type fields:  Union[List, str, Set, Dict]
+        :type fields:  Union[list, str, set, dict]
         """
         return await self.queryset.values(
             fields=fields, exclude_through=exclude_through
@@ -310,10 +305,10 @@ class QuerysetProxy(Generic[T]):
 
     async def values_list(
         self,
-        fields: Union[List, str, Set, Dict, None] = None,
+        fields: Union[list, str, set, dict, None] = None,
         flatten: bool = False,
         exclude_through: bool = False,
-    ) -> List:
+    ) -> list:
         """
         Return a list of tuples with column values in order of the fields passed or
         all fields from queried models.
@@ -329,7 +324,7 @@ class QuerysetProxy(Generic[T]):
         :param exclude_through: flag if through models should be excluded
         :type exclude_through: bool
         :param fields: field name or list of field names to extract from db
-        :type fields: Union[str, List[str]]
+        :type fields: Union[str, list[str]]
         :param flatten: when one field is passed you can flatten the list of tuples
         :type flatten: bool
         """
@@ -411,7 +406,7 @@ class QuerysetProxy(Generic[T]):
         self._register_related(get)
         return get
 
-    async def all(self, *args: Any, **kwargs: Any) -> List["T"]:  # noqa: A003
+    async def all(self, *args: Any, **kwargs: Any) -> list["T"]:  # noqa: A003
         """
         Returns all rows from a database for given model for set filter options.
 
@@ -427,7 +422,7 @@ class QuerysetProxy(Generic[T]):
         :param kwargs: fields names and proper value types
         :type kwargs: Any
         :return: list of returned models
-        :rtype: List[Model]
+        :rtype: list[Model]
         """
         all_items = await self.queryset.all(*args, **kwargs)
         self._clean_items_on_load()
@@ -518,10 +513,10 @@ class QuerysetProxy(Generic[T]):
 
     async def get_or_create(
         self,
-        _defaults: Optional[Dict[str, Any]] = None,
+        _defaults: Optional[dict[str, Any]] = None,
         *args: Any,
         **kwargs: Any,
-    ) -> Tuple["T", bool]:
+    ) -> tuple["T", bool]:
         """
         Combination of create and get methods.
 
@@ -532,9 +527,9 @@ class QuerysetProxy(Generic[T]):
         :param kwargs: fields names and proper value types
         :type kwargs: Any
         :param _defaults: default values for creating object
-        :type _defaults: Optional[Dict[str, Any]]
+        :type _defaults: Optional[dict[str, Any]]
         :return: model instance and a boolean
-        :rtype: Tuple("T", bool)
+        :rtype: tuple("T", bool)
         """
         try:
             return await self.get(*args, **kwargs), False
@@ -652,7 +647,7 @@ class QuerysetProxy(Generic[T]):
             relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
         )
 
-    def select_related(self, related: Union[List, str]) -> "QuerysetProxy[T]":
+    def select_related(self, related: Union[list, str]) -> "QuerysetProxy[T]":
         """
         Allows to prefetch related models during the same query.
 
@@ -667,7 +662,7 @@ class QuerysetProxy(Generic[T]):
         Actual call delegated to QuerySet.
 
         :param related: list of relation field names, can be linked by '__' to nest
-        :type related: Union[List, str]
+        :type related: Union[list, str]
         :return: QuerysetProxy
         :rtype: QuerysetProxy
         """
@@ -676,7 +671,7 @@ class QuerysetProxy(Generic[T]):
             relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
         )
 
-    def prefetch_related(self, related: Union[List, str]) -> "QuerysetProxy[T]":
+    def prefetch_related(self, related: Union[list, str]) -> "QuerysetProxy[T]":
         """
         Allows to prefetch related models during query - but opposite to
         `select_related` each subsequent model is fetched in a separate database query.
@@ -692,7 +687,7 @@ class QuerysetProxy(Generic[T]):
         Actual call delegated to QuerySet.
 
         :param related: list of relation field names, can be linked by '__' to nest
-        :type related: Union[List, str]
+        :type related: Union[list, str]
         :return: QuerysetProxy
         :rtype: QuerysetProxy
         """
@@ -752,7 +747,7 @@ class QuerysetProxy(Generic[T]):
             relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
         )
 
-    def fields(self, columns: Union[List, str, Set, Dict]) -> "QuerysetProxy[T]":
+    def fields(self, columns: Union[list, str, set, dict]) -> "QuerysetProxy[T]":
         """
         With `fields()` you can select subset of model columns to limit the data load.
 
@@ -761,7 +756,7 @@ class QuerysetProxy(Generic[T]):
         as well as `select_related` and `prefetch_related`
         models (with nested notation).
 
-        You can select specified fields by passing a `str, List[str], Set[str] or
+        You can select specified fields by passing a `str, list[str], set[str] or
         dict` with nested definition.
 
         To include related models use notation
@@ -793,7 +788,7 @@ class QuerysetProxy(Generic[T]):
         Actual call delegated to QuerySet.
 
         :param columns: columns to include
-        :type columns: Union[List, str, Set, Dict]
+        :type columns: Union[list, str, set, dict]
         :return: QuerysetProxy
         :rtype: QuerysetProxy
         """
@@ -803,7 +798,7 @@ class QuerysetProxy(Generic[T]):
         )
 
     def exclude_fields(
-        self, columns: Union[List, str, Set, Dict]
+        self, columns: Union[list, str, set, dict]
     ) -> "QuerysetProxy[T]":
         """
         With `exclude_fields()` you can select subset of model columns that will
@@ -829,7 +824,7 @@ class QuerysetProxy(Generic[T]):
         Actual call delegated to QuerySet.
 
         :param columns: columns to exclude
-        :type columns: Union[List, str, Set, Dict]
+        :type columns: Union[list, str, set, dict]
         :return: QuerysetProxy
         :rtype: QuerysetProxy
         """
@@ -838,7 +833,7 @@ class QuerysetProxy(Generic[T]):
             relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
         )
 
-    def order_by(self, columns: Union[List, str, "OrderAction"]) -> "QuerysetProxy[T]":
+    def order_by(self, columns: Union[list, str, "OrderAction"]) -> "QuerysetProxy[T]":
         """
         With `order_by()` you can order the results from database based on your
         choice of fields.
@@ -868,7 +863,7 @@ class QuerysetProxy(Generic[T]):
         Actual call delegated to QuerySet.
 
         :param columns: columns by which models should be sorted
-        :type columns: Union[List, str]
+        :type columns: Union[list, str]
         :return: QuerysetProxy
         :rtype: QuerysetProxy
         """

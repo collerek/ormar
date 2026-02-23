@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import ormar
 import pytest
@@ -15,7 +15,7 @@ class Album(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     is_best_seller: bool = ormar.Boolean(default=False)
-    properties: Tuple[str, Any]
+    properties: tuple[str, Any]
     score: Union[str, int]
 
 
@@ -28,7 +28,7 @@ class Track(ormar.Model):
     position: int = ormar.Integer()
     play_count: Optional[int] = ormar.Integer(nullable=True, default=0)
     is_disabled: bool = ormar.Boolean(default=False)
-    properties: Tuple[str, Any]
+    properties: tuple[str, Any]
 
 
 create_test_database = init_tests(base_ormar_config)

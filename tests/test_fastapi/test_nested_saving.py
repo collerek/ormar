@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Set, Type, Union, cast
+from typing import Any, Optional, Union, cast
 
 import ormar
 import pytest
@@ -57,7 +57,7 @@ to_exclude_ormar = {
 create_test_database = init_tests(base_ormar_config)
 
 
-def auto_exclude_id_field(to_exclude: Any) -> Union[Dict, Set]:
+def auto_exclude_id_field(to_exclude: Any) -> Union[dict, set]:
     if isinstance(to_exclude, dict):
         for key in to_exclude.keys():
             to_exclude[key] = auto_exclude_id_field(to_exclude[key])
@@ -67,9 +67,9 @@ def auto_exclude_id_field(to_exclude: Any) -> Union[Dict, Set]:
         return {"id"}
 
 
-def generate_exclude_for_ids(model: Type[ormar.Model]) -> Dict:
+def generate_exclude_for_ids(model: type[ormar.Model]) -> dict:
     to_exclude_base = translate_list_to_dict(model._iterate_related_models())
-    return cast(Dict, auto_exclude_id_field(to_exclude=to_exclude_base))
+    return cast(dict, auto_exclude_id_field(to_exclude=to_exclude_base))
 
 
 to_exclude_auto = generate_exclude_for_ids(model=Department)

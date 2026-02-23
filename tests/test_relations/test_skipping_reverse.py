@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 import ormar
 import pytest
@@ -30,7 +30,7 @@ class Post(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
-    categories: Optional[List[Category]] = ormar.ManyToMany(Category, skip_reverse=True)
+    categories: Optional[list[Category]] = ormar.ManyToMany(Category, skip_reverse=True)
     author: Optional[Author] = ormar.ForeignKey(Author, skip_reverse=True)
 
 

@@ -29,7 +29,7 @@ Here you can find a very simple sample application code.
 Define startup and shutdown procedures using FastAPI lifespan and use is in the
 application.
 ```python
-from typing import List, Optional, AsyncIterator
+from typing import Optional, AsyncIterator
 
 import sqlalchemy
 from fastapi import FastAPI
@@ -101,7 +101,7 @@ Define your desired endpoints, note how `ormar` models are used both
 as `response_model` and as a requests parameters.
 
 ```python
-@app.get("/items/", response_model=List[Item])
+@app.get("/items/", response_model=list[Item])
 async def get_items():
     items = await Item.objects.select_related("category").all()
     return items

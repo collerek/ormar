@@ -56,7 +56,7 @@ assert post.categories[0] == news
 
 ### get_or_create
 
-`get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+`get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
 
 Tries to get a row meeting the criteria and if `NoMatch` exception is raised it creates a new one with given kwargs and _defaults.
 
@@ -65,7 +65,7 @@ Tries to get a row meeting the criteria and if `NoMatch` exception is raised it 
 
 ### all
 
-`all(**kwargs) -> List[Optional["Model"]]`
+`all(**kwargs) -> list[Optional["Model"]]`
 
 To get a list of related models use `all()` method.
 
@@ -146,7 +146,7 @@ await post.categories.create(
 
 ### get_or_create
 
-`get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+`get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
 
 Tries to get a row meeting the criteria and if NoMatch exception is raised it creates a new one with given kwargs.
 
@@ -207,7 +207,7 @@ Works exactly the same as filter and all modifiers (suffixes) are the same, but 
 
 ### order_by
 
-`order_by(columns:Union[List, str]) -> QuerySet`
+`order_by(columns:Union[list, str]) -> QuerySet`
 
 With order_by() you can order the results from database based on your choice of fields.
 
@@ -218,7 +218,7 @@ With order_by() you can order the results from database based on your choice of 
 
 ### select_related
 
-`select_related(related: Union[List, str]) -> QuerySet`
+`select_related(related: Union[list, str]) -> QuerySet`
 
 Allows to prefetch related models during the same query.
 
@@ -229,7 +229,7 @@ With select_related always only one query is run against the database, meaning t
 
 ### prefetch_related
 
-`prefetch_related(related: Union[List, str]) -> QuerySet`
+`prefetch_related(related: Union[list, str]) -> QuerySet`
 
 Allows to prefetch related models during query - but opposite to select_related each subsequent model is fetched in a separate database query.
 
@@ -271,7 +271,7 @@ You can offset the results by desired number of main models.
 
 ### fields
 
-`fields(columns: Union[List, str, set, dict]) -> QuerySet`
+`fields(columns: Union[list, str, set, dict]) -> QuerySet`
 
 With fields() you can select subset of model columns to limit the data load.
 
@@ -280,7 +280,7 @@ With fields() you can select subset of model columns to limit the data load.
 
 ### exclude_fields
 
-`exclude_fields(columns: Union[List, str, set, dict]) -> QuerySet`
+`exclude_fields(columns: Union[list, str, set, dict]) -> QuerySet`
 
 With exclude_fields() you can select subset of model columns that will be excluded to limit the data load.
 

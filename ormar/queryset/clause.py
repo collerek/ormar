@@ -1,7 +1,7 @@
 import itertools
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Generator, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Generator, Optional, Union
 
 import sqlalchemy
 from sqlalchemy import ColumnElement
@@ -34,11 +34,11 @@ class FilterGroup:
     ) -> None:
         self.filter_type = _filter_type
         self.exclude = _exclude
-        self._nested_groups: List["FilterGroup"] = list(args)
+        self._nested_groups: list["FilterGroup"] = list(args)
         self._resolved = False
         self.is_source_model_filter = False
         self._kwargs_dict = kwargs
-        self.actions: List[FilterAction] = []
+        self.actions: list[FilterAction] = []
 
     def __and__(self, other: "FilterGroup") -> "FilterGroup":
         return FilterGroup(self, other)
@@ -52,22 +52,22 @@ class FilterGroup:
 
     def resolve(
         self,
-        model_cls: Type["Model"],
-        select_related: Optional[List] = None,
-        filter_clauses: Optional[List] = None,
-    ) -> Tuple[List[FilterAction], List[str]]:
+        model_cls: type["Model"],
+        select_related: Optional[list] = None,
+        filter_clauses: Optional[list] = None,
+    ) -> tuple[list[FilterAction], list[str]]:
         """
         Resolves the FilterGroups actions to use proper target model, replace
         complex relation prefixes if needed and nested groups also resolved.
 
         :param model_cls: model from which the query is run
-        :type model_cls: Type["Model"]
+        :type model_cls: type["Model"]
         :param select_related: list of models to join
-        :type select_related: List[str]
+        :type select_related: list[str]
         :param filter_clauses: list of filter conditions
-        :type filter_clauses: List[FilterAction]
+        :type filter_clauses: list[FilterAction]
         :return: list of filter conditions and select_related list
-        :rtype: Tuple[List[FilterAction], List[str]]
+        :rtype: tuple[list[FilterAction], list[str]]
         """
         select_related = select_related if select_related is not None else []
         filter_clauses = filter_clauses if filter_clauses is not None else []
@@ -103,11 +103,11 @@ class FilterGroup:
 
     def _get_text_clauses(
         self,
-    ) -> List[Union[sqlalchemy.sql.expression.TextClause, ColumnElement[Any]]]:
+    ) -> list[Union[sqlalchemy.sql.expression.TextClause, ColumnElement[Any]]]:
         """
         Helper to return list of text queries from actions and nested groups
         :return: list of text queries from actions and nested groups
-        :rtype: List[sqlalchemy.sql.elements.TextClause]
+        :rtype: list[sqlalchemy.sql.elements.TextClause]
         """
         return [x.get_text_clause() for x in self._nested_groups] + [
             x.get_text_clause() for x in self.actions
@@ -138,7 +138,7 @@ def or_(*args: FilterGroup, **kwargs: Any) -> FilterGroup:
     Construct or filter from nested groups and keyword arguments
 
     :param args: nested filter groups
-    :type args: Tuple[FilterGroup]
+    :type args: tuple[FilterGroup]
     :param kwargs: fields names and proper value types
     :type kwargs: Any
     :return: FilterGroup ready to be resolved
@@ -152,7 +152,7 @@ def and_(*args: FilterGroup, **kwargs: Any) -> FilterGroup:
     Construct and filter from nested groups and keyword arguments
 
     :param args: nested filter groups
-    :type args: Tuple[FilterGroup]
+    :type args: tuple[FilterGroup]
     :param kwargs: fields names and proper value types
     :type kwargs: Any
     :return: FilterGroup ready to be resolved
@@ -163,9 +163,9 @@ def and_(*args: FilterGroup, **kwargs: Any) -> FilterGroup:
 
 @dataclass
 class Prefix:
-    source_model: Type["Model"]
+    source_model: type["Model"]
     table_prefix: str
-    model_cls: Type["Model"]
+    model_cls: type["Model"]
     relation_str: str
     is_through: bool
 
@@ -181,7 +181,7 @@ class QueryClause:
     """
 
     def __init__(
-        self, model_cls: Type["Model"], filter_clauses: List, select_related: List
+        self, model_cls: type["Model"], filter_clauses: list, select_related: list
     ) -> None:
         self._select_related = select_related[:]
         self.filter_clauses = filter_clauses[:]
@@ -191,7 +191,7 @@ class QueryClause:
 
     def prepare_filter(  # noqa: A003
         self, _own_only: bool = False, **kwargs: Any
-    ) -> Tuple[List[FilterAction], List[str]]:
+    ) -> tuple[list[FilterAction], list[str]]:
         """
         Main external access point that processes the clauses into sqlalchemy text
         clauses and updates select_related list with implicit related tables
@@ -201,8 +201,8 @@ class QueryClause:
         :type _own_only:
         :param kwargs: key, value pair with column names and values
         :type kwargs: Any
-        :return: Tuple with list of where clauses and updated select_related list
-        :rtype: Tuple[List[sqlalchemy.sql.elements.TextClause], List[str]]
+        :return: tuple with list of where clauses and updated select_related list
+        :rtype: tuple[list[sqlalchemy.sql.elements.TextClause], list[str]]
         """
         if kwargs.get("pk"):
             pk_name = self.model_cls.get_column_alias(
@@ -218,7 +218,7 @@ class QueryClause:
 
     def _populate_filter_clauses(
         self, _own_only: bool, **kwargs: Any
-    ) -> Tuple[List[FilterAction], List[str]]:
+    ) -> tuple[list[FilterAction], list[str]]:
         """
         Iterates all clauses and extracts used operator and field from related
         models if needed. Based on the chain of related names the target table
@@ -226,8 +226,8 @@ class QueryClause:
 
         :param kwargs: key, value pair with column names and values
         :type kwargs: Any
-        :return: Tuple with list of where clauses and updated select_related list
-        :rtype: Tuple[List[sqlalchemy.sql.elements.TextClause], List[str]]
+        :return: tuple with list of where clauses and updated select_related list
+        :rtype: tuple[list[sqlalchemy.sql.elements.TextClause], list[str]]
         """
         filter_clauses = self.filter_clauses
         own_filter_clauses = []
@@ -251,7 +251,7 @@ class QueryClause:
             return own_filter_clauses, select_related
         return filter_clauses, select_related
 
-    def _register_complex_duplicates(self, select_related: List[str]) -> None:
+    def _register_complex_duplicates(self, select_related: list[str]) -> None:
         """
         Checks if duplicate aliases are presented which can happen in self relation
         or when two joins end with the same pair of models.
@@ -260,7 +260,7 @@ class QueryClause:
         model and whole relation key (not just last relation name).
 
         :param select_related: list of relation strings
-        :type select_related: List[str]
+        :type select_related: list[str]
         :return: None
         :rtype: None
         """
@@ -277,16 +277,16 @@ class QueryClause:
                 if prefix.alias_key not in manager:
                     manager.add_alias(alias_key=prefix.alias_key)
 
-    def _parse_related_prefixes(self, select_related: List[str]) -> List[Prefix]:
+    def _parse_related_prefixes(self, select_related: list[str]) -> list[Prefix]:
         """
         Walks all relation strings and parses the target models and prefixes.
 
         :param select_related: list of relation strings
-        :type select_related: List[str]
+        :type select_related: list[str]
         :return: list of parsed prefixes
-        :rtype: List[Prefix]
+        :rtype: list[Prefix]
         """
-        prefixes: List[Prefix] = []
+        prefixes: list[Prefix] = []
         for related in select_related:
             prefix = Prefix(
                 self.model_cls,
@@ -298,16 +298,16 @@ class QueryClause:
         return prefixes
 
     def _switch_filter_action_prefixes(
-        self, filter_clauses: List[FilterAction]
-    ) -> List[FilterAction]:
+        self, filter_clauses: list[FilterAction]
+    ) -> list[FilterAction]:
         """
         Substitutes aliases for filter action if the complex key (whole relation str) is
         present in alias_manager.
 
         :param filter_clauses: raw list of actions
-        :type filter_clauses: List[FilterAction]
+        :type filter_clauses: list[FilterAction]
         :return: list of actions with aliases changed if needed
-        :rtype: List[FilterAction]
+        :rtype: list[FilterAction]
         """
 
         for action in filter_clauses:

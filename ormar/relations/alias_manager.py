@@ -1,7 +1,7 @@
 import string
 import uuid
 from random import choices
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import sqlalchemy
 from sqlalchemy import Label
@@ -34,9 +34,9 @@ class AliasManager:
     """
 
     def __init__(self) -> None:
-        self._aliases_new: Dict[str, str] = dict()
-        self._reversed_aliases: Dict[str, str] = dict()
-        self._prefixed_tables: Dict[str, NamedFromClause] = dict()
+        self._aliases_new: dict[str, str] = dict()
+        self._reversed_aliases: dict[str, str] = dict()
+        self._prefixed_tables: dict[str, NamedFromClause] = dict()
 
     def __contains__(self, item: str) -> bool:
         return self._aliases_new.__contains__(item)
@@ -45,12 +45,12 @@ class AliasManager:
         return self._aliases_new.__getitem__(key)
 
     @property
-    def reversed_aliases(self) -> Dict:
+    def reversed_aliases(self) -> dict:
         """
         Returns swapped key-value pairs from aliases where alias is the key.
 
         :return: dictionary of prefix to relation
-        :rtype: Dict
+        :rtype: dict
         """
         if self._reversed_aliases:
             return self._reversed_aliases
@@ -60,8 +60,8 @@ class AliasManager:
 
     @staticmethod
     def prefixed_columns(
-        alias: str, table: sqlalchemy.Table, fields: Optional[List] = None
-    ) -> List[Label[Any]]:
+        alias: str, table: sqlalchemy.Table, fields: Optional[list] = None
+    ) -> list[Label[Any]]:
         """
         Creates a list of aliases sqlalchemy text clauses from
         string alias and sqlalchemy.Table.
@@ -74,9 +74,9 @@ class AliasManager:
         :param table: table from which fields should be aliased
         :type table: sqlalchemy.Table
         :param fields: fields to include
-        :type fields: Optional[List[str]]
+        :type fields: Optional[list[str]]
         :return: list of sqlalchemy text clauses with "column name as aliased name"
-        :rtype: List[text]
+        :rtype: list[text]
         """
         alias = f"{alias}_" if alias else ""
         aliased_fields = [f"{alias}{x}" for x in fields] if fields else []
@@ -110,7 +110,7 @@ class AliasManager:
 
     def add_relation_type(
         self,
-        source_model: Type["Model"],
+        source_model: type["Model"],
         relation_name: str,
         reverse_name: Optional[str] = None,
     ) -> None:
@@ -160,7 +160,7 @@ class AliasManager:
         return alias
 
     def resolve_relation_alias(
-        self, from_model: Union[Type["Model"], Type["ModelRow"]], relation_name: str
+        self, from_model: Union[type["Model"], type["ModelRow"]], relation_name: str
     ) -> str:
         """
         Given model and relation name returns the alias for this relation.
@@ -177,7 +177,7 @@ class AliasManager:
 
     def resolve_relation_alias_after_complex(
         self,
-        source_model: Union[Type["Model"], Type["ModelRow"]],
+        source_model: Union[type["Model"], type["ModelRow"]],
         relation_str: str,
         relation_field: "ForeignKeyField",
     ) -> str:

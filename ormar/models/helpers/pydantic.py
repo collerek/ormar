@@ -1,5 +1,5 @@
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Dict, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import pydantic
 from pydantic import ConfigDict
@@ -14,7 +14,7 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def create_pydantic_field(
-    field_name: str, model: Type["Model"], model_field: "ManyToManyField"
+    field_name: str, model: type["Model"], model_field: "ManyToManyField"
 ) -> None:
     """
     Registers pydantic field on through model that leads to passed model
@@ -37,7 +37,7 @@ def create_pydantic_field(
     )
 
 
-def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
+def populate_pydantic_default_values(attrs: dict) -> tuple[dict, dict]:
     """
     Extracts ormar fields from annotations (deprecated) and from namespace
     dictionary of the class. Fields declared on model are all subclasses of the
@@ -51,9 +51,9 @@ def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
     Those annotations are later used by pydantic to construct it's own fields.
 
     :param attrs: current class namespace
-    :type attrs: Dict
+    :type attrs: dict
     :return: namespace of the class updated, dict of extracted model_fields
-    :rtype: Tuple[Dict, Dict]
+    :rtype: tuple[dict, dict]
     """
     model_fields = {}
     potential_fields = {}
@@ -74,7 +74,7 @@ def populate_pydantic_default_values(attrs: Dict) -> Tuple[Dict, Dict]:
     return attrs, model_fields
 
 
-def merge_or_generate_pydantic_config(attrs: Dict, name: str) -> None:
+def merge_or_generate_pydantic_config(attrs: dict, name: str) -> None:
     """
     Checks if the user provided pydantic Config,
     and if he did merges it with the default one.
@@ -108,14 +108,14 @@ def get_pydantic_base_orm_config() -> pydantic.ConfigDict:
     return ConfigDict(validate_assignment=True, ser_json_bytes="base64")
 
 
-def get_potential_fields(attrs: Union[Dict, MappingProxyType]) -> Dict:
+def get_potential_fields(attrs: Union[dict, MappingProxyType]) -> dict:
     """
     Gets all the fields in current class namespace that are Fields.
 
     :param attrs: current class namespace
-    :type attrs: Dict
+    :type attrs: dict
     :return: extracted fields that are ormar Fields
-    :rtype: Dict
+    :rtype: dict
     """
     return {
         k: v

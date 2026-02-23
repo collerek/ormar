@@ -1,4 +1,4 @@
-from typing import ForwardRef, List, Optional
+from typing import ForwardRef, Optional
 
 import ormar
 import pydantic
@@ -91,7 +91,7 @@ def test_getting_pydantic_model():
     )
     assert (
         PydanticCategory.model_fields["items"].annotation
-        == Optional[List[PydanticItem]]
+        == Optional[list[PydanticItem]]
     )
     assert issubclass(PydanticItem, pydantic.BaseModel)
     assert not PydanticItem.model_fields["name"].is_required()
