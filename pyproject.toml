@@ -135,6 +135,11 @@ email-validator = "^2.1.1"
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "module"
+asyncio_default_test_loop_scope = "module"
+
 [tool.mypy]
 # TODO: Enable mypy plugin after pydantic release supporting toml file
 disallow_untyped_calls = true
