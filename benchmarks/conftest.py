@@ -4,11 +4,12 @@ import string
 import time
 
 import nest_asyncio
-import ormar
 import pytest
 import pytest_asyncio
 from tests.lifespan import init_tests
 from tests.settings import create_config
+
+import ormar
 
 base_ormar_config = create_config()
 nest_asyncio.apply()

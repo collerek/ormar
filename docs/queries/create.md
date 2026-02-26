@@ -109,7 +109,7 @@ assert album == album2
 
 Updates the model, or in case there is no match in database creates a new one.
 
-```Python hl_lines="43-51"
+```Python hl_lines="44-52"
 --8<-- "../docs_src/queries/docs003.py"
 ```
 
@@ -125,7 +125,7 @@ Allows you to create multiple objects at once.
 
 A valid list of `Model` objects needs to be passed.
 
-```python hl_lines="29-35"
+```python hl_lines="30-37"
 --8<-- "../docs_src/queries/docs004.py"
 ```
 

@@ -4,7 +4,6 @@ from ormar.queryset.utils import (
     update,
     update_dict_from_list,
 )
-
 from tests.settings import create_config
 
 base_ormar_config = create_config()

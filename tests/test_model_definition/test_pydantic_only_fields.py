@@ -1,10 +1,10 @@
 import datetime
 
-import ormar
 import pydantic
 import pytest
 from pydantic import computed_field
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

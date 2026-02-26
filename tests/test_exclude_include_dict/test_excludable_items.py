@@ -2,7 +2,6 @@ from typing import Optional
 
 import ormar
 from ormar.models.excludable import ExcludableItems
-
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

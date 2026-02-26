@@ -1,8 +1,8 @@
-import ormar
 import pytest
-from ormar.databases.connection import DatabaseConnection
 from sqlalchemy import text
 
+import ormar
+from ormar.databases.connection import DatabaseConnection
 from tests.lifespan import init_tests
 from tests.settings import ASYNC_DATABASE_URL, DATABASE_URL, create_config
 

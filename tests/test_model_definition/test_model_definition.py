@@ -3,13 +3,13 @@ import datetime
 import decimal
 import typing
 
-import ormar
 import pydantic
 import pytest
 import sqlalchemy
+
+import ormar
 from ormar.exceptions import ModelDefinitionError
 from ormar.models import Model
-
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

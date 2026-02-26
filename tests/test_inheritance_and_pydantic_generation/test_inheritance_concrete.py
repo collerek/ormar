@@ -2,17 +2,17 @@ import datetime
 from collections import Counter
 from typing import Optional
 
-import ormar
-import ormar.fields.constraints
 import pydantic
 import pytest
 import sqlalchemy as sa
+from pydantic import computed_field
+
+import ormar
+import ormar.fields.constraints
 from ormar import ModelDefinitionError
 from ormar.exceptions import ModelError
 from ormar.models.metaclass import get_constraint_copy
 from ormar.relations.relation_proxy import RelationProxy
-from pydantic import computed_field
-
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

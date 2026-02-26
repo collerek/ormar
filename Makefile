@@ -31,6 +31,6 @@ lint:
 	poetry run python -m ruff check . --fix
 
 fmt:
-	poetry run python -m black .
+	poetry run python -m ruff format .
 
 pre-commit: fmt lint type_check

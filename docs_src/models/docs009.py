@@ -1,7 +1,8 @@
 from typing import Optional
 
-import ormar
 import sqlalchemy
+
+import ormar
 from ormar import DatabaseConnection
 
 database = DatabaseConnection(
@@ -24,7 +25,6 @@ class Artist(ormar.Model):
 
 
 class Album(ormar.Model):
-
     ormar_config = ormar.OrmarConfig(
         database=database,
         metadata=metadata,

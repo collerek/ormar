@@ -1,14 +1,14 @@
 from random import choice
 from string import ascii_uppercase
 
-import ormar
 import pytest
 import pytest_asyncio
 import sqlalchemy
-from ormar import Float, String
-from ormar.databases.connection import DatabaseConnection
 from sqlalchemy import create_engine
 
+import ormar
+from ormar import Float, String
+from ormar.databases.connection import DatabaseConnection
 from tests.settings import ASYNC_DATABASE_URL, DATABASE_URL
 
 database = DatabaseConnection(ASYNC_DATABASE_URL)

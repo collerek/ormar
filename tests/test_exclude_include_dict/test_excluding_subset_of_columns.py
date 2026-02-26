@@ -1,9 +1,9 @@
 from typing import Optional
 
-import ormar
 import pydantic
 import pytest
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -161,9 +161,11 @@ async def test_selecting_subset():
 
             with pytest.raises(pydantic.ValidationError):
                 # cannot exclude mandatory model columns - company__name in this example
-                await Car.objects.select_related("manufacturer").exclude_fields(
-                    ["manufacturer__name"]
-                ).all()
+                await (
+                    Car.objects.select_related("manufacturer")
+                    .exclude_fields(["manufacturer__name"])
+                    .all()
+                )
 
 
 @pytest.mark.asyncio

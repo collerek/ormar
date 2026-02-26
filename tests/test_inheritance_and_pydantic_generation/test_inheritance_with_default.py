@@ -1,9 +1,9 @@
 import datetime
 import uuid
 
-import ormar
 import pytest
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

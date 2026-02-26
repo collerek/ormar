@@ -507,7 +507,8 @@ class QuerysetProxy(Generic[T]):
             await child.update(**kwargs)  # type: ignore
             if self.type_ == ormar.RelationType.MULTIPLE and through_kwargs:
                 await self.update_through_instance(
-                    child=child, **through_kwargs  # type: ignore
+                    child=child,
+                    **through_kwargs,  # type: ignore
                 )
         return len(children)
 
@@ -593,9 +594,7 @@ class QuerysetProxy(Generic[T]):
             relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
         )
 
-    def exclude(
-        self, *args: Any, **kwargs: Any
-    ) -> "QuerysetProxy[T]":  # noqa: A003, A001
+    def exclude(self, *args: Any, **kwargs: Any) -> "QuerysetProxy[T]":  # noqa: A003, A001
         """
         Works exactly the same as filter and all modifiers (suffixes) are the same,
         but returns a *not* condition.

@@ -1,7 +1,7 @@
-import ormar
 import pytest
-from ormar.models import Model
 
+import ormar
+from ormar.models import Model
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

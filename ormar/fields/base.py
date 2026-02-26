@@ -308,7 +308,7 @@ class BaseField(FieldInfo):  # type: ignore[misc]
         """
         if self.primary_key or self.is_relation:
             raise ModelDefinitionError(
-                "Primary key field and relations fields" "cannot be encrypted!"
+                "Primary key field and relations fields cannot be encrypted!"
             )
         column: sqlalchemy.Column = sqlalchemy.Column(
             self.db_alias or name,

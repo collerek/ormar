@@ -1,5 +1,4 @@
 import itertools
-import sqlite3
 from typing import TYPE_CHECKING, Any, ForwardRef
 
 import pydantic

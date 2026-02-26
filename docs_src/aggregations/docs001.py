@@ -1,7 +1,8 @@
 from typing import Optional
 
-import ormar
 import sqlalchemy
+
+import ormar
 from ormar import DatabaseConnection
 
 DATABASE_URL = "sqlite+aiosqlite:///aggregations_docs001.db"
@@ -24,7 +25,6 @@ class Author(ormar.Model):
 
 
 class Book(ormar.Model):
-
     ormar_config = base_ormar_config.copy(
         tablename="books", order_by=["year", "-ranking"]
     )

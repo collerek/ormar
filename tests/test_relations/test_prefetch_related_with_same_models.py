@@ -1,11 +1,11 @@
 from random import randint
 from typing import ForwardRef, Optional
 
-import ormar
 import pytest
 from faker import Faker
-from ormar.relations.relation_proxy import RelationProxy
 
+import ormar
+from ormar.relations.relation_proxy import RelationProxy
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
