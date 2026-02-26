@@ -2,6 +2,7 @@
 source = ormar, tests
 omit = ./tests/test.db, *py.typed*
 data_file = .coverage
+concurrency = greenlet
 
 [report]
 omit = ./tests/test.db, *py.typed*
