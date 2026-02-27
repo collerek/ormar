@@ -20,7 +20,6 @@ def anyio_backend():
     return "asyncio"
 
 
-@pytest.mark.anyio
 @pytest.fixture(scope="function", autouse=True)
 async def db_session():
     async with base_ormar_config.database:
