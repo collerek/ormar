@@ -7,6 +7,11 @@ import ormar  # noqa:  I100, I202
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.queries.query import Query
 from ormar.queryset.utils import translate_list_to_dict
+from ormar.utils.rust_utils import HAS_RUST, ormar_rust_utils
+
+if HAS_RUST:  # pragma: no cover
+    _RsUniqueList = ormar_rust_utils.UniqueList
+    _rs_hash_item = ormar_rust_utils.hash_item
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import ForeignKeyField, Model
@@ -16,15 +21,24 @@ if TYPE_CHECKING:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 
-class UniqueList(list):
+class _PyUniqueList(list):  # pragma: no cover
     """
-    Simple subclass of list that prevents the duplicates
-    Cannot use set as the order is important
+    Simple subclass of list that prevents the duplicates.
+    Uses a set for O(1) membership checks instead of O(n) list scan.
     """
 
+    def __init__(self) -> None:
+        super().__init__()
+        self._seen: set = set()
+
     def append(self, item: Any) -> None:
-        if item not in self:
+        h = hash(item)
+        if h not in self._seen:
+            self._seen.add(h)
             super().append(item)
+
+
+UniqueList = _RsUniqueList if HAS_RUST else _PyUniqueList  # type: ignore[misc]
 
 
 class Node(abc.ABC):
@@ -399,7 +413,7 @@ class LoadNode(Node):
             )
             self.models.append(instance)
 
-    def _hash_item(self, item: Union[dict, list]) -> tuple:
+    def _hash_item(self, item: Union[dict, list]) -> tuple:  # pragma: no cover
         """
         Converts model dictionary or list into a hashable tuple to allow its use
         as a dictionary key - used to ensure unique instances of related models.
@@ -409,6 +423,8 @@ class LoadNode(Node):
         :return: tuple out of model dictionary or list
         :rtype: tuple
         """
+        if HAS_RUST:
+            return _rs_hash_item(item)
         result = []
         for key, value in (
             sorted(item.items()) if isinstance(item, dict) else enumerate(item)
