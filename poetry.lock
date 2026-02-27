@@ -1780,6 +1780,37 @@ files = [
 ]
 
 [[package]]
+name = "ormar-utils"
+version = "0.1.0"
+description = "Rust-accelerated utility functions for the ormar ORM"
+optional = true
+python-versions = ">=3.10"
+groups = ["main"]
+markers = "extra == \"rust\" or extra == \"all\""
+files = [
+    {file = "ormar_utils-0.1.0-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:dd0997bbbf689e55f92d33dccfece13026f6c4a85876c61f1bf66c950e1c45cc"},
+    {file = "ormar_utils-0.1.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:72edeb7ba533f27a13d4037d4aab0e9ef94b38a705eda587f50e3defd7127966"},
+    {file = "ormar_utils-0.1.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5738a89fdb0a547986129ef0091508417a1dbb87b272b2eebb47301b27846f9d"},
+    {file = "ormar_utils-0.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5010a52eddc067f5f0c5e060ee24d1a910e1f48f46b34c722c28af7a95b51fb6"},
+    {file = "ormar_utils-0.1.0-cp310-cp310-win_amd64.whl", hash = "sha256:4e4c94c3390887aa7f3a33d8c664e53db6acf9d6e9ab479d7450556880710da0"},
+    {file = "ormar_utils-0.1.0-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:fb177355f29381936d414779c4e647ebc9f900ea8d57e84581eb03a05f45c9ed"},
+    {file = "ormar_utils-0.1.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:73c48c7ff107b2d52686efbff5c1756a731688c7adea174b85230c0cac3bd37b"},
+    {file = "ormar_utils-0.1.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:40b3348b6e60c9e4e51ae416908c857b7ad683420b2e93fcf2063dc99ebda18e"},
+    {file = "ormar_utils-0.1.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:10e105d762c3145e8232bb44e3797e261ae8b6fac919d3d7e5c62c7b998e6a49"},
+    {file = "ormar_utils-0.1.0-cp311-cp311-win_amd64.whl", hash = "sha256:8877bc0aa59f1718538cce4c51eb927f7c939cfb1b38cc3b2c939a332ed0692f"},
+    {file = "ormar_utils-0.1.0-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:3c870d71193dabc367d3a74abf5d732f07618f2c5f2386cd8df7ff6488aeffd8"},
+    {file = "ormar_utils-0.1.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:7bad96df890c8ca70a89381b1d494afe1ff17a9e71cedeb76fb5d815e0eb0308"},
+    {file = "ormar_utils-0.1.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:df350fc39912d79cac1e7c7a66e7ff110994fe573f551ea1f4a6b032f4855f50"},
+    {file = "ormar_utils-0.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f3a5f651af0d1888d0c924c685afff94d3558a1670f9897df2c30f3d8dc88e32"},
+    {file = "ormar_utils-0.1.0-cp312-cp312-win_amd64.whl", hash = "sha256:5e30cd49075e952794b0d9491204af94a7370121a1a0f9460c7cf61de7cb8a38"},
+    {file = "ormar_utils-0.1.0-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:98c551cbccd840c2ce8df93aa0f402cd7ed55b4eb9e4236404734e89ddc6dba9"},
+    {file = "ormar_utils-0.1.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:e5852c8f9892397e07897099cfcf0f1a3430395924371b1802a55c785eab7109"},
+    {file = "ormar_utils-0.1.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:51266678bf9613c12ecf73d1d6c9e52d46a82e5a9e3b7f098dee0176d7d397c8"},
+    {file = "ormar_utils-0.1.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4b1c79c2652e7be17e0a579fad823f5cc16880d105ac96ae6131179114c57836"},
+    {file = "ormar_utils-0.1.0-cp313-cp313-win_amd64.whl", hash = "sha256:4dd1ab340d75f98023dd97c9a8e4f83bf036515518e2f7d02991604a2c469b01"},
+]
+
+[[package]]
 name = "packaging"
 version = "24.2"
 description = "Core utilities for Python packages"
@@ -3065,15 +3096,16 @@ type = ["pytest-mypy"]
 
 [extras]
 aiopg = ["aiopg", "psycopg2-binary"]
-all = ["PyMySQL", "aiomysql", "aiopg", "aiosqlite", "asyncpg", "cryptography", "mysqlclient", "orjson", "psycopg2-binary"]
+all = ["PyMySQL", "aiomysql", "aiopg", "aiosqlite", "asyncpg", "cryptography", "mysqlclient", "orjson", "ormar-utils", "psycopg2-binary"]
 crypto = ["cryptography"]
 mysql = ["PyMySQL", "aiomysql"]
 orjson = ["orjson"]
 postgres = ["asyncpg", "psycopg2-binary"]
 postgresql = ["asyncpg", "psycopg2-binary"]
+rust = ["ormar-utils"]
 sqlite = ["aiosqlite"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10.0"
-content-hash = "c760557c0c749295223d68bc7ba1326d735fa7f1063c52f2b032138971c8ec4f"
+content-hash = "645fc5e8974f6ca61e5898b51436b419d28a30a6e60919fc763555b1ee0990a4"
