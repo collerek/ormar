@@ -11,6 +11,9 @@ on:
 
 jobs:
   benchmarks:
+    permissions: 
+      contents: read
+      id-token: write
     runs-on: codspeed-macro
     steps:
       - uses: actions/checkout@v6
@@ -36,5 +39,4 @@ jobs:
         uses: CodSpeedHQ/action@v4
         with:
           mode: walltime
-          token: ${{ secrets.CODSPEED_TOKEN }}
           run: poetry run pytest benchmarks/ --codspeed
