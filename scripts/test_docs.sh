@@ -9,4 +9,4 @@ fi
 
 set -x
 
-PYTHONPATH=. ${PREFIX}pytest --ignore venv docs_src/ "${@}"
+PYTHONPATH=. ${PREFIX}pytest -vvv --ignore venv docs_src/ "${@}"

@@ -1,11 +1,13 @@
 from typing import Optional
 
-import databases
-import ormar
 import sqlalchemy
-from tests.settings import DATABASE_URL
 
-database = databases.Database(DATABASE_URL)
+import ormar
+from ormar import DatabaseConnection
+
+DATABASE_URL = "sqlite+aiosqlite:///aggregations_docs001.db"
+
+database = DatabaseConnection(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
@@ -23,7 +25,6 @@ class Author(ormar.Model):
 
 
 class Book(ormar.Model):
-
     ormar_config = base_ormar_config.copy(
         tablename="books", order_by=["year", "-ranking"]
     )

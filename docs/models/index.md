@@ -9,7 +9,7 @@ They are being managed in the background and you do not have to create them on y
 
 To build an ormar model you simply need to inherit a `ormar.Model` class.
 
-```Python hl_lines="9"
+```Python hl_lines="10"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
@@ -23,7 +23,7 @@ Each table **has to** have a primary key column, which you specify by setting `p
 
 Only one primary key column is allowed.
 
-```Python hl_lines="15-17"
+```Python hl_lines="16-18"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
@@ -60,7 +60,7 @@ you should get back exactly same value in `response`.).
 !!!warning
     pydantic fields have to be always **Optional** and it cannot be changed (otherwise db load validation would fail)
 
-```Python hl_lines="19"
+```Python hl_lines="20"
 --8<-- "../docs_src/models/docs014.py"
 ```
 
@@ -76,9 +76,8 @@ Since it can be a function you can set `default=datetime.datetime.now` and get c
 ```python
 # <==part of related code removed for clarity==>
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
+    database=DatabaseConnection(DATABASE_URL),
     metadata=sqlalchemy.MetaData(),
-    engine=sqlalchemy.create_engine(DATABASE_URL),
 )
 
 
@@ -140,17 +139,17 @@ If for whatever reason you prefer to change the name in the database but keep th
 with specifying `name` parameter during Field declaration
 
 Here you have a sample model with changed names
-```Python hl_lines="18-21"
+```Python hl_lines="19-22"
 --8<-- "../docs_src/models/docs008.py"
 ```
 
 Note that you can also change the ForeignKey column name
-```Python hl_lines="34"
+```Python hl_lines="36"
 --8<-- "../docs_src/models/docs009.py"
 ```
 
 But for now you cannot change the ManyToMany column names as they go through other Model anyway.
-```Python hl_lines="43"
+```Python hl_lines="44"
 --8<-- "../docs_src/models/docs010.py"
 ```
 
@@ -194,13 +193,13 @@ book = await Book.objects.first_or_404(name="123")
 
 Note that for better IDE support and mypy checks you can provide type hints.
 
-```Python hl_lines="15-17"
+```Python hl_lines="16-18"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
 Note that type hints are **optional** so perfectly valid `ormar` code can look like this:
 
-```Python hl_lines="15-17"
+```Python hl_lines="16-18"
 --8<-- "../docs_src/models/docs012.py"
 ```
 
@@ -214,21 +213,21 @@ Note that type hints are **optional** so perfectly valid `ormar` code can look l
 
 ### Dependencies
 
-Since ormar depends on [`databases`][databases] and [`sqlalchemy-core`][sqlalchemy-core] for database connection 
+Since ormar depends on [SQLAlchemy async][sqlalchemy-async] and [`sqlalchemy-core`][sqlalchemy-core] for database connection
 and table creation you need to assign each `Model` with two special parameters.
 
-#### Databases
+#### Database Connection
 
-One is `Database` instance created with your database url in [sqlalchemy connection string][sqlalchemy connection string] format.
+One is `DatabaseConnection` instance created with your database url in [sqlalchemy connection string][sqlalchemy connection string] format (with async driver).
 
 Created instance needs to be passed to every `Model` with `ormar_config` object `database` parameter.
 
-```Python hl_lines="1 5 11"
+```Python hl_lines="4 6 12"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
 !!! tip
-    You need to create the `Database` instance **only once** and use it for all models. 
+    You need to create the `DatabaseConnection` instance **only once** and use it for all models.
     You can create several ones if you want to use multiple databases.
 
 #### Sqlalchemy
@@ -237,7 +236,7 @@ Second dependency is sqlalchemy `MetaData` instance.
 
 Created instance needs to be passed to every `Model` with `ormar_config` object `metadata` parameter.
 
-```Python hl_lines="3 6 12"
+```Python hl_lines="1 7 13"
 --8<-- "../docs_src/models/docs001.py"
 ```
 
@@ -252,7 +251,7 @@ To ease the config management, the `OrmarConfig` class provide `copy` method.
 So instead of providing the same parameters over and over again for all models
 you should create a base object and use its copy in all models.
 
-```Python hl_lines="9-12 19 28"
+```Python hl_lines="10-13 20 29"
 --8<-- "../docs_src/models/docs013.py"
 ```
 
@@ -282,7 +281,7 @@ Right now only `IndexColumns`, `UniqueColumns` and `CheckColumns` constraints ar
 
 You can set this parameter by providing `ormar_config` object `constraints` argument.
 
-```Python hl_lines="13-16"
+```Python hl_lines="14-17"
 --8<-- "../docs_src/models/docs006.py"
 ```
 
@@ -295,7 +294,7 @@ You can set this parameter by providing `ormar_config` object `constraints` argu
 
 You can set this parameter by providing `ormar_config` object `constraints` argument.
 
-```Python hl_lines="13-16"
+```Python hl_lines="14-17"
 --8<-- "../docs_src/models/docs017.py"
 ```
 
@@ -308,7 +307,7 @@ You can set this parameter by providing `ormar_config` object `constraints` argu
 
 You can set this parameter by providing `ormar_config` object `constraints` argument.
 
-```Python hl_lines="15-20"
+```Python hl_lines="16-21"
 --8<-- "../docs_src/models/docs018.py"
 ```
 
@@ -335,7 +334,7 @@ model_config = ConfigDict(validate_assignment=True, ser_json_bytes="base64")
 ```
 
 So to overwrite setting or provide your own a sample model can look like following:
-```Python hl_lines="16"
+```Python hl_lines="17"
 --8<-- "../docs_src/models/docs016.py"
 ```
 
@@ -378,7 +377,7 @@ parameter to model `ormar_config` object.
 Sample default ordering (not specified - so by primary key):
 ```python
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
+    database=DatabaseConnection(DATABASE_URL),
     metadata=sqlalchemy.MetaData(),
 )
 
@@ -395,7 +394,7 @@ class Author(ormar.Model):
 Modified
 ```python hl_lines="9"
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
+    database=DatabaseConnection(DATABASE_URL),
     metadata=sqlalchemy.MetaData(),
 )
 
@@ -416,7 +415,7 @@ There are two ways to create and persist the `Model` instance in the database.
 
 If you plan to modify the instance in the later execution of your program you can initiate your `Model` as a normal class and later await a `save()` call.  
 
-```Python hl_lines="25-26"
+```Python hl_lines="30-31"
 --8<-- "../docs_src/models/docs007.py"
 ```
 
@@ -426,7 +425,7 @@ For creating multiple objects at once a `bulk_create()` QuerySet's method is ava
 
 Each model has a `QuerySet` initialised as `objects` parameter 
 
-```Python hl_lines="28"
+```Python hl_lines="33"
 --8<-- "../docs_src/models/docs007.py"
 ```
 
@@ -466,7 +465,7 @@ You can check if model is saved with `ModelInstance.saved` property
 [pydantic]: https://pydantic-docs.helpmanual.io/
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [sqlalchemy-metadata]: https://docs.sqlalchemy.org/en/13/core/metadata.html
-[databases]: https://github.com/encode/databases
+[sqlalchemy-async]: https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html
 [sqlalchemy connection string]: https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls
 [sqlalchemy table creation]: https://docs.sqlalchemy.org/en/13/core/metadata.html#creating-and-dropping-database-tables
 [alembic]: https://alembic.sqlalchemy.org/en/latest/tutorial.html

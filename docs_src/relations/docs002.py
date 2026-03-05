@@ -1,13 +1,14 @@
-from typing import List, Optional
+from typing import Optional
 
-import databases
-import ormar
 import sqlalchemy
 
-DATABASE_URL = "sqlite:///test.db"
+import ormar
+from ormar import DatabaseConnection
+
+DATABASE_URL = "sqlite+aiosqlite:///relations_docs002.db"
 
 ormar_base_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL), metadata=sqlalchemy.MetaData()
+    database=DatabaseConnection(DATABASE_URL), metadata=sqlalchemy.MetaData()
 )
 
 
@@ -31,5 +32,5 @@ class Post(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
-    categories: Optional[List[Category]] = ormar.ManyToMany(Category)
+    categories: Optional[list[Category]] = ormar.ManyToMany(Category)
     author: Optional[Author] = ormar.ForeignKey(Author)

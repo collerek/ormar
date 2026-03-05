@@ -1,14 +1,13 @@
 import base64
 import uuid
 from enum import Enum
-from typing import List
 
-import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
+import ormar
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 
@@ -41,7 +40,7 @@ class BinaryThing(ormar.Model):
 create_test_database = init_tests(base_ormar_config)
 
 
-@app.get("/things", response_model=List[BinaryThing])
+@app.get("/things", response_model=list[BinaryThing])
 async def read_things():
     return await BinaryThing.objects.order_by("name").all()
 

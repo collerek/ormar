@@ -1,13 +1,14 @@
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
-import databases
-import ormar
 import sqlalchemy
 
-DATABASE_URL = "sqlite:///test.db"
+import ormar
+from ormar import DatabaseConnection
+
+DATABASE_URL = "sqlite+aiosqlite:///relations_docs003.db"
 
 ormar_base_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL), metadata=sqlalchemy.MetaData()
+    database=DatabaseConnection(DATABASE_URL), metadata=sqlalchemy.MetaData()
 )
 
 
@@ -23,4 +24,4 @@ class Course(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
-    department: Optional[Union[Department, Dict]] = ormar.ForeignKey(Department)
+    department: Optional[Union[Department, dict]] = ormar.ForeignKey(Department)

@@ -1,10 +1,10 @@
 import datetime
 import uuid
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
-import ormar
 import pytest
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -34,7 +34,7 @@ class Order(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="order")
 
     id: uuid.UUID = ormar.UUID(default=uuid.uuid4, primary_key=True, index=True)
-    user: Optional[Union[User, Dict]] = ormar.ForeignKey(User)
+    user: Optional[Union[User, dict]] = ormar.ForeignKey(User)
 
 
 create_test_database = init_tests(base_ormar_config)

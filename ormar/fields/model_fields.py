@@ -3,7 +3,7 @@ import decimal
 import uuid
 from enum import Enum as E
 from enum import EnumMeta
-from typing import Any, Optional, Type
+from typing import Any, Optional
 
 import pydantic
 import sqlalchemy
@@ -119,7 +119,7 @@ class ModelFieldFactory:
             encrypt_secret=encrypt_secret,
             encrypt_backend=encrypt_backend,
             encrypt_custom_backend=encrypt_custom_backend,
-            **kwargs
+            **kwargs,
         )
         Field = type(cls.__name__, cls._bases, {})
         return Field(**namespace)
@@ -160,7 +160,7 @@ class String(ModelFieldFactory, str):
         max_length: int,
         min_length: Optional[int] = None,
         regex: Optional[str] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Self:  # type: ignore
         kwargs = {
             **kwargs,
@@ -213,7 +213,7 @@ class Integer(ModelFieldFactory, int):
         minimum: Optional[int] = None,
         maximum: Optional[int] = None,
         multiple_of: Optional[int] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Self:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
@@ -294,7 +294,7 @@ class Float(ModelFieldFactory, float):
         minimum: Optional[float] = None,
         maximum: Optional[float] = None,
         multiple_of: Optional[int] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Self:
         kwargs = {
             **kwargs,
@@ -521,7 +521,7 @@ class BigInteger(Integer, int):
         minimum: Optional[int] = None,
         maximum: Optional[int] = None,
         multiple_of: Optional[int] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Self:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
@@ -569,7 +569,7 @@ class SmallInteger(Integer, int):
         minimum: Optional[int] = None,
         maximum: Optional[int] = None,
         multiple_of: Optional[int] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Self:
         autoincrement = kwargs.pop("autoincrement", None)
         autoincrement = (
@@ -621,7 +621,7 @@ class Decimal(ModelFieldFactory, decimal.Decimal):
         scale: Optional[int] = None,
         max_digits: Optional[int] = None,
         decimal_places: Optional[int] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Self:
         kwargs = {
             **kwargs,
@@ -722,7 +722,7 @@ class Enum(ModelFieldFactory):
     _sample = None
 
     def __new__(  # type: ignore # noqa CFQ002
-        cls, *, enum_class: Type[E], **kwargs: Any
+        cls, *, enum_class: type[E], **kwargs: Any
     ) -> Self:
         kwargs = {
             **kwargs,

@@ -1,6 +1,5 @@
 import random
 import string
-from typing import List
 
 import pytest
 import pytest_asyncio
@@ -26,9 +25,9 @@ async def books(author: Author, publisher: Publisher, num_models: int):
 
 
 @pytest.mark.parametrize("num_models", [250, 500, 1000])
-async def test_get_all(aio_benchmark, num_models: int, authors_in_db: List[Author]):
+async def test_get_all(aio_benchmark, num_models: int, authors_in_db: list[Author]):
     @aio_benchmark
-    async def get_all(authors: List[Author]):
+    async def get_all(authors: list[Author]):
         return await Author.objects.all()
 
     authors = get_all(authors_in_db)
@@ -38,7 +37,7 @@ async def test_get_all(aio_benchmark, num_models: int, authors_in_db: List[Autho
 
 @pytest.mark.parametrize("num_models", [10, 20, 40])
 async def test_get_all_with_related_models(
-    aio_benchmark, num_models: int, author: Author, books: List[Book]
+    aio_benchmark, num_models: int, author: Author, books: list[Book]
 ):
     @aio_benchmark
     async def get_with_related(author: Author):
@@ -49,9 +48,9 @@ async def test_get_all_with_related_models(
 
 
 @pytest.mark.parametrize("num_models", [250, 500, 1000])
-async def test_get_one(aio_benchmark, num_models: int, authors_in_db: List[Author]):
+async def test_get_one(aio_benchmark, num_models: int, authors_in_db: list[Author]):
     @aio_benchmark
-    async def get_one(authors: List[Author]):
+    async def get_one(authors: list[Author]):
         return await Author.objects.get(id=authors[0].id)
 
     author = get_one(authors_in_db)
@@ -59,9 +58,9 @@ async def test_get_one(aio_benchmark, num_models: int, authors_in_db: List[Autho
 
 
 @pytest.mark.parametrize("num_models", [250, 500, 1000])
-async def test_get_or_none(aio_benchmark, num_models: int, authors_in_db: List[Author]):
+async def test_get_or_none(aio_benchmark, num_models: int, authors_in_db: list[Author]):
     @aio_benchmark
-    async def get_or_none(authors: List[Author]):
+    async def get_or_none(authors: list[Author]):
         return await Author.objects.get_or_none(id=authors[0].id)
 
     author = get_or_none(authors_in_db)
@@ -70,10 +69,10 @@ async def test_get_or_none(aio_benchmark, num_models: int, authors_in_db: List[A
 
 @pytest.mark.parametrize("num_models", [250, 500, 1000])
 async def test_get_or_create_when_get(
-    aio_benchmark, num_models: int, authors_in_db: List[Author]
+    aio_benchmark, num_models: int, authors_in_db: list[Author]
 ):
     @aio_benchmark
-    async def get_or_create(authors: List[Author]):
+    async def get_or_create(authors: list[Author]):
         author, created = await Author.objects.get_or_create(id=authors[0].id)
         assert not created
         return author
@@ -83,7 +82,7 @@ async def test_get_or_create_when_get(
 
 
 @pytest.mark.parametrize("num_models", [250, 500, 1000])
-async def test_first(aio_benchmark, num_models: int, authors_in_db: List[Author]):
+async def test_first(aio_benchmark, num_models: int, authors_in_db: list[Author]):
     @aio_benchmark
     async def first():
         return await Author.objects.first()
@@ -93,9 +92,9 @@ async def test_first(aio_benchmark, num_models: int, authors_in_db: List[Author]
 
 
 @pytest.mark.parametrize("num_models", [250, 500, 1000])
-async def test_exists(aio_benchmark, num_models: int, authors_in_db: List[Author]):
+async def test_exists(aio_benchmark, num_models: int, authors_in_db: list[Author]):
     @aio_benchmark
-    async def check_exists(authors: List[Author]):
+    async def check_exists(authors: list[Author]):
         return await Author.objects.filter(id=authors[0].id).exists()
 
     exists = check_exists(authors_in_db)

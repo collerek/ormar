@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, cast
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 import sqlalchemy
 from sqlalchemy import TextClause, text
@@ -16,19 +16,19 @@ if TYPE_CHECKING:  # pragma no cover
 class SqlJoin:
     def __init__(  # noqa:  CFQ002
         self,
-        used_aliases: List,
+        used_aliases: list,
         select_from: sqlalchemy.sql.Select,
-        columns: List[sqlalchemy.Column],
+        columns: list[sqlalchemy.Column],
         excludable: "ExcludableItems",
-        order_columns: Optional[List["OrderAction"]],
-        sorted_orders: Dict,
-        main_model: Type["Model"],
+        order_columns: Optional[list["OrderAction"]],
+        sorted_orders: dict,
+        main_model: type["Model"],
         relation_name: str,
         relation_str: str,
         related_models: Any = None,
         own_alias: str = "",
-        source_model: Optional[Type["Model"]] = None,
-        already_sorted: Optional[Dict] = None,
+        source_model: Optional[type["Model"]] = None,
+        already_sorted: Optional[dict] = None,
     ) -> None:
         self.relation_name = relation_name
         self.related_models = related_models or []
@@ -47,14 +47,14 @@ class SqlJoin:
             self.relation_name
         ]
 
-        self._next_model: Optional[Type["Model"]] = None
+        self._next_model: Optional[type["Model"]] = None
         self._next_alias: Optional[str] = None
 
         self.relation_str = relation_str
         self.source_model = source_model
 
     @property
-    def next_model(self) -> Type["Model"]:
+    def next_model(self) -> type["Model"]:
         if not self._next_model:  # pragma: nocover
             raise RelationshipInstanceError(
                 "Cannot link to related table if relation.to model is not set."
@@ -62,7 +62,7 @@ class SqlJoin:
         return self._next_model
 
     @next_model.setter
-    def next_model(self, value: Type["Model"]) -> None:
+    def next_model(self, value: type["Model"]) -> None:
         self._next_model = value
 
     @property
@@ -119,7 +119,7 @@ class SqlJoin:
         :return: clause combining all strings
         :rtype: sqlalchemy.text
         """
-        dialect = self.main_model.ormar_config.database._backend._dialect
+        dialect = self.main_model.ormar_config.database.dialect
         quoter = dialect.identifier_preparer.quote
         left_part = (
             f"{quoter(f'{self.next_alias}_{to_table_name}')}.{quoter(to_column_name)}"
@@ -133,7 +133,7 @@ class SqlJoin:
 
         return text(f"{left_part}={right_part}")
 
-    def build_join(self) -> Tuple[List, sqlalchemy.sql.Select, List, Dict]:
+    def build_join(self) -> tuple[list, sqlalchemy.sql.Select, list, dict]:
         """
         Main external access point for building a join.
         Splits the join definition, updates fields and exclude_fields if needed,
@@ -141,7 +141,7 @@ class SqlJoin:
         used_aliases and sort_orders.
 
         :return: list of used aliases, select from, list of aliased columns, sort orders
-        :rtype: Tuple[List[str], Join, List[TextClause], Dict]
+        :rtype: tuple[list[str], Join, list[TextClause], dict]
         """
         if self.target_field.is_multi:
             self._process_m2m_through_table()
@@ -305,7 +305,9 @@ class SqlJoin:
             self.next_alias, self.to_table
         )
         self.select_from = sqlalchemy.sql.outerjoin(
-            self.select_from, target_table, on_clause  # type: ignore
+            self.select_from,  # type: ignore
+            target_table,
+            on_clause,
         )
 
         self._get_order_bys()
@@ -318,7 +320,9 @@ class SqlJoin:
         )
         self.columns.extend(
             self.alias_manager.prefixed_columns(  # type: ignore
-                self.next_alias, target_table, self_related_fields  # type: ignore
+                self.next_alias,
+                target_table,  # type: ignore
+                self_related_fields,
             )
         )
         self.used_aliases.append(self.next_alias)
@@ -339,17 +343,17 @@ class SqlJoin:
         parts = order_by.split("__")
         if len(parts) > 2 or parts[0] != self.target_field.through.get_name():
             raise ModelDefinitionError(
-                "You can order the relation only " "by related or link table columns!"
+                "You can order the relation only by related or link table columns!"
             )
 
-    def _get_alias_and_model(self, order_by: str) -> Tuple[str, Type["Model"]]:
+    def _get_alias_and_model(self, order_by: str) -> tuple[str, type["Model"]]:
         """
         Returns proper model and alias to be applied in the clause.
 
         :param order_by: string with order by definition
         :type order_by: str
         :return: alias and model to be used in clause
-        :rtype: Tuple[str, Type["Model"]]
+        :rtype: tuple[str, type["Model"]]
         """
         if self.target_field.is_multi and "__" in order_by:
             self._verify_allowed_order_field(order_by=order_by)
@@ -403,14 +407,14 @@ class SqlJoin:
         if not current_table_sorted and not self.target_field.is_multi:
             self._set_default_primary_key_order_by()
 
-    def _get_to_and_from_keys(self) -> Tuple[str, str]:
+    def _get_to_and_from_keys(self) -> tuple[str, str]:
         """
         Based on the relation type, name of the relation and previous models and parts
         stored in JoinParameters it resolves the current to and from keys, which are
         different for ManyToMany relation, ForeignKey and reverse related of relations.
 
         :return: to key and from key
-        :rtype: Tuple[str, str]
+        :rtype: tuple[str, str]
         """
         if self.target_field.is_multi:
             to_key = self._process_m2m_related_name_change(reverse=True)

@@ -1,12 +1,12 @@
-from typing import ForwardRef, List, Optional
+from typing import ForwardRef, Optional
 
-import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from starlette import status
 
+import ormar
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 
@@ -32,7 +32,7 @@ class Country(ormar.Model):
     capital: Optional[CityRef] = ormar.ForeignKey(  # type: ignore
         CityRef, related_name="capital_city", nullable=True
     )
-    borders: List[Optional[CountryRef]] = ormar.ManyToMany(  # type: ignore
+    borders: list[Optional[CountryRef]] = ormar.ManyToMany(  # type: ignore
         CountryRef, nullable=True, skip_reverse=True
     )
 

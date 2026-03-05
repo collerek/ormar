@@ -1,10 +1,11 @@
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
-import databases
-import ormar
 import sqlalchemy
 
-database = databases.Database("sqlite:///db.sqlite")
+import ormar
+from ormar import DatabaseConnection
+
+database = DatabaseConnection("sqlite+aiosqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
 
@@ -27,7 +28,7 @@ class Course(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     completed: bool = ormar.Boolean(default=False)
-    department: Optional[Union[Department, Dict]] = ormar.ForeignKey(Department)
+    department: Optional[Union[Department, dict]] = ormar.ForeignKey(Department)
 
 
 department = Department(name="Science")

@@ -1,17 +1,17 @@
 from typing import Optional
 
+import pytest
+
 # type: ignore
 import ormar
-import pytest
 from ormar import ModelDefinitionError
-
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
 base_ormar_config = create_config()
 
 
-def test_through_with_relation_fails():
+def test_through_with_relation_fails() -> None:
     class Category(ormar.Model):
         ormar_config = base_ormar_config.copy(tablename="categories")
 

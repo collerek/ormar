@@ -9,7 +9,7 @@ Sqlalchemy column and Type are automatically taken from target `Model`.
 
 ## Defining Models
 
-```Python hl_lines="34"
+```Python hl_lines="35"
 --8<-- "../docs_src/relations/docs002.py"
 ```
 
@@ -39,7 +39,7 @@ class Post(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
-    categories: Optional[List[Category]] = ormar.ManyToMany(Category)
+    categories: Optional[list[Category]] = ormar.ManyToMany(Category)
 
 # create some sample data
 post = await Post.objects.create(title="Hello, M2M")
@@ -63,7 +63,7 @@ By default, the related_name is generated in the same way as for the `ForeignKey
 but in the same way you can overwrite this name by providing `related_name` parameter like below:
 
 ```Python
-categories: Optional[Union[Category, List[Category]]] = ormar.ManyToMany(
+categories: Optional[Union[Category, list[Category]]] = ormar.ManyToMany(
         Category, through=PostCategory, related_name="new_categories"
     )
 ```
@@ -107,7 +107,7 @@ class Post(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
-    categories: Optional[List[Category]] = ormar.ManyToMany(Category, skip_reverse=True)
+    categories: Optional[list[Category]] = ormar.ManyToMany(Category, skip_reverse=True)
 
 # create some sample data
 post = await Post.objects.create(title="Hello, M2M")
@@ -139,7 +139,7 @@ assert len(categories) == 1
 Optionally if you want to add additional fields you can explicitly create and pass
 the through model class.
 
-```Python hl_lines="19-24 32"
+```Python hl_lines="20-25 33"
 --8<-- "../docs_src/relations/docs004.py"
 ```
 
@@ -193,7 +193,7 @@ Example:
 ```python
 ... # course declaration omitted
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database("sqlite:///db.sqlite"),
+    database=DatabaseConnection("sqlite+aiosqlite:///db.sqlite"),
     metadata=sqlalchemy.MetaData(),
 )
 
@@ -232,7 +232,7 @@ so it's useful only when additional fields are provided on `Through` model.
 
 In a sample model setup as following:
 
-```Python hl_lines="19-24 32"
+```Python hl_lines="20-25 33"
 --8<-- "../docs_src/relations/docs004.py"
 ```
 

@@ -2,12 +2,8 @@ from typing import (
     TYPE_CHECKING,
     AbstractSet,
     Any,
-    Dict,
-    List,
     Mapping,
     Optional,
-    Set,
-    Type,
     Union,
     cast,
 )
@@ -34,17 +30,17 @@ class ExcludableMixin(RelationMixin):
 
     @staticmethod
     def get_child(
-        items: Union[Set, Dict, None], key: Optional[str] = None
-    ) -> Union[Set, Dict, None]:
+        items: Union[set, dict, None], key: Optional[str] = None
+    ) -> Union[set, dict, None]:
         """
         Used to get nested dictionaries keys if they exists otherwise returns
         passed items.
         :param items: bag of items to include or exclude
-        :type items:  Union[Set, Dict, None]
+        :type items:  Union[set, dict, None]
         :param key: name of the child to extract
         :type key: str
         :return: child extracted from items if exists
-        :rtype: Union[Set, Dict, None]
+        :rtype: Union[set, dict, None]
         """
         if isinstance(items, dict):
             return items.get(key, {})
@@ -52,22 +48,22 @@ class ExcludableMixin(RelationMixin):
 
     @staticmethod
     def _populate_pk_column(
-        model: Union[Type["Model"], Type["ModelRow"]],
-        columns: List[str],
+        model: Union[type["Model"], type["ModelRow"]],
+        columns: list[str],
         use_alias: bool = False,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Adds primary key column/alias (depends on use_alias flag) to list of
         column names that are selected.
 
         :param model: model on columns are selected
-        :type model: Type["Model"]
+        :type model: type["Model"]
         :param columns: list of columns names
-        :type columns: List[str]
+        :type columns: list[str]
         :param use_alias: flag to set if aliases or field names should be used
         :type use_alias: bool
         :return: list of columns names with pk column in it
-        :rtype: List[str]
+        :rtype: list[str]
         """
         pk_alias = (
             model.get_column_alias(model.ormar_config.pkname)
@@ -81,12 +77,12 @@ class ExcludableMixin(RelationMixin):
     @classmethod
     def own_table_columns(
         cls,
-        model: Union[Type["Model"], Type["ModelRow"]],
+        model: Union[type["Model"], type["ModelRow"]],
         excludable: ExcludableItems,
         alias: str = "",
         use_alias: bool = False,
         add_pk_columns: bool = True,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Returns list of aliases or field names for given model.
         Aliases/names switch is use_alias flag.
@@ -103,11 +99,11 @@ class ExcludableMixin(RelationMixin):
         :param excludable: structure of fields to include and exclude
         :type excludable: ExcludableItems
         :param model: model on columns are selected
-        :type model: Type["Model"]
+        :type model: type["Model"]
         :param use_alias: flag if aliases or field names should be used
         :type use_alias: bool
         :return: list of column field names or aliases
-        :rtype: List[str]
+        :rtype: list[str]
         """
         model_excludable = excludable.get(model_cls=model, alias=alias)  # type: ignore
         columns = [
@@ -140,7 +136,7 @@ class ExcludableMixin(RelationMixin):
         return columns
 
     @classmethod
-    def _update_excluded_with_related(cls, exclude: Union[Set, Dict, None]) -> Set:
+    def _update_excluded_with_related(cls, exclude: Union[set, dict, None]) -> set:
         """
         Used during generation of the dict().
         To avoid cyclical references and max recurrence limit nested models have to
@@ -150,9 +146,9 @@ class ExcludableMixin(RelationMixin):
         exclusion, for nested models all related models are excluded.
 
         :param exclude: set/dict with fields to exclude
-        :type exclude: Union[Set, Dict, None]
+        :type exclude: Union[set, dict, None]
         :return: set or dict with excluded fields added.
-        :rtype: Union[Set, Dict]
+        :rtype: Union[set, dict]
         """
         exclude = exclude or set()
         related_set = cls.extract_related_names()
@@ -167,17 +163,17 @@ class ExcludableMixin(RelationMixin):
 
     @classmethod
     def _update_excluded_with_pks_and_through(
-        cls, exclude: Set, exclude_primary_keys: bool, exclude_through_models: bool
-    ) -> Set:
+        cls, exclude: set, exclude_primary_keys: bool, exclude_through_models: bool
+    ) -> set:
         """
         Updates excluded names with name of pk column if exclude flag is set.
 
         :param exclude: set of names to exclude
-        :type exclude: Set
+        :type exclude: set
         :param exclude_primary_keys: flag if the primary keys should be excluded
         :type exclude_primary_keys: bool
         :return: set updated with pk if flag is set
-        :rtype: Set
+        :rtype: set
         """
         if exclude_primary_keys:
             exclude.add(cls.ormar_config.pkname)
@@ -186,7 +182,7 @@ class ExcludableMixin(RelationMixin):
         return exclude
 
     @classmethod
-    def get_names_to_exclude(cls, excludable: ExcludableItems, alias: str) -> Set:
+    def get_names_to_exclude(cls, excludable: ExcludableItems, alias: str) -> set:
         """
         Returns a set of models field names that should be explicitly excluded
         during model initialization.
@@ -202,9 +198,9 @@ class ExcludableMixin(RelationMixin):
         :param excludable: structure of fields to include and exclude
         :type excludable: ExcludableItems
         :return: set of field names that should be excluded
-        :rtype: Set
+        :rtype: set
         """
-        model = cast(Type["Model"], cls)
+        model = cast(type["Model"], cls)
         model_excludable = excludable.get(model_cls=model, alias=alias)
         fields_names = cls.extract_db_own_fields()
         if model_excludable.include:

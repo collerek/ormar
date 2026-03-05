@@ -3,7 +3,7 @@ name = "ormar"
 
 [tool.poetry]
 name = "ormar"
-version = "0.21.0"
+version = "0.23.0"
 description = "An async ORM with fastapi in mind and pydantic validation."
 authors = ["Radosław Drążkiewicz <collerek@gmail.com>"]
 license = "MIT"
@@ -32,20 +32,20 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP",
     "Framework :: AsyncIO",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3 :: Only",
 ]
 
 
 [tool.poetry.dependencies]
-python = "^3.9.0"
-databases = "^0.9.0"
+python = "^3.10.0"
 pydantic = "^2.11.9"
 SQLAlchemy = {version = "^2.0.40", extras = ["asyncio"]}
-cryptography = { version = ">=41.0.3,<44.0.0", optional = true }
+cryptography = { version = ">=44.0.1,<47.0.0", optional = true }
 # Async database drivers
 aiosqlite = { version = ">=0.19,<0.23", optional = true }
 aiomysql = { version = ">=0.1.0", optional = true }
@@ -84,17 +84,15 @@ all = [
 
 [tool.poetry.group.dev.dependencies]
 # Testing
-pytest = ">=7.4.4,<9.0.0"
-pytest-cov = ">=4,<8"
+pytest = ">=8.2,<10.0"
+pytest-cov = ">=7,<8"
 codecov = "^2.1.13"
-pytest-asyncio = ">=0.21,<0.24"
+pytest-asyncio = ">=1.1.0,<2.0"
 fastapi = ">=0.125.0"
 
+ruff = ">=0.5.1,<0.15.5"
 
-black = ">=24.1,<26.0"
-ruff = ">=0.5.1,<0.15.1"
-
-setuptools = ">=78.1.1,<81.0.0"
+setuptools = ">=78.1.1,<83.0.0"
 
 # types
 mypy = "^1.8.0"
@@ -104,7 +102,7 @@ types-ipaddress = "^1.0.1"
 types-enum34 = "^1.1.1"
 types-cryptography = "^3.3.23"
 types-orjson = "^3.6.1"
-types-aiofiles = "^23.2.0"
+types-aiofiles = ">=23.2,<26.0"
 types-requests = "^2.32.0"
 types-toml = "^0.10.8"
 
@@ -112,7 +110,7 @@ types-toml = "^0.10.8"
 mkdocs = "^1.5.3"
 mkdocs-material = ">=8.1.2,<9.8"
 mkdocs-material-extensions = "^1.2"
-mkdocstrings = {version = "==0.30.1", extras = ["python"]}
+mkdocstrings = {version = "==1.0.3", extras = ["python"]}
 mkdocs-gen-files = ">=0.5,<0.7"
 mkdocs-literate-nav = "^0.6.1"
 mkdocs-section-index = "^0.3.7"
@@ -130,12 +128,17 @@ pydantic-extra-types = "^2.5.0"
 watchdog = "<7.0.0"
 pytest-codspeed = "^4.2.0"
 mike = "^2.0.0"
-faker = ">=24.3,<38.0"
+faker = ">=24.3,<41.0"
 email-validator = "^2.1.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "module"
+asyncio_default_test_loop_scope = "module"
 
 [tool.mypy]
 # TODO: Enable mypy plugin after pydantic release supporting toml file
@@ -163,7 +166,16 @@ disable_ending_comma_heuristic = true
 split_arguments_when_comma_terminated = true
 
 [tool.ruff]
-select = ["E", "F", "I"]
-ignore = ["E402"]
 line-length = 88
 src = ["ormar", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E402"]
+
+[tool.ruff.format]
+indent-style = "space"
+docstring-code-format = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["ormar"]

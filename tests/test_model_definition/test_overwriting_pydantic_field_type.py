@@ -1,10 +1,10 @@
-from typing import Dict, Optional
+from typing import Optional
 
-import ormar
 import pydantic
 import pytest
 from pydantic import Json, PositiveInt, ValidationError
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -17,7 +17,7 @@ class OverwriteTest(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     my_int: int = ormar.Integer(overwrite_pydantic_type=PositiveInt)
     constraint_dict: Json = ormar.JSON(
-        overwrite_pydantic_type=Optional[Json[Dict[str, int]]]
+        overwrite_pydantic_type=Optional[Json[dict[str, int]]]
     )  # type: ignore
 
 

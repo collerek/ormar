@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 
 class AliasMixin:
@@ -40,15 +40,15 @@ class AliasMixin:
         return alias  # if not found it's not an alias but actual name
 
     @classmethod
-    def translate_columns_to_aliases(cls, new_kwargs: Dict) -> Dict:
+    def translate_columns_to_aliases(cls, new_kwargs: dict) -> dict:
         """
         Translates dictionary of model fields changing field names into aliases.
         If field has no alias the field name remains intact.
         Only fields present in the dictionary are translated.
         :param new_kwargs: dict with fields names and their values
-        :type new_kwargs: Dict
+        :type new_kwargs: dict
         :return: dict with aliases and their values
-        :rtype: Dict
+        :rtype: dict
         """
         for field_name, field in cls.ormar_config.model_fields.items():
             if field_name in new_kwargs:
@@ -56,15 +56,15 @@ class AliasMixin:
         return new_kwargs
 
     @classmethod
-    def translate_aliases_to_columns(cls, new_kwargs: Dict) -> Dict:
+    def translate_aliases_to_columns(cls, new_kwargs: dict) -> dict:
         """
         Translates dictionary of model fields changing aliases into field names.
         If field has no alias the alias is already a field name.
         Only fields present in the dictionary are translated.
         :param new_kwargs: dict with aliases and their values
-        :type new_kwargs: Dict
+        :type new_kwargs: dict
         :return: dict with fields names and their values
-        :rtype: Dict
+        :rtype: dict
         """
         for field_name, field in cls.ormar_config.model_fields.items():
             if field.get_alias() and field.get_alias() in new_kwargs:

@@ -1,10 +1,10 @@
-from typing import List, Optional
+from typing import Optional
 
-import ormar
 import pytest
 import pytest_asyncio
-from ormar.exceptions import ModelPersistenceError, NoMatch, RelationshipInstanceError
 
+import ormar
+from ormar.exceptions import ModelPersistenceError, NoMatch, RelationshipInstanceError
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -31,7 +31,7 @@ class Post(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
-    categories: Optional[List[Category]] = ormar.ManyToMany(Category)
+    categories: Optional[list[Category]] = ormar.ManyToMany(Category)
     author: Optional[Author] = ormar.ForeignKey(Author)
 
 

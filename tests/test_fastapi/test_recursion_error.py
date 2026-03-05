@@ -1,14 +1,14 @@
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
-import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import Depends, FastAPI
 from httpx import ASGITransport, AsyncClient
 from pydantic import BaseModel, Json
 
+import ormar
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 
@@ -53,13 +53,13 @@ class QuizAnswer(BaseModel):
 
 class QuizQuestion(BaseModel):
     question: str
-    answers: List[QuizAnswer]
+    answers: list[QuizAnswer]
 
 
 class QuizInput(BaseModel):
     title: str
     description: str
-    questions: List[QuizQuestion]
+    questions: list[QuizQuestion]
 
 
 class Quiz(ormar.Model):

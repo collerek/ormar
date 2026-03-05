@@ -1,9 +1,9 @@
 from typing import Optional
 
-import ormar
 import pytest
-from ormar.exceptions import MultipleMatches, NoMatch, RelationshipInstanceError
 
+import ormar
+from ormar.exceptions import MultipleMatches, NoMatch, RelationshipInstanceError
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

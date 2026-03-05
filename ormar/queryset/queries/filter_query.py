@@ -1,4 +1,4 @@
-from typing import Any, List, Union
+from typing import Any, Union
 
 import sqlalchemy
 from sqlalchemy import ColumnElement, Select, TextClause
@@ -12,7 +12,7 @@ class FilterQuery:
     """
 
     def __init__(
-        self, filter_clauses: List[FilterAction], exclude: bool = False
+        self, filter_clauses: list[FilterAction], exclude: bool = False
     ) -> None:
         self.exclude = exclude
         self.filter_clauses = filter_clauses

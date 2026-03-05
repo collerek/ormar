@@ -6,11 +6,11 @@ import hashlib
 import uuid
 from typing import Any, Optional
 
-import ormar
 import pytest
+
+import ormar
 from ormar import ModelDefinitionError, NoMatch
 from ormar.fields.sqlalchemy_encrypted import EncryptedString
-
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

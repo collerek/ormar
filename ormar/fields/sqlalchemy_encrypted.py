@@ -2,7 +2,7 @@
 import abc
 import base64
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
 import sqlalchemy.types as types
 from sqlalchemy.engine import Dialect
@@ -115,11 +115,13 @@ class EncryptedString(types.TypeDecorator):
 
     impl = types.TypeEngine
 
+    cache_ok = True
+
     def __init__(
         self,
         encrypt_secret: Union[str, Callable],
         encrypt_backend: EncryptBackends = EncryptBackends.FERNET,
-        encrypt_custom_backend: Optional[Type[EncryptBackend]] = None,
+        encrypt_custom_backend: Optional[type[EncryptBackend]] = None,
         **kwargs: Any,
     ) -> None:
         _field_type = kwargs.pop("_field_type")
@@ -143,7 +145,7 @@ class EncryptedString(types.TypeDecorator):
         type_ = self._field_type.__type__
         if type_ is None:  # pragma: nocover
             raise ModelDefinitionError(
-                f"Improperly configured field " f"{self._field_type.name}"
+                f"Improperly configured field {self._field_type.name}"
             )
         self.type_: Any = type_
 
@@ -196,8 +198,8 @@ class EncryptedString(types.TypeDecorator):
             return self._field_type.__type__(decrypted_value)  # type: ignore
 
     def _get_coder_type_and_params(
-        self, coders: Dict[type, Callable]
-    ) -> Tuple[Optional[Callable], Optional[str]]:
+        self, coders: dict[type, Callable]
+    ) -> tuple[Optional[Callable], Optional[str]]:
         coder = coders.get(self.type_, None)
         additional_parameter: Optional[str] = None
         if self.type_ in ADDITIONAL_PARAMETERS_MAP:

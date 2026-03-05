@@ -1,12 +1,10 @@
-import sqlite3
-from typing import ForwardRef, List, Optional
+from typing import ForwardRef, Optional
 
-import asyncpg
-import ormar
-import pymysql
 import pytest
 import pytest_asyncio
+import sqlalchemy
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -32,8 +30,8 @@ class Post(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
-    categories: Optional[List[Category]] = ormar.ManyToMany(Category)
-    authors: Optional[List[Author]] = ormar.ManyToMany(
+    categories: Optional[list[Category]] = ormar.ManyToMany(Category)
+    authors: Optional[list[Author]] = ormar.ManyToMany(
         Author, through=ForwardRef("AuthorXPosts")
     )
 
@@ -71,7 +69,7 @@ async def cleanup():
 @pytest.mark.asyncio
 async def test_adding_same_m2m_model_twice():
     async with base_ormar_config.database:
-        async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             post = await Post.objects.create(title="Hello, M2M")
             news = await Category(name="News").save()
 
@@ -85,16 +83,10 @@ async def test_adding_same_m2m_model_twice():
 @pytest.mark.asyncio
 async def test_adding_same_m2m_model_twice_with_unique():
     async with base_ormar_config.database:
-        async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
             post = await Post.objects.create(title="Hello, M2M")
             redactor = await Author(name="News").save()
 
             await post.authors.add(redactor)
-            with pytest.raises(
-                (
-                    sqlite3.IntegrityError,
-                    pymysql.IntegrityError,
-                    asyncpg.exceptions.UniqueViolationError,
-                )
-            ):
+            with pytest.raises((sqlalchemy.exc.IntegrityError)):
                 await post.authors.add(redactor)

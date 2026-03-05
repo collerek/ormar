@@ -29,13 +29,13 @@ Here you can find a very simple sample application code.
 Define startup and shutdown procedures using FastAPI lifespan and use is in the
 application.
 ```python
-from typing import List, Optional, AsyncIterator
+from typing import Optional, AsyncIterator
 
-import databases
 import sqlalchemy
 from fastapi import FastAPI
 
 import ormar
+from ormar import DatabaseConnection
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -55,7 +55,7 @@ def get_lifespan(config):
 
 base_ormar_config = ormar.OrmarConfig(
     metadata=sqlalchemy.MetaData(),
-    database=databases.Database("sqlite:///test.db"),
+    database=DatabaseConnection("sqlite+aiosqlite:///test.db"),
 )
 
 app = FastAPI(lifespan=get_lifespan(base_ormar_config))
@@ -101,7 +101,7 @@ Define your desired endpoints, note how `ormar` models are used both
 as `response_model` and as a requests parameters.
 
 ```python
-@app.get("/items/", response_model=List[Item])
+@app.get("/items/", response_model=list[Item])
 async def get_items():
     items = await Item.objects.select_related("category").all()
     return items

@@ -1,5 +1,5 @@
 import decimal
-from typing import TYPE_CHECKING, Any, Callable, Optional, Type
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 import sqlalchemy
 
@@ -20,7 +20,7 @@ class SelectAction(QueryAction):
     """
 
     def __init__(
-        self, select_str: str, model_cls: Type["Model"], alias: Optional[str] = None
+        self, select_str: str, model_cls: type["Model"], alias: Optional[str] = None
     ) -> None:
         super().__init__(query_str=select_str, model_cls=model_cls)
         if alias:  # pragma: no cover

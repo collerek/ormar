@@ -1,12 +1,12 @@
 from typing import Optional
 
-import ormar
 import pytest
 import pytest_asyncio
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
+import ormar
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 
@@ -105,7 +105,7 @@ async def test_related_with_defaults(sample_data):
                                 {
                                     "author": {"id": 1},
                                     "id": 1,
-                                    "title": "Bug caused by " "default value",
+                                    "title": "Bug caused by default value",
                                     "year": 2021,
                                 }
                             ],

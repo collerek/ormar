@@ -1,14 +1,14 @@
 # type: ignore
 import uuid
-from typing import List, Optional
+from typing import Optional
 
-import ormar
 import pydantic
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
+import ormar
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 
@@ -27,12 +27,12 @@ class Thing(ormar.Model):
 create_test_database = init_tests(base_ormar_config)
 
 
-@app.get("/things", response_model=List[Thing])
+@app.get("/things", response_model=list[Thing])
 async def read_things():
     return await Thing.objects.order_by("name").all()
 
 
-@app.get("/things_with_sample", response_model=List[Thing])
+@app.get("/things_with_sample", response_model=list[Thing])
 async def read_things_sample():
     await Thing(name="b", js=["asdf", "asdf", "bobby", "nigel"]).save()
     await Thing(name="a", js='["lemon", "raspberry", "lime", "pumice"]').save()

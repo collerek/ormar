@@ -2,19 +2,7 @@ import copy
 import sys
 import warnings
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union, cast
 
 import pydantic
 import sqlalchemy
@@ -66,7 +54,7 @@ CONFIG_KEY = "Config"
 PARSED_FIELDS_KEY = "__parsed_fields__"
 
 
-def add_cached_properties(new_model: Type["Model"]) -> None:
+def add_cached_properties(new_model: type["Model"]) -> None:
     """
     Sets cached properties for both pydantic and ormar models.
 
@@ -88,7 +76,7 @@ def add_cached_properties(new_model: Type["Model"]) -> None:
     new_model._bytes_fields = set()
 
 
-def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa: CCR001
+def add_property_fields(new_model: type["Model"], attrs: dict) -> None:  # noqa: CCR001
     """
     Checks class namespace for properties or functions with computed_field.
     If attribute have decorator_info it was decorated with @computed_field.
@@ -99,7 +87,7 @@ def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa:
     :param new_model: newly constructed model
     :type new_model: Model class
     :param attrs:
-    :type attrs: Dict[str, str]
+    :type attrs: dict[str, str]
     """
     props = set()
     for var_name, value in attrs.items():
@@ -116,7 +104,7 @@ def add_property_fields(new_model: Type["Model"], attrs: Dict) -> None:  # noqa:
         )
 
 
-def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
+def register_signals(new_model: type["Model"]) -> None:  # noqa: CCR001
     """
     Registers on model's SignalEmmiter and sets pre-defined signals.
     Predefined signals are (pre/post) + (save/update/delete).
@@ -142,7 +130,7 @@ def register_signals(new_model: Type["Model"]) -> None:  # noqa: CCR001
 
 
 def verify_constraint_names(
-    base_class: "Model", model_fields: Dict, parent_value: List
+    base_class: "Model", model_fields: dict, parent_value: list
 ) -> None:
     """
     Verifies if redefined fields that are overwritten in subclasses did not remove
@@ -152,9 +140,9 @@ def verify_constraint_names(
     :param base_class: one of the parent classes
     :type base_class: Model or model parent class
     :param model_fields: ormar fields in defined in current class
-    :type model_fields: Dict[str, BaseField]
+    :type model_fields: dict[str, BaseField]
     :param parent_value: list of base class constraints
-    :type parent_value: List
+    :type parent_value: list
     """
     new_aliases = {x.name: x.get_alias() for x in model_fields.values()}
     old_aliases = {
@@ -204,7 +192,7 @@ def get_constraint_copy(
 
 
 def update_attrs_from_base_config(  # noqa: CCR001
-    base_class: "Model", attrs: Dict, model_fields: Dict
+    base_class: "Model", attrs: dict, model_fields: dict
 ) -> None:
     """
     Updates OrmarConfig parameters in child from parent if needed.
@@ -212,9 +200,9 @@ def update_attrs_from_base_config(  # noqa: CCR001
     :param base_class: one of the parent classes
     :type base_class: Model or model parent class
     :param attrs: new namespace for class being constructed
-    :type attrs: Dict
+    :type attrs: dict
     :param model_fields: ormar fields in defined in current class
-    :type model_fields: Dict[str, BaseField]
+    :type model_fields: dict[str, BaseField]
     """
 
     params_to_update = ["metadata", "database", "constraints", "property_fields"]
@@ -245,10 +233,10 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     field: ManyToManyField,
     field_name: str,
     table_name: str,
-    parent_fields: Dict,
-    attrs: Dict,
+    parent_fields: dict,
+    attrs: dict,
     ormar_config: OrmarConfig,
-    base_class: Type["Model"],
+    base_class: type["Model"],
 ) -> None:
     """
     Clones class with Through model for m2m relations, appends child name to the name
@@ -263,7 +251,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     Removes the original sqlalchemy table from metadata if it was not removed.
 
     :param base_class: base class model
-    :type base_class: Type["Model"]
+    :type base_class: type["Model"]
     :param field: field with relations definition
     :type field: ManyToManyField
     :param field_name: name of the relation field
@@ -271,13 +259,13 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     :param table_name: name of the table
     :type table_name: str
     :param parent_fields: dictionary of fields to copy to new models from parent
-    :type parent_fields: Dict
+    :type parent_fields: dict
     :param attrs: new namespace for class being constructed
-    :type attrs: Dict
+    :type attrs: dict
     :param ormar_config: metaclass of currently created model
     :type ormar_config: OrmarConfig
     """
-    Field: Type[BaseField] = type(  # type: ignore
+    Field: type[BaseField] = type(  # type: ignore
         field.__class__.__name__, (ManyToManyField, BaseField), {}
     )
     copy_field = Field(**dict(field.__dict__))
@@ -310,7 +298,7 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
     )
     copy_name = through_class.__name__ + attrs.get("__name__", "")
     copy_through = cast(
-        Type[ormar.Model], type(copy_name, (ormar.Model,), {"ormar_config": new_config})
+        type[ormar.Model], type(copy_name, (ormar.Model,), {"ormar_config": new_config})
     )
     # create new table with copied columns but remove foreign keys
     # they will be populated later in expanding reverse relation
@@ -336,11 +324,11 @@ def copy_and_replace_m2m_through_model(  # noqa: CFQ002
 
 
 def copy_data_from_parent_model(  # noqa: CCR001
-    base_class: Type["Model"],
+    base_class: type["Model"],
     curr_class: type,
-    attrs: Dict,
-    model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
-) -> Tuple[Dict, Dict]:
+    attrs: dict,
+    model_fields: dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
+) -> tuple[dict, dict]:
     """
     Copy the key parameters [database, metadata, property_fields and constraints]
     and fields from parent models. Overwrites them if needed.
@@ -356,11 +344,11 @@ def copy_data_from_parent_model(  # noqa: CCR001
     :param curr_class: current constructed class
     :type curr_class: Model or model parent class
     :param attrs: new namespace for class being constructed
-    :type attrs: Dict
+    :type attrs: dict
     :param model_fields: ormar fields in defined in current class
-    :type model_fields: Dict[str, BaseField]
+    :type model_fields: dict[str, BaseField]
     :return: updated attrs and model_fields
-    :rtype: Tuple[Dict, Dict]
+    :rtype: tuple[dict, dict]
     """
     if attrs.get("ormar_config"):
         if model_fields and not base_class.ormar_config.abstract:  # type: ignore
@@ -373,7 +361,7 @@ def copy_data_from_parent_model(  # noqa: CCR001
             attrs=attrs,
             model_fields=model_fields,
         )
-        parent_fields: Dict = dict()
+        parent_fields: dict = dict()
         ormar_config = attrs.get("ormar_config")
         if not ormar_config:  # pragma: no cover
             raise ModelDefinitionError(
@@ -416,9 +404,9 @@ def copy_data_from_parent_model(  # noqa: CCR001
 def extract_from_parents_definition(  # noqa: CCR001
     base_class: type,
     curr_class: type,
-    attrs: Dict,
-    model_fields: Dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
-) -> Tuple[Dict, Dict]:
+    attrs: dict,
+    model_fields: dict[str, Union[BaseField, ForeignKeyField, ManyToManyField]],
+) -> tuple[dict, dict]:
     """
     Extracts fields from base classes if they have valid ormar fields.
 
@@ -436,14 +424,14 @@ def extract_from_parents_definition(  # noqa: CCR001
     :param curr_class: current constructed class
     :type curr_class: Model or model parent class
     :param attrs: new namespace for class being constructed
-    :type attrs: Dict
+    :type attrs: dict
     :param model_fields: ormar fields in defined in current class
-    :type model_fields: Dict[str, BaseField]
+    :type model_fields: dict[str, BaseField]
     :return: updated attrs and model_fields
-    :rtype: Tuple[Dict, Dict]
+    :rtype: tuple[dict, dict]
     """
     if hasattr(base_class, "ormar_config"):
-        base_class = cast(Type["Model"], base_class)
+        base_class = cast(type["Model"], base_class)
         return copy_data_from_parent_model(
             base_class=base_class,
             curr_class=curr_class,
@@ -491,26 +479,26 @@ def extract_from_parents_definition(  # noqa: CCR001
 
 
 def update_attrs_and_fields(
-    attrs: Dict,
-    new_attrs: Dict,
-    model_fields: Dict,
-    new_model_fields: Dict,
-    new_fields: Set,
-) -> Dict:
+    attrs: dict,
+    new_attrs: dict,
+    model_fields: dict,
+    new_model_fields: dict,
+    new_fields: set,
+) -> dict:
     """
     Updates __annotations__, values of model fields (so pydantic FieldInfos)
     as well as model.ormar_config.model_fields definitions from parents.
 
     :param attrs: new namespace for class being constructed
-    :type attrs: Dict
+    :type attrs: dict
     :param new_attrs: related of the namespace extracted from parent class
-    :type new_attrs: Dict
+    :type new_attrs: dict
     :param model_fields: ormar fields in defined in current class
-    :type model_fields: Dict[str, BaseField]
+    :type model_fields: dict[str, BaseField]
     :param new_model_fields: ormar fields defined in parent classes
-    :type new_model_fields: Dict[str, BaseField]
+    :type new_model_fields: dict[str, BaseField]
     :param new_fields: set of new fields names
-    :type new_fields: Set[str]
+    :type new_fields: set[str]
     """
     key = "__annotations__"
     attrs[key].update(new_attrs[key])
@@ -521,7 +509,7 @@ def update_attrs_and_fields(
 
 
 def add_field_descriptor(
-    name: str, field: "BaseField", new_model: Type["Model"]
+    name: str, field: "BaseField", new_model: type["Model"]
 ) -> None:
     """
     Sets appropriate descriptor for each model field.
@@ -533,7 +521,7 @@ def add_field_descriptor(
     :param field: model field to add descriptor for
     :type field: BaseField
     :param new_model: model with fields
-    :type new_model: Type["Model]
+    :type new_model: type["Model]
     """
     if field.is_relation:
         setattr(new_model, name, RelationDescriptor(name=name))
@@ -608,9 +596,9 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
         :param name: name of current class
         :type name: str
         :param bases: base classes
-        :type bases: Tuple
+        :type bases: tuple
         :param attrs: class namespace
-        :type attrs: Dict
+        :type attrs: dict
         """
         merge_or_generate_pydantic_config(attrs=attrs, name=name)
         attrs["__name__"] = name
@@ -681,7 +669,7 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
         return new_model
 
     @property
-    def objects(cls: Type["T"]) -> "QuerySet[T]":  # type: ignore
+    def objects(cls: type["T"]) -> "QuerySet[T]":  # type: ignore
         if cls.ormar_config.requires_ref_update:
             raise ModelError(
                 f"Model {cls.get_name()} has not updated "
@@ -715,11 +703,11 @@ class ModelMetaclass(pydantic._internal._model_construction.ModelMetaclass):
             field = self.ormar_config.model_fields.get(item)
             if field.is_relation:
                 return FieldAccessor(
-                    source_model=cast(Type["Model"], self),
+                    source_model=cast(type["Model"], self),
                     model=field.to,
                     access_chain=item,
                 )
             return FieldAccessor(
-                source_model=cast(Type["Model"], self), field=field, access_chain=item
+                source_model=cast(type["Model"], self), field=field, access_chain=item
             )
         return object.__getattribute__(self, item)
