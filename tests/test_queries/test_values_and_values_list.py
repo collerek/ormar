@@ -47,7 +47,6 @@ create_test_database = init_tests(base_ormar_config)
 
 
 @pytest_asyncio.fixture(autouse=True, scope="module")
-@pytest.mark.usefixtures("create_test_database")
 async def sample_data():
     async with base_ormar_config.database:
         creator = await User(name="Anonymous").save()
