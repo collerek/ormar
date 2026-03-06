@@ -12,9 +12,6 @@
 <a href="https://codecov.io/gh/collerek/ormar">
     <img src="https://codecov.io/gh/collerek/ormar/branch/master/graph/badge.svg" alt="Coverage">
 </a>
-<a href="https://www.codefactor.io/repository/github/collerek/ormar">
-<img src="https://www.codefactor.io/repository/github/collerek/ormar/badge" alt="CodeFactor" />
-</a>
 <a href="https://qlty.sh/gh/collerek/projects/ormar"><img src="https://qlty.sh/gh/collerek/projects/ormar/maintainability.svg" alt="Maintainability" /></a>
 <a href="https://pepy.tech/project/ormar">
 <img src="https://pepy.tech/badge/ormar"></a>
