@@ -2,16 +2,19 @@ name: codspeed-benchmarks
 
 on:
   push:
-    branches: [ master, pydantic_v2 ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, pydantic_v2 ]
+    branches: [ master ]
   # `workflow_dispatch` allows CodSpeed to trigger backtest
   # performance analysis in order to generate initial data.
   workflow_dispatch:
 
 jobs:
   benchmarks:
-    runs-on: ubuntu-latest
+    permissions: 
+      contents: read
+      id-token: write
+    runs-on: codspeed-macro
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -35,6 +38,5 @@ jobs:
       - name: Run benchmarks
         uses: CodSpeedHQ/action@v4
         with:
-          mode: instrumentation
-          token: ${{ secrets.CODSPEED_TOKEN }}
+          mode: walltime
           run: poetry run pytest benchmarks/ --codspeed
