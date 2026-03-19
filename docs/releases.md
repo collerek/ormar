@@ -1,5 +1,13 @@
 # Release notes
 
+## 0.23.1
+
+### ‼️🚨 High vulnerability fixed – please upgrade ASAP
+
+* In this version of ormar a high severity vulnerability (CVE-2026-27953) in model initialization was patched. The vulnerability allowed injection of `__pk_only__` and `__excluded__` parameters through user-supplied `**kwargs` (e.g. JSON request bodies). Passing `__pk_only__=True` bypassed all Pydantic validation, and `__excluded__` could nullify arbitrary fields. Thanks @Mistz1 for reporting!
+* Affected versions:
+  * All versions prior to `0.23.1`
+
 ## 0.23.0
 
 ### ‼️🚨 Critical vulnerability fixed – please upgrade ASAP
