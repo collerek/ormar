@@ -3,7 +3,7 @@ import sys
 import uuid
 from dataclasses import dataclass
 from random import choices
-from typing import TYPE_CHECKING, Any, ForwardRef, Optional, Union, overload
+from typing import TYPE_CHECKING, Any, ForwardRef, Optional, Union, cast, overload
 
 import sqlalchemy
 from pydantic import BaseModel, create_model
@@ -38,14 +38,14 @@ def create_dummy_instance(fk: type["T"], pk: Any = None) -> "T":
     :rtype: Model
     """
     init_dict = {
-        **{fk.ormar_config.pkname: pk or -1, "__pk_only__": True},
+        **{fk.ormar_config.pkname: pk or -1},
         **{
             k: create_dummy_instance(v.to)
             for k, v in fk.ormar_config.model_fields.items()
             if v.is_relation and not v.nullable and not v.virtual
         },
     }
-    return fk(**init_dict)
+    return cast("T", fk._internal_construct(_pk_only=True, _excluded=None, **init_dict))
 
 
 def create_dummy_model(
@@ -524,9 +524,13 @@ class ForeignKeyField(BaseField):  # type: ignore[misc]
             and value.get(self.to.ormar_config.pkname) is not None
             and not self.is_through
         ):
-            value["__pk_only__"] = True
             pk_only_model = self.to_pk_only(**value)
-        model = self.to(**value)
+            model = cast(
+                "Model",
+                self.to._internal_construct(_pk_only=True, _excluded=None, **value),
+            )
+        else:
+            model = self.to(**value)
         if to_register:
             self.register_relation(model=model, child=child)
         return pk_only_model if pk_only_model is not None else model

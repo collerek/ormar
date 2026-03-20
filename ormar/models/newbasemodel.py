@@ -106,15 +106,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         Models marked as abstract=True in internal OrmarConfig cannot be initialized.
 
-        Accepts also special __pk_only__ flag that indicates that Model is constructed
-        only with primary key value (so no other fields, it's a child model on other
-        Model), that causes skipping the validation, that's the only case when the
-        validation can be skipped.
-
-        Accepts also special __excluded__ parameter that contains a set of fields that
-        should be explicitly set to None, as otherwise pydantic will try to populate
-        them with their default values if default is set.
-
         :raises ModelError: if abstract model is initialized, model has ForwardRefs
          that has not been updated or unknown field is passed
         :param args: ignored args
@@ -125,30 +116,100 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         self._verify_model_can_be_initialized()
         self._initialize_internal_attributes()
 
-        pk_only = kwargs.pop("__pk_only__", False)
-        object.__setattr__(self, "__pk_only__", pk_only)
+        object.__setattr__(self, "__pk_only__", False)
 
         new_kwargs, through_tmp_dict = self._process_kwargs(kwargs)
 
-        if not pk_only:
-            new_kwargs = self.serialize_nested_models_json_fields(new_kwargs)
-            self.__pydantic_validator__.validate_python(
+        new_kwargs = self.serialize_nested_models_json_fields(new_kwargs)
+        self.__pydantic_validator__.validate_python(
+            new_kwargs,
+            self_instance=self,  # type: ignore
+        )
+        self._register_related_models(new_kwargs, through_tmp_dict)
+
+    @classmethod
+    def _internal_construct(
+        cls,
+        _pk_only: bool = False,
+        _excluded: Optional[set[str]] = None,
+        **kwargs: Any,
+    ) -> "NewBaseModel":
+        """
+        Internal-only factory for constructing model instances with pk_only or
+        excluded support. Not reachable from user-supplied kwargs or JSON
+        deserialization.
+
+        :param _pk_only: if True, skip validation and set only pk field
+        :type _pk_only: bool
+        :param _excluded: set of field names to explicitly set to None
+        :type _excluded: Optional[set[str]]
+        :param kwargs: field values for the model
+        :type kwargs: Any
+        :return: constructed model instance
+        :rtype: NewBaseModel
+        """
+        instance = cls.__new__(cls)
+        instance._verify_model_can_be_initialized()
+        instance._initialize_internal_attributes()
+        object.__setattr__(instance, "__pk_only__", _pk_only)
+
+        new_kwargs, through_tmp_dict = instance._process_kwargs(kwargs)
+
+        if _excluded:
+            for field_to_nullify in _excluded:
+                new_kwargs[field_to_nullify] = None
+
+        if not _pk_only:
+            new_kwargs = instance.serialize_nested_models_json_fields(new_kwargs)
+            instance.__pydantic_validator__.validate_python(
                 new_kwargs,
-                self_instance=self,  # type: ignore
+                self_instance=instance,  # type: ignore
             )
         else:
-            fields_set = {self.ormar_config.pkname}
-            values = new_kwargs
-            object.__setattr__(self, "__dict__", values)
-            object.__setattr__(self, "__pydantic_fields_set__", fields_set)
-        # add back through fields
+            fields_set = {instance.ormar_config.pkname}
+            object.__setattr__(instance, "__dict__", new_kwargs)
+            object.__setattr__(instance, "__pydantic_fields_set__", fields_set)
+
+        instance._register_related_models(new_kwargs, through_tmp_dict)
+        return instance
+
+    def _register_related_models(
+        self, new_kwargs: dict[str, Any], through_tmp_dict: dict[str, Any]
+    ) -> None:
+        """
+        Adds back through fields and registers related models after initialization.
+
+        :param new_kwargs: processed keyword arguments with field values
+        :type new_kwargs: dict[str, Any]
+        :param through_tmp_dict: through model fields extracted during processing
+        :type through_tmp_dict: dict[str, Any]
+        """
         new_kwargs.update(through_tmp_dict)
         model_fields = object.__getattribute__(self, "ormar_config").model_fields
-        # register the columns models after initialization
         for related in self.extract_related_names().union(self.extract_through_names()):
             model_fields[related].expand_relationship(
                 new_kwargs.get(related), self, to_register=True
             )
+
+    @classmethod
+    def _construct_with_excluded(
+        cls, excluded: set[str], **kwargs: Any
+    ) -> typing_extensions.Self:
+        """
+        Constructs model instance and nullifies excluded fields post-construction.
+        Used when loading partial results from the database.
+
+        :param excluded: set of field names to nullify after construction
+        :type excluded: set[str]
+        :param kwargs: field values for the model
+        :type kwargs: Any
+        :return: constructed model instance
+        :rtype: Self
+        """
+        instance = cls(**kwargs)
+        for field_to_nullify in excluded:
+            instance.__dict__[field_to_nullify] = None
+        return instance
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa CCR001
         """
@@ -273,8 +334,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
 
         Checks if field is in the model fields or pydantic fields.
 
-        Nullifies fields that should be excluded.
-
         Extracts through models from kwargs into temporary dict.
 
         :param kwargs: passed to init keyword arguments
@@ -290,7 +349,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         for prop_filed in property_fields:
             kwargs.pop(prop_filed, None)
 
-        excluded: set[str] = kwargs.pop("__excluded__", set())
         if "pk" in kwargs:
             kwargs[self.ormar_config.pkname] = kwargs.pop("pk")
 
@@ -323,11 +381,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             raise ModelError(
                 f"Unknown field '{e.args[0]}' for model {self.get_name(lower=False)}"
             )
-
-        # explicitly set None to excluded fields
-        # as pydantic populates them with default if set
-        for field_to_nullify in excluded:
-            new_kwargs[field_to_nullify] = None
 
         return new_kwargs, through_tmp_dict
 
