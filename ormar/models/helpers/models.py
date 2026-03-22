@@ -1,6 +1,6 @@
-import itertools
-from typing import TYPE_CHECKING, Any, ForwardRef
+from typing import TYPE_CHECKING, ForwardRef
 
+import ormar_rust_utils
 import pydantic
 
 import ormar  # noqa: I100
@@ -112,19 +112,7 @@ def group_related_list(list_: list) -> dict:
     :return: list converted to dictionary to avoid repetition and group nested models
     :rtype: dict[str, list]
     """
-    result_dict: dict[str, Any] = dict()
-    list_.sort(key=lambda x: x.split("__")[0])
-    grouped = itertools.groupby(list_, key=lambda x: x.split("__")[0])
-    for key, group in grouped:
-        group_list = list(group)
-        new = sorted(
-            ["__".join(x.split("__")[1:]) for x in group_list if len(x.split("__")) > 1]
-        )
-        if any("__" in x for x in new):
-            result_dict[key] = group_related_list(new)
-        else:
-            result_dict.setdefault(key, []).extend(new)
-    return dict(sorted(result_dict.items(), key=lambda item: len(item[1])))
+    return ormar_rust_utils.group_related_list(list_)
 
 
 def config_field_not_set(model: type["Model"], field_name: str) -> bool:

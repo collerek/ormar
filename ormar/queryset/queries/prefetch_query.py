@@ -3,6 +3,8 @@ import logging
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Sequence, Union, cast
 
+import ormar_rust_utils
+
 import ormar  # noqa:  I100, I202
 from ormar.queryset.clause import QueryClause
 from ormar.queryset.queries.query import Query
@@ -15,16 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 logger = logging.getLogger(__name__)
 
-
-class UniqueList(list):
-    """
-    Simple subclass of list that prevents the duplicates
-    Cannot use set as the order is important
-    """
-
-    def append(self, item: Any) -> None:
-        if item not in self:
-            super().append(item)
+UniqueList = ormar_rust_utils.UniqueList
 
 
 class Node(abc.ABC):
@@ -411,15 +404,7 @@ class LoadNode(Node):
         :return: tuple out of model dictionary or list
         :rtype: tuple
         """
-        result = []
-        for key, value in (
-            sorted(item.items()) if isinstance(item, dict) else enumerate(item)
-        ):
-            if isinstance(value, (dict, list)):
-                value = self._hash_item(value)
-            result.append((key, value))
-
-        return tuple(result)
+        return ormar_rust_utils.hash_item(item)
 
     def _group_models_by_relation_key(self) -> None:
         """

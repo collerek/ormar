@@ -1,9 +1,9 @@
-import base64
 import datetime
 import decimal
 import uuid
-from typing import Any, Callable, Optional, Union
+from typing import Callable, Optional
 
+import ormar_rust_utils
 import pydantic
 from pydantic_core import SchemaValidator, core_schema
 
@@ -27,43 +27,9 @@ def encode_decimal(value: decimal.Decimal, precision: Optional[int] = None) -> f
     )
 
 
-def encode_bytes(value: Union[str, bytes], represent_as_string: bool = False) -> str:
-    if represent_as_string:
-        value = (
-            value if isinstance(value, str) else base64.b64encode(value).decode("utf-8")
-        )
-    else:
-        value = value if isinstance(value, str) else value.decode("utf-8")
-    return value
-
-
-def decode_bytes(value: str, represent_as_string: bool = False) -> bytes:
-    if represent_as_string:
-        return value if isinstance(value, bytes) else base64.b64decode(value)
-    return value if isinstance(value, bytes) else value.encode("utf-8")
-
-
-def encode_json(value: Any) -> Optional[str]:
-    if isinstance(value, (datetime.date, datetime.datetime, datetime.time)):
-        value = value.isoformat()
-    value = json.dumps(value) if not isinstance(value, str) else re_dump_value(value)
-    value = value.decode("utf-8") if isinstance(value, bytes) else value
-    return value
-
-
-def re_dump_value(value: str) -> Union[str, bytes]:
-    """
-    Re-dumps value due to different string representation in orjson and json
-    :param value: string to re-dump
-    :type value: str
-    :return: re-dumped value
-    :rtype: list[str]
-    """
-    try:
-        result: Union[str, bytes] = json.dumps(json.loads(value))
-    except json.JSONDecodeError:
-        result = value
-    return result
+encode_bytes = ormar_rust_utils.encode_bytes
+decode_bytes = ormar_rust_utils.decode_bytes
+encode_json = ormar_rust_utils.encode_json
 
 
 ENCODERS_MAP: dict[type, Callable] = {

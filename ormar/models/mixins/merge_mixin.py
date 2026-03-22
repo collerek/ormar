@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, Optional, cast
 
+import ormar_rust_utils
+
 import ormar
 from ormar.queryset.utils import translate_list_to_dict
 
@@ -56,14 +58,14 @@ class MergeModelMixin:
         :rtype: list["Model"]
         """
         merged_rows: list["Model"] = []
-        grouped_instances: dict = {}
 
-        for model in result_rows:
-            grouped_instances.setdefault(model.pk, []).append(model)
-
-        for group in grouped_instances.values():
-            model = cls._recursive_add(group)[0]
-            merged_rows.append(model)
+        if result_rows:
+            pks = [model.pk for model in result_rows]
+            index_groups = ormar_rust_utils.group_by_pk(pks)
+            for group_indices in index_groups:
+                group = [result_rows[i] for i in group_indices]
+                model = cls._recursive_add(group)[0]
+                merged_rows.append(model)
 
         return merged_rows
 
@@ -149,18 +151,24 @@ class MergeModelMixin:
         :return: merged list of models
         :rtype: list[Model]
         """
-        value_to_set = [x for x in other_value]
-        for cur_field in current_field:
-            if cur_field in other_value:
-                old_value = next((x for x in other_value if x == cur_field), None)
+        current_pks = [getattr(m, "pk", None) for m in current_field]
+        other_pks = [getattr(m, "pk", None) for m in other_value]
+        plan = ormar_rust_utils.plan_merge_items_lists(current_pks, other_pks)
+        value_to_set = list(other_value)
+        for cur_idx, other_idx in plan:
+            cur_item = current_field[cur_idx]
+            if other_idx is not None:
+                old_value = other_value[other_idx]
                 new_val = cls.merge_two_instances(
-                    cur_field,
+                    cur_item,
                     cast("Model", old_value),
-                    relation_map=cur_field._skip_ellipsis(  # type: ignore
+                    relation_map=cur_item._skip_ellipsis(  # type: ignore
                         relation_map, field_name, default_return=dict()
                     ),
                 )
-                value_to_set = [x for x in value_to_set if x != cur_field] + [new_val]
+                value_to_set = [
+                    x for x in value_to_set if getattr(x, "pk", None) != cur_item.pk
+                ] + [new_val]
             else:
-                value_to_set.append(cur_field)
+                value_to_set.append(cur_item)
         return value_to_set
