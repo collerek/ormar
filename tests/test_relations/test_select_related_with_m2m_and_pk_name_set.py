@@ -2,11 +2,11 @@
 from datetime import date
 from typing import Optional, Union
 
-import ormar
 import pytest
 import sqlalchemy
-from ormar import ModelDefinitionError
 
+import ormar
+from ormar import ModelDefinitionError
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

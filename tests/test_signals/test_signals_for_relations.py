@@ -1,15 +1,15 @@
 from typing import Optional
 
-import ormar
 import pydantic
 import pytest
+
+import ormar
 from ormar import (
     post_relation_add,
     post_relation_remove,
     pre_relation_add,
     pre_relation_remove,
 )
-
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

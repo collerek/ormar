@@ -1,17 +1,17 @@
 from enum import Enum
 from typing import Optional
 
-import ormar
 import pydantic
 import pytest
+from pydantic import Json
+
+import ormar
 from ormar import QuerySet
 from ormar.exceptions import (
     ModelListEmptyError,
     ModelPersistenceError,
     QueryDefinitionError,
 )
-from pydantic import Json
-
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

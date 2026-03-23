@@ -2,13 +2,13 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import Depends, FastAPI
 from httpx import ASGITransport, AsyncClient
 from pydantic import BaseModel, Json
 
+import ormar
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 

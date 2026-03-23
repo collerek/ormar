@@ -145,7 +145,7 @@ class EncryptedString(types.TypeDecorator):
         type_ = self._field_type.__type__
         if type_ is None:  # pragma: nocover
             raise ModelDefinitionError(
-                f"Improperly configured field " f"{self._field_type.name}"
+                f"Improperly configured field {self._field_type.name}"
             )
         self.type_: Any = type_
 

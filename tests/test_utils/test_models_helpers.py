@@ -20,4 +20,3 @@ def test_group_related_list():
 
 def test_replace_models_with_copy_returns_plain_type():
     assert replace_models_with_copy(int) is int
-

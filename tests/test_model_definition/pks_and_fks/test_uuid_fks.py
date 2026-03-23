@@ -1,11 +1,11 @@
 import uuid
 
-import ormar
 import pytest
 import sqlalchemy
-from ormar.databases.connection import DatabaseConnection
 from sqlalchemy import create_engine
 
+import ormar
+from ormar.databases.connection import DatabaseConnection
 from tests.settings import ASYNC_DATABASE_URL, DATABASE_URL
 
 metadata = sqlalchemy.MetaData()

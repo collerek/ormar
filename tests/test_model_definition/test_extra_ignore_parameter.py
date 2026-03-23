@@ -1,6 +1,5 @@
 import ormar
 from ormar import Extra
-
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

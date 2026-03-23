@@ -1,5 +1,6 @@
-import ormar
 import sqlalchemy
+
+import ormar
 from ormar import DatabaseConnection
 
 database = DatabaseConnection("sqlite+aiosqlite:///db.sqlite")
@@ -7,7 +8,6 @@ metadata = sqlalchemy.MetaData()
 
 
 class Course(ormar.Model):
-
     ormar_config = ormar.OrmarConfig(
         database=database,
         metadata=metadata,

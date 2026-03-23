@@ -1,6 +1,6 @@
-import ormar.fields.constraints
 import pytest
 
+import ormar.fields.constraints
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

@@ -142,7 +142,8 @@ def ManyToMany(  # type: ignore
         column_type = None
     else:
         __type__, column_type, pk_only_model = populate_m2m_params_based_on_to_model(
-            to=to, nullable=nullable  # type: ignore
+            to=to,  # type: ignore
+            nullable=nullable,
         )
     namespace = dict(
         __type__=__type__,

@@ -1,10 +1,10 @@
 from typing import Optional
 
-import ormar
 import pytest
 import sqlalchemy
 from sqlalchemy import text
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

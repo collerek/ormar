@@ -172,7 +172,7 @@ class Prefix:
     @property
     def alias_key(self) -> str:
         source_model_name = self.source_model.get_name()
-        return f"{source_model_name}_" f"{self.relation_str}"
+        return f"{source_model_name}_{self.relation_str}"
 
 
 class QueryClause:

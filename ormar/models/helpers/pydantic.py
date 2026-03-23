@@ -30,7 +30,8 @@ def create_pydantic_field(
     :type model_field: ManyToManyField class
     """
     model_field.through.model_fields[field_name] = FieldInfo.from_annotated_attribute(
-        annotation=Optional[model], default=None  # type: ignore
+        annotation=Optional[model],  # type: ignore
+        default=None,
     )
     model_field.through.model_rebuild(
         force=True, _types_namespace={model_field.owner.__name__: model_field.owner}

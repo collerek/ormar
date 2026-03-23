@@ -4,10 +4,10 @@ from typing import AsyncIterator
 import pytest_asyncio
 import sqlalchemy
 from fastapi import FastAPI
-from ormar import OrmarConfig
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from ormar import OrmarConfig
 from tests.settings import ASYNC_DATABASE_URL
 
 

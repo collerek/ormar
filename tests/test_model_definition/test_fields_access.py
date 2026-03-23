@@ -1,7 +1,7 @@
-import ormar
 import pytest
-from ormar import BaseField
 
+import ormar
+from ormar import BaseField
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -135,7 +135,7 @@ def test_combining_groups_together():
     assert len(group._nested_groups) == 2
     assert str(
         group.get_text_clause().compile(compile_kwargs={"literal_binds": True})
-    ) == ("NOT ((product.name = 'Test') AND" " (product.rating >= 3.0))")
+    ) == ("NOT ((product.name = 'Test') AND (product.rating >= 3.0))")
 
     group = ((Product.name == "Test") & (Product.rating >= 3.0)) | (
         Product.category.name << (["Toys", "Books"])

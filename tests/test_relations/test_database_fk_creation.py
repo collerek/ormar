@@ -1,10 +1,10 @@
 from typing import Optional
 
-import ormar
 import pytest
 import sqlalchemy
-from ormar.fields.foreign_key import validate_referential_action
 
+import ormar
+from ormar.fields.foreign_key import validate_referential_action
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

@@ -395,7 +395,9 @@ class LoadNode(Node):
             hashable_item = self._hash_item(item)
             instance = parsed_rows.setdefault(
                 hashable_item,
-                self.relation_field.to(**item, **{"__excluded__": fields_to_exclude}),
+                self.relation_field.to._construct_with_excluded(
+                    fields_to_exclude, **item
+                ),
             )
             self.models.append(instance)
 

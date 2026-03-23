@@ -1,9 +1,9 @@
 from typing import ForwardRef, Optional
 
-import ormar
 import pydantic
 from pydantic_core import PydanticUndefined
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

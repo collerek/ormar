@@ -14,7 +14,6 @@ from ormar.signals import SignalEmitter
 
 
 class OrmarConfig:
-
     if TYPE_CHECKING:  # pragma: no cover
         pkname: str
         metadata: sqlalchemy.MetaData

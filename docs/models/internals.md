@@ -8,7 +8,7 @@ All `Model` classes inherit from `pydantic.BaseModel` so you can access all norm
 
 For example to list pydantic model fields you can:
 
-```Python hl_lines="20"
+```Python hl_lines="21"
 --8<-- "../docs_src/models/docs003.py"
 ```
 
@@ -24,7 +24,7 @@ To access auto created sqlalchemy table you can use `Model.ormar_config.table` p
 
 For example to list table columns you can:
 
-```Python hl_lines="24"
+```Python hl_lines="25"
 --8<-- "../docs_src/models/docs004.py"
 ```
 
@@ -40,7 +40,7 @@ To access ormar `Fields` you can use `Model.ormar_config.model_fields` parameter
 
 For example to list table model fields you can:
 
-```Python hl_lines="22"
+```Python hl_lines="23"
 --8<-- "../docs_src/models/docs005.py"
 ```
 

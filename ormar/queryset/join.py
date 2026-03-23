@@ -305,7 +305,9 @@ class SqlJoin:
             self.next_alias, self.to_table
         )
         self.select_from = sqlalchemy.sql.outerjoin(
-            self.select_from, target_table, on_clause  # type: ignore
+            self.select_from,  # type: ignore
+            target_table,
+            on_clause,
         )
 
         self._get_order_bys()
@@ -318,7 +320,9 @@ class SqlJoin:
         )
         self.columns.extend(
             self.alias_manager.prefixed_columns(  # type: ignore
-                self.next_alias, target_table, self_related_fields  # type: ignore
+                self.next_alias,
+                target_table,  # type: ignore
+                self_related_fields,
             )
         )
         self.used_aliases.append(self.next_alias)
@@ -339,7 +343,7 @@ class SqlJoin:
         parts = order_by.split("__")
         if len(parts) > 2 or parts[0] != self.target_field.through.get_name():
             raise ModelDefinitionError(
-                "You can order the relation only " "by related or link table columns!"
+                "You can order the relation only by related or link table columns!"
             )
 
     def _get_alias_and_model(self, order_by: str) -> tuple[str, type["Model"]]:

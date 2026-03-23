@@ -1,10 +1,10 @@
 import time
 from datetime import datetime
 
-import ormar
 import pytest
 from sqlalchemy import func, text
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

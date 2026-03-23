@@ -1,10 +1,10 @@
 from typing import Optional
 
-import ormar
 import pydantic
 import pytest
 from pydantic import Json, PositiveInt, ValidationError
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

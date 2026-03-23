@@ -1,7 +1,8 @@
 from typing import Optional
 
-import ormar
 import sqlalchemy
+
+import ormar
 from ormar import DatabaseConnection
 
 DATABASE_URL = "sqlite+aiosqlite:///queries_docs001.db"

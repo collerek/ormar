@@ -1,11 +1,11 @@
 import random
 from typing import Optional
 
-import ormar
 import pytest
 from pydantic import BaseModel, Field, HttpUrl
 from pydantic_extra_types.payment import PaymentCardNumber
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
