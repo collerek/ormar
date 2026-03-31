@@ -97,10 +97,10 @@ class ModelRow(NewBaseModel):
 
         instance: Optional["Model"] = None
         if item.get(cls.ormar_config.pkname, None) is not None:
-            item["__excluded__"] = cls.get_names_to_exclude(
+            excluded = cls.get_names_to_exclude(
                 excludable=excludable, alias=table_prefix
             )
-            instance = cast("Model", cls(**item))
+            instance = cast("Model", cls._construct_with_excluded(excluded, **item))
             instance.set_save_status(True)
         return instance
 
@@ -326,10 +326,10 @@ class ModelRow(NewBaseModel):
         child_dict = model_cls.extract_prefixed_table_columns(
             item={}, row=row, excludable=excludable, table_prefix=table_prefix
         )
-        child_dict["__excluded__"] = model_cls.get_names_to_exclude(
+        excluded = model_cls.get_names_to_exclude(
             excludable=excludable, alias=table_prefix
         )
-        child = model_cls(**child_dict)  # type: ignore
+        child = model_cls._construct_with_excluded(excluded, **child_dict)  # type: ignore
         return child
 
     @classmethod
