@@ -1328,19 +1328,19 @@ files = [
 
 [[package]]
 name = "mike"
-version = "2.1.4"
+version = "2.2.0"
 description = "Manage multiple versions of your MkDocs-powered documentation"
 optional = false
 python-versions = "*"
 groups = ["dev"]
 files = [
-    {file = "mike-2.1.4-py3-none-any.whl", hash = "sha256:39933e992e155dd70f2297e749a0ed78d8fd7942bc33a3666195d177758a280e"},
-    {file = "mike-2.1.4.tar.gz", hash = "sha256:75d549420b134603805a65fc67f7dcd9fcd0ad1454fb2c893d9e844cba1aa6e4"},
+    {file = "mike-2.2.0-py3-none-any.whl", hash = "sha256:e1f4981c1152eec7c2490a3401142292cc47d686194188416db2648fdfe1d040"},
+    {file = "mike-2.2.0.tar.gz", hash = "sha256:1e3858e32c0f125aac14432fc7848434358f9ae0962c5c5cde387ad47f6ad25e"},
 ]
 
 [package.dependencies]
 jinja2 = ">=2.7"
-mkdocs = ">=1.0"
+mkdocs = ">=1.0,<2.0"
 pyparsing = ">=3.0"
 pyyaml = ">=5.1"
 pyyaml-env-tag = "*"
