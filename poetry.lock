@@ -1507,14 +1507,14 @@ properdocs = ">=1.6.5"
 
 [[package]]
 name = "mkdocstrings"
-version = "1.0.3"
+version = "1.0.4"
 description = "Automatic documentation from sources, for MkDocs."
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "mkdocstrings-1.0.3-py3-none-any.whl", hash = "sha256:0d66d18430c2201dc7fe85134277382baaa15e6b30979f3f3bdbabd6dbdb6046"},
-    {file = "mkdocstrings-1.0.3.tar.gz", hash = "sha256:ab670f55040722b49bb45865b2e93b824450fb4aef638b00d7acb493a9020434"},
+    {file = "mkdocstrings-1.0.4-py3-none-any.whl", hash = "sha256:63464b4b29053514f32a1dbbf604e52876d5e638111b0c295ab7ed3cac73ca9b"},
+    {file = "mkdocstrings-1.0.4.tar.gz", hash = "sha256:3969a6515b77db65fd097b53c1b7aa4ae840bd71a2ee62a6a3e89503446d7172"},
 ]
 
 [package.dependencies]
@@ -3066,4 +3066,4 @@ sqlite = ["aiosqlite"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10.0"
-content-hash = "c136db98e804c0fe2cec360e9315240d35b3450d265a5198e78c6b40224648d7"
+content-hash = "457dad9eca1f78d0252d7a82aadd9f7a189aac8ea20132d28d424957409407dd"
