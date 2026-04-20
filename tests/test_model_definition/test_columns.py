@@ -36,6 +36,13 @@ class Example(ormar.Model):
     size: MyEnum = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
 
 
+class ExampleNonAutoIncrement(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="example_nonautoincrement")
+
+    id: int = ormar.Integer(primary_key=True, autoincrement=False)
+    name: str = ormar.String(max_length=200, default="aaa")
+
+
 class EnumExample(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="enum_example")
 
@@ -57,6 +64,18 @@ def test_accepts_only_proper_enums():
 
     with pytest.raises(pydantic.ValidationError):
         Example(size=WrongEnum.A)
+
+
+@pytest.mark.asyncio
+async def test_non_auto_increment_pk():
+    async with base_ormar_config.database:
+        example = ExampleNonAutoIncrement(id=1)
+        await example.save()
+
+        assert (
+            ExampleNonAutoIncrement.ormar_config.table.columns["id"].autoincrement
+            is False
+        )
 
 
 @pytest.mark.asyncio
