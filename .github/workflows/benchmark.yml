@@ -11,7 +11,8 @@ on:
 
 jobs:
   benchmarks:
-    permissions: 
+    if: github.actor != 'dependabot[bot]'
+    permissions:
       contents: read
       id-token: write
     runs-on: codspeed-macro
