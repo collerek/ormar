@@ -1,5 +1,3 @@
-from typing import Dict
-
 import sqlalchemy
 
 
@@ -8,10 +6,10 @@ class OrderQuery:
     Modifies the select query with given list of order_by clauses.
     """
 
-    def __init__(self, sorted_orders: Dict) -> None:
+    def __init__(self, sorted_orders: dict) -> None:
         self.sorted_orders = sorted_orders
 
-    def apply(self, expr: sqlalchemy.sql.select) -> sqlalchemy.sql.select:
+    def apply(self, expr: sqlalchemy.sql.Select) -> sqlalchemy.sql.Select:
         """
         Applies all order_by clauses if set.
 

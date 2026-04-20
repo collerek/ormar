@@ -1,8 +1,8 @@
-from typing import List, Optional
+from typing import Optional
 
-import ormar
 import pytest
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -15,7 +15,7 @@ class Child(ormar.Model):
     id: int = ormar.Integer(name="child_id", primary_key=True)
     first_name: str = ormar.String(name="fname", max_length=100)
     last_name: str = ormar.String(name="lname", max_length=100)
-    born_year: int = ormar.Integer(name="year_born", nullable=True)
+    born_year: Optional[int] = ormar.Integer(name="year_born", nullable=True)
 
 
 class Artist(ormar.Model):
@@ -25,7 +25,7 @@ class Artist(ormar.Model):
     first_name: str = ormar.String(name="fname", max_length=100)
     last_name: str = ormar.String(name="lname", max_length=100)
     born_year: int = ormar.Integer(name="year")
-    children: Optional[List[Child]] = ormar.ManyToMany(Child)
+    children: Optional[list[Child]] = ormar.ManyToMany(Child)
 
 
 class Album(ormar.Model):

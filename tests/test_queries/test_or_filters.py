@@ -1,9 +1,9 @@
 from typing import Optional
 
-import ormar
 import pytest
-from ormar.exceptions import QueryDefinitionError
 
+import ormar
+from ormar.exceptions import QueryDefinitionError
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -23,7 +23,7 @@ class Book(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     author: Optional[Author] = ormar.ForeignKey(Author)
     title: str = ormar.String(max_length=100)
-    year: int = ormar.Integer(nullable=True)
+    year: Optional[int] = ormar.Integer(nullable=True)
 
 
 create_test_database = init_tests(base_ormar_config)

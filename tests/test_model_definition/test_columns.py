@@ -1,11 +1,12 @@
 import datetime
 from enum import Enum
+from typing import Optional
 
-import ormar
 import pydantic
 import pytest
-from ormar import ModelDefinitionError
 
+import ormar
+from ormar import ModelDefinitionError
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -29,8 +30,8 @@ class Example(ormar.Model):
     created: datetime.datetime = ormar.DateTime(default=datetime.datetime.now)
     created_day: datetime.date = ormar.Date(default=datetime.date.today)
     created_time: datetime.time = ormar.Time(default=time)
-    description: str = ormar.Text(nullable=True)
-    value: float = ormar.Float(nullable=True)
+    description: Optional[str] = ormar.Text(nullable=True)
+    value: Optional[float] = ormar.Float(nullable=True)
     data: pydantic.Json = ormar.JSON(default={})
     size: MyEnum = ormar.Enum(enum_class=MyEnum, default=MyEnum.SMALL)
 

@@ -4,7 +4,7 @@ Following methods and functions allow updating existing data in the database.
 
 * `update(each: bool = False, **kwargs) -> int`
 * `update_or_create(**kwargs) -> Model`
-* `bulk_update(objects: List[Model], columns: List[str] = None) -> None`
+* `bulk_update(objects: list[Model], columns: list[str] = None) -> None`
 
 
 * `Model`
@@ -29,7 +29,7 @@ If you do not provide this flag or a filter a `QueryDefinitionError` will be rai
 
 Return number of rows updated.
 
-```Python hl_lines="42-44"
+```Python hl_lines="46-48"
 --8<-- "../docs_src/queries/docs002.py"
 ```
 
@@ -44,7 +44,7 @@ Return number of rows updated.
 
 Updates the model, or in case there is no match in database creates a new one.
 
-```Python hl_lines="40-48"
+```Python hl_lines="44-52"
 --8<-- "../docs_src/queries/docs003.py"
 ```
 
@@ -54,7 +54,7 @@ Updates the model, or in case there is no match in database creates a new one.
 
 ## bulk_update
 
-`bulk_update(objects: List["Model"], columns: List[str] = None) -> None`
+`bulk_update(objects: list["Model"], columns: list[str] = None) -> None`
 
 Allows to update multiple instance at once.
 

@@ -8,11 +8,10 @@ pip install ormar
 
 ### Dependencies
 
-Ormar uses `databases` for connectivity issues, `pydantic` for validation and `sqlalchemy-core` for queries.
+Ormar uses SQLAlchemy async with `DatabaseConnection` for connectivity, `pydantic` for validation and `sqlalchemy-core` for queries.
 
-All three should install along the installation of ormar if not present at your system before.
+Both should install along the installation of ormar if not present at your system before.
 
-*  databases
 *  pydantic
 *  sqlalchemy 
 

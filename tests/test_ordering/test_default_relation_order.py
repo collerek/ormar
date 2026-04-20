@@ -1,10 +1,10 @@
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID, uuid4
 
-import ormar
 import pytest
 import pytest_asyncio
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -26,8 +26,8 @@ class Book(ormar.Model):
         Author, orders_by=["name"], related_orders_by=["-year"]
     )
     title: str = ormar.String(max_length=100)
-    year: int = ormar.Integer(nullable=True)
-    ranking: int = ormar.Integer(nullable=True)
+    year: Optional[int] = ormar.Integer(nullable=True)
+    ranking: Optional[int] = ormar.Integer(nullable=True)
 
 
 class Animal(ormar.Model):
@@ -43,7 +43,7 @@ class Human(ormar.Model):
 
     id: UUID = ormar.UUID(primary_key=True, default=uuid4)
     name: str = ormar.Text(default="")
-    pets: List[Animal] = ormar.ManyToMany(
+    pets: list[Animal] = ormar.ManyToMany(
         Animal,
         related_name="care_takers",
         orders_by=["specie", "-name"],

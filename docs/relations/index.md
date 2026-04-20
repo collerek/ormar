@@ -13,7 +13,7 @@ To read more about methods, possibilities, definition etc. please read the subse
 
 To define many-to-one relation use `ForeignKey` field.
 
-```Python hl_lines="26"
+```Python hl_lines="27"
 --8<-- "../docs_src/relations/docs003.py"
 ```
 
@@ -33,7 +33,7 @@ class Department(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     # there is a virtual field here like follows
-    courses: Optional[List[Course]] = ormar.ForeignKey(Course, virtual=True)
+    courses: Optional[list[Course]] = ormar.ForeignKey(Course, virtual=True)
     # note that you DO NOT define it yourself, ormar does it for you.
 ```
 
@@ -69,7 +69,7 @@ class Post(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     title: str = ormar.String(max_length=200)
-    categories: Optional[List[Category]] = ormar.ManyToMany(Category)
+    categories: Optional[list[Category]] = ormar.ManyToMany(Category)
 ```
 
 
@@ -151,7 +151,7 @@ columns also `Through` model columns `{through_field_name}__{column_name}`
 Sample configuration might look like this:
 
 ```python hl_lines="23"
-database = databases.Database(DATABASE_URL)
+database = DatabaseConnection(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 

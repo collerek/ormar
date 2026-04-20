@@ -10,7 +10,7 @@ All you have to do is call `create_all()` like in the example below.
 
 ```python
 import sqlalchemy
-# get your database url in sqlalchemy format - same as used with databases instance used in Model definition
+# get your database url in sqlalchemy format - same as used with DatabaseConnection in Model definition
 engine = sqlalchemy.create_engine("sqlite:///test.db")
 # note that this has to be the same metadata that is used in ormar Models definition
 metadata.create_all(engine)
@@ -20,7 +20,7 @@ You can also create single tables, sqlalchemy tables are exposed in `ormar.ormar
 
 ```python
 import sqlalchemy
-# get your database url in sqlalchemy format - same as used with databases instance used in Model definition
+# get your database url in sqlalchemy format - same as used with DatabaseConnection in Model definition
 engine = sqlalchemy.create_engine("sqlite:///test.db")
 # Artist is an ormar model from previous examples
 Artist.ormar_config.table.create(engine)
@@ -185,7 +185,7 @@ context.configure(
 [pydantic]: https://pydantic-docs.helpmanual.io/
 [sqlalchemy-core]: https://docs.sqlalchemy.org/en/latest/core/
 [sqlalchemy-metadata]: https://docs.sqlalchemy.org/en/13/core/metadata.html
-[databases]: https://github.com/encode/databases
+[sqlalchemy-async]: https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html
 [sqlalchemy connection string]: https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls
 [sqlalchemy table creation]: https://docs.sqlalchemy.org/en/13/core/metadata.html#creating-and-dropping-database-tables
 [alembic]: https://alembic.sqlalchemy.org/en/latest/tutorial.html

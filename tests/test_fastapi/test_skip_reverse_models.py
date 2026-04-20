@@ -1,11 +1,11 @@
-from typing import List, Optional
+from typing import Optional
 
-import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
+import ormar
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 
@@ -68,12 +68,12 @@ async def create_post(post: Post):
     return post
 
 
-@app.get("/categories/", response_model=List[Category])
+@app.get("/categories/", response_model=list[Category])
 async def get_categories():
     return await Category.objects.select_related("posts").all()
 
 
-@app.get("/posts/", response_model=List[Post])
+@app.get("/posts/", response_model=list[Post])
 async def get_posts():
     posts = await Post.objects.select_related(["categories", "author"]).all()
     return posts
@@ -81,7 +81,8 @@ async def get_posts():
 
 @pytest.mark.asyncio
 async def test_queries():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         right_category = {"name": "Test category"}
         wrong_category = {"name": "Test category2", "posts": [{"title": "Test Post"}]}

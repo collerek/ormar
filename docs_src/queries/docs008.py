@@ -1,16 +1,20 @@
 import asyncio
 
-import databases
-import ormar
 import sqlalchemy
 from examples import create_drop_database
 from pydantic import ValidationError
 
-DATABASE_URL = "sqlite:///test.db"
+import ormar
+from ormar import DatabaseConnection
+
+DATABASE_URL = "sqlite+aiosqlite:///queries_docs008.db"
+
+database = DatabaseConnection(DATABASE_URL)
+metadata = sqlalchemy.MetaData()
 
 ormar_base_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL),
-    metadata=sqlalchemy.MetaData(),
+    database=database,
+    metadata=metadata,
 )
 
 
@@ -103,9 +107,11 @@ async def run_query():
     # cannot exclude mandatory model columns -
     # manufacturer__name in this example - note usage of dict/set this time
     try:
-        await Car.objects.select_related("manufacturer").exclude_fields(
-            {"manufacturer": {"name"}}
-        ).all()
+        await (
+            Car.objects.select_related("manufacturer")
+            .exclude_fields({"manufacturer": {"name"}})
+            .all()
+        )
     except ValidationError:
         # will raise pydantic ValidationError as company.name is required
         pass

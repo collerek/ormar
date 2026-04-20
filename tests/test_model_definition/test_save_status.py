@@ -1,9 +1,9 @@
-from typing import List
+from typing import Optional
+
+import pytest
 
 import ormar
-import pytest
 from ormar.exceptions import ModelPersistenceError
-
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -15,7 +15,7 @@ class NickNames(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
-    is_lame: bool = ormar.Boolean(nullable=True)
+    is_lame: Optional[bool] = ormar.Boolean(nullable=True)
 
 
 class NicksHq(ormar.Model):
@@ -27,7 +27,7 @@ class HQ(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="hq_name")
-    nicks: List[NickNames] = ormar.ManyToMany(NickNames, through=NicksHq)
+    nicks: list[NickNames] = ormar.ManyToMany(NickNames, through=NicksHq)
 
 
 class Company(ormar.Model):
@@ -35,7 +35,7 @@ class Company(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100, nullable=False, name="company_name")
-    founded: int = ormar.Integer(nullable=True)
+    founded: Optional[int] = ormar.Integer(nullable=True)
     hq: HQ = ormar.ForeignKey(HQ)
 
 

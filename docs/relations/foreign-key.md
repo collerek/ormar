@@ -5,7 +5,7 @@ related_name: str = None, virtual: bool = False, onupdate: Union[ReferentialActi
 ondelete: Union[ReferentialAction, str] = None, **kwargs: Any)`
 has required parameters `to` that takes target `Model` class.  
 
-Sqlalchemy column and Type are automatically taken from target `Model`.
+Sqlalchemy column and type are automatically taken from target `Model`.
 
 * Sqlalchemy column: class of a target `Model` primary key column  
 * Type (used for pydantic): type of a target `Model` 
@@ -14,7 +14,7 @@ Sqlalchemy column and Type are automatically taken from target `Model`.
 
 To define a relation add `ForeignKey` field that points to related `Model`.
 
-```Python hl_lines="30"
+```Python hl_lines="31"
 --8<-- "../docs_src/fields/docs003.py"
 ```
 
@@ -24,7 +24,7 @@ To define a relation add `ForeignKey` field that points to related `Model`.
 
 By default it's child (source) `Model` name + s, like courses in snippet below: 
 
-```Python hl_lines="29 36"
+```Python hl_lines="34 41"
 --8<-- "../docs_src/fields/docs001.py"
 ```
 
@@ -173,7 +173,7 @@ To read which methods of QuerySet are available read below [querysetproxy][query
 
 You can overwrite related model field name by providing `related_name` parameter like below:
 
-```Python hl_lines="27-29 35"
+```Python hl_lines="28-30 36"
 --8<-- "../docs_src/fields/docs002.py"
 ```
 

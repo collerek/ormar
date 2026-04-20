@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy
 from sqlalchemy import text
@@ -20,7 +20,7 @@ class OrderAction(QueryAction):
     """
 
     def __init__(
-        self, order_str: str, model_cls: Type["Model"], alias: Optional[str] = None
+        self, order_str: str, model_cls: type["Model"], alias: Optional[str] = None
     ) -> None:
         self.direction: str = ""
         super().__init__(query_str=order_str, model_cls=model_cls)
@@ -36,7 +36,7 @@ class OrderAction(QueryAction):
 
     @property
     def is_postgres_bool(self) -> bool:
-        dialect = self.target_model.ormar_config.database._backend._dialect.name
+        dialect = self.target_model.ormar_config.database.dialect.name
         field_type = self.target_model.ormar_config.model_fields[
             self.field_name
         ].__type__
@@ -52,7 +52,7 @@ class OrderAction(QueryAction):
         :rtype: sqlalchemy.sql.elements.TextClause
         """
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
-        return f"{prefix}{self.table}" f".{self.field_alias}"
+        return f"{prefix}{self.table}.{self.field_alias}"
 
     def get_min_or_max(self) -> sqlalchemy.sql.expression.TextClause:
         """
@@ -67,9 +67,9 @@ class OrderAction(QueryAction):
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
         if self.direction == "":
             function = "min" if not self.is_postgres_bool else "bool_or"
-            return text(f"{function}({prefix}{self.table}" f".{self.field_alias})")
+            return text(f"{function}({prefix}{self.table}.{self.field_alias})")
         function = "max" if not self.is_postgres_bool else "bool_or"
-        return text(f"{function}({prefix}{self.table}" f".{self.field_alias}) desc")
+        return text(f"{function}({prefix}{self.table}.{self.field_alias}) desc")
 
     def get_text_clause(self) -> sqlalchemy.sql.expression.TextClause:
         """
@@ -80,7 +80,7 @@ class OrderAction(QueryAction):
         :return: complied and escaped clause
         :rtype: sqlalchemy.sql.elements.TextClause
         """
-        dialect = self.target_model.ormar_config.database._backend._dialect
+        dialect = self.target_model.ormar_config.database.dialect
         quoter = dialect.identifier_preparer.quote
         prefix = f"{self.table_prefix}_" if self.table_prefix else ""
         table_name = self.table.name
@@ -100,12 +100,12 @@ class OrderAction(QueryAction):
         self.field_name = parts[-1]
         self.related_parts = parts[:-1]
 
-    def check_if_filter_apply(self, target_model: Type["Model"], alias: str) -> bool:
+    def check_if_filter_apply(self, target_model: type["Model"], alias: str) -> bool:
         """
         Checks filter conditions to find if they apply to current join.
 
         :param target_model: model which is now processed
-        :type target_model: Type["Model"]
+        :type target_model: type["Model"]
         :param alias: prefix of the relation
         :type alias: str
         :return: result of the check

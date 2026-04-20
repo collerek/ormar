@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, TypeVar, Union
+import builtins
+from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union
+
+from sqlalchemy import Executable
 
 import ormar.queryset  # noqa I100
 from ormar.exceptions import ModelPersistenceError, NoMatch
@@ -26,6 +29,15 @@ class Model(ModelRow):
         }
         return f"{self.__class__.__name__}({str(_repr)})"
 
+    async def _execute_query(self, expr: Executable, is_select: bool = False) -> Any:
+        async with self.ormar_config.database.get_query_executor() as executor:
+            row = (
+                await executor.fetch_one(expr)
+                if is_select
+                else await executor.execute(expr)
+            )
+        return row
+
     async def upsert(self: T, **kwargs: Any) -> T:
         """
         Performs either a save or an update depending on the presence of the pk.
@@ -41,7 +53,7 @@ class Model(ModelRow):
         force_save = kwargs.pop("__force_save__", False)
         if force_save:
             expr = self.ormar_config.table.select().where(self.pk_column == self.pk)
-            row = await self.ormar_config.database.fetch_one(expr)
+            row = await self._execute_query(expr, is_select=True)
             if not row:
                 return await self.save()
             return await self.update(**kwargs)
@@ -94,7 +106,7 @@ class Model(ModelRow):
         expr = self.ormar_config.table.insert()
         expr = expr.values(**self_fields)
 
-        pk = await self.ormar_config.database.execute(expr)
+        pk = await self._execute_query(expr)
         if pk and isinstance(pk, self.pk_type()):
             setattr(self, self.ormar_config.pkname, pk)
 
@@ -114,8 +126,8 @@ class Model(ModelRow):
         self,
         follow: bool = False,
         save_all: bool = False,
-        relation_map: Optional[Dict] = None,
-        exclude: Union[Set, Dict, None] = None,
+        relation_map: Optional[builtins.dict] = None,
+        exclude: Union[set, builtins.dict, None] = None,
         update_count: int = 0,
         previous_model: Optional["Model"] = None,
         relation_field: Optional["ForeignKeyField"] = None,
@@ -140,9 +152,9 @@ class Model(ModelRow):
         :param previous_model: previous model from which method came
         :type previous_model: Model
         :param exclude: items to exclude during saving of relations
-        :type exclude: Union[Set, Dict]
+        :type exclude: Union[set, dict]
         :param relation_map: map of relations to follow
-        :type relation_map: Dict
+        :type relation_map: dict
         :param save_all: flag if all models should be saved or only not saved ones
         :type save_all: bool
         :param follow: flag to trigger deep save -
@@ -160,7 +172,7 @@ class Model(ModelRow):
             if relation_map is not None
             else translate_list_to_dict(self._iterate_related_models())
         )
-        if exclude and isinstance(exclude, Set):
+        if exclude and isinstance(exclude, set):
             exclude = translate_list_to_dict(exclude)
         relation_map = subtract_dict(relation_map, exclude or {})
 
@@ -213,7 +225,7 @@ class Model(ModelRow):
 
         return update_count
 
-    async def update(self: T, _columns: Optional[List[str]] = None, **kwargs: Any) -> T:
+    async def update(self: T, _columns: Optional[list[str]] = None, **kwargs: Any) -> T:
         """
         Performs update of Model instance in the database.
         Fields can be updated before or you can pass them as kwargs.
@@ -223,7 +235,7 @@ class Model(ModelRow):
         Sets model save status to True.
 
         :param _columns: list of columns to update, if None all are updated
-        :type _columns: List
+        :type _columns: list
         :raises ModelPersistenceError: If the pk column is not set
 
         :param kwargs: list of fields to update as field=value pairs
@@ -250,8 +262,7 @@ class Model(ModelRow):
             self_fields = self.translate_columns_to_aliases(self_fields)
             expr = self.ormar_config.table.update().values(**self_fields)
             expr = expr.where(self.pk_column == getattr(self, self.ormar_config.pkname))
-
-            await self.ormar_config.database.execute(expr)
+            await self._execute_query(expr)
         self.set_save_status(True)
         await self.signals.post_update.send(sender=self.__class__, instance=self)
         return self
@@ -274,7 +285,7 @@ class Model(ModelRow):
         await self.signals.pre_delete.send(sender=self.__class__, instance=self)
         expr = self.ormar_config.table.delete()
         expr = expr.where(self.pk_column == (getattr(self, self.ormar_config.pkname)))
-        result = await self.ormar_config.database.execute(expr)
+        result = await self._execute_query(expr)
         self.set_save_status(False)
         await self.signals.post_delete.send(sender=self.__class__, instance=self)
         return result
@@ -291,7 +302,7 @@ class Model(ModelRow):
         :rtype: Model
         """
         expr = self.ormar_config.table.select().where(self.pk_column == self.pk)
-        row = await self.ormar_config.database.fetch_one(expr)
+        row = await self._execute_query(expr, is_select=True)
         if not row:  # pragma nocover
             raise NoMatch("Instance was deleted from database and cannot be refreshed")
         kwargs = dict(row)
@@ -303,8 +314,8 @@ class Model(ModelRow):
     async def load_all(
         self: T,
         follow: bool = False,
-        exclude: Union[List, str, Set, Dict, None] = None,
-        order_by: Union[List, str, None] = None,
+        exclude: Union[list, str, set, dict, None] = None,
+        order_by: Union[list, str, None] = None,
     ) -> T:
         """
         Allow to refresh existing Models fields from database.
@@ -323,11 +334,11 @@ class Model(ModelRow):
         Nested relations of those kind need to be loaded manually.
 
         :param order_by: columns by which models should be sorted
-        :type order_by: Union[List, str]
+        :type order_by: Union[list, str]
         :raises NoMatch: If given pk is not found in database.
 
         :param exclude: related models to exclude
-        :type exclude: Union[List, str, Set, Dict]
+        :type exclude: Union[list, str, set, dict]
         :param follow: flag to trigger deep save -
         by default only directly related models are saved
         with follow=True also related models of related models are saved

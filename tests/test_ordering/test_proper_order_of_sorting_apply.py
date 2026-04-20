@@ -1,9 +1,9 @@
 from typing import Optional
 
-import ormar
 import pytest
 import pytest_asyncio
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -25,8 +25,8 @@ class Book(ormar.Model):
         Author, orders_by=["name"], related_orders_by=["-year"]
     )
     title: str = ormar.String(max_length=100)
-    year: int = ormar.Integer(nullable=True)
-    ranking: int = ormar.Integer(nullable=True)
+    year: Optional[int] = ormar.Integer(nullable=True)
+    ranking: Optional[int] = ormar.Integer(nullable=True)
 
 
 create_test_database = init_tests(base_ormar_config)

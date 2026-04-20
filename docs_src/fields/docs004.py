@@ -1,16 +1,16 @@
 from datetime import datetime
 
-import databases
-import ormar
 import sqlalchemy
 from sqlalchemy import func, text
 
-database = databases.Database("sqlite:///test.db")
+import ormar
+from ormar import DatabaseConnection
+
+database = DatabaseConnection("sqlite+aiosqlite:///fields_docs004.db")
 metadata = sqlalchemy.MetaData()
 
 
 class Product(ormar.Model):
-
     ormar_config = ormar.OrmarConfig(
         database=database, metadata=metadata, tablename="product"
     )

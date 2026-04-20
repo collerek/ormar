@@ -3,9 +3,9 @@
 Following methods allow you to insert data into the database.
 
 * `create(**kwargs) -> Model`
-* `get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+* `get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
 * `update_or_create(**kwargs) -> Model`
-* `bulk_create(objects: List[Model]) -> None`
+* `bulk_create(objects: list[Model]) -> None`
 
 
 * `Model`
@@ -16,7 +16,7 @@ Following methods allow you to insert data into the database.
 
 * `QuerysetProxy`
       * `QuerysetProxy.create(**kwargs)` method
-      * `QuerysetProxy.get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs)` method
+      * `QuerysetProxy.get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs)` method
       * `QuerysetProxy.update_or_create(**kwargs)` method
 
 ## create
@@ -58,7 +58,7 @@ await malibu.save()
 
 ## get_or_create
 
-`get_or_create(_defaults: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Model, bool]`
+`get_or_create(_defaults: Optional[dict[str, Any]] = None, **kwargs) -> tuple[Model, bool]`
 
 Combination of create and get methods.
 
@@ -109,7 +109,7 @@ assert album == album2
 
 Updates the model, or in case there is no match in database creates a new one.
 
-```Python hl_lines="40-48"
+```Python hl_lines="44-52"
 --8<-- "../docs_src/queries/docs003.py"
 ```
 
@@ -119,13 +119,13 @@ Updates the model, or in case there is no match in database creates a new one.
 
 ## bulk_create
 
-`bulk_create(objects: List["Model"]) -> None`
+`bulk_create(objects: list["Model"]) -> None`
 
 Allows you to create multiple objects at once.
 
 A valid list of `Model` objects needs to be passed.
 
-```python hl_lines="26-32"
+```python hl_lines="30-37"
 --8<-- "../docs_src/queries/docs004.py"
 ```
 

@@ -1,8 +1,9 @@
-import databases
-import ormar
 import sqlalchemy
 
-database = databases.Database("sqlite:///db.sqlite")
+import ormar
+from ormar import DatabaseConnection
+
+database = DatabaseConnection("sqlite+aiosqlite:///db.sqlite")
 metadata = sqlalchemy.MetaData()
 
 

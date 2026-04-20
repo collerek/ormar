@@ -8,15 +8,15 @@ To achieve this you need to register your receiver for a given type of signal fo
 
 Given a sample model like following:
 
-```Python 
-import databases
+```Python
 import sqlalchemy
 
 import ormar
+from ormar import DatabaseConnection
 
 
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database("sqlite:///db.sqlite"),
+    database=DatabaseConnection("sqlite+aiosqlite:///db.sqlite"),
     metadata=sqlalchemy.MetaData(),
 )
 
@@ -54,7 +54,7 @@ for which you want to run the signal receiver.
 
 Currently there is no way to set signal for all models at once without explicitly passing them all into registration of receiver.
 
-```Python hl_lines="28-31"
+```Python hl_lines="31-34"
 --8<-- "../docs_src/signals/docs002.py"
 ```
 
@@ -65,7 +65,7 @@ Currently there is no way to set signal for all models at once without explicitl
 Note that our newly created function has instance and class of the instance so you can easily run database 
 queries inside your receivers if you want to.
 
-```Python hl_lines="41-48"
+```Python hl_lines="44-51"
 --8<-- "../docs_src/signals/docs002.py"
 ```
 
@@ -146,7 +146,7 @@ album.signals.pre_save.disconnect(before_save)
 
 ### pre_save
 
-`pre_save(sender: Type["Model"], instance: "Model")`
+`pre_save(sender: type["Model"], instance: "Model")`
 
 Send for `Model.save()` and `Model.objects.create()` methods.
 
@@ -154,7 +154,7 @@ Send for `Model.save()` and `Model.objects.create()` methods.
 
 ### post_save
 
-`post_save(sender: Type["Model"], instance: "Model")`
+`post_save(sender: type["Model"], instance: "Model")`
 
 Send for `Model.save()` and `Model.objects.create()` methods.
 
@@ -162,7 +162,7 @@ Send for `Model.save()` and `Model.objects.create()` methods.
 
 ### pre_update
 
-`pre_update(sender: Type["Model"], instance: "Model")`
+`pre_update(sender: type["Model"], instance: "Model")`
 
 Send for `Model.update()` method.
 
@@ -170,7 +170,7 @@ Send for `Model.update()` method.
 
 ### post_update
 
-`post_update(sender: Type["Model"], instance: "Model")`
+`post_update(sender: type["Model"], instance: "Model")`
 
 Send for `Model.update()` method.
 
@@ -178,7 +178,7 @@ Send for `Model.update()` method.
 
 ### pre_delete
 
-`pre_delete(sender: Type["Model"], instance: "Model")`
+`pre_delete(sender: type["Model"], instance: "Model")`
 
 Send for `Model.save()` and `Model.objects.create()` methods.
 
@@ -186,7 +186,7 @@ Send for `Model.save()` and `Model.objects.create()` methods.
 
 ### post_delete
 
-`post_delete(sender: Type["Model"], instance: "Model")`
+`post_delete(sender: type["Model"], instance: "Model")`
 
 Send for `Model.update()` method.
 
@@ -194,8 +194,8 @@ Send for `Model.update()` method.
 
 ### pre_relation_add
 
-`pre_relation_add(sender: Type["Model"], instance: "Model", child: "Model", 
-relation_name: str, passed_args: Dict)`
+`pre_relation_add(sender: type["Model"], instance: "Model", child: "Model", 
+relation_name: str, passed_args: dict)`
 
 Send for `Model.relation_name.add()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
 
@@ -204,8 +204,8 @@ Send for `Model.relation_name.add()` method for `ManyToMany` relations and rever
 
 ### post_relation_add
 
-`post_relation_add(sender: Type["Model"], instance: "Model", child: "Model", 
-relation_name: str, passed_args: Dict)`
+`post_relation_add(sender: type["Model"], instance: "Model", child: "Model", 
+relation_name: str, passed_args: dict)`
 
 Send for `Model.relation_name.add()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
 
@@ -214,7 +214,7 @@ Send for `Model.relation_name.add()` method for `ManyToMany` relations and rever
 
 ### pre_relation_remove
 
-`pre_relation_remove(sender: Type["Model"], instance: "Model", child: "Model", 
+`pre_relation_remove(sender: type["Model"], instance: "Model", child: "Model", 
 relation_name: str)`
 
 Send for `Model.relation_name.remove()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
@@ -224,8 +224,8 @@ Send for `Model.relation_name.remove()` method for `ManyToMany` relations and re
 
 ### post_relation_remove
 
-`post_relation_remove(sender: Type["Model"], instance: "Model", child: "Model", 
-relation_name: str, passed_args: Dict)`
+`post_relation_remove(sender: type["Model"], instance: "Model", child: "Model", 
+relation_name: str, passed_args: dict)`
 
 Send for `Model.relation_name.remove()` method for `ManyToMany` relations and reverse side of `ForeignKey` relation.
 
@@ -234,8 +234,8 @@ Send for `Model.relation_name.remove()` method for `ManyToMany` relations and re
 
 ### post_bulk_update
 
-`post_bulk_update(sender: Type["Model"], instances: List["Model"], **kwargs)`, 
-Send for `Model.objects.bulk_update(List[objects])` method.
+`post_bulk_update(sender: type["Model"], instances: list["Model"], **kwargs)`, 
+Send for `Model.objects.bulk_update(list[objects])` method.
 
 
 ## Defining your own signals
@@ -246,14 +246,14 @@ and trigger your signals there.
 Creating new signal is super easy. Following example will set a new signal with name your_custom_signal.
 
 ```python hl_lines="21"
-import databases
 import sqlalchemy
 
 import ormar
+from ormar import DatabaseConnection
 
 
 base_ormar_config = ormar.OrmarConfig(
-    database=databases.Database("sqlite:///db.sqlite"),
+    database=DatabaseConnection("sqlite+aiosqlite:///db.sqlite"),
     metadata=sqlalchemy.MetaData(),
 )
 

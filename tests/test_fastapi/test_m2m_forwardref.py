@@ -1,12 +1,12 @@
-from typing import ForwardRef, List, Optional
+from typing import ForwardRef, Optional
 
-import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from starlette import status
 
+import ormar
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 
@@ -32,7 +32,7 @@ class Country(ormar.Model):
     capital: Optional[CityRef] = ormar.ForeignKey(  # type: ignore
         CityRef, related_name="capital_city", nullable=True
     )
-    borders: List[Optional[CountryRef]] = ormar.ManyToMany(  # type: ignore
+    borders: list[Optional[CountryRef]] = ormar.ManyToMany(  # type: ignore
         CountryRef, nullable=True, skip_reverse=True
     )
 
@@ -61,7 +61,8 @@ async def create_country(country: Country):  # if this is ormar
 
 @pytest.mark.asyncio
 async def test_payload():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         payload = {
             "name": "Thailand",

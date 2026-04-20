@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, List, Optional, Type
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar.models.mixins.relation_mixin import RelationMixin
@@ -10,14 +10,14 @@ class NodeList:
     """
 
     def __init__(self) -> None:
-        self.node_list: List["Node"] = []
+        self.node_list: list["Node"] = []
 
     def __getitem__(self, item: Any) -> Any:
         return self.node_list.__getitem__(item)
 
     def add(
         self,
-        node_class: Type["RelationMixin"],
+        node_class: type["RelationMixin"],
         relation_name: Optional[str] = None,
         parent_node: Optional["Node"] = None,
     ) -> "Node":
@@ -48,7 +48,7 @@ class NodeList:
 
     def find(
         self,
-        node_class: Type["RelationMixin"],
+        node_class: type["RelationMixin"],
         relation_name: Optional[str] = None,
         parent_node: Optional["Node"] = None,
     ) -> Optional["Node"]:
@@ -77,14 +77,14 @@ class NodeList:
 class Node:
     def __init__(
         self,
-        node_class: Type["RelationMixin"],
+        node_class: type["RelationMixin"],
         relation_name: Optional[str] = None,
         parent_node: Optional["Node"] = None,
     ) -> None:
         self.relation_name = relation_name
         self.node_class = node_class
         self.parent_node = parent_node
-        self.visited_children: List["Node"] = []
+        self.visited_children: list["Node"] = []
         if self.parent_node:
             self.parent_node.visited_children.append(self)
 

@@ -1,6 +1,15 @@
 import inspect
 import warnings
-from typing import TYPE_CHECKING, Any, List, Optional, Type, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ForwardRef,
+    Optional,
+    Union,
+    cast,
+    get_args,
+    get_origin,
+)
 
 from pydantic import BaseModel, create_model, field_serializer
 from pydantic._internal._decorators import DecoratorInfos
@@ -16,7 +25,7 @@ from ormar.relations import AliasManager
 
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
-    from ormar.fields import ForeignKeyField, ManyToManyField
+    from ormar.fields import BaseField, ForeignKeyField, ManyToManyField
 
 alias_manager = AliasManager()
 
@@ -79,7 +88,7 @@ def expand_reverse_relationship(model_field: "ForeignKeyField") -> None:
         register_reverse_model_fields(model_field=model_field)
 
 
-def expand_reverse_relationships(model: Type["Model"]) -> None:
+def expand_reverse_relationships(model: type["Model"]) -> None:
     """
     Iterates through model_fields of given model and verifies if all reverse
     relation have been populated on related models.
@@ -149,22 +158,32 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
             annotation=field_type, source_model_field=model_field.name
         )
         if not model_field.is_multi:
-            field_type = Union[field_type, List[field_type], None]  # type: ignore
+            field_type = Union[field_type, list[field_type], None]  # type: ignore
         model_field.to.model_fields[related_name] = FieldInfo.from_annotated_attribute(
             annotation=field_type, default=None
         )
         add_field_serializer_for_reverse_relations(
             to_model=model_field.to, related_name=related_name
         )
-        model_field.to.model_rebuild(force=True)
+        model_field.to.model_rebuild(
+            force=True,
+            _types_namespace={
+                **{model_field.owner.__name__: model_field.owner},
+                **{
+                    field.to.__name__: field.to
+                    for field in related_model_fields.values()
+                    if field.is_relation and field.to.__class__ != ForwardRef
+                },
+            },
+        )
         setattr(model_field.to, related_name, RelationDescriptor(name=related_name))
 
 
 def add_field_serializer_for_reverse_relations(
-    to_model: Type["Model"], related_name: str
+    to_model: type["Model"], related_name: str
 ) -> None:
     def serialize(
-        self: "Model", children: List["Model"], handler: SerializerFunctionWrapHandler
+        self: "Model", children: list["Model"], handler: SerializerFunctionWrapHandler
     ) -> Any:
         """
         Serialize a list of nodes, handling circular references
@@ -205,40 +224,43 @@ def add_field_serializer_for_reverse_relations(
 
 
 def replace_models_with_copy(
-    annotation: Type, source_model_field: Optional[str] = None
+    annotation: Any, source_model_field: Optional[str] = None
 ) -> Any:
     """
     Replaces all models in annotation with their copies to avoid circular references.
 
     :param annotation: annotation to replace models in
-    :type annotation: Type
+    :type annotation: type
     :return: annotation with replaced models
-    :rtype: Type
+    :rtype: type
     """
     if inspect.isclass(annotation) and issubclass(annotation, ormar.Model):
         return create_copy_to_avoid_circular_references(model=annotation)
-    elif hasattr(annotation, "__origin__") and annotation.__origin__ in {list, Union}:
-        if annotation.__origin__ is list:
-            return List[  # type: ignore
-                replace_models_with_copy(
-                    annotation=annotation.__args__[0],
-                    source_model_field=source_model_field,
-                )
-            ]
-        elif annotation.__origin__ == Union:
-            args = annotation.__args__
-            new_args = [
-                replace_models_with_copy(
-                    annotation=arg, source_model_field=source_model_field
-                )
-                for arg in args
-            ]
-            return Union[tuple(new_args)]
-    else:
-        return annotation
+
+    origin = get_origin(annotation)
+    if origin is list:
+        args = get_args(annotation)
+        if not args:
+            return annotation  # pragma: no cover
+        return list[  # type: ignore
+            replace_models_with_copy(
+                annotation=args[0],
+                source_model_field=source_model_field,
+            )
+        ]
+    elif origin is Union:
+        args = get_args(annotation)
+        new_args = [
+            replace_models_with_copy(
+                annotation=arg, source_model_field=source_model_field
+            )
+            for arg in args
+        ]
+        return Union[tuple(new_args)]
+    return annotation
 
 
-def create_copy_to_avoid_circular_references(model: Type["Model"]) -> Type["BaseModel"]:
+def create_copy_to_avoid_circular_references(model: type["Model"]) -> type["BaseModel"]:
     new_model = create_model(
         model.__name__,
         __base__=model,
@@ -278,7 +300,7 @@ def register_through_shortcut_fields(model_field: "ManyToManyField") -> None:
     setattr(model_field.to, through_name, RelationDescriptor(name=through_name))
 
 
-def register_relation_in_alias_manager(field: "ForeignKeyField") -> None:
+def register_relation_in_alias_manager(field: "BaseField") -> None:
     """
     Registers the relation (and reverse relation) in alias manager.
     The m2m relations require registration of through model between
@@ -299,7 +321,7 @@ def register_relation_in_alias_manager(field: "ForeignKeyField") -> None:
     elif field.is_relation and not field.is_through:
         if field.has_unresolved_forward_refs():
             return
-        register_relation_on_build(field=field)
+        register_relation_on_build(field=cast("ForeignKeyField", field))
 
 
 def verify_related_name_dont_duplicate(

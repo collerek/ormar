@@ -1,16 +1,6 @@
 import decimal
 import numbers
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Set,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
 try:
     import orjson as json
@@ -28,19 +18,19 @@ if TYPE_CHECKING:  # pragma no cover
 
 
 def generate_model_example(
-    model: Type["Model"], relation_map: Optional[Dict] = None
-) -> Dict:
+    model: type["Model"], relation_map: Optional[dict] = None
+) -> dict:
     """
     Generates example to be included in schema in fastapi.
 
     :param model: ormar.Model
-    :type model: Type["Model"]
+    :type model: type["Model"]
     :param relation_map: dict with relations to follow
-    :type relation_map: Optional[Dict]
+    :type relation_map: Optional[dict]
     :return: dict with example values
-    :rtype: Dict[str, int]
+    :rtype: dict[str, int]
     """
-    example: Dict[str, Any] = dict()
+    example: dict[str, Any] = dict()
     relation_map = (
         relation_map
         if relation_map is not None
@@ -58,10 +48,10 @@ def generate_model_example(
 
 
 def populates_sample_fields_values(
-    example: Dict[str, Any],
+    example: dict[str, Any],
     name: str,
     field: "BaseField",
-    relation_map: Optional[Dict] = None,
+    relation_map: Optional[dict] = None,
 ) -> None:
     """
     Iterates the field and sets fields to sample values
@@ -71,9 +61,9 @@ def populates_sample_fields_values(
     :param name: name of the field
     :type name: str
     :param example: example dict
-    :type example: Dict[str, Any]
+    :type example: dict[str, Any]
     :param relation_map: dict with relations to follow
-    :type relation_map: Optional[Dict]
+    :type relation_map: Optional[dict]
     """
     if not field.is_relation:
         is_bytes_str = field.__type__ is bytes and field.represent_as_base64_str
@@ -85,8 +75,8 @@ def populates_sample_fields_values(
 
 
 def get_nested_model_example(
-    name: str, field: "BaseField", relation_map: Dict
-) -> Union[List, Dict]:
+    name: str, field: "BaseField", relation_map: dict
+) -> Union[list, dict]:
     """
     Gets representation of nested model.
 
@@ -95,29 +85,29 @@ def get_nested_model_example(
     :param field: ormar field
     :type field: BaseField
     :param relation_map: dict with relation map
-    :type relation_map: Dict
+    :type relation_map: dict
     :return: nested model or list of nested model repr
-    :rtype: Union[List, Dict]
+    :rtype: Union[list, dict]
     """
     value = generate_model_example(field.to, relation_map=relation_map.get(name, {}))
-    new_value: Union[List, Dict] = [value] if field.is_multi or field.virtual else value
+    new_value: Union[list, dict] = [value] if field.is_multi or field.virtual else value
     return new_value
 
 
 def generate_pydantic_example(
-    pydantic_model: Type[pydantic.BaseModel], exclude: Optional[Set] = None
-) -> Dict:
+    pydantic_model: type[pydantic.BaseModel], exclude: Optional[set] = None
+) -> dict:
     """
     Generates dict with example.
 
     :param pydantic_model: model to parse
-    :type pydantic_model: Type[pydantic.BaseModel]
+    :type pydantic_model: type[pydantic.BaseModel]
     :param exclude: list of fields to exclude
-    :type exclude: Optional[Set]
+    :type exclude: Optional[set]
     :return: dict with fields and sample values
-    :rtype: Dict
+    :rtype: dict
     """
-    example: Dict[str, Any] = dict()
+    example: dict[str, Any] = dict()
     exclude = exclude or set()
     name_to_check = [
         name for name in pydantic_model.model_fields if name not in exclude
@@ -149,7 +139,7 @@ def get_pydantic_example_repr(type_: Any) -> Any:
 
 def generate_example_for_nested_types(type_: Any) -> Any:
     """
-    Process nested types like Union[X, Y] or List[X]
+    Process nested types like Union[X, Y] or list[X]
     """
     if type_.__origin__ == Union:
         return generate_example_for_union(type_=type_)
@@ -169,29 +159,29 @@ def generate_example_for_union(type_: Any) -> Any:
 
 
 def overwrite_example_and_description(
-    schema: Dict[str, Any], model: Type["Model"]
+    schema: dict[str, Any], model: type["Model"]
 ) -> None:
     """
     Overwrites the example with properly nested children models.
     Overwrites the description if it's taken from ormar.Model.
 
     :param schema: schema of current model
-    :type schema: Dict[str, Any]
+    :type schema: dict[str, Any]
     :param model: model class
-    :type model: Type["Model"]
+    :type model: type["Model"]
     """
     schema["example"] = generate_model_example(model=model)
 
 
-def overwrite_binary_format(schema: Dict[str, Any], model: Type["Model"]) -> None:
+def overwrite_binary_format(schema: dict[str, Any], model: type["Model"]) -> None:
     """
     Overwrites format of the field if it's a LargeBinary field with
     a flag to represent the field as base64 encoded string.
 
     :param schema: schema of current model
-    :type schema: Dict[str, Any]
+    :type schema: dict[str, Any]
     :param model: model class
-    :type model: Type["Model"]
+    :type model: type["Model"]
     """
     for field_id, prop in schema.get("properties", {}).items():
         if (
@@ -212,14 +202,14 @@ def construct_schema_function() -> Callable:
     :rtype: Callable
     """
 
-    def schema_extra(schema: Dict[str, Any], model: Type["Model"]) -> None:
+    def schema_extra(schema: dict[str, Any], model: type["Model"]) -> None:
         overwrite_example_and_description(schema=schema, model=model)
         overwrite_binary_format(schema=schema, model=model)
 
     return staticmethod(schema_extra)  # type: ignore
 
 
-def modify_schema_example(model: Type["Model"]) -> None:  # noqa CCR001
+def modify_schema_example(model: type["Model"]) -> None:  # noqa CCR001
     """
     Modifies the schema example in openapi schema.
 

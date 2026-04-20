@@ -1,16 +1,17 @@
-# type: ignore
+from typing import Optional
 
-import ormar
 import pytest
-from ormar import ModelDefinitionError
 
+# type: ignore
+import ormar
+from ormar import ModelDefinitionError
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
 base_ormar_config = create_config()
 
 
-def test_through_with_relation_fails():
+def test_through_with_relation_fails() -> None:
     class Category(ormar.Model):
         ormar_config = base_ormar_config.copy(tablename="categories")
 
@@ -27,7 +28,7 @@ def test_through_with_relation_fails():
         ormar_config = base_ormar_config.copy(tablename="posts_x_categories")
 
         id: int = ormar.Integer(primary_key=True)
-        sort_order: int = ormar.Integer(nullable=True)
+        sort_order: Optional[int] = ormar.Integer(nullable=True)
         param_name: str = ormar.String(default="Name", max_length=200)
         blog = ormar.ForeignKey(Blog)
 

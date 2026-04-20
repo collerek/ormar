@@ -1,8 +1,8 @@
-from typing import List
+from typing import Optional
 
-import ormar
 import pytest
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -13,7 +13,7 @@ class Category(ormar.Model):
     ormar_config = base_ormar_config.copy(tablename="categories")
 
     id: int = ormar.Integer(primary_key=True)
-    name: str = ormar.String(max_length=100, default="Test", nullable=True)
+    name: Optional[str] = ormar.String(max_length=100, default="Test", nullable=True)
     visibility: bool = ormar.Boolean(default=True)
 
 
@@ -23,7 +23,7 @@ class Item(ormar.Model):
     id: int = ormar.Integer(primary_key=True)
     name: str = ormar.String(max_length=100)
     price: float = ormar.Float(default=9.99)
-    categories: List[Category] = ormar.ManyToMany(Category)
+    categories: list[Category] = ormar.ManyToMany(Category)
 
 
 create_test_database = init_tests(base_ormar_config)

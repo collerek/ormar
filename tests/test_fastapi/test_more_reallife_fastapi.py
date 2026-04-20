@@ -1,11 +1,11 @@
-from typing import List, Optional
+from typing import Optional
 
-import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
+import ormar
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 
@@ -31,13 +31,13 @@ class Item(ormar.Model):
 create_test_database = init_tests(base_ormar_config)
 
 
-@app.get("/items", response_model=List[Item])
+@app.get("/items", response_model=list[Item])
 async def get_items():
     items = await Item.objects.select_related("category").all()
     return items
 
 
-@app.get("/items/raw", response_model=List[Item])
+@app.get("/items/raw", response_model=list[Item])
 async def get_raw_items():
     items = await Item.objects.all()
     return items
@@ -75,7 +75,8 @@ async def delete_item(item_id: int):
 
 @pytest.mark.asyncio
 async def test_all_endpoints():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         response = await client.post("/categories", json={"name": "test cat"})
         category = response.json()

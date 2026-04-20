@@ -1,14 +1,14 @@
 import datetime
-from typing import List, Optional
+from typing import Optional
 
-import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
-from ormar.relations.relation_proxy import RelationProxy
+from httpx import ASGITransport, AsyncClient
 from pydantic import computed_field
 
+import ormar
+from ormar.relations.relation_proxy import RelationProxy
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 
@@ -159,7 +159,7 @@ async def get_bus(item_id: int):
     return bus
 
 
-@app.get("/buses/", response_model=List[Bus])
+@app.get("/buses/", response_model=list[Bus])
 async def get_buses():
     buses = await Bus.objects.select_related(["owner", "co_owner"]).all()
     return buses
@@ -190,7 +190,7 @@ async def add_bus_coowner(item_id: int, person: Person):
     return bus
 
 
-@app.get("/buses2/", response_model=List[Bus2])
+@app.get("/buses2/", response_model=list[Bus2])
 async def get_buses2():
     buses = await Bus2.objects.select_related(["owner", "co_owners"]).all()
     return buses
@@ -211,7 +211,8 @@ async def add_truck_coowner(item_id: int, person: Person):
 
 @pytest.mark.asyncio
 async def test_read_main():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         test_category = dict(name="Foo", code=123, created_by="Sam", updated_by="Max")
         test_subject = dict(name="Bar")
@@ -242,7 +243,8 @@ async def test_read_main():
 
 @pytest.mark.asyncio
 async def test_inheritance_with_relation():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         sam = Person(**(await client.post("/persons/", json={"name": "Sam"})).json())
         joe = Person(**(await client.post("/persons/", json={"name": "Joe"})).json())
@@ -288,7 +290,8 @@ async def test_inheritance_with_relation():
 
 @pytest.mark.asyncio
 async def test_inheritance_with_m2m_relation():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         sam = Person(**(await client.post("/persons/", json={"name": "Sam"})).json())
         joe = Person(**(await client.post("/persons/", json={"name": "Joe"})).json())

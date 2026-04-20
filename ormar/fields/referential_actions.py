@@ -18,8 +18,8 @@ class ReferentialAction(Enum):
     that shall take place in such occurrences.
     """
 
-    CASCADE: str = "CASCADE"
-    RESTRICT: str = "RESTRICT"
-    SET_NULL: str = "SET NULL"
-    SET_DEFAULT: str = "SET DEFAULT"
-    DO_NOTHING: str = "NO ACTION"
+    CASCADE = "CASCADE"
+    RESTRICT = "RESTRICT"
+    SET_NULL = "SET NULL"
+    SET_DEFAULT = "SET DEFAULT"
+    DO_NOTHING = "NO ACTION"

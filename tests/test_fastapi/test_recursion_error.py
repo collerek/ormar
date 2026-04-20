@@ -1,14 +1,14 @@
 import uuid
 from datetime import datetime
-from typing import List
+from typing import Optional
 
-import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import Depends, FastAPI
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from pydantic import BaseModel, Json
 
+import ormar
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 
@@ -27,7 +27,7 @@ class User(ormar.Model):
     username: str = ormar.String(unique=True, max_length=100)
     password: str = ormar.String(unique=True, max_length=100)
     verified: bool = ormar.Boolean(default=False)
-    verify_key: str = ormar.String(unique=True, max_length=100, nullable=True)
+    verify_key: Optional[str] = ormar.String(unique=True, max_length=100, nullable=True)
     created_at: datetime = ormar.DateTime(default=datetime.now())
 
     ormar_config = base_ormar_config.copy(tablename="users")
@@ -53,19 +53,19 @@ class QuizAnswer(BaseModel):
 
 class QuizQuestion(BaseModel):
     question: str
-    answers: List[QuizAnswer]
+    answers: list[QuizAnswer]
 
 
 class QuizInput(BaseModel):
     title: str
     description: str
-    questions: List[QuizQuestion]
+    questions: list[QuizQuestion]
 
 
 class Quiz(ormar.Model):
     id: uuid.UUID = ormar.UUID(primary_key=True, default=uuid.uuid4)
     title: str = ormar.String(max_length=100)
-    description: str = ormar.String(max_length=300, nullable=True)
+    description: Optional[str] = ormar.String(max_length=300, nullable=True)
     created_at: datetime = ormar.DateTime(default=datetime.now())
     updated_at: datetime = ormar.DateTime(default=datetime.now())
     user_id: uuid.UUID = ormar.UUID(foreign_key=User.id)
@@ -91,7 +91,8 @@ async def create_quiz_lol(
 
 @pytest.mark.asyncio
 async def test_quiz_creation():
-    client = AsyncClient(app=router, base_url="http://testserver")
+    transport = ASGITransport(app=router)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(router):
         payload = {
             "title": "Some test question",

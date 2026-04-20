@@ -1,9 +1,9 @@
 import enum
 
-import ormar
 import pytest
 from pydantic import ValidationError, field_validator
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 

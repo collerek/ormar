@@ -1,10 +1,13 @@
 from typing import Optional
 
-import databases
-import ormar
 import sqlalchemy
 
-database = databases.Database("sqlite:///test.db", force_rollback=True)
+import ormar
+from ormar import DatabaseConnection
+
+database = DatabaseConnection(
+    "sqlite+aiosqlite:///models_docs009.db", force_rollback=True
+)
 metadata = sqlalchemy.MetaData()
 
 
@@ -22,7 +25,6 @@ class Artist(ormar.Model):
 
 
 class Album(ormar.Model):
-
     ormar_config = ormar.OrmarConfig(
         database=database,
         metadata=metadata,

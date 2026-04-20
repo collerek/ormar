@@ -1,12 +1,12 @@
-from typing import Any, Dict, Optional, Set, Type, Union, cast
+from typing import Any, Optional, Union, cast
 
-import ormar
 import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
-from httpx import AsyncClient
-from ormar.queryset.utils import translate_list_to_dict
+from httpx import ASGITransport, AsyncClient
 
+import ormar
+from ormar.queryset.utils import translate_list_to_dict
 from tests.lifespan import init_tests, lifespan
 from tests.settings import create_config
 
@@ -57,7 +57,7 @@ to_exclude_ormar = {
 create_test_database = init_tests(base_ormar_config)
 
 
-def auto_exclude_id_field(to_exclude: Any) -> Union[Dict, Set]:
+def auto_exclude_id_field(to_exclude: Any) -> Union[dict, set]:
     if isinstance(to_exclude, dict):
         for key in to_exclude.keys():
             to_exclude[key] = auto_exclude_id_field(to_exclude[key])
@@ -67,9 +67,9 @@ def auto_exclude_id_field(to_exclude: Any) -> Union[Dict, Set]:
         return {"id"}
 
 
-def generate_exclude_for_ids(model: Type[ormar.Model]) -> Dict:
+def generate_exclude_for_ids(model: type[ormar.Model]) -> dict:
     to_exclude_base = translate_list_to_dict(model._iterate_related_models())
-    return cast(Dict, auto_exclude_id_field(to_exclude=to_exclude_base))
+    return cast(dict, auto_exclude_id_field(to_exclude=to_exclude_base))
 
 
 to_exclude_auto = generate_exclude_for_ids(model=Department)
@@ -107,7 +107,8 @@ async def get_department_exclude_all(department_name: str):
 
 @pytest.mark.asyncio
 async def test_saving_related_in_fastapi():
-    client = AsyncClient(app=app, base_url="http://testserver")
+    transport = ASGITransport(app=app)
+    client = AsyncClient(transport=transport, base_url="http://testserver")
     async with client as client, LifespanManager(app):
         payload = {
             "department_name": "Ormar",

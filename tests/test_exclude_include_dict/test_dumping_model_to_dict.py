@@ -1,8 +1,8 @@
-from typing import List, Optional
+from typing import Optional
 
-import ormar
 import pytest
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -21,9 +21,9 @@ class User(ormar.Model):
 
     id: int = ormar.Integer(primary_key=True)
     email: str = ormar.String(max_length=255, nullable=False)
-    password: str = ormar.String(max_length=255, nullable=True)
+    password: Optional[str] = ormar.String(max_length=255, nullable=True)
     first_name: str = ormar.String(max_length=255, nullable=False)
-    roles: List[Role] = ormar.ManyToMany(Role)
+    roles: list[Role] = ormar.ManyToMany(Role)
 
 
 class Tier(ormar.Model):

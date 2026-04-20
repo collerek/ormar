@@ -1,5 +1,6 @@
-import ormar
+from typing import Optional
 
+import ormar
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -21,7 +22,7 @@ class NonAutoincrementModel(ormar.Model):
 class ExplicitNullableModel(ormar.Model):
     ormar_config = base_ormar_config.copy()
 
-    id: int = ormar.Integer(primary_key=True, nullable=True)
+    id: Optional[int] = ormar.Integer(primary_key=True, nullable=True)
 
 
 create_test_database = init_tests(base_ormar_config)

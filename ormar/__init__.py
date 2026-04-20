@@ -73,6 +73,7 @@ from ormar.fields import (
 )
 
 # noqa: I100
+from ormar.databases.connection import DatabaseConnection
 from ormar.models import ExcludableItems, Extra, Model, OrmarConfig
 from ormar.queryset import OrderAction, QuerySet, and_, or_
 from ormar.relations import RelationType
@@ -143,4 +144,5 @@ __all__ = [
     "LargeBinary",
     "Extra",
     "OrmarConfig",
+    "DatabaseConnection",
 ]

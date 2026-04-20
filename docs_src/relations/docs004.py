@@ -1,11 +1,12 @@
-import databases
-import ormar
 import sqlalchemy
 
-DATABASE_URL = "sqlite:///test.db"
+import ormar
+from ormar import DatabaseConnection
+
+DATABASE_URL = "sqlite+aiosqlite:///relations_docs004.db"
 
 ormar_base_config = ormar.OrmarConfig(
-    database=databases.Database(DATABASE_URL), metadata=sqlalchemy.MetaData()
+    database=DatabaseConnection(DATABASE_URL), metadata=sqlalchemy.MetaData()
 )
 
 

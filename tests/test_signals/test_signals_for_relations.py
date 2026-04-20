@@ -1,16 +1,15 @@
 from typing import Optional
 
-import ormar
 import pydantic
 import pytest
-import pytest_asyncio
+
+import ormar
 from ormar import (
     post_relation_add,
     post_relation_remove,
     pre_relation_add,
     pre_relation_remove,
 )
-
 from tests.lifespan import init_tests
 from tests.settings import create_config
 
@@ -49,13 +48,6 @@ class Album(ormar.Model):
 
 
 create_test_database = init_tests(base_ormar_config)
-
-
-@pytest_asyncio.fixture(autouse=True, scope="function")
-async def cleanup():
-    yield
-    async with base_ormar_config.database:
-        await AuditLog.objects.delete(each=True)
 
 
 @pytest.mark.asyncio
