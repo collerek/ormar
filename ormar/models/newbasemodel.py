@@ -70,12 +70,14 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         "__cached_hash__",
         "__pydantic_extra__",
         "__pydantic_fields_set__",
+        "__setattr_fields__",
     )
 
     if TYPE_CHECKING:  # pragma no cover
         pk: Any
         __relation_map__: Optional[list[str]]
         __cached_hash__: Optional[int]
+        __setattr_fields__: set[str]
         _orm_relationship_manager: AliasManager
         _orm: RelationsManager
         _orm_id: int
@@ -86,6 +88,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         _quick_access_fields: set
         _json_fields: set
         _bytes_fields: set
+        _onupdate_fields: set
         ormar_config: OrmarConfig
 
     # noinspection PyMissingConstructor
@@ -229,6 +232,9 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         else:
             # let pydantic handle errors for unknown fields
             super().__setattr__(name, value)
+
+        if self._onupdate_fields and name in self.ormar_config.model_fields:
+            self.__setattr_fields__.add(name)
 
         # In this case, the hash could have changed, so update it
         if name == self.ormar_config.pkname or self.pk is None:
@@ -415,6 +421,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         # object.__setattr__(self, "_orm_id", uuid.uuid4().hex)
         object.__setattr__(self, "_orm_saved", False)
         object.__setattr__(self, "_pk_column", None)
+        object.__setattr__(self, "__setattr_fields__", set())
         object.__setattr__(
             self,
             "_orm",

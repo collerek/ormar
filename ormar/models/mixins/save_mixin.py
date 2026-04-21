@@ -28,6 +28,7 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
         _skip_ellipsis: Callable
         _json_fields: set[str]
         _bytes_fields: set[str]
+        _onupdate_fields: set[str]
         __pydantic_core_schema__: CoreSchema
         __ormar_fields_validators__: Optional[
             dict[str, Union[SchemaValidator, PluggableSchemaValidator]]
@@ -249,6 +250,34 @@ class SavePrepareMixin(RelationMixin, AliasMixin):
                 and new_kwargs.get(field_name, None) is None
             ):
                 new_kwargs.pop(field_name, None)
+        return new_kwargs
+
+    @classmethod
+    def populate_onupdate_value(
+        cls, new_kwargs: dict, explicit_fields: Optional[set[str]] = None
+    ) -> dict:
+        """
+        Populates on_update values for fields that have on_update configured
+        and were not provided explicitly.
+
+        If ``explicit_fields`` is omitted the keys of ``new_kwargs`` are
+        treated as explicitly provided. Callers pass the set explicitly when
+        ``new_kwargs`` is a full ``model_dump`` (e.g. ``bulk_update``) so that
+        fields the user actually mutated can be distinguished from values that
+        are just present by virtue of the dump.
+
+        :param new_kwargs: dictionary of values about to be used for the update
+        :type new_kwargs: dict
+        :param explicit_fields: fields that should be considered user-provided
+        :type explicit_fields: Optional[set[str]]
+        :return: new_kwargs with on_update values populated
+        :rtype: dict
+        """
+        if explicit_fields is None:
+            explicit_fields = set(new_kwargs.keys())
+        for field_name in cls._onupdate_fields - explicit_fields:
+            field = cls.ormar_config.model_fields[field_name]
+            new_kwargs[field_name] = field.get_on_update()
         return new_kwargs
 
     @classmethod

@@ -786,6 +786,7 @@ class QuerySet(Generic[T]):
             self.model.extract_related_names()
         )
         updates = {k: v for k, v in kwargs.items() if k in self_fields}
+        updates = self.model.populate_onupdate_value(updates)
         updates = self.model.validate_enums(updates)
         updates = self.model.translate_columns_to_aliases(updates)
 
@@ -1210,15 +1211,30 @@ class QuerySet(Generic[T]):
         if pk_name not in columns:
             columns.append(pk_name)
 
+        onupdate_fields = self.model._onupdate_fields
+        for field_name in onupdate_fields:
+            if field_name not in columns:
+                columns.append(field_name)
+
         columns = [self.model.get_column_alias(k) for k in columns]
 
         for i, obj in enumerate(objects):
+            explicit_fields = obj.__setattr_fields__
             new_kwargs = obj.model_dump()
             if new_kwargs.get(pk_name) is None:
                 raise ModelPersistenceError(
                     "You cannot update unsaved objects. "
                     f"{self.model.__name__} has to have {pk_name} filled."
                 )
+            new_kwargs = obj.populate_onupdate_value(
+                new_kwargs, explicit_fields=explicit_fields
+            )
+            obj.update_from_dict(
+                {
+                    field_name: new_kwargs[field_name]
+                    for field_name in onupdate_fields - explicit_fields
+                }
+            )
             new_kwargs = obj.prepare_model_to_update(new_kwargs)
             ready_objects.append(
                 {"new_" + k: v for k, v in new_kwargs.items() if k in columns}
@@ -1249,6 +1265,7 @@ class QuerySet(Generic[T]):
 
         for obj in objects:
             obj.set_save_status(True)
+            obj.__setattr_fields__.clear()
 
         await cast(
             type["Model"], self.model_cls
