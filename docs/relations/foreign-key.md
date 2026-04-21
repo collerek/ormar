@@ -2,7 +2,7 @@
 
 `ForeignKey(to: Model, *, name: str = None, unique: bool = False, nullable: bool = True,
 related_name: str = None, virtual: bool = False, onupdate: Union[ReferentialAction, str] = None,
-ondelete: Union[ReferentialAction, str] = None, **kwargs: Any)`
+ondelete: Union[ReferentialAction, str] = None, foreign_key_name: str = None, **kwargs: Any)`
 has required parameters `to` that takes target `Model` class.  
 
 Sqlalchemy column and type are automatically taken from target `Model`.
@@ -219,6 +219,28 @@ Set the ForeignKey to its default value; a `server_default` for the ForeignKey m
 ### DO_NOTHING
 
 Take `NO ACTION`; NO ACTION and RESTRICT are very much alike. The main difference between NO ACTION and RESTRICT is that with NO ACTION the referential integrity check is done after trying to alter the table. RESTRICT does the check before trying to execute the UPDATE or DELETE statement. Both referential actions act the same if the referential integrity check fails: the UPDATE or DELETE statement will result in an error.
+
+## Overriding the foreign key constraint name
+
+By default ormar generates the foreign key constraint name as
+`fk_{source_table}_{target_table}_{target_pk}_{field_name}`. On databases with a
+short identifier length limit (for example MySQL's 64 character limit) the
+auto-generated name can be truncated or rejected. Pass `foreign_key_name` to use
+a custom name instead:
+
+```python
+class Book(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="books")
+
+    id: int = ormar.Integer(primary_key=True)
+    author = ormar.ForeignKey(
+        Author,
+        foreign_key_name="fk_books_author",
+    )
+```
+
+When used on an abstract base class, each subclass suffixes the name with its
+own tablename to avoid constraint name collisions across sibling tables.
 
 ## Relation Setup
 

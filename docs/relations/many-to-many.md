@@ -221,6 +221,33 @@ class StudentCourse(ormar.Model):
     provide your own custom Through model you cannot change the names there and you need to use
     same `through_relation_name` and `through_reverse_relation_name` parameters.
 
+## Overriding foreign key constraint names on the through model
+
+Auto-generated foreign key constraint names on the through model can be
+overridden with:
+
+* `through_foreign_key_name` - name of the FK constraint on the column that
+  references the model where `ManyToMany` is declared (the owner side).
+* `through_reverse_foreign_key_name` - name of the FK constraint on the column
+  that references the target model.
+
+This is primarily useful for databases with short identifier limits (for
+example MySQL's 64 character limit) where the auto-generated name would be
+truncated.
+
+```python
+class Student(ormar.Model):
+    ormar_config = base_ormar_config.copy()
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    courses = ormar.ManyToMany(
+        Course,
+        through_foreign_key_name="fk_sc_student",
+        through_reverse_foreign_key_name="fk_sc_course",
+    )
+```
+
 ## Through Fields
 
 The through field is auto added to the reverse side of the relation. 

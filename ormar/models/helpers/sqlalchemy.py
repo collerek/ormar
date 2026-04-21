@@ -44,10 +44,16 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
     )
 
     create_and_append_m2m_fk(
-        model=model_field.to, model_field=model_field, field_name=parent_name
+        model=model_field.to,
+        model_field=model_field,
+        field_name=parent_name,
+        foreign_key_name=model_field.through_reverse_foreign_key_name,
     )
     create_and_append_m2m_fk(
-        model=model_field.owner, model_field=model_field, field_name=child_name
+        model=model_field.owner,
+        model_field=model_field,
+        field_name=child_name,
+        foreign_key_name=model_field.through_foreign_key_name,
     )
 
     create_pydantic_field(parent_name, model_field.to, model_field)
@@ -58,7 +64,10 @@ def adjust_through_many_to_many_model(model_field: "ManyToManyField") -> None:
 
 
 def create_and_append_m2m_fk(
-    model: type["Model"], model_field: "ManyToManyField", field_name: str
+    model: type["Model"],
+    model_field: "ManyToManyField",
+    field_name: str,
+    foreign_key_name: Optional[str] = None,
 ) -> None:
     """
     Registers sqlalchemy Column with sqlalchemy.ForeignKey leading to the model.
@@ -72,6 +81,8 @@ def create_and_append_m2m_fk(
     :type model: Model class
     :param model_field: field with ManyToMany relation
     :type model_field: ManyToManyField field
+    :param foreign_key_name: optional override for the generated FK constraint name.
+    :type foreign_key_name: Optional[str]
     """
     pk_alias = model.get_column_alias(model.ormar_config.pkname)
     pk_column = next(
@@ -81,6 +92,9 @@ def create_and_append_m2m_fk(
         raise ormar.ModelDefinitionError(
             "ManyToMany relation cannot lead to field without pk"
         )
+    through_table = model_field.through.ormar_config.tablename
+    target_table = model.ormar_config.tablename
+    default_name = f"fk_{through_table}_{target_table}_{field_name}_{pk_alias}"
     column = sqlalchemy.Column(
         field_name,
         pk_column.type,
@@ -88,8 +102,7 @@ def create_and_append_m2m_fk(
             model.ormar_config.tablename + "." + pk_alias,
             ondelete="CASCADE",
             onupdate="CASCADE",
-            name=f"fk_{model_field.through.ormar_config.tablename}_{model.ormar_config.tablename}"
-            f"_{field_name}_{pk_alias}",
+            name=foreign_key_name or default_name,
         ),
     )
     model_field.through.ormar_config.columns.append(column)

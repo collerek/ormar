@@ -1,4 +1,5 @@
 import copy
+import dataclasses
 import sys
 import warnings
 from pathlib import Path
@@ -385,13 +386,24 @@ def copy_data_from_parent_model(  # noqa: CCR001
                     base_class=base_class,  # type: ignore
                 )
 
-            elif field.is_relation and field.related_name:
+            elif field.is_relation and (
+                field.related_name or cast(ForeignKeyField, field).foreign_key_name
+            ):
+                fk_field = cast(ForeignKeyField, field)
                 Field = type(  # type: ignore
                     field.__class__.__name__, (ForeignKeyField, BaseField), {}
                 )
                 copy_field = Field(**dict(field.__dict__))
-                related_name = field.related_name + "_" + table_name
-                copy_field.related_name = related_name  # type: ignore
+                if fk_field.related_name:
+                    related_name = fk_field.related_name + "_" + table_name
+                    copy_field.related_name = related_name  # type: ignore
+                if fk_field.foreign_key_name:
+                    new_fk_name = f"{fk_field.foreign_key_name}_{table_name}"
+                    copy_field.foreign_key_name = new_fk_name  # type: ignore
+                    copy_field.constraints = [
+                        dataclasses.replace(constraint, name=new_fk_name)
+                        for constraint in fk_field.constraints
+                    ]
                 parent_fields[field_name] = copy_field
             else:
                 parent_fields[field_name] = field
