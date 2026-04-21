@@ -124,6 +124,70 @@ Sample usage:
 !!!info
     `server_default` is passed straight to sqlalchemy table definition so you can read more in [server default][server default] sqlalchemy documentation
 
+## on_update
+
+`on_update`: `Any` = `None` -> defaults to None.
+
+A value (or Callable) that is written to the column on every update when the
+user did not provide that field explicitly.
+
+It applies to all write paths that update existing rows:
+
+* `Model.update()` (and therefore `Model.upsert()`)
+* `QuerySet.update()`
+* `QuerySet.bulk_update()`
+
+A field is considered explicitly provided (and its `on_update` is **skipped**)
+when any of the following is true:
+
+* it was passed as a keyword argument to `update()` / `upsert()`
+* it was mutated on the instance via attribute assignment before `update()` /
+  `bulk_update()` is called
+* it was passed through `QuerySet.update(field=value)`
+
+You can pass a static value or a Callable; a Callable is invoked every time
+the update fires (e.g. `datetime.now` produces the current timestamp on every
+update).
+
+Used in sql only.
+
+Sample usage:
+
+```python
+from datetime import datetime
+
+class Task(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="tasks")
+
+    id: int = ormar.Integer(primary_key=True)
+    # callable - invoked on every update
+    updated_at: datetime = ormar.DateTime(
+        default=datetime.now, on_update=datetime.now
+    )
+    # static value
+    is_dirty: bool = ormar.Boolean(default=False, on_update=True)
+    # static value - field keeps the value the caller passed if any
+    revision: int = ormar.Integer(default=0, on_update=1)
+
+
+task = await Task.objects.create()
+assert task.is_dirty is False
+
+await task.update()
+assert task.is_dirty is True            # on_update applied
+assert task.revision == 1               # on_update applied
+assert task.updated_at > created_time   # on_update callable re-evaluated
+
+# explicit values override on_update
+await task.update(revision=5)
+assert task.revision == 5               # user value wins, on_update skipped
+```
+
+!!!note
+    `on_update` is orthogonal to the `onupdate` parameter on `ForeignKey`,
+    which maps to the SQL `ON UPDATE` referential action and is unrelated.
+
+
 ## name
 
 `name`: `str` = `None` -> defaults to None
