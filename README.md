@@ -663,6 +663,7 @@ The following keyword arguments are supported on all field types.
 * `nullable: bool`
 * `default: Any`
 * `server_default: Any`
+* `on_update: Any`
 * `index: bool`
 * `unique: bool`
 * `choices: typing.Sequence`

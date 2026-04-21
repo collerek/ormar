@@ -90,6 +90,7 @@ class BaseField(FieldInfo):  # type: ignore[misc]
 
         self.ormar_default: Any = kwargs.pop("default", None)
         self.server_default: Any = kwargs.pop("server_default", None)
+        self.on_update: Any = kwargs.pop("on_update", None)
 
         self.comment: str = kwargs.pop("comment", None)
 
@@ -240,6 +241,24 @@ class BaseField(FieldInfo):  # type: ignore[misc]
         return self.ormar_default is not None or (
             self.server_default is not None and use_server
         )
+
+    def has_on_update(self) -> bool:
+        """
+        Checks if the field has an on_update value or callable configured.
+
+        :return: result of the check if on_update value is set
+        :rtype: bool
+        """
+        return self.on_update is not None
+
+    def get_on_update(self) -> Any:
+        """
+        Resolves the on_update value, calling it if it is a callable.
+
+        :return: resolved on_update value
+        :rtype: Any
+        """
+        return self.on_update() if callable(self.on_update) else self.on_update
 
     def is_auto_primary_key(self) -> bool:
         """

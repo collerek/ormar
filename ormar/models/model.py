@@ -119,6 +119,7 @@ class Model(ModelRow):
         ):
             await self.load()
 
+        self.__setattr_fields__.clear()
         await self.signals.post_save.send(sender=self.__class__, instance=self)
         return self
 
@@ -243,8 +244,12 @@ class Model(ModelRow):
         :return: updated Model
         :rtype: Model
         """
-        if kwargs:
-            self.update_from_dict(kwargs)
+        explicit_fields = self.__setattr_fields__ | kwargs.keys()
+        values = self.populate_onupdate_value(
+            dict(kwargs), explicit_fields=explicit_fields
+        )
+        if values:
+            self.update_from_dict(values)
 
         if not self.pk:
             raise ModelPersistenceError(
@@ -257,13 +262,18 @@ class Model(ModelRow):
         self_fields = self._extract_model_db_fields()
         self_fields.pop(self.get_column_name_from_alias(self.ormar_config.pkname))
         if _columns:
-            self_fields = {k: v for k, v in self_fields.items() if k in _columns}
+            self_fields = {
+                k: v
+                for k, v in self_fields.items()
+                if k in _columns or k in self._onupdate_fields
+            }
         if self_fields:
             self_fields = self.translate_columns_to_aliases(self_fields)
             expr = self.ormar_config.table.update().values(**self_fields)
             expr = expr.where(self.pk_column == getattr(self, self.ormar_config.pkname))
             await self._execute_query(expr)
         self.set_save_status(True)
+        self.__setattr_fields__.clear()
         await self.signals.post_update.send(sender=self.__class__, instance=self)
         return self
 
@@ -309,6 +319,7 @@ class Model(ModelRow):
         kwargs = self.translate_aliases_to_columns(kwargs)
         self.update_from_dict(kwargs)
         self.set_save_status(True)
+        self.__setattr_fields__.clear()
         return self
 
     async def load_all(
@@ -357,4 +368,5 @@ class Model(ModelRow):
         instance = await queryset.select_related(relations).get(pk=self.pk)
         self._orm.clear()
         self.update_from_dict(instance.model_dump())
+        self.__setattr_fields__.clear()
         return self

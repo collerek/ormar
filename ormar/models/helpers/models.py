@@ -54,6 +54,9 @@ def populate_default_options_values(  # noqa: CCR001
     new_model._bytes_fields = {
         name for name, field in model_fields.items() if field.__type__ is bytes
     }
+    new_model._onupdate_fields = {
+        name for name, field in model_fields.items() if field.has_on_update()
+    }
 
     new_model.__relation_map__ = None
     new_model.__ormar_fields_validators__ = None
