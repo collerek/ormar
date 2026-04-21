@@ -81,6 +81,7 @@ def populate_fk_params_based_on_to_model(
     nullable: bool,
     onupdate: Optional[str] = None,
     ondelete: Optional[str] = None,
+    foreign_key_name: Optional[str] = None,
 ) -> tuple[Any, list, Any, Any]:
     """
     Based on target to model to which relation leads to populates the type of the
@@ -96,6 +97,9 @@ def populate_fk_params_based_on_to_model(
     :param ondelete: parameter passed to sqlalchemy.ForeignKey.
     How to treat child rows on delete of parent (the one where FK is defined) model.
     :type ondelete: str
+    :param foreign_key_name: optional override for the foreign key constraint name
+    emitted in migrations. Defaults to ``None``, which lets ormar generate a name.
+    :type foreign_key_name: Optional[str]
     :return: tuple with target pydantic type, list of fk constraints and target col type
     :rtype: tuple[Any, list, Any]
     """
@@ -111,7 +115,10 @@ def populate_fk_params_based_on_to_model(
     )
     constraints = [
         ForeignKeyConstraint(
-            reference=fk_string, ondelete=ondelete, onupdate=onupdate, name=None
+            reference=fk_string,
+            ondelete=ondelete,
+            onupdate=onupdate,
+            name=foreign_key_name,
         )
     ]
     column_type = to_field.column_type
@@ -203,6 +210,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     virtual: bool = False,
     onupdate: Union[ReferentialAction, str, None] = None,
     ondelete: Union[ReferentialAction, str, None] = None,
+    foreign_key_name: Optional[str] = None,
     **kwargs: Any,
 ) -> "T":
     """
@@ -230,6 +238,10 @@ def ForeignKey(  # type: ignore # noqa CFQ002
     :param ondelete: parameter passed to sqlalchemy.ForeignKey.
     How to treat child rows on delete of parent (the one where FK is defined) model.
     :type ondelete: Union[ReferentialAction, str]
+    :param foreign_key_name: optional override for the foreign key constraint name
+    generated in migrations. Useful when the auto-generated name exceeds a database
+    specific identifier length limit (for example MySQL 64 chars).
+    :type foreign_key_name: Optional[str]
     :param kwargs: all other args to be populated by BaseField
     :type kwargs: Any
     :return: ormar ForeignKeyField with relation to selected model
@@ -270,6 +282,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
             nullable=nullable,
             ondelete=ondelete,
             onupdate=onupdate,
+            foreign_key_name=foreign_key_name,
         )
 
     namespace = dict(
@@ -292,6 +305,7 @@ def ForeignKey(  # type: ignore # noqa CFQ002
         server_default=None,
         onupdate=onupdate,
         ondelete=ondelete,
+        foreign_key_name=foreign_key_name,
         owner=owner,
         self_reference=self_reference,
         is_relation=True,
@@ -316,6 +330,7 @@ class ForeignKeyField(BaseField):  # type: ignore[misc]
             self.to: type["Model"]
         self.ondelete: str = kwargs.pop("ondelete", None)
         self.onupdate: str = kwargs.pop("onupdate", None)
+        self.foreign_key_name: Optional[str] = kwargs.pop("foreign_key_name", None)
         super().__init__(**kwargs)
 
     def get_source_related_name(self) -> str:
@@ -447,6 +462,7 @@ class ForeignKeyField(BaseField):  # type: ignore[misc]
                 nullable=self.nullable,
                 ondelete=self.ondelete,
                 onupdate=self.onupdate,
+                foreign_key_name=self.foreign_key_name,
             )
 
     def _extract_model_from_sequence(

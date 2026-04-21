@@ -57,6 +57,12 @@ class BaseField(FieldInfo):  # type: ignore[misc]
         self.through_reverse_relation_name = kwargs.pop(
             "through_reverse_relation_name", None
         )
+        self.through_foreign_key_name: Optional[str] = kwargs.pop(
+            "through_foreign_key_name", None
+        )
+        self.through_reverse_foreign_key_name: Optional[str] = kwargs.pop(
+            "through_reverse_foreign_key_name", None
+        )
 
         self.skip_reverse: bool = kwargs.pop("skip_reverse", False)
         self.skip_field: bool = kwargs.pop("skip_field", False)
@@ -257,16 +263,20 @@ class BaseField(FieldInfo):  # type: ignore[misc]
         :return: list of sqlalchemy foreign keys - by default one.
         :rtype: list[sqlalchemy.schema.ForeignKey]
         """
-        constraints = [
-            sqlalchemy.ForeignKey(
-                con.reference,
-                ondelete=con.ondelete,
-                onupdate=con.onupdate,
-                name=f"fk_{self.owner.ormar_config.tablename}_{self.to.ormar_config.tablename}"
-                f"_{self.to.get_column_alias(self.to.ormar_config.pkname)}_{self.name}",
+        constraints = []
+        for constraint in self.constraints:
+            owner_table = self.owner.ormar_config.tablename
+            target_table = self.to.ormar_config.tablename
+            target_pk = self.to.get_column_alias(self.to.ormar_config.pkname)
+            default_name = f"fk_{owner_table}_{target_table}_{target_pk}_{self.name}"
+            constraints.append(
+                sqlalchemy.ForeignKey(
+                    constraint.reference,
+                    ondelete=constraint.ondelete,
+                    onupdate=constraint.onupdate,
+                    name=constraint.name or default_name,
+                )
             )
-            for con in self.constraints
-        ]
         return constraints
 
     def get_column(self, name: str) -> sqlalchemy.Column:
