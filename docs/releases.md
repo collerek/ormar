@@ -1,5 +1,17 @@
 # Release notes
 
+## 0.24.0
+
+### ✨ Features
+
+* Add `on_update` option to fields to customize SQL `ON UPDATE` behavior - thanks @vvanglro [#1273](https://github.com/collerek/ormar/pull/1273)
+* Allow overriding auto-generated foreign key constraint names via `fk_name` parameter on `ormar.ForeignKey`, useful when the generated name exceeds the database's identifier length limit - thanks @nikelborm [#849](https://github.com/collerek/ormar/pull/849)
+* Forward `autoincrement` property from ormar field to the underlying SQLAlchemy column, enabling DDL with manually managed integer primary keys - thanks @smuething [#674](https://github.com/collerek/ormar/pull/674)
+
+### 🐛 Fixes
+
+* Run standalone queries under AUTOCOMMIT isolation to remove the per-query `BEGIN`/`COMMIT` round-trip introduced in 0.22.0. Restores (and exceeds) 0.21-era performance on per-row CRUD and single-row reads while keeping explicit `database.transaction()` and savepoints working. `bulk_update` and `iterate` are internally wrapped in an explicit transaction so their batch-commit and server-side-cursor semantics are preserved [#1629](https://github.com/collerek/ormar/discussions/1629) [#1635](https://github.com/collerek/ormar/pull/1635)
+
 ## 0.23.1
 
 ### ‼️🚨 High vulnerability fixed – please upgrade ASAP
