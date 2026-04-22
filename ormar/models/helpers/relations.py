@@ -136,6 +136,8 @@ def register_reverse_model_fields(model_field: "ForeignKeyField") -> None:
             skip_field=model_field.skip_reverse,
             through_relation_name=model_field.through_reverse_relation_name,
             through_reverse_relation_name=model_field.through_relation_name,
+            through_relation_nullable=model_field.through_reverse_relation_nullable,
+            through_reverse_relation_nullable=model_field.through_relation_nullable,
         )
         # register foreign keys on through model
         model_field = cast("ManyToManyField", model_field)
