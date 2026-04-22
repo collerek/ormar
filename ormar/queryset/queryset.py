@@ -1113,7 +1113,11 @@ class QuerySet(Generic[T]):
         last_primary_key = None
         pk_alias = self.model.get_column_alias(self.model_config.pkname)
 
-        async with self.model_config.database.get_query_executor() as executor:
+        # Server-side cursor (asyncpg/aiomysql) requires an open transaction,
+        # which AUTOCOMMIT does not provide.
+        async with self.model_config.database.get_query_executor(
+            transactional=True
+        ) as executor:
             async for row in executor.iterate(expr):
                 current_primary_key = row[pk_alias]
                 if last_primary_key == current_primary_key or last_primary_key is None:
@@ -1260,7 +1264,11 @@ class QuerySet(Generic[T]):
         # databases bind params only where query is passed as string
         # otherwise it just passes all data to values and results in unconsumed columns
         expr = str(expr)  # type: ignore
-        async with self.model_config.database.get_query_executor() as executor:
+        # Multi-row execute_many: run in an explicit transaction so all rows
+        # share a single COMMIT instead of one per row under AUTOCOMMIT.
+        async with self.model_config.database.get_query_executor(
+            transactional=True
+        ) as executor:
             await executor.execute_many(expr, ready_objects)
 
         for obj in objects:

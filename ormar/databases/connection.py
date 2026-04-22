@@ -38,6 +38,7 @@ class DatabaseConnection:
             options["max_overflow"] = 10
         self._options = options
         self._engine: Optional[AsyncEngine] = None
+        self._autocommit_engine: Optional[AsyncEngine] = None
 
         self._global_transaction: Optional[Transaction] = None
 
@@ -45,6 +46,14 @@ class DatabaseConnection:
         """Connect to the database by creating the async engine."""
         if self._engine is None:
             self._engine = create_async_engine(self._url, **self._options)
+            # View of the same engine/pool in AUTOCOMMIT mode. Standalone
+            # queries use this to avoid a BEGIN/COMMIT round-trip per call,
+            # matching legacy `databases`-library semantics. Explicit
+            # Transactions keep using ``self._engine`` so BEGIN / SAVEPOINT
+            # still work.
+            self._autocommit_engine = self._engine.execution_options(
+                isolation_level="AUTOCOMMIT"
+            )
 
             # Set up SQLite foreign keys pragma if using SQLite
             if self._engine.dialect.name == "sqlite":  # pragma: nocover
@@ -75,6 +84,7 @@ class DatabaseConnection:
 
             await self._engine.dispose()
             self._engine = None
+            self._autocommit_engine = None
 
     @property
     def is_connected(self) -> bool:
@@ -119,10 +129,19 @@ class DatabaseConnection:
         return Transaction(self, force_rollback=force_rollback)
 
     @asynccontextmanager
-    async def get_query_executor(self) -> AsyncIterator[QueryExecutor]:
+    async def get_query_executor(
+        self, *, transactional: bool = False
+    ) -> AsyncIterator[QueryExecutor]:
         """
         Get connection, reusing transaction connection if in transaction.
 
+        :param transactional: If True, open an explicit transaction for the
+            scope of the executor. Use for server-side cursors (``iterate``)
+            and multi-row ``execute_many`` batches, which need a real
+            transaction either because AUTOCOMMIT would commit each row
+            separately or because the driver (asyncpg) requires a
+            transaction for streaming.
+        :type transactional: bool
         :return: QueryExecutor wrapping a connection
         :rtype: QueryExecutor
         """
@@ -130,11 +149,18 @@ class DatabaseConnection:
         if trans_conn is not None:
             # Inside a transaction - reuse the transaction's connection
             yield QueryExecutor(trans_conn)
-        else:
-            # Outside transaction: connect() + commit().
-            async with self.engine.connect() as conn:
+        elif transactional:
+            async with self.transaction():
+                conn = self.get_transaction_connection()
+                assert conn is not None
                 yield QueryExecutor(conn)
-                await conn.commit()
+        else:
+            # Outside transaction: use AUTOCOMMIT view so each statement
+            # commits at the driver level with no extra BEGIN/COMMIT
+            # round-trip.
+            assert self._autocommit_engine is not None
+            async with self._autocommit_engine.connect() as conn:
+                yield QueryExecutor(conn)
 
     def get_transaction_connection(self) -> Optional[AsyncConnection]:
         """Get the current transaction connection if in a transaction."""

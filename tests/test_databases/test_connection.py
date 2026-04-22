@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy import text
+from sqlalchemy import event, text
 
 import ormar
 from ormar.databases.connection import DatabaseConnection
@@ -147,3 +147,82 @@ async def test_force_rollback_cascades():
 
         teams = await Team.objects.all()
         assert len(teams) == 0
+
+
+@pytest.mark.asyncio
+async def test_standalone_query_uses_autocommit():
+    """Standalone CRUD must not wrap each statement in BEGIN/COMMIT.
+
+    The old code path held a real transaction around every call; this test
+    pins the replacement behavior so future refactors don't silently reintroduce
+    the per-query commit overhead (see discussion #1629).
+    """
+    seen_autocommit: list[bool] = []
+
+    def capture(conn, cursor, statement, parameters, context, executemany):
+        if "teams" not in statement.lower():
+            return
+        seen_autocommit.append(
+            conn.get_execution_options().get("isolation_level") == "AUTOCOMMIT"
+        )
+
+    async with base_ormar_config.database:
+        event.listen(
+            base_ormar_config.database.engine.sync_engine,
+            "before_cursor_execute",
+            capture,
+        )
+        try:
+            await Team.objects.create(name="Standalone")
+            await Team.objects.get(name="Standalone")
+
+            async with base_ormar_config.database.transaction():
+                await Team.objects.create(name="InsideTransaction")
+                await Team.objects.get(name="InsideTransaction")
+        finally:
+            event.remove(
+                base_ormar_config.database.engine.sync_engine,
+                "before_cursor_execute",
+                capture,
+            )
+
+    # First two statements were standalone → must have run under AUTOCOMMIT.
+    # Last two were inside an explicit transaction → must NOT have.
+    assert seen_autocommit[:2] == [True, True]
+    assert all(flag is False for flag in seen_autocommit[2:])
+
+
+@pytest.mark.asyncio
+async def test_bulk_update_is_atomic_under_autocommit():
+    """``bulk_update`` must run inside a transaction so that if anything
+    after the write raises, the write is rolled back.
+
+    The mock below lets the real ``execute_many`` run first (so the rows
+    actually get updated inside the open transaction) and only then raises.
+    If the transaction wrapper around ``execute_many`` were removed,
+    AUTOCOMMIT would already have persisted the renames and the post-update
+    assertion would see ``renamed-*`` instead of the original names.
+    """
+    async with base_ormar_config.database:
+        seeded = [await Team.objects.create(name=f"bulk-{n}") for n in "XYZ"]
+        ids = [t.id for t in seeded]
+        for idx, team in enumerate(seeded):
+            team.name = f"renamed-{idx}"
+
+        from ormar.databases.query_executor import QueryExecutor
+
+        orig = QueryExecutor.execute_many
+
+        async def execute_then_raise(self, query, values):
+            await orig(self, query, values)
+            raise RuntimeError("boom")
+
+        QueryExecutor.execute_many = execute_then_raise  # type: ignore[assignment]
+        try:
+            with pytest.raises(RuntimeError, match="boom"):
+                await Team.objects.bulk_update(seeded)
+        finally:
+            QueryExecutor.execute_many = orig  # type: ignore[assignment]
+
+        reloaded = await Team.objects.filter(id__in=ids).all()
+        assert {t.name for t in reloaded} == {"bulk-X", "bulk-Y", "bulk-Z"}
