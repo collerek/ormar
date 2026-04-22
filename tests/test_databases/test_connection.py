@@ -160,8 +160,6 @@ async def test_standalone_query_uses_autocommit():
     seen_autocommit: list[bool] = []
 
     def capture(conn, cursor, statement, parameters, context, executemany):
-        if "teams" not in statement.lower():
-            return
         seen_autocommit.append(
             conn.get_execution_options().get("isolation_level") == "AUTOCOMMIT"
         )
