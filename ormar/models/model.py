@@ -106,16 +106,34 @@ class Model(ModelRow):
         expr = self.ormar_config.table.insert()
         expr = expr.values(**self_fields)
 
+        pkname = self.ormar_config.pkname
+        pk_returned_from_insert = False
         pk = await self._execute_query(expr)
         if pk and isinstance(pk, self.pk_type()):
-            setattr(self, self.ormar_config.pkname, pk)
+            setattr(self, pkname, pk)
+            pk_returned_from_insert = True
+
+        if self.pk is None:
+            raise ModelPersistenceError(  # pragma: no cover
+                f"Could not recover the generated primary key for "
+                f"{self.__class__.__name__} after INSERT. This happens on "
+                "backends that lack RETURNING support for server-side "
+                "defaults on non-AUTO_INCREMENT primary keys — most notably "
+                "Oracle MySQL, which does not implement RETURNING in any "
+                "version. Use autoincrement=True, provide the primary key "
+                "client-side, or switch to a RETURNING-capable backend "
+                "(PostgreSQL, SQLite 3.35+, MariaDB 10.5+)."
+            )
 
         self.set_save_status(True)
-        # refresh server side defaults
+        # refresh server-side defaults — but skip the pk if the insert already
+        # returned it, so save() stays a single round-trip when the pk is the
+        # only server_default field.
         if any(
             field.server_default is not None
             for name, field in self.ormar_config.model_fields.items()
             if name not in self_fields
+            and not (pk_returned_from_insert and name == pkname)
         ):
             await self.load()
 

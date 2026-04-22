@@ -61,13 +61,19 @@ class QueryExecutor:
         Execute a query (INSERT, UPDATE, DELETE).
 
         :param query: SQLAlchemy query expression
-        :return: For INSERT, returns last row id; for UPDATE/DELETE, returns row count
+        :return: For INSERT, the inserted primary key or ``None`` if the backend
+            cannot return one (e.g. Oracle MySQL inserting into a
+            non-AUTO_INCREMENT pk with a server default — no RETURNING support).
+            For UPDATE/DELETE, the row count.
         """
         result: CursorResult[Any] = await self._connection.execute(query)
 
-        # For INSERT queries, try to get the inserted primary key
-        # PostgreSQL/MySQL use inserted_primary_key, SQLite uses lastrowid
-        if result.context and result.context.isinsert:  # pragma: no cover
+        # For INSERT queries, try to get the inserted primary key via the
+        # dialect's best-available mechanism (RETURNING on PostgreSQL / SQLite
+        # 3.35+ / MariaDB 10.5+, LAST_INSERT_ID() on MySQL AUTO_INCREMENT).
+        # Do NOT fall back to rowcount here: rowcount is not a pk, and
+        # returning it would silently corrupt `Model.pk` in `save()`.
+        if result.context and result.context.isinsert:
             if result.inserted_primary_key:
                 pk_value = result.inserted_primary_key[0]
                 if pk_value is not None:
@@ -75,6 +81,8 @@ class QueryExecutor:
 
             if hasattr(result, "lastrowid") and result.lastrowid:  # pragma: no cover
                 return result.lastrowid
+
+            return None  # pragma: no cover
 
         return result.rowcount if result.rowcount is not None else 0
 
