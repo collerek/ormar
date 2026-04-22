@@ -1,5 +1,5 @@
 import base64
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 from ormar.fields.parsers import decode_bytes, encode_json
 
@@ -106,9 +106,19 @@ class RelationDescriptor:
         return None  # pragma no cover
 
     def __set__(self, instance: "Model", value: Any) -> None:
-        instance.ormar_config.model_fields[self.name].expand_relationship(
-            value=value, child=instance
-        )
+        field = instance.ormar_config.model_fields[self.name]
+        field.expand_relationship(value=value, child=instance)
+
+        if (
+            value is None
+            and field.nullable
+            and not field.virtual
+            and not field.is_multi
+            and self.name in instance._orm
+        ):
+            previous = cast(Optional["Model"], instance._orm.get(self.name))
+            if previous is not None:
+                instance._orm.remove(self.name, previous)
 
         if not isinstance(instance.__dict__.get(self.name), list):
             instance.set_save_status(False)
