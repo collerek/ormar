@@ -48,7 +48,7 @@ class QueryAction(abc.ABC):
     @abc.abstractmethod
     def get_text_clause(
         self,
-    ) -> sqlalchemy.sql.expression.TextClause:  # pragma: no cover
+    ) -> sqlalchemy.sql.expression.ClauseElement:  # pragma: no cover
         pass
 
     @property
