@@ -1,4 +1,5 @@
 import decimal
+import re
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
 import sqlalchemy
@@ -38,9 +39,17 @@ class SelectAction(QueryAction):
     def get_target_field_type(self) -> Any:
         return self.target_model.ormar_config.model_fields[self.field_name].__type__
 
-    def get_text_clause(self) -> sqlalchemy.sql.expression.TextClause:
+    def get_text_clause(self) -> sqlalchemy.sql.expression.ColumnClause:
+        if self.field_name not in self.target_model.ormar_config.model_fields:
+            raise ValueError(f"Unknown field selected: {self.field_name}")
+        if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", self.field_name):
+            raise ValueError(f"Invalid field selected: {self.field_name}")
+        if self.table_prefix and not re.match(
+            r"^[A-Za-z_][A-Za-z0-9_]*$", self.table_prefix
+        ):
+            raise ValueError(f"Invalid table prefix: {self.table_prefix}")
         alias = f"{self.table_prefix}_" if self.table_prefix else ""
-        return sqlalchemy.text(f"{alias}{self.field_name}")
+        return sqlalchemy.column(f"{alias}{self.field_name}")
 
     def apply_func(
         self, func: Callable, use_label: bool = True
