@@ -248,6 +248,33 @@ class Student(ormar.Model):
     )
 ```
 
+## Making through relation columns non-nullable
+
+By default the auto-generated foreign key columns on the through table are
+nullable (matching SQLAlchemy's default for non primary-key columns). This can
+be overridden per column with:
+
+* `through_relation_nullable` - controls nullability of the column pointing to
+  the model where `ManyToMany` is declared (the owner side). Defaults to `True`.
+* `through_reverse_relation_nullable` - controls nullability of the column
+  pointing to the target model. Defaults to `True`.
+
+Set either (or both) to `False` when you want the database to enforce that a
+through row always references both sides.
+
+```python
+class Student(ormar.Model):
+    ormar_config = base_ormar_config.copy()
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    courses = ormar.ManyToMany(
+        Course,
+        through_relation_nullable=False,
+        through_reverse_relation_nullable=False,
+    )
+```
+
 ## Through Fields
 
 The through field is auto added to the reverse side of the relation. 

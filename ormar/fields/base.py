@@ -63,6 +63,12 @@ class BaseField(FieldInfo):  # type: ignore[misc]
         self.through_reverse_foreign_key_name: Optional[str] = kwargs.pop(
             "through_reverse_foreign_key_name", None
         )
+        self.through_relation_nullable: bool = kwargs.pop(
+            "through_relation_nullable", True
+        )
+        self.through_reverse_relation_nullable: bool = kwargs.pop(
+            "through_reverse_relation_nullable", True
+        )
 
         self.skip_reverse: bool = kwargs.pop("skip_reverse", False)
         self.skip_field: bool = kwargs.pop("skip_field", False)
