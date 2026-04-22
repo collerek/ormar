@@ -1,5 +1,5 @@
 site_name: ormar
-site_url: 'https://collerek.github.io/ormar/'
+site_url: 'https://ormar-orm.github.io/ormar/'
 site_description: A simple async ORM with fastapi in mind and pydantic validation.
 nav:
   - Overview: index.md
@@ -46,8 +46,8 @@ nav:
   - Release Notes: releases.md
   - Api (BETA): api/
 
-repo_name: collerek/ormar
-repo_url: https://github.com/collerek/ormar
+repo_name: ormar-orm/ormar
+repo_url: https://github.com/ormar-orm/ormar
 theme:
   name: material
   highlightjs: true
@@ -78,6 +78,7 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.highlight:
       linenums: true
+      auto_title: true
 plugins:
 - mike:
     alias_type: symlink
