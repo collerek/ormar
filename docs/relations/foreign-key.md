@@ -280,6 +280,26 @@ Finally you can explicitly set it to None (default behavior if no value passed).
 --8<-- "../docs_src/relations/docs001.py"
 ```
 
+You can also clear a `ForeignKey` relation on an already-loaded model by
+assigning `None` — the field must be `nullable` for this to persist. The
+related model is unregistered from the instance immediately, so subsequent
+reads return `None` without requiring a reload:
+
+```python
+track = await Track.objects.select_related("album").get(id=track_id)
+assert track.album is not None
+
+track.album = None
+assert track.album is None  # in-memory state cleared
+
+await track.update(_columns=["album"])  # persists NULL to the database
+```
+
+!!!note
+    Assigning `None` to a non-nullable `ForeignKey` is ignored at the
+    in-memory level. Make the field `nullable=True` (the default) if you
+    need to unassign it.
+
 !!!warning
     In all not None cases the primary key value for related model **has to exist in database**.
     
