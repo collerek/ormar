@@ -40,7 +40,10 @@ class Transaction:
         """Enter transaction context."""
         self._depth = _transaction_depth.get()
 
-        # If this is the outermost transaction, get a new connection
+        # If this is the outermost transaction, get a new connection.
+        # This uses the main engine (not the AUTOCOMMIT view used by
+        # standalone queries) so ``connection.begin()`` and the nested
+        # ``begin_nested()`` savepoints below both work.
         if self._depth == 0:
             self._connection = await self._database.engine.connect().__aenter__()
             self._database.set_transaction_connection(self._connection)
