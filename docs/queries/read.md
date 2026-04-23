@@ -3,8 +3,12 @@
 Following methods allow you to load data from the database.
 
 * `get(*args, **kwargs) -> Model`
+* `get_or_none(*args, **kwargs) -> Optional[Model]`
 * `get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs) -> tuple[Model, bool]`
 * `first(*args, **kwargs) -> Model`
+* `first_or_none(*args, **kwargs) -> Optional[Model]`
+* `last(*args, **kwargs) -> Model`
+* `last_or_none(*args, **kwargs) -> Optional[Model]`
 * `all(*args, **kwargs) -> list[Optional[Model]]`
 * `iterate(*args, **kwargs) -> AsyncGenerator[Model]`
 
@@ -15,8 +19,12 @@ Following methods allow you to load data from the database.
 
 * `QuerysetProxy`
     * `QuerysetProxy.get(*args, **kwargs)` method
+    * `QuerysetProxy.get_or_none(*args, **kwargs)` method
     * `QuerysetProxy.get_or_create(_defaults: Optional[dict[str, Any]] = None, *args, **kwargs)` method
     * `QuerysetProxy.first(*args, **kwargs)` method
+    * `QuerysetProxy.first_or_none(*args, **kwargs)` method
+    * `QuerysetProxy.last(*args, **kwargs)` method
+    * `QuerysetProxy.last_or_none(*args, **kwargs)` method
     * `QuerysetProxy.all(*args, **kwargs)` method
 
 ## get
@@ -124,6 +132,58 @@ await Album.objects.create(name='The Dog')
 album = await Album.objects.first()
 # first row by primary_key column asc
 assert album.name == 'The Cat'
+```
+
+## first_or_none
+
+`first_or_none(*args, **kwargs) -> Optional[Model]`
+
+Exact equivalent of `first` described above but instead of raising `NoMatch`
+returns `None` if no db record matching the criteria is found.
+
+```python
+empty = await Album.objects.first_or_none()
+# None — no rows in the table
+missing = await Album.objects.first_or_none(name='The Missing')
+# None — no row matches the filter
+```
+
+## last
+
+`last(*args, **kwargs) -> Model`
+
+Gets the last row from the db ordered by primary key column descending.
+Complementary to `first()` — the default pk ordering is flipped and the top
+row is returned. When you combine `last()` with `order_by(...)`, the user's
+ordering is flipped too, so `order_by("name").last()` returns the row that
+would sort last by name.
+
+```python
+await Album.objects.create(name='The Cat')
+await Album.objects.create(name='The Dog')
+album = await Album.objects.last()
+# last row by primary_key column desc
+assert album.name == 'The Dog'
+
+album = await Album.objects.order_by("name").last()
+# last row by name (alphabetical)
+assert album.name == 'The Dog'
+```
+
+!!!warning
+    Same as `first()` — raises `NoMatch` if no rows and `MultipleMatches` if
+    somehow more than one row matches.
+
+## last_or_none
+
+`last_or_none(*args, **kwargs) -> Optional[Model]`
+
+Exact equivalent of `last` described above but instead of raising `NoMatch`
+returns `None` if no db record matching the criteria is found.
+
+```python
+empty = await Album.objects.last_or_none()
+# None — no rows in the table
 ```
 
 ## all
@@ -250,6 +310,30 @@ Works exactly the same as [first](./#first) function above but allows you to que
 related objects from other side of the relation.
 
 !!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+### first_or_none
+
+Works exactly the same as [first_or_none](./#first_or_none) function above but
+returns `None` instead of raising `NoMatch`, and works on the relation side.
+
+!!!tip
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+### last
+
+Works exactly the same as [last](./#last) function above but allows you to query
+related objects from other side of the relation.
+
+!!!tip
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+### last_or_none
+
+Works exactly the same as [last_or_none](./#last_or_none) function above but
+returns `None` instead of raising `NoMatch`, and works on the relation side.
+
+!!!tip
     To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
 
 ### all

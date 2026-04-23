@@ -1,4 +1,13 @@
+from typing import Optional
+
+import pytest
+
+import ormar
+from ormar.exceptions import QueryDefinitionError
+from ormar.queryset.actions.order_action import OrderAction
 from ormar.queryset.utils import (
+    SliceBounds,
+    normalize_slice,
     subtract_dict,
     translate_list_to_dict,
     update,
@@ -7,6 +16,82 @@ from ormar.queryset.utils import (
 from tests.settings import create_config
 
 base_ormar_config = create_config()
+
+
+class _SliceModel(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="slice_utils_model")
+
+    id: int = ormar.Integer(primary_key=True)
+    name: Optional[str] = ormar.String(max_length=50, nullable=True)
+
+
+def test_normalize_slice_positive_int_and_slice():
+    assert normalize_slice(5) == SliceBounds(limit=1, offset=5, reverse=False)
+    assert normalize_slice(slice(2, 8)) == SliceBounds(limit=6, offset=2, reverse=False)
+    assert normalize_slice(slice(None, 8)) == SliceBounds(
+        limit=8, offset=0, reverse=False
+    )
+    assert normalize_slice(slice(2, None)) == SliceBounds(
+        limit=None, offset=2, reverse=False
+    )
+    assert normalize_slice(slice(None, None)) == SliceBounds(
+        limit=None, offset=0, reverse=False
+    )
+    assert normalize_slice(slice(8, 2)) == SliceBounds(limit=0, offset=8, reverse=False)
+
+
+def test_normalize_slice_negative_int_and_slice():
+    assert normalize_slice(-1) == SliceBounds(limit=1, offset=0, reverse=True)
+    assert normalize_slice(-3) == SliceBounds(limit=1, offset=2, reverse=True)
+    assert normalize_slice(slice(-3, None)) == SliceBounds(
+        limit=3, offset=0, reverse=True
+    )
+    assert normalize_slice(slice(-5, -2)) == SliceBounds(
+        limit=3, offset=2, reverse=True
+    )
+    assert normalize_slice(slice(-2, -5)) == SliceBounds(
+        limit=0, offset=0, reverse=True
+    )
+
+
+def test_normalize_slice_rejects_invalid_input():
+    with pytest.raises(QueryDefinitionError):
+        normalize_slice("five")  # type: ignore[arg-type]
+
+    with pytest.raises(QueryDefinitionError):
+        normalize_slice(slice(None, None, 2))
+
+    with pytest.raises(QueryDefinitionError):
+        normalize_slice(slice(None, -5))
+
+    with pytest.raises(QueryDefinitionError):
+        normalize_slice(slice(3, -5))
+
+    with pytest.raises(QueryDefinitionError):
+        normalize_slice(slice(-3, 5))
+
+
+def test_order_action_flipped_direction_and_nulls():
+    asc_first = OrderAction(
+        order_str="name",
+        model_cls=_SliceModel,
+        nulls_ordering="first",
+    )
+    desc_last = asc_first.flipped()
+    assert desc_last.direction == "desc"
+    assert desc_last.nulls_ordering == "last"
+
+    desc_first = OrderAction(
+        order_str="-name",
+        model_cls=_SliceModel,
+        nulls_ordering="last",
+    )
+    asc_last = desc_first.flipped()
+    assert asc_last.direction == ""
+    assert asc_last.nulls_ordering == "first"
+
+    plain = OrderAction(order_str="name", model_cls=_SliceModel)
+    assert plain.flipped().nulls_ordering is None
 
 
 def test_list_to_dict_translation():

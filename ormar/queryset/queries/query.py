@@ -79,8 +79,7 @@ class Query:
         Applies orders_by from model OrmarConfig (if provided), if it was not provided
         it was filled by metaclass, so it's always there and falls back to pk column
         """
-        for order_by in self.model_cls.ormar_config.orders_by:
-            clause = ormar.OrderAction(order_str=order_by, model_cls=self.model_cls)
+        for clause in ormar.OrderAction.from_model_defaults(self.model_cls):
             self.sorted_orders[clause] = clause.get_text_clause()
 
     def _pagination_query_required(self) -> bool:

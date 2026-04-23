@@ -475,6 +475,30 @@ async def test_model_first():
 
 
 @pytest.mark.asyncio
+async def test_model_last():
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            with pytest.raises(ormar.NoMatch):
+                await User.objects.last()
+
+            assert await User.objects.last_or_none() is None
+
+            tom = await User.objects.create(name="Tom")
+            jane = await User.objects.create(name="Jane")
+
+            assert await User.objects.last() == jane
+            assert await User.objects.last(name="Tom") == tom
+            assert await User.objects.filter(name="Tom").last() == tom
+            with pytest.raises(NoMatch):
+                await User.objects.filter(name="Lucy").last()
+
+            assert await User.objects.last_or_none(name="Lucy") is None
+            assert await User.objects.filter(name="Lucy").last_or_none() is None
+
+            assert await User.objects.order_by("name").last() == tom
+
+
+@pytest.mark.asyncio
 async def test_model_choices():
     """Test that enum work properly for various types of fields."""
     async with base_ormar_config.database:
