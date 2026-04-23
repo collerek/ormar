@@ -19,6 +19,13 @@ class FilterType(Enum):
     OR = 2
 
 
+class NullsOrdering(str, Enum):
+    """Nulls placement options for the `.order_by()` queries."""
+
+    FIRST = "first"
+    LAST = "last"
+
+
 class FilterGroup:
     """
     Filter groups are used in complex queries condition to group and and or

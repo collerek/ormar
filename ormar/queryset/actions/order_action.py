@@ -20,7 +20,11 @@ class OrderAction(QueryAction):
     """
 
     def __init__(
-        self, order_str: str, model_cls: type["Model"], alias: Optional[str] = None
+        self,
+        order_str: str,
+        model_cls: type["Model"],
+        alias: Optional[str] = None,
+        nulls_ordering: Optional[str] = None,
     ) -> None:
         self.direction: str = ""
         super().__init__(query_str=order_str, model_cls=model_cls)
@@ -29,6 +33,7 @@ class OrderAction(QueryAction):
             self.table_prefix = alias
         if self.source_model == self.target_model and "__" not in self.related_str:
             self.is_source_model_order = True
+        self.nulls_ordering = nulls_ordering
 
     @property
     def field_alias(self) -> str:
@@ -90,7 +95,30 @@ class OrderAction(QueryAction):
         else:
             table_name = quoter(f"{prefix}{table_name}")
         field_name = quoter(field_name)
-        return text(f"{table_name}.{field_name} {self.direction}")
+        return text(self._build_order_expression(f"{table_name}.{field_name}"))
+
+    def _build_order_expression(self, full_column: str) -> str:
+        """
+        Builds the final ORDER BY expression for a fully-qualified column,
+        optionally including a `NULLS FIRST`/`NULLS LAST` annotation. On MySQL,
+        which lacks the SQL:2003 `NULLS` syntax, emulate it by prepending an
+        `IS NULL` / `IS NOT NULL` sort key — it only affects ordering,
+        not the result set.
+
+        :param full_column: fully-qualified, quoted column reference
+        :type full_column: str
+        :return: ORDER BY expression as raw SQL text
+        :rtype: str
+        """
+        direction = f" {self.direction}" if self.direction else ""
+        base = f"{full_column}{direction}"
+        if self.nulls_ordering is None:
+            return base
+        dialect_name = self.target_model.ormar_config.database.dialect.name
+        if dialect_name == "mysql":  # pragma: no cover
+            not_kw = "not " if self.nulls_ordering == "first" else ""
+            return f"{full_column} is {not_kw}null, {base}"
+        return f"{base} nulls {self.nulls_ordering}"
 
     def _split_value_into_parts(self, order_str: str) -> None:
         if order_str.startswith("-"):

@@ -75,7 +75,7 @@ from ormar.fields import (
 # noqa: I100
 from ormar.databases.connection import DatabaseConnection
 from ormar.models import ExcludableItems, Extra, Model, OrmarConfig
-from ormar.queryset import OrderAction, QuerySet, and_, or_
+from ormar.queryset import NullsOrdering, OrderAction, QuerySet, and_, or_
 from ormar.relations import RelationType
 from ormar.signals import Signal
 
@@ -134,6 +134,7 @@ __all__ = [
     "ManyToManyField",
     "ForeignKeyField",
     "OrderAction",
+    "NullsOrdering",
     "ExcludableItems",
     "and_",
     "or_",
