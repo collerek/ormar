@@ -356,6 +356,71 @@ class QuerysetProxy(Generic[T]):
         self._register_related(first)
         return first
 
+    async def first_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
+        """
+        Gets the first row from the db ordered by primary key column ascending.
+
+        Actual call delegated to QuerySet.
+
+        Passing args and/or kwargs is a shortcut and equals to calling
+        `filter(*args, **kwargs).first_or_none()`.
+
+        If no match is found None will be returned.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: returned model or None
+        :rtype: Optional[Model]
+        """
+        first = await self.queryset.first_or_none(*args, **kwargs)
+        self._clean_items_on_load()
+        if first is not None:
+            self._register_related(first)
+        return first
+
+    async def last(self, *args: Any, **kwargs: Any) -> "T":
+        """
+        Gets the last row from the db ordered by primary key column descending.
+
+        Actual call delegated to QuerySet.
+
+        Passing args and/or kwargs is a shortcut and equals to calling
+        `filter(*args, **kwargs).last()`.
+
+        List of related models is cleared before the call.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: returned model
+        :rtype: Model
+        """
+        last = await self.queryset.last(*args, **kwargs)
+        self._clean_items_on_load()
+        self._register_related(last)
+        return last
+
+    async def last_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
+        """
+        Gets the last row from the db ordered by primary key column descending.
+
+        Actual call delegated to QuerySet.
+
+        Passing args and/or kwargs is a shortcut and equals to calling
+        `filter(*args, **kwargs).last_or_none()`.
+
+        If no match is found None will be returned.
+
+        :param kwargs: fields names and proper value types
+        :type kwargs: Any
+        :return: returned model or None
+        :rtype: Optional[Model]
+        """
+        last = await self.queryset.last_or_none(*args, **kwargs)
+        self._clean_items_on_load()
+        if last is not None:
+            self._register_related(last)
+        return last
+
     async def get_or_none(self, *args: Any, **kwargs: Any) -> Optional["T"]:
         """
         Gets the first row from the db meeting the criteria set by kwargs.
@@ -867,6 +932,26 @@ class QuerysetProxy(Generic[T]):
         :rtype: QuerysetProxy
         """
         queryset = self.queryset.order_by(columns)
+        return self.__class__(
+            relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
+        )
+
+    def __getitem__(self, key: Union[int, slice]) -> "QuerysetProxy[T]":
+        """
+        Slices the underlying QuerySet using Python integer or slice syntax.
+
+        Negative indices and slices are supported the same way as on
+        ``QuerySet.__getitem__`` — they are translated into a reversed-order
+        query plus an in-memory list reversal on ``.all()``.
+
+        Actual call delegated to QuerySet.
+
+        :param key: integer index or slice
+        :type key: int | slice
+        :return: QuerysetProxy with updated pagination
+        :rtype: QuerysetProxy
+        """
+        queryset = self.queryset[key]
         return self.__class__(
             relation=self.relation, type_=self.type_, to=self.to, qryset=queryset
         )

@@ -5,14 +5,22 @@ Following methods allow you to paginate and limit number of rows in queries.
 * `paginate(page: int) -> QuerySet`
 * `limit(limit_count: int) -> QuerySet`
 * `offset(offset: int) -> QuerySet`
+* `__getitem__(key: int | slice) -> QuerySet`
 * `get() -> Model`
 * `first() -> Model`
+* `first_or_none() -> Optional[Model]`
+* `last() -> Model`
+* `last_or_none() -> Optional[Model]`
 
 
 * `QuerysetProxy`
     * `QuerysetProxy.paginate(page: int)` method
     * `QuerysetProxy.limit(limit_count: int)` method
     * `QuerysetProxy.offset(offset: int)` method
+    * `QuerysetProxy.__getitem__(key: int | slice)` method
+    * `QuerysetProxy.first_or_none()` method
+    * `QuerysetProxy.last()` method
+    * `QuerysetProxy.last_or_none()` method
 
 ## paginate
 
@@ -113,6 +121,41 @@ tracks = await Track.objects.offset(1).limit(1).all()
     Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
 
 
+## slicing with `__getitem__`
+
+A `QuerySet` can also be sliced with Python integer or slice syntax. Each
+call returns a new `QuerySet` with LIMIT/OFFSET set accordingly — you still
+need to `await` it with `.all()` to actually run the query.
+
+```python
+# positive bounds map directly to LIMIT/OFFSET
+first_ten = await Track.objects[:10].all()
+page_two = await Track.objects[10:20].all()
+single = await Track.objects[5].all()  # returns a one-element list
+```
+
+Negative indices and negative slice bounds are supported too. Internally
+they are translated into a reversed-order query plus an in-memory list
+reversal, so the caller still sees results in the original ordering:
+
+```python
+last_five = await Track.objects[-5:].all()
+last_one = await Track.objects[-1].all()      # one-element list
+tail_slice = await Track.objects[-10:-5].all()
+```
+
+!!!note
+    Slice shapes that would require a `COUNT(*)` round-trip to resolve — a
+    bare `[:-N]`, or mixed positive/negative bounds like `[3:-2]` — raise
+    `QueryDefinitionError`. If you need "all except the last N", fetch
+    `.count()` explicitly and combine it with `.offset()`/`.limit()`.
+
+    A `step` other than `1` is not supported, and a non-integer / non-slice
+    key (e.g. `objects["foo"]`) also raises `QueryDefinitionError`.
+
+    Each slice replaces any previous pagination state rather than composing
+    with it — avoid chaining multiple slices on the same queryset.
+
 
 ## get
 
@@ -129,12 +172,51 @@ If no criteria is set it will return the last row in db sorted by pk.
 
 ## first
 
-`first() -> Model` 
+`first() -> Model`
 
 Gets the first row from the db ordered by primary key column ascending.
 
 !!!tip
     To read more about `first` visit [read/first](./read/#first)
+
+
+## first_or_none
+
+`first_or_none() -> Optional[Model]`
+
+Same as `first()` but returns `None` instead of raising `NoMatch` when no
+row matches.
+
+!!!tip
+    To read more about `first_or_none` visit [read/first_or_none](./read/#first_or_none)
+
+
+## last
+
+`last() -> Model`
+
+Gets the last row from the db ordered by primary key column descending.
+Complementary to `first()` — the default pk ordering is flipped and the top
+row is returned.
+
+```python
+newest = await Track.objects.last()
+newest_by_name = await Track.objects.order_by("name").last()
+```
+
+!!!tip
+    To read more about `last` visit [read/last](./read/#last)
+
+
+## last_or_none
+
+`last_or_none() -> Optional[Model]`
+
+Same as `last()` but returns `None` instead of raising `NoMatch` when no
+row matches.
+
+!!!tip
+    To read more about `last_or_none` visit [read/last_or_none](./read/#last_or_none)
 
 
 ## QuerysetProxy methods
@@ -167,6 +249,18 @@ Works exactly the same as [offset](./#offset) function above but allows you to p
 objects from other side of the relation.
 
 !!!tip 
+    To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
+
+### slicing with `__getitem__`
+
+Works exactly the same as [slicing](./#slicing-with-__getitem__) above but on the relation
+side:
+
+```python
+recent_cars = await user.cars[-3:].all()
+```
+
+!!!tip
     To read more about `QuerysetProxy` visit [querysetproxy][querysetproxy] section
 
 [querysetproxy]: ../relations/queryset-proxy.md

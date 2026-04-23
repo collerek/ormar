@@ -1,3 +1,4 @@
+import copy
 from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy
@@ -127,6 +128,44 @@ class OrderAction(QueryAction):
         parts = order_str.split("__")
         self.field_name = parts[-1]
         self.related_parts = parts[:-1]
+
+    @classmethod
+    def from_model_defaults(cls, model_cls: type["Model"]) -> list["OrderAction"]:
+        """
+        Builds the default list of ``OrderAction`` instances from a model's
+        ``OrmarConfig.orders_by`` (which always contains at least the primary
+        key, populated by the metaclass).
+
+        :param model_cls: model class whose defaults should be used
+        :type model_cls: type["Model"]
+        :return: list of default OrderAction instances for the model
+        :rtype: list[OrderAction]
+        """
+        return [
+            cls(order_str=str(name), model_cls=model_cls)
+            for name in model_cls.ormar_config.orders_by
+        ]
+
+    def flipped(self) -> "OrderAction":
+        """
+        Returns a shallow copy of this order action with the sort direction
+        and any `NULLS FIRST`/`NULLS LAST` annotation inverted.
+
+        Used by reverse slicing to turn an ASC/DESC ordering into its mirror
+        image so that ``LIMIT N`` fetches rows from the tail of the original
+        ordering. Callers are responsible for reversing the result list in
+        memory afterwards so the caller-visible ordering is preserved.
+
+        :return: new OrderAction with flipped direction and nulls ordering
+        :rtype: OrderAction
+        """
+        flipped = copy.copy(self)
+        flipped.direction = "" if self.direction == "desc" else "desc"
+        if self.nulls_ordering == "first":
+            flipped.nulls_ordering = "last"
+        elif self.nulls_ordering == "last":
+            flipped.nulls_ordering = "first"
+        return flipped
 
     def check_if_filter_apply(self, target_model: type["Model"], alias: str) -> bool:
         """
