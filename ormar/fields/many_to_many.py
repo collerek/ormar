@@ -185,6 +185,7 @@ def ManyToMany(  # type: ignore
         through_reverse_foreign_key_name=through_reverse_foreign_key_name,
         through_relation_nullable=through_relation_nullable,
         through_reverse_relation_nullable=through_reverse_relation_nullable,
+        **kwargs,
     )
 
     Field = type("ManyToMany", (ManyToManyField, BaseField), {})
