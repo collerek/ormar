@@ -783,7 +783,32 @@ assert owner.toys[1].name == "Toy 1"
 
     So operations like `filter()`, `select_related()`, `limit()` and `offset()` etc. can be chained.
     
-    Something like `Track.object.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
+    Something like `Track.objects.select_related("album").filter(album__name="Malibu").offset(1).limit(1).all()`
+
+#### Controlling NULL placement with `nulls_ordering`
+
+Both `.asc()` and `.desc()` accept an optional `nulls_ordering` argument so you can
+decide whether `NULL` values come first or last in the result:
+
+```python
+import ormar
+
+# nulls go to the end
+await Song.objects.order_by(
+    Song.sort_order.asc(nulls_ordering=ormar.NullsOrdering.LAST)
+).all()
+
+# nulls come first
+await Owner.objects.order_by(
+    Owner.toys.name.desc(nulls_ordering=ormar.NullsOrdering.FIRST)
+).all()
+```
+
+!!!note
+    On PostgreSQL and SQLite (3.30+) this emits the standard `NULLS FIRST` /
+    `NULLS LAST` clause. MySQL does not support that syntax, so `ormar`
+    emulates it by prepending an `IS NULL` / `IS NOT NULL` sort key — the
+    result set is unchanged, only the ordering.
 
 ### Default sorting in ormar
 

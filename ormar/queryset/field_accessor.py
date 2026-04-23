@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any, Optional, cast
 
 from ormar.queryset.actions import OrderAction
 from ormar.queryset.actions.filter_action import METHODS_TO_OPERATORS
-from ormar.queryset.clause import FilterGroup
+from ormar.queryset.clause import FilterGroup, NullsOrdering
 
 if TYPE_CHECKING:  # pragma: no cover
     from ormar import BaseField, Model
@@ -260,22 +260,48 @@ class FieldAccessor:
         """
         return self._select_operator(op="isnull", other=other)
 
-    def asc(self) -> OrderAction:
+    def asc(self, nulls_ordering: Optional[NullsOrdering] = None) -> OrderAction:
         """
         works as sql `column asc`
 
+        :param nulls_ordering: optional nulls placement, `NullsOrdering.FIRST`
+            or `NullsOrdering.LAST`
+        :type nulls_ordering: Optional[NullsOrdering]
+        :raises ValueError: if `nulls_ordering` is not a `NullsOrdering` member
         :return: OrderGroup for operator
         :rtype: ormar.queryset.actions.OrderGroup
         """
-        return OrderAction(order_str=self._access_chain, model_cls=self._source_model)
+        nulls_value = self._coerce_nulls_ordering(nulls_ordering)
+        return OrderAction(
+            order_str=self._access_chain,
+            model_cls=self._source_model,
+            nulls_ordering=nulls_value,
+        )
 
-    def desc(self) -> OrderAction:
+    def desc(self, nulls_ordering: Optional[NullsOrdering] = None) -> OrderAction:
         """
         works as sql `column desc`
 
+        :param nulls_ordering: optional nulls placement, `NullsOrdering.FIRST`
+            or `NullsOrdering.LAST`
+        :type nulls_ordering: Optional[NullsOrdering]
+        :raises ValueError: if `nulls_ordering` is not a `NullsOrdering` member
         :return: OrderGroup for operator
         :rtype: ormar.queryset.actions.OrderGroup
         """
+        nulls_value = self._coerce_nulls_ordering(nulls_ordering)
         return OrderAction(
-            order_str="-" + self._access_chain, model_cls=self._source_model
+            order_str="-" + self._access_chain,
+            model_cls=self._source_model,
+            nulls_ordering=nulls_value,
         )
+
+    @staticmethod
+    def _coerce_nulls_ordering(
+        nulls_ordering: Optional[NullsOrdering],
+    ) -> Optional[str]:
+        if nulls_ordering is None:
+            return None
+        if not isinstance(nulls_ordering, NullsOrdering):
+            raise ValueError("Invalid option for ordering nulls values.")
+        return nulls_ordering.value
