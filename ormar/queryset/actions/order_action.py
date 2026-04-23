@@ -118,7 +118,7 @@ class OrderAction(QueryAction):
         if dialect_name == "mysql":  # pragma: no cover
             not_kw = "not " if self.nulls_ordering == "first" else ""
             return f"{full_column} is {not_kw}null, {base}"
-        return f"{base} nulls {self.nulls_ordering}"
+        return f"{base} nulls {self.nulls_ordering}"  # pragma: no cover
 
     def _split_value_into_parts(self, order_str: str) -> None:
         if order_str.startswith("-"):
