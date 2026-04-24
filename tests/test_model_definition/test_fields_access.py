@@ -32,6 +32,21 @@ class Product(ormar.Model):
     category = ormar.ForeignKey(Category)
 
 
+class Supplier(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="suppliers")
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+
+
+class Item(ormar.Model):
+    ormar_config = base_ormar_config.copy(tablename="items")
+
+    id: int = ormar.Integer(primary_key=True)
+    name: str = ormar.String(max_length=100)
+    supplier = ormar.ForeignKey(Supplier, name="supplier_id")
+
+
 create_test_database = init_tests(base_ormar_config)
 
 
@@ -62,8 +77,40 @@ def test_fields_access():
     assert curr_field._access_chain == "categories__products__rating"
     assert curr_field._source_model == PriceList
 
+    # FK accessor accepts the same operators as a regular field
+    sample_category = Category(id=7, name="x")
+    assert (Product.category == 3)._kwargs_dict == {"category__exact": 3}
+    assert (Product.category == sample_category)._kwargs_dict == {
+        "category__exact": sample_category
+    }
+    assert (Product.category >= 3)._kwargs_dict == {"category__gte": 3}
+    assert (Product.category <= 3)._kwargs_dict == {"category__lte": 3}
+    assert (Product.category > 3)._kwargs_dict == {"category__gt": 3}
+    assert (Product.category < 3)._kwargs_dict == {"category__lt": 3}
+    assert (Product.category << [1, 2])._kwargs_dict == {"category__in": [1, 2]}
+    assert Product.category.in_([1, 2])._kwargs_dict == {"category__in": [1, 2]}
+    assert (Product.category >> None)._kwargs_dict == {"category__isnull": True}
+    assert Product.category.isnull(False)._kwargs_dict == {"category__isnull": False}
+
+    # FK accessor with an explicit db alias (name="supplier_id") still works
+    # because the check keys on the ormar field registry, not on table.columns
+    sample_supplier = Supplier(id=9, name="acme")
+    assert (Item.supplier == 2)._kwargs_dict == {"supplier__exact": 2}
+    assert (Item.supplier == sample_supplier)._kwargs_dict == {
+        "supplier__exact": sample_supplier
+    }
+    assert (Item.supplier << [sample_supplier, 5])._kwargs_dict == {
+        "supplier__in": [sample_supplier, 5]
+    }
+    assert (Item.supplier >= 2)._kwargs_dict == {"supplier__gte": 2}
+
+    # m2m accessor has no own column - comparison still raises
     with pytest.raises(AttributeError):
-        assert Product.category >= 3
+        assert Category.price_lists >= 3
+
+    # reverse FK accessor (virtual relation) - comparison still raises
+    with pytest.raises(AttributeError):
+        assert Category.products >= 3
 
 
 @pytest.mark.parametrize(
@@ -204,3 +251,48 @@ async def test_filtering_by_field_access():
 
             check = await Product.objects.get(Product.name == "My Little Pony")
             assert check == product2
+
+
+@pytest.mark.asyncio
+async def test_filtering_fk_by_field_access():
+    async with base_ormar_config.database:
+        async with base_ormar_config.database.transaction(force_rollback=True):
+            toys = await Category(name="Toys").save()
+            books = await Category(name="Books").save()
+            pony = await Product(
+                name="My Little Pony", rating=3.8, category=toys
+            ).save()
+            await Product(name="Novel", rating=4.2, category=books).save()
+
+            # by scalar PK - should match kwargs form exactly
+            via_accessor = await Product.objects.filter(
+                Product.category == toys.pk
+            ).all()
+            via_kwargs = await Product.objects.filter(category=toys.pk).all()
+            assert {p.pk for p in via_accessor} == {pony.pk}
+            assert {p.pk for p in via_accessor} == {p.pk for p in via_kwargs}
+
+            # by model instance
+            via_instance = await Product.objects.filter(Product.category == toys).all()
+            assert {p.pk for p in via_instance} == {pony.pk}
+
+            # `in_` / `<<` returns matches for several PKs
+            all_products = await Product.objects.all()
+            via_in = await Product.objects.filter(
+                Product.category << [toys.pk, books.pk]
+            ).all()
+            assert {p.pk for p in via_in} == {p.pk for p in all_products}
+
+            # aliased FK field (name="supplier_id")
+            sup = await Supplier(name="Acme").save()
+            other_sup = await Supplier(name="Globex").save()
+            gadget = await Item(name="gadget", supplier=sup).save()
+            await Item(name="widget", supplier=other_sup).save()
+            via_aliased_pk = await Item.objects.filter(Item.supplier == sup.pk).all()
+            via_aliased_instance = await Item.objects.filter(Item.supplier == sup).all()
+            via_aliased_in = await Item.objects.filter(
+                Item.supplier << [sup.pk, other_sup.pk]
+            ).all()
+            assert {i.pk for i in via_aliased_pk} == {gadget.pk}
+            assert {i.pk for i in via_aliased_instance} == {gadget.pk}
+            assert len(via_aliased_in) == 2

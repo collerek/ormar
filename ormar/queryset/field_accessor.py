@@ -63,10 +63,12 @@ class FieldAccessor:
         return object.__getattribute__(self, item)  # pragma: no cover
 
     def _check_field(self) -> None:
-        if not self._field:
-            raise AttributeError(
-                "Cannot filter by Model, you need to provide model name"
-            )
+        if self._field:
+            return
+        field = self._source_model.ormar_config.model_fields.get(self._access_chain)
+        if field is not None and not field.virtual and not field.is_multi:
+            return
+        raise AttributeError("Cannot filter by Model, you need to provide model name")
 
     def _select_operator(self, op: str, other: Any) -> FilterGroup:
         self._check_field()
