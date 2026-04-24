@@ -161,6 +161,23 @@ Product.objects.filter(
     ).get()
 ```
 
+!!!note
+    A foreign-key accessor can also be compared directly to a primary-key value
+    or a model instance, which is equivalent to the kwargs form and stays a
+    single-table filter (no JOIN is added):
+
+    ```python
+    # both produce: WHERE books.author = 5
+    Book.objects.filter(author=5)
+    Book.objects.filter(Book.author == 5)
+
+    # with an instance - the PK is extracted for you
+    Book.objects.filter(Book.author == tolkien)
+    ```
+
+    This only applies to own FK columns. Many-to-many and reverse relations
+    still require targeting a concrete column, e.g. `Category.products.name`.
+
 !!!note 
     All methods that do not return the rows explicitly returns a QuerySet instance so
     you can chain them together
