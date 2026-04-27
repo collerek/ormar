@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 from ormar.exceptions import QueryDefinitionError
 from ormar.queryset.utils import (
     PathParts,
     build_flatten_map,
     get_relationship_alias_model_and_str,
+    translate_list_to_dict,
 )
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -13,6 +14,226 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 Slot = Literal["include", "exclude", "flatten"]
+
+
+def skip_ellipsis(
+    items: Union[set, dict, None],
+    key: str,
+    default: Any = None,
+) -> Union[set, dict, None]:
+    """
+    Descend one level into an include/exclude dict by ``key``, returning
+    ``default`` when the lookup yields ``Ellipsis``. Ellipsis at this position
+    means "all fields below" rather than a concrete set/dict to recurse into.
+
+    :param items: current include/exclude value
+    :type items: Union[set, dict, None]
+    :param key: key for nested relations to check
+    :type key: str
+    :param default: value returned when the lookup yields Ellipsis
+    :type default: Any
+    :return: nested value of the items
+    :rtype: Union[set, dict, None]
+    """
+    result = items.get(key, {}) if isinstance(items, dict) else items
+    return result if result is not Ellipsis else default
+
+
+def convert_all(items: Union[set, dict, None]) -> Union[set, dict, None]:
+    """
+    Convert pydantic ``__all__`` special index into the ormar form, which does
+    not support index-based exclusions.
+
+    :param items: current include/exclude value
+    :type items: Union[set, dict, None]
+    :return: items with ``__all__`` unwrapped if present
+    :rtype: Union[set, dict, None]
+    """
+    if isinstance(items, dict) and "__all__" in items:
+        return items.get("__all__")
+    return items
+
+
+def normalize_to_dict(items: Union[set, dict, None]) -> Optional[dict]:
+    """
+    Convert a set form of include/exclude into its dict equivalent, leaving
+    dicts and ``None`` unchanged.
+
+    :param items: include/exclude value in any user-accepted form
+    :type items: Union[set, dict, None]
+    :return: dict form of items, or ``None``
+    :rtype: Optional[dict]
+    """
+    return translate_list_to_dict(items) if isinstance(items, set) else items
+
+
+def filter_not_excluded_fields(
+    fields: Union[list, set],
+    include: Optional[dict],
+    exclude: Optional[dict],
+) -> list:
+    """
+    Apply include / exclude dicts to a flat field list, returning the field
+    names that survive filtering. Mirrors the rules used during ``model_dump``
+    serialization.
+
+    :param fields: candidate field names
+    :type fields: Union[list, set]
+    :param include: fields to include
+    :type include: Optional[dict]
+    :param exclude: fields to exclude
+    :type exclude: Optional[dict]
+    :return: list of field names that pass the include/exclude filter
+    :rtype: list
+    """
+    fields = [*fields] if not isinstance(fields, list) else fields
+    if include:
+        fields = [field for field in fields if field in include]
+    if exclude:
+        fields = [
+            field
+            for field in fields
+            if field not in exclude
+            or (
+                exclude.get(field) is not Ellipsis and exclude.get(field) != {"__all__"}
+            )
+        ]
+    return fields
+
+
+class FlattenMap:
+    """
+    Nested-dict view of flatten directives with Ellipsis at leaves. Wraps the
+    ``Optional[dict]`` shape produced by :class:`ExcludableItems` so the few
+    operations that consume it (leaf check, descent, validation against
+    include/exclude) live alongside the data.
+
+    A truthy instance means at least one relation will be rendered as its
+    primary key.
+    """
+
+    __slots__ = ("_data", "_flatten_all")
+
+    def __init__(self, data: Optional[dict] = None, flatten_all: bool = False) -> None:
+        self._data = data
+        self._flatten_all = flatten_all
+
+    @property
+    def data(self) -> Optional[dict]:
+        """
+        Underlying nested-Ellipsis dict, or ``None`` when only ``flatten_all``
+        drives behavior. Exposed primarily for inspection and tests.
+
+        :return: stored nested-Ellipsis dict, or None
+        :rtype: Optional[dict]
+        """
+        return self._data
+
+    def is_field_flattened(self, field: str) -> bool:
+        """
+        Decide if a relation field should be rendered as its primary key.
+        ``flatten_all`` wins globally; otherwise an Ellipsis leaf at ``field``
+        triggers flattening.
+
+        :param field: name of the relation field
+        :type field: str
+        :return: True if the field should be rendered as a pk value
+        :rtype: bool
+        """
+        if self._flatten_all:
+            return True
+        return self._data is not None and self._data.get(field) is Ellipsis
+
+    def descend(self, field: str) -> Optional["FlattenMap"]:
+        """
+        Return the flatten sub-map for the nested model reached via ``field``,
+        or ``None`` when there is no sub-map. Callers must check
+        ``is_field_flattened`` first — ``flatten_all`` instances short-circuit
+        there before reaching ``descend``.
+
+        :param field: relation name to descend into
+        :type field: str
+        :return: nested FlattenMap or None
+        :rtype: Optional[FlattenMap]
+        """
+        value = self._data.get(field) if self._data else None
+        if isinstance(value, dict):
+            return FlattenMap(data=value)
+        return None
+
+    def check_vs_selector(
+        self,
+        selector: Union[set, dict, None],
+        selector_kind: str,
+        path: str = "",
+    ) -> None:
+        """
+        Walk the flatten map alongside an include/exclude dict and raise when
+        a flattened leaf has sub-field selection on its target.
+
+        ``flatten_all`` alone never produces a conflict because there is no
+        explicit per-relation map to compare against.
+
+        :param selector: current level of include / exclude nested dict
+        :type selector: Union[set, dict, None]
+        :param selector_kind: "include" or "exclude" - used in error message
+        :type selector_kind: str
+        :param path: dunder path accumulator for the error message
+        :type path: str
+        """
+        if not self._data:
+            return
+        _walk_flatten_vs_selector(self._data, selector, selector_kind, path)
+
+    def __bool__(self) -> bool:
+        return self._flatten_all or bool(self._data)
+
+
+def _walk_flatten_vs_selector(
+    flatten_map: dict,
+    selector: Union[set, dict, None],
+    selector_kind: str,
+    path: str,
+) -> None:
+    """
+    Recursive worker behind :meth:`FlattenMap.check_vs_selector` — kept at
+    module level so the recursion stays on a plain dict and does not allocate
+    intermediate :class:`FlattenMap` instances.
+
+    :param flatten_map: current level of the flatten nested dict
+    :type flatten_map: dict
+    :param selector: current level of include / exclude nested dict
+    :type selector: Union[set, dict, None]
+    :param selector_kind: "include" or "exclude" - used in error message
+    :type selector_kind: str
+    :param path: dunder path accumulator for the error message
+    :type path: str
+    """
+    if not selector or not isinstance(selector, dict):
+        return
+    for key, value in flatten_map.items():
+        sel = selector.get(key)
+        full_path = f"{path}__{key}" if path else key
+        if value is Ellipsis:
+            conflicts: Optional[set] = None
+            if isinstance(sel, dict):
+                conflicts = set(sel.keys()) - {...}
+            elif isinstance(sel, set):
+                conflicts = {item for item in sel if item is not ...}
+            if conflicts:
+                raise QueryDefinitionError(
+                    f"Flatten conflict: relation '{full_path}' is flattened "
+                    f"but {selector_kind} specifies children "
+                    f"{sorted(conflicts)}. A flattened relation renders only "
+                    f"its primary key and cannot have children selected."
+                )
+        elif isinstance(value, dict):
+            _walk_flatten_vs_selector(
+                flatten_map=value,
+                selector=sel,
+                selector_kind=selector_kind,
+                path=full_path,
+            )
 
 
 @dataclass
@@ -96,7 +317,7 @@ class ExcludableItems:
     def __init__(self) -> None:
         self.items: dict[str, Excludable] = dict()
         self._flatten_paths: set[PathParts] = set()
-        self._flatten_map_cache: Optional[dict] = None
+        self._flatten_map_cache: Optional[FlattenMap] = None
 
     @classmethod
     def from_excludable(cls, other: "ExcludableItems") -> "ExcludableItems":
@@ -132,20 +353,23 @@ class ExcludableItems:
         """
         return any(entry.flatten for entry in self.items.values())
 
-    def flatten_map(self) -> Optional[dict]:
+    def flatten_map(self) -> Optional[FlattenMap]:
         """
-        Return a nested-Ellipsis dict representation of the stored flatten
-        paths, built lazily on first call and cached for reuse. The cache is
-        invalidated whenever ``_set_slot`` adds a new flatten path.
+        Return a :class:`FlattenMap` over the stored flatten paths, built
+        lazily on first call and cached for reuse. The cache is invalidated
+        whenever ``_set_slot`` adds a new flatten path. Returns ``None`` when
+        no flatten paths are stored, so callers can short-circuit.
 
-        :return: nested dict keyed by relation names (``...`` at leaves), or
-            ``None`` when no flatten paths are stored
-        :rtype: Optional[dict]
+        :return: FlattenMap wrapping the nested-Ellipsis dict, or ``None``
+            when no flatten paths are stored
+        :rtype: Optional[FlattenMap]
         """
         if not self._flatten_paths:
             return None
         if self._flatten_map_cache is None:
-            self._flatten_map_cache = build_flatten_map(self._flatten_paths)
+            self._flatten_map_cache = FlattenMap(
+                data=build_flatten_map(self._flatten_paths)
+            )
         return self._flatten_map_cache
 
     def get(self, model_cls: type["Model"], alias: str = "") -> Excludable:

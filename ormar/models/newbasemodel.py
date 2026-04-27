@@ -23,7 +23,14 @@ import ormar  # noqa I100
 from ormar.exceptions import ModelError, ModelPersistenceError, QueryDefinitionError
 from ormar.fields.foreign_key import ForeignKeyField
 from ormar.fields.parsers import decode_bytes, encode_json
-from ormar.models.excludable import ExcludableItems
+from ormar.models.excludable import (
+    ExcludableItems,
+    FlattenMap,
+    convert_all,
+    filter_not_excluded_fields,
+    normalize_to_dict,
+    skip_ellipsis,
+)
 from ormar.models.helpers import register_relation_in_alias_manager
 from ormar.models.helpers.relations import expand_reverse_relationship
 from ormar.models.helpers.sqlalchemy import (
@@ -591,37 +598,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         cls.ormar_config.requires_ref_update = False
 
     @staticmethod
-    def _get_not_excluded_fields(
-        fields: Union[list, set],
-        include: Optional[builtins.dict],
-        exclude: Optional[builtins.dict],
-    ) -> list:
-        """
-        Returns related field names applying on them include and exclude set.
-
-        :param include: fields to include
-        :type include: Union[set, dict, None]
-        :param exclude: fields to exclude
-        :type exclude: Union[set, dict, None]
-        :return:
-        :rtype: list of fields with relations that is not excluded
-        """
-        fields = [*fields] if not isinstance(fields, list) else fields
-        if include:
-            fields = [field for field in fields if field in include]
-        if exclude:
-            fields = [
-                field
-                for field in fields
-                if field not in exclude
-                or (
-                    exclude.get(field) is not Ellipsis
-                    and exclude.get(field) != {"__all__"}
-                )
-            ]
-        return fields
-
-    @staticmethod
     def _extract_nested_models_from_list(  # noqa: CFQ002
         relation_map: builtins.dict,
         models: MutableSequence,
@@ -629,8 +605,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude: Union[set, builtins.dict, None],
         exclude_primary_keys: bool,
         exclude_through_models: bool,
-        flatten_map: Optional[builtins.dict] = None,
-        flatten_all: bool = False,
+        flatten_map: Optional[FlattenMap] = None,
     ) -> list:
         """
         Converts list of models into list of dictionaries.
@@ -641,10 +616,8 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :type include: Union[set, dict, None]
         :param exclude: fields to exclude
         :type exclude: Union[set, dict, None]
-        :param flatten_map: nested-dict view of flatten directives to thread down
-        :type flatten_map: Optional[dict]
-        :param flatten_all: if True, every nested relation is collapsed to pk
-        :type flatten_all: bool
+        :param flatten_map: FlattenMap of relations to render as pk values
+        :type flatten_map: Optional[FlattenMap]
         :return: list of models converted to dictionaries
         :rtype: list[dict]
         """
@@ -658,7 +631,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     exclude_primary_keys=exclude_primary_keys,
                     exclude_through_models=exclude_through_models,
                     flatten_fields=flatten_map,
-                    flatten_all=flatten_all,
                 )
                 if not exclude_through_models:
                     model.populate_through_models(
@@ -698,20 +670,10 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         :rtype: None
         """
 
-        include_dict = (
-            translate_list_to_dict(include)
-            if (include and isinstance(include, set))
-            else include
-        )
-        exclude_dict = (
-            translate_list_to_dict(exclude)
-            if (exclude and isinstance(exclude, set))
-            else exclude
-        )
-        models_to_populate = model._get_not_excluded_fields(
+        models_to_populate = filter_not_excluded_fields(
             fields=model.extract_through_names(),
-            include=cast(Optional[builtins.dict], include_dict),
-            exclude=cast(Optional[builtins.dict], exclude_dict),
+            include=normalize_to_dict(include),
+            exclude=normalize_to_dict(exclude),
         )
         through_fields_to_populate = [
             model.ormar_config.model_fields[through_model]
@@ -724,43 +686,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             if through_instance:
                 model_dict[through_field.name] = through_instance.model_dump()
 
-    @classmethod
-    def _skip_ellipsis(
-        cls,
-        items: Union[set, builtins.dict, None],
-        key: str,
-        default_return: Any = None,
-    ) -> Union[set, builtins.dict, None]:
-        """
-        Helper to traverse the include/exclude dictionaries.
-        In model_dump() Ellipsis should be skipped as it indicates all fields required
-        and not the actual set/dict with fields names.
-
-        :param items: current include/exclude value
-        :type items: Union[set, dict, None]
-        :param key: key for nested relations to check
-        :type key: str
-        :return: nested value of the items
-        :rtype: Union[set, dict, None]
-        """
-        result = cls.get_child(items, key)
-        return result if result is not Ellipsis else default_return
-
-    @staticmethod
-    def _convert_all(
-        items: Union[set, builtins.dict, None],
-    ) -> Union[set, builtins.dict, None]:
-        """
-        Helper to convert __all__ pydantic special index to ormar which does not
-        support index based exclusions.
-
-        :param items: current include/exclude value
-        :type items: Union[set, dict, None]
-        """
-        if isinstance(items, dict) and "__all__" in items:
-            return items.get("__all__")
-        return items
-
     def _extract_nested_models(  # noqa: CCR001, CFQ002
         self,
         relation_map: builtins.dict,
@@ -770,31 +695,28 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude_primary_keys: bool,
         exclude_through_models: bool,
         exclude_list: bool,
-        flatten_map: Optional[builtins.dict] = None,
-        flatten_all: bool = False,
+        flatten_map: Optional[FlattenMap] = None,
     ) -> builtins.dict:
         """
         Traverse nested models and converts them into dictionaries.
         Calls itself recursively if needed.
 
-        :param nested: flag if current instance is nested
-        :type nested: bool
+        :param relation_map: map of the relations to follow to avoid circular deps
+        :type relation_map: dict
         :param dict_instance: current instance dict
         :type dict_instance: dict
         :param include: fields to include
         :type include: Optional[dict]
         :param exclude: fields to exclude
         :type exclude: Optional[dict]
-        :param exclude: whether to exclude lists
-        :type exclude: bool
-        :param flatten_map: nested-dict of relations to render as their pk value
-        :type flatten_map: Optional[dict]
-        :param flatten_all: if True, every nested relation is rendered as pk
-        :type flatten_all: bool
+        :param exclude_list: whether to exclude list-valued relations
+        :type exclude_list: bool
+        :param flatten_map: FlattenMap directing relations to render as pk values
+        :type flatten_map: Optional[FlattenMap]
         :return: current model dict with child models converted to dictionaries
         :rtype: dict
         """
-        fields = self._get_not_excluded_fields(
+        fields = filter_not_excluded_fields(
             fields=self.extract_related_names(), include=include, exclude=exclude
         )
 
@@ -803,7 +725,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 continue
             try:
                 nested_model = getattr(self, field)
-                if self._is_field_flattened(field, flatten_map, flatten_all):
+                if flatten_map is not None and flatten_map.is_field_flattened(field):
                     if isinstance(nested_model, MutableSequence):
                         if exclude_list:
                             continue
@@ -813,48 +735,43 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                     else:
                         dict_instance[field] = None
                     continue
-                nested_flatten = self._descend_flatten_map(flatten_map, field)
+                if isinstance(nested_model, MutableSequence) and exclude_list:
+                    continue
+                nested_flatten = (
+                    flatten_map.descend(field) if flatten_map is not None else None
+                )
+                nested_relation_map = cast(
+                    builtins.dict,
+                    skip_ellipsis(relation_map, field, default=dict()),
+                )
+                nested_include = convert_all(skip_ellipsis(include, field))
+                nested_exclude = convert_all(skip_ellipsis(exclude, field))
                 if isinstance(nested_model, MutableSequence):
-                    if exclude_list:
-                        continue
-
                     dict_instance[field] = self._extract_nested_models_from_list(
-                        relation_map=self._skip_ellipsis(  # type: ignore
-                            relation_map, field, default_return=dict()
-                        ),
+                        relation_map=nested_relation_map,
                         models=nested_model,
-                        include=self._convert_all(self._skip_ellipsis(include, field)),
-                        exclude=self._convert_all(self._skip_ellipsis(exclude, field)),
+                        include=nested_include,
+                        exclude=nested_exclude,
                         exclude_primary_keys=exclude_primary_keys,
                         exclude_through_models=exclude_through_models,
                         flatten_map=nested_flatten,
-                        flatten_all=flatten_all,
                     )
                 elif nested_model is not None:
                     model_dict = nested_model.model_dump(
-                        relation_map=self._skip_ellipsis(
-                            relation_map, field, default_return=dict()
-                        ),
-                        include=self._convert_all(self._skip_ellipsis(include, field)),
-                        exclude=self._convert_all(self._skip_ellipsis(exclude, field)),
+                        relation_map=nested_relation_map,
+                        include=nested_include,
+                        exclude=nested_exclude,
                         exclude_primary_keys=exclude_primary_keys,
                         exclude_through_models=exclude_through_models,
                         flatten_fields=nested_flatten,
-                        flatten_all=flatten_all,
                     )
                     if not exclude_through_models:
                         nested_model.populate_through_models(
                             model=nested_model,
                             model_dict=model_dict,
-                            include=self._convert_all(
-                                self._skip_ellipsis(include, field)
-                            ),
-                            exclude=self._convert_all(
-                                self._skip_ellipsis(exclude, field)
-                            ),
-                            relation_map=self._skip_ellipsis(
-                                relation_map, field, default_return=dict()
-                            ),
+                            include=nested_include,
+                            exclude=nested_exclude,
+                            relation_map=nested_relation_map,
                         )
                     dict_instance[field] = model_dict
                 else:
@@ -862,50 +779,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             except ReferenceError:  # pragma: no cover
                 dict_instance[field] = None
         return dict_instance
-
-    @staticmethod
-    def _is_field_flattened(
-        field: str,
-        flatten_map: Optional[builtins.dict],
-        flatten_all: bool,
-    ) -> bool:
-        """
-        Decide if a relation field should be rendered as its primary key.
-        ``flatten_all`` wins globally; otherwise an Ellipsis leaf at ``field``
-        in the flatten map triggers flattening.
-
-        :param field: name of the relation field
-        :type field: str
-        :param flatten_map: current-level nested flatten dict (``...`` leaf
-            means "flatten here"); may be ``None``
-        :type flatten_map: Optional[dict]
-        :param flatten_all: if True, every relation is flattened
-        :type flatten_all: bool
-        :return: True if the field should be rendered as a pk value
-        :rtype: bool
-        """
-        return flatten_all or (
-            bool(flatten_map) and flatten_map.get(field) is Ellipsis  # type: ignore[union-attr]
-        )
-
-    @staticmethod
-    def _descend_flatten_map(
-        flatten_map: Optional[builtins.dict],
-        field: str,
-    ) -> Optional[builtins.dict]:
-        """
-        Return the flatten sub-map for the nested model reached via ``field``.
-        Returns ``None`` when there is no sub-map (leaf or missing key).
-
-        :param flatten_map: current-level flatten dict
-        :type flatten_map: Optional[dict]
-        :param field: relation name to descend into
-        :type field: str
-        :return: nested flatten dict or None
-        :rtype: Optional[dict]
-        """
-        value = flatten_map.get(field) if flatten_map else None
-        return value if isinstance(value, dict) else None
 
     @typing_extensions.deprecated(
         "The `dict` method is deprecated; use `model_dump` instead.",
@@ -957,7 +830,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude_list: bool = False,
         relation_map: Optional[builtins.dict] = None,
         flatten_fields: Union[
-            set, list, str, tuple, builtins.dict, "FieldAccessor", None
+            set, list, str, tuple, builtins.dict, "FieldAccessor", FlattenMap, None
         ] = None,
         flatten_all: bool = False,
         round_trip: bool = False,
@@ -1013,13 +886,18 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         flatten_map = self._resolve_flatten_map(
             flatten_fields=flatten_fields, flatten_all=flatten_all
         )
-        self._validate_flatten_against_options(
-            flatten_map=flatten_map,
-            flatten_all=flatten_all,
-            include=include,
-            exclude=exclude,
-            exclude_primary_keys=exclude_primary_keys,
-        )
+        if exclude_primary_keys and flatten_map:
+            raise QueryDefinitionError(
+                "flatten_fields / flatten_all cannot be combined with "
+                "exclude_primary_keys=True: flattening renders primary keys, "
+                "excluding removes them."
+            )
+        include_dict = normalize_to_dict(include)
+        exclude_dict = normalize_to_dict(exclude)
+        if flatten_map is not None:
+            flatten_map.check_vs_selector(include_dict, "include")
+            flatten_map.check_vs_selector(exclude_dict, "exclude")
+
         pydantic_exclude = self._update_excluded_with_related(exclude)
         pydantic_exclude = self._update_excluded_with_pks_and_through(
             exclude=pydantic_exclude,
@@ -1043,13 +921,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             for k, v in dict_instance.items()
         }
 
-        include_dict = (
-            translate_list_to_dict(include) if isinstance(include, set) else include
-        )
-        exclude_dict = (
-            translate_list_to_dict(exclude) if isinstance(exclude, set) else exclude
-        )
-
         relation_map = (
             relation_map
             if relation_map is not None
@@ -1066,7 +937,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 exclude_through_models=exclude_through_models,
                 exclude_list=exclude_list,
                 flatten_map=flatten_map,
-                flatten_all=flatten_all,
             )
 
         return dict_instance
@@ -1074,35 +944,36 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
     def _resolve_flatten_map(
         self,
         flatten_fields: Union[
-            set, list, str, tuple, builtins.dict, "FieldAccessor", None
+            set, list, str, tuple, builtins.dict, "FieldAccessor", FlattenMap, None
         ],
         flatten_all: bool,
-    ) -> Optional[builtins.dict]:
+    ) -> Optional[FlattenMap]:
         """
-        Produce a nested-dict flatten spec from the various input forms.
-        Accepts the same forms as ``fields`` / ``exclude_fields`` plus
-        ``FieldAccessor`` chains. An already-computed nested dict is returned
-        as-is so recursion can thread it down cheaply.
+        Produce a :class:`FlattenMap` from the various input forms accepted by
+        ``model_dump``. Resolves dunder strings / lists / sets / nested dicts /
+        ``FieldAccessor`` chains; an already-resolved ``FlattenMap`` (passed
+        during recursion) is returned as-is.
 
-        :param flatten_fields: user spec or nested dict from recursion
-        :type flatten_fields: Union[set, list, str, tuple, dict, FieldAccessor, None]
-        :param flatten_all: if True, skip spec parsing - flatten bit wins everywhere
+        :param flatten_fields: user spec, nested dict, or FlattenMap from recursion
+        :type flatten_fields: Union[set, list, str, tuple, dict, FieldAccessor,
+            FlattenMap, None]
+        :param flatten_all: if True every relation flattens regardless of spec
         :type flatten_all: bool
-        :return: resolved nested dict (or None if nothing to do)
-        :rtype: Optional[dict]
+        :return: resolved FlattenMap, or None when nothing should flatten
+        :rtype: Optional[FlattenMap]
         """
+        if flatten_all:
+            return FlattenMap(flatten_all=True)
+
         if flatten_fields is None:
-            if flatten_all:
-                return None
             excludable = getattr(self, "__ormar_excludable__", None)
             return excludable.flatten_map() if excludable is not None else None
 
-        # A dict input is treated as a pre-resolved flatten map — either passed
-        # down from recursion or supplied directly by a caller who knows the
-        # shape. Skip re-parsing; validation against include/exclude still runs
-        # once at the top-level model_dump entry.
-        if isinstance(flatten_fields, builtins.dict):
+        if isinstance(flatten_fields, FlattenMap):
             return flatten_fields
+
+        if isinstance(flatten_fields, builtins.dict):
+            return FlattenMap(data=flatten_fields)
 
         excludable = ExcludableItems()
         excludable.build(
@@ -1111,100 +982,6 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             slot="flatten",
         )
         return excludable.flatten_map()
-
-    def _validate_flatten_against_options(
-        self,
-        flatten_map: Optional[builtins.dict],
-        flatten_all: bool,
-        include: Union[set, builtins.dict, None],
-        exclude: Union[set, builtins.dict, None],
-        exclude_primary_keys: bool,
-    ) -> None:
-        """
-        Ensure flatten directives don't collide with other ``model_dump`` options.
-
-        Raises:
-          * ``QueryDefinitionError`` when ``exclude_primary_keys=True`` is combined
-            with a flatten spec (directly contradictory - flatten renders pks,
-            ``exclude_primary_keys`` strips them).
-          * ``QueryDefinitionError`` when a flattened relation has sub-field
-            include/exclude on its target. Whole-relation include/exclude at the
-            parent level (``{"author": ...}``) is allowed.
-
-        :param flatten_map: resolved flatten nested-dict spec, or None
-        :type flatten_map: Optional[dict]
-        :param flatten_all: global flatten flag
-        :type flatten_all: bool
-        :param include: user's include argument (any form)
-        :type include: Union[set, dict, None]
-        :param exclude: user's exclude argument (any form)
-        :type exclude: Union[set, dict, None]
-        :param exclude_primary_keys: user's exclude_primary_keys flag
-        :type exclude_primary_keys: bool
-        """
-        if exclude_primary_keys and (flatten_all or flatten_map):
-            raise QueryDefinitionError(
-                "flatten_fields / flatten_all cannot be combined with "
-                "exclude_primary_keys=True: flattening renders primary keys, "
-                "excluding removes them."
-            )
-        if not flatten_map:
-            return
-        include_dict = (
-            translate_list_to_dict(include) if isinstance(include, set) else include
-        )
-        exclude_dict = (
-            translate_list_to_dict(exclude) if isinstance(exclude, set) else exclude
-        )
-        self._check_flatten_vs_selector(flatten_map, include_dict, "include")
-        self._check_flatten_vs_selector(flatten_map, exclude_dict, "exclude")
-
-    @classmethod
-    def _check_flatten_vs_selector(
-        cls,
-        flatten_map: builtins.dict,
-        selector: Union[builtins.dict, None],
-        selector_kind: str,
-        path: str = "",
-    ) -> None:
-        """
-        Walk a flatten map alongside an include/exclude dict and raise when a
-        flattened leaf has sub-field selection on its target.
-
-        :param flatten_map: current level of the flatten nested dict
-        :type flatten_map: dict
-        :param selector: current level of include / exclude nested dict
-        :type selector: Optional[dict]
-        :param selector_kind: "include" or "exclude" - used in the error message
-        :type selector_kind: str
-        :param path: dunder path accumulator for the error message
-        :type path: str
-        """
-        if not selector or not isinstance(selector, builtins.dict):
-            return
-        for key, value in flatten_map.items():
-            sel = selector.get(key)
-            full_path = f"{path}__{key}" if path else key
-            if value is Ellipsis:
-                conflicts: Optional[set] = None
-                if isinstance(sel, builtins.dict):
-                    conflicts = set(sel.keys()) - {...}
-                elif isinstance(sel, set):
-                    conflicts = {item for item in sel if item is not ...}
-                if conflicts:
-                    raise QueryDefinitionError(
-                        f"Flatten conflict: relation '{full_path}' is flattened "
-                        f"but {selector_kind} specifies children "
-                        f"{sorted(conflicts)}. A flattened relation renders only "
-                        f"its primary key and cannot have children selected."
-                    )
-            elif isinstance(value, builtins.dict):
-                cls._check_flatten_vs_selector(
-                    flatten_map=value,
-                    selector=sel,
-                    selector_kind=selector_kind,
-                    path=full_path,
-                )
 
     @typing_extensions.deprecated(
         "The `json` method is deprecated; use `model_dump_json` instead.",
@@ -1251,7 +1028,7 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
         exclude_primary_keys: bool = False,
         exclude_through_models: bool = False,
         flatten_fields: Union[
-            set, list, str, tuple, builtins.dict, "FieldAccessor", None
+            set, list, str, tuple, builtins.dict, "FieldAccessor", FlattenMap, None
         ] = None,
         flatten_all: bool = False,
         **dumps_kwargs: Any,

@@ -252,14 +252,14 @@ def test_flatten_map_caches_and_invalidates_on_new_path():
     excludable = ExcludableItems()
     excludable.build(items="hq", model_cls=Company, slot="flatten")
     first = excludable.flatten_map()
-    assert first == {"hq": ...}
-    assert excludable.flatten_map() is first  # cached: same dict reference
+    assert first.data == {"hq": ...}
+    assert excludable.flatten_map() is first  # cached: same FlattenMap reference
 
     # adding a new (non-colliding) flatten path invalidates the cache
     excludable.build(items="cars", model_cls=Company, slot="flatten")
     rebuilt = excludable.flatten_map()
     assert rebuilt is not first
-    assert rebuilt == {"hq": ..., "cars": ...}
+    assert rebuilt.data == {"hq": ..., "cars": ...}
 
 
 def test_flatten_has_flatten_entries_flag():
