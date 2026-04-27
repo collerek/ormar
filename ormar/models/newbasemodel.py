@@ -2,6 +2,7 @@ import base64
 import builtins
 import sys
 import warnings
+from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
     AbstractSet,
@@ -58,6 +59,20 @@ if TYPE_CHECKING:  # pragma no cover
     SetStr = set[str]
     AbstractSetIntStr = AbstractSet[IntStr]
     MappingIntStrAny = Mapping[IntStr, Any]
+
+
+@dataclass(frozen=True)
+class NestedDescent:
+    """
+    Per-field locals threaded into the recursive ``model_dump`` call when
+    descending into a related field. Returned from ``_resolve_field_descent``
+    only when the field is not handled inline (flattened or skipped).
+    """
+
+    flatten_map: Optional["FlattenMap"]
+    relation_map: builtins.dict
+    include: Union[set, builtins.dict, None]
+    exclude: Union[set, builtins.dict, None]
 
 
 class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass):
@@ -686,6 +701,65 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
             if through_instance:
                 model_dict[through_field.name] = through_instance.model_dump()
 
+    @staticmethod
+    def _resolve_field_descent(  # noqa: CFQ002
+        field: str,
+        nested_model: Any,
+        flatten_map: Optional[FlattenMap],
+        exclude_list: bool,
+        relation_map: builtins.dict,
+        include: Optional[builtins.dict],
+        exclude: Optional[builtins.dict],
+        dict_instance: builtins.dict,
+    ) -> Optional[NestedDescent]:
+        """
+        Decide how to dump a related field. When the field is flattened, write
+        its primary-key representation directly into ``dict_instance`` and
+        return ``None`` so the caller skips further descent. When the field is
+        an excluded list, also return ``None``. Otherwise return a
+        ``NestedDescent`` carrying the per-field locals the caller threads
+        into the recursive dump.
+
+        :param field: relation field name being processed
+        :type field: str
+        :param nested_model: value of the relation on the current instance
+        :type nested_model: Any
+        :param flatten_map: current flatten directive scope, or ``None``
+        :type flatten_map: Optional[FlattenMap]
+        :param exclude_list: whether to skip list-valued relations entirely
+        :type exclude_list: bool
+        :param relation_map: relation traversal map for the current scope
+        :type relation_map: dict
+        :param include: include selector for the current scope
+        :type include: Optional[dict]
+        :param exclude: exclude selector for the current scope
+        :type exclude: Optional[dict]
+        :param dict_instance: dict being built for the current model
+        :type dict_instance: dict
+        :return: per-field locals, or ``None`` if the field was handled inline
+            (flattened or skipped)
+        :rtype: Optional[NestedDescent]
+        """
+        if flatten_map is not None and flatten_map.is_field_flattened(field):
+            if isinstance(nested_model, MutableSequence):
+                if not exclude_list:
+                    dict_instance[field] = [m.pk for m in nested_model]
+            elif nested_model is not None:
+                dict_instance[field] = nested_model.pk
+            else:
+                dict_instance[field] = None
+            return None
+        if isinstance(nested_model, MutableSequence) and exclude_list:
+            return None
+        return NestedDescent(
+            flatten_map=flatten_map.descend(field) if flatten_map is not None else None,
+            relation_map=cast(
+                builtins.dict, skip_ellipsis(relation_map, field, default=dict())
+            ),
+            include=convert_all(skip_ellipsis(include, field)),
+            exclude=convert_all(skip_ellipsis(exclude, field)),
+        )
+
     def _extract_nested_models(  # noqa: CCR001, CFQ002
         self,
         relation_map: builtins.dict,
@@ -725,53 +799,44 @@ class NewBaseModel(pydantic.BaseModel, ModelTableProxy, metaclass=ModelMetaclass
                 continue
             try:
                 nested_model = getattr(self, field)
-                if flatten_map is not None and flatten_map.is_field_flattened(field):
-                    if isinstance(nested_model, MutableSequence):
-                        if exclude_list:
-                            continue
-                        dict_instance[field] = [m.pk for m in nested_model]
-                    elif nested_model is not None:
-                        dict_instance[field] = nested_model.pk
-                    else:
-                        dict_instance[field] = None
-                    continue
-                if isinstance(nested_model, MutableSequence) and exclude_list:
-                    continue
-                nested_flatten = (
-                    flatten_map.descend(field) if flatten_map is not None else None
+                descent = self._resolve_field_descent(
+                    field=field,
+                    nested_model=nested_model,
+                    flatten_map=flatten_map,
+                    exclude_list=exclude_list,
+                    relation_map=relation_map,
+                    include=include,
+                    exclude=exclude,
+                    dict_instance=dict_instance,
                 )
-                nested_relation_map = cast(
-                    builtins.dict,
-                    skip_ellipsis(relation_map, field, default=dict()),
-                )
-                nested_include = convert_all(skip_ellipsis(include, field))
-                nested_exclude = convert_all(skip_ellipsis(exclude, field))
+                if descent is None:
+                    continue
                 if isinstance(nested_model, MutableSequence):
                     dict_instance[field] = self._extract_nested_models_from_list(
-                        relation_map=nested_relation_map,
+                        relation_map=descent.relation_map,
                         models=nested_model,
-                        include=nested_include,
-                        exclude=nested_exclude,
+                        include=descent.include,
+                        exclude=descent.exclude,
                         exclude_primary_keys=exclude_primary_keys,
                         exclude_through_models=exclude_through_models,
-                        flatten_map=nested_flatten,
+                        flatten_map=descent.flatten_map,
                     )
                 elif nested_model is not None:
                     model_dict = nested_model.model_dump(
-                        relation_map=nested_relation_map,
-                        include=nested_include,
-                        exclude=nested_exclude,
+                        relation_map=descent.relation_map,
+                        include=descent.include,
+                        exclude=descent.exclude,
                         exclude_primary_keys=exclude_primary_keys,
                         exclude_through_models=exclude_through_models,
-                        flatten_fields=nested_flatten,
+                        flatten_fields=descent.flatten_map,
                     )
                     if not exclude_through_models:
                         nested_model.populate_through_models(
                             model=nested_model,
                             model_dict=model_dict,
-                            include=nested_include,
-                            exclude=nested_exclude,
-                            relation_map=nested_relation_map,
+                            include=descent.include,
+                            exclude=descent.exclude,
+                            relation_map=descent.relation_map,
                         )
                     dict_instance[field] = model_dict
                 else:

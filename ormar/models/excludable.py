@@ -183,13 +183,13 @@ class FlattenMap:
         """
         if not self._data:
             return
-        _walk_flatten_vs_selector(self._data, selector, selector_kind, path)
+        walk_flatten_vs_selector(self._data, selector, selector_kind, path)
 
     def __bool__(self) -> bool:
         return self._flatten_all or bool(self._data)
 
 
-def _walk_flatten_vs_selector(
+def walk_flatten_vs_selector(
     flatten_map: dict,
     selector: Union[set, dict, None],
     selector_kind: str,
@@ -228,7 +228,7 @@ def _walk_flatten_vs_selector(
                     f"its primary key and cannot have children selected."
                 )
         elif isinstance(value, dict):
-            _walk_flatten_vs_selector(
+            walk_flatten_vs_selector(
                 flatten_map=value,
                 selector=sel,
                 selector_kind=selector_kind,
@@ -383,7 +383,7 @@ class ExcludableItems:
         :return: Excludable for given model and alias
         :rtype: ormar.models.excludable.Excludable
         """
-        key = _excludable_key(model_cls, alias)
+        key = excludable_key(model_cls, alias)
         excludable = self.items.get(key)
         if not excludable:
             excludable = Excludable()
@@ -467,7 +467,7 @@ class ExcludableItems:
             self._flatten_map_cache = None
 
         excludable = self.items.setdefault(
-            _excludable_key(model_cls, alias), Excludable()
+            excludable_key(model_cls, alias), Excludable()
         )
         excludable.set_values(value=items, slot=slot)
 
@@ -589,17 +589,17 @@ class ExcludableItems:
                 raise QueryDefinitionError(
                     f"Unknown relation '{item}' on model "
                     f"{model_cls.get_name(lower=False)} in flatten_fields path "
-                    f"'{_join_path(path_parts, item)}'."
+                    f"'{join_path(path_parts, item)}'."
                 )
             if getattr(related_field, "is_through", False):
                 raise QueryDefinitionError(
                     f"Cannot flatten through model '{item}' at path "
-                    f"'{_join_path(path_parts, item)}'. Flatten the many-to-many "
+                    f"'{join_path(path_parts, item)}'. Flatten the many-to-many "
                     f"relation itself instead."
                 )
             if not getattr(related_field, "is_relation", False):
                 raise QueryDefinitionError(
-                    f"flatten_fields target '{_join_path(path_parts, item)}' is "
+                    f"flatten_fields target '{join_path(path_parts, item)}' is "
                     f"not a relation on model {model_cls.get_name(lower=False)}. "
                     f"Only foreign keys, many-to-many, and reverse relations can "
                     f"be flattened."
@@ -625,8 +625,8 @@ class ExcludableItems:
                     break
                 raise QueryDefinitionError(
                     f"Conflicting flatten directives: "
-                    f"'{_join_path(short)}' is flattened to its primary key, "
-                    f"so nested flatten '{_join_path(longer)}' is unreachable."
+                    f"'{join_path(short)}' is flattened to its primary key, "
+                    f"so nested flatten '{join_path(longer)}' is unreachable."
                 )
 
     def validate_flatten_vs_excludable(self, source_model: type["Model"]) -> None:
@@ -645,20 +645,20 @@ class ExcludableItems:
                 source_model=source_model,
                 related_parts=list(parts),
             )
-            child = self.items.get(_excludable_key(target_model, table_prefix))
+            child = self.items.get(excludable_key(target_model, table_prefix))
             if not child:
                 continue
             conflicts = (child.include | child.exclude) - {...}
             if conflicts:
                 raise QueryDefinitionError(
-                    f"Flatten conflict: relation '{_join_path(parts)}' is "
+                    f"Flatten conflict: relation '{join_path(parts)}' is "
                     f"flattened but include/exclude specifies children "
                     f"{sorted(conflicts)}. A flattened relation renders only "
                     f"its primary key and cannot have children selected."
                 )
 
 
-def _excludable_key(model_cls: type["Model"], alias: str) -> str:
+def excludable_key(model_cls: type["Model"], alias: str) -> str:
     """
     Compose the ``{alias}_{model_name}`` key used across ExcludableItems
     lookups. Centralized here so every call site keys entries the same way.
@@ -673,7 +673,7 @@ def _excludable_key(model_cls: type["Model"], alias: str) -> str:
     return f"{alias + '_' if alias else ''}{model_cls.get_name(lower=True)}"
 
 
-def _join_path(parts: PathParts, tail: Optional[str] = None) -> str:
+def join_path(parts: PathParts, tail: Optional[str] = None) -> str:
     """
     Build a user-facing dunder path string from a pre-split tuple, optionally
     appending one extra segment. Used only for error messages — the rest of

@@ -37,7 +37,7 @@ from ormar.queryset.utils import (
 if TYPE_CHECKING:  # pragma no cover
     from ormar import Model
     from ormar.models import T
-    from ormar.models.excludable import ExcludableItems
+    from ormar.models.excludable import ExcludableItems, Slot
     from ormar.models.ormar_config import OrmarConfig
 else:
     T = TypeVar("T", bound="Model")
@@ -535,7 +535,7 @@ class QuerySet(Generic[T]):
         return select_paths, prefetch_paths
 
     def fields(
-        self, columns: Union[list, str, set, dict], _is_exclude: bool = False
+        self, columns: Union[list, str, set, dict], slot: "Slot" = "include"
     ) -> "QuerySet[T]":
         """
         With `fields()` you can select subset of model columns to limit the data load.
@@ -574,8 +574,8 @@ class QuerySet(Generic[T]):
 
         To include whole nested model specify model related field name and ellipsis.
 
-        :param _is_exclude: flag if it's exclude or include operation
-        :type _is_exclude: bool
+        :param slot: which Excludable slot to write into ("include" or "exclude")
+        :type slot: Slot
         :param columns: columns to include
         :type columns: Union[list, str, set, dict]
         :return: QuerySet
@@ -585,7 +585,7 @@ class QuerySet(Generic[T]):
         excludable.build(
             items=columns,
             model_cls=self.model_cls,  # type: ignore
-            slot="exclude" if _is_exclude else "include",
+            slot=slot,
         )
         if excludable._flatten_paths:
             excludable.validate_flatten_vs_excludable(
@@ -621,7 +621,7 @@ class QuerySet(Generic[T]):
         :return: QuerySet
         :rtype: QuerySet
         """
-        return self.fields(columns=columns, _is_exclude=True)
+        return self.fields(columns=columns, slot="exclude")
 
     def order_by(self, columns: Union[list, str, OrderAction]) -> "QuerySet[T]":
         """
